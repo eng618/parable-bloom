@@ -17,6 +17,9 @@ class GridComponent extends PositionComponent
 
   late List<List<CellComponent>> cells;
 
+  // Level completion state
+  bool _levelComplete = false;
+
   // TODO: Replace with actual vine system from GAME_DESIGN.md
   // Placeholder vine data - NO overlapping cells (each cell holds max 1 vine segment)
   // Blocking occurs when arrow path hits another vine's segments in the movement direction
@@ -131,6 +134,11 @@ class GridComponent extends PositionComponent
         }
       }
     }
+
+    // Render level complete overlay
+    if (_levelComplete) {
+      _drawLevelCompleteOverlay(canvas);
+    }
   }
 
   void _drawArrowHead(Canvas canvas, Rect rect, Color color, String direction, bool isBlocked) {
@@ -230,6 +238,50 @@ class GridComponent extends PositionComponent
     return null;
   }
 
+  void _drawLevelCompleteOverlay(Canvas canvas) {
+    // Semi-transparent background overlay
+    final overlayPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.7 * 255);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.x, size.y), overlayPaint);
+
+    // Level complete text
+    const text = 'LEVEL COMPLETE!\n\nGood Job!';
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          height: 1.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
+    );
+    textPainter.layout(maxWidth: size.x * 0.8);
+
+    final textOffset = Offset(
+      (size.x - textPainter.width) / 2,
+      (size.y - textPainter.height) / 2,
+    );
+    textPainter.paint(canvas, textOffset);
+
+    // Add a subtle glow effect around the text
+    final glowPaint = Paint()
+      ..color = Colors.yellow.withValues(alpha: 0.3 * 255)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+    canvas.drawRect(
+      Rect.fromCenter(
+        center: textOffset + Offset(textPainter.width / 2, textPainter.height / 2),
+        width: textPainter.width + 20,
+        height: textPainter.height + 20,
+      ),
+      glowPaint,
+    );
+  }
+
   void _calculateVineDirections() {
     // All vines get arrows, but we check if their movement path is blocked
     // Horizontal vines point right, vertical vines point down
@@ -320,8 +372,14 @@ class GridComponent extends PositionComponent
     // Remove the vine from the placeholder data (simulate clearing)
     placeholderVines.removeWhere((v) => v['id'] == vineId);
 
-    // Recalculate directions for remaining vines (some may now be unblocked)
-    _calculateVineDirections();
+    // Check if level is complete (all vines cleared)
+    if (placeholderVines.isEmpty) {
+      _levelComplete = true;
+      debugPrint('LEVEL COMPLETE! All vines cleared.');
+    } else {
+      // Recalculate directions for remaining vines (some may now be unblocked)
+      _calculateVineDirections();
+    }
 
     // Trigger parable reveal animation (placeholder)
     debugPrint('Vine $vineId cleared! Trigger parable reveal animation');
@@ -330,7 +388,7 @@ class GridComponent extends PositionComponent
     // TODO: Gradually reveal parable background/image
     // TODO: Animate parable text appearing
 
-    // Force redraw to show vine removed and arrows updated
+    // Force redraw to show vine removed, arrows updated, or level complete overlay
     update(0);
   }
 }
