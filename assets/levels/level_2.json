@@ -1,0 +1,118 @@
+{
+    "levelId": "level_002_t_formation",
+    "levelNumber": 2,
+    "title": "T Formation",
+    "difficulty": 1,
+    "grid": {
+        "rows": 7,
+        "columns": 7
+    },
+    "vines": [
+        {
+            "id": "vine_main",
+            "color": "#8B4513",
+            "description": "Main horizontal vine",
+            "path": [
+                {
+                    "row": 3,
+                    "col": 0
+                },
+                {
+                    "row": 3,
+                    "col": 1
+                },
+                {
+                    "row": 3,
+                    "col": 2
+                },
+                {
+                    "row": 3,
+                    "col": 3
+                },
+                {
+                    "row": 3,
+                    "col": 4
+                },
+                {
+                    "row": 3,
+                    "col": 5
+                },
+                {
+                    "row": 3,
+                    "col": 6
+                }
+            ],
+            "blockingVines": []
+        },
+        {
+            "id": "vine_branch_north",
+            "color": "#6B8E23",
+            "description": "Northern branch",
+            "path": [
+                {
+                    "row": 0,
+                    "col": 3
+                },
+                {
+                    "row": 1,
+                    "col": 3
+                },
+                {
+                    "row": 2,
+                    "col": 3
+                },
+                {
+                    "row": 3,
+                    "col": 3
+                }
+            ],
+            "blockingVines": [
+                "vine_main"
+            ]
+        },
+        {
+            "id": "vine_branch_south",
+            "color": "#6B8E23",
+            "description": "Southern branch",
+            "path": [
+                {
+                    "row": 3,
+                    "col": 3
+                },
+                {
+                    "row": 4,
+                    "col": 3
+                },
+                {
+                    "row": 5,
+                    "col": 3
+                },
+                {
+                    "row": 6,
+                    "col": 3
+                }
+            ],
+            "blockingVines": [
+                "vine_main"
+            ]
+        }
+    ],
+    "parable": {
+        "title": "The Vine & Branches",
+        "scripture": "John 15:1-5",
+        "content": "I am the true vine, and my Father is the gardener...",
+        "reflection": "How does remaining connected to Christ produce fruit in your life?",
+        "backgroundImage": "assets/parables/vine_branches.jpg"
+    },
+    "hints": [
+        "Look for vines with no blockers—tap those first",
+        "The branches are attached to the main vine",
+        "Remove the main vine to unblock the branches"
+    ],
+    "optimalSequence": [
+        "vine_main",
+        "vine_branch_north",
+        "vine_branch_south"
+    ],
+    "optimalMoves": 3
+}

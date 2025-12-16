@@ -1,64 +1,40 @@
-// lib/game/components/grid_component.dart
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flame/geometry.dart';
 import 'package:flutter/material.dart';
 
+import '../../providers/game_providers.dart';
 import '../garden_game.dart';
 
 // TODO: Add vine rendering system
 // This component will eventually render actual vine sprites
 // For now, it renders placeholder colored rectangles
 
-class GridComponent extends PositionComponent
-    with TapCallbacks, ParentIsA<GardenGame> {
+class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<GardenGame> {
   final int gridSize;
   final double cellSize;
 
   late List<List<CellComponent>> cells;
 
-  // Level completion state
-  bool _levelComplete = false;
+  // Current level data - will be set by Riverpod
+  LevelData? _currentLevel;
 
-  // TODO: Replace with actual vine system from GAME_DESIGN.md
-  // Placeholder vine data - NO overlapping cells (each cell holds max 1 vine segment)
-  // Blocking occurs when arrow path hits another vine's segments in the movement direction
-  final List<Map<String, dynamic>> placeholderVines = [
-    {
-      'id': 'vine_1',
-      'color': const Color(0xFF8B4513), // Brown horizontal vine
-      'cells': [
-        {'row': 1, 'col': 1},
-        {'row': 1, 'col': 2},
-        {'row': 1, 'col': 3}, // Head points right
-      ],
-      // Arrow points right, path hits Vine 2's [2,4] segment immediately
-    },
-    {
-      'id': 'vine_2',
-      'color': const Color(0xFF6B8E23), // Green L-shaped vine
-      'cells': [
-        {'row': 2, 'col': 4}, // No overlap with Vine 1
-        {'row': 3, 'col': 4},
-        {'row': 3, 'col': 5}, // Head points down
-      ],
-      // Arrow points down, path hits Vine 3's [4,5] segment
-    },
-    {
-      'id': 'vine_3',
-      'color': const Color(0xFF6B8E23), // Green vertical vine
-      'cells': [
-        {'row': 4, 'col': 5}, // No overlap with Vine 2 ([3,5])
-        {'row': 5, 'col': 5}, // Head points down
-      ],
-      // Arrow points down, clear path to bottom edge (no other vines in way)
-    },
-  ];
+  // Vine states - will be managed by Riverpod
+  Map<String, VineState> _vineStates = {};
 
-  GridComponent({required this.gridSize, required this.cellSize})
-    : super(position: Vector2.zero()) {
-    // Calculate which vines can move and in which direction
-    _calculateVineDirections();
+  // Callback to notify when level is complete
+  final VoidCallback? onLevelComplete;
+
+  // Callback to clear a vine in the Riverpod provider
+  final Function(String)? onVineCleared;
+
+  GridComponent({required this.gridSize, required this.cellSize, this.onLevelComplete, this.onVineCleared})
+    : super(position: Vector2.zero());
+
+  // Set level data and vine states from Riverpod providers
+  void setLevelData(LevelData levelData, Map<String, VineState> vineStates) {
+    _currentLevel = levelData;
+    _vineStates = Map.from(vineStates);
+    update(0); // Force redraw
   }
 
   @override
@@ -92,22 +68,25 @@ class GridComponent extends PositionComponent
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // TODO: Replace with actual vine sprite rendering
+    if (_currentLevel == null) return;
+
     // Render all vines with arrows - blocked vs free indicated by arrow style
-    for (final vine in placeholderVines) {
-      final color = vine['color'] as Color;
-      final cells = vine['cells'] as List<Map<String, dynamic>>;
-      final direction = vine['direction'] as String?;
-      final isBlocked = vine['isBlocked'] as bool? ?? true;
+    for (final vine in _currentLevel!.vines) {
+      final vineState = _vineStates[vine.id];
+      if (vineState == null || vineState.isCleared) continue;
 
-      if (cells.isEmpty) continue;
+      final color = Color(int.parse(vine.color.replaceFirst('#', '0xFF')));
+      final isBlocked = vineState.isBlocked;
 
-      for (int i = 0; i < cells.length; i++) {
-        final cell = cells[i];
+      // Calculate direction from vine path
+      final direction = _calculateVineDirection(vine);
+
+      for (int i = 0; i < vine.path.length; i++) {
+        final cell = vine.path[i];
         final row = cell['row'] as int;
         final col = cell['col'] as int;
 
-        final isHead = direction != null && i == cells.length - 1; // Last cell is head
+        final isHead = direction != null && i == vine.path.length - 1; // Last cell is head
 
         final rect = Rect.fromLTWH(
           col * cellSize + 5,
@@ -135,10 +114,7 @@ class GridComponent extends PositionComponent
       }
     }
 
-    // Render level complete overlay
-    if (_levelComplete) {
-      _drawLevelCompleteOverlay(canvas);
-    }
+
   }
 
   void _drawArrowHead(Canvas canvas, Rect rect, Color color, String direction, bool isBlocked) {
@@ -217,19 +193,20 @@ class GridComponent extends PositionComponent
   void handleCellTap(int row, int col) {
     final clickedVine = _getVineAtCell(row, col);
 
-    if (clickedVine != null && clickedVine['direction'] != null && !(clickedVine['isBlocked'] as bool? ?? true)) {
+    if (clickedVine != null && _vineStates[clickedVine.id]?.isCleared == false && !(_vineStates[clickedVine.id]?.isBlocked ?? true)) {
       // Vine can be moved (not blocked) - trigger animation
-      _animateVineOffScreen(clickedVine);
-      debugPrint('Clicked movable vine: ${clickedVine['id']}');
+      _clearVine(clickedVine.id);
+      debugPrint('Clicked movable vine: ${clickedVine.id}');
     } else {
       debugPrint('Tapped empty cell or blocked vine: ($row, $col)');
     }
   }
 
-  Map<String, dynamic>? _getVineAtCell(int row, int col) {
-    for (final vine in placeholderVines) {
-      final cells = vine['cells'] as List<Map<String, dynamic>>;
-      for (final cell in cells) {
+  VineData? _getVineAtCell(int row, int col) {
+    if (_currentLevel == null) return null;
+
+    for (final vine in _currentLevel!.vines) {
+      for (final cell in vine.path) {
         if (cell['row'] == row && cell['col'] == col) {
           return vine;
         }
@@ -238,148 +215,33 @@ class GridComponent extends PositionComponent
     return null;
   }
 
-  void _drawLevelCompleteOverlay(Canvas canvas) {
-    // Semi-transparent background overlay
-    final overlayPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.7 * 255);
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.x, size.y), overlayPaint);
+  String? _calculateVineDirection(VineData vine) {
+    if (vine.path.length < 2) return 'right'; // Default for single cell
 
-    // Level complete text
-    const text = 'LEVEL COMPLETE!\n\nGood Job!';
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-          height: 1.5,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-      textAlign: TextAlign.center,
-    );
-    textPainter.layout(maxWidth: size.x * 0.8);
+    final headCell = vine.path.last;
+    final secondLastCell = vine.path[vine.path.length - 2];
 
-    final textOffset = Offset(
-      (size.x - textPainter.width) / 2,
-      (size.y - textPainter.height) / 2,
-    );
-    textPainter.paint(canvas, textOffset);
-
-    // Add a subtle glow effect around the text
-    final glowPaint = Paint()
-      ..color = Colors.yellow.withValues(alpha: 0.3 * 255)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawRect(
-      Rect.fromCenter(
-        center: textOffset + Offset(textPainter.width / 2, textPainter.height / 2),
-        width: textPainter.width + 20,
-        height: textPainter.height + 20,
-      ),
-      glowPaint,
-    );
-  }
-
-  void _calculateVineDirections() {
-    // All vines get arrows, but we check if their movement path is blocked
-    // Horizontal vines point right, vertical vines point down
-    // If arrow points to another vine segment, the vine is blocked
-    // If arrow points to empty space off grid, the vine is free
-
-    for (final vine in placeholderVines) {
-      final cells = vine['cells'] as List<Map<String, dynamic>>;
-      if (cells.isEmpty) continue;
-
-      final headCell = cells.last; // Last cell is the head
-      final headRow = headCell['row'] as int;
-      final headCol = headCell['col'] as int;
-
-      // Determine arrow direction based on vine orientation
-      String arrowDirection;
-      if (cells.length >= 2) {
-        final secondLastCell = cells[cells.length - 2];
-        final prevRow = secondLastCell['row'] as int;
-        final prevCol = secondLastCell['col'] as int;
-
-        // Determine direction from second-to-last cell to head
-        if (headCol > prevCol) arrowDirection = 'right';
-        else if (headCol < prevCol) arrowDirection = 'left';
-        else if (headRow > prevRow) arrowDirection = 'down';
-        else arrowDirection = 'up';
-      } else {
-        // Single cell vine - point right by default
-        arrowDirection = 'right';
-      }
-
-      // Check if the arrow path is blocked (hits another vine segment)
-      bool isBlocked = _isArrowPathBlocked(vine, arrowDirection);
-
-      // Store both direction and blocked status
-      vine['direction'] = arrowDirection;
-      vine['isBlocked'] = isBlocked;
-
-      debugPrint('Vine ${vine['id']}: arrow $arrowDirection, blocked: $isBlocked');
-    }
-  }
-
-  bool _isArrowPathBlocked(Map<String, dynamic> vine, String direction) {
-    final cells = vine['cells'] as List<Map<String, dynamic>>;
-    final headCell = cells.last;
     final headRow = headCell['row'] as int;
     final headCol = headCell['col'] as int;
+    final prevRow = secondLastCell['row'] as int;
+    final prevCol = secondLastCell['col'] as int;
 
-    // Check cells in the arrow direction for other vine segments
-    int checkRow = headRow;
-    int checkCol = headCol;
+    if (headCol > prevCol) return 'right';
+    if (headCol < prevCol) return 'left';
+    if (headRow > prevRow) return 'down';
+    if (headRow < prevRow) return 'up';
 
-    while (true) {
-      // Move in arrow direction
-      switch (direction) {
-        case 'right': checkCol++; break;
-        case 'left': checkCol--; break;
-        case 'down': checkRow++; break;
-        case 'up': checkRow--; break;
-      }
-
-      // Check if we're off the grid (free path)
-      if (checkRow < 0 || checkRow >= gridSize || checkCol < 0 || checkCol >= gridSize) {
-        return false; // Path is clear to edge
-      }
-
-      // Check if this cell contains another vine segment
-      for (final otherVine in placeholderVines) {
-        if (otherVine['id'] == vine['id']) continue; // Skip self
-
-        final otherCells = otherVine['cells'] as List<Map<String, dynamic>>;
-        for (final otherCell in otherCells) {
-          if (otherCell['row'] == checkRow && otherCell['col'] == checkCol) {
-            return true; // Path is blocked by another vine
-          }
-        }
-      }
-    }
+    return 'right'; // Default
   }
 
-  void _animateVineOffScreen(Map<String, dynamic> vine) {
-    final direction = vine['direction'] as String;
-    final vineId = vine['id'] as String;
 
-    // TODO: Add smooth animation moving vine off screen in the direction
-    // For now, just remove instantly
 
-    // Remove the vine from the placeholder data (simulate clearing)
-    placeholderVines.removeWhere((v) => v['id'] == vineId);
+  void _clearVine(String vineId) {
+    // Update vine state to cleared
+    _vineStates[vineId] = _vineStates[vineId]!.copyWith(isCleared: true);
 
-    // Check if level is complete (all vines cleared)
-    if (placeholderVines.isEmpty) {
-      _levelComplete = true;
-      debugPrint('LEVEL COMPLETE! All vines cleared.');
-    } else {
-      // Recalculate directions for remaining vines (some may now be unblocked)
-      _calculateVineDirections();
-    }
+    // Notify Riverpod provider
+    onVineCleared?.call(vineId);
 
     // Trigger parable reveal animation (placeholder)
     debugPrint('Vine $vineId cleared! Trigger parable reveal animation');
@@ -388,7 +250,7 @@ class GridComponent extends PositionComponent
     // TODO: Gradually reveal parable background/image
     // TODO: Animate parable text appearing
 
-    // Force redraw to show vine removed, arrows updated, or level complete overlay
+    // Force redraw to show vine removed
     update(0);
   }
 }
@@ -435,7 +297,7 @@ class CellComponent extends RectangleComponent
     (parent as GridComponent).handleCellTap(row, col);
 
     // Flash feedback
-    paint.color = Colors.white.withOpacity(0.3);
+    paint.color = Colors.white.withValues(alpha: 0.3 * 255);
     Future.delayed(const Duration(milliseconds: 200), () {
       paint.color = Colors.transparent;
       update(0);
