@@ -41,6 +41,10 @@ dependencies:
   riverpod: ^2.5.1
   flutter_riverpod: ^2.5.1
   confetti: ^0.7.0
+  get_it: ^9.2.0
+  injectable: ^2.7.1+2
+  mockito: ^5.6.1
+  test: ^1.26.3
 
 dev_dependencies:
   flutter_test:
