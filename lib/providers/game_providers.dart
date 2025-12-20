@@ -135,7 +135,8 @@ class GameProgressNotifier extends StateNotifier<GameProgress> {
 
   Future<void> completeLevel(int levelNumber) async {
     final newCompletedLevels = Set<int>.from(state.completedLevels)..add(levelNumber);
-    final newCurrentLevel = levelNumber < 2 ? levelNumber + 1 : state.currentLevel; // For now, just increment
+    // Increment level number - GardenGame will handle detection of end of levels
+    final newCurrentLevel = levelNumber + 1;
 
     state = state.copyWith(
       completedLevels: newCompletedLevels,
@@ -161,6 +162,15 @@ final currentLevelProvider = StateProvider<LevelData?>((ref) => null);
 // Level completion state provider
 final levelCompleteProvider = StateProvider<bool>((ref) => false);
 
+// Total game completion state provider
+final gameCompletedProvider = StateProvider<bool>((ref) => false);
+
+// Lives system
+final livesProvider = StateProvider<int>((ref) => 3);
+
+// Game over state provider
+final gameOverProvider = StateProvider<bool>((ref) => false);
+
 // Game instance provider
 final gameInstanceProvider = StateNotifierProvider<GameInstanceNotifier, GardenGame?>((ref) {
   return GameInstanceNotifier();
@@ -171,6 +181,21 @@ class GameInstanceNotifier extends StateNotifier<GardenGame?> {
 
   void setGame(GardenGame game) {
     state = game;
+  }
+
+  void resetLives() {
+    state?.ref.read(livesProvider.notifier).state = 3;
+    state?.ref.read(gameOverProvider.notifier).state = false;
+  }
+
+  void decrementLives() {
+    final currentLives = state?.ref.read(livesProvider) ?? 0;
+    if (currentLives > 0) {
+      state?.ref.read(livesProvider.notifier).state = currentLives - 1;
+      if (currentLives - 1 == 0) {
+        state?.ref.read(gameOverProvider.notifier).state = true;
+      }
+    }
   }
 }
 
@@ -198,6 +223,90 @@ class VineState {
   }
 }
 
+// --- Level Solver Logic ---
+
+class LevelSolver {
+  /// Solves the level and returns one optimal sequence of vine IDs to clear.
+  /// Returns null if the level is unsolvable.
+  static List<String>? solve(LevelData level) {
+    debugPrint('LevelSolver: Attempting to solve level ${level.levelId}');
+    final initialVines = level.vines.map((v) => v.id).toList();
+    
+    // BFS queue: (remaining vine IDs, sequence taken)
+    final queue = <(List<String>, List<String>)>[];
+    queue.add((initialVines, []));
+    
+    final visited = <String>{};
+    visited.add(_getStateKey(initialVines));
+
+    while (queue.isNotEmpty) {
+      final (currentVines, sequence) = queue.removeAt(0);
+
+      if (currentVines.isEmpty) {
+        debugPrint('LevelSolver: Solvable! Sequence: $sequence');
+        return sequence;
+      }
+
+      for (final vineId in currentVines) {
+        if (!isVineBlockedInState(level, vineId, currentVines)) {
+          final nextVines = List<String>.from(currentVines)..remove(vineId);
+          final key = _getStateKey(nextVines);
+          
+          if (!visited.contains(key)) {
+            visited.add(key);
+            queue.add((nextVines, [...sequence, vineId]));
+          }
+        }
+      }
+    }
+
+    debugPrint('LevelSolver: UNSOLVABLE level ${level.levelId}');
+    return null;
+  }
+
+  static String _getStateKey(List<String> vines) {
+    final sorted = List<String>.from(vines)..sort();
+    return sorted.join(',');
+  }
+
+  /// Checks if a vine is blocked by any other 'active' vines in a specific state.
+  static bool isVineBlockedInState(LevelData level, String vineId, List<String> activeVineIds) {
+    final vine = level.vines.firstWhere((v) => v.id == vineId);
+    final gridRows = level.grid['rows'] as int;
+    final gridCols = level.grid['columns'] as int;
+
+    // Determine direction from head (last two cells)
+    if (vine.path.length < 2) return false;
+    
+    final head = vine.path.last;
+    final neck = vine.path[vine.path.length - 2];
+    final dRow = (head['row'] as int) - (neck['row'] as int);
+    final dCol = (head['col'] as int) - (neck['col'] as int);
+
+    // Trace path from head forward
+    var currentRow = (head['row'] as int) + dRow;
+    var currentCol = (head['col'] as int) + dCol;
+
+    while (currentRow >= 0 && currentRow < gridRows && currentCol >= 0 && currentCol < gridCols) {
+      // Check for collisions with ANY other active vine
+      for (final otherId in activeVineIds) {
+        if (otherId == vineId) continue;
+        
+        final otherVine = level.vines.firstWhere((v) => v.id == otherId);
+        for (final cell in otherVine.path) {
+          if (cell['row'] == currentRow && cell['col'] == currentCol) {
+            return true; // Blocked
+          }
+        }
+      }
+      currentRow += dRow;
+      currentCol += dCol;
+    }
+
+    return false; // Not blocked
+  }
+}
+
 final vineStatesProvider = StateNotifierProvider<VineStatesNotifier, Map<String, VineState>>((ref) {
   final levelData = ref.watch(currentLevelProvider);
   return VineStatesNotifier(levelData, ref);
@@ -207,30 +316,50 @@ class VineStatesNotifier extends StateNotifier<Map<String, VineState>> {
   final Ref _ref;
   LevelData? _levelData;
 
-  VineStatesNotifier(LevelData? levelData, this._ref) : super(_initializeVineStates(levelData)) {
+  VineStatesNotifier(LevelData? levelData, this._ref) : super(_calculateVineStates(levelData, {})) {
     _levelData = levelData;
   }
 
-  static Map<String, VineState> _initializeVineStates(LevelData? levelData) {
+  static Map<String, VineState> _calculateVineStates(LevelData? levelData, Map<String, VineState> currentStates) {
     if (levelData == null) return {};
 
-    final states = <String, VineState>{};
+    final activeIds = <String>[];
     for (final vine in levelData.vines) {
-      states[vine.id] = VineState(
+      final isCleared = currentStates[vine.id]?.isCleared ?? false;
+      if (!isCleared) {
+        activeIds.add(vine.id);
+      }
+    }
+
+    final newStates = <String, VineState>{};
+    for (final vine in levelData.vines) {
+      final isCleared = currentStates[vine.id]?.isCleared ?? false;
+      bool isBlocked = false;
+      
+      if (!isCleared) {
+        isBlocked = LevelSolver.isVineBlockedInState(levelData, vine.id, activeIds);
+      }
+
+      newStates[vine.id] = VineState(
         id: vine.id,
-        isBlocked: vine.blockingVines.isNotEmpty,
-        isCleared: false,
+        isBlocked: isBlocked,
+        isCleared: isCleared,
       );
     }
-    return states;
+
+    return newStates;
   }
 
   void clearVine(String vineId) {
     debugPrint('VineStatesNotifier: Clearing vine $vineId');
-    state = Map.from(state)..[vineId] = state[vineId]!.copyWith(isCleared: true);
-
-    // Update blocking status for remaining vines
-    _updateBlockingStates();
+    // Mark as cleared
+    final mapWithCleared = Map<String, VineState>.from(state);
+    if (mapWithCleared.containsKey(vineId)) {
+        mapWithCleared[vineId] = mapWithCleared[vineId]!.copyWith(isCleared: true);
+    }
+    
+    // Recalculate blocking for all
+    state = _calculateVineStates(_levelData, mapWithCleared);
 
     // Check if level is complete
     _checkLevelComplete();
@@ -243,29 +372,11 @@ class VineStatesNotifier extends StateNotifier<Map<String, VineState>> {
       debugPrint('VineStatesNotifier: LEVEL COMPLETE detected! Setting levelCompleteProvider to true');
       // Trigger level complete
       _ref.read(levelCompleteProvider.notifier).state = true;
-      debugPrint('VineStatesNotifier: levelCompleteProvider set to true');
     }
-  }
-
-  void _updateBlockingStates() {
-    if (_levelData == null) return;
-
-    final newStates = Map<String, VineState>.from(state);
-
-    for (final entry in state.entries) {
-      if (entry.value.isCleared) continue;
-
-      // A vine is blocked if any of its blocking vines are not cleared
-      final vineData = _levelData!.vines.firstWhere((v) => v.id == entry.key);
-      final isBlocked = vineData.blockingVines.any((blockingId) => !(state[blockingId]?.isCleared ?? false));
-      newStates[entry.key] = entry.value.copyWith(isBlocked: isBlocked);
-    }
-
-    state = newStates;
   }
 
   void resetForLevel(LevelData levelData) {
     _levelData = levelData;
-    state = _initializeVineStates(levelData);
+    state = _calculateVineStates(levelData, {});
   }
 }

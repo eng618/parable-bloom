@@ -1,118 +1,44 @@
 {
-    "levelId": "level_002_t_formation",
+    "levelId": "level_002_blocking",
     "levelNumber": 2,
-    "title": "T Formation",
+    "title": "Clear the Path",
     "difficulty": 1,
     "grid": {
-        "rows": 7,
-        "columns": 7
+        "rows": 4,
+        "columns": 4
     },
     "vines": [
         {
-            "id": "vine_main",
+            "id": "vine_1",
             "color": "#8B4513",
-            "description": "Main horizontal vine",
+            "description": "Brown arrow blocked by green",
             "path": [
-                {
-                    "row": 3,
-                    "col": 0
-                },
-                {
-                    "row": 3,
-                    "col": 1
-                },
-                {
-                    "row": 3,
-                    "col": 2
-                },
-                {
-                    "row": 3,
-                    "col": 3
-                },
-                {
-                    "row": 3,
-                    "col": 4
-                },
-                {
-                    "row": 3,
-                    "col": 5
-                },
-                {
-                    "row": 3,
-                    "col": 6
-                }
+                { "row": 1, "col": 0 },
+                { "row": 1, "col": 1 }
             ],
             "blockingVines": []
         },
         {
-            "id": "vine_branch_north",
+            "id": "vine_2",
             "color": "#6B8E23",
-            "description": "Northern branch",
+            "description": "Green arrow blocking brown",
             "path": [
-                {
-                    "row": 0,
-                    "col": 3
-                },
-                {
-                    "row": 1,
-                    "col": 3
-                },
-                {
-                    "row": 2,
-                    "col": 3
-                },
-                {
-                    "row": 3,
-                    "col": 3
-                }
+                { "row": 0, "col": 2 },
+                { "row": 1, "col": 2 }
             ],
-            "blockingVines": [
-                "vine_main"
-            ]
-        },
-        {
-            "id": "vine_branch_south",
-            "color": "#6B8E23",
-            "description": "Southern branch",
-            "path": [
-                {
-                    "row": 3,
-                    "col": 3
-                },
-                {
-                    "row": 4,
-                    "col": 3
-                },
-                {
-                    "row": 5,
-                    "col": 3
-                },
-                {
-                    "row": 6,
-                    "col": 3
-                }
-            ],
-            "blockingVines": [
-                "vine_main"
-            ]
+            "blockingVines": []
         }
     ],
     "parable": {
-        "title": "The Vine & Branches",
-        "scripture": "John 15:1-5",
-        "content": "I am the true vine, and my Father is the gardener...",
-        "reflection": "How does remaining connected to Christ produce fruit in your life?",
+        "title": "Clear Impediments",
+        "scripture": "Hebrews 12:1",
+        "content": "Let us throw off everything that hinders...",
+        "reflection": "What is blocking your spiritual progress?",
         "backgroundImage": "assets/parables/vine_branches.jpg"
     },
     "hints": [
-        "Look for vines with no blockers—tap those first",
-        "The branches are attached to the main vine",
-        "Remove the main vine to unblock the branches"
+        "One arrow is blocking the other. Which one can move first?"
     ],
-    "optimalSequence": [
-        "vine_main",
-        "vine_branch_north",
-        "vine_branch_south"
-    ],
-    "optimalMoves": 3
+    "optimalSequence": ["vine_2", "vine_1"],
+    "optimalMoves": 2
 }

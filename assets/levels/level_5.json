@@ -1,0 +1,60 @@
+{
+    "levelId": "level_005_complex",
+    "levelNumber": 5,
+    "title": "Master Gardener",
+    "difficulty": 3,
+    "grid": {
+        "rows": 5,
+        "columns": 5
+    },
+    "vines": [
+        {
+            "id": "vine_1",
+            "color": "#8B4513",
+            "path": [ { "row": 0, "col": 0 }, { "row": 0, "col": 1 } ],
+            "description": "Right (Blocked by vine_2)",
+            "blockingVines": []
+        },
+        {
+            "id": "vine_2",
+            "color": "#6B8E23",
+            "path": [ { "row": 0, "col": 3 }, { "row": 0, "col": 4 } ],
+            "description": "Right (Clear)",
+            "blockingVines": []
+        },
+        {
+            "id": "vine_3",
+            "color": "#4682B4",
+            "path": [ { "row": 2, "col": 2 }, { "row": 1, "col": 2 } ],
+            "description": "Down (Clear)",
+            "blockingVines": []
+        },
+        {
+            "id": "vine_4",
+            "color": "#DAA520",
+            "path": [ { "row": 4, "col": 0 }, { "row": 3, "col": 0 } ],
+            "description": "Down (Clear)",
+            "blockingVines": []
+        },
+        {
+            "id": "vine_5",
+            "color": "#FF6347",
+            "path": [ { "row": 1, "col": 0 }, { "row": 1, "col": 1 } ],
+            "description": "Right (Blocked by vine_3)",
+            "blockingVines": []
+        }
+    ],
+    "parable": {
+        "title": "Faithful in Little",
+        "scripture": "Luke 16:10",
+        "content": "Whoever can be trusted with very little can also be trusted with much...",
+        "reflection": "How are you using the 'little' things God has given you?",
+        "backgroundImage": "assets/parables/vine_branches.jpg"
+    },
+    "hints": [
+        "Focus on the arrows that have a clear path to the edge.",
+        "Clear vine_2 and vine_3 first to free up others."
+    ],
+    "optimalSequence": ["vine_2", "vine_3", "vine_1", "vine_4", "vine_5"],
+    "optimalMoves": 5
+}

@@ -21,6 +21,9 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
   // Vine states - will be managed by Riverpod
   Map<String, VineState> _vineStates = {};
 
+  // Track vines that were tapped but are blocked (for visual feedback)
+  final Set<String> _tappedBlockedVines = {};
+
   // Callback to notify when level is complete
   final VoidCallback? onLevelComplete;
 
@@ -49,17 +52,21 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
 
     cells = [];
 
-    for (int row = 0; row < gridSize; row++) {
+      for (int rangeRow = 0; rangeRow < gridSize; rangeRow++) {
       cells.add([]);
       for (int col = 0; col < gridSize; col++) {
+        // Use local variable for calculated visual row
+        // Row 0 is at the bottom, so visual Y is proportional to (gridSize - 1 - row)
+        final visualRow = gridSize - 1 - rangeRow;
+        
         final cell = CellComponent(
-          row: row,
+          row: rangeRow,
           col: col,
           size: Vector2(cellSize, cellSize),
-          position: Vector2(col * cellSize, row * cellSize),
+          position: Vector2(col * cellSize, visualRow * cellSize),
         );
         add(cell);
-        cells[row].add(cell);
+        cells[rangeRow].add(cell);
       }
     }
   }
@@ -85,121 +92,132 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
         final cell = vine.path[i];
         final row = cell['row'] as int;
         final col = cell['col'] as int;
+        
+        // Calculate visual position based on bottom-left origin
+        final visualRow = gridSize - 1 - row;
 
         final isHead = direction != null && i == vine.path.length - 1; // Last cell is head
 
         final rect = Rect.fromLTWH(
           col * cellSize + 5,
-          row * cellSize + 5,
+          visualRow * cellSize + 5,
           cellSize - 10,
           cellSize - 10,
         );
 
-        if (isHead && direction != null) {
+        if (isHead) {
           // Draw arrow head - style indicates blocked vs free
-          _drawArrowHead(canvas, rect, color, direction, isBlocked);
+          final isTapped = _tappedBlockedVines.contains(vine.id);
+          _drawArrowHead(canvas, rect, const Color(0xFF8FBC8F), direction, isBlocked, isTapped);
         } else {
-          // Draw body segment as rectangle
-          final alpha = isBlocked ? 0.5 : 0.8; // Dim blocked vines
-          final vinePaint = Paint()..color = color.withValues(alpha: alpha * 255);
-          canvas.drawRect(rect, vinePaint);
-
-          // Add subtle border
-          final borderPaint = Paint()
-            ..color = color.withValues(alpha: 1.0 * 255)
+          // Draw body segment as a thin line
+          final isTappedBlocked = _tappedBlockedVines.contains(vine.id);
+          final drawColor = isTappedBlocked ? Colors.red : const Color(0xFF8FBC8F);
+          final alpha = isBlocked ? 0.3 : 0.8; 
+          
+          final bodyPaint = Paint()
+            ..color = drawColor.withValues(alpha: alpha * 255)
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 2;
-          canvas.drawRect(rect, borderPaint);
+            ..strokeWidth = 4
+            ..strokeCap = StrokeCap.round;
+
+          // Draw line from center of cell in direction or along path
+          // For simplicity, just draw a centered line/dot if not head
+          canvas.drawCircle(rect.center, 4, bodyPaint..style = PaintingStyle.fill);
+          
+          // Connect to previous/next if they exist (TODO: refined line segments)
+          // For now, just dots and arrows looks better than blocks
         }
       }
     }
-
-
   }
 
-  void _drawArrowHead(Canvas canvas, Rect rect, Color color, String direction, bool isBlocked) {
+  void _drawArrowHead(Canvas canvas, Rect rect, Color color, String? direction, bool isBlocked, bool isTapped) {
+    if (direction == null) return;
+    
     final center = rect.center;
     final path = Path();
+    final arrowSize = rect.width;
 
     switch (direction) {
       case 'right':
-        // Arrow pointing right
-        path.moveTo(rect.left, rect.top);
+        path.moveTo(rect.left, rect.top + arrowSize * 0.1);
         path.lineTo(rect.right, center.dy);
-        path.lineTo(rect.left, rect.bottom);
+        path.lineTo(rect.left, rect.bottom - arrowSize * 0.1);
         path.close();
         break;
       case 'left':
-        // Arrow pointing left
-        path.moveTo(rect.right, rect.top);
+        path.moveTo(rect.right, rect.top + arrowSize * 0.1);
         path.lineTo(rect.left, center.dy);
-        path.lineTo(rect.right, rect.bottom);
+        path.lineTo(rect.right, rect.bottom - arrowSize * 0.1);
         path.close();
         break;
       case 'down':
-        // Arrow pointing down
-        path.moveTo(rect.left, rect.top);
-        path.lineTo(rect.right, rect.top);
+        path.moveTo(rect.left + arrowSize * 0.1, rect.top);
+        path.lineTo(rect.right - arrowSize * 0.1, rect.top);
         path.lineTo(center.dx, rect.bottom);
         path.close();
         break;
       case 'up':
-        // Arrow pointing up
-        path.moveTo(rect.left, rect.bottom);
-        path.lineTo(rect.right, rect.bottom);
+        path.moveTo(rect.left + arrowSize * 0.1, rect.bottom);
+        path.lineTo(rect.right - arrowSize * 0.1, rect.bottom);
         path.lineTo(center.dx, rect.top);
         path.close();
         break;
     }
 
-    // Blocked arrows are dimmed and have a different style
-    final arrowColor = isBlocked ? color.withValues(alpha: 0.4 * 255) : color;
-    final borderColor = isBlocked ? color.withValues(alpha: 0.3 * 255) : color.withValues(alpha: 0.8 * 255);
+    // Shadow
+    final shadowPaint = Paint()
+      ..color = Colors.black45
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+    canvas.drawPath(path.shift(const Offset(2, 2)), shadowPaint);
 
+    // Blocked arrows are dimmed and have a different style
+    final arrowAlpha = isBlocked ? 0.4 : 0.9;
     final arrowPaint = Paint()
-      ..color = arrowColor
+      ..color = (isBlocked && isTapped ? Colors.red : color).withValues(alpha: arrowAlpha * 255)
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, arrowPaint);
 
-    // Add border - blocked arrows have dashed/different style
     final borderPaint = Paint()
-      ..color = borderColor
+      ..color = (isBlocked && isTapped ? Colors.red : color).withValues(alpha: 1.0 * 255)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isBlocked ? 1 : 2;
+      ..strokeWidth = 2;
     canvas.drawPath(path, borderPaint);
-
-    // Add "X" mark on blocked arrows
-    if (isBlocked) {
-      final crossPaint = Paint()
-        ..color = Colors.red.withValues(alpha: 0.6 * 255)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
-
-      // Draw X through the arrow
-      canvas.drawLine(
-        Offset(rect.left + 5, rect.top + 5),
-        Offset(rect.right - 5, rect.bottom - 5),
-        crossPaint,
-      );
-      canvas.drawLine(
-        Offset(rect.right - 5, rect.top + 5),
-        Offset(rect.left + 5, rect.bottom - 5),
-        crossPaint,
-      );
-    }
   }
 
   // Handle cell tap from child CellComponent
   void handleCellTap(int row, int col) {
     final clickedVine = _getVineAtCell(row, col);
 
-    if (clickedVine != null && _vineStates[clickedVine.id]?.isCleared == false && !(_vineStates[clickedVine.id]?.isBlocked ?? true)) {
+    if (clickedVine == null) return;
+
+    final state = _vineStates[clickedVine.id];
+    if (state == null || state.isCleared) return;
+
+    if (!state.isBlocked) {
       // Vine can be moved (not blocked) - trigger animation
       _clearVine(clickedVine.id);
       debugPrint('Clicked movable vine: ${clickedVine.id}');
     } else {
-      debugPrint('Tapped empty cell or blocked vine: ($row, $col)');
+      // Tapped a blocked vine - show visual feedback and decrement lives
+      debugPrint('Tapped blocked vine: ${clickedVine.id}');
+      _showBlockedFeedback(clickedVine.id);
+      
+      // Notify parent/provider to decrement lives
+      parent.ref.read(gameInstanceProvider.notifier).decrementLives();
     }
+  }
+
+  void _showBlockedFeedback(String vineId) {
+    _tappedBlockedVines.add(vineId);
+    update(0); // Redraw
+
+    // Remove feedback after a short duration
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _tappedBlockedVines.remove(vineId);
+      update(0); // Redraw
+    });
   }
 
   VineData? _getVineAtCell(int row, int col) {
@@ -228,8 +246,11 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
 
     if (headCol > prevCol) return 'right';
     if (headCol < prevCol) return 'left';
-    if (headRow > prevRow) return 'down';
-    if (headRow < prevRow) return 'up';
+    // With bottom-left origin (Row 0 is bottom):
+    // If headRow > prevRow, it's moving UP (away from bottom)
+    if (headRow > prevRow) return 'up';
+    // If headRow < prevRow, it's moving DOWN (towards bottom)
+    if (headRow < prevRow) return 'down';
 
     return 'right'; // Default
   }
@@ -274,21 +295,12 @@ class CellComponent extends RectangleComponent
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // Draw soft border
-    final borderPaint = Paint()
-      ..color = Colors.white24
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawRect(size.toRect(), borderPaint);
-
-    // Optional: Debug label
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
-    textPainter.text = TextSpan(
-      text: '$row,$col',
-      style: const TextStyle(color: Colors.white38, fontSize: 14),
-    );
-    textPainter.layout();
-    textPainter.paint(canvas, const Offset(4, 4));
+    // Draw small dot in the center of the cell
+    final center = size.toRect().center;
+    final dotPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.15 * 255)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, 4, dotPaint);
   }
 
   @override

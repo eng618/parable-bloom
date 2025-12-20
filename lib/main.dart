@@ -30,10 +30,9 @@ class ParableWeaveApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
-        final hiveBox = ref.watch(hiveBoxProvider);
         // Create game instance only once and store in provider
         final gameInstance = ref.watch(gameInstanceProvider);
-        final game = gameInstance ?? GardenGame(hiveBox: hiveBox);
+        final game = gameInstance ?? GardenGame(ref: ref);
 
         // Store the game instance in the provider after build is complete
         if (gameInstance == null) {
@@ -77,10 +76,32 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
       }
     });
 
+    // Watch for total game completion
+    ref.listen(gameCompletedProvider, (previous, next) {
+      if (next && (previous == null || !previous)) {
+        debugPrint('_GameScreen: Showing game completed dialog');
+        _showGameCompletedDialog();
+      }
+    });
+
+    // Watch for Game Over
+    ref.listen(gameOverProvider, (previous, next) {
+      if (next && (previous == null || !previous)) {
+        debugPrint('_GameScreen: Showing game over dialog');
+        _showGameOverDialog();
+      }
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFF2D4A3A), // Deep moss green - matches game design
       appBar: AppBar(
-        title: const Text('ParableWeave'),
+        title: Row(
+          children: [
+            const Text('ParableWeave'),
+            const SizedBox(width: 16),
+            _buildLivesDisplay(),
+          ],
+        ),
         backgroundColor: const Color(0xFF1E3528),
         actions: [
           // TODO: Replace with actual UI buttons
@@ -103,6 +124,8 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
               ref.read(currentLevelProvider.notifier).state = null;
               // Reset level complete state
               ref.read(levelCompleteProvider.notifier).state = false;
+              // Reset game completion state
+              ref.read(gameCompletedProvider.notifier).state = false;
 
               // Reload the level in the game instance
               final gameInstance = ref.read(gameInstanceProvider);
@@ -133,43 +156,6 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
             game: widget.game,
             loadingBuilder: (_) => const Center(
               child: CircularProgressIndicator(color: Colors.white70),
-            ),
-          ),
-          // TODO: Replace with actual parable reveal overlay
-          // Placeholder parable text overlay - replace with actual parable system
-          Positioned(
-            bottom: 20,
-            left: 20,
-            right: 20,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7 * 255),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Placeholder Parable Text',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '"I am the true vine, and my Father is the gardener..." - John 15:1',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
             ),
           ),
         ],
@@ -242,9 +228,14 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
                   ref.read(levelCompleteProvider.notifier).state = false;
 
                   // Close dialog
-                  Navigator.of(context).pop();
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
 
                   debugPrint('Advanced to next level after completing ${currentLevel.title}');
+                  
+                  // Reload the level in the game instance
+                  await widget.game.reloadLevel();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4A7C59),
@@ -266,6 +257,148 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
           ],
         );
       },
+    );
+  }
+
+  void _showGameCompletedDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E3528),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'CONGRATULATIONS!',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.emoji_events, color: Colors.amber, size: 64),
+              SizedBox(height: 16),
+              Text(
+                'You have completed the game!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 12),
+              Text(
+                'Stay tuned for updates that are released regularly.',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  // Reset game completion state
+                  ref.read(gameCompletedProvider.notifier).state = false;
+                  // Reset progress to level 1 for now (or just leave it)
+                  ref.read(gameProgressProvider.notifier).resetProgress();
+                  ref.read(currentLevelProvider.notifier).state = null;
+                  widget.game.reloadLevel();
+                  
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4A7C59),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('PLAY AGAIN'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showGameOverDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E3528),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'GAME OVER',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.broken_image, color: Colors.grey, size: 64),
+              SizedBox(height: 16),
+              Text(
+                'You ran out of lives!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  // Reset lives and reload level
+                  ref.read(gameInstanceProvider.notifier).resetLives();
+                  widget.game.reloadLevel();
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4A7C59),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('RETRY LEVEL'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLivesDisplay() {
+    final lives = ref.watch(livesProvider);
+    return Row(
+      children: List.generate(3, (index) {
+        return Icon(
+          index < lives ? Icons.favorite : Icons.favorite_border,
+          color: Colors.redAccent,
+          size: 20,
+        );
+      }),
     );
   }
 
