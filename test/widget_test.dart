@@ -3,8 +3,8 @@ import 'package:flame/game.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:parable_weave/main.dart';
-import 'package:parable_weave/providers/game_providers.dart';
+import 'package:parable_bloom/main.dart';
+import 'package:parable_bloom/providers/game_providers.dart';
 
 void main() {
   setUpAll(() {
@@ -22,13 +22,13 @@ void main() {
         overrides: [
           hiveBoxProvider.overrideWithValue(box),
         ],
-        child: const ParableWeaveApp(),
+        child: const ParableBloomApp(),
       ),
     );
 
     // Verify that the game screen is displayed
     expect(find.byType(GameWidget), findsNothing); // GameWidget requires assets which fail in widget test without setup
     // But we can check for main UI elements like AppBar
-    expect(find.text('ParableWeave'), findsOneWidget);
+    expect(find.text('Parable Bloom'), findsOneWidget);
   });
 }

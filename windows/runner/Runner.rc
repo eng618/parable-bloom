@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "parable_weave" "\0"
+            VALUE "CompanyName", "com.garciaericn" "\0"
+            VALUE "FileDescription", "parable_bloom" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "parable_weave" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "parable_weave.exe" "\0"
-            VALUE "ProductName", "parable_weave" "\0"
+            VALUE "InternalName", "parable_bloom" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 com.garciaericn. All rights reserved." "\0"
+            VALUE "OriginalFilename", "parable_bloom.exe" "\0"
+            VALUE "ProductName", "parable_bloom" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

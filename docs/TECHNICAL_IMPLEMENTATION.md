@@ -1,4 +1,4 @@
-# ParableWeave - Technical Implementation Guide
+# Parable Bloom - Technical Implementation Guide
 
 ## Complete Development Roadmap for Solo Developer
 
@@ -64,6 +64,7 @@
 ## 🏗️ Technical Architecture
 
 ### Core Technologies
+
 - **Framework**: Flutter 3.24+ with Flame game engine.
 - **State Management**: **Riverpod** (centralized, reactive, and decoupled).
 - **Data Storage**: **Hive** (local, high-performance persistence).
@@ -71,26 +72,33 @@
 - **Validation**: Built-in **LevelSolver** (BFS) and automated tests.
 
 ### State Management (Riverpod)
+
 The application follows a reactive data flow where the UI and Game Engine are consumers of centralized providers:
+
 - `gameProgressProvider`: Persists level progression and completed levels.
 - `vineStatesProvider`: Calculates real-time blocking status for all arrows using the `LevelSolver`.
 - `livesProvider`: Tracks remaining lives (3 per level) and triggers Game Over state.
 - `gameInstanceProvider`: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
 
 ### Data Persistence (Hive)
+
 We use Hive for immediate, local-first persistence:
+
 - **Progress Box**: Stores current level and a set of completed level IDs.
 - **Settings Box**: (Planned) for audio and visual preferences.
 
 ### Firebase Integration Roadmap
+
 The current architecture is **Firebase Ready**. We will transition by:
-1.  **Repository Pattern**: Abstracting data access into a `ProgressRepository`.
-2.  **Offline Sync**: Using Hive as a local cache that synchronizes with Firestore in the background.
-3.  **Cross-Device Auth**: Implementing Firebase Auth for progress recovery across platforms.
+
+1. **Repository Pattern**: Abstracting data access into a `ProgressRepository`.
+2. **Offline Sync**: Using Hive as a local cache that synchronizes with Firestore in the background.
+3. **Cross-Device Auth**: Implementing Firebase Auth for progress recovery across platforms.
 
 ## 🏭 Implementation Details
 
 We have moved beyond the initial "Weeks" roadmap into a mature implementation of the core loops:
+
 - **Infinite Level Flow**: Dynamic loading of JSON levels from `assets/levels`.
 - **Bullet-Proof Logic**: Every level is automatically validated for solvability before launch.
 - **Minimalist UX**: Reactive visuals that provide instant feedback without noise.
@@ -231,8 +239,8 @@ class GameBoard {
 **`lib/data/models/level_model.dart`**
 
 ```dart
-import 'package:parableweave/domain/entities/vine.dart';
-import 'package:parableweave/domain/entities/grid_position.dart';
+import 'package:parablebloom/domain/entities/vine.dart';
+import 'package:parablebloom/domain/entities/grid_position.dart';
 
 class VineModel {
   final String id;
@@ -348,7 +356,7 @@ class LevelModel {
 **`lib/data/datasources/level_validator.dart`**
 
 ```dart
-import 'package:parableweave/data/models/level_model.dart';
+import 'package:parablebloom/data/models/level_model.dart';
 
 class LevelValidator {
   static List<String> validate(LevelModel model) {

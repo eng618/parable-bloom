@@ -1,4 +1,4 @@
-# parable_weave
+# parable_bloom
 
 A new Flutter project.
 

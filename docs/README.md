@@ -1,8 +1,8 @@
-# ParableWeave - Master Documentation Index
+# Parable Bloom - Master Documentation Index
 
-## 🌿 Welcome to ParableWeave
+## 🌿 Welcome to Parable Bloom
 
-**ParableWeave** is a **zen hyper-casual arrow puzzle** where players clear a "garden" by untangling arrows to reveal parabolic blooms. It combines a minimalist aesthetic with deep strategic puzzle logic.
+**Parable Bloom** is a **zen hyper-casual arrow puzzle** where players clear a "garden" by untangling arrows to reveal parabolic blooms. It combines a minimalist aesthetic with deep strategic puzzle logic.
 
 ---
 

@@ -20,13 +20,13 @@ void main() async {
       overrides: [
         hiveBoxProvider.overrideWithValue(box),
       ],
-      child: const ParableWeaveApp(),
+      child: const ParableBloomApp(),
     ),
   );
 }
 
-class ParableWeaveApp extends StatelessWidget {
-  const ParableWeaveApp({super.key});
+class ParableBloomApp extends StatelessWidget {
+  const ParableBloomApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +52,7 @@ class ParableWeaveApp extends StatelessWidget {
     final themeMode = ref.watch(themeModeProvider);
     
     return MaterialApp(
-      title: 'ParableWeave',
+      title: 'Parable Bloom',
       debugShowCheckedModeBanner: false,
       themeMode: _convertThemeMode(themeMode),
       theme: AppTheme.lightTheme,
@@ -122,7 +122,7 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            const Text('ParableWeave'),
+            const Text('Parable Bloom'),
             const SizedBox(width: 16),
             _buildLivesDisplay(),
           ],

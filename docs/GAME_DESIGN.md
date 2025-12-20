@@ -1,14 +1,15 @@
-# ParableWeave – Updated Game Design Document (GDD)
+# Parable Bloom – Updated Game Design Document (GDD)
 
 **Version 2.0 – December 17, 2025**
 
 ## Executive Summary
 
-**ParableWeave** is a **zen hyper-casual arrow puzzle** where players clear a path for "blooms" by untangling a garden of arrows. The game uses a minimalist aesthetic with a focus on serene feedback and clarity.
+**Parable Bloom** is a **zen hyper-casual arrow puzzle** where players clear a path for "blooms" by untangling a garden of arrows. The game uses a minimalist aesthetic with a focus on serene feedback and clarity.
 
 **Core Loop**: Tap an arrow -> it moves in its fixed direction -> exit the grid to clear -> all vines cleared = level complete.
 
 **Key Design Principles**:
+
 - **Clarity first**: Minimalist dots for the grid and line-segment arrows ensure the player can always see the state of the game.
 - **Reactive World**: Tapping a blocked arrow provides instant visual feedback (red flash), and clearing an arrow immediately unblocks others.
 - **Progressive Challenge**: 5 tutorial levels introduce interlocks, chain blocking, and dense grids.
