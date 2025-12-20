@@ -20,9 +20,7 @@ void main() async {
 
   runApp(
     ProviderScope(
-      overrides: [
-        hiveBoxProvider.overrideWithValue(box),
-      ],
+      overrides: [hiveBoxProvider.overrideWithValue(box)],
       child: const ParableBloomApp(),
     ),
   );
@@ -53,7 +51,7 @@ class ParableBloomApp extends StatelessWidget {
 
   Widget _buildGameWidget(GardenGame game, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
-    
+
     return MaterialApp(
       title: 'Parable Bloom',
       debugShowCheckedModeBanner: false,
@@ -66,9 +64,12 @@ class ParableBloomApp extends StatelessWidget {
 
   ThemeMode _convertThemeMode(AppThemeMode mode) {
     switch (mode) {
-      case AppThemeMode.light: return ThemeMode.light;
-      case AppThemeMode.dark: return ThemeMode.dark;
-      case AppThemeMode.system: return ThemeMode.system;
+      case AppThemeMode.light:
+        return ThemeMode.light;
+      case AppThemeMode.dark:
+        return ThemeMode.dark;
+      case AppThemeMode.system:
+        return ThemeMode.system;
     }
   }
 }
@@ -88,7 +89,9 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _confettiController = ConfettiController(
+      duration: const Duration(milliseconds: 1500),
+    );
   }
 
   @override
@@ -106,10 +109,12 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
       AppTheme.getGameSurface(brightness),
       AppTheme.getGridBackground(brightness),
     );
-    
+
     // Watch for level completion and show dialog
     ref.listen(levelCompleteProvider, (previous, next) {
-      debugPrint('_GameScreen: levelCompleteProvider changed from $previous to $next');
+      debugPrint(
+        '_GameScreen: levelCompleteProvider changed from $previous to $next',
+      );
       if (next && (previous == null || !previous)) {
         debugPrint('_GameScreen: Showing level complete dialog');
         // Trigger confetti celebration
@@ -135,17 +140,17 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
     });
 
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Row(
-              children: [
-                const Text('Parable Bloom'),
-                const SizedBox(width: 16),
-                _buildLivesDisplay(),
-                const SizedBox(width: 16),
-                _buildCurrentLevelDisplay(),
+          children: [
+            const Text('Parable Bloom'),
+            const SizedBox(width: 16),
+            _buildLivesDisplay(),
+            const SizedBox(width: 16),
+            _buildCurrentLevelDisplay(),
           ],
         ),
         backgroundColor: colorScheme.surfaceContainerHighest,
@@ -157,7 +162,9 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
             icon: const Icon(Icons.lightbulb),
             onPressed: () {
               // Placeholder hint action
-              debugPrint('Hint button pressed - replace with actual hint system');
+              debugPrint(
+                'Hint button pressed - replace with actual hint system',
+              );
             },
             tooltip: 'Hint (placeholder)',
           ),
@@ -175,9 +182,9 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
               gameInstance?.reloadLevel();
 
               debugPrint('Level restarted');
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Level restarted')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Level restarted')));
             },
             tooltip: 'Restart Level',
           ),
@@ -200,7 +207,9 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
 
               debugPrint('Debug: Progress reset and level reloaded');
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Progress reset and level reloaded')),
+                const SnackBar(
+                  content: Text('Progress reset and level reloaded'),
+                ),
               );
             },
             tooltip: 'Debug: Reset Progress',
@@ -208,9 +217,9 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
             },
             tooltip: 'Settings',
           ),
@@ -225,31 +234,33 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
               child: CircularProgressIndicator(color: Colors.white70),
             ),
           ),
-          // Left confetti cannon (top, positioned at 1/3 from left)
+          // Left confetti cannon (bottom-left corner, shooting up towards center)
           Positioned(
-            top: 0,
-            left: MediaQuery.of(context).size.width / 3,
+            bottom: 0,
+            left: 0,
             child: ConfettiWidget(
               confettiController: _confettiController,
-              blastDirection: pi / 2, // Straight down
+              blastDirection:
+                  -pi / 3, // Shooting up and to the right towards center
               emissionFrequency: 0.03,
               numberOfParticles: 25,
-              maxBlastForce: 30,
-              minBlastForce: 20,
+              maxBlastForce: 50,
+              minBlastForce: 35,
               gravity: 0.2,
             ),
           ),
-          // Right confetti cannon (top, positioned at 2/3 from left)
+          // Right confetti cannon (bottom-right corner, shooting up towards center)
           Positioned(
-            top: 0,
-            right: MediaQuery.of(context).size.width / 3,
+            bottom: 0,
+            right: 0,
             child: ConfettiWidget(
               confettiController: _confettiController,
-              blastDirection: pi / 2, // Straight down
+              blastDirection:
+                  -2 * pi / 3, // Shooting up and to the left towards center
               emissionFrequency: 0.03,
               numberOfParticles: 25,
-              maxBlastForce: 30,
-              minBlastForce: 20,
+              maxBlastForce: 50,
+              minBlastForce: 35,
               gravity: 0.2,
             ),
           ),
@@ -286,10 +297,7 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
             children: [
               Text(
                 currentLevel.title,
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: 18,
-                ),
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -305,10 +313,7 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
               const SizedBox(height: 8),
               Text(
                 '- ${currentLevel.parable['scripture']}',
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -318,7 +323,9 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
               child: ElevatedButton(
                 onPressed: () async {
                   // Mark level as completed and advance to next level
-                  await ref.read(gameProgressProvider.notifier).completeLevel(currentLevel.levelNumber);
+                  await ref
+                      .read(gameProgressProvider.notifier)
+                      .completeLevel(currentLevel.levelNumber);
 
                   // Reset level complete state
                   ref.read(levelCompleteProvider.notifier).state = false;
@@ -328,25 +335,27 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
                     Navigator.of(dialogContext).pop();
                   }
 
-                  debugPrint('Advanced to next level after completing ${currentLevel.title}');
-                  
+                  debugPrint(
+                    'Advanced to next level after completing ${currentLevel.title}',
+                  );
+
                   // Reload the level in the game instance
                   await widget.game.reloadLevel();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: cs.primary,
                   foregroundColor: cs.onPrimary,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
                 child: const Text(
                   'NEXT LEVEL',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -383,19 +392,13 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
               const SizedBox(height: 16),
               Text(
                 'You have completed the game!',
-                style: TextStyle(
-                  color: cs.onSurface,
-                  fontSize: 18,
-                ),
+                style: TextStyle(color: cs.onSurface, fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 'Stay tuned for updates that are released regularly.',
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -413,7 +416,10 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: cs.primary,
                   foregroundColor: cs.onPrimary,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -454,10 +460,7 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
               const SizedBox(height: 16),
               Text(
                 'You ran out of lives!',
-                style: TextStyle(
-                  color: cs.onSurface,
-                  fontSize: 18,
-                ),
+                style: TextStyle(color: cs.onSurface, fontSize: 18),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -502,12 +505,7 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
 
     return Text(
       'Level ${currentLevel.levelNumber}: ${currentLevel.title}',
-      style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-      ),
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
     );
   }
-
-
 }
