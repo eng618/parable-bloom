@@ -309,6 +309,42 @@ class LevelSolver {
 
     return false; // Not blocked
   }
+
+  /// Calculates how many cells a vine can slide before being blocked or exiting.
+  static int getDistanceToBlocker(LevelData level, String vineId, List<String> activeVineIds) {
+    final vine = level.vines.firstWhere((v) => v.id == vineId);
+    final gridRows = level.grid['rows'] as int;
+    final gridCols = level.grid['columns'] as int;
+
+    if (vine.path.length < 2) return 0;
+    
+    final head = vine.path.last;
+    final neck = vine.path[vine.path.length - 2];
+    final dRow = (head['row'] as int) - (neck['row'] as int);
+    final dCol = (head['col'] as int) - (neck['col'] as int);
+
+    var currentRow = (head['row'] as int) + dRow;
+    var currentCol = (head['col'] as int) + dCol;
+    int distance = 0;
+
+    while (currentRow >= 0 && currentRow < gridRows && currentCol >= 0 && currentCol < gridCols) {
+      for (final otherId in activeVineIds) {
+        if (otherId == vineId) continue;
+        
+        final otherVine = level.vines.firstWhere((v) => v.id == otherId);
+        for (final cell in otherVine.path) {
+          if (cell['row'] == currentRow && cell['col'] == currentCol) {
+            return distance; // Blocked at this distance
+          }
+        }
+      }
+      distance++;
+      currentRow += dRow;
+      currentCol += dCol;
+    }
+
+    return distance; // No blocker found before edge
+  }
 }
 
 final vineStatesProvider = StateNotifierProvider<VineStatesNotifier, Map<String, VineState>>((ref) {
