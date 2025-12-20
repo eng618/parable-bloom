@@ -21,9 +21,6 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
   // Vine states - will be managed by Riverpod
   Map<String, VineState> _vineStates = {};
 
-  // Track vines that were tapped but are blocked (for visual feedback)
-  final Set<String> _tappedBlockedVines = {};
-
   // Callback to notify when level is complete
   final VoidCallback? onLevelComplete;
 
@@ -77,20 +74,27 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
 
     if (_currentLevel == null) return;
 
-    // Render all vines with arrows - blocked vs free indicated by arrow style
     for (final vine in _currentLevel!.vines) {
       final vineState = _vineStates[vine.id];
       if (vineState == null || vineState.isCleared) continue;
 
-      final color = Color(int.parse(vine.color.replaceFirst('#', '0xFF')));
       final isBlocked = vineState.isBlocked;
+      final isAttempted = vineState.hasBeenAttempted;
+      
+      // Standardize vine green
+      const vineGreen = Color(0xFF8FBC8F);
+      
+      // The color persists as red if the vine was ever attempted while blocked,
+      // even if it is currently unblocked.
+      final baseColor = isAttempted ? Colors.red : vineGreen;
 
       // Calculate direction from vine path
       final direction = _calculateVineDirection(vine);
 
       // Draw line segments connecting cells (tails)
+      final segmentAlpha = isBlocked ? 0.3 : 0.8;
       final segmentPaint = Paint()
-        ..color = (isBlocked ? const Color(0xFF8FBC8F).withValues(alpha: 0.3 * 255) : const Color(0xFF8FBC8F).withValues(alpha: 0.8 * 255))
+        ..color = baseColor.withValues(alpha: segmentAlpha * 255)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 4
         ..strokeCap = StrokeCap.round;
@@ -134,16 +138,13 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
 
         if (isHead) {
           // Draw arrow head - style indicates blocked vs free
-          final isTapped = _tappedBlockedVines.contains(vine.id);
-          _drawArrowHead(canvas, rect, const Color(0xFF8FBC8F), direction, isBlocked, isTapped);
+          _drawArrowHead(canvas, rect, baseColor, direction, isBlocked, isAttempted);
         } else {
           // Draw body segment dot
-          final isTappedBlocked = _tappedBlockedVines.contains(vine.id);
-          final drawColor = isTappedBlocked ? Colors.red : const Color(0xFF8FBC8F);
           final alpha = isBlocked ? 0.3 : 0.8; 
           
           final bodyPaint = Paint()
-            ..color = drawColor.withValues(alpha: alpha * 255)
+            ..color = baseColor.withValues(alpha: alpha * 255)
             ..style = PaintingStyle.fill;
 
           canvas.drawCircle(rect.center, 4, bodyPaint);
@@ -152,7 +153,7 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
     }
   }
 
-  void _drawArrowHead(Canvas canvas, Rect rect, Color color, String? direction, bool isBlocked, bool isTapped) {
+  void _drawArrowHead(Canvas canvas, Rect rect, Color color, String? direction, bool isBlocked, bool isAttempted) {
     if (direction == null) return;
     
     final center = rect.center;
@@ -202,15 +203,15 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
     canvas.drawPath(path.shift(const Offset(2, 2)), shadowPaint);
 
-    // Blocked arrows are dimmed and have a different style
+    // Blocked arrows are dimmed
     final arrowAlpha = isBlocked ? 0.4 : 0.9;
     final arrowPaint = Paint()
-      ..color = (isBlocked && isTapped ? Colors.red : color).withValues(alpha: arrowAlpha * 255)
+      ..color = color.withValues(alpha: arrowAlpha * 255)
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, arrowPaint);
 
     final borderPaint = Paint()
-      ..color = (isBlocked && isTapped ? Colors.red : color).withValues(alpha: 1.0 * 255)
+      ..color = color.withValues(alpha: 1.0 * 255)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawPath(path, borderPaint);
@@ -230,24 +231,12 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
       _clearVine(clickedVine.id);
       debugPrint('Clicked movable vine: ${clickedVine.id}');
     } else {
-      // Tapped a blocked vine - show visual feedback and decrement lives
+      // Tapped a blocked vine - show visual feedback via provider
       debugPrint('Tapped blocked vine: ${clickedVine.id}');
-      _showBlockedFeedback(clickedVine.id);
       
-      // Notify parent/provider to decrement lives
-      parent.ref.read(gameInstanceProvider.notifier).decrementLives();
+      // Delegate to provider which handles life decrement and persistent state
+      parent.ref.read(vineStatesProvider.notifier).markAttempted(clickedVine.id);
     }
-  }
-
-  void _showBlockedFeedback(String vineId) {
-    _tappedBlockedVines.add(vineId);
-    update(0); // Redraw
-
-    // Remove feedback after a short duration
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _tappedBlockedVines.remove(vineId);
-      update(0); // Redraw
-    });
   }
 
   VineData? _getVineAtCell(int row, int col) {

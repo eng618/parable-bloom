@@ -204,21 +204,25 @@ class VineState {
   final String id;
   final bool isBlocked;
   final bool isCleared;
+  final bool hasBeenAttempted; // New field for persistent blocked tap feedback
 
   VineState({
     required this.id,
     required this.isBlocked,
     required this.isCleared,
+    this.hasBeenAttempted = false,
   });
 
   VineState copyWith({
     bool? isBlocked,
     bool? isCleared,
+    bool? hasBeenAttempted,
   }) {
     return VineState(
       id: id,
       isBlocked: isBlocked ?? this.isBlocked,
       isCleared: isCleared ?? this.isCleared,
+      hasBeenAttempted: hasBeenAttempted ?? this.hasBeenAttempted,
     );
   }
 }
@@ -344,6 +348,7 @@ class VineStatesNotifier extends StateNotifier<Map<String, VineState>> {
         id: vine.id,
         isBlocked: isBlocked,
         isCleared: isCleared,
+        hasBeenAttempted: currentStates[vine.id]?.hasBeenAttempted ?? false,
       );
     }
 
@@ -363,6 +368,24 @@ class VineStatesNotifier extends StateNotifier<Map<String, VineState>> {
 
     // Check if level is complete
     _checkLevelComplete();
+  }
+
+  void markAttempted(String vineId) {
+    final s = state[vineId];
+    if (s == null) return;
+    
+    if (s.isBlocked && !s.hasBeenAttempted) {
+      debugPrint('VineStatesNotifier: Marking $vineId as attempted and decrementing life');
+      state = {
+        ...state,
+        vineId: s.copyWith(hasBeenAttempted: true),
+      };
+      
+      // Notify parent/provider to decrement lives
+      _ref.read(gameInstanceProvider.notifier).decrementLives();
+    } else if (s.isBlocked && s.hasBeenAttempted) {
+      debugPrint('VineStatesNotifier: $vineId already attempted, skipping life decrement');
+    }
   }
 
   void _checkLevelComplete() {
