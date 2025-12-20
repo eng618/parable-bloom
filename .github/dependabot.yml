@@ -5,10 +5,10 @@
 version: 2
 updates:
   # Enable version updates for github actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
 
   # Enable version updates for go
   # - package-ecosystem: gomod
@@ -29,7 +29,7 @@ updates:
   #     interval: "monthly"
 
   # Enable version updates for Dart
-  # - package-ecosystem: "pub"
-  #   directory: "/"
-  #   schedule:
-  #     interval: "monthly"
+  - package-ecosystem: 'pub'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
