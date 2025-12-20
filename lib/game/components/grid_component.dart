@@ -195,12 +195,5 @@ class CellComponent extends RectangleComponent
   void onTapUp(TapUpEvent event) {
     // Delegate to parent GridComponent for vine handling
     (parent as GridComponent).handleCellTap(row, col);
-
-    // Flash feedback
-    paint.color = Colors.white.withValues(alpha: 0.3 * 255);
-    Future.delayed(const Duration(milliseconds: 200), () {
-      paint.color = Colors.transparent;
-      update(0);
-    });
   }
 }
