@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/game_providers.dart';
-import 'components/grid_component.dart';
+import '../../../../providers/game_providers.dart';
+import 'grid_component.dart';
 
 class GardenGame extends FlameGame {
   static const double cellSize = 80.0; // Pixels per cell
@@ -17,7 +17,7 @@ class GardenGame extends FlameGame {
   LevelData? _currentLevelData;
   RectangleComponent? _gridBackground;
   RectangleComponent? _gameBackground;
-  
+
   // Theme colors - can be updated dynamically
   Color _backgroundColor = const Color(0xFF1E3528);
   Color _surfaceColor = const Color(0xFF2D4A3A);
@@ -25,12 +25,18 @@ class GardenGame extends FlameGame {
 
   GardenGame({required this.ref});
 
-  void updateThemeColors(Color backgroundColor, Color surfaceColor, Color gridColor) {
-    debugPrint('GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor');
+  void updateThemeColors(
+    Color backgroundColor,
+    Color surfaceColor,
+    Color gridColor,
+  ) {
+    debugPrint(
+      'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor',
+    );
     _backgroundColor = backgroundColor;
     _surfaceColor = surfaceColor;
     _gridColor = gridColor;
-    
+
     // Update existing components if they exist - must replace the Paint to trigger redraw
     if (_gameBackground != null) {
       debugPrint('GardenGame: Updating _gameBackground to $_surfaceColor');
@@ -112,12 +118,14 @@ class GardenGame extends FlameGame {
 
     try {
       // Load level data from JSON
-      final levelJson = await rootBundle.loadString('assets/levels/level_$levelNumber.json');
+      final levelJson = await rootBundle.loadString(
+        'assets/levels/level_$levelNumber.json',
+      );
       _currentLevelData = LevelData.fromJson(json.decode(levelJson));
 
       // Update providers
       ref.read(currentLevelProvider.notifier).state = _currentLevelData;
-      
+
       // Ensure gameCompleted is false if we found a level
       ref.read(gameCompletedProvider.notifier).state = false;
 
@@ -155,7 +163,7 @@ class GardenGame extends FlameGame {
       if (_gridBackground!.isMounted) remove(_gridBackground!);
       _gridBackground = null;
     }
-    
+
     // Check if grid is initialized and mounted before removing
     try {
       if (grid.isMounted) remove(grid);
@@ -164,15 +172,15 @@ class GardenGame extends FlameGame {
     }
 
     await _loadCurrentLevel();
-    
+
     if (_currentLevelData != null) {
       _createLevelComponents();
-      
+
       // Reset vine states for the new level
       ref.read(vineStatesProvider.notifier).resetForLevel(_currentLevelData!);
       // Reset lives for the new level
       ref.read(gameInstanceProvider.notifier).resetLives();
-      
+
       await _setLevelDataOnGrid();
     }
   }

@@ -1,8 +1,8 @@
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../providers/game_providers.dart';
+import '../../../../core/app_theme.dart';
+import '../../../../providers/game_providers.dart';
 import 'grid_component.dart';
 
 class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
@@ -34,7 +34,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     final isBlocked = vineState.isBlocked;
     final isAttempted = vineState.hasBeenAttempted;
-    
+
     // Use centralized theme colors
     final baseColor = isAttempted ? AppTheme.vineAttempted : AppTheme.vineGreen;
 
@@ -52,10 +52,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     for (int i = 0; i < vineData.path.length - 1; i++) {
       final currentCell = vineData.path[i];
       final nextCell = vineData.path[i + 1];
-      
+
       final currentVisualRow = gridSize - 1 - (currentCell['row'] as int);
       final nextVisualRow = gridSize - 1 - (nextCell['row'] as int);
-      
+
       final start = Offset(
         (currentCell['col'] as int) * cellSize + cellSize / 2,
         currentVisualRow * cellSize + cellSize / 2,
@@ -64,7 +64,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         (nextCell['col'] as int) * cellSize + cellSize / 2,
         nextVisualRow * cellSize + cellSize / 2,
       );
-      
+
       canvas.drawLine(start, end, segmentPaint);
     }
 
@@ -85,9 +85,16 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       );
 
       if (isHead) {
-        _drawArrowHead(canvas, rect, baseColor, direction, isBlocked, isAttempted);
+        _drawArrowHead(
+          canvas,
+          rect,
+          baseColor,
+          direction,
+          isBlocked,
+          isAttempted,
+        );
       } else {
-        final alpha = isBlocked ? 0.3 : 0.8; 
+        final alpha = isBlocked ? 0.3 : 0.8;
         final bodyPaint = Paint()
           ..color = baseColor.withValues(alpha: alpha * 255)
           ..style = PaintingStyle.fill;
@@ -96,14 +103,21 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     }
   }
 
-  void _drawArrowHead(Canvas canvas, Rect rect, Color color, String direction, bool isBlocked, bool isAttempted) {
+  void _drawArrowHead(
+    Canvas canvas,
+    Rect rect,
+    Color color,
+    String direction,
+    bool isBlocked,
+    bool isAttempted,
+  ) {
     final center = rect.center;
     final path = Path();
-    
+
     final scale = 0.45;
     final h = rect.height * scale;
     final w = rect.width * scale;
-    
+
     final left = center.dx - w / 2;
     final right = center.dx + w / 2;
     final top = center.dy - h / 2;
@@ -179,27 +193,38 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     final direction = _calculateVineDirection();
     Vector2 delta;
-    
+
     // Slide off the grid: gridSize + 5 cells to be safe
     final slideDistance = (gridSize + 5) * cellSize;
 
     switch (direction) {
-      case 'right': delta = Vector2(slideDistance, 0); break;
-      case 'left': delta = Vector2(-slideDistance, 0); break;
-      case 'up': delta = Vector2(0, -slideDistance); break; // Visual Y is up
-      case 'down': delta = Vector2(0, slideDistance); break;
-      default: delta = Vector2.zero();
+      case 'right':
+        delta = Vector2(slideDistance, 0);
+        break;
+      case 'left':
+        delta = Vector2(-slideDistance, 0);
+        break;
+      case 'up':
+        delta = Vector2(0, -slideDistance);
+        break; // Visual Y is up
+      case 'down':
+        delta = Vector2(0, slideDistance);
+        break;
+      default:
+        delta = Vector2.zero();
     }
 
-    add(MoveByEffect(
-      delta,
-      EffectController(duration: 0.5, curve: Curves.easeIn),
-      onComplete: () {
-        // Notify parent to update Riverpod state
-        parent.notifyVineCleared(vineData.id);
-        removeFromParent();
-      },
-    ));
+    add(
+      MoveByEffect(
+        delta,
+        EffectController(duration: 0.5, curve: Curves.easeIn),
+        onComplete: () {
+          // Notify parent to update Riverpod state
+          parent.notifyVineCleared(vineData.id);
+          removeFromParent();
+        },
+      ),
+    );
   }
 
   void slideBump(int distanceInCells) {
@@ -207,36 +232,47 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _isAnimating = true;
 
     final direction = _calculateVineDirection();
-    
+
     // Animate to blocker + half a cell for a "bump" feel
     final bumpDistance = (distanceInCells + 0.4) * cellSize;
     Vector2 delta;
 
     switch (direction) {
-      case 'right': delta = Vector2(bumpDistance, 0); break;
-      case 'left': delta = Vector2(-bumpDistance, 0); break;
-      case 'up': delta = Vector2(0, -bumpDistance); break;
-      case 'down': delta = Vector2(0, bumpDistance); break;
-      default: delta = Vector2.zero();
+      case 'right':
+        delta = Vector2(bumpDistance, 0);
+        break;
+      case 'left':
+        delta = Vector2(-bumpDistance, 0);
+        break;
+      case 'up':
+        delta = Vector2(0, -bumpDistance);
+        break;
+      case 'down':
+        delta = Vector2(0, bumpDistance);
+        break;
+      default:
+        delta = Vector2.zero();
     }
 
     // Move forward, then move back
-    add(SequenceEffect([
-      MoveByEffect(
-        delta,
-        EffectController(duration: 0.2, curve: Curves.easeOut),
-        onComplete: () {
-          // Trigger persistent state update (turns red)
-          parent.markVineAttempted(vineData.id);
-        }
-      ),
-      MoveByEffect(
-        -delta,
-        EffectController(duration: 0.2, curve: Curves.easeIn),
-        onComplete: () {
-          _isAnimating = false;
-        }
-      ),
-    ]));
+    add(
+      SequenceEffect([
+        MoveByEffect(
+          delta,
+          EffectController(duration: 0.2, curve: Curves.easeOut),
+          onComplete: () {
+            // Trigger persistent state update (turns red)
+            parent.markVineAttempted(vineData.id);
+          },
+        ),
+        MoveByEffect(
+          -delta,
+          EffectController(duration: 0.2, curve: Curves.easeIn),
+          onComplete: () {
+            _isAnimating = false;
+          },
+        ),
+      ]),
+    );
   }
 }

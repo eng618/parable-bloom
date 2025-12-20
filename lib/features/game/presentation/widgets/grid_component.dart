@@ -2,15 +2,16 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
-import '../../providers/game_providers.dart';
-import '../garden_game.dart';
+import '../../../../providers/game_providers.dart';
+import 'garden_game.dart';
 import 'vine_component.dart';
 
 // TODO: Add vine rendering system
 // This component will eventually render actual vine sprites
 // For now, it renders placeholder colored rectangles
 
-class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<GardenGame> {
+class GridComponent extends PositionComponent
+    with TapCallbacks, ParentIsA<GardenGame> {
   final int gridSize;
   final double cellSize;
 
@@ -31,14 +32,18 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
   // Map to track active vine components
   final Map<String, VineComponent> _vineComponents = {};
 
-  GridComponent({required this.gridSize, required this.cellSize, this.onLevelComplete, this.onVineCleared})
-    : super(position: Vector2.zero());
+  GridComponent({
+    required this.gridSize,
+    required this.cellSize,
+    this.onLevelComplete,
+    this.onVineCleared,
+  }) : super(position: Vector2.zero());
 
   // Set level data and vine states from Riverpod providers
   void setLevelData(LevelData levelData, Map<String, VineState> vineStates) {
     _currentLevel = levelData;
     _vineStates = Map.from(vineStates);
-    
+
     // Clear old vine components
     for (final comp in _vineComponents.values) {
       comp.removeFromParent();
@@ -81,13 +86,13 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
 
     cells = [];
 
-      for (int rangeRow = 0; rangeRow < gridSize; rangeRow++) {
+    for (int rangeRow = 0; rangeRow < gridSize; rangeRow++) {
       cells.add([]);
       for (int col = 0; col < gridSize; col++) {
         // Use local variable for calculated visual row
         // Row 0 is at the bottom, so visual Y is proportional to (gridSize - 1 - row)
         final visualRow = gridSize - 1 - rangeRow;
-        
+
         final cell = CellComponent(
           row: rangeRow,
           col: col,
@@ -121,13 +126,17 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
     } else {
       // Tapped a blocked vine - calculate distance and trigger bump animation
       debugPrint('Tapped blocked vine: ${clickedVine.id}');
-      
+
       final activeIds = _vineStates.entries
           .where((e) => !e.value.isCleared)
           .map((e) => e.key)
           .toList();
-          
-      final distance = LevelSolver.getDistanceToBlocker(_currentLevel!, clickedVine.id, activeIds);
+
+      final distance = LevelSolver.getDistanceToBlocker(
+        _currentLevel!,
+        clickedVine.id,
+        activeIds,
+      );
       comp.slideBump(distance);
     }
   }
