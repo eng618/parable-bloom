@@ -47,3 +47,12 @@ app.*.map.json
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+.codacy/cli-config.yaml
+.codacy/tools-configs/analysis_options.yaml
+.codacy/tools-configs/eslint.config.mjs
+.codacy/tools-configs/lizard.yaml
+.codacy/tools-configs/pylint.rc
+.codacy/tools-configs/revive.toml
+.codacy/tools-configs/ruleset.xml
+.codacy/tools-configs/semgrep.yaml
+.codacy/tools-configs/trivy.yaml
