@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:confetti/confetti.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -80,6 +83,20 @@ class _GameScreen extends ConsumerStatefulWidget {
 }
 
 class _GameScreenState extends ConsumerState<_GameScreen> {
+  late ConfettiController _confettiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Update game theme colors when theme changes
@@ -95,6 +112,8 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
       debugPrint('_GameScreen: levelCompleteProvider changed from $previous to $next');
       if (next && (previous == null || !previous)) {
         debugPrint('_GameScreen: Showing level complete dialog');
+        // Trigger confetti celebration
+        _confettiController.play();
         _showLevelCompleteDialog();
       }
     });
@@ -204,6 +223,34 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
             game: widget.game,
             loadingBuilder: (_) => const Center(
               child: CircularProgressIndicator(color: Colors.white70),
+            ),
+          ),
+          // Left confetti cannon (top, positioned at 1/3 from left)
+          Positioned(
+            top: 0,
+            left: MediaQuery.of(context).size.width / 3,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: pi / 2, // Straight down
+              emissionFrequency: 0.03,
+              numberOfParticles: 25,
+              maxBlastForce: 30,
+              minBlastForce: 20,
+              gravity: 0.2,
+            ),
+          ),
+          // Right confetti cannon (top, positioned at 2/3 from left)
+          Positioned(
+            top: 0,
+            right: MediaQuery.of(context).size.width / 3,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: pi / 2, // Straight down
+              emissionFrequency: 0.03,
+              numberOfParticles: 25,
+              maxBlastForce: 30,
+              minBlastForce: 20,
+              gravity: 0.2,
             ),
           ),
         ],

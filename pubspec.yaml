@@ -40,6 +40,7 @@ dependencies:
   just_audio: ^0.10.5
   riverpod: ^2.5.1
   flutter_riverpod: ^2.5.1
+  confetti: ^0.7.0
 
 dev_dependencies:
   flutter_test:
