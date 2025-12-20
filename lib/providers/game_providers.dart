@@ -176,6 +176,34 @@ final gameInstanceProvider = StateNotifierProvider<GameInstanceNotifier, GardenG
   return GameInstanceNotifier();
 });
 
+// Theme mode provider with Hive persistence
+enum AppThemeMode { light, dark, system }
+
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, AppThemeMode>((ref) {
+  final box = ref.watch(hiveBoxProvider);
+  return ThemeModeNotifier(box);
+});
+
+class ThemeModeNotifier extends StateNotifier<AppThemeMode> {
+  final Box _box;
+
+  ThemeModeNotifier(this._box) : super(_loadThemeMode(_box));
+
+  static AppThemeMode _loadThemeMode(Box box) {
+    final value = box.get('themeMode', defaultValue: 'system');
+    switch (value) {
+      case 'light': return AppThemeMode.light;
+      case 'dark': return AppThemeMode.dark;
+      default: return AppThemeMode.system;
+    }
+  }
+
+  Future<void> setThemeMode(AppThemeMode mode) async {
+    state = mode;
+    await _box.put('themeMode', mode.name);
+  }
+}
+
 class GameInstanceNotifier extends StateNotifier<GardenGame?> {
   GameInstanceNotifier() : super(null);
 

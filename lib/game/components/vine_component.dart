@@ -1,6 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
+import '../../core/app_theme.dart';
 import '../../providers/game_providers.dart';
 import 'grid_component.dart';
 
@@ -34,9 +35,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final isBlocked = vineState.isBlocked;
     final isAttempted = vineState.hasBeenAttempted;
     
-    // Standardize vine green
-    const vineGreen = Color(0xFF8FBC8F);
-    final baseColor = isAttempted ? Colors.red : vineGreen;
+    // Use centralized theme colors
+    final baseColor = isAttempted ? AppTheme.vineAttempted : AppTheme.vineGreen;
 
     // Calculate direction from vine path
     final direction = _calculateVineDirection();

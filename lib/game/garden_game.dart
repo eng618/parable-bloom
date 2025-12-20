@@ -15,9 +15,32 @@ class GardenGame extends FlameGame {
   late GridComponent grid;
   final WidgetRef ref;
   LevelData? _currentLevelData;
-  Component? _gridBackground;
+  RectangleComponent? _gridBackground;
+  RectangleComponent? _gameBackground;
+  
+  // Theme colors - can be updated dynamically
+  Color _backgroundColor = const Color(0xFF1E3528);
+  Color _surfaceColor = const Color(0xFF2D4A3A);
+  Color _gridColor = const Color(0xFF3D5A4A);
 
   GardenGame({required this.ref});
+
+  void updateThemeColors(Color backgroundColor, Color surfaceColor, Color gridColor) {
+    debugPrint('GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor');
+    _backgroundColor = backgroundColor;
+    _surfaceColor = surfaceColor;
+    _gridColor = gridColor;
+    
+    // Update existing components if they exist - must replace the Paint to trigger redraw
+    if (_gameBackground != null) {
+      debugPrint('GardenGame: Updating _gameBackground to $_surfaceColor');
+      _gameBackground!.paint = Paint()..color = _surfaceColor;
+    }
+    if (_gridBackground != null) {
+      debugPrint('GardenGame: Updating _gridBackground to $_gridColor');
+      _gridBackground!.paint = Paint()..color = _gridColor;
+    }
+  }
 
   @override
   Future<void> onLoad() async {
@@ -27,12 +50,13 @@ class GardenGame extends FlameGame {
     await _loadCurrentLevel();
 
     // TODO: Replace with actual parable background image
-    // Load parable background (placeholder for now)
-    add(RectangleComponent(
+    // Load parable background
+    _gameBackground = RectangleComponent(
       size: size,
-      paint: Paint()..color = const Color(0xFFFFF8DC), // Cream background
+      paint: Paint()..color = _surfaceColor,
       priority: -2,
-    ));
+    );
+    add(_gameBackground!);
 
     // Create grid and background components
     _createLevelComponents();
@@ -65,7 +89,7 @@ class GardenGame extends FlameGame {
         (size.x - (gridSize * cellSize + 20)) / 2,
         (size.y - (gridSize * cellSize + 20)) / 2,
       ),
-      paint: Paint()..color = const Color(0xFFF5F5DC), // Beige grid background
+      paint: Paint()..color = _gridColor,
       priority: -1,
     );
     add(_gridBackground!);
@@ -116,7 +140,7 @@ class GardenGame extends FlameGame {
   }
 
   @override
-  Color backgroundColor() => const Color(0xFF1E3528); // Dark forest base
+  Color backgroundColor() => _backgroundColor;
 
   @override
   void onRemove() {

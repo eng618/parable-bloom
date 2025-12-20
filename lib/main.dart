@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'core/app_theme.dart';
 import 'game/garden_game.dart';
 import 'providers/game_providers.dart';
+import 'screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,17 +43,30 @@ class ParableWeaveApp extends StatelessWidget {
           });
         }
 
-        return _buildGameWidget(game);
+        return _buildGameWidget(game, ref);
       },
     );
   }
 
-  Widget _buildGameWidget(GardenGame game) {
+  Widget _buildGameWidget(GardenGame game, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    
     return MaterialApp(
       title: 'ParableWeave',
       debugShowCheckedModeBanner: false,
+      themeMode: _convertThemeMode(themeMode),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       home: _GameScreen(game: game),
     );
+  }
+
+  ThemeMode _convertThemeMode(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.light: return ThemeMode.light;
+      case AppThemeMode.dark: return ThemeMode.dark;
+      case AppThemeMode.system: return ThemeMode.system;
+    }
   }
 }
 
@@ -67,6 +82,14 @@ class _GameScreen extends ConsumerStatefulWidget {
 class _GameScreenState extends ConsumerState<_GameScreen> {
   @override
   Widget build(BuildContext context) {
+    // Update game theme colors when theme changes
+    final brightness = Theme.of(context).brightness;
+    widget.game.updateThemeColors(
+      AppTheme.getGameBackground(brightness),
+      AppTheme.getGameSurface(brightness),
+      AppTheme.getGridBackground(brightness),
+    );
+    
     // Watch for level completion and show dialog
     ref.listen(levelCompleteProvider, (previous, next) {
       debugPrint('_GameScreen: levelCompleteProvider changed from $previous to $next');
@@ -92,8 +115,10 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
       }
     });
 
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFF2D4A3A), // Deep moss green - matches game design
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Row(
           children: [
@@ -102,7 +127,7 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
             _buildLivesDisplay(),
           ],
         ),
-        backgroundColor: const Color(0xFF1E3528),
+        backgroundColor: colorScheme.surfaceContainerHighest,
         actions: [
           // TODO: Replace with actual UI buttons
           // Placeholder hint button - replace with actual hint system
@@ -138,14 +163,14 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
             },
             tooltip: 'Debug: Reset Progress',
           ),
-          // TODO: Replace with settings menu
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // Placeholder settings action
-              debugPrint('Settings button pressed - replace with actual settings');
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
             },
-            tooltip: 'Settings (placeholder)',
+            tooltip: 'Settings',
           ),
         ],
       ),
@@ -170,16 +195,17 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
     showDialog(
       context: context,
       barrierDismissible: false, // Prevent accidental dismissal
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
+        final cs = Theme.of(dialogContext).colorScheme;
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E3528),
+          backgroundColor: cs.surfaceContainerHighest,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
+          title: Text(
             'LEVEL COMPLETE!',
             style: TextStyle(
-              color: Colors.white,
+              color: cs.onSurface,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -190,8 +216,8 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
             children: [
               Text(
                 currentLevel.title,
-                style: const TextStyle(
-                  color: Colors.white70,
+                style: TextStyle(
+                  color: cs.onSurfaceVariant,
                   fontSize: 18,
                 ),
                 textAlign: TextAlign.center,
@@ -199,8 +225,8 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
               const SizedBox(height: 16),
               Text(
                 '"${currentLevel.parable['content']}"',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: cs.onSurface,
                   fontSize: 14,
                   fontStyle: FontStyle.italic,
                 ),
@@ -209,8 +235,8 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
               const SizedBox(height: 8),
               Text(
                 '- ${currentLevel.parable['scripture']}',
-                style: const TextStyle(
-                  color: Colors.white70,
+                style: TextStyle(
+                  color: cs.onSurfaceVariant,
                   fontSize: 12,
                 ),
                 textAlign: TextAlign.center,
@@ -228,8 +254,8 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
                   ref.read(levelCompleteProvider.notifier).state = false;
 
                   // Close dialog
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop();
                   }
 
                   debugPrint('Advanced to next level after completing ${currentLevel.title}');
@@ -238,8 +264,8 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
                   await widget.game.reloadLevel();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A7C59),
-                  foregroundColor: Colors.white,
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -264,39 +290,40 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
+        final cs = Theme.of(dialogContext).colorScheme;
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E3528),
+          backgroundColor: cs.surfaceContainerHighest,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
+          title: Text(
             'CONGRATULATIONS!',
             style: TextStyle(
-              color: Colors.white,
+              color: cs.onSurface,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
           ),
-          content: const Column(
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.emoji_events, color: Colors.amber, size: 64),
-              SizedBox(height: 16),
+              const Icon(Icons.emoji_events, color: Colors.amber, size: 64),
+              const SizedBox(height: 16),
               Text(
                 'You have completed the game!',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: cs.onSurface,
                   fontSize: 18,
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 'Stay tuned for updates that are released regularly.',
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: cs.onSurfaceVariant,
                   fontSize: 14,
                 ),
                 textAlign: TextAlign.center,
@@ -307,18 +334,15 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Reset game completion state
                   ref.read(gameCompletedProvider.notifier).state = false;
-                  // Reset progress to level 1 for now (or just leave it)
                   ref.read(gameProgressProvider.notifier).resetProgress();
                   ref.read(currentLevelProvider.notifier).state = null;
                   widget.game.reloadLevel();
-                  
-                  Navigator.of(context).pop();
+                  Navigator.of(dialogContext).pop();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A7C59),
-                  foregroundColor: Colors.white,
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -337,30 +361,31 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
+        final cs = Theme.of(dialogContext).colorScheme;
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E3528),
+          backgroundColor: cs.surfaceContainerHighest,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
+          title: Text(
             'GAME OVER',
             style: TextStyle(
-              color: Colors.white,
+              color: cs.onSurface,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
           ),
-          content: const Column(
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.broken_image, color: Colors.grey, size: 64),
-              SizedBox(height: 16),
+              Icon(Icons.broken_image, color: cs.onSurfaceVariant, size: 64),
+              const SizedBox(height: 16),
               Text(
                 'You ran out of lives!',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: cs.onSurface,
                   fontSize: 18,
                 ),
                 textAlign: TextAlign.center,
@@ -371,14 +396,13 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Reset lives and reload level
                   ref.read(gameInstanceProvider.notifier).resetLives();
                   widget.game.reloadLevel();
-                  Navigator.of(context).pop();
+                  Navigator.of(dialogContext).pop();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A7C59),
-                  foregroundColor: Colors.white,
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
                 ),
                 child: const Text('RETRY LEVEL'),
               ),
