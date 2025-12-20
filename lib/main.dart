@@ -121,13 +121,16 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Row(
-          children: [
-            const Text('Parable Bloom'),
-            const SizedBox(width: 16),
-            _buildLivesDisplay(),
+              children: [
+                const Text('Parable Bloom'),
+                const SizedBox(width: 16),
+                _buildLivesDisplay(),
+                const SizedBox(width: 16),
+                _buildCurrentLevelDisplay(),
           ],
         ),
         backgroundColor: colorScheme.surfaceContainerHighest,
+        centerTitle: true,
         actions: [
           // TODO: Replace with actual UI buttons
           // Placeholder hint button - replace with actual hint system
@@ -138,6 +141,26 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
               debugPrint('Hint button pressed - replace with actual hint system');
             },
             tooltip: 'Hint (placeholder)',
+          ),
+          // Restart level button
+          IconButton(
+            icon: const Icon(Icons.replay),
+            onPressed: () {
+              // Reset level state without resetting progress
+              ref.read(levelCompleteProvider.notifier).state = false;
+              ref.read(gameOverProvider.notifier).state = false;
+              ref.read(gameInstanceProvider.notifier).resetLives();
+
+              // Reload the level in the game instance
+              final gameInstance = ref.read(gameInstanceProvider);
+              gameInstance?.reloadLevel();
+
+              debugPrint('Level restarted');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Level restarted')),
+              );
+            },
+            tooltip: 'Restart Level',
           ),
           // Debug reset button
           IconButton(
@@ -423,6 +446,19 @@ class _GameScreenState extends ConsumerState<_GameScreen> {
           size: 20,
         );
       }),
+    );
+  }
+
+  Widget _buildCurrentLevelDisplay() {
+    final currentLevel = ref.watch(currentLevelProvider);
+    if (currentLevel == null) return const SizedBox.shrink();
+
+    return Text(
+      'Level ${currentLevel.levelNumber}: ${currentLevel.title}',
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 
