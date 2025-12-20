@@ -157,31 +157,41 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
     
     final center = rect.center;
     final path = Path();
-    final arrowSize = rect.width;
+    
+    // Reduce the effective size of the arrow head to be more minimalist
+    final scale = 0.45; // Scale down further to 45% of original cell-rect width
+    final h = rect.height * scale;
+    final w = rect.width * scale;
+    
+    // Calculate centered box for the scaled arrow
+    final left = center.dx - w / 2;
+    final right = center.dx + w / 2;
+    final top = center.dy - h / 2;
+    final bottom = center.dy + h / 2;
 
     switch (direction) {
       case 'right':
-        path.moveTo(rect.left, rect.top + arrowSize * 0.1);
-        path.lineTo(rect.right, center.dy);
-        path.lineTo(rect.left, rect.bottom - arrowSize * 0.1);
+        path.moveTo(left, top + h * 0.1);
+        path.lineTo(right, center.dy);
+        path.lineTo(left, bottom - h * 0.1);
         path.close();
         break;
       case 'left':
-        path.moveTo(rect.right, rect.top + arrowSize * 0.1);
-        path.lineTo(rect.left, center.dy);
-        path.lineTo(rect.right, rect.bottom - arrowSize * 0.1);
+        path.moveTo(right, top + h * 0.1);
+        path.lineTo(left, center.dy);
+        path.lineTo(right, bottom - h * 0.1);
         path.close();
         break;
       case 'down':
-        path.moveTo(rect.left + arrowSize * 0.1, rect.top);
-        path.lineTo(rect.right - arrowSize * 0.1, rect.top);
-        path.lineTo(center.dx, rect.bottom);
+        path.moveTo(left + w * 0.1, top);
+        path.lineTo(right - w * 0.1, top);
+        path.lineTo(center.dx, bottom);
         path.close();
         break;
       case 'up':
-        path.moveTo(rect.left + arrowSize * 0.1, rect.bottom);
-        path.lineTo(rect.right - arrowSize * 0.1, rect.bottom);
-        path.lineTo(center.dx, rect.top);
+        path.moveTo(left + w * 0.1, bottom);
+        path.lineTo(right - w * 0.1, bottom);
+        path.lineTo(center.dx, top);
         path.close();
         break;
     }
