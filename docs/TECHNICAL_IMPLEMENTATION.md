@@ -6,143 +6,94 @@
 
 ## 🎯 Development Overview
 
-**Timeline**: 24-36 weeks to launch
-**Budget**: $0 (free tools and assets)
+**Timeline**: 4 weeks MVP, expandable to 12 weeks full launch
+**Budget**: $0 (free tools: Flutter/Flame, Unity AI sprites, freesound audio)
 **Team**: Solo developer
 **Platforms**: iOS + Android
 
 **Target Milestones**:
 
-- **Week 6**: Core mechanics working, can play Level 1
-- **Week 16**: 15 levels playable with art
-- **Week 24**: 50 levels complete, ready for QA
-- **Week 28**: App store launch
+- **Week 1**: Grid/tap system ready (from existing code)
+- **Week 2**: Vine slide/wilt loop implemented
+- **Week 3**: 10 levels + coins/lives UI
+- **Week 4**: Builds/TestFlight APK ready for feedback
 
 ---
 
 ## 📋 Development Checklist
 
-### Phase 1: Foundation (Weeks 1-10)
+### MVP Core Loop (Weeks 1-4)
 
-- [ ] **Week 1**: Domain entities & JSON system
-  - Implement `GridPosition`, `Vine`, `GameBoard` entities
-  - Create JSON models (`VineModel`, `ParableModel`, `LevelModel`)
-  - Build level validator with 6 validation checks
-  - Write comprehensive unit tests
-- [ ] **Week 2**: State management & basic rendering
-- [ ] **Week 3**: Core gameplay mechanics
-- [ ] **Weeks 4-10**: Level progression, UI polish, testing
+- [ ] **Week 1**: Grid/tap system ready
+  - Extend existing grid component for vine rendering
+  - Add VineComponent class with head/body sprites
+  - Implement basic tap detection on vines
+  - Hive setup for coins/lives persistence
+- [ ] **Week 2**: Vine slide/wilt mechanics
+  - Tap-to-slide: scan forward, tween max empty cells
+  - Wilt on blocked taps (+1 wrong counter)
+  - Clear on overflow edge (bloom SFX, coin reward)
+  - Win condition: all vines cleared
+- [ ] **Week 3**: 10 levels + UI polish
+  - JSON level loader for simple vine definitions
+  - Coins/lives UI (HUD counters, fail overlay)
+  - Auto-progression, restart/buy mercy flows
+  - Stuck detection (30s hint glow)
+- [ ] **Week 4**: Builds + testing
+  - APK/TestFlight builds (<20MB)
+  - 5-friend beta testing
+  - Performance optimization (60FPS mid-range)
+  - Onboarding tutorials
 
-### Phase 2: Assets & Polish (Weeks 11-16)
+### Post-MVP Expansion (Optional)
 
-- [ ] Generate vine sprites and parable backgrounds
-- [ ] Implement smooth animations and sound design
-- [ ] Performance optimization
-
-### Phase 3: Content Creation (Weeks 17-24)
-
-- [ ] Create 50 playable levels
-- [ ] Test difficulty curve
-- [ ] Final QA and bug fixes
-
-### Phase 4: Launch (Weeks 25-28)
-
-- [ ] App store submission preparation
-- [ ] Beta testing and final polish
+- [ ] **Weeks 5-6**: Parables integration
+  - JSON parable reveals on win
+  - Voice/text narration
+  - Scripture journal feature
+- [ ] **Weeks 7-8**: PCG levels
+  - Python script for 100+ procedural levels
+  - Difficulty scaling, variety testing
+- [ ] **Weeks 9-12**: Store launch
+  - IAP for mercy packs
+  - App store assets/screenshots
+  - Firebase optional (progress backup)
 
 ---
 
 ## 🏗️ Technical Architecture
 
 ### Core Technologies
+- **Framework**: Flutter 3.24+ with Flame game engine.
+- **State Management**: **Riverpod** (centralized, reactive, and decoupled).
+- **Data Storage**: **Hive** (local, high-performance persistence).
+- **Backend (Roadmap)**: **Firebase** integration planned via Repository Pattern.
+- **Validation**: Built-in **LevelSolver** (BFS) and automated tests.
 
-- **Framework**: Flutter 3.24+ with Flame game engine
-- **Language**: Dart
-- **Architecture**: Clean Architecture (Presentation → Domain → Data)
-- **State Management**: Provider pattern
-- **Data Storage**: Hive (local) + Firebase (cloud sync)
-- **Level Format**: JSON-based configuration
+### State Management (Riverpod)
+The application follows a reactive data flow where the UI and Game Engine are consumers of centralized providers:
+- `gameProgressProvider`: Persists level progression and completed levels.
+- `vineStatesProvider`: Calculates real-time blocking status for all arrows using the `LevelSolver`.
+- `livesProvider`: Tracks remaining lives (3 per level) and triggers Game Over state.
+- `gameInstanceProvider`: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
 
-### Project Structure
+### Data Persistence (Hive)
+We use Hive for immediate, local-first persistence:
+- **Progress Box**: Stores current level and a set of completed level IDs.
+- **Settings Box**: (Planned) for audio and visual preferences.
 
-```
-lib/
-├── core/           # Constants, themes, utilities
-├── data/           # Models, repositories, datasources
-├── domain/         # Entities, usecases, repositories
-├── presentation/   # Screens, widgets, providers
-└── game/           # Flame game components
-
-assets/
-├── levels/         # JSON level files
-├── art/           # Sprites and textures
-├── audio/         # Sound effects
-└── parables/      # Illustration assets
-```
-
----
-
-## ⚡ Quick Start (30 Minutes)
-
-### 1. Create GitHub Repository
-
-```bash
-# Create private repo on GitHub
-# Clone it locally
-git clone https://github.com/YOUR_USERNAME/parableweave.git
-cd parableweave
-```
-
-### 2. Flutter Project Setup
-
-```bash
-flutter create --org com.parableweave .
-flutter pub get
-```
-
-### 3. Dependencies (pubspec.yaml)
-
-```yaml
-dependencies:
-  flutter:
-    sdk: flutter
-
-  # Game Engine
-  flame: ^1.9.0
-  flame_audio: ^2.0.0
-
-  # State Management
-  provider: ^6.0.0
-
-  # Data Storage
-  hive: ^2.2.0
-  hive_flutter: ^1.1.0
-
-  # JSON Handling
-  json_annotation: ^4.8.0
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  build_runner: ^2.4.0
-  json_serializable: ^6.6.0
-  hive_generator: ^2.0.0
-```
-
-### 4. First Commit
-
-```bash
-flutter pub get
-git add .
-git commit -m "Initial Flutter setup with dependencies"
-git push
-```
-
----
+### Firebase Integration Roadmap
+The current architecture is **Firebase Ready**. We will transition by:
+1.  **Repository Pattern**: Abstracting data access into a `ProgressRepository`.
+2.  **Offline Sync**: Using Hive as a local cache that synchronizes with Firestore in the background.
+3.  **Cross-Device Auth**: Implementing Firebase Auth for progress recovery across platforms.
 
 ## 🏭 Implementation Details
 
-### Week 1: Domain Entities & JSON System
+We have moved beyond the initial "Weeks" roadmap into a mature implementation of the core loops:
+- **Infinite Level Flow**: Dynamic loading of JSON levels from `assets/levels`.
+- **Bullet-Proof Logic**: Every level is automatically validated for solvability before launch.
+- **Minimalist UX**: Reactive visuals that provide instant feedback without noise.
 
 #### Core Domain Entities
 
@@ -952,29 +903,18 @@ lib/
 
 ## 🎯 Development Timeline
 
-### Phase 1: Core (Weeks 1-10)
+### MVP Sprint (Weeks 1-4)
 
-- Week 1: Domain entities & JSON system ✅
-- Week 2: State management & basic rendering
-- Week 3: Core gameplay mechanics
-- Weeks 4-10: Level progression, UI polish
+- **Week 1**: Grid/vine rendering foundation
+- **Week 2**: Core tap-slide mechanics
+- **Week 3**: Level progression & UI
+- **Week 4**: Builds & beta testing
 
-### Phase 2: Assets & Polish (Weeks 11-16)
+### Post-MVP Expansion (Weeks 5-12)
 
-- Generate vine sprites and parable backgrounds
-- Implement animations and sound design
-- Performance optimization
-
-### Phase 3: Content (Weeks 17-24)
-
-- Create 50 playable levels
-- Test difficulty curve
-- Final QA
-
-### Phase 4: Launch (Weeks 25-28)
-
-- App store submission
-- Beta testing and final polish
+- **Weeks 5-6**: Parables & narrative
+- **Weeks 7-8**: PCG level generation
+- **Weeks 9-12**: Store launch polish
 
 ---
 

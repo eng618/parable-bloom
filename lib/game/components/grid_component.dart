@@ -88,6 +88,33 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
       // Calculate direction from vine path
       final direction = _calculateVineDirection(vine);
 
+      // Draw line segments connecting cells (tails)
+      final segmentPaint = Paint()
+        ..color = (isBlocked ? const Color(0xFF8FBC8F).withValues(alpha: 0.3 * 255) : const Color(0xFF8FBC8F).withValues(alpha: 0.8 * 255))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4
+        ..strokeCap = StrokeCap.round;
+
+      for (int i = 0; i < vine.path.length - 1; i++) {
+        final currentCell = vine.path[i];
+        final nextCell = vine.path[i + 1];
+        
+        final currentVisualRow = gridSize - 1 - (currentCell['row'] as int);
+        final nextVisualRow = gridSize - 1 - (nextCell['row'] as int);
+        
+        final start = Offset(
+          (currentCell['col'] as int) * cellSize + cellSize / 2,
+          currentVisualRow * cellSize + cellSize / 2,
+        );
+        final end = Offset(
+          (nextCell['col'] as int) * cellSize + cellSize / 2,
+          nextVisualRow * cellSize + cellSize / 2,
+        );
+        
+        canvas.drawLine(start, end, segmentPaint);
+      }
+
+      // Draw dots and heads
       for (int i = 0; i < vine.path.length; i++) {
         final cell = vine.path[i];
         final row = cell['row'] as int;
@@ -110,23 +137,16 @@ class GridComponent extends PositionComponent with TapCallbacks, ParentIsA<Garde
           final isTapped = _tappedBlockedVines.contains(vine.id);
           _drawArrowHead(canvas, rect, const Color(0xFF8FBC8F), direction, isBlocked, isTapped);
         } else {
-          // Draw body segment as a thin line
+          // Draw body segment dot
           final isTappedBlocked = _tappedBlockedVines.contains(vine.id);
           final drawColor = isTappedBlocked ? Colors.red : const Color(0xFF8FBC8F);
           final alpha = isBlocked ? 0.3 : 0.8; 
           
           final bodyPaint = Paint()
             ..color = drawColor.withValues(alpha: alpha * 255)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 4
-            ..strokeCap = StrokeCap.round;
+            ..style = PaintingStyle.fill;
 
-          // Draw line from center of cell in direction or along path
-          // For simplicity, just draw a centered line/dot if not head
-          canvas.drawCircle(rect.center, 4, bodyPaint..style = PaintingStyle.fill);
-          
-          // Connect to previous/next if they exist (TODO: refined line segments)
-          // For now, just dots and arrows looks better than blocks
+          canvas.drawCircle(rect.center, 4, bodyPaint);
         }
       }
     }
