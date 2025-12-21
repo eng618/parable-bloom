@@ -183,6 +183,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _resetProgress() {
     ref.read(gameProgressProvider.notifier).resetProgress();
+    // Invalidate the progress provider to force refresh
+    ref.invalidate(gameProgressProvider);
     ref.read(currentLevelProvider.notifier).state = null;
     ref.read(levelCompleteProvider.notifier).state = false;
     ref.read(gameCompletedProvider.notifier).state = false;
@@ -248,6 +250,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   await GetIt.I<CompleteLevelUseCase>().execute(
                     currentLevel.levelNumber,
                   );
+                  // Invalidate the progress provider to force refresh
+                  ref.invalidate(gameProgressProvider);
                   ref.read(levelCompleteProvider.notifier).state = false;
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
