@@ -4,9 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../../../core/app_theme.dart';
 import '../../../../providers/game_providers.dart';
-import '../../../domain/usecases/complete_level_usecase.dart';
+import '../../../../features/game/domain/usecases/complete_level_usecase.dart';
 import '../widgets/garden_game.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -184,6 +183,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _resetProgress() {
     ref.read(gameProgressProvider.notifier).resetProgress();
+    // Invalidate the progress provider to force refresh
+    ref.invalidate(gameProgressProvider);
     ref.read(currentLevelProvider.notifier).state = null;
     ref.read(levelCompleteProvider.notifier).state = false;
     ref.read(gameCompletedProvider.notifier).state = false;
@@ -249,8 +250,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   await GetIt.I<CompleteLevelUseCase>().execute(
                     currentLevel.levelNumber,
                   );
+                  // Invalidate the progress provider to force refresh
+                  ref.invalidate(gameProgressProvider);
                   ref.read(levelCompleteProvider.notifier).state = false;
-                  if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop();
+                  }
                   await _game?.reloadLevel();
                 },
                 style: ElevatedButton.styleFrom(
@@ -323,8 +328,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     ref.read(gameProgressProvider.notifier).resetProgress();
                     ref.read(currentLevelProvider.notifier).state = null;
                     _game?.reloadLevel();
-                    if (dialogContext.mounted)
+                    if (dialogContext.mounted) {
                       Navigator.of(dialogContext).pop();
+                    }
                   });
                 },
                 style: ElevatedButton.styleFrom(
