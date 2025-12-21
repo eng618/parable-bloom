@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/game_providers.dart';
+import '../../../../providers/game_providers.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -45,7 +45,11 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildThemeTile(BuildContext context, WidgetRef ref, AppThemeMode currentMode) {
+  Widget _buildThemeTile(
+    BuildContext context,
+    WidgetRef ref,
+    AppThemeMode currentMode,
+  ) {
     return ListTile(
       leading: Icon(_getThemeIcon(currentMode)),
       title: const Text('Theme'),
@@ -56,21 +60,31 @@ class SettingsScreen extends ConsumerWidget {
 
   IconData _getThemeIcon(AppThemeMode mode) {
     switch (mode) {
-      case AppThemeMode.light: return Icons.light_mode;
-      case AppThemeMode.dark: return Icons.dark_mode;
-      case AppThemeMode.system: return Icons.settings_brightness;
+      case AppThemeMode.light:
+        return Icons.light_mode;
+      case AppThemeMode.dark:
+        return Icons.dark_mode;
+      case AppThemeMode.system:
+        return Icons.settings_brightness;
     }
   }
 
   String _getThemeLabel(AppThemeMode mode) {
     switch (mode) {
-      case AppThemeMode.light: return 'Light';
-      case AppThemeMode.dark: return 'Dark';
-      case AppThemeMode.system: return 'System';
+      case AppThemeMode.light:
+        return 'Light';
+      case AppThemeMode.dark:
+        return 'Dark';
+      case AppThemeMode.system:
+        return 'System';
     }
   }
 
-  void _showThemeDialog(BuildContext context, WidgetRef ref, AppThemeMode currentMode) {
+  void _showThemeDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AppThemeMode currentMode,
+  ) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -82,16 +96,25 @@ class SettingsScreen extends ConsumerWidget {
             return ListTile(
               leading: Icon(
                 _getThemeIcon(mode),
-                color: isSelected ? Theme.of(dialogContext).colorScheme.primary : null,
+                color: isSelected
+                    ? Theme.of(dialogContext).colorScheme.primary
+                    : null,
               ),
               title: Text(
                 _getThemeLabel(mode),
                 style: TextStyle(
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? Theme.of(dialogContext).colorScheme.primary : null,
+                  color: isSelected
+                      ? Theme.of(dialogContext).colorScheme.primary
+                      : null,
                 ),
               ),
-              trailing: isSelected ? Icon(Icons.check, color: Theme.of(dialogContext).colorScheme.primary) : null,
+              trailing: isSelected
+                  ? Icon(
+                      Icons.check,
+                      color: Theme.of(dialogContext).colorScheme.primary,
+                    )
+                  : null,
               onTap: () {
                 ref.read(themeModeProvider.notifier).setThemeMode(mode);
                 Navigator.of(dialogContext).pop();
