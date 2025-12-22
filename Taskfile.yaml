@@ -142,7 +142,7 @@ tasks:
     desc: Validate code quality, linting, tests, and build
     cmds:
       - task: analyze
-      # - task: format
+      - task: format:check
       - task: lint
       - task: test
       - task: build:web
@@ -163,10 +163,15 @@ tasks:
     cmds:
       - flutter test
 
-  # format:
-  #   desc: Format the Flutter code
-  #   cmds:
-  #     - flutter format .
+  format:
+    desc: Format the Flutter code
+    cmds:
+      - dart format .
+
+  format:check:
+    desc: Check if Flutter code is formatted
+    cmds:
+      - dart format --output=none --set-exit-if-changed .
 
   lint:
     desc: Run Flutter linting
