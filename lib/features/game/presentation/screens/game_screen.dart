@@ -2,10 +2,8 @@ import 'package:confetti/confetti.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get_it/get_it.dart';
 
 import '../../../../providers/game_providers.dart';
-import '../../../../features/game/domain/usecases/complete_level_usecase.dart';
 import '../widgets/garden_game.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -172,8 +170,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _restartLevel() {
-    ref.read(levelCompleteProvider.notifier).state = false;
-    ref.read(gameOverProvider.notifier).state = false;
+    ref.read(levelCompleteProvider.notifier).setComplete(false);
+    ref.read(gameOverProvider.notifier).setGameOver(false);
     ref.read(gameInstanceProvider.notifier).resetLives();
     _game?.reloadLevel();
     ScaffoldMessenger.of(
@@ -185,9 +183,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     ref.read(gameProgressProvider.notifier).resetProgress();
     // Invalidate the progress provider to force refresh
     ref.invalidate(gameProgressProvider);
-    ref.read(currentLevelProvider.notifier).state = null;
-    ref.read(levelCompleteProvider.notifier).state = false;
-    ref.read(gameCompletedProvider.notifier).state = false;
+    ref.read(currentLevelProvider.notifier).setLevel(null);
+    ref.read(levelCompleteProvider.notifier).setComplete(false);
+    ref.read(gameCompletedProvider.notifier).setCompleted(false);
     _game?.reloadLevel();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Progress reset and level reloaded')),
@@ -247,12 +245,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () async {
-                  await GetIt.I<CompleteLevelUseCase>().execute(
-                    currentLevel.levelNumber,
-                  );
-                  // Invalidate the progress provider to force refresh
-                  ref.invalidate(gameProgressProvider);
-                  ref.read(levelCompleteProvider.notifier).state = false;
+                  // Update progress through Riverpod instead of use case
+                  await ref
+                      .read(gameProgressProvider.notifier)
+                      .completeLevel(currentLevel.levelNumber);
+                  ref.read(levelCompleteProvider.notifier).setComplete(false);
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
                   }
@@ -323,15 +320,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  ref.read(gameCompletedProvider.notifier).state = false;
-                  GetIt.I<CompleteLevelUseCase>().execute(1).then((_) {
-                    ref.read(gameProgressProvider.notifier).resetProgress();
-                    ref.read(currentLevelProvider.notifier).state = null;
-                    _game?.reloadLevel();
-                    if (dialogContext.mounted) {
-                      Navigator.of(dialogContext).pop();
-                    }
-                  });
+                  ref.read(gameCompletedProvider.notifier).setCompleted(false);
+                  ref.read(gameProgressProvider.notifier).resetProgress();
+                  ref.read(currentLevelProvider.notifier).setLevel(null);
+                  _game?.reloadLevel();
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop();
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
@@ -376,21 +371,41 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 style: TextStyle(color: cs.onSurface, fontSize: 18),
                 textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 8),
+              Text(
+                'Try again to improve your strategy.',
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
           actions: [
             Center(
               child: ElevatedButton(
                 onPressed: () {
+                  // Just retry the current level
                   ref.read(gameInstanceProvider.notifier).resetLives();
+                  ref.read(gameOverProvider.notifier).setGameOver(false);
                   _game?.reloadLevel();
-                  if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop();
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                child: const Text('RETRY LEVEL'),
+                child: const Text(
+                  'RETRY LEVEL',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],

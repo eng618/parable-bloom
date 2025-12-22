@@ -110,17 +110,14 @@ final hiveBoxProvider = Provider<Box>((ref) {
 });
 
 final gameProgressProvider =
-    StateNotifierProvider<GameProgressNotifier, GameProgress>((ref) {
-      final box = ref.watch(hiveBoxProvider);
-      return GameProgressNotifier(box);
-    });
+    NotifierProvider<GameProgressNotifier, GameProgress>(
+      GameProgressNotifier.new,
+    );
 
-class GameProgressNotifier extends StateNotifier<GameProgress> {
-  final Box _box;
-
-  GameProgressNotifier(this._box) : super(_loadProgress(_box));
-
-  static GameProgress _loadProgress(Box box) {
+class GameProgressNotifier extends Notifier<GameProgress> {
+  @override
+  GameProgress build() {
+    final box = ref.watch(hiveBoxProvider);
     final data = box.get('progress');
     if (data != null) {
       return GameProgress.fromJson(Map<String, dynamic>.from(data));
@@ -148,46 +145,96 @@ class GameProgressNotifier extends StateNotifier<GameProgress> {
   }
 
   Future<void> _saveProgress() async {
-    await _box.put('progress', state.toJson());
+    final box = ref.read(hiveBoxProvider);
+    await box.put('progress', state.toJson());
   }
 }
 
 // Current level provider
-final currentLevelProvider = StateProvider<LevelData?>((ref) => null);
+final currentLevelProvider = NotifierProvider<CurrentLevelNotifier, LevelData?>(
+  CurrentLevelNotifier.new,
+);
+
+class CurrentLevelNotifier extends Notifier<LevelData?> {
+  @override
+  LevelData? build() => null;
+
+  void setLevel(LevelData? level) {
+    state = level;
+  }
+}
 
 // Level completion state provider
-final levelCompleteProvider = StateProvider<bool>((ref) => false);
+final levelCompleteProvider = NotifierProvider<LevelCompleteNotifier, bool>(
+  LevelCompleteNotifier.new,
+);
+
+class LevelCompleteNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setComplete(bool complete) {
+    state = complete;
+  }
+}
 
 // Total game completion state provider
-final gameCompletedProvider = StateProvider<bool>((ref) => false);
+final gameCompletedProvider = NotifierProvider<GameCompletedNotifier, bool>(
+  GameCompletedNotifier.new,
+);
+
+class GameCompletedNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setCompleted(bool completed) {
+    state = completed;
+  }
+}
 
 // Lives system
-final livesProvider = StateProvider<int>((ref) => 3);
+final livesProvider = NotifierProvider<LivesNotifier, int>(LivesNotifier.new);
+
+class LivesNotifier extends Notifier<int> {
+  @override
+  int build() => 3;
+
+  void setLives(int lives) {
+    state = lives;
+  }
+}
 
 // Game over state provider
-final gameOverProvider = StateProvider<bool>((ref) => false);
+final gameOverProvider = NotifierProvider<GameOverNotifier, bool>(
+  GameOverNotifier.new,
+);
+
+class GameOverNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setGameOver(bool gameOver) {
+    state = gameOver;
+  }
+}
 
 // Game instance provider
 final gameInstanceProvider =
-    StateNotifierProvider<GameInstanceNotifier, GardenGame?>((ref) {
-      return GameInstanceNotifier();
-    });
+    NotifierProvider<GameInstanceNotifier, GardenGame?>(
+      GameInstanceNotifier.new,
+    );
 
 // Theme mode provider with Hive persistence
 enum AppThemeMode { light, dark, system }
 
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeNotifier, AppThemeMode>((ref) {
-      final box = ref.watch(hiveBoxProvider);
-      return ThemeModeNotifier(box);
-    });
+final themeModeProvider = NotifierProvider<ThemeModeNotifier, AppThemeMode>(
+  ThemeModeNotifier.new,
+);
 
-class ThemeModeNotifier extends StateNotifier<AppThemeMode> {
-  final Box _box;
-
-  ThemeModeNotifier(this._box) : super(_loadThemeMode(_box));
-
-  static AppThemeMode _loadThemeMode(Box box) {
+class ThemeModeNotifier extends Notifier<AppThemeMode> {
+  @override
+  AppThemeMode build() {
+    final box = ref.watch(hiveBoxProvider);
     final value = box.get('themeMode', defaultValue: 'system');
     switch (value) {
       case 'light':
@@ -201,28 +248,30 @@ class ThemeModeNotifier extends StateNotifier<AppThemeMode> {
 
   Future<void> setThemeMode(AppThemeMode mode) async {
     state = mode;
-    await _box.put('themeMode', mode.name);
+    final box = ref.read(hiveBoxProvider);
+    await box.put('themeMode', mode.name);
   }
 }
 
-class GameInstanceNotifier extends StateNotifier<GardenGame?> {
-  GameInstanceNotifier() : super(null);
+class GameInstanceNotifier extends Notifier<GardenGame?> {
+  @override
+  GardenGame? build() => null;
 
   void setGame(GardenGame game) {
     state = game;
   }
 
   void resetLives() {
-    state?.ref.read(livesProvider.notifier).state = 3;
-    state?.ref.read(gameOverProvider.notifier).state = false;
+    ref.read(livesProvider.notifier).setLives(3);
+    ref.read(gameOverProvider.notifier).setGameOver(false);
   }
 
   void decrementLives() {
-    final currentLives = state?.ref.read(livesProvider) ?? 0;
+    final currentLives = ref.read(livesProvider);
     if (currentLives > 0) {
-      state?.ref.read(livesProvider.notifier).state = currentLives - 1;
+      ref.read(livesProvider.notifier).setLives(currentLives - 1);
       if (currentLives - 1 == 0) {
-        state?.ref.read(gameOverProvider.notifier).state = true;
+        ref.read(gameOverProvider.notifier).setGameOver(true);
       }
     }
   }
@@ -391,18 +440,18 @@ class LevelSolver {
 }
 
 final vineStatesProvider =
-    StateNotifierProvider<VineStatesNotifier, Map<String, VineState>>((ref) {
-      final levelData = ref.watch(currentLevelProvider);
-      return VineStatesNotifier(levelData, ref);
-    });
+    NotifierProvider<VineStatesNotifier, Map<String, VineState>>(
+      VineStatesNotifier.new,
+    );
 
-class VineStatesNotifier extends StateNotifier<Map<String, VineState>> {
-  final Ref _ref;
+class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   LevelData? _levelData;
 
-  VineStatesNotifier(LevelData? levelData, this._ref)
-    : super(_calculateVineStates(levelData, {})) {
+  @override
+  Map<String, VineState> build() {
+    final levelData = ref.watch(currentLevelProvider);
     _levelData = levelData;
+    return _calculateVineStates(levelData, {});
   }
 
   static Map<String, VineState> _calculateVineStates(
@@ -471,7 +520,7 @@ class VineStatesNotifier extends StateNotifier<Map<String, VineState>> {
       state = {...state, vineId: s.copyWith(hasBeenAttempted: true)};
 
       // Notify parent/provider to decrement lives
-      _ref.read(gameInstanceProvider.notifier).decrementLives();
+      ref.read(gameInstanceProvider.notifier).decrementLives();
     } else if (s.isBlocked && s.hasBeenAttempted) {
       debugPrint(
         'VineStatesNotifier: $vineId already attempted, skipping life decrement',
@@ -489,7 +538,7 @@ class VineStatesNotifier extends StateNotifier<Map<String, VineState>> {
         'VineStatesNotifier: LEVEL COMPLETE detected! Setting levelCompleteProvider to true',
       );
       // Trigger level complete
-      _ref.read(levelCompleteProvider.notifier).state = true;
+      ref.read(levelCompleteProvider.notifier).setComplete(true);
     }
   }
 

@@ -124,16 +124,16 @@ class GardenGame extends FlameGame {
       _currentLevelData = LevelData.fromJson(json.decode(levelJson));
 
       // Update providers
-      ref.read(currentLevelProvider.notifier).state = _currentLevelData;
+      ref.read(currentLevelProvider.notifier).setLevel(_currentLevelData);
 
       // Ensure gameCompleted is false if we found a level
-      ref.read(gameCompletedProvider.notifier).state = false;
+      ref.read(gameCompletedProvider.notifier).setCompleted(false);
 
       debugPrint('Loaded level $levelNumber: ${_currentLevelData!.title}');
     } catch (e) {
       debugPrint('Error loading level $levelNumber: $e');
       // If we can't load the level, it likely means we reached the end
-      ref.read(gameCompletedProvider.notifier).state = true;
+      ref.read(gameCompletedProvider.notifier).setCompleted(true);
     }
   }
 
