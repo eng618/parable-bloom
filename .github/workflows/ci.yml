@@ -18,6 +18,14 @@ jobs:
         with:
           channel: 'stable'
 
+      - name: Retrieve secrets with Bitwarden
+        uses: bitwarden/sm-action@v2
+        with:
+          access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
+          secrets: |
+            FIREBASE_WEB_API_KEY > env:FIREBASE_WEB_API_KEY
+            FIREBASE_PROJECT_ID > env:FIREBASE_PROJECT_ID
+
       - name: Install dependencies
         run: flutter pub get
 

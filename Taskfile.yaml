@@ -1,9 +1,8 @@
 version: '3'
 
 tasks:
-
-# -----------------------------------------------------------------------------
-# Flutter Builds
+  # -----------------------------------------------------------------------------
+  # Flutter Builds
 
   build:web:
     desc: Build the Flutter application
@@ -35,8 +34,8 @@ tasks:
     cmds:
       - flutter build macos --release
 
-# -----------------------------------------------------------------------------
-# Release Builds
+  # -----------------------------------------------------------------------------
+  # Release Builds
 
   release:web:
     desc: Build the web application for release
@@ -64,7 +63,7 @@ tasks:
     cmds:
       - task: clean
       - task: get
-      - task: build:linux 
+      - task: build:linux
 
   release:windows:
     desc: Build the Windows application
@@ -80,8 +79,8 @@ tasks:
       - task: get
       - task: build:macos
 
-# -----------------------------------------------------------------------------
-# Flutter server
+  # -----------------------------------------------------------------------------
+  # Flutter server
 
   serve:web:
     desc: Serve the application locally
@@ -125,8 +124,8 @@ tasks:
     cmds:
       - flutter run -d ios
 
-# -----------------------------------------------------------------------------
-# Deploy
+  # -----------------------------------------------------------------------------
+  # Deploy
 
   deploy:
     desc: Deploy the application to Firebase Hosting
@@ -135,8 +134,8 @@ tasks:
     cmds:
       - firebase deploy --only hosting
 
-# -----------------------------------------------------------------------------
-# Validation and Maintenance
+  # -----------------------------------------------------------------------------
+  # Validation and Maintenance
 
   validate:
     desc: Validate code quality, linting, tests, and build
@@ -146,7 +145,6 @@ tasks:
       - task: lint
       - task: test
       - task: build:web
-
 
   clean:
     desc: Clean the Flutter build cache
@@ -178,8 +176,8 @@ tasks:
     cmds:
       - flutter analyze --no-fatal-infos --no-fatal-warnings
 
-# -----------------------------------------------------------------------------
-# Icons
+  # -----------------------------------------------------------------------------
+  # Icons
 
   generate_icons:
     desc: Generate app icons and favicon for all platforms using flutter_launcher_icons
@@ -191,8 +189,8 @@ tasks:
     cmds:
       - flutter pub run flutter_launcher_icons:main
 
-# -----------------------------------------------------------------------------
-# Dependencies
+  # -----------------------------------------------------------------------------
+  # Dependencies
 
   get:
     desc: Get Flutter dependencies
@@ -204,8 +202,8 @@ tasks:
     cmds:
       - flutter pub upgrade
 
-# -----------------------------------------------------------------------------
-# Firebase
+  # -----------------------------------------------------------------------------
+  # Firebase
 
   firebase:login:
     desc: Log in to Firebase

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../features/game/domain/entities/game_progress.dart';
 import '../features/game/presentation/widgets/garden_game.dart';
 
 // Models for game state
@@ -73,34 +74,6 @@ class LevelData {
       optimalSequence: List<String>.from(json['optimalSequence']),
       optimalMoves: json['optimalMoves'],
     );
-  }
-}
-
-class GameProgress {
-  final int currentLevel;
-  final Set<int> completedLevels;
-
-  GameProgress({required this.currentLevel, required this.completedLevels});
-
-  GameProgress copyWith({int? currentLevel, Set<int>? completedLevels}) {
-    return GameProgress(
-      currentLevel: currentLevel ?? this.currentLevel,
-      completedLevels: completedLevels ?? this.completedLevels,
-    );
-  }
-
-  factory GameProgress.fromJson(Map<String, dynamic> json) {
-    return GameProgress(
-      currentLevel: json['currentLevel'] ?? 1,
-      completedLevels: Set<int>.from(json['completedLevels'] ?? []),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'currentLevel': currentLevel,
-      'completedLevels': completedLevels.toList(),
-    };
   }
 }
 
