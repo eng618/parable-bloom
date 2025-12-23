@@ -22,9 +22,10 @@ jobs:
         uses: bitwarden/sm-action@v2
         with:
           access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
+          base_url: https://vault.bitwarden.com
           secrets: |
-            64bbf80e-0fbb-4a23-8dfa-b3bc00330e7f > env:FIREBASE_WEB_API_KEY
-            3e6acbf7-a652-4a79-9e41-b3bc003318b4 > env:FIREBASE_PROJECT_ID
+            64bbf80e-0fbb-4a23-8dfa-b3bc00330e7f > FIREBASE_WEB_API_KEY
+            3e6acbf7-a652-4a79-9e41-b3bc003318b4 > FIREBASE_PROJECT_ID
 
       - name: Install dependencies
         run: flutter pub get
