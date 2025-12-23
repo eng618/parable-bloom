@@ -9,6 +9,7 @@ import '../features/game/data/repositories/hive_game_progress_repository.dart';
 import '../features/game/domain/entities/game_progress.dart';
 import '../features/game/domain/repositories/game_progress_repository.dart';
 import '../features/game/presentation/widgets/garden_game.dart';
+import '../services/analytics_service.dart';
 
 // Models for game state
 class VineData {
@@ -95,6 +96,45 @@ final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
   return FirebaseAuth.instance;
 });
 
+final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
+  throw UnimplementedError('AnalyticsService must be initialized in main');
+});
+
+// Level tap tracking providers
+final levelTotalTapsProvider = NotifierProvider<LevelTotalTapsNotifier, int>(
+  LevelTotalTapsNotifier.new,
+);
+
+class LevelTotalTapsNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void increment() {
+    state++;
+  }
+
+  void reset() {
+    state = 0;
+  }
+}
+
+final levelWrongTapsProvider = NotifierProvider<LevelWrongTapsNotifier, int>(
+  LevelWrongTapsNotifier.new,
+);
+
+class LevelWrongTapsNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void increment() {
+    state++;
+  }
+
+  void reset() {
+    state = 0;
+  }
+}
+
 // Repository providers
 final localGameProgressRepositoryProvider = Provider<GameProgressRepository>((
   ref,
@@ -171,6 +211,13 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     );
 
     await _saveProgress(newProgress);
+
+    // Log level complete analytics
+    final totalTaps = ref.read(levelTotalTapsProvider);
+    final wrongTaps = ref.read(levelWrongTapsProvider);
+    ref
+        .read(analyticsServiceProvider)
+        .logLevelComplete(levelNumber, totalTaps, wrongTaps);
   }
 
   Future<void> resetProgress() async {
@@ -593,6 +640,18 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
         'VineStatesNotifier: Marking $vineId as attempted and decrementing life',
       );
       state = {...state, vineId: s.copyWith(hasBeenAttempted: true)};
+
+      // Increment wrong taps counter
+      ref.read(levelWrongTapsProvider.notifier).increment();
+
+      // Log wrong tap analytics
+      final currentLevel = ref.read(currentLevelProvider);
+      final remainingLives = ref.read(livesProvider);
+      if (currentLevel != null) {
+        ref
+            .read(analyticsServiceProvider)
+            .logWrongTap(currentLevel.levelNumber, remainingLives);
+      }
 
       // Notify parent/provider to decrement lives
       ref.read(gameInstanceProvider.notifier).decrementLives();

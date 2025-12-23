@@ -129,6 +129,13 @@ class GardenGame extends FlameGame {
       // Ensure gameCompleted is false if we found a level
       ref.read(gameCompletedProvider.notifier).setCompleted(false);
 
+      // Reset tap counters for new level
+      ref.read(levelTotalTapsProvider.notifier).reset();
+      ref.read(levelWrongTapsProvider.notifier).reset();
+
+      // Log level start analytics
+      ref.read(analyticsServiceProvider).logLevelStart(levelNumber);
+
       debugPrint('Loaded level $levelNumber: ${_currentLevelData!.title}');
     } catch (e) {
       debugPrint('Error loading level $levelNumber: $e');

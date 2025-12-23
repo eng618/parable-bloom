@@ -109,6 +109,9 @@ class GridComponent extends PositionComponent
 
   // Handle cell tap from child CellComponent
   void handleCellTap(int row, int col) {
+    // Increment total taps counter
+    parent.ref.read(levelTotalTapsProvider.notifier).increment();
+
     final clickedVine = _getVineAtCell(row, col);
 
     if (clickedVine == null) return;

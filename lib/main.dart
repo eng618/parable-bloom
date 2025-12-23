@@ -7,12 +7,17 @@ import 'app.dart';
 import 'core/di/injection_container.dart' as di;
 import 'firebase_options.dart';
 import 'providers/game_providers.dart';
+import 'services/analytics_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase with FlutterFire-generated options
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Analytics
+  final analyticsService = AnalyticsService();
+  await analyticsService.init();
 
   // Initialize Hive
   await Hive.initFlutter();
@@ -23,7 +28,10 @@ void main() async {
 
   runApp(
     ProviderScope(
-      overrides: [hiveBoxProvider.overrideWithValue(hiveBox)],
+      overrides: [
+        hiveBoxProvider.overrideWithValue(hiveBox),
+        analyticsServiceProvider.overrideWithValue(analyticsService),
+      ],
       child: const ParableBloomApp(),
     ),
   );

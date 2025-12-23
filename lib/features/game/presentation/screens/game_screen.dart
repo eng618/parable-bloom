@@ -342,6 +342,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _showGameOverDialog() {
+    // Log game over analytics
+    final currentLevel = ref.read(currentLevelProvider);
+    if (currentLevel != null) {
+      ref.read(analyticsServiceProvider).logGameOver(currentLevel.levelNumber);
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
