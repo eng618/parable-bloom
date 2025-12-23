@@ -91,6 +91,63 @@ Once you've completed steps 1-2, the CI workflow will automatically:
 - [GitHub Actions Secrets Documentation](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
 - [Firebase Flutter Documentation](https://firebase.google.com/docs/flutter/setup)
 
+## 🚀 Local Development Setup
+
+### Automated Firebase Configuration
+
+Firebase config files are **automatically generated** for local development using the secure setup script. No manual file creation needed!
+
+#### **Prerequisites:**
+
+1. **Bitwarden CLI** (`bw`) installed and logged in
+2. **Bitwarden Secrets CLI** (`bws`) installed
+3. Access to the `parable-bloom` Bitwarden project
+
+#### **One-Command Setup:**
+
+```bash
+# Using Task (recommended)
+task setup:firebase
+
+# Or directly
+./scripts/setup-firebase.sh
+```
+
+**What the script does:**
+
+1. ✅ Checks Bitwarden CLI authentication
+2. ✅ Retrieves Firebase secrets securely from Bitwarden
+3. ✅ Generates all platform config files automatically
+4. ✅ Provides clear success/error feedback
+
+#### **Generated Files:**
+
+- **`android/app/google-services.json`** - Android Firebase config
+- **`ios/Runner/GoogleService-Info.plist`** - iOS Firebase config
+- **`web/firebase-config.js`** - Web Firebase config
+
+#### **Security Notes:**
+
+- 🔐 Files contain API keys but are excluded from version control
+- 🔐 Secrets retrieved securely via Bitwarden CLI
+- 🔐 No sensitive data stored locally except during development
+- ⚠️ Never commit these generated files to version control
+
+#### **Manual Setup (Alternative):**
+
+If you prefer manual setup or don't have Bitwarden CLI access, create the files manually as shown in the [CI/CD Auto-Generation](#cicd-auto-generation) section.
+
+#### **CI/CD Auto-Generation:**
+
+During GitHub Actions builds, these files are **automatically generated** from Bitwarden secrets:
+
+1. Bitwarden provides `FIREBASE_WEB_API_KEY` and `FIREBASE_PROJECT_ID`
+2. CI script generates platform-specific config files
+3. Flutter builds use the generated configs
+4. Files are temporary and not committed back to repo
+
+**Security**: Config files contain API keys but are generated fresh for each build and never committed.
+
 ---
 
 **Status**: 🔄 **Awaiting Service Account Setup** - Complete steps 1-2 above, then CI will work automatically.

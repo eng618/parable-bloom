@@ -27,6 +27,92 @@ jobs:
             64bbf80e-0fbb-4a23-8dfa-b3bc00330e7f > FIREBASE_WEB_API_KEY
             3e6acbf7-a652-4a79-9e41-b3bc003318b4 > FIREBASE_PROJECT_ID
 
+      - name: Generate Firebase config files
+        run: |
+          # Create Android google-services.json
+          mkdir -p android/app
+          cat > android/app/google-services.json << EOF
+          {
+            "project_info": {
+              "project_number": "1005379493386",
+              "project_id": "${FIREBASE_PROJECT_ID}",
+              "storage_bucket": "${FIREBASE_PROJECT_ID}.firebasestorage.app"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:1005379493386:android:cb48ba8767aa471f1789f3",
+                  "android_client_info": {
+                    "package_name": "com.garciaericn.parable_bloom"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [
+                  {
+                    "current_key": "${FIREBASE_WEB_API_KEY}"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+
+          # Create iOS GoogleService-Info.plist
+          mkdir -p ios/Runner
+          cat > ios/Runner/GoogleService-Info.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+          	<key>API_KEY</key>
+          	<string>${FIREBASE_WEB_API_KEY}</string>
+          	<key>GCM_SENDER_ID</key>
+          	<string>1005379493386</string>
+          	<key>PLIST_VERSION</key>
+          	<string>1</string>
+          	<key>BUNDLE_ID</key>
+          	<string>com.garciaericn.parablebloom</string>
+          	<key>PROJECT_ID</key>
+          	<string>${FIREBASE_PROJECT_ID}</string>
+          	<key>STORAGE_BUCKET</key>
+          	<string>${FIREBASE_PROJECT_ID}.firebasestorage.app</string>
+          	<key>IS_ADS_ENABLED</key>
+          	<false></false>
+          	<key>IS_ANALYTICS_ENABLED</key>
+          	<false></false>
+          	<key>IS_APPINVITE_ENABLED</key>
+          	<true></true>
+          	<key>IS_GCM_ENABLED</key>
+          	<true></true>
+          	<key>IS_SIGNIN_ENABLED</key>
+          	<true></true>
+          	<key>GOOGLE_APP_ID</key>
+          	<string>1:1005379493386:ios:74f559f1cf97c8ef1789f3</string>
+          </dict>
+          </plist>
+          EOF
+
+          # Create web firebase-config.js
+          cat > web/firebase-config.js << EOF
+          // Firebase Configuration for Parable Bloom Web App
+          // Generated automatically from CI secrets
+          window.firebaseConfig = {
+            apiKey: "${FIREBASE_WEB_API_KEY}",
+            authDomain: "${FIREBASE_PROJECT_ID}.firebaseapp.com",
+            projectId: "${FIREBASE_PROJECT_ID}",
+            storageBucket: "${FIREBASE_PROJECT_ID}.firebasestorage.app",
+            messagingSenderId: "1005379493386",
+            appId: "1:1005379493386:web:8477bb3a66efd9f81789f3",
+            measurementId: "G-9YV8X65ZNY"
+          };
+          EOF
+
       - name: Install dependencies
         run: flutter pub get
 

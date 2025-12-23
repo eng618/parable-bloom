@@ -249,3 +249,11 @@ tasks:
     desc: Deploy all Firebase services
     cmds:
       - firebase deploy
+
+  # -----------------------------------------------------------------------------
+  # Local Development Setup
+
+  setup:firebase:
+    desc: Set up Firebase configuration files for local development using Bitwarden
+    cmds:
+      - ./scripts/setup-firebase.sh
