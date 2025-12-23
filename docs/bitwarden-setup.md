@@ -14,6 +14,7 @@
 
 - Updated `.github/workflows/ci.yml` to retrieve secrets automatically
 - Uses official `bitwarden/sm-action@v2` GitHub Action
+- **Uses secret UUIDs** (not names) for secure retrieval
 - Secrets injected as environment variables during builds
 
 ## 🔧 Manual Setup Required
@@ -72,9 +73,10 @@ Once you've completed steps 1-2, the CI workflow will automatically:
 ### Secrets Not Available in Build
 
 - Confirm the `bitwarden/sm-action@v2` syntax in the workflow
+- **Verify you're using secret UUIDs** (not names) in the `secrets` parameter
 - Check that secrets are properly mapped in the `secrets` parameter
-- Verify secret names match between Bitwarden and the workflow
 - Ensure the service account has access to the specified project
+- Get secret UUIDs from Bitwarden web interface or `bws secret list`
 
 ## 🔐 Security Notes
 
