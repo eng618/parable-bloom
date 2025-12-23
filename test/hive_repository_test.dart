@@ -1,26 +1,44 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:parable_bloom/features/game/data/repositories/hive_game_progress_repository.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
+import 'package:path/path.dart' as path;
 
 void main() {
   late Box box;
   late HiveGameProgressRepository repository;
+  late Directory tempDir;
 
   setUpAll(() async {
-    // Use in-memory adapter for testing
-    Hive.init(null);
+    // Create a temporary directory for testing
+    tempDir = await Directory.systemTemp.createTemp('hive_test_');
+    // Initialize Hive with the temp directory
+    Hive.init(tempDir.path);
   });
 
   setUp(() async {
-    box = await Hive.openBox('test_box', bytes: null);
+    // Create a unique test box for each test to avoid conflicts
+    final boxName = 'test_box_hive_${DateTime.now().millisecondsSinceEpoch}';
+    box = await Hive.openBox(boxName);
     repository = HiveGameProgressRepository(box);
   });
 
   tearDown(() async {
     await box.clear();
     await box.close();
+    // Delete the box to free resources
+    await Hive.deleteBoxFromDisk(box.name);
+  });
+
+  tearDownAll(() async {
+    // Clean up Hive after all tests
+    await Hive.close();
+    // Clean up temp directory
+    if (tempDir.existsSync()) {
+      tempDir.deleteSync(recursive: true);
+    }
   });
 
   group('HiveGameProgressRepository', () {

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
@@ -26,15 +27,20 @@ void main() {
   late MockFirebaseAuth mockAuth;
   late MockFirebaseFirestore mockFirestore;
   late FirebaseGameProgressRepository repository;
+  late Directory tempDir;
 
   setUpAll(() async {
-    // Use in-memory adapter for testing (same as hive test)
-    Hive.init(null);
+    // Create a temporary directory for testing
+    tempDir = await Directory.systemTemp.createTemp('hive_firebase_test_');
+    // Initialize Hive with the temp directory
+    Hive.init(tempDir.path);
   });
 
   setUp(() async {
-    // Create a test box (same as hive test)
-    box = await Hive.openBox('test_box', bytes: null);
+    // Create a unique test box for each test to avoid conflicts
+    final boxName =
+        'test_box_firebase_${DateTime.now().millisecondsSinceEpoch}';
+    box = await Hive.openBox(boxName);
 
     // Mock Firebase Auth with a signed-in anonymous user
     final mockUser = MockUser(uid: 'test-user-id');
@@ -49,6 +55,17 @@ void main() {
   tearDown(() async {
     await box.clear();
     await box.close();
+    // Delete the box to free resources
+    await Hive.deleteBoxFromDisk(box.name);
+  });
+
+  tearDownAll(() async {
+    // Clean up Hive after all tests
+    await Hive.close();
+    // Clean up temp directory
+    if (tempDir.existsSync()) {
+      tempDir.deleteSync(recursive: true);
+    }
   });
 
   group('FirebaseGameProgressRepository', () {
