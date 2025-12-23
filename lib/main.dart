@@ -1,38 +1,18 @@
-import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
 import 'core/di/injection_container.dart' as di;
+import 'firebase_options.dart';
 import 'providers/game_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase with platform-specific options
-  if (kIsWeb) {
-    // For web, provide FirebaseOptions that match the firebase-config.js
-    // These values are replaced during CI builds with real secrets
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "FIREBASE_WEB_API_KEY_PLACEHOLDER",
-        authDomain: "FIREBASE_PROJECT_ID_PLACEHOLDER.firebaseapp.com",
-        projectId: "FIREBASE_PROJECT_ID_PLACEHOLDER",
-        storageBucket: "FIREBASE_PROJECT_ID_PLACEHOLDER.firebasestorage.app",
-        messagingSenderId: "1005379493386",
-        appId: "1:1005379493386:web:8477bb3a66efd9f81789f3",
-        measurementId: "G-9YV8X65ZNY",
-      ),
-    );
-  } else {
-    // For mobile, initialize with default options
-    // The native config files (google-services.json / GoogleService-Info.plist)
-    // will be used automatically
-    await Firebase.initializeApp();
-  }
+  // Initialize Firebase with FlutterFire-generated options
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Initialize Hive
   await Hive.initFlutter();

@@ -18,104 +18,14 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Retrieve secrets with Bitwarden
-        uses: bitwarden/sm-action@v2
-        with:
-          access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
-          base_url: https://vault.bitwarden.com
-          secrets: |
-            64bbf80e-0fbb-4a23-8dfa-b3bc00330e7f > FIREBASE_WEB_API_KEY
-            3e6acbf7-a652-4a79-9e41-b3bc003318b4 > FIREBASE_PROJECT_ID
-
-      - name: Generate Firebase config files
+      - name: Configure Firebase with FlutterFire CLI
         run: |
-          # Create Android google-services.json
-          mkdir -p android/app
-          cat > android/app/google-services.json << EOF
-          {
-            "project_info": {
-              "project_number": "1005379493386",
-              "project_id": "${FIREBASE_PROJECT_ID}",
-              "storage_bucket": "${FIREBASE_PROJECT_ID}.firebasestorage.app"
-            },
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:1005379493386:android:cb48ba8767aa471f1789f3",
-                  "android_client_info": {
-                    "package_name": "com.garciaericn.parable_bloom"
-                  }
-                },
-                "oauth_client": [],
-                "api_key": [
-                  {
-                    "current_key": "${FIREBASE_WEB_API_KEY}"
-                  }
-                ],
-                "services": {
-                  "appinvite_service": {
-                    "other_platform_oauth_client": []
-                  }
-                }
-              }
-            ],
-            "configuration_version": "1"
-          }
-          EOF
+          # Install FlutterFire CLI globally (if not already installed)
+          dart pub global activate flutterfire_cli
 
-          # Create iOS GoogleService-Info.plist
-          mkdir -p ios/Runner
-          cat > ios/Runner/GoogleService-Info.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-          	<key>API_KEY</key>
-          	<string>${FIREBASE_WEB_API_KEY}</string>
-          	<key>GCM_SENDER_ID</key>
-          	<string>1005379493386</string>
-          	<key>PLIST_VERSION</key>
-          	<string>1</string>
-          	<key>BUNDLE_ID</key>
-          	<string>com.garciaericn.parablebloom</string>
-          	<key>PROJECT_ID</key>
-          	<string>${FIREBASE_PROJECT_ID}</string>
-          	<key>STORAGE_BUCKET</key>
-          	<string>${FIREBASE_PROJECT_ID}.firebasestorage.app</string>
-          	<key>IS_ADS_ENABLED</key>
-          	<false></false>
-          	<key>IS_ANALYTICS_ENABLED</key>
-          	<false></false>
-          	<key>IS_APPINVITE_ENABLED</key>
-          	<true></true>
-          	<key>IS_GCM_ENABLED</key>
-          	<true></true>
-          	<key>IS_SIGNIN_ENABLED</key>
-          	<true></true>
-          	<key>GOOGLE_APP_ID</key>
-          	<string>1:1005379493386:ios:74f559f1cf97c8ef1789f3</string>
-          </dict>
-          </plist>
-          EOF
-
-          # Create web firebase-config.js
-          cat > web/firebase-config.js << EOF
-          // Firebase Configuration for Parable Bloom Web App
-          // Generated automatically from CI secrets
-          window.firebaseConfig = {
-            apiKey: "${FIREBASE_WEB_API_KEY}",
-            authDomain: "${FIREBASE_PROJECT_ID}.firebaseapp.com",
-            projectId: "${FIREBASE_PROJECT_ID}",
-            storageBucket: "${FIREBASE_PROJECT_ID}.firebasestorage.app",
-            messagingSenderId: "1005379493386",
-            appId: "1:1005379493386:web:8477bb3a66efd9f81789f3",
-            measurementId: "G-9YV8X65ZNY"
-          };
-          EOF
-
-          # Replace placeholders in main.dart for web builds
-          sed -i "s/FIREBASE_WEB_API_KEY_PLACEHOLDER/${FIREBASE_WEB_API_KEY}/g" lib/main.dart
-          sed -i "s/FIREBASE_PROJECT_ID_PLACEHOLDER/${FIREBASE_PROJECT_ID}/g" lib/main.dart
+          # Configure Firebase for the project
+          # FlutterFire will automatically download and configure platform-specific files
+          flutterfire configure --project=parableweave --platforms=android,ios,web --yes
 
       - name: Install dependencies
         run: flutter pub get

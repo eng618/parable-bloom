@@ -1,0 +1,22 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "parableweave",
+          "appId": "1:1005379493386:android:cb48ba8767aa471f1789f3",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "parableweave",
+          "configurations": {
+            "android": "1:1005379493386:android:cb48ba8767aa471f1789f3",
+            "web": "1:1005379493386:web:8477bb3a66efd9f81789f3"
+          }
+        }
+      }
+    }
+  }
+}

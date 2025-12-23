@@ -251,9 +251,32 @@ tasks:
       - firebase deploy
 
   # -----------------------------------------------------------------------------
-  # Local Development Setup
+  # Firebase
+
+  firebase:configure:
+    desc: Configure Firebase using FlutterFire CLI for all platforms
+    cmds:
+      - flutterfire configure --project=parableweave --platforms=android,ios,web --yes
+
+  firebase:configure:android:
+    desc: Configure Firebase for Android only
+    cmds:
+      - flutterfire configure --project=parableweave --platforms=android --yes
+
+  firebase:configure:ios:
+    desc: Configure Firebase for iOS only
+    cmds:
+      - flutterfire configure --project=parableweave --platforms=ios --yes
+
+  firebase:configure:web:
+    desc: Configure Firebase for Web only
+    cmds:
+      - flutterfire configure --project=parableweave --platforms=web --yes
+
+  # -----------------------------------------------------------------------------
+  # Local Development Setup (Legacy)
 
   setup:firebase:
-    desc: Set up Firebase configuration files for local development using Bitwarden
+    desc: Set up Firebase configuration files for local development using Bitwarden (legacy)
     cmds:
       - ./scripts/setup-firebase.sh

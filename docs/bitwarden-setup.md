@@ -93,60 +93,73 @@ Once you've completed steps 1-2, the CI workflow will automatically:
 
 ## 🚀 Local Development Setup
 
-### Automated Firebase Configuration
+### FlutterFire CLI Configuration
 
-Firebase config files are **automatically generated** for local development using the secure setup script. No manual file creation needed!
+Firebase configuration is now managed by **FlutterFire CLI** for maximum reliability and simplicity. No manual secret handling required!
 
 #### **Prerequisites:**
 
-1. **Bitwarden CLI** (`bw`) installed and logged in
-2. **Bitwarden Secrets CLI** (`bws`) installed
-3. Access to the `parable-bloom` Bitwarden project
+1. **FlutterFire CLI** installed globally: `dart pub global activate flutterfire_cli`
+2. **Firebase project access** (automatically configured via FlutterFire)
 
 #### **One-Command Setup:**
 
 ```bash
-# Using Task (recommended)
-task setup:firebase
+# Configure Firebase for all platforms
+flutterfire configure --project=parableweave --platforms=android,ios,web --yes
 
-# Or directly
-./scripts/setup-firebase.sh
+# Or using Task
+task firebase:configure
 ```
 
-**What the script does:**
+**What FlutterFire CLI does:**
 
-1. ✅ Checks Bitwarden CLI authentication
-2. ✅ Retrieves Firebase secrets securely from Bitwarden
-3. ✅ Generates all platform config files automatically
-4. ✅ Provides clear success/error feedback
+1. ✅ Connects to your Firebase project
+2. ✅ Downloads official Firebase configuration files
+3. ✅ Generates `lib/firebase_options.dart` with proper FirebaseOptions
+4. ✅ Updates platform-specific config files automatically
 
 #### **Generated Files:**
 
-- **`android/app/google-services.json`** - Android Firebase config
-- **`ios/Runner/GoogleService-Info.plist`** - iOS Firebase config
-- **`web/firebase-config.js`** - Web Firebase config
+- **`lib/firebase_options.dart`** - **NEW** FlutterFire-generated options class
+- **`android/app/google-services.json`** - Official Android Firebase config
+- **`ios/Runner/GoogleService-Info.plist`** - Official iOS Firebase config
+- **`web/firebase-config.js`** - Web Firebase config (if needed)
 
-#### **Security Notes:**
+#### **Usage in Code:**
 
-- 🔐 Files contain API keys but are excluded from version control
-- 🔐 Secrets retrieved securely via Bitwarden CLI
-- 🔐 No sensitive data stored locally except during development
-- ⚠️ Never commit these generated files to version control
+```dart
+// main.dart - now uses FlutterFire-generated options
+import 'firebase_options.dart';
 
-#### **Manual Setup (Alternative):**
+await Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform, // ← Automatically handles platform detection
+);
+```
 
-If you prefer manual setup or don't have Bitwarden CLI access, create the files manually as shown in the [CI/CD Auto-Generation](#cicd-auto-generation) section.
+#### **Security & Reliability:**
 
-#### **CI/CD Auto-Generation:**
+- 🔐 **Official Firebase configuration** - No manual API key handling
+- 🔐 **Platform-specific options** - Correct config for each platform
+- 🔐 **Version controlled** - `firebase_options.dart` is safe to commit
+- ⚠️ Platform config files are still excluded from version control
 
-During GitHub Actions builds, these files are **automatically generated** from Bitwarden secrets:
+#### **CI/CD Integration:**
 
-1. Bitwarden provides `FIREBASE_WEB_API_KEY` and `FIREBASE_PROJECT_ID`
-2. CI script generates platform-specific config files
-3. Flutter builds use the generated configs
-4. Files are temporary and not committed back to repo
+GitHub Actions now uses FlutterFire CLI:
 
-**Security**: Config files contain API keys but are generated fresh for each build and never committed.
+```yaml
+- name: Configure Firebase with FlutterFire CLI
+  run: |
+    dart pub global activate flutterfire_cli
+    flutterfire configure --project=parableweave --platforms=android,ios,web --yes
+```
+
+**Result**: Consistent, official Firebase configuration across all environments!
+
+#### **Legacy Manual Setup (Not Recommended):**
+
+The old Bitwarden-based script (`./scripts/setup-firebase.sh`) is still available but **FlutterFire CLI is now the recommended approach** for its official support and reliability.
 
 ---
 
