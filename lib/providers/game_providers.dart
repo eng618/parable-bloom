@@ -1,8 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../features/game/data/repositories/firebase_game_progress_repository.dart';
+import '../features/game/data/repositories/hive_game_progress_repository.dart';
 import '../features/game/domain/entities/game_progress.dart';
+import '../features/game/domain/repositories/game_progress_repository.dart';
 import '../features/game/presentation/widgets/garden_game.dart';
 
 // Models for game state
@@ -82,20 +87,76 @@ final hiveBoxProvider = Provider<Box>((ref) {
   throw UnimplementedError('Hive box must be initialized in main');
 });
 
+final firestoreProvider = Provider<FirebaseFirestore>((ref) {
+  return FirebaseFirestore.instance;
+});
+
+final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
+  return FirebaseAuth.instance;
+});
+
+// Repository providers
+final localGameProgressRepositoryProvider = Provider<GameProgressRepository>((
+  ref,
+) {
+  final box = ref.watch(hiveBoxProvider);
+  return HiveGameProgressRepository(box);
+});
+
+final cloudGameProgressRepositoryProvider = Provider<GameProgressRepository>((
+  ref,
+) {
+  final box = ref.watch(hiveBoxProvider);
+  final firestore = ref.watch(firestoreProvider);
+  final auth = ref.watch(firebaseAuthProvider);
+  return FirebaseGameProgressRepository(box, firestore, auth);
+});
+
+// Current repository selector - defaults to local, can be switched to cloud
+final gameProgressRepositoryProvider = Provider<GameProgressRepository>((ref) {
+  // For now, use local repository. In the future, this could check user preferences
+  // and return either local or cloud repository based on sync settings
+  return ref.watch(localGameProgressRepositoryProvider);
+});
+
 final gameProgressProvider =
     NotifierProvider<GameProgressNotifier, GameProgress>(
       GameProgressNotifier.new,
     );
 
+// Cloud sync state provider
+final cloudSyncEnabledProvider = FutureProvider<bool>((ref) async {
+  final notifier = ref.watch(gameProgressProvider.notifier);
+  return notifier.isCloudSyncEnabled();
+});
+
+final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
+  final notifier = ref.watch(gameProgressProvider.notifier);
+  return notifier.isCloudSyncAvailable();
+});
+
+final lastSyncTimeProvider = FutureProvider<DateTime?>((ref) async {
+  final notifier = ref.watch(gameProgressProvider.notifier);
+  return notifier.getLastSyncTime();
+});
+
 class GameProgressNotifier extends Notifier<GameProgress> {
   @override
   GameProgress build() {
-    final box = ref.watch(hiveBoxProvider);
-    final data = box.get('progress');
-    if (data != null) {
-      return GameProgress.fromJson(Map<String, dynamic>.from(data));
+    // For initial build, return initial state
+    // Data will be loaded via initialize() method
+    return GameProgress.initial();
+  }
+
+  Future<void> initialize() async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    try {
+      final progress = await repository.getProgress();
+      state = progress;
+    } catch (e) {
+      // If loading fails, keep initial state
+      state = GameProgress.initial();
     }
-    return GameProgress(currentLevel: 1, completedLevels: {});
   }
 
   Future<void> completeLevel(int levelNumber) async {
@@ -104,22 +165,63 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     // Increment level number - GardenGame will handle detection of end of levels
     final newCurrentLevel = levelNumber + 1;
 
-    state = state.copyWith(
+    final newProgress = state.copyWith(
       completedLevels: newCompletedLevels,
       currentLevel: newCurrentLevel,
     );
 
-    await _saveProgress();
+    await _saveProgress(newProgress);
   }
 
   Future<void> resetProgress() async {
-    state = GameProgress(currentLevel: 1, completedLevels: {});
-    await _saveProgress();
+    final repository = ref.read(gameProgressRepositoryProvider);
+    await repository.resetProgress();
+    state = GameProgress.initial();
   }
 
-  Future<void> _saveProgress() async {
-    final box = ref.read(hiveBoxProvider);
-    await box.put('progress', state.toJson());
+  Future<void> _saveProgress(GameProgress progress) async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    await repository.saveProgress(progress);
+    state = progress;
+  }
+
+  // Cloud sync methods
+  Future<void> enableCloudSync() async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    if (repository is FirebaseGameProgressRepository) {
+      await repository.setCloudSyncEnabled(true);
+    }
+  }
+
+  Future<void> disableCloudSync() async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    if (repository is FirebaseGameProgressRepository) {
+      await repository.setCloudSyncEnabled(false);
+    }
+  }
+
+  Future<bool> isCloudSyncEnabled() async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    return await repository.isCloudSyncEnabled();
+  }
+
+  Future<bool> isCloudSyncAvailable() async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    return await repository.isCloudSyncAvailable();
+  }
+
+  Future<DateTime?> getLastSyncTime() async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    return await repository.getLastSyncTime();
+  }
+
+  Future<void> manualSync() async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    if (repository is FirebaseGameProgressRepository) {
+      await repository.syncFromCloud();
+      // Reload local data after sync
+      await initialize();
+    }
   }
 }
 
