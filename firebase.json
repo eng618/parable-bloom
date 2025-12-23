@@ -13,8 +13,27 @@
           "projectId": "parableweave",
           "configurations": {
             "android": "1:1005379493386:android:cb48ba8767aa471f1789f3",
-            "web": "1:1005379493386:web:8477bb3a66efd9f81789f3"
+            "ios": "1:1005379493386:ios:74f559f1cf97c8ef1789f3",
+            "macos": "1:1005379493386:ios:74f559f1cf97c8ef1789f3",
+            "web": "1:1005379493386:web:8477bb3a66efd9f81789f3",
+            "windows": "1:1005379493386:web:5ce12bd5f2d2825b1789f3"
           }
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "parableweave",
+          "appId": "1:1005379493386:ios:74f559f1cf97c8ef1789f3",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "parableweave",
+          "appId": "1:1005379493386:ios:74f559f1cf97c8ef1789f3",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
         }
       }
     }

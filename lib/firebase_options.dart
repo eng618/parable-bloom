@@ -23,20 +23,11 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -66,4 +57,33 @@ class DefaultFirebaseOptions {
     projectId: 'parableweave',
     storageBucket: 'parableweave.firebasestorage.app',
   );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCM58jPRARKT7ZrznXTqXydbUw2Wpnusuw',
+    appId: '1:1005379493386:ios:74f559f1cf97c8ef1789f3',
+    messagingSenderId: '1005379493386',
+    projectId: 'parableweave',
+    storageBucket: 'parableweave.firebasestorage.app',
+    iosBundleId: 'com.garciaericn.parablebloom',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyCM58jPRARKT7ZrznXTqXydbUw2Wpnusuw',
+    appId: '1:1005379493386:ios:74f559f1cf97c8ef1789f3',
+    messagingSenderId: '1005379493386',
+    projectId: 'parableweave',
+    storageBucket: 'parableweave.firebasestorage.app',
+    iosBundleId: 'com.garciaericn.parablebloom',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyC8S6rx2GX1bms80Dpad48GOLRU5DTNe3U',
+    appId: '1:1005379493386:web:5ce12bd5f2d2825b1789f3',
+    messagingSenderId: '1005379493386',
+    projectId: 'parableweave',
+    authDomain: 'parableweave.firebaseapp.com',
+    storageBucket: 'parableweave.firebasestorage.app',
+    measurementId: 'G-EYGHBP8ZLZ',
+  );
+
 }
