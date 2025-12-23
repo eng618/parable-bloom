@@ -135,6 +135,21 @@ tasks:
       - firebase deploy --only hosting
 
   # -----------------------------------------------------------------------------
+  # Firebase Hosting
+
+  hosting:deploy:
+    desc: Deploy to Firebase Hosting (manual token)
+    cmds:
+      - firebase deploy --only hosting
+    env:
+      FIREBASE_TOKEN: '{{bitwarden "item" "parableweave" "field" "firebase_token"}}' # Generate once via firebase login:ci
+
+  hosting:preview:
+    desc: Deploy preview channel
+    cmds:
+      - firebase hosting:channel:deploy pr-${{PR_NUMBER}} # Manual for now
+
+  # -----------------------------------------------------------------------------
   # Validation and Maintenance
 
   validate:

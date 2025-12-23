@@ -85,5 +85,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'parableweave.firebasestorage.app',
     measurementId: 'G-EYGHBP8ZLZ',
   );
-
 }

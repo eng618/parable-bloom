@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -215,9 +217,11 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     // Log level complete analytics
     final totalTaps = ref.read(levelTotalTapsProvider);
     final wrongTaps = ref.read(levelWrongTapsProvider);
-    ref
-        .read(analyticsServiceProvider)
-        .logLevelComplete(levelNumber, totalTaps, wrongTaps);
+    unawaited(
+      ref
+          .read(analyticsServiceProvider)
+          .logLevelComplete(levelNumber, totalTaps, wrongTaps),
+    );
   }
 
   Future<void> resetProgress() async {
