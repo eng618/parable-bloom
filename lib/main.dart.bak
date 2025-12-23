@@ -18,7 +18,7 @@ void main() async {
     // These values are replaced during CI builds with real secrets
     await Firebase.initializeApp(
       options: const FirebaseOptions(
-        apiKey: "FIREBASE_WEB_API_KEY_PLACEHOLDER",
+        apiKey: "AIzaSyC8S6rx2GX1bms80Dpad48GOLRU5DTNe3U",
         authDomain: "FIREBASE_PROJECT_ID_PLACEHOLDER.firebaseapp.com",
         projectId: "FIREBASE_PROJECT_ID_PLACEHOLDER",
         storageBucket: "FIREBASE_PROJECT_ID_PLACEHOLDER.firebasestorage.app",

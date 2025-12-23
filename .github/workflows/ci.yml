@@ -113,6 +113,10 @@ jobs:
           };
           EOF
 
+          # Replace placeholders in main.dart for web builds
+          sed -i "s/FIREBASE_WEB_API_KEY_PLACEHOLDER/${FIREBASE_WEB_API_KEY}/g" lib/main.dart
+          sed -i "s/FIREBASE_PROJECT_ID_PLACEHOLDER/${FIREBASE_PROJECT_ID}/g" lib/main.dart
+
       - name: Install dependencies
         run: flutter pub get
 

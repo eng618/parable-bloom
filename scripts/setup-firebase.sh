@@ -176,7 +176,7 @@ EOF
 }
 
 # Generate web firebase-config.js
-generate_web_config() {
+  generate_web_config() {
     print_status "Generating web configuration..."
 
     cat > web/firebase-config.js << EOF
@@ -194,6 +194,13 @@ window.firebaseConfig = {
 EOF
 
     print_success "Generated web/firebase-config.js"
+
+    # Also replace placeholders in main.dart for local development
+    if [[ -f "lib/main.dart" ]]; then
+      sed -i.bak "s/FIREBASE_WEB_API_KEY_PLACEHOLDER/${FIREBASE_WEB_API_KEY}/g" lib/main.dart
+      sed -i.bak "s/FIREBASE_PROJECT_ID_PLACEHOLDER/${FIREBASE_PROJECT_ID}/g" lib/main.dart
+      print_success "Updated lib/main.dart with real Firebase configuration"
+    fi
 }
 
 # Main execution
