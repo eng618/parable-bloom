@@ -23,6 +23,9 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
@@ -44,9 +47,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Firebase configuration files (contain sensitive API keys)
-android/app/google-services.json
+# Firebase configuration files
+.firebase/
+lib/firebase_options.dart
 ios/Runner/GoogleService-Info.plist
+android/app/google-services.json
 web/firebase-config.js
 
 #Ignore vscode AI rules

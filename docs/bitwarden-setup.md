@@ -146,16 +146,20 @@ await Firebase.initializeApp(
 
 #### **CI/CD Integration:**
 
-GitHub Actions now uses FlutterFire CLI:
+GitHub Actions uses Bitwarden secrets to generate Firebase config files (since FlutterFire CLI requires Firebase CLI authentication which isn't available in CI):
 
 ```yaml
-- name: Configure Firebase with FlutterFire CLI
+- name: Retrieve secrets with Bitwarden
+  # Gets FIREBASE_WEB_API_KEY and FIREBASE_PROJECT_ID
+
+- name: Generate Firebase config files
   run: |
-    dart pub global activate flutterfire_cli
-    flutterfire configure --project=parableweave --platforms=android,ios,web --yes
+    # Generates android/app/google-services.json
+    # Generates ios/Runner/GoogleService-Info.plist
+    # Generates web/firebase-config.js
 ```
 
-**Result**: Consistent, official Firebase configuration across all environments!
+**Result**: Secure, automated Firebase configuration in CI/CD using Bitwarden secrets!
 
 #### **Legacy Manual Setup (Not Recommended):**
 
