@@ -191,13 +191,12 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     if (_isAnimating) return;
     _isAnimating = true;
 
-    final direction = _calculateVineDirection();
+    // Snake-like movement: head moves in head_direction, body follows as queue
+    final headDirection = vineData.headDirection;
+    final slideDistance = (gridSize + 5) * cellSize;
     Vector2 delta;
 
-    // Slide off the grid: gridSize + 5 cells to be safe
-    final slideDistance = (gridSize + 5) * cellSize;
-
-    switch (direction) {
+    switch (headDirection) {
       case 'right':
         delta = Vector2(slideDistance, 0);
         break;
@@ -205,8 +204,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         delta = Vector2(-slideDistance, 0);
         break;
       case 'up':
-        delta = Vector2(0, -slideDistance);
-        break; // Visual Y is up
+        delta = Vector2(0, -slideDistance); // Visual Y is up
+        break;
       case 'down':
         delta = Vector2(0, slideDistance);
         break;
@@ -214,6 +213,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         delta = Vector2.zero();
     }
 
+    // For now, simple slide - will be replaced with proper queue movement
     add(
       MoveByEffect(
         delta,
@@ -231,13 +231,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     if (_isAnimating) return;
     _isAnimating = true;
 
-    final direction = _calculateVineDirection();
+    final headDirection = vineData.headDirection;
 
     // Animate to blocker + half a cell for a "bump" feel
     final bumpDistance = (distanceInCells + 0.4) * cellSize;
     Vector2 delta;
 
-    switch (direction) {
+    switch (headDirection) {
       case 'right':
         delta = Vector2(bumpDistance, 0);
         break;

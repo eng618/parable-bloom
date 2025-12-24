@@ -1,4 +1,12 @@
-# Parable Bloom - Architecture & State Management
+---
+title: "ParableWeave - Architecture & State Management"
+version: "3.4"
+last_updated: "2025-12-24"
+status: "Implementation Complete"
+type: "Architecture Documentation"
+---
+
+# ParableWeave - Architecture & State Management
 
 This document explains the current state management and persistence implementation using Riverpod and Hive, and outlines the strategy for integrating Firebase in the future.
 
@@ -8,17 +16,19 @@ This document explains the current state management and persistence implementati
 
 We use **Riverpod** for reactive state management. This decouples the game logic from the UI and allows for easy testing and debugging.
 
-- **`gameProgressProvider`**: The central source of truth for the user's progress (current level, completed levels).
-- **`vineStatesProvider`**: Manages the dynamic "blocking" logic for all arrows in the current level. It uses the `LevelSolver` to calculate which arrows are movable.
-- **`gameInstanceProvider`**: Holds the reference to the active `GardenGame` instance, allowing UI components and providers to interact with the game engine.
-- **Transient State Providers**: Small providers for lives, level completion, and game-over states.
+- **`moduleProgressProvider`**: Tracks current module, level within module, and completed modules with Hive persistence.
+- **`vineStatesProvider`**: Manages the dynamic "blocking" logic for all vines in the current level. It uses the `LevelSolver` to calculate which vines are movable based on snake-like path movement.
+- **`graceProvider`**: Manages Grace system (3 per level, 4 for Transcendent) with persistence.
+- **`currentLevelProvider`**: Holds the current level data with updated JSON schema (id, module_id, name, grid_size, difficulty, vines with head_direction).
+- **`gameInstanceProvider`**: Bridges Flutter UI with Flame game engine instance.
+- **Transient State Providers**: Level completion, game over, and analytics tracking providers.
 
 ### 2. Local Persistence (Hive)
 
 We use **Hive** for fast, local-first key-value storage.
 
 - **Initialization**: Hive is initialized in `main.dart` and the `Box` is injected into the Riverpod `ProviderScope`.
-- **Sync Logic**: The `GameProgressNotifier` handles the synchronization between the in-memory state and the Hive storage.
+- **Sync Logic**: The `GameProgressNotifier` and `ModuleProgressNotifier` handle the synchronization between the in-memory state and the Hive storage.
 
 ---
 

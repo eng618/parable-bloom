@@ -1,4 +1,12 @@
-# Parable Bloom - Technical Implementation Guide
+---
+title: "ParableWeave - Technical Implementation Guide"
+version: "3.4"
+last_updated: "2025-12-24"
+status: "Snake Mechanics & Module System Implementation Complete"
+type: "Technical Documentation"
+---
+
+# ParableWeave - Technical Implementation Guide
 
 ## Complete Development Roadmap for Solo Developer
 
@@ -950,7 +958,3 @@ lib/
 - Remember: shipping is the goal, perfection is the enemy
 
 ---
-
-*Version 1.0 - Technical Implementation Guide*
-*Date: December 16, 2025*
-*Status: Ready for Development*

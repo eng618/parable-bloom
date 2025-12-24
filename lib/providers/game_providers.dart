@@ -16,71 +16,68 @@ import '../services/analytics_service.dart';
 // Models for game state
 class VineData {
   final String id;
+  final String headDirection;
+  final List<Map<String, dynamic>> path;
   final String color;
-  final String description;
-  final List<Map<String, int>> path;
-  final List<String> blockingVines;
 
   VineData({
     required this.id,
-    required this.color,
-    required this.description,
+    required this.headDirection,
     required this.path,
-    required this.blockingVines,
+    required this.color,
   });
 
   factory VineData.fromJson(Map<String, dynamic> json) {
     return VineData(
-      id: json['id'],
-      color: json['color'],
-      description: json['description'],
-      path: List<Map<String, int>>.from(
-        json['path'].map((cell) => Map<String, int>.from(cell)),
+      id: json['id'].toString(),
+      headDirection: json['head_direction'],
+      path: List<Map<String, dynamic>>.from(
+        json['path'].map((cell) => Map<String, dynamic>.from(cell)),
       ),
-      blockingVines: List<String>.from(json['blockingVines']),
+      color: json['color'],
     );
   }
 }
 
 class LevelData {
-  final String levelId;
-  final int levelNumber;
-  final String title;
-  final int difficulty;
-  final Map<String, int> grid;
+  final int id;
+  final int moduleId;
+  final String name;
+  final List<int> gridSize;
+  final String difficulty;
   final List<VineData> vines;
-  final Map<String, dynamic> parable;
-  final List<String> hints;
-  final List<String> optimalSequence;
-  final int optimalMoves;
+  final int maxMoves;
+  final int minMoves;
+  final String complexity;
+  final int grace;
 
   LevelData({
-    required this.levelId,
-    required this.levelNumber,
-    required this.title,
+    required this.id,
+    required this.moduleId,
+    required this.name,
+    required this.gridSize,
     required this.difficulty,
-    required this.grid,
     required this.vines,
-    required this.parable,
-    required this.hints,
-    required this.optimalSequence,
-    required this.optimalMoves,
+    required this.maxMoves,
+    required this.minMoves,
+    required this.complexity,
+    required this.grace,
   });
 
   factory LevelData.fromJson(Map<String, dynamic> json) {
     return LevelData(
-      levelId: json['levelId'],
-      levelNumber: json['levelNumber'],
-      title: json['title'],
+      id: json['id'],
+      moduleId: json['module_id'],
+      name: json['name'],
+      gridSize: List<int>.from(json['grid_size']),
       difficulty: json['difficulty'],
-      grid: Map<String, int>.from(json['grid']),
       vines: List<VineData>.from(
         json['vines'].map((vine) => VineData.fromJson(vine)),
       ),
-      parable: Map<String, dynamic>.from(json['parable']),
-      hints: List<String>.from(json['hints']),
-      optimalSequence: List<String>.from(json['optimalSequence']),
-      optimalMoves: json['optimalMoves'],
+      maxMoves: json['max_moves'],
+      minMoves: json['min_moves'],
+      complexity: json['complexity'],
+      grace: json['grace'],
     );
   }
 }
@@ -276,6 +273,97 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   }
 }
 
+// Module progression
+class ModuleProgress {
+  final int currentModule;
+  final int currentLevelInModule;
+  final Set<String> completedModules; // "module_1", "module_2", etc.
+
+  const ModuleProgress({
+    this.currentModule = 1,
+    this.currentLevelInModule = 1,
+    this.completedModules = const {},
+  });
+
+  ModuleProgress copyWith({
+    int? currentModule,
+    int? currentLevelInModule,
+    Set<String>? completedModules,
+  }) {
+    return ModuleProgress(
+      currentModule: currentModule ?? this.currentModule,
+      currentLevelInModule: currentLevelInModule ?? this.currentLevelInModule,
+      completedModules: completedModules ?? this.completedModules,
+    );
+  }
+}
+
+final moduleProgressProvider =
+    NotifierProvider<ModuleProgressNotifier, ModuleProgress>(
+      ModuleProgressNotifier.new,
+    );
+
+class ModuleProgressNotifier extends Notifier<ModuleProgress> {
+  @override
+  ModuleProgress build() {
+    // Load from Hive
+    final box = ref.watch(hiveBoxProvider);
+    final currentModule = box.get('currentModule', defaultValue: 1);
+    final currentLevelInModule = box.get(
+      'currentLevelInModule',
+      defaultValue: 1,
+    );
+    final completedModules = Set<String>.from(
+      box.get('completedModules', defaultValue: <String>[]),
+    );
+
+    final progress = ModuleProgress(
+      currentModule: currentModule,
+      currentLevelInModule: currentLevelInModule,
+      completedModules: completedModules,
+    );
+
+    debugPrint('ModuleProgressNotifier: Built with $progress');
+
+    return progress;
+  }
+
+  Future<void> completeModule(int moduleId) async {
+    final newCompleted = Set<String>.from(state.completedModules)
+      ..add('module_$moduleId');
+
+    final newState = state.copyWith(completedModules: newCompleted);
+    await _saveProgress(newState);
+    state = newState;
+  }
+
+  Future<void> advanceLevel() async {
+    final nextLevel = state.currentLevelInModule + 1;
+    if (nextLevel > 15) {
+      // Module complete, advance to next module
+      final nextModule = state.currentModule + 1;
+      final newState = state.copyWith(
+        currentModule: nextModule,
+        currentLevelInModule: 1,
+      );
+      await _saveProgress(newState);
+      state = newState;
+    } else {
+      // Next level in current module
+      final newState = state.copyWith(currentLevelInModule: nextLevel);
+      await _saveProgress(newState);
+      state = newState;
+    }
+  }
+
+  Future<void> _saveProgress(ModuleProgress progress) async {
+    final box = ref.read(hiveBoxProvider);
+    await box.put('currentModule', progress.currentModule);
+    await box.put('currentLevelInModule', progress.currentLevelInModule);
+    await box.put('completedModules', progress.completedModules.toList());
+  }
+}
+
 // Current level provider
 final currentLevelProvider = NotifierProvider<CurrentLevelNotifier, LevelData?>(
   CurrentLevelNotifier.new,
@@ -318,15 +406,15 @@ class GameCompletedNotifier extends Notifier<bool> {
   }
 }
 
-// Lives system
-final livesProvider = NotifierProvider<LivesNotifier, int>(LivesNotifier.new);
+// Grace system
+final graceProvider = NotifierProvider<GraceNotifier, int>(GraceNotifier.new);
 
-class LivesNotifier extends Notifier<int> {
+class GraceNotifier extends Notifier<int> {
   @override
   int build() => 3;
 
-  void setLives(int lives) {
-    state = lives;
+  void setGrace(int grace) {
+    state = grace;
   }
 }
 
@@ -387,16 +475,16 @@ class GameInstanceNotifier extends Notifier<GardenGame?> {
     state = game;
   }
 
-  void resetLives() {
-    ref.read(livesProvider.notifier).setLives(3);
+  void resetGrace() {
+    ref.read(graceProvider.notifier).setGrace(3);
     ref.read(gameOverProvider.notifier).setGameOver(false);
   }
 
-  void decrementLives() {
-    final currentLives = ref.read(livesProvider);
-    if (currentLives > 0) {
-      ref.read(livesProvider.notifier).setLives(currentLives - 1);
-      if (currentLives - 1 == 0) {
+  void decrementGrace() {
+    final currentGrace = ref.read(graceProvider);
+    if (currentGrace > 0) {
+      ref.read(graceProvider.notifier).setGrace(currentGrace - 1);
+      if (currentGrace - 1 == 0) {
         ref.read(gameOverProvider.notifier).setGameOver(true);
       }
     }
@@ -437,7 +525,7 @@ class LevelSolver {
   /// Solves the level and returns one optimal sequence of vine IDs to clear.
   /// Returns null if the level is unsolvable.
   static List<String>? solve(LevelData level) {
-    debugPrint('LevelSolver: Attempting to solve level ${level.levelId}');
+    debugPrint('LevelSolver: Attempting to solve level ${level.id}');
     final initialVines = level.vines.map((v) => v.id).toList();
 
     // BFS queue: (remaining vine IDs, sequence taken)
@@ -468,7 +556,7 @@ class LevelSolver {
       }
     }
 
-    debugPrint('LevelSolver: UNSOLVABLE level ${level.levelId}');
+    debugPrint('LevelSolver: UNSOLVABLE level ${level.id}');
     return null;
   }
 
@@ -484,8 +572,8 @@ class LevelSolver {
     List<String> activeVineIds,
   ) {
     final vine = level.vines.firstWhere((v) => v.id == vineId);
-    final gridRows = level.grid['rows'] as int;
-    final gridCols = level.grid['columns'] as int;
+    final gridRows = level.gridSize[0];
+    final gridCols = level.gridSize[1];
 
     // Determine direction from head (last two cells)
     if (vine.path.length < 2) return false;
@@ -528,8 +616,8 @@ class LevelSolver {
     List<String> activeVineIds,
   ) {
     final vine = level.vines.firstWhere((v) => v.id == vineId);
-    final gridRows = level.grid['rows'] as int;
-    final gridCols = level.grid['columns'] as int;
+    final gridRows = level.gridSize[0];
+    final gridCols = level.gridSize[1];
 
     if (vine.path.length < 2) return 0;
 
@@ -650,15 +738,15 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
 
       // Log wrong tap analytics
       final currentLevel = ref.read(currentLevelProvider);
-      final remainingLives = ref.read(livesProvider);
+      final remainingGrace = ref.read(graceProvider);
       if (currentLevel != null) {
         ref
             .read(analyticsServiceProvider)
-            .logWrongTap(currentLevel.levelNumber, remainingLives);
+            .logWrongTap(currentLevel.id, remainingGrace);
       }
 
-      // Notify parent/provider to decrement lives
-      ref.read(gameInstanceProvider.notifier).decrementLives();
+      // Notify parent/provider to decrement grace
+      ref.read(gameInstanceProvider.notifier).decrementGrace();
     } else if (s.isBlocked && s.hasBeenAttempted) {
       debugPrint(
         'VineStatesNotifier: $vineId already attempted, skipping life decrement',

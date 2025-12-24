@@ -1,0 +1,22 @@
+{
+  "id": 1,
+  "module_id": 1,
+  "name": "First Sprout",
+  "grid_size": [9, 9],
+  "difficulty": "Seedling",
+  "vines": [
+    {
+      "id": "1",
+      "head_direction": "right",
+      "path": [
+        { "row": 4, "col": 4, "direction": "right" },
+        { "row": 4, "col": 5, "direction": "right" }
+      ],
+      "color": "moss_green"
+    }
+  ],
+  "max_moves": 5,
+  "min_moves": 1,
+  "complexity": "low",
+  "grace": 3
+}

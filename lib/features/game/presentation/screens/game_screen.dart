@@ -70,7 +70,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           children: [
             const Text('Parable Bloom'),
             const SizedBox(width: 16),
-            _buildLivesDisplay(),
+            _buildGraceDisplay(),
             const SizedBox(width: 16),
             _buildCurrentLevelDisplay(),
           ],
@@ -113,12 +113,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 
-  Widget _buildLivesDisplay() {
-    final lives = ref.watch(livesProvider);
+  Widget _buildGraceDisplay() {
+    final grace = ref.watch(graceProvider);
     return Row(
       children: List.generate(3, (index) {
         return Icon(
-          index < lives ? Icons.favorite : Icons.favorite_border,
+          index < grace ? Icons.favorite : Icons.favorite_border,
           color: Colors.redAccent,
           size: 20,
         );
@@ -127,11 +127,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Widget _buildCurrentLevelDisplay() {
+    final moduleProgress = ref.watch(moduleProgressProvider);
     final currentLevel = ref.watch(currentLevelProvider);
     if (currentLevel == null) return const SizedBox.shrink();
 
     return Text(
-      'Level ${currentLevel.levelNumber}: ${currentLevel.title}',
+      'Module ${moduleProgress.currentModule} Level ${moduleProgress.currentLevelInModule}: ${currentLevel.name}',
       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
     );
   }
@@ -172,7 +173,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _restartLevel() {
     ref.read(levelCompleteProvider.notifier).setComplete(false);
     ref.read(gameOverProvider.notifier).setGameOver(false);
-    ref.read(gameInstanceProvider.notifier).resetLives();
+    ref.read(gameInstanceProvider.notifier).resetGrace();
     _game?.reloadLevel();
     ScaffoldMessenger.of(
       context,
@@ -219,24 +220,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                currentLevel.title,
+                currentLevel.name,
                 style: TextStyle(color: cs.onSurfaceVariant, fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               Text(
-                '"${currentLevel.parable['content']}"',
-                style: TextStyle(
-                  color: cs.onSurface,
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '- ${currentLevel.parable['scripture']}',
-                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+                'Level completed successfully!',
+                style: TextStyle(color: cs.onSurface, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -245,10 +236,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () async {
-                  // Update progress through Riverpod instead of use case
+                  // Advance to next level in module progression
                   await ref
-                      .read(gameProgressProvider.notifier)
-                      .completeLevel(currentLevel.levelNumber);
+                      .read(moduleProgressProvider.notifier)
+                      .advanceLevel();
                   ref.read(levelCompleteProvider.notifier).setComplete(false);
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
@@ -345,7 +336,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Log game over analytics
     final currentLevel = ref.read(currentLevelProvider);
     if (currentLevel != null) {
-      ref.read(analyticsServiceProvider).logGameOver(currentLevel.levelNumber);
+      ref.read(analyticsServiceProvider).logGameOver(currentLevel.id);
     }
 
     showDialog(
@@ -359,7 +350,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
-            'GAME OVER',
+            'OUT OF GRACE',
             style: TextStyle(
               color: cs.onSurface,
               fontSize: 24,
@@ -370,16 +361,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.broken_image, color: cs.onSurfaceVariant, size: 64),
+              Icon(Icons.healing, color: cs.onSurfaceVariant, size: 64),
               const SizedBox(height: 16),
               Text(
-                'You ran out of lives!',
+                'God\'s grace is endless—try again!',
                 style: TextStyle(color: cs.onSurface, fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'Try again to improve your strategy.',
+                'Take a moment to reflect and try again.',
                 style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
@@ -389,8 +380,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Just retry the current level
-                  ref.read(gameInstanceProvider.notifier).resetLives();
+                  // Reset grace and retry the current level
+                  ref.read(gameInstanceProvider.notifier).resetGrace();
                   ref.read(gameOverProvider.notifier).setGameOver(false);
                   _game?.reloadLevel();
                   if (dialogContext.mounted) {
@@ -409,7 +400,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   ),
                 ),
                 child: const Text(
-                  'RETRY LEVEL',
+                  'TRY AGAIN',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),

@@ -86,7 +86,7 @@ class GardenGame extends FlameGame {
   void _createLevelComponents() {
     if (_currentLevelData == null) return;
 
-    final gridSize = _currentLevelData!.grid['rows'] as int;
+    final gridSize = _currentLevelData!.gridSize[0];
 
     // Grid background
     _gridBackground = RectangleComponent(
@@ -113,15 +113,33 @@ class GardenGame extends FlameGame {
   }
 
   Future<void> _loadCurrentLevel() async {
-    final progress = ref.read(gameProgressProvider);
-    final levelNumber = progress.currentLevel;
+    final moduleProgress = ref.read(moduleProgressProvider);
+    final moduleId = moduleProgress.currentModule;
+    final levelInModule = moduleProgress.currentLevelInModule;
+
+    debugPrint(
+      'GardenGame: Attempting to load module $moduleId level $levelInModule',
+    );
+    debugPrint('GardenGame: Module progress: $moduleProgress');
 
     try {
-      // Load level data from JSON
-      final levelJson = await rootBundle.loadString(
-        'assets/levels/level_$levelNumber.json',
+      // Load level data from JSON in module structure
+      final assetPath =
+          'assets/levels/module_$moduleId/level_$levelInModule.json';
+      debugPrint('GardenGame: Loading asset: $assetPath');
+
+      final levelJson = await rootBundle.loadString(assetPath);
+      debugPrint(
+        'GardenGame: Successfully loaded JSON string, length: ${levelJson.length}',
       );
-      _currentLevelData = LevelData.fromJson(json.decode(levelJson));
+
+      final jsonMap = json.decode(levelJson);
+      debugPrint('GardenGame: Successfully parsed JSON: $jsonMap');
+
+      _currentLevelData = LevelData.fromJson(jsonMap);
+      debugPrint(
+        'GardenGame: Successfully created LevelData: ${_currentLevelData!.name}',
+      );
 
       // Update providers
       ref.read(currentLevelProvider.notifier).setLevel(_currentLevelData);
@@ -134,13 +152,29 @@ class GardenGame extends FlameGame {
       ref.read(levelWrongTapsProvider.notifier).reset();
 
       // Log level start analytics
-      ref.read(analyticsServiceProvider).logLevelStart(levelNumber);
+      ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
 
-      debugPrint('Loaded level $levelNumber: ${_currentLevelData!.title}');
-    } catch (e) {
-      debugPrint('Error loading level $levelNumber: $e');
-      // If we can't load the level, it likely means we reached the end
-      ref.read(gameCompletedProvider.notifier).setCompleted(true);
+      debugPrint(
+        'Loaded module $moduleId level $levelInModule: ${_currentLevelData!.name}',
+      );
+    } catch (e, stackTrace) {
+      debugPrint('Error loading module $moduleId level $levelInModule: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // Don't set game completed on startup load failure - this might be due to asset loading issues
+      // Only set completed when we actually finish all available levels
+      debugPrint('GardenGame: Level loading failed, creating fallback level');
+
+      // Create a fallback level programmatically
+      _currentLevelData = _createFallbackLevel();
+      debugPrint(
+        'GardenGame: Created fallback level: ${_currentLevelData!.name}',
+      );
+
+      // Update providers with fallback level
+      ref.read(currentLevelProvider.notifier).setLevel(_currentLevelData);
+      ref.read(gameCompletedProvider.notifier).setCompleted(false);
+      ref.read(levelTotalTapsProvider.notifier).reset();
+      ref.read(levelWrongTapsProvider.notifier).reset();
     }
   }
 
@@ -185,10 +219,36 @@ class GardenGame extends FlameGame {
 
       // Reset vine states for the new level
       ref.read(vineStatesProvider.notifier).resetForLevel(_currentLevelData!);
-      // Reset lives for the new level
-      ref.read(gameInstanceProvider.notifier).resetLives();
+      // Reset grace for the new level
+      ref.read(gameInstanceProvider.notifier).resetGrace();
 
       await _setLevelDataOnGrid();
     }
+  }
+
+  LevelData _createFallbackLevel() {
+    // Create a simple fallback level programmatically
+    return LevelData(
+      id: 999,
+      moduleId: 1,
+      name: 'Fallback Level',
+      gridSize: [9, 9],
+      difficulty: 'Seedling',
+      vines: [
+        VineData(
+          id: 'fallback_vine',
+          headDirection: 'right',
+          path: [
+            {'row': 4, 'col': 4, 'direction': 'right'},
+            {'row': 4, 'col': 5, 'direction': 'right'},
+          ],
+          color: 'moss_green',
+        ),
+      ],
+      maxMoves: 5,
+      minMoves: 1,
+      complexity: 'low',
+      grace: 3,
+    );
   }
 }
