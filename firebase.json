@@ -14,9 +14,7 @@
           "configurations": {
             "android": "1:1005379493386:android:cb48ba8767aa471f1789f3",
             "ios": "1:1005379493386:ios:74f559f1cf97c8ef1789f3",
-            "macos": "1:1005379493386:ios:74f559f1cf97c8ef1789f3",
-            "web": "1:1005379493386:web:8477bb3a66efd9f81789f3",
-            "windows": "1:1005379493386:web:5ce12bd5f2d2825b1789f3"
+            "web": "1:1005379493386:web:5ce12bd5f2d2825b1789f3"
           }
         }
       },
@@ -38,17 +36,10 @@
       }
     }
   },
-  "firestore": {
-    "rules": "firestore.rules"
-  },
+  "firestore": { "rules": "firestore.rules" },
   "hosting": {
     "public": "build/web",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
   }
 }
