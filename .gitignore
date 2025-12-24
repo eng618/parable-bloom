@@ -65,4 +65,3 @@ web/firebase-config.js
 .codacy/tools-configs/ruleset.xml
 .codacy/tools-configs/semgrep.yaml
 .codacy/tools-configs/trivy.yaml
-docs/firebase.md
