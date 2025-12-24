@@ -44,3 +44,18 @@ jobs:
       - name: Deploy Preview (PR only)
         if: github.event_name == 'pull_request'
         run: firebase hosting:channel:deploy pr-${{ github.event.pull_request.number }} --token ${{ secrets.FIREBASE_CI_TOKEN }}
+
+      - name: Comment PR with Preview URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const previewUrl = `https://parableweave--pr-${prNumber}.web.app`;
+
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 **Preview Deployed!**\n\nYour changes are now live for testing:\n\n🌐 **Preview URL:** ${previewUrl}\n\nThis preview will be automatically cleaned up when the PR is closed.`
+            });
