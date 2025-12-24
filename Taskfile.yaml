@@ -184,7 +184,7 @@ tasks:
   format:check:
     desc: Check if Flutter code is formatted
     cmds:
-      - find lib test -name "*.dart" -not -name "firebase_options.dart" -exec dart format --output=none --set-exit-if-changed {} \;
+      - dart format --output=none --set-exit-if-changed .
 
   lint:
     desc: Run Flutter linting
@@ -287,11 +287,3 @@ tasks:
     desc: Configure Firebase for Web only (local development)
     cmds:
       - flutterfire configure --project=parableweave --platforms=web --yes
-
-  # -----------------------------------------------------------------------------
-  # Local Development Setup (Legacy)
-
-  setup:firebase:
-    desc: Set up Firebase configuration files for local development using Bitwarden (legacy)
-    cmds:
-      - ./scripts/setup-firebase.sh
