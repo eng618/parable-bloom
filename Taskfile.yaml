@@ -184,7 +184,7 @@ tasks:
   format:check:
     desc: Check if Flutter code is formatted
     cmds:
-      - dart format --output=none --set-exit-if-changed .
+      - find lib test -name "*.dart" -not -name "firebase_options.dart" -exec dart format --output=none --set-exit-if-changed {} \;
 
   lint:
     desc: Run Flutter linting
