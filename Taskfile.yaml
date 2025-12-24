@@ -120,9 +120,43 @@ tasks:
       - flutter run -d 'SM S901U'
 
   serve:ios:
-    desc: Serve the application on iOS
+    desc: Serve the application on iOS simulator (auto-selects available simulator)
     cmds:
-      - flutter run -d ios
+      - task: get
+      - cd ios && pod install
+      - |
+        # Auto-select iOS simulator - find booted simulator or boot the first available one
+        BOOTED_SIM=$(xcrun simctl list devices booted | grep -E "iPhone|iPad" | head -1 | awk -F'[()]' '{print $2}')
+        if [ -z "$BOOTED_SIM" ]; then
+          # No booted simulator, find and boot the first available iPhone simulator
+          SIM_ID=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | awk -F'[()]' '{print $2}')
+          if [ -n "$SIM_ID" ]; then
+            echo "Booting iOS simulator: $SIM_ID"
+            xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+            sleep 2
+          fi
+        fi
+      - flutter run
+
+  serve:ios:clean:
+    desc: Clean and serve the application on iOS simulator
+    cmds:
+      - task: clean
+      - task: get
+      - cd ios && pod install
+      - |
+        # Auto-select iOS simulator - find booted simulator or boot the first available one
+        BOOTED_SIM=$(xcrun simctl list devices booted | grep -E "iPhone|iPad" | head -1 | awk -F'[()]' '{print $2}')
+        if [ -z "$BOOTED_SIM" ]; then
+          # No booted simulator, find and boot the first available iPhone simulator
+          SIM_ID=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | awk -F'[()]' '{print $2}')
+          if [ -n "$SIM_ID" ]; then
+            echo "Booting iOS simulator: $SIM_ID"
+            xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+            sleep 2
+          fi
+        fi
+      - flutter run
 
   # -----------------------------------------------------------------------------
   # Deploy
