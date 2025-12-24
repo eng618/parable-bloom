@@ -1,0 +1,43 @@
+{
+  "id": 4,
+  "module_id": 1,
+  "name": "Careful Order",
+  "grid_size": [9, 9],
+  "difficulty": "Seedling",
+  "vines": [
+    {
+      "id": "1",
+      "head_direction": "right",
+      "path": [
+        { "row": 4, "col": 1, "direction": "right" },
+        { "row": 4, "col": 2, "direction": "right" },
+        { "row": 4, "col": 3, "direction": "right" }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "2",
+      "head_direction": "down",
+      "path": [
+        { "row": 1, "col": 3, "direction": "down" },
+        { "row": 2, "col": 3, "direction": "down" },
+        { "row": 3, "col": 3, "direction": "down" }
+      ],
+      "color": "emerald"
+    },
+    {
+      "id": "3",
+      "head_direction": "left",
+      "path": [
+        { "row": 2, "col": 5, "direction": "left" },
+        { "row": 2, "col": 4, "direction": "left" },
+        { "row": 2, "col": 3, "direction": "left" }
+      ],
+      "color": "olive"
+    }
+  ],
+  "max_moves": 7,
+  "min_moves": 3,
+  "complexity": "medium",
+  "grace": 3
+}

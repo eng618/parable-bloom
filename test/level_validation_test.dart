@@ -24,20 +24,38 @@ void main() {
           final jsonMap = json.decode(content);
           final level = LevelData.fromJson(jsonMap);
 
-          // 1. Check for overlaps
-          final occupiedCells = <String>{};
+          // 1. Check for overlaps (except at blocking points)
+          final occupiedCells = <String, String>{}; // cell -> vineId
           for (final vine in level.vines) {
             for (final cell in vine.path) {
               final row = cell['row'];
               final col = cell['col'];
               final key = '$row,$col';
 
-              if (occupiedCells.contains(key)) {
-                fail(
-                  'Vine overlap detected in ${entity.path} at cell ($row, $col). Multiple vines occupy this cell.',
+              if (occupiedCells.containsKey(key) &&
+                  occupiedCells[key] != vine.id) {
+                // Allow overlaps only if it's a head-body intersection (blocking point)
+                // This happens when a vine's head occupies the same cell as another vine's body
+                final otherVineId = occupiedCells[key]!;
+                final otherVine = level.vines.firstWhere(
+                  (v) => v.id == otherVineId,
                 );
+
+                // Check if this is a valid blocking intersection
+                final isHeadBodyIntersection = _isValidBlockingIntersection(
+                  vine,
+                  otherVine,
+                  row,
+                  col,
+                );
+
+                if (!isHeadBodyIntersection) {
+                  fail(
+                    'Invalid vine overlap detected in ${entity.path} at cell ($row, $col) between vines ${vine.id} and $otherVineId.',
+                  );
+                }
               }
-              occupiedCells.add(key);
+              occupiedCells[key] = vine.id;
             }
           }
 
@@ -57,15 +75,15 @@ void main() {
             final dCol = (head['col'] as int) - (neck['col'] as int);
 
             String expectedDirection;
-            if (dRow == 1 && dCol == 0)
+            if (dRow == 1 && dCol == 0) {
               expectedDirection = 'down';
-            else if (dRow == -1 && dCol == 0)
+            } else if (dRow == -1 && dCol == 0) {
               expectedDirection = 'up';
-            else if (dRow == 0 && dCol == 1)
+            } else if (dRow == 0 && dCol == 1) {
               expectedDirection = 'right';
-            else if (dRow == 0 && dCol == -1)
+            } else if (dRow == 0 && dCol == -1) {
               expectedDirection = 'left';
-            else {
+            } else {
               fail(
                 'Invalid direction delta ($dRow, $dCol) for vine ${vine.id}',
               );
@@ -80,23 +98,26 @@ void main() {
             );
 
             // Rule: Consecutive segments have valid turns (90 degrees only)
-            for (int i = 0; i < vine.path.length - 2; i++) {
-              final current = vine.path[i];
-              final next = vine.path[i + 1];
-              final after = vine.path[i + 2];
+            // Check direction changes between consecutive segments
+            for (int i = 0; i < vine.path.length - 1; i++) {
+              final currentDir = vine.path[i]['direction'] as String;
+              final nextDir = vine.path[i + 1]['direction'] as String;
 
-              final dRow1 = (next['row'] as int) - (current['row'] as int);
-              final dCol1 = (next['col'] as int) - (current['col'] as int);
-              final dRow2 = (after['row'] as int) - (next['row'] as int);
-              final dCol2 = (after['col'] as int) - (next['col'] as int);
+              // Same direction is always valid (straight line)
+              if (currentDir == nextDir) continue;
 
+              // Different directions must be perpendicular (90-degree turn)
               final isValidTurn =
-                  (dRow1 == 0 && dCol1 != 0 && dRow2 != 0 && dCol2 == 0) ||
-                  (dRow1 != 0 && dCol1 == 0 && dRow2 == 0 && dCol2 != 0);
+                  (currentDir == 'up' || currentDir == 'down') &&
+                      (nextDir == 'left' || nextDir == 'right') ||
+                  (currentDir == 'left' || currentDir == 'right') &&
+                      (nextDir == 'up' || nextDir == 'down');
+
               expect(
                 isValidTurn,
                 isTrue,
-                reason: 'Vine ${vine.id} has invalid turn at segment ${i + 1}',
+                reason:
+                    'Vine ${vine.id} has invalid direction change from $currentDir to $nextDir at segment ${i + 1}',
               );
             }
           }
@@ -115,4 +136,34 @@ void main() {
       }
     }
   });
+}
+
+// Helper function to check if an overlap is a valid blocking intersection
+bool _isValidBlockingIntersection(
+  VineData vine1,
+  VineData vine2,
+  int row,
+  int col,
+) {
+  // Find which vine has the head at this position
+  final headVine =
+      vine1.path.last['row'] == row && vine1.path.last['col'] == col
+      ? vine1
+      : vine2.path.last['row'] == row && vine2.path.last['col'] == col
+      ? vine2
+      : null;
+
+  if (headVine == null) return false; // No vine has head here
+
+  // The other vine should have a body segment at this position
+  final bodyVine = headVine == vine1 ? vine2 : vine1;
+
+  // Check if the body vine has a segment at this position (not counting its head)
+  for (int i = 0; i < bodyVine.path.length - 1; i++) {
+    if (bodyVine.path[i]['row'] == row && bodyVine.path[i]['col'] == col) {
+      return true; // Valid blocking intersection
+    }
+  }
+
+  return false; // Invalid overlap
 }

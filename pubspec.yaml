@@ -75,7 +75,11 @@ flutter:
   assets:
     - assets/art/
     - assets/audio/
-    - assets/levels/
+    - assets/levels/module_1/
+    # - assets/levels/module_2/
+    # - assets/levels/module_3/
+    # - assets/levels/module_4/
+    # - assets/levels/module_5/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

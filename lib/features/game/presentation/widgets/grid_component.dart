@@ -201,6 +201,15 @@ class CellComponent extends RectangleComponent
       ..color = Colors.white.withValues(alpha: 0.15 * 255)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, 4, dotPaint);
+
+    // Debug: draw row/col labels in corner
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    textPainter.text = TextSpan(
+      text: '$row,$col',
+      style: const TextStyle(color: Colors.white38, fontSize: 10),
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, const Offset(2, 2));
   }
 
   @override

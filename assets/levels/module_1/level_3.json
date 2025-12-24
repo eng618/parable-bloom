@@ -1,0 +1,33 @@
+{
+  "id": 3,
+  "module_id": 1,
+  "name": "Blocked Paths",
+  "grid_size": [7, 7],
+  "difficulty": "Seedling",
+  "vines": [
+    {
+      "id": "1",
+      "head_direction": "right",
+      "path": [
+        { "row": 2, "col": 1, "direction": "right" },
+        { "row": 2, "col": 2, "direction": "right" },
+        { "row": 2, "col": 3, "direction": "right" }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "2",
+      "head_direction": "down",
+      "path": [
+        { "row": 2, "col": 3, "direction": "down" },
+        { "row": 3, "col": 3, "direction": "down" },
+        { "row": 4, "col": 3, "direction": "down" }
+      ],
+      "color": "emerald"
+    }
+  ],
+  "max_moves": 5,
+  "min_moves": 2,
+  "complexity": "low",
+  "grace": 3
+}

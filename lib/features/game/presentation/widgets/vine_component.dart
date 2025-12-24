@@ -23,6 +23,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // Initial position is zero within GridComponent coordinate space
     position = Vector2.zero();
     size = parent.size;
+
+    debugPrint('VineComponent loaded for vine ${vineData.id}');
+    debugPrint(
+      'Vine path: ${vineData.path.map((p) => "(${p['row']},${p['col']})").join(' -> ')}',
+    );
+    debugPrint('Head direction: ${vineData.headDirection}');
+    debugPrint('Calculated direction: ${_calculateVineDirection()}');
   }
 
   @override
@@ -46,7 +53,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final segmentPaint = Paint()
       ..color = baseColor.withValues(alpha: segmentAlpha * 255)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
+      ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
 
     for (int i = 0; i < vineData.path.length - 1; i++) {
@@ -77,11 +84,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       final isHead = direction != null && i == vineData.path.length - 1;
 
-      final rect = Rect.fromLTWH(
-        col * cellSize + 5,
-        visualRow * cellSize + 5,
-        cellSize - 10,
-        cellSize - 10,
+      final rect = Rect.fromCenter(
+        center: Offset(
+          col * cellSize + cellSize / 2,
+          visualRow * cellSize + cellSize / 2,
+        ),
+        width: cellSize * 0.6,
+        height: cellSize * 0.6,
       );
 
       if (isHead) {
@@ -98,7 +107,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         final bodyPaint = Paint()
           ..color = baseColor.withValues(alpha: alpha * 255)
           ..style = PaintingStyle.fill;
-        canvas.drawCircle(rect.center, 4, bodyPaint);
+        canvas.drawCircle(rect.center, 3, bodyPaint);
       }
     }
   }

@@ -129,6 +129,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Widget _buildCurrentLevelDisplay() {
     final moduleProgress = ref.watch(moduleProgressProvider);
     final currentLevel = ref.watch(currentLevelProvider);
+
+    debugPrint('GameScreen: Module progress: $moduleProgress');
+    debugPrint('GameScreen: Current level: ${currentLevel?.name ?? "null"}');
+
     if (currentLevel == null) return const SizedBox.shrink();
 
     return Text(
@@ -181,13 +185,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _resetProgress() {
+    debugPrint('_resetProgress: Starting progress reset');
     ref.read(gameProgressProvider.notifier).resetProgress();
+    ref.read(moduleProgressProvider.notifier).resetProgress();
     // Invalidate the progress provider to force refresh
     ref.invalidate(gameProgressProvider);
+    ref.invalidate(moduleProgressProvider);
     ref.read(currentLevelProvider.notifier).setLevel(null);
     ref.read(levelCompleteProvider.notifier).setComplete(false);
     ref.read(gameCompletedProvider.notifier).setCompleted(false);
     _game?.reloadLevel();
+    debugPrint('_resetProgress: Progress reset completed');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Progress reset and level reloaded')),
     );
@@ -311,8 +319,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
+                  debugPrint('_showGameCompletedDialog: Resetting for replay');
                   ref.read(gameCompletedProvider.notifier).setCompleted(false);
                   ref.read(gameProgressProvider.notifier).resetProgress();
+                  ref.read(moduleProgressProvider.notifier).resetProgress();
+                  ref.invalidate(gameProgressProvider);
+                  ref.invalidate(moduleProgressProvider);
                   ref.read(currentLevelProvider.notifier).setLevel(null);
                   _game?.reloadLevel();
                   if (dialogContext.mounted) {

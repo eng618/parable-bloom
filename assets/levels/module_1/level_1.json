@@ -1,21 +1,22 @@
 {
   "id": 1,
   "module_id": 1,
-  "name": "First Sprout",
-  "grid_size": [9, 9],
+  "name": "First Steps",
+  "grid_size": [7, 7],
   "difficulty": "Seedling",
   "vines": [
     {
       "id": "1",
       "head_direction": "right",
       "path": [
-        { "row": 4, "col": 4, "direction": "right" },
-        { "row": 4, "col": 5, "direction": "right" }
+        { "row": 3, "col": 2, "direction": "right" },
+        { "row": 3, "col": 3, "direction": "right" },
+        { "row": 3, "col": 4, "direction": "right" }
       ],
       "color": "moss_green"
     }
   ],
-  "max_moves": 5,
+  "max_moves": 3,
   "min_moves": 1,
   "complexity": "low",
   "grace": 3

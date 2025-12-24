@@ -285,6 +285,11 @@ class ModuleProgress {
     this.completedModules = const {},
   });
 
+  @override
+  String toString() {
+    return 'ModuleProgress(currentModule: $currentModule, currentLevelInModule: $currentLevelInModule, completedModules: $completedModules)';
+  }
+
   ModuleProgress copyWith({
     int? currentModule,
     int? currentLevelInModule,
@@ -339,6 +344,10 @@ class ModuleProgressNotifier extends Notifier<ModuleProgress> {
 
   Future<void> advanceLevel() async {
     final nextLevel = state.currentLevelInModule + 1;
+    debugPrint(
+      'ModuleProgressNotifier: advanceLevel called, current: $state, nextLevel: $nextLevel',
+    );
+
     if (nextLevel > 15) {
       // Module complete, advance to next module
       final nextModule = state.currentModule + 1;
@@ -348,11 +357,13 @@ class ModuleProgressNotifier extends Notifier<ModuleProgress> {
       );
       await _saveProgress(newState);
       state = newState;
+      debugPrint('ModuleProgressNotifier: Advanced to next module: $newState');
     } else {
       // Next level in current module
       final newState = state.copyWith(currentLevelInModule: nextLevel);
       await _saveProgress(newState);
       state = newState;
+      debugPrint('ModuleProgressNotifier: Advanced to next level: $newState');
     }
   }
 
@@ -361,6 +372,17 @@ class ModuleProgressNotifier extends Notifier<ModuleProgress> {
     await box.put('currentModule', progress.currentModule);
     await box.put('currentLevelInModule', progress.currentLevelInModule);
     await box.put('completedModules', progress.completedModules.toList());
+  }
+
+  Future<void> resetProgress() async {
+    const defaultProgress = ModuleProgress(
+      currentModule: 1,
+      currentLevelInModule: 1,
+      completedModules: {},
+    );
+    await _saveProgress(defaultProgress);
+    state = defaultProgress;
+    debugPrint('ModuleProgressNotifier: Progress reset to $defaultProgress');
   }
 }
 

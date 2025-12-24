@@ -1,32 +1,24 @@
 {
   "id": 2,
   "module_id": 1,
-  "name": "Gentle Turn",
-  "grid_size": [9, 9],
+  "name": "Gentle Curves",
+  "grid_size": [7, 7],
   "difficulty": "Seedling",
   "vines": [
     {
       "id": "1",
       "head_direction": "up",
       "path": [
-        { "row": 5, "col": 5, "direction": "up" },
-        { "row": 5, "col": 6, "direction": "up" },
-        { "row": 4, "col": 6, "direction": "left" }
+        { "row": 4, "col": 3, "direction": "right" },
+        { "row": 4, "col": 4, "direction": "right" },
+        { "row": 3, "col": 4, "direction": "up" },
+        { "row": 2, "col": 4, "direction": "up" }
       ],
       "color": "moss_green"
-    },
-    {
-      "id": "2",
-      "head_direction": "right",
-      "path": [
-        { "row": 3, "col": 3, "direction": "right" },
-        { "row": 3, "col": 4, "direction": "right" }
-      ],
-      "color": "emerald"
     }
   ],
-  "max_moves": 5,
-  "min_moves": 3,
+  "max_moves": 3,
+  "min_moves": 1,
   "complexity": "low",
   "grace": 3
 }

@@ -1,0 +1,44 @@
+{
+  "id": 5,
+  "module_id": 1,
+  "name": "Harmony Achieved",
+  "grid_size": [7, 7],
+  "difficulty": "Seedling",
+  "vines": [
+    {
+      "id": "1",
+      "head_direction": "right",
+      "path": [
+        { "row": 3, "col": 1, "direction": "right" },
+        { "row": 3, "col": 2, "direction": "right" },
+        { "row": 3, "col": 3, "direction": "right" },
+        { "row": 3, "col": 4, "direction": "right" }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "2",
+      "head_direction": "up",
+      "path": [
+        { "row": 5, "col": 3, "direction": "up" },
+        { "row": 4, "col": 3, "direction": "up" },
+        { "row": 3, "col": 3, "direction": "up" }
+      ],
+      "color": "emerald"
+    },
+    {
+      "id": "3",
+      "head_direction": "left",
+      "path": [
+        { "row": 1, "col": 5, "direction": "left" },
+        { "row": 1, "col": 4, "direction": "left" },
+        { "row": 1, "col": 3, "direction": "left" }
+      ],
+      "color": "olive"
+    }
+  ],
+  "max_moves": 6,
+  "min_moves": 3,
+  "complexity": "medium",
+  "grace": 3
+}
