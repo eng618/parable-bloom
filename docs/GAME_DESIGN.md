@@ -74,11 +74,11 @@ Hardened for procedural content generation (PCG) in Golang and snake-like moveme
   "vines": [
     {
       "id": 1,
-      "head_direction": "up",
-      "path": [
-        {"row": 5, "col": 5, "direction": "up"},
-        {"row": 5, "col": 6, "direction": "up"},
-        {"row": 4, "col": 6, "direction": "left"}
+      "head_direction": "right",
+      "ordered_path": [
+        {"x": 2, "y": 3},  // HEAD (index 0) - moving RIGHT
+        {"x": 3, "y": 3},  // First segment LEFT of head (opposite direction)
+        {"x": 4, "y": 3}   // TAIL (last) - continues rightward
       ],
       "color": "moss_green"
     }

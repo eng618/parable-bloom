@@ -74,6 +74,15 @@ class GridComponent extends PositionComponent
     _clearVine(vineId);
   }
 
+  List<String> getActiveVineIds() {
+    return _vineStates.entries
+        .where((e) => !e.value.isCleared)
+        .map((e) => e.key)
+        .toList();
+  }
+
+  LevelData? getCurrentLevelData() => _currentLevel;
+
   @override
   Future<void> onLoad() async {
     size = Vector2(gridSize * cellSize, gridSize * cellSize);
@@ -86,21 +95,21 @@ class GridComponent extends PositionComponent
 
     cells = [];
 
-    for (int rangeRow = 0; rangeRow < gridSize; rangeRow++) {
+    for (int y = 0; y < gridSize; y++) {
       cells.add([]);
-      for (int col = 0; col < gridSize; col++) {
+      for (int x = 0; x < gridSize; x++) {
         // Use local variable for calculated visual row
-        // Row 0 is at the bottom, so visual Y is proportional to (gridSize - 1 - row)
-        final visualRow = gridSize - 1 - rangeRow;
+        // y=0 is at the bottom, so visual Y is proportional to (gridSize - 1 - y)
+        final visualRow = gridSize - 1 - y;
 
         final cell = CellComponent(
-          row: rangeRow,
-          col: col,
+          gridX: x,
+          gridY: y,
           size: Vector2(cellSize, cellSize),
-          position: Vector2(col * cellSize, visualRow * cellSize),
+          position: Vector2(x * cellSize, visualRow * cellSize),
         );
         add(cell);
-        cells[rangeRow].add(cell);
+        cells[y].add(cell);
       }
     }
   }
@@ -148,8 +157,9 @@ class GridComponent extends PositionComponent
     if (_currentLevel == null) return null;
 
     for (final vine in _currentLevel!.vines) {
-      for (final cell in vine.path) {
-        if (cell['row'] == row && cell['col'] == col) {
+      for (final cell in vine.orderedPath) {
+        if (cell['x'] == col && cell['y'] == row) {
+          // Note: x=col, y=row in grid coordinates
           return vine;
         }
       }
@@ -178,12 +188,12 @@ class GridComponent extends PositionComponent
 
 class CellComponent extends RectangleComponent
     with TapCallbacks, HasGameReference<GardenGame> {
-  final int row;
-  final int col;
+  final int gridX;
+  final int gridY;
 
   CellComponent({
-    required this.row,
-    required this.col,
+    required this.gridX,
+    required this.gridY,
     required super.size,
     required super.position,
   }) : super(
@@ -202,10 +212,10 @@ class CellComponent extends RectangleComponent
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, 4, dotPaint);
 
-    // Debug: draw row/col labels in corner
+    // Debug: draw x,y labels in corner
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
     textPainter.text = TextSpan(
-      text: '$row,$col',
+      text: '$gridX,$gridY',
       style: const TextStyle(color: Colors.white38, fontSize: 10),
     );
     textPainter.layout();
@@ -215,6 +225,9 @@ class CellComponent extends RectangleComponent
   @override
   void onTapUp(TapUpEvent event) {
     // Delegate to parent GridComponent for vine handling
-    (parent as GridComponent).handleCellTap(row, col);
+    (parent as GridComponent).handleCellTap(
+      gridY,
+      gridX,
+    ); // Convert x,y to row,col for GridComponent
   }
 }

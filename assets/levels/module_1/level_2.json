@@ -8,11 +8,11 @@
     {
       "id": "1",
       "head_direction": "up",
-      "path": [
-        { "row": 4, "col": 3, "direction": "right" },
-        { "row": 4, "col": 4, "direction": "right" },
-        { "row": 3, "col": 4, "direction": "up" },
-        { "row": 2, "col": 4, "direction": "up" }
+      "ordered_path": [
+        { "x": 3, "y": 4 },
+        { "x": 3, "y": 3 },
+        { "x": 4, "y": 3 },
+        { "x": 4, "y": 2 }
       ],
       "color": "moss_green"
     }

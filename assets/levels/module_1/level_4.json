@@ -8,30 +8,30 @@
     {
       "id": "1",
       "head_direction": "right",
-      "path": [
-        { "row": 4, "col": 1, "direction": "right" },
-        { "row": 4, "col": 2, "direction": "right" },
-        { "row": 4, "col": 3, "direction": "right" }
+      "ordered_path": [
+        { "x": 3, "y": 4 },
+        { "x": 2, "y": 4 },
+        { "x": 1, "y": 4 }
       ],
       "color": "moss_green"
     },
     {
       "id": "2",
       "head_direction": "down",
-      "path": [
-        { "row": 1, "col": 3, "direction": "down" },
-        { "row": 2, "col": 3, "direction": "down" },
-        { "row": 3, "col": 3, "direction": "down" }
+      "ordered_path": [
+        { "x": 6, "y": 2 },
+        { "x": 6, "y": 3 },
+        { "x": 6, "y": 4 }
       ],
       "color": "emerald"
     },
     {
       "id": "3",
       "head_direction": "left",
-      "path": [
-        { "row": 2, "col": 5, "direction": "left" },
-        { "row": 2, "col": 4, "direction": "left" },
-        { "row": 2, "col": 3, "direction": "left" }
+      "ordered_path": [
+        { "x": 4, "y": 0 },
+        { "x": 5, "y": 0 },
+        { "x": 6, "y": 0 }
       ],
       "color": "olive"
     }

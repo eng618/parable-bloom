@@ -238,9 +238,12 @@ class GardenGame extends FlameGame {
         VineData(
           id: 'fallback_vine',
           headDirection: 'right',
-          path: [
-            {'row': 4, 'col': 4, 'direction': 'right'},
-            {'row': 4, 'col': 5, 'direction': 'right'},
+          orderedPath: [
+            {'x': 4, 'y': 4}, // Head (moving right)
+            {
+              'x': 3,
+              'y': 4,
+            }, // First segment LEFT of head (x decreases, opposite direction)
           ],
           color: 'moss_green',
         ),

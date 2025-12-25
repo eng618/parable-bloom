@@ -17,13 +17,14 @@ import '../services/analytics_service.dart';
 class VineData {
   final String id;
   final String headDirection;
-  final List<Map<String, dynamic>> path;
+  final List<Map<String, int>>
+  orderedPath; // Ordered from head (index 0) to tail (last)
   final String color;
 
   VineData({
     required this.id,
     required this.headDirection,
-    required this.path,
+    required this.orderedPath,
     required this.color,
   });
 
@@ -31,8 +32,10 @@ class VineData {
     return VineData(
       id: json['id'].toString(),
       headDirection: json['head_direction'],
-      path: List<Map<String, dynamic>>.from(
-        json['path'].map((cell) => Map<String, dynamic>.from(cell)),
+      orderedPath: List<Map<String, int>>.from(
+        json['ordered_path'].map(
+          (cell) => {'x': cell['x'] as int, 'y': cell['y'] as int},
+        ),
       ),
       color: json['color'],
     );
@@ -597,35 +600,47 @@ class LevelSolver {
     final gridRows = level.gridSize[0];
     final gridCols = level.gridSize[1];
 
-    // Determine direction from head (last two cells)
-    if (vine.path.length < 2) return false;
+    // Determine direction from head (first cell) and its direction
+    if (vine.orderedPath.isEmpty) return false;
 
-    final head = vine.path.last;
-    final neck = vine.path[vine.path.length - 2];
-    final dRow = (head['row'] as int) - (neck['row'] as int);
-    final dCol = (head['col'] as int) - (neck['col'] as int);
+    final head = vine.orderedPath[0]; // Head is at index 0
+    final headX = head['x'] as int;
+    final headY = head['y'] as int;
 
-    // Trace path from head forward
-    var currentRow = (head['row'] as int) + dRow;
-    var currentCol = (head['col'] as int) + dCol;
+    // Calculate next position based on head direction
+    var nextX = headX;
+    var nextY = headY;
 
-    while (currentRow >= 0 &&
-        currentRow < gridRows &&
-        currentCol >= 0 &&
-        currentCol < gridCols) {
-      // Check for collisions with ANY other active vine
-      for (final otherId in activeVineIds) {
-        if (otherId == vineId) continue;
+    switch (vine.headDirection) {
+      case 'right':
+        nextX += 1;
+        break;
+      case 'left':
+        nextX -= 1;
+        break;
+      case 'up':
+        nextY += 1; // Up increases y
+        break;
+      case 'down':
+        nextY -= 1; // Down decreases y
+        break;
+    }
 
-        final otherVine = level.vines.firstWhere((v) => v.id == otherId);
-        for (final cell in otherVine.path) {
-          if (cell['row'] == currentRow && cell['col'] == currentCol) {
-            return true; // Blocked
-          }
+    // Check if next position is within bounds
+    if (nextX < 0 || nextX >= gridCols || nextY < 0 || nextY >= gridRows) {
+      return false; // Can move off grid edge
+    }
+
+    // Check for collisions with ANY other active vine at the next position
+    for (final otherId in activeVineIds) {
+      if (otherId == vineId) continue;
+
+      final otherVine = level.vines.firstWhere((v) => v.id == otherId);
+      for (final cell in otherVine.orderedPath) {
+        if (cell['x'] == nextX && cell['y'] == nextY) {
+          return true; // Blocked
         }
       }
-      currentRow += dRow;
-      currentCol += dCol;
     }
 
     return false; // Not blocked
@@ -641,34 +656,53 @@ class LevelSolver {
     final gridRows = level.gridSize[0];
     final gridCols = level.gridSize[1];
 
-    if (vine.path.length < 2) return 0;
+    if (vine.orderedPath.isEmpty) return 0;
 
-    final head = vine.path.last;
-    final neck = vine.path[vine.path.length - 2];
-    final dRow = (head['row'] as int) - (neck['row'] as int);
-    final dCol = (head['col'] as int) - (neck['col'] as int);
+    final head = vine.orderedPath[0]; // Head is at index 0
+    final headX = head['x'] as int;
+    final headY = head['y'] as int;
 
-    var currentRow = (head['row'] as int) + dRow;
-    var currentCol = (head['col'] as int) + dCol;
+    // Calculate movement direction
+    var deltaX = 0;
+    var deltaY = 0;
+
+    switch (vine.headDirection) {
+      case 'right':
+        deltaX = 1;
+        break;
+      case 'left':
+        deltaX = -1;
+        break;
+      case 'up':
+        deltaY = 1; // Up increases y
+        break;
+      case 'down':
+        deltaY = -1; // Down decreases y
+        break;
+    }
+
+    var currentX = headX + deltaX;
+    var currentY = headY + deltaY;
     int distance = 0;
 
-    while (currentRow >= 0 &&
-        currentRow < gridRows &&
-        currentCol >= 0 &&
-        currentCol < gridCols) {
+    while (currentX >= 0 &&
+        currentX < gridCols &&
+        currentY >= 0 &&
+        currentY < gridRows) {
+      // Check for collisions with ANY other active vine at current position
       for (final otherId in activeVineIds) {
         if (otherId == vineId) continue;
 
         final otherVine = level.vines.firstWhere((v) => v.id == otherId);
-        for (final cell in otherVine.path) {
-          if (cell['row'] == currentRow && cell['col'] == currentCol) {
+        for (final cell in otherVine.orderedPath) {
+          if (cell['x'] == currentX && cell['y'] == currentY) {
             return distance; // Blocked at this distance
           }
         }
       }
       distance++;
-      currentRow += dRow;
-      currentCol += dCol;
+      currentX += deltaX;
+      currentY += deltaY;
     }
 
     return distance; // No blocker found before edge

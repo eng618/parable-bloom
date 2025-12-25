@@ -8,20 +8,20 @@
     {
       "id": "1",
       "head_direction": "right",
-      "path": [
-        { "row": 2, "col": 1, "direction": "right" },
-        { "row": 2, "col": 2, "direction": "right" },
-        { "row": 2, "col": 3, "direction": "right" }
+      "ordered_path": [
+        { "x": 2, "y": 2 },
+        { "x": 1, "y": 2 },
+        { "x": 0, "y": 2 }
       ],
       "color": "moss_green"
     },
     {
       "id": "2",
       "head_direction": "down",
-      "path": [
-        { "row": 2, "col": 3, "direction": "down" },
-        { "row": 3, "col": 3, "direction": "down" },
-        { "row": 4, "col": 3, "direction": "down" }
+      "ordered_path": [
+        { "x": 3, "y": 2 },
+        { "x": 3, "y": 3 },
+        { "x": 3, "y": 4 }
       ],
       "color": "emerald"
     }
