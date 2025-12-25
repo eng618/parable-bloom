@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/app_theme.dart';
 import 'features/game/presentation/screens/game_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
+import 'screens/home_screen.dart';
 
 class ParableBloomApp extends ConsumerWidget {
   const ParableBloomApp({super.key});
@@ -15,8 +16,11 @@ class ParableBloomApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      home: const GameScreen(),
-      routes: {'/settings': (context) => const SettingsScreen()},
+      home: const HomeScreen(),
+      routes: {
+        '/game': (context) => const GameScreen(),
+        '/settings': (context) => const SettingsScreen(),
+      },
     );
   }
 }
