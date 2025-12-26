@@ -18,12 +18,17 @@ class GardenGame extends FlameGame {
   RectangleComponent? _gridBackground;
   RectangleComponent? _gameBackground;
 
-  // Theme colors - can be updated dynamically
-  Color _backgroundColor = const Color(0xFF1E3528);
-  Color _surfaceColor = const Color(0xFF2D4A3A);
-  Color _gridColor = const Color(0xFF3D5A4A);
+  // Theme colors - updated dynamically from app theme
+  late Color _backgroundColor;
+  late Color _surfaceColor;
+  late Color _gridColor;
 
-  GardenGame({required this.ref});
+  GardenGame({required this.ref}) {
+    // Initialize with default theme colors - will be updated by game screen
+    _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
+    _surfaceColor = const Color(0xFF2C3E50); // Default dark surface
+    _gridColor = const Color(0xFF3E5366); // Default dark grid
+  }
 
   void updateThemeColors(
     Color backgroundColor,

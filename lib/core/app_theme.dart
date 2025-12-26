@@ -1,51 +1,56 @@
 import 'package:flutter/material.dart';
 
-/// Centralized theme configuration for Parable Bloom.
+/// Centralized theme configuration for ParableWeave.
 /// All colors, themes, and visual styling can be configured here.
 class AppTheme {
   // ============================================================
-  // BRAND COLORS - Core identity colors
+  // BRAND COLORS - Core identity colors inspired by the braided bracelet
   // ============================================================
 
-  /// Primary brand color (Vine Green)
-  static const Color primarySeed = Color(0xFF4A7C59);
+  /// Primary brand color (Blue from bracelet)
+  static const Color primarySeed = Color(0xFF3A7DAF);
 
-  /// Secondary accent color
-  static const Color secondarySeed = Color(0xFF6B8E23);
+  /// Secondary accent color (Green from bracelet)
+  static const Color secondarySeed = Color(0xFF4F8A5B);
+
+  /// Tertiary neutral color (Beige from bracelet)
+  static const Color tertiarySeed = Color(0xFFE2D6C4);
 
   // ============================================================
   // GAME COLORS - Colors used in the game itself
   // ============================================================
 
-  /// Color for active/unblocked vines
-  static const Color vineGreen = Color(0xFF8FBC8F);
+  /// Color for active/unblocked vines (uses secondary for bracelet tie-in)
+  static const Color vineGreen = secondarySeed;
 
   /// Color for attempted/failed vines
   static const Color vineAttempted = Colors.red;
 
-  /// Grid dot color (light mode)
-  static const Color gridDotLight = Color(0x26FFFFFF); // 15% white
+  /// Grid dot color (light mode) - subtle beige tint
+  static const Color gridDotLight = Color(0x26E2D6C4); // 15% beige
 
-  /// Grid dot color (dark mode)
-  static const Color gridDotDark = Color(0x26FFFFFF); // 15% white
+  /// Grid dot color (dark mode) - subtle beige tint
+  static const Color gridDotDark = Color(0x26E2D6C4); // 15% beige
 
   // ============================================================
-  // LIGHT THEME COLORS
+  // LIGHT THEME COLORS - Beige-dominant for warmth
   // ============================================================
 
-  static const _lightBackground = Color(0xFFF5F5F0);
+  static const _lightBackground = Color(0xFFF8F5EF); // Lightened beige
   static const _lightSurface = Color(0xFFFFFFFF);
-  static const _lightSurfaceContainer = Color(0xFFF0F0E8);
+  static const _lightSurfaceContainer = Color(0xFFEFF3ED); // Subtle green tint
   static const _lightOnSurface = Color(0xFF1C1B1F);
   static const _lightOnSurfaceVariant = Color(0xFF49454F);
 
   // ============================================================
-  // DARK THEME COLORS
+  // DARK THEME COLORS - Blue-green mix for depth
   // ============================================================
 
-  static const _darkBackground = Color(0xFF1E3528);
-  static const _darkSurface = Color(0xFF2D4A3A);
-  static const _darkSurfaceContainer = Color(0xFF3D5A4A);
+  static const _darkBackground = Color(0xFF1A2E3F); // Dark blue
+  static const _darkSurface = Color(0xFF2C3E50); // Deeper blue
+  static const _darkSurfaceContainer = Color(
+    0xFF3E5366,
+  ); // Blue with green hint
   static const _darkOnSurface = Color(0xFFE6E1E5);
   static const _darkOnSurfaceVariant = Color(0xFFCAC4D0);
 
@@ -63,6 +68,8 @@ class AppTheme {
           onSurface: _lightOnSurface,
           onSurfaceVariant: _lightOnSurfaceVariant,
         ).copyWith(
+          secondary: secondarySeed,
+          tertiary: tertiarySeed,
           surfaceContainerLow: _lightSurfaceContainer,
           surfaceContainerHighest: _lightSurfaceContainer,
         );
@@ -88,6 +95,8 @@ class AppTheme {
           onSurface: _darkOnSurface,
           onSurfaceVariant: _darkOnSurfaceVariant,
         ).copyWith(
+          secondary: secondarySeed,
+          tertiary: tertiarySeed,
           surfaceContainerLow: _darkSurfaceContainer,
           surfaceContainerHighest: _darkSurfaceContainer,
         );

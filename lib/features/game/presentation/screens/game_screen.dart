@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/app_theme.dart';
 import '../../../../providers/game_providers.dart';
 import '../widgets/garden_game.dart';
 
@@ -14,20 +15,43 @@ class GameScreen extends ConsumerStatefulWidget {
 }
 
 class _GameScreenState extends ConsumerState<GameScreen> {
-  late ConfettiController _confettiController;
+  late ConfettiController _leftConfettiController;
+  late ConfettiController _rightConfettiController;
   GardenGame? _game;
+  late bool _isLevelCompleteOverlayVisible;
+  late String _currentCongratulationMessage;
+
+  // List of congratulatory messages
+  static const List<String> _congratulationMessages = [
+    'Awesome!',
+    'Great Job!',
+    'Excellent!',
+    'Well Done!',
+    'Fantastic!',
+    'Outstanding!',
+    'Brilliant!',
+    'Perfect!',
+    'Superb!',
+    'Amazing!',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(
-      duration: const Duration(milliseconds: 1500),
+    _isLevelCompleteOverlayVisible = false;
+    _currentCongratulationMessage = '';
+    _leftConfettiController = ConfettiController(
+      duration: const Duration(milliseconds: 2000),
+    );
+    _rightConfettiController = ConfettiController(
+      duration: const Duration(milliseconds: 2000),
     );
   }
 
   @override
   void dispose() {
-    _confettiController.dispose();
+    _leftConfettiController.dispose();
+    _rightConfettiController.dispose();
     super.dispose();
   }
 
@@ -35,15 +59,34 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Watch for level completion and show dialog
+    // Update game theme colors when theme changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_game != null) {
+        final gameBackground = AppTheme.getGameBackground(
+          Theme.of(context).brightness,
+        );
+        final gameSurface = AppTheme.getGameSurface(
+          Theme.of(context).brightness,
+        );
+        final gridBackground = AppTheme.getGridBackground(
+          Theme.of(context).brightness,
+        );
+
+        _game!.updateThemeColors(gameBackground, gameSurface, gridBackground);
+      }
+    });
+
+    // Watch for level completion and show overlay
     ref.listen(levelCompleteProvider, (previous, next) {
       debugPrint(
         '_GameScreen: levelCompleteProvider changed from $previous to $next',
       );
       if (next && (previous == null || !previous)) {
-        debugPrint('_GameScreen: Showing level complete dialog');
-        _confettiController.play();
-        _showLevelCompleteDialog();
+        debugPrint('_GameScreen: Showing level complete overlay');
+        debugPrint('_GameScreen: Starting both confetti cannons');
+        _leftConfettiController.play();
+        _rightConfettiController.play();
+        _showLevelCompleteOverlay();
       }
     });
 
@@ -89,6 +132,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             tooltip: 'Restart Level',
           ),
           IconButton(
+            icon: const Icon(Icons.celebration),
+            onPressed: _testConfetti,
+            tooltip: 'Test Confetti',
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _resetProgress,
             tooltip: 'Debug: Reset Progress',
@@ -108,6 +156,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 const Center(child: CircularProgressIndicator()),
           ),
           _buildConfetti(),
+          if (_isLevelCompleteOverlayVisible) _buildLevelCompleteOverlay(),
         ],
       ),
     );
@@ -142,35 +191,130 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Widget _buildConfetti() {
+    // Ensure controllers are properly initialized
     return Stack(
       children: [
+        // Left cannon - positioned at bottom-left corner
         Positioned(
-          bottom: 0,
-          left: 0,
+          bottom: 20,
+          left: 20,
           child: ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirection: -3.14159 / 3,
-            emissionFrequency: 0.03,
-            numberOfParticles: 25,
-            maxBlastForce: 50,
-            minBlastForce: 35,
-            gravity: 0.2,
+            confettiController: _leftConfettiController,
+            blastDirection: -3.14159 / 3, // -60 degrees (up and left)
+            emissionFrequency: 0.05, // Increased from 0.03 for more particles
+            numberOfParticles: 35, // Increased from 25 for more confetti
+            maxBlastForce: 80, // Increased from 50 for longer/faster distance
+            minBlastForce: 55, // Increased from 35 for more power
+            gravity: 0.4, // Increased from 0.2 for faster falling
+            shouldLoop: false,
+            colors: const [
+              Colors.red,
+              Colors.blue,
+              Colors.green,
+              Colors.yellow,
+              Colors.purple,
+              Colors.orange,
+            ],
           ),
         ),
+        // Right cannon - positioned at bottom-right corner
         Positioned(
-          bottom: 0,
-          right: 0,
+          bottom: 20,
+          right: 20,
           child: ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirection: -2 * 3.14159 / 3,
-            emissionFrequency: 0.03,
-            numberOfParticles: 25,
-            maxBlastForce: 50,
-            minBlastForce: 35,
-            gravity: 0.2,
+            confettiController: _rightConfettiController,
+            blastDirection: -2 * 3.14159 / 3, // -120 degrees (up and right)
+            emissionFrequency: 0.05, // Increased from 0.03 for more particles
+            numberOfParticles: 35, // Increased from 25 for more confetti
+            maxBlastForce: 80, // Increased from 50 for longer/faster distance
+            minBlastForce: 55, // Increased from 35 for more power
+            gravity: 0.4, // Increased from 0.2 for faster falling
+            shouldLoop: false,
+            colors: const [
+              Colors.red,
+              Colors.blue,
+              Colors.green,
+              Colors.yellow,
+              Colors.purple,
+              Colors.orange,
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLevelCompleteOverlay() {
+    return Container(
+      color: Colors.black.withValues(alpha: 0.3),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _currentCongratulationMessage,
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 10.0,
+                      color: Colors.black.withValues(alpha: 0.8),
+                      offset: const Offset(2.0, 2.0),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              const Icon(Icons.celebration, color: Colors.yellow, size: 80),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLevelCompleteOverlay() async {
+    // Select a random congratulatory message
+    final randomIndex =
+        DateTime.now().millisecondsSinceEpoch % _congratulationMessages.length;
+    _currentCongratulationMessage = _congratulationMessages[randomIndex];
+
+    setState(() {
+      _isLevelCompleteOverlayVisible = true;
+    });
+
+    // Advance to next level
+    await ref.read(moduleProgressProvider.notifier).advanceLevel();
+    ref.read(levelCompleteProvider.notifier).setComplete(false);
+
+    // Wait for 3 seconds then navigate back to home
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (mounted) {
+      setState(() {
+        _isLevelCompleteOverlayVisible = false;
+      });
+
+      // Navigate back to home screen and clear game screen from stack
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    }
+  }
+
+  void _testConfetti() {
+    debugPrint('_testConfetti: Testing both confetti cannons');
+    _leftConfettiController.play();
+    _rightConfettiController.play();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Confetti test: Both cannons fired!')),
     );
   }
 
@@ -198,82 +342,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     debugPrint('_resetProgress: Progress reset completed');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Progress reset and level reloaded')),
-    );
-  }
-
-  void _showLevelCompleteDialog() {
-    final currentLevel = ref.read(currentLevelProvider);
-    if (currentLevel == null) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        final cs = Theme.of(dialogContext).colorScheme;
-        return AlertDialog(
-          backgroundColor: cs.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            'LEVEL COMPLETE!',
-            style: TextStyle(
-              color: cs.onSurface,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                currentLevel.name,
-                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Level completed successfully!',
-                style: TextStyle(color: cs.onSurface, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  // Advance to next level in module progression
-                  await ref
-                      .read(moduleProgressProvider.notifier)
-                      .advanceLevel();
-                  ref.read(levelCompleteProvider.notifier).setComplete(false);
-                  if (dialogContext.mounted) {
-                    Navigator.of(dialogContext).pop();
-                  }
-                  await _game?.reloadLevel();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'NEXT LEVEL',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 

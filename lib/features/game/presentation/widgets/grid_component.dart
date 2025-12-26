@@ -205,18 +205,28 @@ class CellComponent extends RectangleComponent
   void render(Canvas canvas) {
     super.render(canvas);
 
+    // Use theme-aware colors for grid dots
+    final theme = Theme.of(game.buildContext!);
+    final isDark = theme.brightness == Brightness.dark;
+
     // Draw small dot in the center of the cell
     final center = size.toRect().center;
+    final dotColor = isDark
+        ? const Color(0x26E2D6C4) // Beige tint for dark mode
+        : const Color(0x26E2D6C4); // Same beige tint for light mode
     final dotPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.15 * 255)
+      ..color = dotColor
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, 4, dotPaint);
 
-    // Debug: draw x,y labels in corner
+    // Debug: draw x,y labels in corner with theme-aware colors
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
     textPainter.text = TextSpan(
       text: '$gridX,$gridY',
-      style: const TextStyle(color: Colors.white38, fontSize: 10),
+      style: TextStyle(
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        fontSize: 10,
+      ),
     );
     textPainter.layout();
     textPainter.paint(canvas, const Offset(2, 2));

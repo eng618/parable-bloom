@@ -115,22 +115,31 @@ class StylizedGrid extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: CustomPaint(painter: GridPainter()),
+        child: CustomPaint(painter: GridPainter(context: context)),
       ),
     );
   }
 }
 
 class GridPainter extends CustomPainter {
+  final BuildContext context;
+
+  GridPainter({required this.context});
+
   @override
   void paint(Canvas canvas, Size size) {
+    // Use theme-based colors instead of hardcoded greens
+    final ThemeData theme = Theme.of(context);
+
     final paint = Paint()
-      ..color = Colors.green.shade200
+      ..color = theme.colorScheme.secondary
+          .withValues(alpha: 0.6) // Medium green
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = Colors.green.shade50
+      ..color = theme.colorScheme.secondary
+          .withValues(alpha: 0.1) // Light green tint
       ..style = PaintingStyle.fill;
 
     const gridSize = 5;
@@ -150,7 +159,8 @@ class GridPainter extends CustomPainter {
 
     // Draw some decorative vine-like elements
     final vinePaint = Paint()
-      ..color = Colors.green.shade400
+      ..color = theme.colorScheme.secondary
+          .withValues(alpha: 0.8) // Stronger green
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -179,7 +189,9 @@ class GridPainter extends CustomPainter {
 
     // Draw some small circles to represent vine heads
     final circlePaint = Paint()
-      ..color = Colors.green.shade600
+      ..color = theme
+          .colorScheme
+          .secondary // Pure secondary green
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(Offset(cellSize * 1, cellSize * 1), 4, circlePaint);
