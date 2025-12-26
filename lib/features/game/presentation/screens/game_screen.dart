@@ -84,8 +84,20 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       if (next && (previous == null || !previous)) {
         debugPrint('_GameScreen: Showing level complete overlay');
         debugPrint('_GameScreen: Starting both confetti cannons');
+        debugPrint(
+          '_GameScreen: Left controller state before play: ${_leftConfettiController.state}',
+        );
+        debugPrint(
+          '_GameScreen: Right controller state before play: ${_rightConfettiController.state}',
+        );
         _leftConfettiController.play();
         _rightConfettiController.play();
+        debugPrint(
+          '_GameScreen: Left controller state after play: ${_leftConfettiController.state}',
+        );
+        debugPrint(
+          '_GameScreen: Right controller state after play: ${_rightConfettiController.state}',
+        );
         _showLevelCompleteOverlay();
       }
     });
@@ -155,7 +167,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             loadingBuilder: (_) =>
                 const Center(child: CircularProgressIndicator()),
           ),
-          _buildConfetti(),
           if (_isLevelCompleteOverlayVisible) _buildLevelCompleteOverlay(),
         ],
       ),
@@ -245,40 +256,45 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Widget _buildLevelCompleteOverlay() {
-    return Container(
-      color: Colors.black.withValues(alpha: 0.3),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _currentCongratulationMessage,
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(
-                      blurRadius: 10.0,
-                      color: Colors.black.withValues(alpha: 0.8),
-                      offset: const Offset(2.0, 2.0),
-                    ),
-                  ],
+    return Stack(
+      children: [
+        // Confetti (no background overlay - completely transparent)
+        _buildConfetti(),
+        // Content
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _currentCongratulationMessage,
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 10.0,
+                        color: Colors.black.withValues(alpha: 1.0),
+                        offset: const Offset(2.0, 2.0),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              const Icon(Icons.celebration, color: Colors.yellow, size: 80),
-            ],
+                const SizedBox(height: 20),
+                const Icon(Icons.celebration, color: Colors.yellow, size: 80),
+              ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -296,6 +312,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     await ref.read(moduleProgressProvider.notifier).advanceLevel();
     ref.read(levelCompleteProvider.notifier).setComplete(false);
 
+    // Reset grace for the next level
+    ref.read(gameInstanceProvider.notifier).resetGrace();
+
     // Wait for 3 seconds then navigate back to home
     await Future.delayed(const Duration(seconds: 3));
 
@@ -311,8 +330,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _testConfetti() {
     debugPrint('_testConfetti: Testing both confetti cannons');
+    debugPrint(
+      '_testConfetti: Left controller state: ${_leftConfettiController.state}',
+    );
+    debugPrint(
+      '_testConfetti: Right controller state: ${_rightConfettiController.state}',
+    );
     _leftConfettiController.play();
     _rightConfettiController.play();
+    debugPrint(
+      '_testConfetti: After play - Left: ${_leftConfettiController.state}, Right: ${_rightConfettiController.state}',
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Confetti test: Both cannons fired!')),
     );

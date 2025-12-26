@@ -11,6 +11,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final int gridSize;
 
   bool _isAnimating = false;
+  bool _willClearAfterAnimation =
+      false; // Whether this vine should be cleared when animation completes
 
   // Track current visual positions during animation (separate from vineData.path)
   List<Map<String, int>> _currentVisualPositions = [];
@@ -64,17 +66,14 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // Use centralized theme colors
     final baseColor = isAttempted ? AppTheme.vineAttempted : AppTheme.vineGreen;
 
-    // Calculate direction from current visual positions
-    final direction = _calculateVineDirectionFromPositions(
-      _currentVisualPositions,
-    );
+    // Calculate direction from vine data
+    final direction = _calculateVineDirection();
 
     // Draw line segments connecting cells (tails)
-    final segmentAlpha = isBlocked ? 0.3 : 0.8;
     final segmentPaint = Paint()
-      ..color = baseColor.withValues(alpha: segmentAlpha * 255)
+      ..color = baseColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
+      ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
 
     for (int i = 0; i < _currentVisualPositions.length - 1; i++) {
@@ -126,9 +125,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           isAttempted,
         );
       } else {
-        final alpha = isBlocked ? 0.3 : 0.8;
         final bodyPaint = Paint()
-          ..color = baseColor.withValues(alpha: alpha * 255)
+          ..color = baseColor
           ..style = PaintingStyle.fill;
         canvas.drawCircle(rect.center, 3, bodyPaint);
       }
@@ -187,9 +185,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
     canvas.drawPath(path.shift(const Offset(2, 2)), shadowPaint);
 
-    final arrowAlpha = isBlocked ? 0.4 : 0.9;
     final arrowPaint = Paint()
-      ..color = color.withValues(alpha: arrowAlpha * 255)
+      ..color = color
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, arrowPaint);
 
@@ -232,15 +229,25 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _isAnimating = true;
 
     // Initialize animation state
+    final rawDistance = _calculateMovementDistance();
     _currentAnimationStep = 0;
-    _totalAnimationSteps = _calculateMovementDistance();
     _isMovingForward = true;
     _animationTimer = 0.0;
 
-    if (_totalAnimationSteps == 0) {
-      // Cannot move forward, treat as blocked
-      _isAnimating = false;
-      return;
+    // Calculate animation parameters based on whether vine can clear
+    final canClear = rawDistance > 0;
+    final maxDistance = rawDistance.abs();
+
+    if (canClear) {
+      // Vine can reach edge - animate until completely off screen
+      // Add extra steps to ensure all segments exit the grid
+      _totalAnimationSteps = maxDistance + vineData.orderedPath.length;
+      _willClearAfterAnimation = true;
+    } else {
+      // Vine is blocked - animate to blocker, bump, then reverse
+      _totalAnimationSteps =
+          maxDistance * 2; // Forward to blocker + reverse back
+      _willClearAfterAnimation = false;
     }
   }
 
@@ -255,15 +262,31 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     if (_animationTimer >= _stepDuration) {
       _animationTimer = 0.0;
 
-      // For bump animation, switch direction halfway through
-      final isBumpAnimation =
-          _totalAnimationSteps > _calculateMovementDistance();
-      if (isBumpAnimation &&
-          _currentAnimationStep == _totalAnimationSteps ~/ 2) {
-        _isMovingForward = false;
-        parent.markVineAttempted(
-          vineData.id,
-        ); // Mark as attempted when reaching blocker
+      final rawDistance = _calculateMovementDistance();
+      final canClear = rawDistance > 0;
+      final maxForwardDistance = rawDistance.abs();
+
+      // Handle animation phases
+      if (_isMovingForward) {
+        if (_currentAnimationStep < maxForwardDistance) {
+          // Still moving forward in snake animation
+        } else if (!canClear && _currentAnimationStep == maxForwardDistance) {
+          // Reached the blocker - do bump effect and mark as attempted
+          parent.markVineAttempted(vineData.id);
+          // Continue to next step for reverse animation
+        }
+      } else {
+        // Moving backward to original position
+      }
+
+      // Calculate which step to use for position calculation
+      int positionStep;
+      if (_isMovingForward) {
+        positionStep = _currentAnimationStep;
+      } else {
+        // Reverse phase: calculate backward step
+        final reverseStep = _currentAnimationStep - maxForwardDistance;
+        positionStep = maxForwardDistance - reverseStep - 1;
       }
 
       // Update each segment's position for this step
@@ -272,12 +295,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         segmentIndex < _currentVisualPositions.length;
         segmentIndex++
       ) {
-        final stepForCalculation = _isMovingForward
-            ? _currentAnimationStep
-            : (_totalAnimationSteps - _currentAnimationStep - 1);
         final targetPosition = _calculateSegmentTargetPosition(
           segmentIndex,
-          stepForCalculation,
+          positionStep,
           _isMovingForward,
         );
 
@@ -295,13 +315,20 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       _currentAnimationStep++;
 
-      if (_currentAnimationStep >= _totalAnimationSteps) {
-        if (_isMovingForward && !isBumpAnimation) {
-          // Forward movement completed successfully (slideOut)
+      // Check for phase transitions
+      if (_isMovingForward &&
+          _currentAnimationStep > maxForwardDistance &&
+          !canClear) {
+        // Finished forward phase for blocked vine - start reverse phase
+        _isMovingForward = false;
+      } else if (_currentAnimationStep >= _totalAnimationSteps) {
+        // Animation complete
+        if (_willClearAfterAnimation) {
+          // Vine cleared off screen
           parent.notifyVineCleared(vineData.id);
           removeFromParent();
         } else {
-          // Reverse movement completed (bump back to start)
+          // Vine returned to original position
           _isAnimating = false;
         }
       }
@@ -323,40 +350,43 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     int step,
     bool forward,
   ) {
-    // For snake movement: orderedPath[0] is head, orderedPath[last] is tail
-    // Head moves in its direction, body segments follow
+    // Calculate position for each segment at the given animation step
+    // For forward movement: head moves step positions forward, body follows
+    // For reverse movement: head moves backward, body follows
 
-    if (segmentIndex == 0) {
-      // Head segment (index 0) - calculate next position based on direction
-      final headCell = vineData.orderedPath[segmentIndex];
-      final headX = headCell['x'] as int;
-      final headY = headCell['y'] as int;
+    final originalHead = vineData.orderedPath[0];
+    final headX = originalHead['x'] as int;
+    final headY = originalHead['y'] as int;
 
-      final direction = forward
-          ? vineData.headDirection
-          : _getReverseDirection(vineData.headDirection);
+    // Calculate effective step (negative for reverse)
+    final effectiveStep = forward ? step : -step;
 
-      switch (direction) {
-        case 'right':
-          return {'x': headX + 1, 'y': headY};
-        case 'left':
-          return {'x': headX - 1, 'y': headY};
-        case 'up':
-          return {'x': headX, 'y': headY + 1}; // Up increases y
-        case 'down':
-          return {'x': headX, 'y': headY - 1}; // Down decreases y
-        default:
-          return null;
-      }
-    } else {
-      // Body segment - move to where the previous segment (index - 1) was
-      // This creates the snake-like following behavior
-      final previousSegmentCell = vineData.orderedPath[segmentIndex - 1];
-      return {
-        'x': previousSegmentCell['x'] as int,
-        'y': previousSegmentCell['y'] as int,
-      };
+    // Calculate direction deltas
+    var deltaX = 0;
+    var deltaY = 0;
+    switch (vineData.headDirection) {
+      case 'right':
+        deltaX = 1;
+        break;
+      case 'left':
+        deltaX = -1;
+        break;
+      case 'up':
+        deltaY = 1; // Up increases y
+        break;
+      case 'down':
+        deltaY = -1; // Down decreases y
+        break;
     }
+
+    // For each segment: position = original_position + (effectiveStep - segmentIndex) * direction
+    // This creates the snake-like following behavior
+    final segmentStep = effectiveStep - segmentIndex;
+
+    return {
+      'x': headX + segmentStep * deltaX,
+      'y': headY + segmentStep * deltaY,
+    };
   }
 
   String _getReverseDirection(String direction) {

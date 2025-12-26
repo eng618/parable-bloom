@@ -357,12 +357,27 @@ class SettingsScreen extends ConsumerWidget {
       await box.clear();
       debugPrint('ResetData: Hive data cleared');
 
-      // 3. Close the loading dialog
+      // 3. Invalidate all Riverpod providers to force fresh state
+      debugPrint('ResetData: Invalidating providers...');
+      ref.invalidate(gameProgressProvider);
+      ref.invalidate(moduleProgressProvider);
+      ref.invalidate(currentLevelProvider);
+      ref.invalidate(levelCompleteProvider);
+      ref.invalidate(gameCompletedProvider);
+      ref.invalidate(gameOverProvider);
+      ref.invalidate(graceProvider);
+      ref.invalidate(levelTotalTapsProvider);
+      ref.invalidate(levelWrongTapsProvider);
+      ref.invalidate(vineStatesProvider);
+      ref.invalidate(themeModeProvider);
+      // Note: Keep hiveBoxProvider and other low-level providers
+
+      // 4. Close the loading dialog
       if (Navigator.canPop(context)) {
         Navigator.of(context).pop();
       }
 
-      // 4. Show success message and restart app
+      // 5. Show success message and restart app
       debugPrint('ResetData: Showing success message...');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -371,7 +386,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
       );
 
-      // 5. Restart the app by navigating to home and clearing navigation stack
+      // 6. Restart the app by navigating to home and clearing navigation stack
       debugPrint('ResetData: Restarting app...');
       await Future.delayed(const Duration(seconds: 2));
 

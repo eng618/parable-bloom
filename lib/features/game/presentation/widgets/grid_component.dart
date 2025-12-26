@@ -131,26 +131,13 @@ class GridComponent extends PositionComponent
     final comp = _vineComponents[clickedVine.id];
     if (comp == null) return;
 
-    if (!state.isBlocked) {
-      // Vine can be moved (not blocked) - trigger animation
-      comp.slideOut();
-      debugPrint('Clicked movable vine: ${clickedVine.id}');
-    } else {
-      // Tapped a blocked vine - calculate distance and trigger bump animation
-      debugPrint('Tapped blocked vine: ${clickedVine.id}');
+    final activeIds = _vineStates.entries
+        .where((e) => !e.value.isCleared)
+        .map((e) => e.key)
+        .toList();
 
-      final activeIds = _vineStates.entries
-          .where((e) => !e.value.isCleared)
-          .map((e) => e.key)
-          .toList();
-
-      final distance = LevelSolver.getDistanceToBlocker(
-        _currentLevel!,
-        clickedVine.id,
-        activeIds,
-      );
-      comp.slideBump(distance);
-    }
+    debugPrint('Sliding out vine: ${clickedVine.id}');
+    comp.slideOut();
   }
 
   VineData? _getVineAtCell(int row, int col) {

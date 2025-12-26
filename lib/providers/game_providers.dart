@@ -647,6 +647,7 @@ class LevelSolver {
   }
 
   /// Calculates how many cells a vine can slide before being blocked or exiting.
+  /// Returns negative distance if blocked by vine, positive if reaches edge.
   static int getDistanceToBlocker(
     LevelData level,
     String vineId,
@@ -683,7 +684,7 @@ class LevelSolver {
 
     var currentX = headX + deltaX;
     var currentY = headY + deltaY;
-    int distance = 0;
+    int distance = 1;
 
     while (currentX >= 0 &&
         currentX < gridCols &&
@@ -696,7 +697,7 @@ class LevelSolver {
         final otherVine = level.vines.firstWhere((v) => v.id == otherId);
         for (final cell in otherVine.orderedPath) {
           if (cell['x'] == currentX && cell['y'] == currentY) {
-            return distance; // Blocked at this distance
+            return -distance; // Negative = blocked by vine at this distance
           }
         }
       }
@@ -705,7 +706,7 @@ class LevelSolver {
       currentY += deltaY;
     }
 
-    return distance; // No blocker found before edge
+    return distance - 1; // Positive = reached edge at this distance
   }
 }
 
@@ -783,7 +784,7 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
     final s = state[vineId];
     if (s == null) return;
 
-    if (s.isBlocked && !s.hasBeenAttempted) {
+    if (!s.hasBeenAttempted) {
       debugPrint(
         'VineStatesNotifier: Marking $vineId as attempted and decrementing life',
       );
@@ -803,7 +804,7 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
 
       // Notify parent/provider to decrement grace
       ref.read(gameInstanceProvider.notifier).decrementGrace();
-    } else if (s.isBlocked && s.hasBeenAttempted) {
+    } else {
       debugPrint(
         'VineStatesNotifier: $vineId already attempted, skipping life decrement',
       );

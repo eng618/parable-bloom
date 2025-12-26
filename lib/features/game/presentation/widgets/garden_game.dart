@@ -10,7 +10,7 @@ import '../../../../providers/game_providers.dart';
 import 'grid_component.dart';
 
 class GardenGame extends FlameGame {
-  static const double cellSize = 80.0; // Pixels per cell
+  static const double cellSize = 40.0; // Pixels per cell
 
   late GridComponent grid;
   final WidgetRef ref;
@@ -56,6 +56,9 @@ class GardenGame extends FlameGame {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    // Reset grace for new level
+    ref.read(gameInstanceProvider.notifier).resetGrace();
 
     // Load current level first
     await _loadCurrentLevel();
