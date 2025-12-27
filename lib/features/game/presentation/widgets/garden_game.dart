@@ -121,14 +121,21 @@ class GardenGame extends FlameGame {
   }
 
   Future<void> _loadCurrentLevel() async {
-    final moduleProgress = ref.read(moduleProgressProvider);
-    final moduleId = moduleProgress.currentModule;
-    final levelInModule = moduleProgress.currentLevelInModule;
+    final globalProgress = ref.read(globalProgressProvider);
+    final globalLevelNumber = globalProgress.currentGlobalLevel;
 
     debugPrint(
-      'GardenGame: Attempting to load module $moduleId level $levelInModule',
+      'GardenGame: Attempting to load global level $globalLevelNumber',
     );
-    debugPrint('GardenGame: Module progress: $moduleProgress');
+    debugPrint('GardenGame: Global progress: $globalProgress');
+
+    // Convert global level number to module and level within module
+    final moduleId = globalProgress.currentModule;
+    final levelInModule = globalProgress.currentLevelInModule;
+
+    debugPrint(
+      'GardenGame: Converting to module $moduleId level $levelInModule',
+    );
 
     try {
       // Load level data from JSON in module structure

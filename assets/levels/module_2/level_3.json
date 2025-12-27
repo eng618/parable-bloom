@@ -1,52 +1,52 @@
 {
-  "id": 2,
+  "id": 3,
   "module_id": 1,
-  "global_level_number": 2,
-  "name": "First Companions",
-  "grid_size": [5, 8],
-  "difficulty": "Tutorial",
+  "global_level_number": 8,
+  "name": "Blocked Paths",
+  "grid_size": [9, 16],
+  "difficulty": "Seedling",
   "vines": [
     {
       "id": "1",
       "head_direction": "right",
       "ordered_path": [
         {
-          "x": 2,
-          "y": 1
+          "x": 0,
+          "y": 2
         },
         {
           "x": 1,
-          "y": 1
+          "y": 2
         },
         {
-          "x": 0,
-          "y": 1
+          "x": 2,
+          "y": 2
         }
       ],
       "color": "moss_green"
     },
     {
       "id": "2",
-      "head_direction": "right",
+      "head_direction": "down",
       "ordered_path": [
         {
-          "x": 2,
+          "x": 3,
+          "y": 4
+        },
+        {
+          "x": 3,
           "y": 3
         },
         {
-          "x": 1,
-          "y": 3
-        },
-        {
-          "x": 0,
-          "y": 3
+          "x": 3,
+          "y": 2
         }
       ],
       "color": "emerald"
     }
   ],
-  "max_moves": 2,
+  "max_moves": 5,
   "min_moves": 2,
-  "complexity": "tutorial",
+  "complexity": "low",
   "grace": 3
 }

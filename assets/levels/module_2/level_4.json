@@ -1,75 +1,71 @@
 {
   "id": 4,
   "module_id": 1,
-  "global_level_number": 4,
-  "name": "Order Matters",
-  "grid_size": [6, 10],
-  "difficulty": "Tutorial",
+  "global_level_number": 9,
+  "name": "Careful Order",
+  "grid_size": [9, 16],
+  "difficulty": "Seedling",
   "vines": [
     {
       "id": "1",
       "head_direction": "right",
       "ordered_path": [
         {
-          "x": 2,
-          "y": 2
-        },
-        {
           "x": 1,
-          "y": 2
+          "y": 4
         },
         {
-          "x": 0,
-          "y": 2
+          "x": 2,
+          "y": 4
+        },
+        {
+          "x": 3,
+          "y": 4
         }
       ],
       "color": "moss_green"
     },
     {
       "id": "2",
-      "head_direction": "right",
+      "head_direction": "down",
       "ordered_path": [
         {
-          "x": 3,
+          "x": 6,
+          "y": 4
+        },
+        {
+          "x": 6,
           "y": 3
         },
         {
-          "x": 2,
-          "y": 3
-        },
-        {
-          "x": 1,
-          "y": 3
-        },
-        {
-          "x": 0,
-          "y": 3
+          "x": 6,
+          "y": 2
         }
       ],
       "color": "emerald"
     },
     {
       "id": "3",
-      "head_direction": "down",
+      "head_direction": "left",
       "ordered_path": [
         {
-          "x": 4,
-          "y": 5
+          "x": 6,
+          "y": 0
+        },
+        {
+          "x": 5,
+          "y": 0
         },
         {
           "x": 4,
-          "y": 4
-        },
-        {
-          "x": 4,
-          "y": 3
+          "y": 0
         }
       ],
       "color": "olive"
     }
   ],
-  "max_moves": 3,
+  "max_moves": 7,
   "min_moves": 3,
-  "complexity": "tutorial",
+  "complexity": "medium",
   "grace": 3
 }

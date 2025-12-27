@@ -8,7 +8,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final moduleProgress = ref.watch(moduleProgressProvider);
+    final globalProgress = ref.watch(globalProgressProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -50,7 +50,7 @@ class HomeScreen extends ConsumerWidget {
                   elevation: 4,
                 ),
                 child: Text(
-                  'Play Module ${moduleProgress.currentModule} Level ${moduleProgress.currentLevelInModule}',
+                  'Play Level ${globalProgress.currentGlobalLevel}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

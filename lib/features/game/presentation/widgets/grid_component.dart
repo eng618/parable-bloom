@@ -89,7 +89,11 @@ class GridComponent extends PositionComponent
 
   List<String> getActiveVineIds() {
     return _vineStates.entries
-        .where((e) => !e.value.isCleared && e.value.animationState != VineAnimationState.animatingClear)
+        .where(
+          (e) =>
+              !e.value.isCleared &&
+              e.value.animationState != VineAnimationState.animatingClear,
+        )
         .map((e) => e.key)
         .toList();
   }
@@ -143,11 +147,6 @@ class GridComponent extends PositionComponent
 
     final comp = _vineComponents[clickedVine.id];
     if (comp == null) return;
-
-    final activeIds = _vineStates.entries
-        .where((e) => !e.value.isCleared)
-        .map((e) => e.key)
-        .toList();
 
     debugPrint('Sliding out vine: ${clickedVine.id}');
     comp.slideOut();

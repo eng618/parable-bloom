@@ -1,0 +1,13 @@
+{
+  "id": 2,
+  "name": "The Sower",
+  "level_count": 15,
+  "parable": {
+    "title": "The Parable of the Sower",
+    "scripture": "Matthew 13:1-23",
+    "content": "That same day Jesus went out of the house and sat by the lake. Such large crowds gathered around him that he got into a boat and sat in it, while all the people stood on the shore. Then he told them many things in parables, saying: 'A farmer went out to sow his seed. As he was scattering the seed, some fell along the path, and the birds came and ate it up. Some fell on rocky places, where it did not have much soil. It sprang up quickly, because the soil was shallow. But when the sun came up, the plants were scorched, and they withered because they had no root. Other seed fell among thorns, which grew up and choked the plants. Still other seed fell on good soil, where it produced a crop—a hundred, sixty or thirty times what was sown. Whoever has ears, let them hear.'",
+    "reflection": "What kind of soil represents your heart when it comes to receiving God's word?",
+    "background_image": "parable_sower.jpg"
+  },
+  "unlock_message": "Module complete! Take time to reflect on the parable of the sower."
+}

@@ -316,32 +316,58 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _performDataReset(BuildContext context, WidgetRef ref) async {
-    // Close the dialog
+  void _performDataReset(BuildContext context, WidgetRef ref) {
+    // Close the confirmation dialog immediately (before any async work)
     Navigator.of(context).pop();
 
-    // Show loading dialog
+    // Store service references before async operations
+    final firestore = ref.read(firestoreProvider);
+    final auth = ref.read(firebaseAuthProvider);
+    final box = ref.read(hiveBoxProvider);
+
+    // Show loading dialog and capture its context
+    BuildContext? loadingContext;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (loadingContext) => const AlertDialog(
-        title: Text('Resetting Data...'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('This may take a moment...'),
-          ],
-        ),
-      ),
+      builder: (ctx) {
+        loadingContext = ctx;
+        return const AlertDialog(
+          title: Text('Resetting Data...'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('This may take a moment...'),
+            ],
+          ),
+        );
+      },
     );
 
+    // Perform async operations without awaiting, using .then() and .catchError()
+    _performResetAsync(
+      firestore: firestore,
+      auth: auth,
+      box: box,
+      ref: ref,
+      loadingContext: loadingContext,
+      originalContext: context,
+    );
+  }
+
+  Future<void> _performResetAsync({
+    required dynamic firestore,
+    required dynamic auth,
+    required dynamic box,
+    required WidgetRef ref,
+    required BuildContext? loadingContext,
+    required BuildContext originalContext,
+  }) async {
     try {
       // 1. Clear Firebase data
       debugPrint('ResetData: Clearing Firebase data...');
-      final firestore = ref.read(firestoreProvider);
-      final auth = ref.read(firebaseAuthProvider);
       final user = auth.currentUser;
 
       if (user != null) {
@@ -353,14 +379,13 @@ class SettingsScreen extends ConsumerWidget {
 
       // 2. Clear Hive data
       debugPrint('ResetData: Clearing Hive data...');
-      final box = ref.read(hiveBoxProvider);
       await box.clear();
       debugPrint('ResetData: Hive data cleared');
 
       // 3. Invalidate all Riverpod providers to force fresh state
       debugPrint('ResetData: Invalidating providers...');
       ref.invalidate(gameProgressProvider);
-      ref.invalidate(moduleProgressProvider);
+      ref.invalidate(globalProgressProvider);
       ref.invalidate(currentLevelProvider);
       ref.invalidate(levelCompleteProvider);
       ref.invalidate(gameCompletedProvider);
@@ -370,16 +395,16 @@ class SettingsScreen extends ConsumerWidget {
       ref.invalidate(levelWrongTapsProvider);
       ref.invalidate(vineStatesProvider);
       ref.invalidate(themeModeProvider);
-      // Note: Keep hiveBoxProvider and other low-level providers
 
-      // 4. Close the loading dialog
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();
+      // 4. Close the loading dialog safely
+      if (loadingContext != null && Navigator.canPop(loadingContext)) {
+        Navigator.of(loadingContext).pop();
       }
 
       // 5. Show success message and restart app
       debugPrint('ResetData: Showing success message...');
-      ScaffoldMessenger.of(context).showSnackBar(
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(originalContext).showSnackBar(
         const SnackBar(
           content: Text('All data reset successfully. Restarting app...'),
           duration: Duration(seconds: 2),
@@ -390,21 +415,24 @@ class SettingsScreen extends ConsumerWidget {
       debugPrint('ResetData: Restarting app...');
       await Future.delayed(const Duration(seconds: 2));
 
-      // Navigate to home screen and clear navigation stack
-      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      // ignore: use_build_context_synchronously
+      Navigator.of(
+        originalContext,
+      ).pushNamedAndRemoveUntil('/', (route) => false);
     } catch (e) {
       debugPrint('ResetData: Error during reset: $e');
 
-      // Close loading dialog
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();
+      // Close loading dialog safely
+      if (loadingContext != null && Navigator.canPop(loadingContext)) {
+        Navigator.of(loadingContext).pop();
       }
 
       // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(originalContext).showSnackBar(
         SnackBar(
           content: Text('Error resetting data: ${e.toString()}'),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: Theme.of(originalContext).colorScheme.error,
         ),
       );
     }

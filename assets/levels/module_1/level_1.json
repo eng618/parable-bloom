@@ -1,23 +1,33 @@
 {
   "id": 1,
   "module_id": 1,
-  "name": "First Steps",
-  "grid_size": [7, 7],
-  "difficulty": "Seedling",
+  "global_level_number": 1,
+  "name": "Welcome to Parable Bloom",
+  "grid_size": [5, 8],
+  "difficulty": "Tutorial",
   "vines": [
     {
       "id": "1",
       "head_direction": "right",
       "ordered_path": [
-        { "x": 3, "y": 3 },
-        { "x": 2, "y": 3 },
-        { "x": 1, "y": 3 }
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 0,
+          "y": 2
+        }
       ],
       "color": "moss_green"
     }
   ],
-  "max_moves": 3,
+  "max_moves": 1,
   "min_moves": 1,
-  "complexity": "low",
+  "complexity": "tutorial",
   "grace": 3
 }

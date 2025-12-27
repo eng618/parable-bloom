@@ -1,0 +1,13 @@
+{
+  "id": 5,
+  "name": "Growing Seed",
+  "level_count": 15,
+  "parable": {
+    "title": "The Parable of the Growing Seed",
+    "scripture": "Mark 4:26-29",
+    "content": "He also said, 'This is what the kingdom of God is like. A man scatters seed on the ground. Night and day, whether he sleeps or gets up, the seed sprouts and grows, though he does not know how. All by itself the soil produces grain—first the stalk, then the head, then the full kernel in the head. As soon as the grain is ripe, he puts the sickle to it, because the harvest has come.'",
+    "reflection": "How has God's kingdom grown in your life in ways you didn't expect or understand?",
+    "background_image": "parable_growing_seed.jpg"
+  },
+  "unlock_message": "Module complete! Take time to reflect on the parable of the growing seed."
+}

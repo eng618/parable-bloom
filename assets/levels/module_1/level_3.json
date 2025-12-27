@@ -1,17 +1,27 @@
 {
   "id": 3,
   "module_id": 1,
-  "name": "Blocked Paths",
-  "grid_size": [7, 7],
-  "difficulty": "Seedling",
+  "global_level_number": 3,
+  "name": "The First Block",
+  "grid_size": [5, 8],
+  "difficulty": "Tutorial",
   "vines": [
     {
       "id": "1",
       "head_direction": "right",
       "ordered_path": [
-        { "x": 2, "y": 2 },
-        { "x": 1, "y": 2 },
-        { "x": 0, "y": 2 }
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 0,
+          "y": 2
+        }
       ],
       "color": "moss_green"
     },
@@ -19,15 +29,24 @@
       "id": "2",
       "head_direction": "down",
       "ordered_path": [
-        { "x": 3, "y": 2 },
-        { "x": 3, "y": 3 },
-        { "x": 3, "y": 4 }
+        {
+          "x": 3,
+          "y": 4
+        },
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 2
+        }
       ],
       "color": "emerald"
     }
   ],
-  "max_moves": 5,
+  "max_moves": 2,
   "min_moves": 2,
-  "complexity": "low",
+  "complexity": "tutorial",
   "grace": 3
 }

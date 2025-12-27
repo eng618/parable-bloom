@@ -45,6 +45,7 @@ class VineData {
 class LevelData {
   final int id;
   final int moduleId;
+  final int? globalLevelNumber;
   final String name;
   final List<int> gridSize;
   final String difficulty;
@@ -57,6 +58,7 @@ class LevelData {
   LevelData({
     required this.id,
     required this.moduleId,
+    this.globalLevelNumber,
     required this.name,
     required this.gridSize,
     required this.difficulty,
@@ -71,6 +73,7 @@ class LevelData {
     return LevelData(
       id: json['id'],
       moduleId: json['module_id'],
+      globalLevelNumber: json['global_level_number'],
       name: json['name'],
       gridSize: List<int>.from(json['grid_size']),
       difficulty: json['difficulty'],
@@ -276,116 +279,98 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   }
 }
 
-// Module progression
-class ModuleProgress {
-  final int currentModule;
-  final int currentLevelInModule;
-  final Set<String> completedModules; // "module_1", "module_2", etc.
+// Global progression (continuous level numbering)
+class GlobalProgress {
+  final int currentGlobalLevel;
+  final Set<int> completedLevels; // Global level numbers: 1, 2, 3...
 
-  const ModuleProgress({
-    this.currentModule = 1,
-    this.currentLevelInModule = 1,
-    this.completedModules = const {},
+  const GlobalProgress({
+    this.currentGlobalLevel = 1,
+    this.completedLevels = const {},
   });
+
+  // Helper methods to convert between global and module-based numbering
+  int get currentModule => ((currentGlobalLevel - 1) ~/ 15) + 1;
+  int get currentLevelInModule => ((currentGlobalLevel - 1) % 15) + 1;
+
+  // Check if a module is completed (all 15 levels done)
+  bool isModuleCompleted(int moduleId) {
+    final startLevel = (moduleId - 1) * 15 + 1;
+    return completedLevels.containsAll(
+      List.generate(15, (i) => startLevel + i),
+    );
+  }
 
   @override
   String toString() {
-    return 'ModuleProgress(currentModule: $currentModule, currentLevelInModule: $currentLevelInModule, completedModules: $completedModules)';
+    return 'GlobalProgress(currentGlobalLevel: $currentGlobalLevel, completedLevels: $completedLevels, currentModule: $currentModule, currentLevelInModule: $currentLevelInModule)';
   }
 
-  ModuleProgress copyWith({
-    int? currentModule,
-    int? currentLevelInModule,
-    Set<String>? completedModules,
+  GlobalProgress copyWith({
+    int? currentGlobalLevel,
+    Set<int>? completedLevels,
   }) {
-    return ModuleProgress(
-      currentModule: currentModule ?? this.currentModule,
-      currentLevelInModule: currentLevelInModule ?? this.currentLevelInModule,
-      completedModules: completedModules ?? this.completedModules,
+    return GlobalProgress(
+      currentGlobalLevel: currentGlobalLevel ?? this.currentGlobalLevel,
+      completedLevels: completedLevels ?? this.completedLevels,
     );
   }
 }
 
-final moduleProgressProvider =
-    NotifierProvider<ModuleProgressNotifier, ModuleProgress>(
-      ModuleProgressNotifier.new,
+final globalProgressProvider =
+    NotifierProvider<GlobalProgressNotifier, GlobalProgress>(
+      GlobalProgressNotifier.new,
     );
 
-class ModuleProgressNotifier extends Notifier<ModuleProgress> {
+class GlobalProgressNotifier extends Notifier<GlobalProgress> {
   @override
-  ModuleProgress build() {
+  GlobalProgress build() {
     // Load from Hive
     final box = ref.watch(hiveBoxProvider);
-    final currentModule = box.get('currentModule', defaultValue: 1);
-    final currentLevelInModule = box.get(
-      'currentLevelInModule',
-      defaultValue: 1,
-    );
-    final completedModules = Set<String>.from(
-      box.get('completedModules', defaultValue: <String>[]),
+    final currentGlobalLevel = box.get('currentGlobalLevel', defaultValue: 1);
+    final completedLevels = Set<int>.from(
+      box.get('completedLevels', defaultValue: <int>[]),
     );
 
-    final progress = ModuleProgress(
-      currentModule: currentModule,
-      currentLevelInModule: currentLevelInModule,
-      completedModules: completedModules,
+    final progress = GlobalProgress(
+      currentGlobalLevel: currentGlobalLevel,
+      completedLevels: completedLevels,
     );
 
-    debugPrint('ModuleProgressNotifier: Built with $progress');
+    debugPrint('GlobalProgressNotifier: Built with $progress');
 
     return progress;
   }
 
-  Future<void> completeModule(int moduleId) async {
-    final newCompleted = Set<String>.from(state.completedModules)
-      ..add('module_$moduleId');
+  Future<void> completeLevel(int globalLevelNumber) async {
+    final newCompletedLevels = Set<int>.from(state.completedLevels)
+      ..add(globalLevelNumber);
 
-    final newState = state.copyWith(completedModules: newCompleted);
+    final newState = state.copyWith(
+      currentGlobalLevel: globalLevelNumber + 1,
+      completedLevels: newCompletedLevels,
+    );
     await _saveProgress(newState);
     state = newState;
-  }
-
-  Future<void> advanceLevel() async {
-    final nextLevel = state.currentLevelInModule + 1;
     debugPrint(
-      'ModuleProgressNotifier: advanceLevel called, current: $state, nextLevel: $nextLevel',
+      'GlobalProgressNotifier: Completed level $globalLevelNumber, advanced to ${newState.currentGlobalLevel}',
     );
-
-    if (nextLevel > 15) {
-      // Module complete, advance to next module
-      final nextModule = state.currentModule + 1;
-      final newState = state.copyWith(
-        currentModule: nextModule,
-        currentLevelInModule: 1,
-      );
-      await _saveProgress(newState);
-      state = newState;
-      debugPrint('ModuleProgressNotifier: Advanced to next module: $newState');
-    } else {
-      // Next level in current module
-      final newState = state.copyWith(currentLevelInModule: nextLevel);
-      await _saveProgress(newState);
-      state = newState;
-      debugPrint('ModuleProgressNotifier: Advanced to next level: $newState');
-    }
   }
 
-  Future<void> _saveProgress(ModuleProgress progress) async {
+  Future<void> _saveProgress(GlobalProgress progress) async {
     final box = ref.read(hiveBoxProvider);
-    await box.put('currentModule', progress.currentModule);
-    await box.put('currentLevelInModule', progress.currentLevelInModule);
-    await box.put('completedModules', progress.completedModules.toList());
+    await box.put('currentGlobalLevel', progress.currentGlobalLevel);
+    await box.put('completedLevels', progress.completedLevels.toList());
   }
 
   Future<void> resetProgress() async {
-    const defaultProgress = ModuleProgress(
-      currentModule: 1,
-      currentLevelInModule: 1,
-      completedModules: {},
+    const defaultProgress = GlobalProgress(
+      currentGlobalLevel: 1,
+      completedLevels: {},
     );
     await _saveProgress(defaultProgress);
     state = defaultProgress;
-    debugPrint('ModuleProgressNotifier: Progress reset to $defaultProgress');
+    debugPrint('GlobalProgressNotifier: Progress reset to $defaultProgress');
   }
 }
 
@@ -555,6 +540,66 @@ class VineState {
   }
 }
 
+// --- Priority Queue for A* Search ---
+
+class _PriorityQueue<T> {
+  final List<(T, int)> _heap = [];
+
+  void add(T item, int priority) {
+    _heap.add((item, priority));
+    _bubbleUp(_heap.length - 1);
+  }
+
+  T removeFirst() {
+    if (_heap.isEmpty) throw StateError('Queue is empty');
+    final result = _heap.first.$1;
+    final last = _heap.removeLast();
+    if (_heap.isNotEmpty) {
+      _heap[0] = last;
+      _sinkDown(0);
+    }
+    return result;
+  }
+
+  bool get isNotEmpty => _heap.isNotEmpty;
+  bool get isEmpty => _heap.isEmpty;
+
+  void _bubbleUp(int index) {
+    while (index > 0) {
+      final parentIndex = (index - 1) ~/ 2;
+      if (_heap[index].$2 >= _heap[parentIndex].$2) break;
+      _swap(index, parentIndex);
+      index = parentIndex;
+    }
+  }
+
+  void _sinkDown(int index) {
+    final length = _heap.length;
+    while (true) {
+      var smallest = index;
+      final left = 2 * index + 1;
+      final right = 2 * index + 2;
+
+      if (left < length && _heap[left].$2 < _heap[smallest].$2) {
+        smallest = left;
+      }
+      if (right < length && _heap[right].$2 < _heap[smallest].$2) {
+        smallest = right;
+      }
+      if (smallest == index) break;
+
+      _swap(index, smallest);
+      index = smallest;
+    }
+  }
+
+  void _swap(int i, int j) {
+    final temp = _heap[i];
+    _heap[i] = _heap[j];
+    _heap[j] = temp;
+  }
+}
+
 // --- Level Solver Logic ---
 
 class LevelSolver {
@@ -564,36 +609,148 @@ class LevelSolver {
     debugPrint('LevelSolver: Attempting to solve level ${level.id}');
     final initialVines = level.vines.map((v) => v.id).toList();
 
-    // BFS queue: (remaining vine IDs, sequence taken)
-    final queue = <(List<String>, List<String>)>[];
-    queue.add((initialVines, []));
+    // Pre-compute blocking relationships for optimization
+    final blockingCache = <String, Set<String>>{};
+    final blockedByCache = <String, Set<String>>{};
 
-    final visited = <String>{};
-    visited.add(_getStateKey(initialVines));
+    // Build dependency graph
+    for (final vine in level.vines) {
+      blockingCache[vine.id] = <String>{};
+      blockedByCache[vine.id] = <String>{};
+    }
 
-    while (queue.isNotEmpty) {
-      final (currentVines, sequence) = queue.removeAt(0);
-
-      if (currentVines.isEmpty) {
-        debugPrint('LevelSolver: Solvable! Sequence: $sequence');
-        return sequence;
-      }
-
-      for (final vineId in currentVines) {
-        if (!isVineBlockedInState(level, vineId, currentVines)) {
-          final nextVines = List<String>.from(currentVines)..remove(vineId);
-          final key = _getStateKey(nextVines);
-
-          if (!visited.contains(key)) {
-            visited.add(key);
-            queue.add((nextVines, [...sequence, vineId]));
+    for (final vine in level.vines) {
+      for (final otherVine in level.vines) {
+        if (vine.id != otherVine.id) {
+          if (_doesVineBlock(level, vine.id, otherVine.id)) {
+            blockingCache[vine.id]!.add(otherVine.id);
+            blockedByCache[otherVine.id]!.add(vine.id);
           }
         }
       }
     }
 
-    debugPrint('LevelSolver: UNSOLVABLE level ${level.id}');
+    // Use priority-based search with heuristics
+    final queue = _PriorityQueue<(List<String>, List<String>)>();
+    queue.add((
+      initialVines,
+      [],
+    ), _calculatePriority(level, initialVines, blockingCache, blockedByCache));
+
+    final visited = <String>{};
+    visited.add(_getStateKey(initialVines));
+
+    int statesExplored = 0;
+    const maxStates = 100000; // Prevent infinite loops on unsolvable levels
+
+    while (queue.isNotEmpty && statesExplored < maxStates) {
+      final (currentVines, sequence) = queue.removeFirst();
+      statesExplored++;
+
+      if (currentVines.isEmpty) {
+        debugPrint(
+          'LevelSolver: Solvable! Sequence: $sequence (explored $statesExplored states)',
+        );
+        return sequence;
+      }
+
+      // Get movable vines sorted by priority (most blocking first)
+      final movableVines = currentVines
+          .where((vineId) => !isVineBlockedInState(level, vineId, currentVines))
+          .toList();
+
+      // Sort by heuristic: prefer vines that unblock the most others
+      movableVines.sort((a, b) {
+        final aUnblocks = blockingCache[a]!.where(currentVines.contains).length;
+        final bUnblocks = blockingCache[b]!.where(currentVines.contains).length;
+        return bUnblocks.compareTo(
+          aUnblocks,
+        ); // Higher unblocking potential first
+      });
+
+      for (final vineId in movableVines) {
+        final nextVines = List<String>.from(currentVines)..remove(vineId);
+        final key = _getStateKey(nextVines);
+
+        if (!visited.contains(key)) {
+          visited.add(key);
+          final priority = _calculatePriority(
+            level,
+            nextVines,
+            blockingCache,
+            blockedByCache,
+          );
+          queue.add((nextVines, [...sequence, vineId]), priority);
+        }
+      }
+    }
+
+    if (statesExplored >= maxStates) {
+      debugPrint(
+        'LevelSolver: Gave up after exploring $maxStates states - level may be too complex',
+      );
+    } else {
+      debugPrint('LevelSolver: UNSOLVABLE level ${level.id}');
+    }
     return null;
+  }
+
+  /// Checks if vine A blocks vine B (A prevents B from moving)
+  static bool _doesVineBlock(
+    LevelData level,
+    String blockerId,
+    String blockedId,
+  ) {
+    final blocker = level.vines.firstWhere((v) => v.id == blockerId);
+    final blocked = level.vines.firstWhere((v) => v.id == blockedId);
+
+    // Get the position where blocked vine would move
+    final head = blocked.orderedPath[0];
+    final headX = head['x'] as int;
+    final headY = head['y'] as int;
+
+    var nextX = headX;
+    var nextY = headY;
+
+    switch (blocked.headDirection) {
+      case 'right':
+        nextX += 1;
+        break;
+      case 'left':
+        nextX -= 1;
+        break;
+      case 'up':
+        nextY += 1;
+        break; // Up increases y
+      case 'down':
+        nextY -= 1;
+        break; // Down decreases y
+    }
+
+    // Check if blocker occupies the next position
+    return blocker.orderedPath.any(
+      (cell) => cell['x'] == nextX && cell['y'] == nextY,
+    );
+  }
+
+  /// Calculate priority for A* search (lower is better)
+  static int _calculatePriority(
+    LevelData level,
+    List<String> remainingVines,
+    Map<String, Set<String>> blockingCache,
+    Map<String, Set<String>> blockedByCache,
+  ) {
+    if (remainingVines.isEmpty) return 0;
+
+    // Heuristic: prefer states where fewer vines are blocked
+    int blockedCount = 0;
+    for (final vineId in remainingVines) {
+      final blockers = blockedByCache[vineId]!.where(remainingVines.contains);
+      if (blockers.isNotEmpty) blockedCount++;
+    }
+
+    // Also consider total remaining moves
+    return blockedCount * 10 + remainingVines.length;
   }
 
   static String _getStateKey(List<String> vines) {

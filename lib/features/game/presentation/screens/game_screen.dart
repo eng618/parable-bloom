@@ -182,16 +182,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Widget _buildCurrentLevelDisplay() {
-    final moduleProgress = ref.watch(moduleProgressProvider);
+    final globalProgress = ref.watch(globalProgressProvider);
     final currentLevel = ref.watch(currentLevelProvider);
 
-    debugPrint('GameScreen: Module progress: $moduleProgress');
+    debugPrint('GameScreen: Global progress: $globalProgress');
     debugPrint('GameScreen: Current level: ${currentLevel?.name ?? "null"}');
 
     if (currentLevel == null) return const SizedBox.shrink();
 
     return Text(
-      'Module ${moduleProgress.currentModule} Level ${moduleProgress.currentLevelInModule}: ${currentLevel.name}',
+      'Level ${currentLevel.globalLevelNumber ?? globalProgress.currentGlobalLevel}: ${currentLevel.name}',
       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
     );
   }
@@ -304,7 +304,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
 
     // Advance to next level
-    await ref.read(moduleProgressProvider.notifier).advanceLevel();
+    final currentLevel = ref.read(currentLevelProvider);
+    if (currentLevel?.globalLevelNumber != null) {
+      await ref
+          .read(globalProgressProvider.notifier)
+          .completeLevel(currentLevel!.globalLevelNumber!);
+    }
     ref.read(levelCompleteProvider.notifier).setComplete(false);
 
     // Reset grace for the next level
@@ -336,10 +341,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _resetProgress() {
     debugPrint('_resetProgress: Starting progress reset');
     ref.read(gameProgressProvider.notifier).resetProgress();
-    ref.read(moduleProgressProvider.notifier).resetProgress();
+    ref.read(globalProgressProvider.notifier).resetProgress();
     // Invalidate the progress provider to force refresh
     ref.invalidate(gameProgressProvider);
-    ref.invalidate(moduleProgressProvider);
+    ref.invalidate(globalProgressProvider);
     ref.read(currentLevelProvider.notifier).setLevel(null);
     ref.read(levelCompleteProvider.notifier).setComplete(false);
     ref.read(gameCompletedProvider.notifier).setCompleted(false);
@@ -395,9 +400,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   debugPrint('_showGameCompletedDialog: Resetting for replay');
                   ref.read(gameCompletedProvider.notifier).setCompleted(false);
                   ref.read(gameProgressProvider.notifier).resetProgress();
-                  ref.read(moduleProgressProvider.notifier).resetProgress();
+                  ref.read(globalProgressProvider.notifier).resetProgress();
                   ref.invalidate(gameProgressProvider);
-                  ref.invalidate(moduleProgressProvider);
+                  ref.invalidate(globalProgressProvider);
                   ref.read(currentLevelProvider.notifier).setLevel(null);
                   _game?.reloadLevel();
                   if (dialogContext.mounted) {

@@ -1,0 +1,13 @@
+{
+  "id": 4,
+  "name": "Vine & Branches",
+  "level_count": 15,
+  "parable": {
+    "title": "The Parable of the Vine and Branches",
+    "scripture": "John 15:1-8",
+    "content": "'I am the true vine, and my Father is the gardener. He cuts off every branch in me that bears no fruit, while every branch that does bear fruit he prunes so that it will be even more fruitful. You are already clean because of the word I have spoken to you. Remain in me, as I also remain in you. No branch can bear fruit by itself; it must remain in the vine. Neither can you bear fruit unless you remain in me. I am the vine; you are the branches. If you remain in me and I in you, you will bear much fruit; apart from me you can do nothing. If you do not remain in me, you are like a branch that is thrown away and withers; such branches are picked up, thrown into the fire and burned. If you remain in me and my words remain in you, ask whatever you wish, and it will be done for you. This is to my Father's glory, that you bear much fruit, showing yourselves to be my disciples.'",
+    "reflection": "How connected are you to Jesus, the true vine? What fruit is God producing in your life?",
+    "background_image": "parable_vine_branches.jpg"
+  },
+  "unlock_message": "Module complete! Take time to reflect on the parable of the vine and branches."
+}

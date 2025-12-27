@@ -1,0 +1,13 @@
+{
+  "id": 1,
+  "name": "Tutorial",
+  "level_count": 5,
+  "parable": {
+    "title": "Welcome to Parable Bloom",
+    "scripture": "Psalm 1:3",
+    "content": "They are like a tree planted by streams of water, which yields its fruit in season and whose leaf does not witherwhatever they do prospers.",
+    "reflection": "Just as a tree grows strong by the water, may your faith grow deep roots and bear good fruit.",
+    "background_image": "tutorial_welcome.jpg"
+  },
+  "unlock_message": "Tutorial complete! Now let's begin your parable journey."
+}

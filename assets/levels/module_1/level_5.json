@@ -1,44 +1,94 @@
 {
   "id": 5,
   "module_id": 1,
-  "name": "Harmony Achieved",
-  "grid_size": [7, 7],
-  "difficulty": "Seedling",
+  "global_level_number": 5,
+  "name": "Your First Puzzle",
+  "grid_size": [6, 10],
+  "difficulty": "Tutorial",
   "vines": [
     {
       "id": "1",
       "head_direction": "right",
       "ordered_path": [
-        { "x": 3, "y": 3 },
-        { "x": 2, "y": 3 },
-        { "x": 1, "y": 3 },
-        { "x": 0, "y": 3 }
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 1
+        }
       ],
       "color": "moss_green"
     },
     {
       "id": "2",
-      "head_direction": "up",
+      "head_direction": "right",
       "ordered_path": [
-        { "x": 4, "y": 5 },
-        { "x": 4, "y": 4 },
-        { "x": 4, "y": 3 }
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 3
+        },
+        {
+          "x": 0,
+          "y": 3
+        }
       ],
       "color": "emerald"
     },
     {
       "id": "3",
-      "head_direction": "left",
+      "head_direction": "down",
       "ordered_path": [
-        { "x": 4, "y": 1 },
-        { "x": 5, "y": 1 },
-        { "x": 6, "y": 1 }
+        {
+          "x": 4,
+          "y": 3
+        },
+        {
+          "x": 4,
+          "y": 2
+        },
+        {
+          "x": 4,
+          "y": 1
+        }
       ],
       "color": "olive"
+    },
+    {
+      "id": "4",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 5,
+          "y": 5
+        },
+        {
+          "x": 5,
+          "y": 4
+        },
+        {
+          "x": 5,
+          "y": 3
+        }
+      ],
+      "color": "sage"
     }
   ],
-  "max_moves": 6,
-  "min_moves": 3,
-  "complexity": "medium",
+  "max_moves": 4,
+  "min_moves": 4,
+  "complexity": "tutorial",
   "grace": 3
 }
