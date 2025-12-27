@@ -41,30 +41,43 @@ class GridComponent extends PositionComponent
 
   // Set level data and vine states from Riverpod providers
   void setLevelData(LevelData levelData, Map<String, VineState> vineStates) {
+    final isNewLevel = _currentLevel != levelData;
     _currentLevel = levelData;
     _vineStates = Map.from(vineStates);
 
-    // Clear old vine components
-    for (final comp in _vineComponents.values) {
-      comp.removeFromParent();
-    }
-    _vineComponents.clear();
+    // Only recreate components if it's a new level
+    if (isNewLevel) {
+      // Clear old vine components
+      for (final comp in _vineComponents.values) {
+        comp.removeFromParent();
+      }
+      _vineComponents.clear();
 
-    // Add new vine components for each vine in the level
-    for (final vine in levelData.vines) {
-      final comp = VineComponent(
-        vineData: vine,
-        cellSize: cellSize,
-        gridSize: gridSize,
-      );
-      add(comp);
-      _vineComponents[vine.id] = comp;
+      // Add new vine components for each vine in the level
+      for (final vine in levelData.vines) {
+        final comp = VineComponent(
+          vineData: vine,
+          cellSize: cellSize,
+          gridSize: gridSize,
+        );
+        add(comp);
+        _vineComponents[vine.id] = comp;
+      }
     }
+    // For state updates, just update the state without recreating components
 
     update(0); // Force redraw
   }
 
   VineState? getCurrentVineState(String vineId) => _vineStates[vineId];
+
+  VineComponent? getVineComponent(String vineId) => _vineComponents[vineId];
+
+  void setVineAnimationState(String vineId, VineAnimationState animationState) {
+    parent.ref
+        .read(vineStatesProvider.notifier)
+        .setAnimationState(vineId, animationState);
+  }
 
   void markVineAttempted(String vineId) {
     parent.ref.read(vineStatesProvider.notifier).markAttempted(vineId);
@@ -76,7 +89,7 @@ class GridComponent extends PositionComponent
 
   List<String> getActiveVineIds() {
     return _vineStates.entries
-        .where((e) => !e.value.isCleared)
+        .where((e) => !e.value.isCleared && e.value.animationState != VineAnimationState.animatingClear)
         .map((e) => e.key)
         .toList();
   }

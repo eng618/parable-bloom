@@ -51,6 +51,7 @@ type: "Game Design Document"
   - **Clear**: Continue snake movement until all segments exit the grid and are fully off-screen, then show bloom/sparkle effect at exit location.
 - **History-Based Movement**: Maintains a history of all vine positions, allowing smooth forward and backward animations.
 - **Bloom Effect**: Beautiful particle effect (expanding rings, central glow, sparkle particles) appears when vine fully clears off-screen.
+- **Fluid Gameplay Optimization**: Clearable vines are immediately removed from blocking calculations when tapped, allowing other vines to be tapped without incorrect blocking during animation. Visual animation continues smoothly until off-screen.
 - **Example**: On a 10x10 grid, vine at [(5,5,Up), (5,6,Up), (4,6,Left)]:
   - Tap → Head moves to (5,7), middle segment takes old head position (5,6), tail takes old middle position (5,6).
   - If blocked, animate backwards through history to original positions.

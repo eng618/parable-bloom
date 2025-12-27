@@ -112,6 +112,8 @@ We have moved beyond the initial "Weeks" roadmap into a mature implementation of
 - **Bullet-Proof Logic**: Every level is automatically validated for solvability before launch.
 - **History-Based Animation**: Snake-like movement where head moves first, body follows previous segment's old position. Blocked vines animate backwards through position history.
 - **Bloom Effect**: Beautiful particle animation (expanding rings, central glow, sparkle particles) triggered when vines fully clear off-screen, positioned at exit location.
+- **Clean Animation State Management**: Four distinct vine animation states (normal, animatingClear, animatingBlocked, cleared) ensure proper separation between blocking logic and visual animation.
+- **Fluid Gameplay Optimization**: Clearable vines are immediately removed from blocking calculations when tapped, allowing other vines to be tapped without incorrect blocking during animation.
 - **Minimalist UX**: Reactive visuals that provide instant feedback without noise.
 
 #### Core Domain Entities

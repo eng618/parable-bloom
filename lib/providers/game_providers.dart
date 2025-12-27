@@ -517,29 +517,40 @@ class GameInstanceNotifier extends Notifier<GardenGame?> {
 }
 
 // Vine state for current level
+enum VineAnimationState {
+  normal, // On board, tappable, blocks others
+  animatingClear, // Animating off-screen, doesn't block others, will be cleared
+  animatingBlocked, // Doing blocked animation, blocks others during animation
+  cleared, // Removed from game
+}
+
 class VineState {
   final String id;
   final bool isBlocked;
   final bool isCleared;
-  final bool hasBeenAttempted; // New field for persistent blocked tap feedback
+  final bool hasBeenAttempted;
+  final VineAnimationState animationState;
 
   VineState({
     required this.id,
     required this.isBlocked,
     required this.isCleared,
     this.hasBeenAttempted = false,
+    this.animationState = VineAnimationState.normal,
   });
 
   VineState copyWith({
     bool? isBlocked,
     bool? isCleared,
     bool? hasBeenAttempted,
+    VineAnimationState? animationState,
   }) {
     return VineState(
       id: id,
       isBlocked: isBlocked ?? this.isBlocked,
       isCleared: isCleared ?? this.isCleared,
       hasBeenAttempted: hasBeenAttempted ?? this.hasBeenAttempted,
+      animationState: animationState ?? this.animationState,
     );
   }
 }
@@ -731,24 +742,35 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   ) {
     if (levelData == null) return {};
 
-    final activeIds = <String>[];
+    // Active vines are those that can block others (not cleared and not animating clear)
+    final blockingVineIds = <String>[];
     for (final vine in levelData.vines) {
-      final isCleared = currentStates[vine.id]?.isCleared ?? false;
-      if (!isCleared) {
-        activeIds.add(vine.id);
+      final currentState = currentStates[vine.id];
+      final isCleared = currentState?.isCleared ?? false;
+      final animationState =
+          currentState?.animationState ?? VineAnimationState.normal;
+
+      if (!isCleared && animationState != VineAnimationState.animatingClear) {
+        blockingVineIds.add(vine.id);
       }
     }
 
     final newStates = <String, VineState>{};
     for (final vine in levelData.vines) {
-      final isCleared = currentStates[vine.id]?.isCleared ?? false;
+      final currentState = currentStates[vine.id];
+      final isCleared = currentState?.isCleared ?? false;
+      final animationState =
+          currentState?.animationState ?? VineAnimationState.normal;
+      final hasBeenAttempted = currentState?.hasBeenAttempted ?? false;
+
       bool isBlocked = false;
 
-      if (!isCleared) {
+      // Only calculate blocking for vines that are in normal state
+      if (!isCleared && animationState == VineAnimationState.normal) {
         isBlocked = LevelSolver.isVineBlockedInState(
           levelData,
           vine.id,
-          activeIds,
+          blockingVineIds,
         );
       }
 
@@ -756,7 +778,8 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
         id: vine.id,
         isBlocked: isBlocked,
         isCleared: isCleared,
-        hasBeenAttempted: currentStates[vine.id]?.hasBeenAttempted ?? false,
+        hasBeenAttempted: hasBeenAttempted,
+        animationState: animationState,
       );
     }
 
@@ -823,6 +846,19 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
       // Trigger level complete
       ref.read(levelCompleteProvider.notifier).setComplete(true);
     }
+  }
+
+  void setAnimationState(String vineId, VineAnimationState animationState) {
+    final currentState = state[vineId];
+    if (currentState == null) return;
+
+    state = {
+      ...state,
+      vineId: currentState.copyWith(animationState: animationState),
+    };
+
+    // Recalculate blocking states when animation state changes
+    state = _calculateVineStates(_levelData, state);
   }
 
   void resetForLevel(LevelData levelData) {

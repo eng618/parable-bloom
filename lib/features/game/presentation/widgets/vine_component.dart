@@ -35,6 +35,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final double _bloomEffectDuration = 1.0; // seconds
   Offset? _bloomEffectPosition; // Where to show the bloom effect
 
+  // Track if we've already notified parent of clearing
+  final bool _alreadyNotifiedCleared = false;
+
   VineComponent({
     required this.vineData,
     required this.cellSize,
@@ -69,7 +72,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     super.render(canvas);
 
     final vineState = parent.getCurrentVineState(vineData.id);
-    if (vineState == null || (vineState.isCleared && !_isAnimating)) return;
+    if (vineState == null) return;
+
+    // For optimization, we allow rendering even if cleared during animation
+    // The vine should complete its animation sequence before disappearing
 
     final isBlocked = vineState.isBlocked;
     final isAttempted = vineState.hasBeenAttempted;
@@ -233,13 +239,29 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final maxDistance = rawDistance.abs();
 
     if (canClear) {
-      // Vine can reach edge - calculate steps needed to exit completely
-      _totalAnimationSteps = maxDistance + vineData.orderedPath.length;
+      // Vine can reach edge - calculate steps needed to exit completely off-screen
+      // Add extra steps to ensure vine moves well beyond the visible area
+      const int extraOffScreenSteps = 6; // Ensure vine is far off-screen
+      _totalAnimationSteps =
+          maxDistance + vineData.orderedPath.length + extraOffScreenSteps;
       _willClearAfterAnimation = true;
+
+      // Set animation state to animatingClear - this removes it from blocking calculations
+      // but allows the animation to continue and complete properly
+      parent.setVineAnimationState(
+        vineData.id,
+        VineAnimationState.animatingClear,
+      );
     } else {
       // Vine is blocked - move forward to blocker, then reverse
       _totalAnimationSteps = maxDistance * 2;
       _willClearAfterAnimation = false;
+
+      // Set animation state to animatingBlocked
+      parent.setVineAnimationState(
+        vineData.id,
+        VineAnimationState.animatingBlocked,
+      );
     }
   }
 
@@ -270,10 +292,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         _currentAnimationStep++;
 
         if (_currentAnimationStep >= _positionHistory.length) {
-          // Finished reverse animation
+          // Finished reverse animation - return to normal state
           _positionHistory.clear();
           _isAnimating = false;
           _isBlockedAnimation = false;
+
+          // Reset animation state to normal
+          parent.setVineAnimationState(vineData.id, VineAnimationState.normal);
         }
         return;
       }
@@ -428,7 +453,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
   int _calculateMovementDistance() {
     // Get distance from LevelSolver - this tells us how far we can move before being blocked
+    // Use the active IDs that exclude animatingClear vines (they don't block others)
     final activeIds = parent.getActiveVineIds();
+
     return LevelSolver.getDistanceToBlocker(
       parent.getCurrentLevelData()!,
       vineData.id,
@@ -452,17 +479,37 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _isShowingBloomEffect = true;
     _bloomEffectTimer = 0.0;
 
-    // Calculate bloom position based on vine's exit direction
-    // Find the position where the vine exited the screen
+    // Calculate bloom position at the grid edge where the vine exited
+    // Find the exit position based on vine's head direction and grid boundaries
     if (_currentVisualPositions.isNotEmpty) {
-      final lastPos = _currentVisualPositions.last;
-      final x = lastPos['x'] as int;
-      final y = lastPos['y'] as int;
-      final visualRow = gridSize - 1 - y;
+      final headPos = _currentVisualPositions[0]; // Head is at index 0
+      final headX = headPos['x'] as int;
+      final headY = headPos['y'] as int;
 
-      // Position the bloom effect at the vine's exit point
+      // Calculate exit position based on movement direction
+      int exitX = headX;
+      int exitY = headY;
+
+      switch (vineData.headDirection) {
+        case 'right':
+          exitX = gridSize - 1; // Right edge
+          break;
+        case 'left':
+          exitX = 0; // Left edge
+          break;
+        case 'up':
+          exitY = gridSize - 1; // Top edge (y increases upward)
+          break;
+        case 'down':
+          exitY = 0; // Bottom edge
+          break;
+      }
+
+      final visualRow = gridSize - 1 - exitY;
+
+      // Position the bloom effect at the grid edge exit point
       _bloomEffectPosition = Offset(
-        x * cellSize + cellSize / 2,
+        exitX * cellSize + cellSize / 2,
         visualRow * cellSize + cellSize / 2,
       );
     }
@@ -476,8 +523,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       _isShowingBloomEffect = false;
       _bloomEffectPosition = null;
 
-      // Now clear the vine
-      parent.notifyVineCleared(vineData.id);
+      // Set animation state to cleared - this properly marks the vine as cleared
+      parent.setVineAnimationState(vineData.id, VineAnimationState.cleared);
+
+      // Only notify parent if we haven't already (for optimization)
+      if (!_alreadyNotifiedCleared) {
+        parent.notifyVineCleared(vineData.id);
+      }
       removeFromParent();
     }
   }
