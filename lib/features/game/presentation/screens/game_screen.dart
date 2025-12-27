@@ -144,11 +144,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             tooltip: 'Restart Level',
           ),
           IconButton(
-            icon: const Icon(Icons.celebration),
-            onPressed: _testConfetti,
-            tooltip: 'Test Confetti',
-          ),
-          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _resetProgress,
             tooltip: 'Debug: Reset Progress',
@@ -326,24 +321,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       // Navigate back to home screen and clear game screen from stack
       Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
     }
-  }
-
-  void _testConfetti() {
-    debugPrint('_testConfetti: Testing both confetti cannons');
-    debugPrint(
-      '_testConfetti: Left controller state: ${_leftConfettiController.state}',
-    );
-    debugPrint(
-      '_testConfetti: Right controller state: ${_rightConfettiController.state}',
-    );
-    _leftConfettiController.play();
-    _rightConfettiController.play();
-    debugPrint(
-      '_testConfetti: After play - Left: ${_leftConfettiController.state}, Right: ${_rightConfettiController.state}',
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Confetti test: Both cannons fired!')),
-    );
   }
 
   void _restartLevel() {

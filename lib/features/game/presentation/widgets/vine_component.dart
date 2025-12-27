@@ -20,9 +20,12 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Animation state
   int _currentAnimationStep = 0;
   int _totalAnimationSteps = 0;
-  bool _isMovingForward = true;
   double _animationTimer = 0.0;
   double _stepDuration = 0.1; // seconds per step
+
+  // History-based animation (snake-like movement)
+  List<List<Map<String, int>>> _positionHistory = [];
+  bool _isBlockedAnimation = false;
 
   VineComponent({
     required this.vineData,
@@ -202,51 +205,29 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     return vineData.headDirection;
   }
 
-  String? _calculateVineDirectionFromPositions(
-    List<Map<String, int>> positions,
-  ) {
-    if (positions.length < 2) return 'right';
 
-    // positions[0] is head, positions[1] is first segment
-    final headCell = positions[0];
-    final nextCell = positions[1];
-
-    final headX = headCell['x'] as int;
-    final headY = headCell['y'] as int;
-    final nextX = nextCell['x'] as int;
-    final nextY = nextCell['y'] as int;
-
-    if (headX < nextX) return 'right';
-    if (headX > nextX) return 'left';
-    if (headY < nextY) return 'down'; // Down increases y
-    if (headY > nextY) return 'up'; // Up decreases y
-
-    return 'right';
-  }
 
   void slideOut() {
     if (_isAnimating) return;
     _isAnimating = true;
 
-    // Initialize animation state
-    final rawDistance = _calculateMovementDistance();
+    // Initialize history-based animation
+    _positionHistory = [];
     _currentAnimationStep = 0;
-    _isMovingForward = true;
+    _isBlockedAnimation = false;
     _animationTimer = 0.0;
 
-    // Calculate animation parameters based on whether vine can clear
+    final rawDistance = _calculateMovementDistance();
     final canClear = rawDistance > 0;
     final maxDistance = rawDistance.abs();
 
     if (canClear) {
-      // Vine can reach edge - animate until completely off screen
-      // Add extra steps to ensure all segments exit the grid
+      // Vine can reach edge - calculate steps needed to exit completely
       _totalAnimationSteps = maxDistance + vineData.orderedPath.length;
       _willClearAfterAnimation = true;
     } else {
-      // Vine is blocked - animate to blocker, bump, then reverse
-      _totalAnimationSteps =
-          maxDistance * 2; // Forward to blocker + reverse back
+      // Vine is blocked - move forward to blocker, then reverse
+      _totalAnimationSteps = maxDistance * 2;
       _willClearAfterAnimation = false;
     }
   }
@@ -262,74 +243,161 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     if (_animationTimer >= _stepDuration) {
       _animationTimer = 0.0;
 
+      if (_isBlockedAnimation) {
+        // Animate backwards through history
+        final historyIndex =
+            _positionHistory.length - 1 - _currentAnimationStep;
+        if (historyIndex >= 0) {
+          // Set vine positions to historical state
+          _currentVisualPositions = List<Map<String, int>>.from(
+            _positionHistory[historyIndex].map(
+              (pos) => Map<String, int>.from(pos),
+            ),
+          );
+        }
+
+        _currentAnimationStep++;
+
+        if (_currentAnimationStep >= _positionHistory.length) {
+          // Finished reverse animation
+          _positionHistory.clear();
+          _isAnimating = false;
+          _isBlockedAnimation = false;
+        }
+        return;
+      }
+
+      // Normal forward movement (history-based snake animation)
       final rawDistance = _calculateMovementDistance();
       final canClear = rawDistance > 0;
       final maxForwardDistance = rawDistance.abs();
 
-      // Handle animation phases
-      if (_isMovingForward) {
-        if (_currentAnimationStep < maxForwardDistance) {
-          // Still moving forward in snake animation
-        } else if (!canClear && _currentAnimationStep == maxForwardDistance) {
-          // Reached the blocker - do bump effect and mark as attempted
-          parent.markVineAttempted(vineData.id);
-          // Continue to next step for reverse animation
-        }
-      } else {
-        // Moving backward to original position
-      }
-
-      // Calculate which step to use for position calculation
-      int positionStep;
-      if (_isMovingForward) {
-        positionStep = _currentAnimationStep;
-      } else {
-        // Reverse phase: calculate backward step
-        final reverseStep = _currentAnimationStep - maxForwardDistance;
-        positionStep = maxForwardDistance - reverseStep - 1;
-      }
-
-      // Update each segment's position for this step
-      for (
-        int segmentIndex = 0;
-        segmentIndex < _currentVisualPositions.length;
-        segmentIndex++
-      ) {
-        final targetPosition = _calculateSegmentTargetPosition(
-          segmentIndex,
-          positionStep,
-          _isMovingForward,
+      if (_currentAnimationStep <= maxForwardDistance) {
+        // Save current positions to history
+        _positionHistory.add(
+          List<Map<String, int>>.from(
+            _currentVisualPositions.map((pos) => Map<String, int>.from(pos)),
+          ),
         );
 
-        if (targetPosition != null) {
-          final targetX = targetPosition['x'];
-          final targetY = targetPosition['y'];
-          if (targetX != null && targetY != null) {
-            _currentVisualPositions[segmentIndex] = {
-              'x': targetX,
-              'y': targetY,
-            };
+        // Move head based on direction
+        final headIndex = 0;
+        final headPos = _currentVisualPositions[headIndex];
+        var newHeadX = headPos['x'] as int;
+        var newHeadY = headPos['y'] as int;
+
+        switch (vineData.headDirection) {
+          case 'right':
+            newHeadX += 1;
+            break;
+          case 'left':
+            newHeadX -= 1;
+            break;
+          case 'up':
+            newHeadY += 1; // Up increases y
+            break;
+          case 'down':
+            newHeadY -= 1; // Down decreases y
+            break;
+        }
+
+        // Update each following segment to previous segment's old position
+        var prevX = headPos['x'] as int;
+        var prevY = headPos['y'] as int;
+
+        for (int i = 1; i < _currentVisualPositions.length; i++) {
+          final tempX = _currentVisualPositions[i]['x'] as int;
+          final tempY = _currentVisualPositions[i]['y'] as int;
+
+          _currentVisualPositions[i]['x'] = prevX;
+          _currentVisualPositions[i]['y'] = prevY;
+
+          prevX = tempX;
+          prevY = tempY;
+        }
+
+        // Move head to new position
+        _currentVisualPositions[headIndex]['x'] = newHeadX;
+        _currentVisualPositions[headIndex]['y'] = newHeadY;
+
+        _currentAnimationStep++;
+
+        // Check if we've reached the blocker
+        if (_currentAnimationStep > maxForwardDistance && !canClear) {
+          // Hit blocker - start reverse animation
+          parent.markVineAttempted(vineData.id);
+          _isBlockedAnimation = true;
+          _currentAnimationStep = 0;
+        }
+      } else if (_willClearAfterAnimation) {
+        // Continue moving off screen for clearing vines
+        // Save current positions to history
+        _positionHistory.add(
+          List<Map<String, int>>.from(
+            _currentVisualPositions.map((pos) => Map<String, int>.from(pos)),
+          ),
+        );
+
+        // Move head further in direction
+        final headIndex = 0;
+        final headPos = _currentVisualPositions[headIndex];
+        var newHeadX = headPos['x'] as int;
+        var newHeadY = headPos['y'] as int;
+
+        switch (vineData.headDirection) {
+          case 'right':
+            newHeadX += 1;
+            break;
+          case 'left':
+            newHeadX -= 1;
+            break;
+          case 'up':
+            newHeadY += 1; // Up increases y
+            break;
+          case 'down':
+            newHeadY -= 1; // Down decreases y
+            break;
+        }
+
+        // Update each following segment to previous segment's old position
+        var prevX = headPos['x'] as int;
+        var prevY = headPos['y'] as int;
+
+        for (int i = 1; i < _currentVisualPositions.length; i++) {
+          final tempX = _currentVisualPositions[i]['x'] as int;
+          final tempY = _currentVisualPositions[i]['y'] as int;
+
+          _currentVisualPositions[i]['x'] = prevX;
+          _currentVisualPositions[i]['y'] = prevY;
+
+          prevX = tempX;
+          prevY = tempY;
+        }
+
+        // Move head to new position
+        _currentVisualPositions[headIndex]['x'] = newHeadX;
+        _currentVisualPositions[headIndex]['y'] = newHeadY;
+
+        _currentAnimationStep++;
+
+        // Check if all segments are off screen
+        final gridRows = parent.getCurrentLevelData()!.gridSize[0];
+        final gridCols = parent.getCurrentLevelData()!.gridSize[1];
+        bool allOffScreen = true;
+
+        for (final pos in _currentVisualPositions) {
+          final x = pos['x'] as int;
+          final y = pos['y'] as int;
+          if (x >= 0 && x < gridCols && y >= 0 && y < gridRows) {
+            allOffScreen = false;
+            break;
           }
         }
-      }
 
-      _currentAnimationStep++;
-
-      // Check for phase transitions
-      if (_isMovingForward &&
-          _currentAnimationStep > maxForwardDistance &&
-          !canClear) {
-        // Finished forward phase for blocked vine - start reverse phase
-        _isMovingForward = false;
-      } else if (_currentAnimationStep >= _totalAnimationSteps) {
-        // Animation complete
-        if (_willClearAfterAnimation) {
+        if (allOffScreen || _currentAnimationStep >= _totalAnimationSteps) {
           // Vine cleared off screen
           parent.notifyVineCleared(vineData.id);
           removeFromParent();
-        } else {
-          // Vine returned to original position
-          _isAnimating = false;
         }
       }
     }
@@ -345,64 +413,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     );
   }
 
-  Map<String, int>? _calculateSegmentTargetPosition(
-    int segmentIndex,
-    int step,
-    bool forward,
-  ) {
-    // Calculate position for each segment at the given animation step
-    // For forward movement: head moves step positions forward, body follows
-    // For reverse movement: head moves backward, body follows
 
-    final originalHead = vineData.orderedPath[0];
-    final headX = originalHead['x'] as int;
-    final headY = originalHead['y'] as int;
-
-    // Calculate effective step (negative for reverse)
-    final effectiveStep = forward ? step : -step;
-
-    // Calculate direction deltas
-    var deltaX = 0;
-    var deltaY = 0;
-    switch (vineData.headDirection) {
-      case 'right':
-        deltaX = 1;
-        break;
-      case 'left':
-        deltaX = -1;
-        break;
-      case 'up':
-        deltaY = 1; // Up increases y
-        break;
-      case 'down':
-        deltaY = -1; // Down decreases y
-        break;
-    }
-
-    // For each segment: position = original_position + (effectiveStep - segmentIndex) * direction
-    // This creates the snake-like following behavior
-    final segmentStep = effectiveStep - segmentIndex;
-
-    return {
-      'x': headX + segmentStep * deltaX,
-      'y': headY + segmentStep * deltaY,
-    };
-  }
-
-  String _getReverseDirection(String direction) {
-    switch (direction) {
-      case 'right':
-        return 'left';
-      case 'left':
-        return 'right';
-      case 'up':
-        return 'down';
-      case 'down':
-        return 'up';
-      default:
-        return direction;
-    }
-  }
 
   void slideBump(int distanceInCells) {
     if (_isAnimating) return;
@@ -411,8 +422,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // Initialize bump animation state
     _currentAnimationStep = 0;
     _totalAnimationSteps = distanceInCells * 2; // forward + backward
-    _isMovingForward = true;
     _animationTimer = 0.0;
     _stepDuration = 0.05; // faster for bump animation
+    // Note: slideBump not implemented with history-based animation yet
   }
 }
