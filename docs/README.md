@@ -2,7 +2,7 @@
 title: "ParableWeave – Master Documentation Index"
 version: "3.4"
 last_updated: "2025-12-24"
-status: "Snake Mechanics & Module System Implementation Complete"
+status: "Snake Mechanics & History-Based Animation Implementation Complete"
 type: "Master Index"
 ---
 

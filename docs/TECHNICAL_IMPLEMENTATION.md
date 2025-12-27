@@ -37,10 +37,11 @@ type: "Technical Documentation"
   - Add VineComponent class with head/body sprites
   - Implement basic tap detection on vines
   - Hive setup for coins/lives persistence
-- [ ] **Week 2**: Vine slide/wilt mechanics
-  - Tap-to-slide: scan forward, tween max empty cells
-  - Wilt on blocked taps (+1 wrong counter)
-  - Clear on overflow edge (bloom SFX, coin reward)
+- [x] **Week 2**: Vine slide/wilt mechanics **COMPLETED**
+  - History-based snake animation: head moves first, body follows previous segment's old position
+  - Forward movement: tap triggers snake-like sliding in head direction
+  - Blocked vines: animate backwards through position history to return to start
+  - Clearing: continue snake movement until all segments exit grid
   - Win condition: all vines cleared
 - [ ] **Week 3**: 10 levels + UI polish
   - JSON level loader for simple vine definitions
@@ -109,6 +110,7 @@ We have moved beyond the initial "Weeks" roadmap into a mature implementation of
 
 - **Infinite Level Flow**: Dynamic loading of JSON levels from `assets/levels`.
 - **Bullet-Proof Logic**: Every level is automatically validated for solvability before launch.
+- **History-Based Animation**: Snake-like movement where head moves first, body follows previous segment's old position. Blocked vines animate backwards through position history.
 - **Minimalist UX**: Reactive visuals that provide instant feedback without noise.
 
 #### Core Domain Entities

@@ -46,11 +46,13 @@ type: "Game Design Document"
     - **Blocked**: If any segment's next cell is occupied, the vine animates forward to the obstruction, pauses (200ms), then reverses to its original position. Costs 1 **Grace**.
 - **Blocking Rules**: A vine is blocked if any cell in its forward path (head's direction) is occupied by another vine. Blocking is dynamic—clearing one vine unblocks others.
 - **Animation**:
-  - **Slide**: Smooth tween (300ms) in head's direction.
-  - **Blocked**: Forward tween to obstacle (150ms), pause, reverse tween (150ms).
+  - **Slide**: Snake-like movement where head moves first, each body segment follows the previous segment's old position (classic Snake game mechanics).
+  - **Blocked**: Forward snake animation to obstacle, then reverse animation through position history to return to start.
+  - **Clear**: Continue snake movement until all segments exit the grid edge.
+- **History-Based Movement**: Maintains a history of all vine positions, allowing smooth forward and backward animations.
 - **Example**: On a 10x10 grid, vine at [(5,5,Up), (5,6,Up), (4,6,Left)]:
-  - Tap → Head tries (5,7), (5,6) to (5,7), (4,6) to (5,6).
-  - If (5,7) occupied, animate to [(5,6,Up), (5,7,Up), (5,6,Left)], pause, return.
+  - Tap → Head moves to (5,7), middle segment takes old head position (5,6), tail takes old middle position (5,6).
+  - If blocked, animate backwards through history to original positions.
 
 ### Grid & Win Conditions
 
