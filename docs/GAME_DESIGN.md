@@ -1,16 +1,16 @@
 ---
-title: "ParableWeave – Final Game Design Document (GDD)"
+title: "Parable Bloom – Final Game Design Document (GDD)"
 version: "3.4"
 last_updated: "2025-12-24"
 status: "Implementation Complete"
 type: "Game Design Document"
 ---
 
-# ParableWeave – Final Game Design Document (GDD)
+# Parable Bloom – Final Game Design Document (GDD)
 
 ## Executive Summary
 
-**ParableWeave** is a **zen hyper-casual arrow puzzle game** with faith-based themes, where players tap directional vines (arrows) to slide them off a grid in the direction of their head, mimicking the classic Snake game's movement. Body segments follow as a queue, and blocked vines animate back to their original position. The game emphasizes serene gameplay, strategic depth, and spiritual reflections through parable rewards.
+**Parable Bloom** is a **zen hyper-casual arrow puzzle game** with faith-based themes, where players tap directional vines (arrows) to slide them off a grid in the direction of their head, mimicking the classic Snake game's movement. Body segments follow as a queue, and blocked vines animate back to their original position. The game emphasizes serene gameplay, strategic depth, and spiritual reflections through parable rewards.
 
 **Core Loop**: Tap a vine → it slides in its head's direction (Up, Down, Left, Right) → exits the grid to "bloom" if clear, or animates back if blocked → clear all vines to win.
 

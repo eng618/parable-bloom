@@ -1,8 +1,8 @@
-# ParableWeave (parable-bloom) - Cline Instruction File
+# Parable Bloom (parable-bloom) - Cline Instruction File
 
 ## Project Overview
 
-This is **ParableWeave**, a zen hyper-casual arrow puzzle game built with Flutter and Flame. The game features faith-based themes where players tap directional vines to slide them off a grid in Snake-like movement. The game includes:
+This is **Parable Bloom**, a zen hyper-casual arrow puzzle game built with Flutter and Flame. The game features faith-based themes where players tap directional vines to slide them off a grid in Snake-like movement. The game includes:
 
 - **Snake-like Movement**: Vines slide in head direction with body segments following as a queue
 - **Grace System**: 3 Grace per level (4 for Transcendent) with faith-based messaging
@@ -455,4 +455,4 @@ Treat documentation with the same rigor as code:
 
 ---
 
-*This instruction file ensures consistent development practices and maintains code quality across the ParableWeave codebase. Update this file when introducing new patterns or technologies.*
+*This instruction file ensures consistent development practices and maintains code quality across the Parable Bloom codebase. Update this file when introducing new patterns or technologies.*

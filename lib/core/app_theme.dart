@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Centralized theme configuration for ParableWeave.
+/// Centralized theme configuration for Parable Bloom.
 /// All colors, themes, and visual styling can be configured here.
 class AppTheme {
   // ============================================================

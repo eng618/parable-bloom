@@ -1,6 +1,6 @@
-# Contributing to ParableWeave
+# Contributing to Parable Bloom
 
-Thank you for your interest in contributing to ParableWeave! We welcome contributions from the community.
+Thank you for your interest in contributing to Parable Bloom! We welcome contributions from the community.
 
 ## 🚀 Quick Start
 

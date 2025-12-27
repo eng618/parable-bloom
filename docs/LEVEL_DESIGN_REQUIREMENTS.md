@@ -1,14 +1,14 @@
 ---
-title: "ParableWeave - Level Design Requirements"
+title: "Parable Bloom - Level Design Requirements"
 version: "1.0"
 last_updated: "2025-12-27"
 status: "Active Development"
 type: "Level Design Documentation"
 ---
 
-# ParableWeave - Level Design Requirements
+# Parable Bloom - Level Design Requirements
 
-This document outlines the formal requirements for designing levels in ParableWeave, including module structure, level validation rules, difficulty scaling, and content organization.
+This document outlines the formal requirements for designing levels in Parable Bloom, including module structure, level validation rules, difficulty scaling, and content organization.
 
 ## 🏗️ Module Structure
 

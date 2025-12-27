@@ -1,4 +1,4 @@
-# 🌿 ParableWeave
+# 🌿 Parable Bloom
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.24+-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?style=for-the-badge&logo=dart)](https://dart.dev)
@@ -175,7 +175,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Issues**: [GitHub Issues](https://github.com/eng618/parable-bloom/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/eng618/parable-bloom/discussions)
-- **Email**: <ParableWeave@garciaericn.com>
+- **Email**: <ParableBloom@garciaericn.com>
 
 ---
 

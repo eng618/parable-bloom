@@ -1,16 +1,16 @@
 ---
-title: "ParableWeave – Master Documentation Index"
+title: "Parable Bloom – Master Documentation Index"
 version: "3.4"
 last_updated: "2025-12-24"
 status: "Snake Mechanics & History-Based Animation Implementation Complete"
 type: "Master Index"
 ---
 
-# ParableWeave – Master Documentation Index
+# Parable Bloom – Master Documentation Index
 
-## 🌿 Welcome to ParableWeave
+## 🌿 Welcome to Parable Bloom
 
-**ParableWeave** is a **zen hyper-casual arrow puzzle game** with faith-based themes, where players tap directional vines to slide them off a grid in the direction of their head, mimicking Snake's movement. Body segments follow as a queue, and blocked vines animate back with spiritual messaging.
+**Parable Bloom** is a **zen hyper-casual arrow puzzle game** with faith-based themes, where players tap directional vines to slide them off a grid in the direction of their head, mimicking Snake's movement. Body segments follow as a queue, and blocked vines animate back with spiritual messaging.
 
 ---
 
