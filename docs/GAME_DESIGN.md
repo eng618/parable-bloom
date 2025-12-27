@@ -19,7 +19,7 @@ type: "Game Design Document"
 - **Snake-Like Movement**: Vines move only in the head's direction, with body segments following. Paths can include 90-degree turns, but movement follows the head.
 - **Grace System**: Replaces "hearts" with **Grace** (3 per level, 4 for Transcendent difficulty), symbolizing forgiveness. If Grace runs out, a message appears: "God's grace is endless—try again!" with a restart option.
 - **Module Structure**: 5 modules for MVP, each with 15 levels (10 core, 4 progressive, 1 Transcendent capstone), unlocking a parable in the Journal.
-- **Grid Sizes**: 9x9 (tutorial) to 20x20 (capstone), with future potential for shaped grids (e.g., cross, smiley face).
+- **Grid Sizes**: Rectangular grids from 5×8 (tutorial) to 24×40 (capstone), with future potential for shaped grids (e.g., cross, smiley face). GridComponent now properly supports rectangular dimensions instead of assuming square grids.
 - **Hints**: One hint per level (glows tappable vines after 30s inactivity).
 - **No Undo**: Encourages thoughtful play.
 - **Themed Difficulty**: Faith-inspired tiers (Seedling, Nurturing, Flourishing, Transcendent) with parameters for moves, complexity, and turns.

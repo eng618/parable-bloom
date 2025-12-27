@@ -94,14 +94,15 @@ class GardenGame extends FlameGame {
   void _createLevelComponents() {
     if (_currentLevelData == null) return;
 
-    final gridSize = _currentLevelData!.gridSize[0];
+    final cols = _currentLevelData!.gridSize[0];
+    final rows = _currentLevelData!.gridSize[1];
 
     // Grid background
     _gridBackground = RectangleComponent(
-      size: Vector2(gridSize * cellSize + 20, gridSize * cellSize + 20),
+      size: Vector2(cols * cellSize + 20, rows * cellSize + 20),
       position: Vector2(
-        (size.x - (gridSize * cellSize + 20)) / 2,
-        (size.y - (gridSize * cellSize + 20)) / 2,
+        (size.x - (cols * cellSize + 20)) / 2,
+        (size.y - (rows * cellSize + 20)) / 2,
       ),
       paint: Paint()..color = _gridColor,
       priority: -1,
@@ -110,7 +111,8 @@ class GardenGame extends FlameGame {
 
     // Interactive grid
     grid = GridComponent(
-      gridSize: gridSize,
+      rows: rows,
+      cols: cols,
       cellSize: cellSize,
       onVineCleared: (vineId) {
         // Update the Riverpod provider when a vine is cleared
@@ -129,9 +131,32 @@ class GardenGame extends FlameGame {
     );
     debugPrint('GardenGame: Global progress: $globalProgress');
 
-    // Convert global level number to module and level within module
-    final moduleId = globalProgress.currentModule;
-    final levelInModule = globalProgress.currentLevelInModule;
+    // Load module data to convert global level number to module and level within module
+    final modulesAsync = ref.read(modulesProvider);
+    final modules = modulesAsync.maybeWhen(
+      data: (data) => data,
+      orElse: () => <ModuleData>[
+        // Fallback default modules if not loaded yet
+        ModuleData(
+          id: 1,
+          name: 'Tutorial',
+          levelCount: 5,
+          parable: {},
+          unlockMessage: '',
+        ),
+        ModuleData(
+          id: 2,
+          name: 'The Sower',
+          levelCount: 15,
+          parable: {},
+          unlockMessage: '',
+        ),
+      ],
+    );
+
+    final (:moduleId, :levelInModule) = globalProgress.getCurrentModuleAndLevel(
+      modules,
+    );
 
     debugPrint(
       'GardenGame: Converting to module $moduleId level $levelInModule',

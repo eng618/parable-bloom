@@ -101,10 +101,10 @@ Each level file must include:
 
 | Difficulty Tier | Grid Size | Total Cells | Vine Length (Avg) | Vine Count | Max Moves | Complexity | Grace |
 |-----------------|-----------|-------------|-------------------|------------|-----------|------------|-------|
-| **Seedling** | 9×16 | 144 | 6-8 | 18-24 | 5-8 | Low: Linear, no interlocks | 3 |
-| **Nurturing** | 12×20 | 240 | 5-7 | 34-48 | 8-12 | Medium: 1-2 interlocks | 3 |
-| **Flourishing** | 16×28 | 448 | 4-6 | 75-112 | 12-18 | High: Multi-interlocks | 3 |
-| **Transcendent** | 24×40 | 960 | 3-5 | 192-320 | 18+ | Extreme: Deep cycles | 4 |
+| **Seedling** | 5×8 to 9×16 | 40-144 | 6-8 | 18-24 | 5-8 | Low: Linear, no interlocks | 3 |
+| **Nurturing** | 9×16 to 12×20 | 144-240 | 5-7 | 34-48 | 8-12 | Medium: 1-2 interlocks | 3 |
+| **Flourishing** | 12×20 to 16×28 | 240-448 | 4-6 | 75-112 | 12-18 | High: Multi-interlocks | 3 |
+| **Transcendent** | 16×28 to 24×40 | 448-960 | 3-5 | 192-320 | 18+ | Extreme: Deep cycles | 4 |
 
 ### Validation Rules
 

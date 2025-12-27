@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -12,6 +14,56 @@ import '../features/game/domain/entities/game_progress.dart';
 import '../features/game/domain/repositories/game_progress_repository.dart';
 import '../features/game/presentation/widgets/garden_game.dart';
 import '../services/analytics_service.dart';
+
+// Module data model
+class ModuleData {
+  final int id;
+  final String name;
+  final int levelCount;
+  final Map<String, dynamic> parable;
+  final String unlockMessage;
+
+  ModuleData({
+    required this.id,
+    required this.name,
+    required this.levelCount,
+    required this.parable,
+    required this.unlockMessage,
+  });
+
+  factory ModuleData.fromJson(Map<String, dynamic> json) {
+    return ModuleData(
+      id: json['id'],
+      name: json['name'],
+      levelCount: json['level_count'],
+      parable: json['parable'],
+      unlockMessage: json['unlock_message'],
+    );
+  }
+}
+
+// Provider for loading all module data
+final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
+  final modules = <ModuleData>[];
+
+  // Load modules dynamically by trying to load module_1.json, module_2.json, etc.
+  int moduleId = 1;
+  while (true) {
+    try {
+      final assetPath = 'assets/levels/module_$moduleId/module.json';
+      final jsonString = await rootBundle.loadString(assetPath);
+      final jsonMap = json.decode(jsonString);
+      final module = ModuleData.fromJson(jsonMap);
+      modules.add(module);
+      moduleId++;
+    } catch (e) {
+      // Stop when we can't load more modules
+      break;
+    }
+  }
+
+  return modules;
+});
 
 // Models for game state
 class VineData {
@@ -290,20 +342,50 @@ class GlobalProgress {
   });
 
   // Helper methods to convert between global and module-based numbering
+  // These require module data to be passed in since level counts vary per module
+  ({int moduleId, int levelInModule}) getCurrentModuleAndLevel(
+    List<ModuleData> modules,
+  ) {
+    int globalLevel = currentGlobalLevel;
+    for (final module in modules) {
+      if (globalLevel <= module.levelCount) {
+        return (moduleId: module.id, levelInModule: globalLevel);
+      }
+      globalLevel -= module.levelCount;
+    }
+    // If we've exceeded all modules, return the last module's last level
+    final lastModule = modules.last;
+    return (moduleId: lastModule.id, levelInModule: lastModule.levelCount);
+  }
+
+  // Legacy getters for backward compatibility - these assume 15 levels per module
+  // TODO: Remove these once all code is updated to use getCurrentModuleAndLevel
+  @Deprecated(
+    'Use getCurrentModuleAndLevel() instead for variable module sizes',
+  )
   int get currentModule => ((currentGlobalLevel - 1) ~/ 15) + 1;
+
+  @Deprecated(
+    'Use getCurrentModuleAndLevel() instead for variable module sizes',
+  )
   int get currentLevelInModule => ((currentGlobalLevel - 1) % 15) + 1;
 
-  // Check if a module is completed (all 15 levels done)
-  bool isModuleCompleted(int moduleId) {
-    final startLevel = (moduleId - 1) * 15 + 1;
+  // Check if a module is completed (all levels in the module are done)
+  bool isModuleCompleted(int moduleId, List<ModuleData> modules) {
+    final module = modules.firstWhere((m) => m.id == moduleId);
+    final startLevel =
+        modules
+            .take(moduleId - 1)
+            .fold<int>(0, (total, m) => total + m.levelCount) +
+        1;
     return completedLevels.containsAll(
-      List.generate(15, (i) => startLevel + i),
+      List.generate(module.levelCount, (i) => startLevel + i),
     );
   }
 
   @override
   String toString() {
-    return 'GlobalProgress(currentGlobalLevel: $currentGlobalLevel, completedLevels: $completedLevels, currentModule: $currentModule, currentLevelInModule: $currentLevelInModule)';
+    return 'GlobalProgress(currentGlobalLevel: $currentGlobalLevel, completedLevels: $completedLevels)';
   }
 
   GlobalProgress copyWith({
@@ -765,8 +847,8 @@ class LevelSolver {
     List<String> activeVineIds,
   ) {
     final vine = level.vines.firstWhere((v) => v.id == vineId);
-    final gridRows = level.gridSize[0];
-    final gridCols = level.gridSize[1];
+    final gridCols = level.gridSize[0];
+    final gridRows = level.gridSize[1];
 
     // Determine direction from head (first cell) and its direction
     if (vine.orderedPath.isEmpty) return false;
@@ -822,8 +904,8 @@ class LevelSolver {
     List<String> activeVineIds,
   ) {
     final vine = level.vines.firstWhere((v) => v.id == vineId);
-    final gridRows = level.gridSize[0];
-    final gridCols = level.gridSize[1];
+    final gridCols = level.gridSize[0];
+    final gridRows = level.gridSize[1];
 
     if (vine.orderedPath.isEmpty) return 0;
 

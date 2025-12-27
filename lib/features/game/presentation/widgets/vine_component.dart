@@ -10,7 +10,8 @@ import 'grid_component.dart';
 class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final VineData vineData;
   final double cellSize;
-  final int gridSize;
+  final int rows;
+  final int cols;
 
   bool _isAnimating = false;
   bool _willClearAfterAnimation =
@@ -41,12 +42,21 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   VineComponent({
     required this.vineData,
     required this.cellSize,
-    required this.gridSize,
+    required this.rows,
+    required this.cols,
   }) {
     // Initialize visual positions immediately to avoid render issues
     // Convert from Map<String, int> (x,y) to Map<String, int>
+    // The level data uses coordinates for the old [rows, cols] system,
+    // but we now use [cols, rows], so we need to transform coordinates
     _currentVisualPositions = vineData.orderedPath.map((cell) {
-      return {'x': cell['x'] as int, 'y': cell['y'] as int};
+      final oldX = cell['x'] as int;
+      final oldY = cell['y'] as int;
+      // Transform from old [rows, cols] coordinate system to new [cols, rows] system
+      // For level 5: old was [9,16] meaning 9 rows, 16 cols
+      // New is [9,16] meaning 9 cols, 16 rows
+      // So we need to swap x,y coordinates
+      return {'x': oldY, 'y': oldX};
     }).toList();
   }
 
@@ -104,11 +114,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       final start = Offset(
         currentX * cellSize + cellSize / 2,
-        (gridSize - 1 - currentY) * cellSize + cellSize / 2,
+        (rows - 1 - currentY) * cellSize + cellSize / 2,
       );
       final end = Offset(
         nextX * cellSize + cellSize / 2,
-        (gridSize - 1 - nextY) * cellSize + cellSize / 2,
+        (rows - 1 - nextY) * cellSize + cellSize / 2,
       );
 
       canvas.drawLine(start, end, segmentPaint);
@@ -119,7 +129,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final cell = _currentVisualPositions[i];
       final x = cell['x'] as int;
       final y = cell['y'] as int;
-      final visualRow = gridSize - 1 - y;
+      final visualRow = rows - 1 - y;
 
       final isHead = direction != null && i == 0; // Head is at position 0
 
@@ -417,8 +427,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         _currentAnimationStep++;
 
         // Check if all segments are well off screen (with margin)
-        final gridRows = parent.getCurrentLevelData()!.gridSize[0];
-        final gridCols = parent.getCurrentLevelData()!.gridSize[1];
+        final gridCols = parent.getCurrentLevelData()!.gridSize[0];
+        final gridRows = parent.getCurrentLevelData()!.gridSize[1];
         const int offScreenMargin =
             3; // Extra cells to ensure vine is fully off-screen
 
@@ -492,20 +502,20 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       switch (vineData.headDirection) {
         case 'right':
-          exitX = gridSize - 1; // Right edge
+          exitX = cols - 1; // Right edge
           break;
         case 'left':
           exitX = 0; // Left edge
           break;
         case 'up':
-          exitY = gridSize - 1; // Top edge (y increases upward)
+          exitY = rows - 1; // Top edge (y increases upward)
           break;
         case 'down':
           exitY = 0; // Bottom edge
           break;
       }
 
-      final visualRow = gridSize - 1 - exitY;
+      final visualRow = rows - 1 - exitY;
 
       // Position the bloom effect at the grid edge exit point
       _bloomEffectPosition = Offset(

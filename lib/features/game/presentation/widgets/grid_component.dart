@@ -12,7 +12,8 @@ import 'vine_component.dart';
 
 class GridComponent extends PositionComponent
     with TapCallbacks, ParentIsA<GardenGame> {
-  final int gridSize;
+  final int rows;
+  final int cols;
   final double cellSize;
 
   late List<List<CellComponent>> cells;
@@ -33,7 +34,8 @@ class GridComponent extends PositionComponent
   final Map<String, VineComponent> _vineComponents = {};
 
   GridComponent({
-    required this.gridSize,
+    required this.rows,
+    required this.cols,
     required this.cellSize,
     this.onLevelComplete,
     this.onVineCleared,
@@ -58,7 +60,8 @@ class GridComponent extends PositionComponent
         final comp = VineComponent(
           vineData: vine,
           cellSize: cellSize,
-          gridSize: gridSize,
+          rows: rows,
+          cols: cols,
         );
         add(comp);
         _vineComponents[vine.id] = comp;
@@ -102,7 +105,7 @@ class GridComponent extends PositionComponent
 
   @override
   Future<void> onLoad() async {
-    size = Vector2(gridSize * cellSize, gridSize * cellSize);
+    size = Vector2(cols * cellSize, rows * cellSize);
 
     // Center the grid on screen
     position = Vector2(
@@ -112,12 +115,12 @@ class GridComponent extends PositionComponent
 
     cells = [];
 
-    for (int y = 0; y < gridSize; y++) {
+    for (int y = 0; y < rows; y++) {
       cells.add([]);
-      for (int x = 0; x < gridSize; x++) {
+      for (int x = 0; x < cols; x++) {
         // Use local variable for calculated visual row
-        // y=0 is at the bottom, so visual Y is proportional to (gridSize - 1 - y)
-        final visualRow = gridSize - 1 - y;
+        // y=0 is at the bottom, so visual Y is proportional to (rows - 1 - y)
+        final visualRow = rows - 1 - y;
 
         final cell = CellComponent(
           gridX: x,
