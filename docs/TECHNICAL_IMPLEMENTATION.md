@@ -111,6 +111,7 @@ We have moved beyond the initial "Weeks" roadmap into a mature implementation of
 - **Infinite Level Flow**: Dynamic loading of JSON levels from `assets/levels`.
 - **Bullet-Proof Logic**: Every level is automatically validated for solvability before launch.
 - **History-Based Animation**: Snake-like movement where head moves first, body follows previous segment's old position. Blocked vines animate backwards through position history.
+- **Bloom Effect**: Beautiful particle animation (expanding rings, central glow, sparkle particles) triggered when vines fully clear off-screen, positioned at exit location.
 - **Minimalist UX**: Reactive visuals that provide instant feedback without noise.
 
 #### Core Domain Entities

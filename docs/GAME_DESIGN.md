@@ -48,8 +48,9 @@ type: "Game Design Document"
 - **Animation**:
   - **Slide**: Snake-like movement where head moves first, each body segment follows the previous segment's old position (classic Snake game mechanics).
   - **Blocked**: Forward snake animation to obstacle, then reverse animation through position history to return to start.
-  - **Clear**: Continue snake movement until all segments exit the grid edge.
+  - **Clear**: Continue snake movement until all segments exit the grid and are fully off-screen, then show bloom/sparkle effect at exit location.
 - **History-Based Movement**: Maintains a history of all vine positions, allowing smooth forward and backward animations.
+- **Bloom Effect**: Beautiful particle effect (expanding rings, central glow, sparkle particles) appears when vine fully clears off-screen.
 - **Example**: On a 10x10 grid, vine at [(5,5,Up), (5,6,Up), (4,6,Left)]:
   - Tap → Head moves to (5,7), middle segment takes old head position (5,6), tail takes old middle position (5,6).
   - If blocked, animate backwards through history to original positions.

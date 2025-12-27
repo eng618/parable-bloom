@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
@@ -26,6 +28,12 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // History-based animation (snake-like movement)
   List<List<Map<String, int>>> _positionHistory = [];
   bool _isBlockedAnimation = false;
+
+  // Bloom effect after clearing
+  bool _isShowingBloomEffect = false;
+  double _bloomEffectTimer = 0.0;
+  final double _bloomEffectDuration = 1.0; // seconds
+  Offset? _bloomEffectPosition; // Where to show the bloom effect
 
   VineComponent({
     required this.vineData,
@@ -134,6 +142,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         canvas.drawCircle(rect.center, 3, bodyPaint);
       }
     }
+
+    // Draw bloom effect if active
+    if (_isShowingBloomEffect && _bloomEffectPosition != null) {
+      _drawBloomEffect(canvas);
+    }
   }
 
   void _drawArrowHead(
@@ -204,8 +217,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // Direction comes directly from the level data, not calculated from positions
     return vineData.headDirection;
   }
-
-
 
   void slideOut() {
     if (_isAnimating) return;
@@ -380,24 +391,36 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
         _currentAnimationStep++;
 
-        // Check if all segments are off screen
+        // Check if all segments are well off screen (with margin)
         final gridRows = parent.getCurrentLevelData()!.gridSize[0];
         final gridCols = parent.getCurrentLevelData()!.gridSize[1];
-        bool allOffScreen = true;
+        const int offScreenMargin =
+            3; // Extra cells to ensure vine is fully off-screen
 
+        bool allOffScreen = true;
         for (final pos in _currentVisualPositions) {
           final x = pos['x'] as int;
           final y = pos['y'] as int;
-          if (x >= 0 && x < gridCols && y >= 0 && y < gridRows) {
+          // Check if any segment is still visible on screen (with margin)
+          if (x >= -offScreenMargin &&
+              x < gridCols + offScreenMargin &&
+              y >= -offScreenMargin &&
+              y < gridRows + offScreenMargin) {
             allOffScreen = false;
             break;
           }
         }
 
-        if (allOffScreen || _currentAnimationStep >= _totalAnimationSteps) {
-          // Vine cleared off screen
-          parent.notifyVineCleared(vineData.id);
-          removeFromParent();
+        if (allOffScreen && !_isShowingBloomEffect) {
+          // Vine is fully off-screen, start bloom effect
+          _startBloomEffect();
+        } else if (_isShowingBloomEffect) {
+          // Continue bloom effect
+          _updateBloomEffect(dt);
+        } else if (_currentAnimationStep >= _totalAnimationSteps &&
+            !_isShowingBloomEffect) {
+          // Fallback: if animation times out but vine isn't fully off-screen, still show effect
+          _startBloomEffect();
         }
       }
     }
@@ -413,8 +436,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     );
   }
 
-
-
   void slideBump(int distanceInCells) {
     if (_isAnimating) return;
     _isAnimating = true;
@@ -425,5 +446,95 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _animationTimer = 0.0;
     _stepDuration = 0.05; // faster for bump animation
     // Note: slideBump not implemented with history-based animation yet
+  }
+
+  void _startBloomEffect() {
+    _isShowingBloomEffect = true;
+    _bloomEffectTimer = 0.0;
+
+    // Calculate bloom position based on vine's exit direction
+    // Find the position where the vine exited the screen
+    if (_currentVisualPositions.isNotEmpty) {
+      final lastPos = _currentVisualPositions.last;
+      final x = lastPos['x'] as int;
+      final y = lastPos['y'] as int;
+      final visualRow = gridSize - 1 - y;
+
+      // Position the bloom effect at the vine's exit point
+      _bloomEffectPosition = Offset(
+        x * cellSize + cellSize / 2,
+        visualRow * cellSize + cellSize / 2,
+      );
+    }
+  }
+
+  void _updateBloomEffect(double dt) {
+    _bloomEffectTimer += dt;
+
+    if (_bloomEffectTimer >= _bloomEffectDuration) {
+      // Bloom effect finished
+      _isShowingBloomEffect = false;
+      _bloomEffectPosition = null;
+
+      // Now clear the vine
+      parent.notifyVineCleared(vineData.id);
+      removeFromParent();
+    }
+  }
+
+  void _drawBloomEffect(Canvas canvas) {
+    if (_bloomEffectPosition == null) return;
+
+    final progress = _bloomEffectTimer / _bloomEffectDuration;
+    final center = _bloomEffectPosition!;
+
+    // Create expanding sparkle rings
+    final sparkleColors = [
+      AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.8),
+      AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.6),
+      AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.4),
+    ];
+
+    final maxRadius = cellSize * 2.0;
+    final ringCount = 3;
+
+    for (int i = 0; i < ringCount; i++) {
+      final ringProgress = (progress + i * 0.2) % 1.0; // Staggered timing
+      final radius = ringProgress * maxRadius;
+
+      if (radius > 0) {
+        final paint = Paint()
+          ..color = sparkleColors[i % sparkleColors.length]
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3.0 * (1.0 - ringProgress); // Thinner as they expand
+
+        canvas.drawCircle(center, radius, paint);
+      }
+    }
+
+    // Add central glow
+    final glowRadius = progress * cellSize * 0.8;
+    if (glowRadius > 0) {
+      final glowPaint = Paint()
+        ..color = AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.5)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(center, glowRadius, glowPaint);
+    }
+
+    // Add sparkle particles
+    final particleCount = 8;
+    for (int i = 0; i < particleCount; i++) {
+      final angle = (i / particleCount) * 2 * math.pi;
+      final distance = progress * cellSize * 1.5;
+      final particleX = center.dx + distance * math.cos(angle);
+      final particleY = center.dy + distance * math.sin(angle);
+
+      final particlePaint = Paint()
+        ..color = AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.9)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(Offset(particleX, particleY), 2.0, particlePaint);
+    }
   }
 }
