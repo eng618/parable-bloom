@@ -1,0 +1,609 @@
+{
+  "id": 6,
+  "name": "First Steps",
+  "grid_size": [9, 16],
+  "difficulty": "Seedling",
+  "vines": [
+    {
+      "id": "1",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 4,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "2",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 3,
+          "y": 4
+        },
+        {
+          "x": 2,
+          "y": 4
+        },
+        {
+          "x": 1,
+          "y": 4
+        },
+        {
+          "x": 0,
+          "y": 4
+        }
+      ],
+      "color": "emerald"
+    },
+    {
+      "id": "3",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 6
+        },
+        {
+          "x": 1,
+          "y": 6
+        },
+        {
+          "x": 0,
+          "y": 6
+        }
+      ],
+      "color": "olive"
+    },
+    {
+      "id": "4",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 6,
+          "y": 6
+        },
+        {
+          "x": 6,
+          "y": 5
+        },
+        {
+          "x": 6,
+          "y": 4
+        },
+        {
+          "x": 6,
+          "y": 3
+        },
+        {
+          "x": 6,
+          "y": 2
+        }
+      ],
+      "color": "sage"
+    },
+    {
+      "id": "5",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 12,
+          "y": 2
+        },
+        {
+          "x": 13,
+          "y": 2
+        },
+        {
+          "x": 14,
+          "y": 2
+        },
+        {
+          "x": 15,
+          "y": 2
+        }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "6",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 13,
+          "y": 4
+        },
+        {
+          "x": 14,
+          "y": 4
+        },
+        {
+          "x": 15,
+          "y": 4
+        }
+      ],
+      "color": "emerald"
+    },
+    {
+      "id": "7",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 6
+        },
+        {
+          "x": 12,
+          "y": 6
+        },
+        {
+          "x": 13,
+          "y": 6
+        },
+        {
+          "x": 14,
+          "y": 6
+        },
+        {
+          "x": 15,
+          "y": 6
+        }
+      ],
+      "color": "olive"
+    },
+    {
+      "id": "8",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 8,
+          "y": 4
+        },
+        {
+          "x": 8,
+          "y": 5
+        },
+        {
+          "x": 8,
+          "y": 6
+        },
+        {
+          "x": 8,
+          "y": 7
+        },
+        {
+          "x": 8,
+          "y": 8
+        }
+      ],
+      "color": "sage"
+    },
+    {
+      "id": "9",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 10,
+          "y": 6
+        },
+        {
+          "x": 10,
+          "y": 7
+        },
+        {
+          "x": 10,
+          "y": 8
+        }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "10",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 10,
+          "y": 9
+        },
+        {
+          "x": 9,
+          "y": 9
+        },
+        {
+          "x": 8,
+          "y": 9
+        },
+        {
+          "x": 7,
+          "y": 9
+        }
+      ],
+      "color": "emerald"
+    },
+    {
+      "id": "11",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 5,
+          "y": 0
+        },
+        {
+          "x": 4,
+          "y": 0
+        },
+        {
+          "x": 3,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 1,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "color": "olive"
+    },
+    {
+      "id": "12",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 3,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 1
+        }
+      ],
+      "color": "sage"
+    },
+    {
+      "id": "13",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 4,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 3
+        },
+        {
+          "x": 0,
+          "y": 3
+        }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "14",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 3,
+          "y": 5
+        },
+        {
+          "x": 2,
+          "y": 5
+        },
+        {
+          "x": 1,
+          "y": 5
+        },
+        {
+          "x": 0,
+          "y": 5
+        }
+      ],
+      "color": "emerald"
+    },
+    {
+      "id": "15",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 4,
+          "y": 7
+        },
+        {
+          "x": 3,
+          "y": 7
+        },
+        {
+          "x": 2,
+          "y": 7
+        },
+        {
+          "x": 1,
+          "y": 7
+        },
+        {
+          "x": 0,
+          "y": 7
+        }
+      ],
+      "color": "olive"
+    },
+    {
+      "id": "16",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 3,
+          "y": 8
+        },
+        {
+          "x": 2,
+          "y": 8
+        },
+        {
+          "x": 1,
+          "y": 8
+        },
+        {
+          "x": 0,
+          "y": 8
+        }
+      ],
+      "color": "sage"
+    },
+    {
+      "id": "18",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 7,
+          "y": 8
+        },
+        {
+          "x": 7,
+          "y": 7
+        },
+        {
+          "x": 7,
+          "y": 6
+        },
+        {
+          "x": 7,
+          "y": 5
+        },
+        {
+          "x": 7,
+          "y": 4
+        },
+        {
+          "x": 7,
+          "y": 3
+        },
+        {
+          "x": 7,
+          "y": 2
+        },
+        {
+          "x": 7,
+          "y": 1
+        },
+        {
+          "x": 7,
+          "y": 0
+        }
+      ],
+      "color": "emerald"
+    },
+    {
+      "id": "19",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 9,
+          "y": 0
+        },
+        {
+          "x": 10,
+          "y": 0
+        },
+        {
+          "x": 11,
+          "y": 0
+        },
+        {
+          "x": 12,
+          "y": 0
+        },
+        {
+          "x": 13,
+          "y": 0
+        },
+        {
+          "x": 14,
+          "y": 0
+        },
+        {
+          "x": 15,
+          "y": 0
+        }
+      ],
+      "color": "olive"
+    },
+    {
+      "id": "20",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 1
+        },
+        {
+          "x": 12,
+          "y": 1
+        },
+        {
+          "x": 13,
+          "y": 1
+        },
+        {
+          "x": 14,
+          "y": 1
+        },
+        {
+          "x": 15,
+          "y": 1
+        }
+      ],
+      "color": "sage"
+    },
+    {
+      "id": "21",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 12,
+          "y": 3
+        },
+        {
+          "x": 13,
+          "y": 3
+        },
+        {
+          "x": 14,
+          "y": 3
+        },
+        {
+          "x": 15,
+          "y": 3
+        }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "22",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 5
+        },
+        {
+          "x": 12,
+          "y": 5
+        },
+        {
+          "x": 13,
+          "y": 5
+        },
+        {
+          "x": 14,
+          "y": 5
+        },
+        {
+          "x": 15,
+          "y": 5
+        }
+      ],
+      "color": "emerald"
+    },
+    {
+      "id": "23",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 7
+        },
+        {
+          "x": 12,
+          "y": 7
+        },
+        {
+          "x": 13,
+          "y": 7
+        },
+        {
+          "x": 14,
+          "y": 7
+        },
+        {
+          "x": 15,
+          "y": 7
+        }
+      ],
+      "color": "olive"
+    },
+    {
+      "id": "24",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 8
+        },
+        {
+          "x": 12,
+          "y": 8
+        },
+        {
+          "x": 13,
+          "y": 8
+        },
+        {
+          "x": 14,
+          "y": 8
+        },
+        {
+          "x": 15,
+          "y": 8
+        }
+      ],
+      "color": "sage"
+    }
+  ],
+  "max_moves": 5,
+  "min_moves": 4,
+  "complexity": "low",
+  "grace": 3
+}

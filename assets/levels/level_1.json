@@ -1,0 +1,31 @@
+{
+  "id": 1,
+  "name": "Welcome to Parable Bloom",
+  "grid_size": [5, 8],
+  "difficulty": "Tutorial",
+  "vines": [
+    {
+      "id": "1",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "color": "moss_green"
+    }
+  ],
+  "max_moves": 1,
+  "min_moves": 1,
+  "complexity": "tutorial",
+  "grace": 3
+}

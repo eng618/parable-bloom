@@ -131,41 +131,9 @@ class GardenGame extends FlameGame {
     );
     debugPrint('GardenGame: Global progress: $globalProgress');
 
-    // Load module data to convert global level number to module and level within module
-    final modulesAsync = ref.read(modulesProvider);
-    final modules = modulesAsync.maybeWhen(
-      data: (data) => data,
-      orElse: () => <ModuleData>[
-        // Fallback default modules if not loaded yet
-        ModuleData(
-          id: 1,
-          name: 'Tutorial',
-          levelCount: 5,
-          parable: {},
-          unlockMessage: '',
-        ),
-        ModuleData(
-          id: 2,
-          name: 'The Sower',
-          levelCount: 15,
-          parable: {},
-          unlockMessage: '',
-        ),
-      ],
-    );
-
-    final (:moduleId, :levelInModule) = globalProgress.getCurrentModuleAndLevel(
-      modules,
-    );
-
-    debugPrint(
-      'GardenGame: Converting to module $moduleId level $levelInModule',
-    );
-
     try {
-      // Load level data from JSON in module structure
-      final assetPath =
-          'assets/levels/module_$moduleId/level_$levelInModule.json';
+      // Load level data directly by global level number
+      final assetPath = 'assets/levels/level_$globalLevelNumber.json';
       debugPrint('GardenGame: Loading asset: $assetPath');
 
       final levelJson = await rootBundle.loadString(assetPath);
@@ -194,14 +162,32 @@ class GardenGame extends FlameGame {
       // Log level start analytics
       ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
 
-      debugPrint(
-        'Loaded module $moduleId level $levelInModule: ${_currentLevelData!.name}',
-      );
+      debugPrint('Loaded level $globalLevelNumber: ${_currentLevelData!.name}');
     } catch (e, stackTrace) {
-      debugPrint('Error loading module $moduleId level $levelInModule: $e');
+      debugPrint('Error loading level $globalLevelNumber: $e');
       debugPrint('Stack trace: $stackTrace');
-      // Don't set game completed on startup load failure - this might be due to asset loading issues
-      // Only set completed when we actually finish all available levels
+
+      // Check if this is because we've completed all levels
+      final modulesAsync = ref.read(modulesProvider);
+      final modules = modulesAsync.maybeWhen(
+        data: (data) => data,
+        orElse: () => <ModuleData>[],
+      );
+
+      final totalLevels = modules.fold<int>(
+        0,
+        (total, module) => total + module.levelCount,
+      );
+
+      if (globalLevelNumber > totalLevels) {
+        debugPrint(
+          'GardenGame: All levels completed! Setting game as completed.',
+        );
+        ref.read(gameCompletedProvider.notifier).setCompleted(true);
+        return;
+      }
+
+      // Otherwise, it's a loading error
       debugPrint('GardenGame: Level loading failed, creating fallback level');
 
       // Create a fallback level programmatically
@@ -270,7 +256,6 @@ class GardenGame extends FlameGame {
     // Create a simple fallback level programmatically
     return LevelData(
       id: 999,
-      moduleId: 1,
       name: 'Fallback Level',
       gridSize: [9, 9],
       difficulty: 'Seedling',

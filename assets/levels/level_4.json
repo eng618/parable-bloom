@@ -1,0 +1,73 @@
+{
+  "id": 4,
+  "name": "Order Matters",
+  "grid_size": [6, 10],
+  "difficulty": "Tutorial",
+  "vines": [
+    {
+      "id": "1",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "2",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 3
+        },
+        {
+          "x": 0,
+          "y": 3
+        }
+      ],
+      "color": "emerald"
+    },
+    {
+      "id": "3",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 4,
+          "y": 5
+        },
+        {
+          "x": 4,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 3
+        }
+      ],
+      "color": "olive"
+    }
+  ],
+  "max_moves": 3,
+  "min_moves": 3,
+  "complexity": "tutorial",
+  "grace": 3
+}

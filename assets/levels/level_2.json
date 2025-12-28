@@ -1,0 +1,50 @@
+{
+  "id": 2,
+  "name": "First Companions",
+  "grid_size": [5, 8],
+  "difficulty": "Tutorial",
+  "vines": [
+    {
+      "id": "1",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 1
+        }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "2",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 3
+        },
+        {
+          "x": 0,
+          "y": 3
+        }
+      ],
+      "color": "emerald"
+    }
+  ],
+  "max_moves": 2,
+  "min_moves": 2,
+  "complexity": "tutorial",
+  "grace": 3
+}

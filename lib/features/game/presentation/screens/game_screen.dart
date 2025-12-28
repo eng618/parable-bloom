@@ -191,7 +191,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (currentLevel == null) return const SizedBox.shrink();
 
     return Text(
-      'Level ${currentLevel.globalLevelNumber ?? globalProgress.currentGlobalLevel}: ${currentLevel.name}',
+      'Level ${currentLevel.id}: ${currentLevel.name}',
       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
     );
   }
@@ -305,10 +305,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     // Advance to next level
     final currentLevel = ref.read(currentLevelProvider);
-    if (currentLevel?.globalLevelNumber != null) {
+    if (currentLevel != null) {
       await ref
           .read(globalProgressProvider.notifier)
-          .completeLevel(currentLevel!.globalLevelNumber!);
+          .completeLevel(currentLevel.id);
     }
     ref.read(levelCompleteProvider.notifier).setComplete(false);
 

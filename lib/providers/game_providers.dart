@@ -44,25 +44,27 @@ class ModuleData {
 
 // Provider for loading all module data
 final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
-  final modules = <ModuleData>[];
+  try {
+    final jsonString = await rootBundle.loadString(
+      'assets/levels/modules.json',
+    );
+    final jsonMap = json.decode(jsonString);
+    final modulesList = jsonMap['modules'] as List<dynamic>;
 
-  // Load modules dynamically by trying to load module_1.json, module_2.json, etc.
-  int moduleId = 1;
-  while (true) {
-    try {
-      final assetPath = 'assets/levels/module_$moduleId/module.json';
-      final jsonString = await rootBundle.loadString(assetPath);
-      final jsonMap = json.decode(jsonString);
-      final module = ModuleData.fromJson(jsonMap);
-      modules.add(module);
-      moduleId++;
-    } catch (e) {
-      // Stop when we can't load more modules
-      break;
-    }
+    return modulesList.map((moduleJson) {
+      final range = moduleJson['level_range'] as List<dynamic>;
+      return ModuleData(
+        id: moduleJson['id'],
+        name: moduleJson['name'],
+        levelCount: range[1] - range[0] + 1, // Calculate level count from range
+        parable: moduleJson['parable'],
+        unlockMessage: moduleJson['unlock_message'],
+      );
+    }).toList();
+  } catch (e) {
+    debugPrint('Error loading modules.json: $e');
+    return [];
   }
-
-  return modules;
 });
 
 // Models for game state
@@ -95,9 +97,7 @@ class VineData {
 }
 
 class LevelData {
-  final int id;
-  final int moduleId;
-  final int? globalLevelNumber;
+  final int id; // Global level ID (1, 2, 3...)
   final String name;
   final List<int> gridSize;
   final String difficulty;
@@ -109,8 +109,6 @@ class LevelData {
 
   LevelData({
     required this.id,
-    required this.moduleId,
-    this.globalLevelNumber,
     required this.name,
     required this.gridSize,
     required this.difficulty,
@@ -124,8 +122,6 @@ class LevelData {
   factory LevelData.fromJson(Map<String, dynamic> json) {
     return LevelData(
       id: json['id'],
-      moduleId: json['module_id'],
-      globalLevelNumber: json['global_level_number'],
       name: json['name'],
       gridSize: List<int>.from(json['grid_size']),
       difficulty: json['difficulty'],
