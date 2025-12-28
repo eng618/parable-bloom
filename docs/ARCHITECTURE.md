@@ -20,6 +20,10 @@ We use **Riverpod** for reactive state management. This decouples the game logic
 - **`vineStatesProvider`**: Manages the dynamic "blocking" logic for all vines in the current level. It uses the `LevelSolver` to calculate which vines are movable based on snake-like path movement.
 - **`graceProvider`**: Manages Grace system (3 per level, 4 for Transcendent) with persistence.
 - **`currentLevelProvider`**: Holds the current level data with updated JSON schema (id, module_id, name, grid_size [rows, cols], difficulty, vines with head_direction). GridComponent now properly supports rectangular grids instead of assuming square dimensions.
+- **`currentLevelProvider`**: Holds the current level data with updated JSON schema (id, module_id, name, grid_size [rows, cols], difficulty, vines with head_direction). GridComponent now properly supports rectangular grids instead of assuming square dimensions.
+  
+  Note: Levels include both coordinate-based `ordered_path` (x,y) and an optional/expected `grid_size`. The canonical level format for the app is coordinate paths plus `grid_size` to help the UI compute bounds; clients should validate that `grid_size` is consistent with vine coordinates.
+
 - **`gameInstanceProvider`**: Bridges Flutter UI with Flame game engine instance.
 - **Transient State Providers**: Level completion, game over, and analytics tracking providers.
 

@@ -230,9 +230,9 @@ This document defines the JSON schemas for Parable Bloom's data structures, upda
 
 ### Coordinate System Refactor
 
-- **Removed**: `grid_size` field (bounds calculated dynamically from vine positions)
-- **Added**: Pure x,y coordinates with no grid constraints
-- **Changed**: Vines can exist at any coordinate position
+- **Retained**: `grid_size` field (kept for UI/grid bounds compatibility). Levels use coordinate-based paths and may include `grid_size` to help the client compute bounds; `grid_size` should be consistent with vine coordinates.
+- **Added**: Pure x,y coordinates for vine paths (no row/column transformation required)
+- **Changed**: Vines can exist at any coordinate position; clients compute dynamic bounds but may use `grid_size` when present.
 
 ### Module Structure Simplification
 

@@ -22,7 +22,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   int _currentAnimationStep = 0;
   int _totalAnimationSteps = 0;
   double _animationTimer = 0.0;
-  double _stepDuration = 0.1; // seconds per step
+  double _stepDuration =
+      0.04; // seconds per step - reduced for smoother animation
 
   // History-based animation (snake-like movement)
   List<List<Map<String, int>>> _positionHistory = [];
@@ -421,24 +422,26 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         _currentAnimationStep++;
 
         // Check vine position relative to visible grid bounds
-        final hasExitedVisibleGrid = _hasExitedVisibleGrid();
+        final isHeadAtBoundary = _isVineHeadAtGridBoundary();
         final isFullyOffScreen = _isFullyOffScreen();
 
-        // Start bloom effect when vine exits visible grid (no margin)
-        if (hasExitedVisibleGrid && !_isShowingBloomEffect) {
+        // Start bloom effect as soon as vine head reaches grid boundary (starts leaving)
+        if (isHeadAtBoundary && !_isShowingBloomEffect) {
           _startBloomEffect();
         }
 
-        // Continue bloom effect and check for full off-screen removal
+        // Update bloom effect continuously while vine is animating off-screen
         if (_isShowingBloomEffect) {
-          if (isFullyOffScreen) {
-            // Vine is fully off-screen, update bloom effect and eventually remove
-            _updateBloomEffect(dt);
+          _updateBloomEffect(dt);
+
+          // Continue bloom effect while vine animates, but check for completion when fully off-screen
+          if (isFullyOffScreen && _bloomEffectTimer >= _bloomEffectDuration) {
+            // Bloom effect finished and vine is fully off-screen - remove vine
+            _finishAnimation();
           }
-          // If not fully off-screen yet, bloom effect continues while vine animates
         } else if (_currentAnimationStep >= _totalAnimationSteps &&
-            !hasExitedVisibleGrid) {
-          // Fallback: if animation times out but vine hasn't exited visible grid, still show effect
+            !isHeadAtBoundary) {
+          // Fallback: if animation times out but vine head hasn't reached boundary, still show effect
           _startBloomEffect();
         }
       }
@@ -455,6 +458,22 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       vineData.id,
       activeIds,
     );
+  }
+
+  // Check if the vine head is at the grid boundary (starting to leave - triggers sparkle)
+  bool _isVineHeadAtGridBoundary() {
+    final bounds = parent.getCurrentLevelData()!.getBounds();
+
+    // Only check the head position (first segment)
+    final headPos = _currentVisualPositions[0];
+    final x = headPos['x'] as int;
+    final y = headPos['y'] as int;
+
+    // Check if head is at any grid boundary (edge of visible grid)
+    return x == bounds.minX ||
+        x == bounds.maxX ||
+        y == bounds.minY ||
+        y == bounds.maxY;
   }
 
   // Check if all vine segments have exited the visible grid area (no margin)
@@ -568,20 +587,29 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   void _updateBloomEffect(double dt) {
     _bloomEffectTimer += dt;
 
-    if (_bloomEffectTimer >= _bloomEffectDuration) {
-      // Bloom effect finished
-      _isShowingBloomEffect = false;
-      _bloomEffectPosition = null;
+    // Bloom effect continues while vine animates - no early termination
+  }
 
-      // Set animation state to cleared - this properly marks the vine as cleared
-      parent.setVineAnimationState(vineData.id, VineAnimationState.cleared);
+  void _finishAnimation() {
+    // Clean up animation state
+    _isAnimating = false;
+    _isShowingBloomEffect = false;
+    _bloomEffectPosition = null;
+    _positionHistory.clear();
+    _currentAnimationStep = 0;
+    _totalAnimationSteps = 0;
+    _animationTimer = 0.0;
 
-      // Only notify parent if we haven't already (for optimization)
-      if (!_alreadyNotifiedCleared) {
-        parent.notifyVineCleared(vineData.id);
-      }
-      removeFromParent();
+    // Set animation state to cleared - this properly marks the vine as cleared
+    parent.setVineAnimationState(vineData.id, VineAnimationState.cleared);
+
+    // Notify parent of clearing (only once)
+    if (!_alreadyNotifiedCleared) {
+      parent.notifyVineCleared(vineData.id);
     }
+
+    // Remove the vine component from the scene
+    removeFromParent();
   }
 
   void _drawBloomEffect(Canvas canvas) {
