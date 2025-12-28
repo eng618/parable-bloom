@@ -1,0 +1,31 @@
+{
+  "id": 2001,
+  "name": "Unsolvable: Circular Blocking",
+  "difficulty": "Seedling",
+  "vines": [
+    {
+      "id": "vine_a",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 1, "y": 2 },
+        { "x": 2, "y": 2 },
+        { "x": 3, "y": 2 }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "vine_b",
+      "head_direction": "left",
+      "ordered_path": [
+        { "x": 7, "y": 2 },
+        { "x": 6, "y": 2 },
+        { "x": 5, "y": 2 }
+      ],
+      "color": "emerald"
+    }
+  ],
+  "max_moves": 2,
+  "min_moves": 1,
+  "complexity": "low",
+  "grace": 3
+}

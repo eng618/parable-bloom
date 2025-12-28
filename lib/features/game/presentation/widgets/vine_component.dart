@@ -10,8 +10,6 @@ import 'grid_component.dart';
 class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final VineData vineData;
   final double cellSize;
-  final int rows;
-  final int cols;
 
   bool _isAnimating = false;
   bool _willClearAfterAnimation =
@@ -39,25 +37,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Track if we've already notified parent of clearing
   final bool _alreadyNotifiedCleared = false;
 
-  VineComponent({
-    required this.vineData,
-    required this.cellSize,
-    required this.rows,
-    required this.cols,
-  }) {
-    // Initialize visual positions immediately to avoid render issues
-    // Convert from Map<String, int> (x,y) to Map<String, int>
-    // The level data uses coordinates for the old [rows, cols] system,
-    // but we now use [cols, rows], so we need to transform coordinates
-    _currentVisualPositions = vineData.orderedPath.map((cell) {
-      final oldX = cell['x'] as int;
-      final oldY = cell['y'] as int;
-      // Transform from old [rows, cols] coordinate system to new [cols, rows] system
-      // For level 5: old was [9,16] meaning 9 rows, 16 cols
-      // New is [9,16] meaning 9 cols, 16 rows
-      // So we need to swap x,y coordinates
-      return {'x': oldY, 'y': oldX};
-    }).toList();
+  VineComponent({required this.vineData, required this.cellSize}) {
+    // Initialize visual positions directly from vine data (pure x,y coordinates)
+    _currentVisualPositions = List<Map<String, int>>.from(
+      vineData.orderedPath.map((cell) => Map<String, int>.from(cell)),
+    );
   }
 
   @override
@@ -103,6 +87,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
 
+    // Calculate bounds for coordinate transformation
+    final bounds = parent.getCurrentLevelData()!.getBounds();
+    final visualHeight = bounds.maxY - bounds.minY + 1;
+
     for (int i = 0; i < _currentVisualPositions.length - 1; i++) {
       final currentCell = _currentVisualPositions[i];
       final nextCell = _currentVisualPositions[i + 1];
@@ -112,13 +100,17 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final nextX = nextCell['x'] as int;
       final nextY = nextCell['y'] as int;
 
+      // Transform to visual coordinates (y=0 at bottom)
+      final currentVisualY = visualHeight - 1 - (currentY - bounds.minY);
+      final nextVisualY = visualHeight - 1 - (nextY - bounds.minY);
+
       final start = Offset(
-        currentX * cellSize + cellSize / 2,
-        (rows - 1 - currentY) * cellSize + cellSize / 2,
+        (currentX - bounds.minX) * cellSize + cellSize / 2,
+        currentVisualY * cellSize + cellSize / 2,
       );
       final end = Offset(
-        nextX * cellSize + cellSize / 2,
-        (rows - 1 - nextY) * cellSize + cellSize / 2,
+        (nextX - bounds.minX) * cellSize + cellSize / 2,
+        nextVisualY * cellSize + cellSize / 2,
       );
 
       canvas.drawLine(start, end, segmentPaint);
@@ -129,14 +121,16 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final cell = _currentVisualPositions[i];
       final x = cell['x'] as int;
       final y = cell['y'] as int;
-      final visualRow = rows - 1 - y;
+
+      // Transform to visual coordinates (y=0 at bottom)
+      final visualY = visualHeight - 1 - (y - bounds.minY);
 
       final isHead = direction != null && i == 0; // Head is at position 0
 
       final rect = Rect.fromCenter(
         center: Offset(
-          x * cellSize + cellSize / 2,
-          visualRow * cellSize + cellSize / 2,
+          (x - bounds.minX) * cellSize + cellSize / 2,
+          visualY * cellSize + cellSize / 2,
         ),
         width: cellSize * 0.6,
         height: cellSize * 0.6,
@@ -426,35 +420,25 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
         _currentAnimationStep++;
 
-        // Check if all segments are well off screen (with margin)
-        final gridCols = parent.getCurrentLevelData()!.gridSize[0];
-        final gridRows = parent.getCurrentLevelData()!.gridSize[1];
-        const int offScreenMargin =
-            3; // Extra cells to ensure vine is fully off-screen
+        // Check vine position relative to visible grid bounds
+        final hasExitedVisibleGrid = _hasExitedVisibleGrid();
+        final isFullyOffScreen = _isFullyOffScreen();
 
-        bool allOffScreen = true;
-        for (final pos in _currentVisualPositions) {
-          final x = pos['x'] as int;
-          final y = pos['y'] as int;
-          // Check if any segment is still visible on screen (with margin)
-          if (x >= -offScreenMargin &&
-              x < gridCols + offScreenMargin &&
-              y >= -offScreenMargin &&
-              y < gridRows + offScreenMargin) {
-            allOffScreen = false;
-            break;
-          }
+        // Start bloom effect when vine exits visible grid (no margin)
+        if (hasExitedVisibleGrid && !_isShowingBloomEffect) {
+          _startBloomEffect();
         }
 
-        if (allOffScreen && !_isShowingBloomEffect) {
-          // Vine is fully off-screen, start bloom effect
-          _startBloomEffect();
-        } else if (_isShowingBloomEffect) {
-          // Continue bloom effect
-          _updateBloomEffect(dt);
+        // Continue bloom effect and check for full off-screen removal
+        if (_isShowingBloomEffect) {
+          if (isFullyOffScreen) {
+            // Vine is fully off-screen, update bloom effect and eventually remove
+            _updateBloomEffect(dt);
+          }
+          // If not fully off-screen yet, bloom effect continues while vine animates
         } else if (_currentAnimationStep >= _totalAnimationSteps &&
-            !_isShowingBloomEffect) {
-          // Fallback: if animation times out but vine isn't fully off-screen, still show effect
+            !hasExitedVisibleGrid) {
+          // Fallback: if animation times out but vine hasn't exited visible grid, still show effect
           _startBloomEffect();
         }
       }
@@ -471,6 +455,59 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       vineData.id,
       activeIds,
     );
+  }
+
+  // Check if all vine segments have exited the visible grid area (no margin)
+  bool _hasExitedVisibleGrid() {
+    final bounds = parent.getCurrentLevelData()!.getBounds();
+    final gridCols = bounds.maxX - bounds.minX + 1;
+    final gridRows = bounds.maxY - bounds.minY + 1;
+
+    // Check if any segment is still within the visible grid bounds
+    for (final pos in _currentVisualPositions) {
+      final x = pos['x'] as int;
+      final y = pos['y'] as int;
+
+      // Convert to grid-relative coordinates
+      final gridX = x - bounds.minX;
+      final gridY = y - bounds.minY;
+
+      // If any segment is still within visible grid (0 <= x < cols, 0 <= y < rows)
+      if (gridX >= 0 && gridX < gridCols && gridY >= 0 && gridY < gridRows) {
+        return false; // Still visible on grid
+      }
+    }
+
+    return true; // All segments have exited visible grid
+  }
+
+  // Check if all vine segments are fully off-screen (with margin)
+  bool _isFullyOffScreen() {
+    final bounds = parent.getCurrentLevelData()!.getBounds();
+    final gridCols = bounds.maxX - bounds.minX + 1;
+    final gridRows = bounds.maxY - bounds.minY + 1;
+    const int offScreenMargin =
+        3; // Extra cells to ensure vine is fully off-screen
+
+    // Check if any segment is still visible on screen (with margin)
+    for (final pos in _currentVisualPositions) {
+      final x = pos['x'] as int;
+      final y = pos['y'] as int;
+
+      // Convert to grid-relative coordinates
+      final gridX = x - bounds.minX;
+      final gridY = y - bounds.minY;
+
+      // If any segment is still within extended bounds (includes margin)
+      if (gridX >= -offScreenMargin &&
+          gridX < gridCols + offScreenMargin &&
+          gridY >= -offScreenMargin &&
+          gridY < gridRows + offScreenMargin) {
+        return false; // Still visible with margin
+      }
+    }
+
+    return true; // All segments are fully off-screen
   }
 
   void slideBump(int distanceInCells) {
@@ -492,6 +529,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // Calculate bloom position at the grid edge where the vine exited
     // Find the exit position based on vine's head direction and grid boundaries
     if (_currentVisualPositions.isNotEmpty) {
+      final bounds = parent.getCurrentLevelData()!.getBounds();
       final headPos = _currentVisualPositions[0]; // Head is at index 0
       final headX = headPos['x'] as int;
       final headY = headPos['y'] as int;
@@ -502,25 +540,27 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       switch (vineData.headDirection) {
         case 'right':
-          exitX = cols - 1; // Right edge
+          exitX = bounds.maxX; // Right edge
           break;
         case 'left':
-          exitX = 0; // Left edge
+          exitX = bounds.minX; // Left edge
           break;
         case 'up':
-          exitY = rows - 1; // Top edge (y increases upward)
+          exitY = bounds.maxY; // Top edge (y increases upward)
           break;
         case 'down':
-          exitY = 0; // Bottom edge
+          exitY = bounds.minY; // Bottom edge
           break;
       }
 
-      final visualRow = rows - 1 - exitY;
+      // Transform to visual coordinates (y=0 at bottom)
+      final visualHeight = bounds.maxY - bounds.minY + 1;
+      final visualY = visualHeight - 1 - (exitY - bounds.minY);
 
       // Position the bloom effect at the grid edge exit point
       _bloomEffectPosition = Offset(
-        exitX * cellSize + cellSize / 2,
-        visualRow * cellSize + cellSize / 2,
+        (exitX - bounds.minX) * cellSize + cellSize / 2,
+        visualY * cellSize + cellSize / 2,
       );
     }
   }

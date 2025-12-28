@@ -12,11 +12,11 @@ import 'vine_component.dart';
 
 class GridComponent extends PositionComponent
     with TapCallbacks, ParentIsA<GardenGame> {
-  final int rows;
-  final int cols;
   final double cellSize;
 
   late List<List<CellComponent>> cells;
+  late int rows;
+  late int cols;
 
   // Current level data - will be set by Riverpod
   LevelData? _currentLevel;
@@ -34,8 +34,6 @@ class GridComponent extends PositionComponent
   final Map<String, VineComponent> _vineComponents = {};
 
   GridComponent({
-    required this.rows,
-    required this.cols,
     required this.cellSize,
     this.onLevelComplete,
     this.onVineCleared,
@@ -47,8 +45,16 @@ class GridComponent extends PositionComponent
     _currentLevel = levelData;
     _vineStates = Map.from(vineStates);
 
+    // Calculate grid dimensions from vine bounds
+    final bounds = levelData.getBounds();
+    rows = bounds.maxY - bounds.minY + 1;
+    cols = bounds.maxX - bounds.minX + 1;
+
     // Only recreate components if it's a new level
     if (isNewLevel) {
+      // Create grid cells for the new level
+      _createGridCells();
+
       // Clear old vine components
       for (final comp in _vineComponents.values) {
         comp.removeFromParent();
@@ -57,12 +63,7 @@ class GridComponent extends PositionComponent
 
       // Add new vine components for each vine in the level
       for (final vine in levelData.vines) {
-        final comp = VineComponent(
-          vineData: vine,
-          cellSize: cellSize,
-          rows: rows,
-          cols: cols,
-        );
+        final comp = VineComponent(vineData: vine, cellSize: cellSize);
         add(comp);
         _vineComponents[vine.id] = comp;
       }
@@ -105,13 +106,24 @@ class GridComponent extends PositionComponent
 
   @override
   Future<void> onLoad() async {
-    size = Vector2(cols * cellSize, rows * cellSize);
+    // Initialize cells list
+    cells = [];
 
-    // Center the grid on screen
-    position = Vector2(
-      (parent.size.x - width) / 2,
-      (parent.size.y - height) / 2,
-    );
+    // Grid will be sized and positioned when level data is set
+    size = Vector2.zero();
+    position = Vector2.zero();
+  }
+
+  // Create or update grid cells based on level data
+  void _createGridCells() {
+    // Remove existing cells
+    for (final row in cells) {
+      for (final cell in row) {
+        if (cell.isMounted) {
+          remove(cell);
+        }
+      }
+    }
 
     cells = [];
 
@@ -132,6 +144,13 @@ class GridComponent extends PositionComponent
         cells[y].add(cell);
       }
     }
+
+    // Update grid size and position
+    size = Vector2(cols * cellSize, rows * cellSize);
+    position = Vector2(
+      (parent.size.x - width) / 2,
+      (parent.size.y - height) / 2,
+    );
   }
 
   // Individual vines are now rendered by VineComponent children
@@ -158,10 +177,14 @@ class GridComponent extends PositionComponent
   VineData? _getVineAtCell(int row, int col) {
     if (_currentLevel == null) return null;
 
+    // Convert from grid coordinates to world coordinates
+    final bounds = _currentLevel!.getBounds();
+    final worldX = bounds.minX + col;
+    final worldY = bounds.minY + row;
+
     for (final vine in _currentLevel!.vines) {
       for (final cell in vine.orderedPath) {
-        if (cell['x'] == col && cell['y'] == row) {
-          // Note: x=col, y=row in grid coordinates
+        if (cell['x'] == worldX && cell['y'] == worldY) {
           return vine;
         }
       }

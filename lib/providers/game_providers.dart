@@ -99,7 +99,6 @@ class VineData {
 class LevelData {
   final int id; // Global level ID (1, 2, 3...)
   final String name;
-  final List<int> gridSize;
   final String difficulty;
   final List<VineData> vines;
   final int maxMoves;
@@ -110,7 +109,6 @@ class LevelData {
   LevelData({
     required this.id,
     required this.name,
-    required this.gridSize,
     required this.difficulty,
     required this.vines,
     required this.maxMoves,
@@ -123,7 +121,6 @@ class LevelData {
     return LevelData(
       id: json['id'],
       name: json['name'],
-      gridSize: List<int>.from(json['grid_size']),
       difficulty: json['difficulty'],
       vines: List<VineData>.from(
         json['vines'].map((vine) => VineData.fromJson(vine)),
@@ -134,6 +131,39 @@ class LevelData {
       grace: json['grace'],
     );
   }
+
+  // Calculate bounds dynamically from vine positions
+  ({int minX, int maxX, int minY, int maxY}) getBounds() {
+    if (vines.isEmpty || vines.first.orderedPath.isEmpty) {
+      return (minX: 0, maxX: 8, minY: 0, maxY: 8); // Default fallback
+    }
+
+    int minX = vines
+        .expand((vine) => vine.orderedPath)
+        .map((pos) => pos['x'] as int)
+        .reduce((a, b) => a < b ? a : b);
+
+    int maxX = vines
+        .expand((vine) => vine.orderedPath)
+        .map((pos) => pos['x'] as int)
+        .reduce((a, b) => a > b ? a : b);
+
+    int minY = vines
+        .expand((vine) => vine.orderedPath)
+        .map((pos) => pos['y'] as int)
+        .reduce((a, b) => a < b ? a : b);
+
+    int maxY = vines
+        .expand((vine) => vine.orderedPath)
+        .map((pos) => pos['y'] as int)
+        .reduce((a, b) => a > b ? a : b);
+
+    return (minX: minX, maxX: maxX, minY: minY, maxY: maxY);
+  }
+
+  // Get dimensions for backwards compatibility
+  int get width => getBounds().maxX - getBounds().minX + 1;
+  int get height => getBounds().maxY - getBounds().minY + 1;
 }
 
 // Providers
@@ -773,7 +803,8 @@ class LevelSolver {
     return null;
   }
 
-  /// Checks if vine A blocks vine B (A prevents B from moving)
+  /// Checks if vine A blocks vine B (A prevents B from moving).
+  /// Properly simulates snake-like movement of B and checks if A occupies any position B would move to.
   static bool _doesVineBlock(
     LevelData level,
     String blockerId,
@@ -782,33 +813,20 @@ class LevelSolver {
     final blocker = level.vines.firstWhere((v) => v.id == blockerId);
     final blocked = level.vines.firstWhere((v) => v.id == blockedId);
 
-    // Get the position where blocked vine would move
-    final head = blocked.orderedPath[0];
-    final headX = head['x'] as int;
-    final headY = head['y'] as int;
+    // Simulate where blocked vine would be after one move
+    final blockedNewPositions = _simulateVineMovement(blocked);
 
-    var nextX = headX;
-    var nextY = headY;
-
-    switch (blocked.headDirection) {
-      case 'right':
-        nextX += 1;
-        break;
-      case 'left':
-        nextX -= 1;
-        break;
-      case 'up':
-        nextY += 1;
-        break; // Up increases y
-      case 'down':
-        nextY -= 1;
-        break; // Down decreases y
+    // Check if blocker occupies any of the positions blocked vine would move to
+    for (final newPos in blockedNewPositions) {
+      for (final blockerCell in blocker.orderedPath) {
+        if (blockerCell['x'] == newPos['x'] &&
+            blockerCell['y'] == newPos['y']) {
+          return true; // Blocker occupies a position blocked vine needs
+        }
+      }
     }
 
-    // Check if blocker occupies the next position
-    return blocker.orderedPath.any(
-      (cell) => cell['x'] == nextX && cell['y'] == nextY,
-    );
+    return false;
   }
 
   /// Calculate priority for A* search (lower is better)
@@ -836,80 +854,18 @@ class LevelSolver {
     return sorted.join(',');
   }
 
-  /// Checks if a vine is blocked by any other 'active' vines in a specific state.
-  static bool isVineBlockedInState(
-    LevelData level,
-    String vineId,
-    List<String> activeVineIds,
-  ) {
-    final vine = level.vines.firstWhere((v) => v.id == vineId);
-    final gridCols = level.gridSize[0];
-    final gridRows = level.gridSize[1];
+  /// Simulates snake-like movement: calculates where each segment of a vine
+  /// would be positioned after the vine moves one step in its direction.
+  static List<Map<String, int>> _simulateVineMovement(VineData vine) {
+    final positions = List<Map<String, int>>.from(vine.orderedPath);
 
-    // Determine direction from head (first cell) and its direction
-    if (vine.orderedPath.isEmpty) return false;
+    if (positions.isEmpty) return positions;
 
-    final head = vine.orderedPath[0]; // Head is at index 0
-    final headX = head['x'] as int;
-    final headY = head['y'] as int;
+    // Calculate new head position
+    final head = positions[0];
+    final newHeadX = head['x'] as int;
+    final newHeadY = head['y'] as int;
 
-    // Calculate next position based on head direction
-    var nextX = headX;
-    var nextY = headY;
-
-    switch (vine.headDirection) {
-      case 'right':
-        nextX += 1;
-        break;
-      case 'left':
-        nextX -= 1;
-        break;
-      case 'up':
-        nextY += 1; // Up increases y
-        break;
-      case 'down':
-        nextY -= 1; // Down decreases y
-        break;
-    }
-
-    // Check if next position is within bounds
-    if (nextX < 0 || nextX >= gridCols || nextY < 0 || nextY >= gridRows) {
-      return false; // Can move off grid edge
-    }
-
-    // Check for collisions with ANY other active vine at the next position
-    for (final otherId in activeVineIds) {
-      if (otherId == vineId) continue;
-
-      final otherVine = level.vines.firstWhere((v) => v.id == otherId);
-      for (final cell in otherVine.orderedPath) {
-        if (cell['x'] == nextX && cell['y'] == nextY) {
-          return true; // Blocked
-        }
-      }
-    }
-
-    return false; // Not blocked
-  }
-
-  /// Calculates how many cells a vine can slide before being blocked or exiting.
-  /// Returns negative distance if blocked by vine, positive if reaches edge.
-  static int getDistanceToBlocker(
-    LevelData level,
-    String vineId,
-    List<String> activeVineIds,
-  ) {
-    final vine = level.vines.firstWhere((v) => v.id == vineId);
-    final gridCols = level.gridSize[0];
-    final gridRows = level.gridSize[1];
-
-    if (vine.orderedPath.isEmpty) return 0;
-
-    final head = vine.orderedPath[0]; // Head is at index 0
-    final headX = head['x'] as int;
-    final headY = head['y'] as int;
-
-    // Calculate movement direction
     var deltaX = 0;
     var deltaY = 0;
 
@@ -921,38 +877,145 @@ class LevelSolver {
         deltaX = -1;
         break;
       case 'up':
-        deltaY = 1; // Up increases y
+        deltaY = 1;
         break;
       case 'down':
-        deltaY = -1; // Down decreases y
+        deltaY = -1;
         break;
     }
 
-    var currentX = headX + deltaX;
-    var currentY = headY + deltaY;
-    int distance = 1;
+    final newHead = {'x': newHeadX + deltaX, 'y': newHeadY + deltaY};
 
-    while (currentX >= 0 &&
-        currentX < gridCols &&
-        currentY >= 0 &&
-        currentY < gridRows) {
-      // Check for collisions with ANY other active vine at current position
+    // Shift all segments: each segment moves to where the previous one was
+    final newPositions = <Map<String, int>>[newHead];
+
+    for (int i = 1; i < positions.length; i++) {
+      newPositions.add(positions[i - 1]);
+    }
+
+    return newPositions;
+  }
+
+  /// Checks if a vine is blocked by any other 'active' vines in a specific state.
+  /// Properly simulates snake-like movement where all segments follow the head.
+  static bool isVineBlockedInState(
+    LevelData level,
+    String vineId,
+    List<String> activeVineIds,
+  ) {
+    final vine = level.vines.firstWhere((v) => v.id == vineId);
+
+    if (vine.orderedPath.isEmpty) return false;
+
+    // Simulate snake-like movement: calculate where each segment would be after one move
+    final newPositions = _simulateVineMovement(vine);
+
+    // Check if any of the new positions would be occupied by other active vines
+    for (final newPos in newPositions) {
       for (final otherId in activeVineIds) {
         if (otherId == vineId) continue;
 
         final otherVine = level.vines.firstWhere((v) => v.id == otherId);
         for (final cell in otherVine.orderedPath) {
-          if (cell['x'] == currentX && cell['y'] == currentY) {
-            return -distance; // Negative = blocked by vine at this distance
+          if (cell['x'] == newPos['x'] && cell['y'] == newPos['y']) {
+            return true; // Blocked by another vine
           }
         }
       }
-      distance++;
-      currentX += deltaX;
-      currentY += deltaY;
     }
 
-    return distance - 1; // Positive = reached edge at this distance
+    return false; // Not blocked
+  }
+
+  /// Calculates how many cells a vine can slide before being blocked.
+  /// Properly simulates snake-like movement and checks for collisions.
+  /// Returns negative distance if blocked by vine, positive if can move far.
+  static int getDistanceToBlocker(
+    LevelData level,
+    String vineId,
+    List<String> activeVineIds,
+  ) {
+    final vine = level.vines.firstWhere((v) => v.id == vineId);
+
+    if (vine.orderedPath.isEmpty) return 0;
+
+    // Start with current positions
+    var currentPositions = List<Map<String, int>>.from(vine.orderedPath);
+    int distance = 0;
+
+    // Check up to a reasonable distance for blocking (no grid bounds in coordinate system)
+    const int maxCheckDistance = 50; // Prevent infinite loops
+
+    for (int step = 0; step < maxCheckDistance; step++) {
+      // Simulate one step of movement
+      final newPositions = _simulateVineMovementFromPositions(
+        currentPositions,
+        vine.headDirection,
+      );
+
+      // Check if any of the new positions would be occupied by other active vines
+      for (final newPos in newPositions) {
+        for (final otherId in activeVineIds) {
+          if (otherId == vineId) continue;
+
+          final otherVine = level.vines.firstWhere((v) => v.id == otherId);
+          for (final cell in otherVine.orderedPath) {
+            if (cell['x'] == newPos['x'] && cell['y'] == newPos['y']) {
+              return -(distance +
+                  1); // Negative = blocked by vine at this distance
+            }
+          }
+        }
+      }
+
+      // Move to next positions
+      currentPositions = newPositions;
+      distance++;
+    }
+
+    return maxCheckDistance; // Positive = can move far without being blocked
+  }
+
+  /// Simulates snake-like movement from given positions.
+  static List<Map<String, int>> _simulateVineMovementFromPositions(
+    List<Map<String, int>> positions,
+    String direction,
+  ) {
+    if (positions.isEmpty) return positions;
+
+    // Calculate new head position
+    final head = positions[0];
+    final newHeadX = head['x'] as int;
+    final newHeadY = head['y'] as int;
+
+    var deltaX = 0;
+    var deltaY = 0;
+
+    switch (direction) {
+      case 'right':
+        deltaX = 1;
+        break;
+      case 'left':
+        deltaX = -1;
+        break;
+      case 'up':
+        deltaY = 1;
+        break;
+      case 'down':
+        deltaY = -1;
+        break;
+    }
+
+    final newHead = {'x': newHeadX + deltaX, 'y': newHeadY + deltaY};
+
+    // Shift all segments: each segment moves to where the previous one was
+    final newPositions = <Map<String, int>>[newHead];
+
+    for (int i = 1; i < positions.length; i++) {
+      newPositions.add(positions[i - 1]);
+    }
+
+    return newPositions;
   }
 }
 

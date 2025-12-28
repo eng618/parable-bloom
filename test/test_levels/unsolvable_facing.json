@@ -1,0 +1,31 @@
+{
+  "id": 2002,
+  "name": "Unsolvable: Deadlock",
+  "difficulty": "Seedling",
+  "vines": [
+    {
+      "id": "vine_a",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 1, "y": 2 },
+        { "x": 2, "y": 2 },
+        { "x": 3, "y": 2 }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "vine_b",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 2, "y": 4 },
+        { "x": 3, "y": 4 },
+        { "x": 4, "y": 4 }
+      ],
+      "color": "emerald"
+    }
+  ],
+  "max_moves": 2,
+  "min_moves": 1,
+  "complexity": "low",
+  "grace": 3
+}

@@ -94,8 +94,10 @@ class GardenGame extends FlameGame {
   void _createLevelComponents() {
     if (_currentLevelData == null) return;
 
-    final cols = _currentLevelData!.gridSize[0];
-    final rows = _currentLevelData!.gridSize[1];
+    // Calculate bounds from vine positions
+    final bounds = _currentLevelData!.getBounds();
+    final cols = bounds.maxX - bounds.minX + 1;
+    final rows = bounds.maxY - bounds.minY + 1;
 
     // Grid background
     _gridBackground = RectangleComponent(
@@ -111,8 +113,6 @@ class GardenGame extends FlameGame {
 
     // Interactive grid
     grid = GridComponent(
-      rows: rows,
-      cols: cols,
       cellSize: cellSize,
       onVineCleared: (vineId) {
         // Update the Riverpod provider when a vine is cleared
@@ -257,7 +257,6 @@ class GardenGame extends FlameGame {
     return LevelData(
       id: 999,
       name: 'Fallback Level',
-      gridSize: [9, 9],
       difficulty: 'Seedling',
       vines: [
         VineData(

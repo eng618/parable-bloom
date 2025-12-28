@@ -82,9 +82,7 @@ void main() {
     test('LevelData structure is valid', () {
       final level = LevelData(
         id: 1,
-        moduleId: 1,
         name: 'Test Level',
-        gridSize: [6, 6],
         difficulty: 'Seedling',
         vines: [],
         maxMoves: 5,
@@ -94,9 +92,7 @@ void main() {
       );
 
       expect(level.id, 1);
-      expect(level.moduleId, 1);
       expect(level.name, 'Test Level');
-      expect(level.gridSize, [6, 6]);
       expect(level.difficulty, 'Seedling');
       expect(level.vines, []);
       expect(level.maxMoves, 5);
@@ -108,9 +104,7 @@ void main() {
     test('Level solving algorithm finds solution for simple level', () {
       final solvableLevel = LevelData(
         id: 3,
-        moduleId: 1,
         name: 'Solvable Level',
-        gridSize: [6, 6],
         difficulty: 'Seedling',
         vines: [
           VineData(
@@ -133,8 +127,6 @@ void main() {
       final solution = LevelSolver.solve(solvableLevel);
       expect(solution, ['clearable']);
     });
-
-
 
     test('Animation state transitions maintain state integrity', () {
       final state = VineState(
