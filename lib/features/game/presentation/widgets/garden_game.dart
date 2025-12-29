@@ -118,6 +118,26 @@ class GardenGame extends FlameGame {
         // Update the Riverpod provider when a vine is cleared
         ref.read(vineStatesProvider.notifier).clearVine(vineId);
       },
+      onVineTap: (vineId) {
+        // Called when user taps a vine (after checking if it's valid)
+        // No additional action needed here, component handles sliding animation
+      },
+      onVineAnimationStateChanged: (vineId, animationState) {
+        // Update animation state in provider
+        ref
+            .read(vineStatesProvider.notifier)
+            .setAnimationState(vineId, animationState);
+      },
+      onVineAttempted: (vineId) {
+        // Mark vine as attempted in provider
+        ref.read(vineStatesProvider.notifier).markAttempted(vineId);
+      },
+      onTapIncrement: (count) {
+        // Increment tap counter
+        for (int i = 0; i < count; i++) {
+          ref.read(levelTotalTapsProvider.notifier).increment();
+        }
+      },
     );
     add(grid);
   }

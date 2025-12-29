@@ -25,11 +25,13 @@ class GridComponent extends PositionComponent
   // Vine states - will be managed by Riverpod
   Map<String, VineState> _vineStates = {};
 
-  // Callback to notify when level is complete
+  // Callbacks for decoupled communication with state management
   final VoidCallback? onLevelComplete;
-
-  // Callback to clear a vine in the Riverpod provider
   final Function(String)? onVineCleared;
+  final Function(String)? onVineTap; // Callback when user taps a vine
+  final Function(String, VineAnimationState)? onVineAnimationStateChanged;
+  final Function(String)? onVineAttempted;
+  final Function(int)? onTapIncrement; // Callback to increment tap counter
 
   // Map to track active vine components
   final Map<String, VineComponent> _vineComponents = {};
@@ -38,6 +40,10 @@ class GridComponent extends PositionComponent
     required this.cellSize,
     this.onLevelComplete,
     this.onVineCleared,
+    this.onVineTap,
+    this.onVineAnimationStateChanged,
+    this.onVineAttempted,
+    this.onTapIncrement,
   }) : super(position: Vector2.zero());
 
   // Set level data and vine states from Riverpod providers
@@ -79,13 +85,11 @@ class GridComponent extends PositionComponent
   VineComponent? getVineComponent(String vineId) => _vineComponents[vineId];
 
   void setVineAnimationState(String vineId, VineAnimationState animationState) {
-    parent.ref
-        .read(vineStatesProvider.notifier)
-        .setAnimationState(vineId, animationState);
+    onVineAnimationStateChanged?.call(vineId, animationState);
   }
 
   void markVineAttempted(String vineId) {
-    parent.ref.read(vineStatesProvider.notifier).markAttempted(vineId);
+    onVineAttempted?.call(vineId);
   }
 
   void notifyVineCleared(String vineId) {
@@ -162,8 +166,8 @@ class GridComponent extends PositionComponent
 
   // Handle cell tap from child CellComponent
   void handleCellTap(int row, int col) {
-    // Increment total taps counter
-    parent.ref.read(levelTotalTapsProvider.notifier).increment();
+    // Notify tap counter via callback
+    onTapIncrement?.call(1);
 
     final clickedVine = _getVineAtCell(row, col);
 
@@ -174,6 +178,9 @@ class GridComponent extends PositionComponent
 
     final comp = _vineComponents[clickedVine.id];
     if (comp == null) return;
+
+    // Notify that a vine was tapped
+    onVineTap?.call(clickedVine.id);
 
     debugPrint('Sliding out vine: ${clickedVine.id}');
     comp.slideOut();
