@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/game_providers.dart';
 import '../../domain/entities/game_progress.dart';
-import '../../domain/repositories/global_level_repository.dart';
 
 // Progress tracking providers
 

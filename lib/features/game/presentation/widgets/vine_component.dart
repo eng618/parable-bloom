@@ -533,16 +533,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // The bloom should appear at the boundary edge, clamped to valid grid coordinates.
     if (_currentVisualPositions.isNotEmpty) {
       final bounds = parent.getCurrentLevelData()!.getBounds();
-      final gridCols = bounds.maxX - bounds.minX + 1;
-      final gridRows = bounds.maxY - bounds.minY + 1;
 
       final headPos = _currentVisualPositions[0]; // Head is at index 0
       final headX = headPos['x'] as int;
       final headY = headPos['y'] as int;
-
-      // Calculate the grid-relative position to determine which edge was crossed
-      final gridX = headX - bounds.minX;
-      final gridY = headY - bounds.minY;
 
       // Determine bloom position at the grid boundary (perpendicular axis clamped to grid)
       int bloomX = headX;
