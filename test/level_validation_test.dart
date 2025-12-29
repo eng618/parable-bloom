@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parable_bloom/providers/game_providers.dart';
+import 'package:parable_bloom/features/game/domain/services/level_solver_service.dart';
 
 void main() {
   test('Clean: validate levels and helper logic', () async {
@@ -47,8 +48,9 @@ void main() {
       expect(_detectCircularBlocking(level), isFalse);
 
       // solvability
+      final solver = LevelSolverService();
       expect(
-        LevelSolver.solve(level),
+        solver.solve(level),
         isNotNull,
         reason: 'Level ${levelFile.path} is unsolvable',
       );

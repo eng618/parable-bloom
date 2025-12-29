@@ -450,11 +450,12 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   }
 
   int _calculateMovementDistance() {
-    // Get distance from LevelSolver - this tells us how far we can move before being blocked
+    // Get distance from solver service - this tells us how far we can move before being blocked
     // Use the active IDs that exclude animatingClear vines (they don't block others)
     final activeIds = parent.getActiveVineIds();
+    final solver = parent.getLevelSolverService();
 
-    return LevelSolver.getDistanceToBlocker(
+    return solver.getDistanceToBlocker(
       parent.getCurrentLevelData()!,
       vineData.id,
       activeIds,

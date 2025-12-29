@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parable_bloom/providers/game_providers.dart';
+import 'package:parable_bloom/features/game/domain/services/level_solver_service.dart';
 
 void main() {
   group('Vine Animation System Tests', () {
@@ -124,7 +125,8 @@ void main() {
         grace: 3,
       );
 
-      final solution = LevelSolver.solve(solvableLevel);
+      final solver = LevelSolverService();
+      final solution = solver.solve(solvableLevel);
       expect(solution, ['clearable']);
     });
 

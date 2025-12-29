@@ -3,6 +3,7 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../providers/game_providers.dart';
+import '../../../game/domain/services/level_solver_service.dart';
 import 'garden_game.dart';
 import 'vine_component.dart';
 
@@ -103,6 +104,10 @@ class GridComponent extends PositionComponent
   }
 
   LevelData? getCurrentLevelData() => _currentLevel;
+
+  LevelSolverService getLevelSolverService() {
+    return parent.ref.read(levelSolverServiceProvider);
+  }
 
   @override
   Future<void> onLoad() async {
