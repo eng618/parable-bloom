@@ -528,41 +528,64 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _isShowingBloomEffect = true;
     _bloomEffectTimer = 0.0;
 
-    // Calculate bloom position at the grid edge where the vine exited
-    // Find the exit position based on vine's head direction and grid boundaries
+    // Calculate bloom position at the grid edge where the vine exited.
+    // The bloom should appear at the boundary edge, clamped to valid grid coordinates.
     if (_currentVisualPositions.isNotEmpty) {
       final bounds = parent.getCurrentLevelData()!.getBounds();
+      final gridCols = bounds.maxX - bounds.minX + 1;
+      final gridRows = bounds.maxY - bounds.minY + 1;
+
       final headPos = _currentVisualPositions[0]; // Head is at index 0
       final headX = headPos['x'] as int;
       final headY = headPos['y'] as int;
 
-      // Calculate exit position based on movement direction
-      int exitX = headX;
-      int exitY = headY;
+      // Calculate the grid-relative position to determine which edge was crossed
+      final gridX = headX - bounds.minX;
+      final gridY = headY - bounds.minY;
+
+      // Determine bloom position at the grid boundary (perpendicular axis clamped to grid)
+      int bloomX = headX;
+      int bloomY = headY;
 
       switch (vineData.headDirection) {
         case 'right':
-          exitX = bounds.maxX; // Right edge
+          // Head exited right edge - bloom at right boundary
+          bloomX = bounds.maxX;
+          // Clamp Y to valid grid range
+          bloomY = headY.clamp(bounds.minY, bounds.maxY);
           break;
         case 'left':
-          exitX = bounds.minX; // Left edge
+          // Head exited left edge - bloom at left boundary
+          bloomX = bounds.minX;
+          // Clamp Y to valid grid range
+          bloomY = headY.clamp(bounds.minY, bounds.maxY);
           break;
         case 'up':
-          exitY = bounds.maxY; // Top edge (y increases upward)
+          // Head exited top edge - bloom at top boundary
+          bloomY = bounds.maxY;
+          // Clamp X to valid grid range
+          bloomX = headX.clamp(bounds.minX, bounds.maxX);
           break;
         case 'down':
-          exitY = bounds.minY; // Bottom edge
+          // Head exited bottom edge - bloom at bottom boundary
+          bloomY = bounds.minY;
+          // Clamp X to valid grid range
+          bloomX = headX.clamp(bounds.minX, bounds.maxX);
           break;
       }
 
       // Transform to visual coordinates (y=0 at bottom)
       final visualHeight = bounds.maxY - bounds.minY + 1;
-      final visualY = visualHeight - 1 - (exitY - bounds.minY);
+      final visualY = visualHeight - 1 - (bloomY - bounds.minY);
 
       // Position the bloom effect at the grid edge exit point
       _bloomEffectPosition = Offset(
-        (exitX - bounds.minX) * cellSize + cellSize / 2,
+        (bloomX - bounds.minX) * cellSize + cellSize / 2,
         visualY * cellSize + cellSize / 2,
+      );
+
+      debugPrint(
+        'Bloom effect started at grid edge: head($headX,$headY) -> bloom($bloomX,$bloomY)',
       );
     }
   }

@@ -863,6 +863,100 @@ lib/
 
 ---
 
+## 🎬 Vine Click Animation & Grace System
+
+### Animation Flow Overview
+
+The vine click animation follows a **two-branch decision tree** based on whether the vine's path is clear to the edge of the grid:
+
+#### **When Path is Clear (Vine Can Exit)**
+
+1. **Check blocking**: Use `LevelSolver.getDistanceToBlocker()` to verify no vines block the path to grid edge
+2. **Immediately clear** (technically): Remove vine from blocking calculations via `VineAnimationState.animatingClear`
+   - Vine is no longer eligible to block other vines
+   - Visual animation continues (vine still visible on screen)
+3. **Animate off-screen**: Head-body snake animation moves vine toward grid edge, then continues beyond bounds
+4. **Bloom effect**: When vine head exits visible grid (`_hasExitedVisibleGrid()`), trigger bloom animation at exit position
+5. **Complete**: When last vine segment fully exits grid (`_isFullyOffScreen()`) and bloom completes, permanently remove vine
+
+**Code Flow**:
+
+- `handleCellTap()` → `comp.slideOut()` → Check blocking via `_calculateMovementDistance()` → Animate with `_willClearAfterAnimation=true` → `_startBloomEffect()` → `_finishAnimation()`
+
+#### **When Path is Blocked (Vine Hits Obstacle)**
+
+1. **Check blocking**: `LevelSolver.getDistanceToBlocker()` returns negative distance to obstacle
+2. **Animate forward**: Snake animation moves head-first toward blocking vine until collision
+3. **Turn red/blocked**: Vine color changes to indicate failed attempt (uses `AppTheme.vineAttemptedColor`)
+4. **Mark attempted**: Call `markVineAttempted(vineId)` which:
+   - Sets `hasBeenAttempted=true` flag
+   - Increments `levelWrongTapsProvider` counter
+   - Calls `decrementGrace()` to lose 1 heart/grace
+   - Logs wrong tap analytics
+5. **Reverse animation**: Play backward through position history to return to original state
+6. **Complete**: Return vine to normal animation state
+
+**Code Flow**:
+
+- `handleCellTap()` → `comp.slideOut()` → Check blocking via `_calculateMovementDistance()` (returns negative) → Animate with `_isBlockedAnimation=true` → `markVineAttempted()` (decrments grace) → Reverse through `_positionHistory`
+
+### Grace System (Hearts/Lives)
+
+**Definition**: Grace is a per-level resource representing "attempts remaining". Each failed vine tap costs 1 Grace.
+
+**Implementation**:
+
+- **Provider**: `graceProvider` (Riverpod `NotifierProvider<GraceNotifier, int>`)
+- **Initial value**: 3 per level (can be overridden in level JSON via `"grace": 4`)
+- **Decrement trigger**: `GraceNotifier.decrementGrace()` called from `VineStatesNotifier.markAttempted()`
+- **Visual feedback**: Grace counter displayed in UI (hearts/gems icon + number)
+
+**Timing**:
+
+- Grace is decremented **immediately when vine hits obstacle** (during `markVineAttempted()`)
+- Happens **before** reverse animation plays (visual feedback is synchronous with game mechanic)
+- If grace reaches 0, game over screen appears
+
+**Code Locations**:
+
+- `lib/providers/game_providers.dart`: `GraceNotifier` class (lines ~559-634)
+- `lib/features/game/presentation/widgets/garden_game.dart`: `resetGrace()` called on level load
+- `lib/features/game/presentation/widgets/vine_component.dart`: Animation logic (lines ~240-450)
+- `lib/features/game/presentation/widgets/grid_component.dart`: Tap handler & `markVineAttempted()` call
+
+### Vine Animation States
+
+Four distinct animation states prevent incorrect blocking during animation:
+
+| State | Meaning | Blocks Other Vines? | Removable? | Rendering |
+|-------|---------|-------------------|-----------|-----------|
+| `normal` | Default, stationary | Yes (if clear path) | No | Normal color + direction indicator |
+| `animatingClear` | Sliding off-screen | **No** | Yes (immediately) | Current color, animating |
+| `animatingBlocked` | Hitting obstacle, reversing | Yes | No | Red/attempted color, animating |
+| `cleared` | Fully off-screen, complete | No | Yes (permanent) | Not rendered |
+
+**Key Insight**: `animatingClear` vines don't block others, so you can tap multiple vines in sequence without stuttering.
+
+### Color Scheme for Vine States
+
+- **Normal**: `AppTheme.vineGreen` (default vine color)
+- **Attempted**: `AppTheme.vineAttempted` (red tint, applied during blocked animation)
+- **Head Direction**: Arrow indicator (right, left, up, down) rendered on head segment
+
+### Bloom Effect Positioning
+
+The bloom effect (expanding circles, glow, sparkles) appears at the **grid edge where the vine exits**, not at the vine head's current position:
+
+- **Exit calculation**: When vine head crosses grid boundary, bloom is positioned at the nearest grid boundary cell
+  - Head direction determines which edge: right → maxX, left → minX, up → maxY, down → minY
+  - Perpendicular axis is clamped to valid grid range (e.g., if moving right and head Y goes out of bounds, Y is clamped to minY or maxY)
+- **Timing**: Starts when vine head leaves visible grid (`_hasExitedVisibleGrid()`)
+- **Duration**: 1 second particle animation
+- **Removal**: Vine removed only when **both** bloom completes AND all segments off-screen (`_isFullyOffScreen()`)
+- **Debug logs**: `_startBloomEffect()` prints bloom position for verification
+
+---
+
 ## 🐛 Troubleshooting Common Issues
 
 ### Development Issues
