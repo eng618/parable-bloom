@@ -1,10 +1,7 @@
 {
   "id": 7,
   "name": "Gentle Curves",
-  "grid_size": [
-    9,
-    16
-  ],
+  "grid_size": [9, 16],
   "difficulty": "Seedling",
   "vines": [
     {
@@ -12,20 +9,20 @@
       "head_direction": "up",
       "ordered_path": [
         {
-          "x": 4,
-          "y": 2
-        },
-        {
-          "x": 4,
-          "y": 3
-        },
-        {
-          "x": 3,
-          "y": 3
-        },
-        {
           "x": 3,
           "y": 4
+        },
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 4,
+          "y": 3
+        },
+        {
+          "x": 4,
+          "y": 2
         }
       ],
       "color": "moss_green"

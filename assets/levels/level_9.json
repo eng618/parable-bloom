@@ -1,10 +1,7 @@
 {
   "id": 9,
   "name": "Careful Order",
-  "grid_size": [
-    9,
-    16
-  ],
+  "grid_size": [9, 16],
   "difficulty": "Seedling",
   "vines": [
     {
@@ -12,7 +9,7 @@
       "head_direction": "right",
       "ordered_path": [
         {
-          "x": 1,
+          "x": 3,
           "y": 4
         },
         {
@@ -20,7 +17,7 @@
           "y": 4
         },
         {
-          "x": 3,
+          "x": 1,
           "y": 4
         }
       ],
@@ -32,7 +29,7 @@
       "ordered_path": [
         {
           "x": 6,
-          "y": 4
+          "y": 2
         },
         {
           "x": 6,
@@ -40,7 +37,7 @@
         },
         {
           "x": 6,
-          "y": 2
+          "y": 4
         }
       ],
       "color": "emerald"
@@ -50,7 +47,7 @@
       "head_direction": "left",
       "ordered_path": [
         {
-          "x": 6,
+          "x": 4,
           "y": 0
         },
         {
@@ -58,7 +55,7 @@
           "y": 0
         },
         {
-          "x": 4,
+          "x": 6,
           "y": 0
         }
       ],

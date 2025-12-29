@@ -24,6 +24,13 @@ We use **Riverpod** for reactive state management. This decouples the game logic
   
   Note: Levels include both coordinate-based `ordered_path` (x,y) and an optional/expected `grid_size`. The canonical level format for the app is coordinate paths plus `grid_size` to help the UI compute bounds; clients should validate that `grid_size` is consistent with vine coordinates.
 
+  Recent changes and conventions:
+  - `grid_size` is retained for UI/backwards-compatibility; LevelData still computes bounds from coordinates when needed.
+  - Visual masking: `LevelData` now supports an optional `mask` (modes: `hide`, `show`, `show-all`) that lists grid points to hide or show for purely visual shapes (e.g., smiley faces). Rendering should consult `mask` but the solver and collision logic continue to operate on the full rectangular grid.
+  - Solver consolidation: the canonical coordinate-based `LevelSolver` implementation lives in `lib/providers/game_providers.dart`. A legacy row/col solver was removed/replaced with a deprecation stub to avoid duplicated logic.
+
+  Tests: new unit tests validate mask parsing and enforce that vine coordinates use `(0,0)` as the lower-left origin and fit within provided or computed `grid_size`.
+
 - **`gameInstanceProvider`**: Bridges Flutter UI with Flame game engine instance.
 - **Transient State Providers**: Level completion, game over, and analytics tracking providers.
 

@@ -55,6 +55,25 @@ Each module must have a `module.json` file:
 }
 ```
 
+### Visual Masking (for shaped grids)
+
+Designers may want certain grid points to be visually hidden to create shapes (smileys, silhouettes) while keeping the underlying grid rectangular for movement and solver logic. To support this, levels may include an optional `mask` object with a `mode` and `points`:
+
+- `mode`: `hide` (list points to hide), `show` (list points to render), or `show-all` (no mask). Default: `show-all`.
+- `points`: array of either two-element arrays `[x,y]` or objects `{x: <int>, y: <int>}`.
+
+Guidelines:
+
+- Use `hide` when most points are visible and only a few are disguised (e.g., small eyes/mouth for a smiley).
+- Use `show` when most points are hidden (sparse islands).
+- Keep mask visual-only unless intentionally changing gameplay semantics; modifying solver/collision to exclude masked points requires explicit implementation work.
+
+Example:
+
+```json
+"mask": { "mode": "hide", "points": [[2,2],[6,2],{"x":3,"y":4}] }
+```
+
 ## 🎯 Level Structure
 
 ### Level JSON Schema

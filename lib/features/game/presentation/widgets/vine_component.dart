@@ -422,11 +422,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         _currentAnimationStep++;
 
         // Check vine position relative to visible grid bounds
-        final isHeadAtBoundary = _isVineHeadAtGridBoundary();
+        // Use `_hasExitedVisibleGrid()` to detect when the vine head has left
+        // the visible grid area so we can start the bloom immediately.
+        final isHeadExitedVisibleGrid = _hasExitedVisibleGrid();
         final isFullyOffScreen = _isFullyOffScreen();
 
-        // Start bloom effect as soon as vine head reaches grid boundary (starts leaving)
-        if (isHeadAtBoundary && !_isShowingBloomEffect) {
+        // Start bloom effect as soon as vine head leaves the visible grid
+        if (isHeadExitedVisibleGrid && !_isShowingBloomEffect) {
           _startBloomEffect();
         }
 
@@ -439,9 +441,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
             // Bloom effect finished and vine is fully off-screen - remove vine
             _finishAnimation();
           }
-        } else if (_currentAnimationStep >= _totalAnimationSteps &&
-            !isHeadAtBoundary) {
-          // Fallback: if animation times out but vine head hasn't reached boundary, still show effect
+        } else if (_currentAnimationStep >= _totalAnimationSteps) {
+          // Fallback: if animation times out, still show effect
           _startBloomEffect();
         }
       }
@@ -460,44 +461,26 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     );
   }
 
-  // Check if the vine head is at the grid boundary (starting to leave - triggers sparkle)
-  bool _isVineHeadAtGridBoundary() {
-    final bounds = parent.getCurrentLevelData()!.getBounds();
-
-    // Only check the head position (first segment)
-    final headPos = _currentVisualPositions[0];
-    final x = headPos['x'] as int;
-    final y = headPos['y'] as int;
-
-    // Check if head is at any grid boundary (edge of visible grid)
-    return x == bounds.minX ||
-        x == bounds.maxX ||
-        y == bounds.minY ||
-        y == bounds.maxY;
-  }
-
   // Check if all vine segments have exited the visible grid area (no margin)
   bool _hasExitedVisibleGrid() {
     final bounds = parent.getCurrentLevelData()!.getBounds();
     final gridCols = bounds.maxX - bounds.minX + 1;
     final gridRows = bounds.maxY - bounds.minY + 1;
 
-    // Check if any segment is still within the visible grid bounds
-    for (final pos in _currentVisualPositions) {
-      final x = pos['x'] as int;
-      final y = pos['y'] as int;
+    // If no visual positions, consider it exited
+    if (_currentVisualPositions.isEmpty) return true;
 
-      // Convert to grid-relative coordinates
-      final gridX = x - bounds.minX;
-      final gridY = y - bounds.minY;
+    // Only check the head position: we want the bloom to start as soon as
+    // the head has left the visible grid area.
+    final headPos = _currentVisualPositions[0];
+    final x = headPos['x'] as int;
+    final y = headPos['y'] as int;
 
-      // If any segment is still within visible grid (0 <= x < cols, 0 <= y < rows)
-      if (gridX >= 0 && gridX < gridCols && gridY >= 0 && gridY < gridRows) {
-        return false; // Still visible on grid
-      }
-    }
+    final gridX = x - bounds.minX;
+    final gridY = y - bounds.minY;
 
-    return true; // All segments have exited visible grid
+    // Head is outside visible grid when it's <0 or >= cols/rows
+    return gridX < 0 || gridX >= gridCols || gridY < 0 || gridY >= gridRows;
   }
 
   // Check if all vine segments are fully off-screen (with margin)

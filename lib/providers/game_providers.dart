@@ -42,6 +42,32 @@ class ModuleData {
   }
 }
 
+class MaskData {
+  final String mode; // 'hide' or 'show' or 'show-all'
+  final List<Map<String, int>> points;
+
+  MaskData({required this.mode, required this.points});
+
+  factory MaskData.fromJson(dynamic json) {
+    if (json == null) return MaskData(mode: 'show-all', points: []);
+
+    final mode = (json['mode'] as String?) ?? 'show-all';
+    final pts = <Map<String, int>>[];
+
+    if (json['points'] != null) {
+      for (final p in json['points']) {
+        if (p is List && p.length >= 2) {
+          pts.add({'x': p[0] as int, 'y': p[1] as int});
+        } else if (p is Map) {
+          pts.add({'x': p['x'] as int, 'y': p['y'] as int});
+        }
+      }
+    }
+
+    return MaskData(mode: mode, points: pts);
+  }
+}
+
 // Provider for loading all module data
 final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
   try {
@@ -105,6 +131,7 @@ class LevelData {
   final int minMoves;
   final String complexity;
   final int grace;
+  final MaskData? mask;
 
   LevelData({
     required this.id,
@@ -115,6 +142,7 @@ class LevelData {
     required this.minMoves,
     required this.complexity,
     required this.grace,
+    this.mask,
   });
 
   factory LevelData.fromJson(Map<String, dynamic> json) {
@@ -129,6 +157,7 @@ class LevelData {
       minMoves: json['min_moves'],
       complexity: json['complexity'],
       grace: json['grace'],
+      mask: json.containsKey('mask') ? MaskData.fromJson(json['mask']) : null,
     );
   }
 

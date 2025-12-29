@@ -222,6 +222,39 @@ This document defines the JSON schemas for Parable Bloom's data structures, upda
     }
   }
 }
+
+### 3. **Visual Masking (hide/show)**
+
+To support shaped visual effects (for example: smiley faces, non-rectangular visible grids) levels may optionally include a `mask` object. The `mask` only affects rendering of grid points — it does not change movement, collision, or solver logic which operate on the full rectangular grid defined by `grid_size` or computed bounds.
+
+Example `mask` formats (flexible for authoring):
+
+1) Simple hide points (recommended for sparse hidden cells):
+
+```json
+"mask": {
+  "mode": "hide",
+  "points": [ [2,2], [6,2], {"x":3, "y":4} ]
+}
+```
+
+1) Show-only mode (useful when most points are hidden):
+
+```json
+"mask": {
+  "mode": "show",
+  "points": [ [4,4], [5,4], [6,4] ]
+}
+```
+
+Rules & recommendations:
+
+- `mode` may be `hide`, `show`, or `show-all` (default). `hide` lists points to hide; `show` lists points to render; `show-all` means no mask.
+- `points` supports either array pairs `[x,y]` or objects `{x: <int>, y: <int>}` for author convenience.
+- Keep masks visual-only unless you intentionally want hidden cells to be non-playable; changing solver/collision semantics requires explicit schema and code updates.
+
+This approach keeps level data compact for the common case (most points visible) while allowing expressive visual shapes without changing the core rectangular grid logic.
+
 ```
 
 ---
@@ -251,6 +284,7 @@ This document defines the JSON schemas for Parable Bloom's data structures, upda
 ## 📁 File Organization
 
 ```
+
 assets/levels/
 ├── modules.json          # Module registry
 ├── level_1.json         # Tutorial level 1
@@ -261,6 +295,7 @@ assets/levels/
 ├── level_6.json         # Mustard Seed level 1
 ├── level_7.json         # Mustard Seed level 2
 └── ...                  # Continues sequentially
+
 ```
 
 ---
