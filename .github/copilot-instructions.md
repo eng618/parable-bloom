@@ -1,4 +1,4 @@
-## Copilot / AI Agent Instructions — ParableWeave (parable-bloom)
+## Copilot / AI Agent Instructions — Parable Bloom (parable-bloom)
 
 Be concise. Below are targeted, repository-specific instructions to get an AI coding agent productive quickly.
 
