@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
-import 'core/di/injection_container.dart' as di;
 import 'firebase_options.dart';
 import 'providers/game_providers.dart';
 import 'services/analytics_service.dart';
@@ -22,9 +21,6 @@ void main() async {
   // Initialize Hive
   await Hive.initFlutter();
   final hiveBox = await Hive.openBox('garden_save');
-
-  // Setup dependency injection
-  await di.setupDependencies(hiveBox);
 
   runApp(
     ProviderScope(
