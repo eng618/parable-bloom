@@ -10,10 +10,14 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../features/game/data/repositories/firebase_game_progress_repository.dart';
 import '../features/game/data/repositories/hive_game_progress_repository.dart';
+import '../features/game/data/repositories/hive_global_level_repository.dart';
 import '../features/game/domain/entities/game_progress.dart';
 import '../features/game/domain/repositories/game_progress_repository.dart';
+import '../features/game/domain/repositories/global_level_repository.dart';
 import '../features/game/domain/services/level_solver_service.dart';
 import '../features/game/presentation/widgets/garden_game.dart';
+import '../features/settings/data/repositories/hive_settings_repository.dart';
+import '../features/settings/domain/repositories/settings_repository.dart';
 import '../services/analytics_service.dart';
 
 // Module data model
@@ -277,6 +281,18 @@ final gameProgressRepositoryProvider = Provider<GameProgressRepository>((ref) {
   return ref.watch(localGameProgressRepositoryProvider);
 });
 
+// Settings repository provider
+final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
+  final box = ref.watch(hiveBoxProvider);
+  return HiveSettingsRepository(box);
+});
+
+// Global level repository provider
+final globalLevelRepositoryProvider = Provider<GlobalLevelRepository>((ref) {
+  final box = ref.watch(hiveBoxProvider);
+  return HiveGlobalLevelRepository(box);
+});
+
 final gameProgressProvider =
     NotifierProvider<GameProgressNotifier, GameProgress>(
       GameProgressNotifier.new,
@@ -468,9 +484,13 @@ final globalProgressProvider =
 class GlobalProgressNotifier extends Notifier<GlobalProgress> {
   @override
   GlobalProgress build() {
-    // Load from Hive
+    // Load from repository synchronously at build time
     final box = ref.watch(hiveBoxProvider);
-    final currentGlobalLevel = box.get('currentGlobalLevel', defaultValue: 1);
+
+    // Use Hive directly for synchronous read at build time
+    // The repository provides abstraction for mutations (completeLevel, resetProgress)
+    final currentGlobalLevel =
+        box.get('currentGlobalLevel', defaultValue: 1) as int;
     final completedLevels = Set<int>.from(
       box.get('completedLevels', defaultValue: <int>[]),
     );
@@ -486,6 +506,8 @@ class GlobalProgressNotifier extends Notifier<GlobalProgress> {
   }
 
   Future<void> completeLevel(int globalLevelNumber) async {
+    final repository = ref.read(globalLevelRepositoryProvider);
+
     final newCompletedLevels = Set<int>.from(state.completedLevels)
       ..add(globalLevelNumber);
 
@@ -493,26 +515,26 @@ class GlobalProgressNotifier extends Notifier<GlobalProgress> {
       currentGlobalLevel: globalLevelNumber + 1,
       completedLevels: newCompletedLevels,
     );
-    await _saveProgress(newState);
+
+    await repository.setCurrentGlobalLevel(newState.currentGlobalLevel);
     state = newState;
+
     debugPrint(
       'GlobalProgressNotifier: Completed level $globalLevelNumber, advanced to ${newState.currentGlobalLevel}',
     );
   }
 
-  Future<void> _saveProgress(GlobalProgress progress) async {
-    final box = ref.read(hiveBoxProvider);
-    await box.put('currentGlobalLevel', progress.currentGlobalLevel);
-    await box.put('completedLevels', progress.completedLevels.toList());
-  }
-
   Future<void> resetProgress() async {
+    final repository = ref.read(globalLevelRepositoryProvider);
+
     const defaultProgress = GlobalProgress(
       currentGlobalLevel: 1,
       completedLevels: {},
     );
-    await _saveProgress(defaultProgress);
+
+    await repository.setCurrentGlobalLevel(defaultProgress.currentGlobalLevel);
     state = defaultProgress;
+
     debugPrint('GlobalProgressNotifier: Progress reset to $defaultProgress');
   }
 }
@@ -615,8 +637,8 @@ class ThemeModeNotifier extends Notifier<AppThemeMode> {
 
   Future<void> setThemeMode(AppThemeMode mode) async {
     state = mode;
-    final box = ref.read(hiveBoxProvider);
-    await box.put('themeMode', mode.name);
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setThemeMode(mode.name);
   }
 }
 
