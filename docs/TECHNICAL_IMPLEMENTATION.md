@@ -963,7 +963,7 @@ The following timing parameters control animation speed and can be tuned for per
 |-----------|----------|---------------|---------|
 | `_stepDuration` | `vine_component.dart:26` | `0.03s` | Time per step for vine movement animation |
 | `_bloomEffectDuration` | `vine_component.dart:35` | `0.5s` | Duration of bloom particle effect after clearing |
-| `_stepDuration` (bump) | `vine_component.dart:524` | `0.05s` | Time per step for bump animation (blocked vines) |
+| `_stepDuration` (bump) | `vine_component.dart:524` | `0.05s` | Time per step for bump animation (blocked vines, set locally in method) |
 | Level complete overlay | `game_screen.dart:319` | `2s` | Display time for congratulations message |
 
 **Performance notes**:
@@ -972,7 +972,9 @@ The following timing parameters control animation speed and can be tuned for per
 - The level complete overlay delay should be long enough to appreciate the victory but short enough to maintain game flow
 - Current values are optimized for 60 FPS gameplay with smooth, responsive animations
 
-**Total end-of-level time**: ~2-3 seconds (varies by vine length) + 2s overlay = 4-5 seconds total
+**Total end-of-level time**: ~1-2 seconds (vine animation, varies by length) + 0.5s (bloom) + 2s (overlay) = ~3.5-4.5 seconds total
+**Previous total time**: ~1-2 seconds (vine animation) + 1.0s (bloom) + 3s (overlay) = ~5-6 seconds total
+**Time saved**: ~1.5-2 seconds per level completion
 
 ---
 
