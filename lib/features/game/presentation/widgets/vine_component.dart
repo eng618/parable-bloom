@@ -32,7 +32,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Bloom effect after clearing
   bool _isShowingBloomEffect = false;
   double _bloomEffectTimer = 0.0;
-  final double _bloomEffectDuration = 1.0; // seconds
+  final double _bloomEffectDuration = 0.5; // seconds - reduced for faster level completion
   Offset? _bloomEffectPosition; // Where to show the bloom effect
 
   // Track if we've already notified parent of clearing

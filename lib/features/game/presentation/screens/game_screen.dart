@@ -315,8 +315,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Reset grace for the next level
     ref.read(gameInstanceProvider.notifier).resetGrace();
 
-    // Wait for 3 seconds then navigate back to home
-    await Future.delayed(const Duration(seconds: 3));
+    // Wait for 2 seconds then navigate back to home - reduced for faster level completion
+    await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
       setState(() {
