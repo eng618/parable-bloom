@@ -4,18 +4,33 @@ on:
   workflow_run:
     workflows: ['CI']
     types: [completed]
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Checkout (workflow_run)
+        if: github.event_name == 'workflow_run'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Checkout (pull_request)
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -39,7 +54,11 @@ jobs:
 
       - name: Deploy to Hosting
         run: firebase deploy --only hosting --token ${{ secrets.FIREBASE_CI_TOKEN }}
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main'
+
+      - name: Deploy Preview (develop branch)
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop'
+        run: firebase hosting:channel:deploy preview --token ${{ secrets.FIREBASE_CI_TOKEN }}
 
       - name: Deploy Preview (PR only)
         if: github.event_name == 'pull_request'
