@@ -1,0 +1,71 @@
+{
+  "id": 3,
+  "name": "Vertical Flow",
+  "difficulty": "Tutorial",
+  "vines": [
+    {
+      "id": "vine_a",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 0, "y": 4 },
+        { "x": 0, "y": 3 },
+        { "x": 0, "y": 2 },
+        { "x": 0, "y": 1 },
+        { "x": 0, "y": 0 }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "vine_b",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 1, "y": 4 },
+        { "x": 1, "y": 3 },
+        { "x": 1, "y": 2 },
+        { "x": 1, "y": 1 },
+        { "x": 1, "y": 0 }
+      ],
+      "color": "sage"
+    },
+    {
+      "id": "vine_c",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 2, "y": 4 },
+        { "x": 2, "y": 3 },
+        { "x": 2, "y": 2 },
+        { "x": 2, "y": 1 },
+        { "x": 2, "y": 0 }
+      ],
+      "color": "emerald"
+    },
+    {
+      "id": "vine_d",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 3, "y": 4 },
+        { "x": 3, "y": 3 },
+        { "x": 3, "y": 2 },
+        { "x": 3, "y": 1 },
+        { "x": 3, "y": 0 }
+      ],
+      "color": "olive"
+    },
+    {
+      "id": "vine_e",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 4, "y": 4 },
+        { "x": 4, "y": 3 },
+        { "x": 4, "y": 2 },
+        { "x": 4, "y": 1 },
+        { "x": 4, "y": 0 }
+      ],
+      "color": "moss_green"
+    }
+  ],
+  "max_moves": 8,
+  "min_moves": 5,
+  "complexity": "tutorial",
+  "grace": 3
+}

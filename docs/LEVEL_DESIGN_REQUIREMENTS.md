@@ -137,7 +137,10 @@ Each level file must include:
 
 - All vine paths must be contiguous (no gaps between segments)
 - Only 90-degree turns allowed (up, down, left, right movement only)
-- Head direction must match the first movement direction
+- `ordered_path` is head (index 0) to tail (last)
+- `head_direction` indicates where the head will move next
+- Therefore, the first body segment (index 1) must be exactly one cell **opposite** `head_direction`
+  - Equivalent check: `(head.x - neck.x, head.y - neck.y)` must equal the unit vector for `head_direction`
 - Minimum vine length: 2 segments (head + 1 body)
 
 #### 3. Blocking Logic Validation

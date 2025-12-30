@@ -307,7 +307,8 @@ assets/levels/
 - Vine paths must be contiguous (adjacent coordinates)
 - Only orthogonal movement (up, down, left, right)
 - No overlapping vine segments
-- Head direction matches first path segment
+- `ordered_path[0]` is the head and `ordered_path[1]` is the first body segment (neck)
+- `head_direction` must match the direction from neck 0 head (so the neck is one cell opposite the head direction)
 
 ### Dynamic Bounds
 

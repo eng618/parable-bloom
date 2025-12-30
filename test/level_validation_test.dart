@@ -33,6 +33,68 @@ void main() {
 
       for (final vine in level.vines) {
         expect(vine.orderedPath.length, greaterThanOrEqualTo(2));
+
+        // Head/neck orientation: neck must be exactly one cell opposite the head_direction.
+        // Equivalently, the vector from neck -> head must match head_direction.
+        final head = vine.orderedPath[0];
+        final neck = vine.orderedPath[1];
+        final dx = (head['x'] as int) - (neck['x'] as int);
+        final dy = (head['y'] as int) - (neck['y'] as int);
+        switch (vine.headDirection) {
+          case 'right':
+            expect(
+              dx,
+              equals(1),
+              reason: 'Head/neck mismatch in ${levelFile.path} ${vine.id}',
+            );
+            expect(
+              dy,
+              equals(0),
+              reason: 'Head/neck mismatch in ${levelFile.path} ${vine.id}',
+            );
+            break;
+          case 'left':
+            expect(
+              dx,
+              equals(-1),
+              reason: 'Head/neck mismatch in ${levelFile.path} ${vine.id}',
+            );
+            expect(
+              dy,
+              equals(0),
+              reason: 'Head/neck mismatch in ${levelFile.path} ${vine.id}',
+            );
+            break;
+          case 'up':
+            expect(
+              dx,
+              equals(0),
+              reason: 'Head/neck mismatch in ${levelFile.path} ${vine.id}',
+            );
+            expect(
+              dy,
+              equals(1),
+              reason: 'Head/neck mismatch in ${levelFile.path} ${vine.id}',
+            );
+            break;
+          case 'down':
+            expect(
+              dx,
+              equals(0),
+              reason: 'Head/neck mismatch in ${levelFile.path} ${vine.id}',
+            );
+            expect(
+              dy,
+              equals(-1),
+              reason: 'Head/neck mismatch in ${levelFile.path} ${vine.id}',
+            );
+            break;
+          default:
+            fail(
+              'Unknown head_direction ${vine.headDirection} in ${levelFile.path} ${vine.id}',
+            );
+        }
+
         for (int i = 1; i < vine.orderedPath.length; i++) {
           final dx =
               (vine.orderedPath[i]['x'] as int) -

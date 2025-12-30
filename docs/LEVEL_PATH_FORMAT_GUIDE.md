@@ -30,8 +30,8 @@ For a vine moving **DOWN** (head_direction: "down"):
 - Body trails UPWARD
 
 ```
-Path: [head at 0,5] → [body at 0,4] → [body at 0,3] → [body at 0,2]
-Animation: Head slides down, body follows up
+Path: [head at 0,0] → [body at 0,1] → [body at 0,2] → [body at 0,3]
+Animation: Head slides down (toward y-1), body trails upward (toward y+1)
 ```
 
 ## Validation Rules
@@ -42,10 +42,12 @@ When validator checks a vine:
 2. Head direction must match first movement
    - If head_direction is "right", then: head.x - body[0].x should equal 1
    - If head_direction is "left", then: head.x - body[0].x should equal -1
-   - If head_direction is "down", then: head.y - body[0].y should equal 1
-   - If head_direction is "up", then: head.y - body[0].y should equal -1
-3. All segments must be contiguous (no gaps)
-4. Only 90-degree turns allowed
+
+- If head_direction is "up", then: head.y - body[0].y should equal 1
+- If head_direction is "down", then: head.y - body[0].y should equal -1
+
+1. All segments must be contiguous (no gaps)
+2. Only 90-degree turns allowed
 
 ## Quick Template
 
