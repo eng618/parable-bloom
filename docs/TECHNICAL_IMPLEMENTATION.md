@@ -961,7 +961,7 @@ The following timing parameters control animation speed and can be tuned for per
 
 | Parameter | Location | Default Value | Purpose |
 |-----------|----------|---------------|---------|
-| `_stepDuration` | `vine_component.dart:26` | `0.03s` | Time per step for vine movement animation |
+| `_stepDuration` | `vine_component.dart:25` | `0.03s` | Time per step for vine movement animation |
 | `_bloomEffectDuration` | `vine_component.dart:35` | `0.5s` | Duration of bloom particle effect after clearing |
 | `_stepDuration` (bump) | `vine_component.dart:524` | `0.05s` | Time per step for bump animation (blocked vines, set locally in method) |
 | Level complete overlay | `game_screen.dart:319` | `2s` | Display time for congratulations message |
