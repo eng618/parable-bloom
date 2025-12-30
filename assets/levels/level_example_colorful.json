@@ -1,0 +1,359 @@
+{
+  "id": 5,
+  "module_id": 1,
+  "global_level_number": 5,
+  "name": "The Web of Growth",
+  "parable_reference": "Matthew 13:31-32 - The Mustard Seed",
+  "grid_size": [10, 14],
+  "difficulty": "Nurturing",
+  "occupancy_percent": 95.7,
+  "vines": [
+    {
+      "id": "vine_1",
+      "color": "moss_green",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 0, "y": 0 },
+        { "x": 1, "y": 0 },
+        { "x": 2, "y": 0 },
+        { "x": 2, "y": 1 },
+        { "x": 1, "y": 1 },
+        { "x": 0, "y": 1 }
+      ],
+      "role": "blocker",
+      "blocks": ["vine_3"]
+    },
+    {
+      "id": "vine_2",
+      "color": "sunset_orange",
+      "head_direction": "down",
+      "ordered_path": [
+        { "x": 3, "y": 0 },
+        { "x": 3, "y": 1 },
+        { "x": 3, "y": 2 },
+        { "x": 4, "y": 2 }
+      ],
+      "role": "intermediate",
+      "blocks": ["vine_5"]
+    },
+    {
+      "id": "vine_3",
+      "color": "golden_yellow",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 5, "y": 3 },
+        { "x": 5, "y": 2 },
+        { "x": 5, "y": 1 },
+        { "x": 6, "y": 1 }
+      ],
+      "role": "intermediate",
+      "blocks": []
+    },
+    {
+      "id": "vine_4",
+      "color": "royal_purple",
+      "head_direction": "left",
+      "ordered_path": [
+        { "x": 7, "y": 0 },
+        { "x": 6, "y": 0 },
+        { "x": 5, "y": 0 },
+        { "x": 5, "y": 1 }
+      ],
+      "role": "blocker",
+      "blocks": ["vine_6"]
+    },
+    {
+      "id": "vine_5",
+      "color": "sky_blue",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 4, "y": 3 },
+        { "x": 5, "y": 3 },
+        { "x": 6, "y": 3 },
+        { "x": 6, "y": 4 },
+        { "x": 6, "y": 5 }
+      ],
+      "role": "intermediate",
+      "blocks": ["vine_7"]
+    },
+    {
+      "id": "vine_6",
+      "color": "moss_green",
+      "head_direction": "down",
+      "ordered_path": [
+        { "x": 8, "y": 1 },
+        { "x": 8, "y": 2 },
+        { "x": 8, "y": 3 },
+        { "x": 9, "y": 3 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_7",
+      "color": "sunset_orange",
+      "head_direction": "down",
+      "ordered_path": [
+        { "x": 7, "y": 4 },
+        { "x": 7, "y": 5 },
+        { "x": 7, "y": 6 },
+        { "x": 7, "y": 7 }
+      ],
+      "role": "intermediate",
+      "blocks": ["vine_8"]
+    },
+    {
+      "id": "vine_8",
+      "color": "golden_yellow",
+      "head_direction": "left",
+      "ordered_path": [
+        { "x": 8, "y": 8 },
+        { "x": 7, "y": 8 },
+        { "x": 6, "y": 8 },
+        { "x": 5, "y": 8 }
+      ],
+      "role": "intermediate",
+      "blocks": []
+    },
+    {
+      "id": "vine_9",
+      "color": "royal_purple",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 1, "y": 9 },
+        { "x": 1, "y": 8 },
+        { "x": 1, "y": 7 },
+        { "x": 2, "y": 7 }
+      ],
+      "role": "blocker",
+      "blocks": ["vine_10"]
+    },
+    {
+      "id": "vine_10",
+      "color": "moss_green",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 3, "y": 6 },
+        { "x": 4, "y": 6 },
+        { "x": 5, "y": 6 },
+        { "x": 5, "y": 7 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_11",
+      "color": "sky_blue",
+      "head_direction": "down",
+      "ordered_path": [
+        { "x": 0, "y": 5 },
+        { "x": 0, "y": 6 },
+        { "x": 0, "y": 7 },
+        { "x": 0, "y": 8 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_12",
+      "color": "sunset_orange",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 2, "y": 10 },
+        { "x": 3, "y": 10 },
+        { "x": 4, "y": 10 },
+        { "x": 4, "y": 11 }
+      ],
+      "role": "intermediate",
+      "blocks": []
+    },
+    {
+      "id": "vine_13",
+      "color": "golden_yellow",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 6, "y": 12 },
+        { "x": 6, "y": 11 },
+        { "x": 6, "y": 10 },
+        { "x": 6, "y": 9 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_14",
+      "color": "royal_purple",
+      "head_direction": "left",
+      "ordered_path": [
+        { "x": 9, "y": 10 },
+        { "x": 8, "y": 10 },
+        { "x": 7, "y": 10 },
+        { "x": 7, "y": 11 }
+      ],
+      "role": "intermediate",
+      "blocks": []
+    },
+    {
+      "id": "vine_15",
+      "color": "moss_green",
+      "head_direction": "down",
+      "ordered_path": [
+        { "x": 3, "y": 4 },
+        { "x": 3, "y": 5 },
+        { "x": 3, "y": 6 },
+        { "x": 3, "y": 7 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_16",
+      "color": "sky_blue",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 4, "y": 12 },
+        { "x": 5, "y": 12 },
+        { "x": 6, "y": 12 },
+        { "x": 7, "y": 12 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_17",
+      "color": "sunset_orange",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 9, "y": 13 },
+        { "x": 9, "y": 12 },
+        { "x": 9, "y": 11 },
+        { "x": 9, "y": 10 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_18",
+      "color": "golden_yellow",
+      "head_direction": "left",
+      "ordered_path": [
+        { "x": 8, "y": 5 },
+        { "x": 7, "y": 5 },
+        { "x": 6, "y": 5 },
+        { "x": 5, "y": 5 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_19",
+      "color": "royal_purple",
+      "head_direction": "down",
+      "ordered_path": [
+        { "x": 2, "y": 3 },
+        { "x": 2, "y": 4 },
+        { "x": 2, "y": 5 },
+        { "x": 2, "y": 6 }
+      ],
+      "role": "intermediate",
+      "blocks": []
+    },
+    {
+      "id": "vine_20",
+      "color": "moss_green",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 0, "y": 11 },
+        { "x": 1, "y": 11 },
+        { "x": 2, "y": 11 },
+        { "x": 2, "y": 12 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_21",
+      "color": "sky_blue",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 4, "y": 13 },
+        { "x": 4, "y": 12 },
+        { "x": 4, "y": 11 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_22",
+      "color": "sunset_orange",
+      "head_direction": "left",
+      "ordered_path": [
+        { "x": 9, "y": 6 },
+        { "x": 8, "y": 6 },
+        { "x": 7, "y": 6 },
+        { "x": 6, "y": 6 }
+      ],
+      "role": "intermediate",
+      "blocks": []
+    },
+    {
+      "id": "vine_23",
+      "color": "golden_yellow",
+      "head_direction": "down",
+      "ordered_path": [
+        { "x": 0, "y": 2 },
+        { "x": 0, "y": 3 },
+        { "x": 0, "y": 4 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    },
+    {
+      "id": "vine_24",
+      "color": "royal_purple",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 1, "y": 13 },
+        { "x": 2, "y": 13 },
+        { "x": 3, "y": 13 },
+        { "x": 3, "y": 12 }
+      ],
+      "role": "quick_clear",
+      "blocks": []
+    }
+  ],
+  "blocking_graph": {
+    "vine_1": ["vine_3"],
+    "vine_2": ["vine_5"],
+    "vine_4": ["vine_6"],
+    "vine_5": ["vine_7"],
+    "vine_9": ["vine_10"]
+  },
+  "blocking_depth": 2,
+  "color_distribution": {
+    "moss_green": 0.25,
+    "sunset_orange": 0.25,
+    "golden_yellow": 0.21,
+    "royal_purple": 0.17,
+    "sky_blue": 0.12
+  },
+  "complexity": "medium",
+  "max_moves": 12,
+  "min_moves": 6,
+  "grace": 3,
+  "designer_notes": "A balanced level showing intermediate puzzle complexity. Five colors create visual rhythm. Two blocking chains of depth 2 provide strategic elements. Color distribution is balanced without any color exceeding 35%. This level introduces players to managing multiple blocking relationships simultaneously.",
+  "solution_sequence": [
+    "vine_11",
+    "vine_23",
+    "vine_9",
+    "vine_10",
+    "vine_1",
+    "vine_3",
+    "vine_2",
+    "vine_5",
+    "vine_7",
+    "vine_8",
+    "vine_4",
+    "vine_6"
+  ]
+}
