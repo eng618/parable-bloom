@@ -37,7 +37,7 @@ jobs:
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
       - name: Generate firebase_options.dart
-        run: flutterfire configure --project=parableweave --out=lib/firebase_options.dart --platforms=web --yes
+        run: flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
 

@@ -305,19 +305,19 @@ tasks:
   firebase:configure:
     desc: Configure Firebase using FlutterFire CLI for local development (requires Firebase CLI auth)
     cmds:
-      - flutterfire configure --project=parableweave --platforms=android,ios,web --yes
+      - flutterfire configure --project=parable-bloom --platforms=android,ios,web --yes
 
   firebase:configure:android:
     desc: Configure Firebase for Android only (local development)
     cmds:
-      - flutterfire configure --project=parableweave --platforms=android --yes
+      - flutterfire configure --project=parable-bloom --platforms=android --yes
 
   firebase:configure:ios:
     desc: Configure Firebase for iOS only (local development)
     cmds:
-      - flutterfire configure --project=parableweave --platforms=ios --yes
+      - flutterfire configure --project=parable-bloom --platforms=ios --yes
 
   firebase:configure:web:
     desc: Configure Firebase for Web only (local development)
     cmds:
-      - flutterfire configure --project=parableweave --platforms=web --yes
+      - flutterfire configure --project=parable-bloom --platforms=web --yes

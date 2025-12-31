@@ -53,6 +53,7 @@ lib/firebase_options.dart
 ios/Runner/GoogleService-Info.plist
 android/app/google-services.json
 web/firebase-config.js
+macos/Runner/GoogleService-Info.plist
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md

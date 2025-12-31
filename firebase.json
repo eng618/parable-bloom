@@ -3,33 +3,33 @@
     "platforms": {
       "android": {
         "default": {
-          "projectId": "parableweave",
-          "appId": "1:1005379493386:android:cb48ba8767aa471f1789f3",
+          "projectId": "parable-bloom",
+          "appId": "1:697900014066:android:3f2b49ceb7551ec5c1f36b",
           "fileOutput": "android/app/google-services.json"
         }
       },
       "dart": {
         "lib/firebase_options.dart": {
-          "projectId": "parableweave",
+          "projectId": "parable-bloom",
           "configurations": {
-            "android": "1:1005379493386:android:cb48ba8767aa471f1789f3",
-            "ios": "1:1005379493386:ios:74f559f1cf97c8ef1789f3",
-            "web": "1:1005379493386:web:5ce12bd5f2d2825b1789f3"
+            "android": "1:697900014066:android:3f2b49ceb7551ec5c1f36b",
+            "ios": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
+            "web": "1:697900014066:web:97c78a6c780f8f46c1f36b"
           }
         }
       },
       "ios": {
         "default": {
-          "projectId": "parableweave",
-          "appId": "1:1005379493386:ios:74f559f1cf97c8ef1789f3",
+          "projectId": "parable-bloom",
+          "appId": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
           "uploadDebugSymbols": false,
           "fileOutput": "ios/Runner/GoogleService-Info.plist"
         }
       },
       "macos": {
         "default": {
-          "projectId": "parableweave",
-          "appId": "1:1005379493386:ios:74f559f1cf97c8ef1789f3",
+          "projectId": "parable-bloom",
+          "appId": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
           "uploadDebugSymbols": false,
           "fileOutput": "macos/Runner/GoogleService-Info.plist"
         }

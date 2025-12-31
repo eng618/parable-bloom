@@ -1,3 +1,4 @@
 {
-  "cSpell.words": ["riverpod", "tappable"]
+  "cSpell.words": ["firestore", "riverpod", "tappable"],
+  "languageToolLinter.languageTool.ignoredWordsInWorkspace": ["firestore"]
 }
