@@ -52,10 +52,16 @@ class GridComponent extends PositionComponent
     _currentLevel = levelData;
     _vineStates = Map.from(vineStates);
 
-    // Calculate grid dimensions from vine bounds
-    final bounds = levelData.getBounds();
-    rows = bounds.maxY - bounds.minY + 1;
-    cols = bounds.maxX - bounds.minX + 1;
+    // Use explicit grid size if provided, otherwise calculate from vine bounds
+    if (levelData.gridRows != null && levelData.gridCols != null) {
+      rows = levelData.gridRows!;
+      cols = levelData.gridCols!;
+    } else {
+      // Calculate grid dimensions from vine bounds (backwards compatibility)
+      final bounds = levelData.getBounds();
+      rows = bounds.maxY - bounds.minY + 1;
+      cols = bounds.maxX - bounds.minX + 1;
+    }
 
     // Only recreate components if it's a new level
     if (isNewLevel) {
@@ -135,6 +141,9 @@ class GridComponent extends PositionComponent
     }
 
     cells = [];
+    
+    // Get occupied positions from the current level
+    final occupiedPositions = _currentLevel?.getOccupiedPositions() ?? {};
 
     for (int y = 0; y < rows; y++) {
       cells.add([]);
@@ -143,11 +152,15 @@ class GridComponent extends PositionComponent
         // y=0 is at the bottom, so visual Y is proportional to (rows - 1 - y)
         final visualRow = rows - 1 - y;
 
+        // Check if this cell is occupied by a vine
+        final isOccupied = occupiedPositions.contains('$x,$y');
+
         final cell = CellComponent(
           gridX: x,
           gridY: y,
           size: Vector2(cellSize, cellSize),
           position: Vector2(x * cellSize, visualRow * cellSize),
+          isVisible: isOccupied, // Only show cells that have vines
         );
         add(cell);
         cells[y].add(cell);
@@ -227,12 +240,14 @@ class CellComponent extends RectangleComponent
     with TapCallbacks, HasGameReference<GardenGame> {
   final int gridX;
   final int gridY;
+  bool isVisible;
 
   CellComponent({
     required this.gridX,
     required this.gridY,
     required super.size,
     required super.position,
+    this.isVisible = true,
   }) : super(
          paint: Paint()..color = Colors.transparent,
          anchor: Anchor.topLeft,
@@ -240,6 +255,9 @@ class CellComponent extends RectangleComponent
 
   @override
   void render(Canvas canvas) {
+    // Don't render anything if the cell is not visible
+    if (!isVisible) return;
+    
     super.render(canvas);
 
     // Use theme-aware colors for grid dots

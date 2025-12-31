@@ -2,6 +2,10 @@
   "id": 1,
   "name": "First Steps",
   "difficulty": "Tutorial",
+  "grid_size": {
+    "rows": 5,
+    "cols": 5
+  },
   "vines": [
     {
       "id": "vine_a",

@@ -137,6 +137,8 @@ class LevelData {
   final String complexity;
   final int grace;
   final MaskData? mask;
+  final int? gridRows; // Explicit grid size from JSON
+  final int? gridCols;
 
   LevelData({
     required this.id,
@@ -148,6 +150,8 @@ class LevelData {
     required this.complexity,
     required this.grace,
     this.mask,
+    this.gridRows,
+    this.gridCols,
   });
 
   factory LevelData.fromJson(Map<String, dynamic> json) {
@@ -163,6 +167,8 @@ class LevelData {
       complexity: json['complexity'],
       grace: json['grace'],
       mask: json.containsKey('mask') ? MaskData.fromJson(json['mask']) : null,
+      gridRows: json.containsKey('grid_size') ? json['grid_size']['rows'] as int? : null,
+      gridCols: json.containsKey('grid_size') ? json['grid_size']['cols'] as int? : null,
     );
   }
 
@@ -195,9 +201,20 @@ class LevelData {
     return (minX: minX, maxX: maxX, minY: minY, maxY: maxY);
   }
 
-  // Get dimensions for backwards compatibility
-  int get width => getBounds().maxX - getBounds().minX + 1;
-  int get height => getBounds().maxY - getBounds().minY + 1;
+  // Get dimensions - use explicit grid_size if provided, otherwise calculate from bounds
+  int get width => gridCols ?? (getBounds().maxX - getBounds().minX + 1);
+  int get height => gridRows ?? (getBounds().maxY - getBounds().minY + 1);
+  
+  // Get a set of all occupied positions for visibility checking
+  Set<String> getOccupiedPositions() {
+    final occupied = <String>{};
+    for (final vine in vines) {
+      for (final pos in vine.orderedPath) {
+        occupied.add('${pos['x']},${pos['y']}');
+      }
+    }
+    return occupied;
+  }
 }
 
 // Providers
