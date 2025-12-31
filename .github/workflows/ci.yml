@@ -32,10 +32,11 @@ jobs:
           dart pub global activate flutterfire_cli
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
-      - name: Generate firebase_options.dart
-        run: flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes
+      - name: Generate firebase_options.dart (skipped if no token)
+        if: ${{ secrets.FIREBASE_CI_TOKEN != '' }}
+        run: flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes --token "$FIREBASE_CI_TOKEN"
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
+          FIREBASE_CI_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
 
       - name: Run task validate
         run: task validate
