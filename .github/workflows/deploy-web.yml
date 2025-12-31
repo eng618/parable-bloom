@@ -54,7 +54,15 @@ jobs:
 
       - name: Deploy Preview (PR only)
         if: github.event_name == 'pull_request'
-        run: firebase hosting:channel:deploy pr-${{ github.event.pull_request.number }} --token ${{ secrets.FIREBASE_CI_TOKEN }}
+        id: deploy-preview
+        run: |
+          CHANNEL_NAME="pr-${{ github.event.pull_request.number }}"
+          firebase hosting:channel:deploy $CHANNEL_NAME --token ${{ secrets.FIREBASE_CI_TOKEN }} > deploy_output.txt 2>&1
+          cat deploy_output.txt
+          # Extract URL from Firebase CLI output
+          PREVIEW_URL=$(grep -oP 'https://[^\s]+' deploy_output.txt | head -1)
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+          echo "Channel deployed to: $PREVIEW_URL"
 
       - name: Comment PR with Preview URL
         if: github.event_name == 'pull_request'
@@ -62,7 +70,7 @@ jobs:
         with:
           script: |
             const prNumber = context.issue.number;
-            const previewUrl = `https://parableweave--pr-${prNumber}.web.app`;
+            const previewUrl = '${{ steps.deploy-preview.outputs.preview_url }}';
 
             github.rest.issues.createComment({
               issue_number: prNumber,
