@@ -184,7 +184,8 @@ class LevelData {
   // Calculate bounds dynamically from vine positions
   ({int minX, int maxX, int minY, int maxY}) getBounds() {
     if (vines.isEmpty || vines.first.orderedPath.isEmpty) {
-      return (minX: 0, maxX: 8, minY: 0, maxY: 8); // Default fallback
+      // Default fallback for empty levels - matches common 9x9 grid
+      return (minX: 0, maxX: 8, minY: 0, maxY: 8);
     }
 
     int minX = vines
@@ -211,8 +212,17 @@ class LevelData {
   }
 
   // Get dimensions - use explicit grid_size if provided, otherwise calculate from bounds
-  int get width => gridCols ?? (getBounds().maxX - getBounds().minX + 1);
-  int get height => gridRows ?? (getBounds().maxY - getBounds().minY + 1);
+  int get width {
+    if (gridCols != null) return gridCols!;
+    final bounds = getBounds();
+    return bounds.maxX - bounds.minX + 1;
+  }
+
+  int get height {
+    if (gridRows != null) return gridRows!;
+    final bounds = getBounds();
+    return bounds.maxY - bounds.minY + 1;
+  }
 
   // Get a set of all occupied positions for visibility checking
   Set<String> getOccupiedPositions() {
