@@ -60,7 +60,8 @@ jobs:
           firebase hosting:channel:deploy $CHANNEL_NAME --token ${{ secrets.FIREBASE_CI_TOKEN }} > deploy_output.txt 2>&1
           cat deploy_output.txt
           # Extract URL from Firebase CLI output - look for Firebase hosting preview URL pattern
-          PREVIEW_URL=$(grep -oP 'https://[a-zA-Z0-9\-]+--[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+\.web\.app' deploy_output.txt | head -1)
+          # Format: PROJECT_ID--CHANNEL_ID-RANDOM_HASH.web.app
+          PREVIEW_URL=$(grep -oP 'https://[a-zA-Z0-9\-]+--[a-zA-Z0-9\-]+-[a-zA-Z0-9]+\.web\.app' deploy_output.txt | head -1)
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           echo "Channel deployed to: $PREVIEW_URL"
 
