@@ -202,10 +202,20 @@ class GridComponent extends PositionComponent
   VineData? _getVineAtCell(int row, int col) {
     if (_currentLevel == null) return null;
 
-    // Convert from grid coordinates to world coordinates
-    final bounds = _currentLevel!.getBounds();
-    final worldX = bounds.minX + col;
-    final worldY = bounds.minY + row;
+    // When explicit grid_size is provided, assume coordinates start at (0,0)
+    // Otherwise, convert from grid coordinates to world coordinates using bounds
+    int worldX, worldY;
+    
+    if (_currentLevel!.gridRows != null && _currentLevel!.gridCols != null) {
+      // Explicit grid size: coordinates are absolute (0,0) origin
+      worldX = col;
+      worldY = row;
+    } else {
+      // Calculate from bounds for backward compatibility
+      final bounds = _currentLevel!.getBounds();
+      worldX = bounds.minX + col;
+      worldY = bounds.minY + row;
+    }
 
     for (final vine in _currentLevel!.vines) {
       for (final cell in vine.orderedPath) {

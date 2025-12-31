@@ -155,6 +155,15 @@ class LevelData {
   });
 
   factory LevelData.fromJson(Map<String, dynamic> json) {
+    int? gridRows;
+    int? gridCols;
+    
+    if (json.containsKey('grid_size') && json['grid_size'] != null) {
+      final gridSize = json['grid_size'] as Map<String, dynamic>;
+      gridRows = gridSize['rows'] as int?;
+      gridCols = gridSize['cols'] as int?;
+    }
+    
     return LevelData(
       id: json['id'],
       name: json['name'],
@@ -167,8 +176,8 @@ class LevelData {
       complexity: json['complexity'],
       grace: json['grace'],
       mask: json.containsKey('mask') ? MaskData.fromJson(json['mask']) : null,
-      gridRows: json.containsKey('grid_size') ? json['grid_size']['rows'] as int? : null,
-      gridCols: json.containsKey('grid_size') ? json['grid_size']['cols'] as int? : null,
+      gridRows: gridRows,
+      gridCols: gridCols,
     );
   }
 
