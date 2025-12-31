@@ -4,6 +4,8 @@
 [![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?style=for-the-badge&logo=dart)](https://dart.dev)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
+[![CI](https://github.com/eng618/parable-bloom/actions/workflows/ci.yml/badge.svg)](https://github.com/eng618/parable-bloom/actions/workflows/ci.yml)
+
 **A zen hyper-casual arrow puzzle game** with faith-based themes, where players tap directional vines to slide them off a grid in Snake-like movement. Body segments follow as a queue, and blocked vines animate back with spiritual messaging.
 
 > *"God's grace is endless—try again!"*
