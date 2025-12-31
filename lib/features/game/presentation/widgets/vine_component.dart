@@ -23,7 +23,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   int _totalAnimationSteps = 0;
   double _animationTimer = 0.0;
   double _stepDuration =
-      0.04; // seconds per step - reduced for smoother animation
+      0.03; // seconds per step - optimized for smooth, responsive animation
 
   // History-based animation (snake-like movement)
   List<List<Map<String, int>>> _positionHistory = [];
@@ -32,7 +32,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Bloom effect after clearing
   bool _isShowingBloomEffect = false;
   double _bloomEffectTimer = 0.0;
-  final double _bloomEffectDuration = 1.0; // seconds
+  final double _bloomEffectDuration = 0.5; // seconds - reduced for faster level completion
   Offset? _bloomEffectPosition; // Where to show the bloom effect
 
   // Track if we've already notified parent of clearing
