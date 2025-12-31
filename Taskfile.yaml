@@ -164,7 +164,7 @@ tasks:
   deploy:
     desc: Deploy the application to Firebase Hosting
     deps:
-      - build
+      - build:web
     cmds:
       - firebase deploy --only hosting
 
@@ -172,11 +172,9 @@ tasks:
   # Firebase Hosting
 
   hosting:deploy:
-    desc: Deploy to Firebase Hosting (manual token)
+    desc: Deploy to Firebase Hosting (uses Bitwarden Secrets Manager token)
     cmds:
-      - firebase deploy --only hosting
-    env:
-      FIREBASE_TOKEN: '{{bitwarden "item" "parableweave" "field" "firebase_token"}}' # Generate once via firebase login:ci
+      - firebase deploy --only hosting --token "$(bws secret get FIREBASE_CI_TOKEN)"
 
   hosting:preview:
     desc: Deploy preview channel
