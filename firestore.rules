@@ -1,13 +1,35 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Game progress data - users can only access their own data
-    match /game_progress/{userId} {
+    // Development environment - game progress data
+    match /game_progress_dev/{userId} {
       // Users can read/write their own progress data
       allow read, write: if request.auth != null && request.auth.uid == userId;
 
-      // Allow access to the data subcollection
-      match /data/{document=**} {
+      // Allow access to the modules subcollection
+      match /modules/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Preview environment - game progress data
+    match /game_progress_preview/{userId} {
+      // Users can read/write their own progress data
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Allow access to the modules subcollection
+      match /modules/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Production environment - game progress data
+    match /game_progress_prod/{userId} {
+      // Users can read/write their own progress data
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Allow access to the modules subcollection
+      match /modules/{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
