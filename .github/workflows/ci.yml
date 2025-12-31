@@ -12,8 +12,6 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      FIREBASE_CI_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
 
     steps:
       - uses: actions/checkout@v6
@@ -34,9 +32,10 @@ jobs:
           dart pub global activate flutterfire_cli
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
-      - name: Generate firebase_options.dart (skipped if no token)
-        if: ${{ env.FIREBASE_CI_TOKEN != '' }}
-        run: flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes --token "$FIREBASE_CI_TOKEN"
+      - name: Generate firebase_options.dart
+        run: flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
 
       - name: Run task validate
         run: task validate
