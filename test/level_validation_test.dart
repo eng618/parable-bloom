@@ -42,7 +42,7 @@ void main() {
           occupied[k] = vine.id;
         }
       }
-      
+
       // Verify getOccupiedPositions matches the occupied set
       final occupiedPositions = level.getOccupiedPositions();
       expect(

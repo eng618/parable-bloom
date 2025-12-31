@@ -117,7 +117,7 @@ void main() {
       expect(occupied, contains('4,2'));
       expect(occupied, contains('4,3'));
       expect(occupied, contains('4,4'));
-      
+
       // Test that unoccupied positions are not in the set
       expect(occupied, isNot(contains('3,3')));
       expect(occupied, isNot(contains('0,4')));

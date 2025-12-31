@@ -141,7 +141,7 @@ class GridComponent extends PositionComponent
     }
 
     cells = [];
-    
+
     // Get occupied positions from the current level
     final occupiedPositions = _currentLevel?.getOccupiedPositions() ?? {};
 
@@ -205,7 +205,7 @@ class GridComponent extends PositionComponent
     // When explicit grid_size is provided, assume coordinates start at (0,0)
     // Otherwise, convert from grid coordinates to world coordinates using bounds
     int worldX, worldY;
-    
+
     if (_currentLevel!.gridRows != null && _currentLevel!.gridCols != null) {
       // Explicit grid size: coordinates are absolute (0,0) origin
       worldX = col;
@@ -267,7 +267,7 @@ class CellComponent extends RectangleComponent
   void render(Canvas canvas) {
     // Don't render anything if the cell is not visible
     if (!isVisible) return;
-    
+
     super.render(canvas);
 
     // Use theme-aware colors for grid dots

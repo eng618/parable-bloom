@@ -157,13 +157,13 @@ class LevelData {
   factory LevelData.fromJson(Map<String, dynamic> json) {
     int? gridRows;
     int? gridCols;
-    
+
     if (json.containsKey('grid_size') && json['grid_size'] != null) {
       final gridSize = json['grid_size'] as Map<String, dynamic>;
       gridRows = gridSize['rows'] as int?;
       gridCols = gridSize['cols'] as int?;
     }
-    
+
     return LevelData(
       id: json['id'],
       name: json['name'],
@@ -213,7 +213,7 @@ class LevelData {
   // Get dimensions - use explicit grid_size if provided, otherwise calculate from bounds
   int get width => gridCols ?? (getBounds().maxX - getBounds().minX + 1);
   int get height => gridRows ?? (getBounds().maxY - getBounds().minY + 1);
-  
+
   // Get a set of all occupied positions for visibility checking
   Set<String> getOccupiedPositions() {
     final occupied = <String>{};
