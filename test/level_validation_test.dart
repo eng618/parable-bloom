@@ -17,6 +17,18 @@ void main() {
       final jsonMap = json.decode(await levelFile.readAsString());
       final level = LevelData.fromJson(jsonMap);
 
+      // Validate grid_size field is present
+      expect(
+        level.gridRows,
+        isNotNull,
+        reason: 'grid_size.rows missing in ${levelFile.path}',
+      );
+      expect(
+        level.gridCols,
+        isNotNull,
+        reason: 'grid_size.cols missing in ${levelFile.path}',
+      );
+
       // simple structural checks
       final occupied = <String, String>{};
       for (final vine in level.vines) {
@@ -30,6 +42,14 @@ void main() {
           occupied[k] = vine.id;
         }
       }
+      
+      // Verify getOccupiedPositions matches the occupied set
+      final occupiedPositions = level.getOccupiedPositions();
+      expect(
+        occupiedPositions,
+        equals(occupied.keys.toSet()),
+        reason: 'getOccupiedPositions mismatch in ${levelFile.path}',
+      );
 
       for (final vine in level.vines) {
         expect(vine.orderedPath.length, greaterThanOrEqualTo(2));
