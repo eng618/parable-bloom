@@ -19,6 +19,7 @@ import '../features/game/presentation/widgets/garden_game.dart';
 import '../features/settings/data/repositories/hive_settings_repository.dart';
 import '../features/settings/domain/repositories/settings_repository.dart';
 import '../core/vine_color_palette.dart';
+import '../services/background_audio_controller.dart';
 import '../services/analytics_service.dart';
 
 // Module data model
@@ -686,6 +687,46 @@ class ThemeModeNotifier extends Notifier<AppThemeMode> {
     await repository.setThemeMode(mode.name);
   }
 }
+
+// Background audio enabled setting
+final backgroundAudioEnabledProvider =
+    NotifierProvider<BackgroundAudioEnabledNotifier, bool>(
+      BackgroundAudioEnabledNotifier.new,
+    );
+
+class BackgroundAudioEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final box = ref.watch(hiveBoxProvider);
+    return box.get('backgroundAudioEnabled', defaultValue: true) as bool;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setBackgroundAudioEnabled(enabled);
+  }
+}
+
+// Background audio controller (plays/loops based on backgroundAudioEnabledProvider)
+final backgroundAudioControllerProvider = Provider<BackgroundAudioController>((
+  ref,
+) {
+  final controller = BackgroundAudioController();
+
+  ref.onDispose(() {
+    unawaited(controller.dispose());
+  });
+
+  ref.listen<bool>(backgroundAudioEnabledProvider, (previous, next) {
+    unawaited(controller.setEnabled(next));
+  });
+
+  // Apply initial state.
+  unawaited(controller.setEnabled(ref.read(backgroundAudioEnabledProvider)));
+
+  return controller;
+});
 
 class GameInstanceNotifier extends Notifier<GardenGame?> {
   @override

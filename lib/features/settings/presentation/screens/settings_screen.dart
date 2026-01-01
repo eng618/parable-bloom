@@ -9,6 +9,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final backgroundAudioEnabled = ref.watch(backgroundAudioEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,6 +21,26 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           _buildSectionHeader(context, 'Appearance'),
           _buildThemeTile(context, ref, themeMode),
+          const Divider(),
+          _buildSectionHeader(context, 'Audio'),
+          SwitchListTile(
+            secondary: Icon(
+              backgroundAudioEnabled ? Icons.music_note : Icons.music_off,
+              color: backgroundAudioEnabled
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+            title: const Text('Background Audio'),
+            subtitle: const Text('Play background music on a loop'),
+            value: backgroundAudioEnabled,
+            onChanged: (value) async {
+              await ref
+                  .read(backgroundAudioEnabledProvider.notifier)
+                  .setEnabled(value);
+            },
+          ),
           const Divider(),
           _buildSectionHeader(context, 'Data & Sync'),
           _buildCloudSyncTile(context, ref),
