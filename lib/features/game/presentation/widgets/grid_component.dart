@@ -52,10 +52,9 @@ class GridComponent extends PositionComponent
     _currentLevel = levelData;
     _vineStates = Map.from(vineStates);
 
-    // Calculate grid dimensions from vine bounds
-    final bounds = levelData.getBounds();
-    rows = bounds.maxY - bounds.minY + 1;
-    cols = bounds.maxX - bounds.minX + 1;
+    // Grid dimensions are driven by grid_size.
+    cols = levelData.gridWidth;
+    rows = levelData.gridHeight;
 
     // Only recreate components if it's a new level
     if (isNewLevel) {
@@ -169,6 +168,12 @@ class GridComponent extends PositionComponent
     // Notify tap counter via callback
     onTapIncrement?.call(1);
 
+    final level = _currentLevel;
+    if (level == null) return;
+
+    // Masked-out cells are not interactive.
+    if (!level.isCellVisible(col, row)) return;
+
     final clickedVine = _getVineAtCell(row, col);
 
     if (clickedVine == null) return;
@@ -189,10 +194,10 @@ class GridComponent extends PositionComponent
   VineData? _getVineAtCell(int row, int col) {
     if (_currentLevel == null) return null;
 
-    // Convert from grid coordinates to world coordinates
-    final bounds = _currentLevel!.getBounds();
-    final worldX = bounds.minX + col;
-    final worldY = bounds.minY + row;
+    // Convert from grid coordinates to world coordinates.
+    // With grid_size, grid coordinates are the world coordinates.
+    final worldX = col;
+    final worldY = row;
 
     for (final vine in _currentLevel!.vines) {
       for (final cell in vine.orderedPath) {
@@ -241,6 +246,12 @@ class CellComponent extends RectangleComponent
   @override
   void render(Canvas canvas) {
     super.render(canvas);
+
+    final level = (parent as GridComponent).getCurrentLevelData();
+    if (level == null) return;
+
+    // Masked-out cells are not drawn.
+    if (!level.isCellVisible(gridX, gridY)) return;
 
     // Use theme-aware colors for grid dots
     final theme = Theme.of(game.buildContext!);

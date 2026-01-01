@@ -58,7 +58,7 @@ type: "Game Design Document"
 
 ### Grid & Win Conditions
 
-- **Grid**: Subtle dot-based for zen aesthetic. Sizes: 9x9 (tutorial) to 20x20 (capstone). Future: Shaped grids (e.g., cross, smiley face).
+- **Grid**: Subtle dot-based for zen aesthetic. Portrait-first rectangular boards (3:4 width:height), scaling up with difficulty (e.g., 6×8 tutorial, then 9×12, 12×16...). Future: Shaped grids (e.g., cross, smiley face).
 - **Win**: All vines cleared (bloomed off-grid). Triggers level complete with glow and transition to next level.
 - **Grace System**: 3 Grace per level (4 for Transcendent). Lose all → restart prompt: "God's grace is endless—try again!" with restart or hint option.
 - **Hints**: One hint per level, auto-triggered after 30s inactivity (glows tappable vines). No additional hints to maintain challenge.
@@ -66,25 +66,24 @@ type: "Game Design Document"
 
 ### JSON Schema for Levels
 
-Hardened for procedural content generation (PCG) in Golang and snake-like movement:
+Hardened for procedural content generation (PCG) in Dart and snake-like movement:
 
 ```json
 {
   "id": 1,
-  "module_id": 1,
   "name": "First Sprout",
-  "grid_size": [9, 9],
+  "grid_size": [6, 8],
   "difficulty": "Seedling",
   "vines": [
     {
-      "id": 1,
+      "id": "vine_1",
       "head_direction": "right",
       "ordered_path": [
-        {"x": 2, "y": 3},  // HEAD (index 0) - moving RIGHT
-        {"x": 3, "y": 3},  // First segment LEFT of head (opposite direction)
-        {"x": 4, "y": 3}   // TAIL (last) - continues rightward
+        {"x": 2, "y": 3},  // HEAD (index 0)
+        {"x": 1, "y": 3},  // NECK (index 1) - one cell opposite head_direction
+        {"x": 0, "y": 3}   // TAIL (last)
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     }
   ],
   "max_moves": 5,
@@ -97,18 +96,13 @@ Hardened for procedural content generation (PCG) in Golang and snake-like moveme
 - **Validation Rules (for PCG)**:
   - No initial overlaps between vines.
   - Paths contiguous with 90-degree turns only.
-  - Solvable (BFS/DFS confirms no deadlocks).
-  - Minimum 50% empty cells at start.
-  - Head direction matches first segment's direction.
-  - PCG (Golang): Generate vines (length 2-80% grid, 0-3 turns), simulate solvability, adjust for difficulty.
+  - Solvable (BFS confirms no deadlocks).
+  - Head direction matches the first segment (neck) orientation.
 
 ## Progression & Module Structure
 
-- **Modules**: 5 for MVP, each with 15 levels themed around a parable (Mustard Seed, Sower, Wheat & Weeds, Vine & Branches, Growing Seed):
-  - Levels 1-5: Seedling (9x9).
-  - Levels 6-10: Nurturing (9x9 to 12x12).
-  - Levels 11-14: Flourishing (12x12 to 16x16).
-  - Level 15: Transcendent (16x16 to 20x20, 4 Grace).
+- **Modules**: Content is grouped for parable unlocks, but levels use a single global id and module ranges are defined in `assets/levels/modules.json`.
+- **Sizing**: Keep a consistent portrait aspect ratio (3:4 width:height) and scale up with difficulty (e.g., 6×8 → 9×12 → 12×16 → 15×20).
 - **Pacing**: ~30-60 minutes per module (~2-5 minutes per level).
 - **Reward**: Module completion unlocks a parable (text, watercolor illustration, optional voice narration) in the Journal.
 - **Home Screen**: Garden hub with flowers representing completed modules. Tabs: Play (module/level select), Journal (parable collection).
@@ -168,34 +162,33 @@ Faith-inspired tiers with parameters for PCG and gameplay:
 
 **Prompt Example**: "Watercolor vine corner, 90-degree up-to-right, moss green, 64x64, transparent."
 
-## Sample Level (9x9, Seedling)
+## Sample Level (6x8, Seedling)
 
 ```json
 {
   "id": 1,
-  "module_id": 1,
   "name": "First Sprout",
-  "grid_size": [9, 9],
+  "grid_size": [6, 8],
   "difficulty": "Seedling",
   "vines": [
     {
-      "id": 1,
+      "id": "vine_1",
       "head_direction": "up",
-      "path": [
-        {"row": 5, "col": 5, "direction": "up"},
-        {"row": 5, "col": 6, "direction": "up"},
-        {"row": 4, "col": 6, "direction": "left"}
+      "ordered_path": [
+        {"x": 2, "y": 7},
+        {"x": 2, "y": 6},
+        {"x": 3, "y": 6}
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     },
     {
-      "id": 2,
+      "id": "vine_2",
       "head_direction": "right",
-      "path": [
-        {"row": 3, "col": 3, "direction": "right"},
-        {"row": 3, "col": 4, "direction": "right"}
+      "ordered_path": [
+        {"x": 5, "y": 1},
+        {"x": 4, "y": 1}
       ],
-      "color": "emerald"
+      "vine_color": "default"
     }
   ],
   "max_moves": 5,

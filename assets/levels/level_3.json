@@ -1,71 +1,69 @@
 {
   "id": 3,
-  "name": "Vertical Flow",
+  "name": "Blocking Chain",
   "difficulty": "Tutorial",
+  "grid_size": [6, 8],
+  "mask": { "mode": "show-all", "points": [] },
   "vines": [
     {
       "id": "vine_a",
       "head_direction": "up",
       "ordered_path": [
+        { "x": 0, "y": 5 },
         { "x": 0, "y": 4 },
-        { "x": 0, "y": 3 },
-        { "x": 0, "y": 2 },
-        { "x": 0, "y": 1 },
-        { "x": 0, "y": 0 }
+        { "x": 0, "y": 3 }
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     },
     {
       "id": "vine_b",
-      "head_direction": "up",
+      "head_direction": "left",
       "ordered_path": [
-        { "x": 1, "y": 4 },
         { "x": 1, "y": 3 },
+        { "x": 2, "y": 3 },
+        { "x": 2, "y": 2 },
         { "x": 1, "y": 2 },
-        { "x": 1, "y": 1 },
-        { "x": 1, "y": 0 }
+        { "x": 0, "y": 2 },
+        { "x": 0, "y": 1 }
       ],
-      "color": "sage"
+      "vine_color": "default"
     },
     {
       "id": "vine_c",
-      "head_direction": "up",
+      "head_direction": "left",
       "ordered_path": [
-        { "x": 2, "y": 4 },
-        { "x": 2, "y": 3 },
-        { "x": 2, "y": 2 },
+        { "x": 1, "y": 1 },
         { "x": 2, "y": 1 },
-        { "x": 2, "y": 0 }
+        { "x": 2, "y": 0 },
+        { "x": 3, "y": 0 }
       ],
-      "color": "emerald"
+      "vine_color": "default"
     },
     {
       "id": "vine_d",
-      "head_direction": "up",
+      "head_direction": "right",
       "ordered_path": [
-        { "x": 3, "y": 4 },
-        { "x": 3, "y": 3 },
-        { "x": 3, "y": 2 },
-        { "x": 3, "y": 1 },
-        { "x": 3, "y": 0 }
+        { "x": 5, "y": 0 },
+        { "x": 4, "y": 0 },
+        { "x": 4, "y": 1 },
+        { "x": 5, "y": 1 }
       ],
-      "color": "olive"
+      "vine_color": "default"
     },
     {
       "id": "vine_e",
-      "head_direction": "up",
+      "head_direction": "right",
       "ordered_path": [
+        { "x": 5, "y": 5 },
+        { "x": 4, "y": 5 },
         { "x": 4, "y": 4 },
-        { "x": 4, "y": 3 },
-        { "x": 4, "y": 2 },
-        { "x": 4, "y": 1 },
-        { "x": 4, "y": 0 }
+        { "x": 5, "y": 4 }
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     }
   ],
-  "max_moves": 8,
-  "min_moves": 5,
+  "max_moves": 10,
+  "min_moves": 0,
   "complexity": "tutorial",
   "grace": 3
 }

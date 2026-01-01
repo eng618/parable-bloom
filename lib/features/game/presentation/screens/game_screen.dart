@@ -305,7 +305,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     // Advance to next level
     final currentLevel = ref.read(currentLevelProvider);
+    ModuleData? completedModule;
     if (currentLevel != null) {
+      final modules = await ref.read(modulesProvider.future);
+      for (final m in modules) {
+        if (m.endLevel == currentLevel.id) {
+          completedModule = m;
+          break;
+        }
+      }
+
       await ref
           .read(globalProgressProvider.notifier)
           .completeLevel(currentLevel.id);
@@ -315,17 +324,118 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Reset grace for the next level
     ref.read(gameInstanceProvider.notifier).resetGrace();
 
-    // Wait for 2 seconds then navigate back to home - reduced for faster level completion
+    // Wait for 2 seconds then navigate back to home OR show parable unlock.
     await Future.delayed(const Duration(seconds: 2));
 
-    if (mounted) {
-      setState(() {
-        _isLevelCompleteOverlayVisible = false;
-      });
+    if (!mounted) return;
 
-      // Navigate back to home screen and clear game screen from stack
-      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    setState(() {
+      _isLevelCompleteOverlayVisible = false;
+    });
+
+    if (completedModule != null) {
+      await _showParableUnlockedDialog(completedModule);
+      return;
     }
+
+    // Navigate back to home screen and clear game screen from stack
+    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+  }
+
+  Future<void> _showParableUnlockedDialog(ModuleData module) async {
+    if (!mounted) return;
+
+    final parable = module.parable;
+    final title = (parable['title'] as String?)?.trim();
+    final scripture = (parable['scripture'] as String?)?.trim();
+    final content = (parable['content'] as String?)?.trim();
+    final reflection = (parable['reflection'] as String?)?.trim();
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final cs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: cs.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            title?.isNotEmpty == true ? title! : 'Parable Unlocked',
+            style: TextStyle(
+              color: cs.onSurface,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.menu_book, size: 48),
+                const SizedBox(height: 12),
+                if (module.unlockMessage.trim().isNotEmpty)
+                  Text(
+                    module.unlockMessage,
+                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                if (scripture?.isNotEmpty == true) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    scripture!,
+                    style: TextStyle(
+                      color: cs.onSurface,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+                if (content?.isNotEmpty == true) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    content!,
+                    style: TextStyle(color: cs.onSurface, fontSize: 14),
+                    textAlign: TextAlign.left,
+                  ),
+                ],
+                if (reflection?.isNotEmpty == true) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    reflection!,
+                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
+                    textAlign: TextAlign.left,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/journal', (route) => false);
+              },
+              child: const Text('GO TO JOURNAL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
+              },
+              child: const Text('CONTINUE'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _restartLevel() {
