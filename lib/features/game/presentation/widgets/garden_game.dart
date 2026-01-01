@@ -194,7 +194,7 @@ class GardenGame extends FlameGame {
 
       final totalLevels = modules.fold<int>(
         0,
-        (total, module) => total + module.levelCount,
+        (maxEnd, module) => module.endLevel > maxEnd ? module.endLevel : maxEnd,
       );
 
       if (globalLevelNumber > totalLevels) {

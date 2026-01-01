@@ -27,6 +27,8 @@ class ModuleData {
   final int id;
   final String name;
   final int levelCount;
+  final int startLevel;
+  final int endLevel;
   final Map<String, dynamic> parable;
   final String unlockMessage;
 
@@ -34,15 +36,22 @@ class ModuleData {
     required this.id,
     required this.name,
     required this.levelCount,
+    required this.startLevel,
+    required this.endLevel,
     required this.parable,
     required this.unlockMessage,
   });
 
   factory ModuleData.fromJson(Map<String, dynamic> json) {
+    final range = (json['level_range'] as List<dynamic>?) ?? const [];
+    final start = range.isNotEmpty ? (range[0] as num).toInt() : 1;
+    final end = range.length > 1 ? (range[1] as num).toInt() : start;
     return ModuleData(
       id: json['id'],
       name: json['name'],
-      levelCount: json['level_count'],
+      levelCount: (json['level_count'] as num?)?.toInt() ?? (end - start + 1),
+      startLevel: start,
+      endLevel: end,
       parable: json['parable'],
       unlockMessage: json['unlock_message'],
     );
@@ -86,10 +95,14 @@ final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
 
     return modulesList.map((moduleJson) {
       final range = moduleJson['level_range'] as List<dynamic>;
+      final startLevel = (range[0] as num).toInt();
+      final endLevel = (range[1] as num).toInt();
       return ModuleData(
         id: moduleJson['id'],
         name: moduleJson['name'],
-        levelCount: range[1] - range[0] + 1, // Calculate level count from range
+        levelCount: endLevel - startLevel + 1,
+        startLevel: startLevel,
+        endLevel: endLevel,
         parable: moduleJson['parable'],
         unlockMessage: moduleJson['unlock_message'],
       );
@@ -496,13 +509,8 @@ class GlobalProgress {
   // Check if a module is completed (all levels in the module are done)
   bool isModuleCompleted(int moduleId, List<ModuleData> modules) {
     final module = modules.firstWhere((m) => m.id == moduleId);
-    final startLevel =
-        modules
-            .take(moduleId - 1)
-            .fold<int>(0, (total, m) => total + m.levelCount) +
-        1;
     return completedLevels.containsAll(
-      List.generate(module.levelCount, (i) => startLevel + i),
+      List.generate(module.levelCount, (i) => module.startLevel + i),
     );
   }
 
@@ -553,6 +561,7 @@ class GlobalProgressNotifier extends Notifier<GlobalProgress> {
 
   Future<void> completeLevel(int globalLevelNumber) async {
     final repository = ref.read(globalLevelRepositoryProvider);
+    final box = ref.read(hiveBoxProvider);
 
     final newCompletedLevels = Set<int>.from(state.completedLevels)
       ..add(globalLevelNumber);
@@ -563,6 +572,7 @@ class GlobalProgressNotifier extends Notifier<GlobalProgress> {
     );
 
     await repository.setCurrentGlobalLevel(newState.currentGlobalLevel);
+    await box.put('completedLevels', newState.completedLevels.toList());
     state = newState;
 
     debugPrint(
@@ -572,6 +582,7 @@ class GlobalProgressNotifier extends Notifier<GlobalProgress> {
 
   Future<void> resetProgress() async {
     final repository = ref.read(globalLevelRepositoryProvider);
+    final box = ref.read(hiveBoxProvider);
 
     const defaultProgress = GlobalProgress(
       currentGlobalLevel: 1,
@@ -579,6 +590,7 @@ class GlobalProgressNotifier extends Notifier<GlobalProgress> {
     );
 
     await repository.setCurrentGlobalLevel(defaultProgress.currentGlobalLevel);
+    await box.put('completedLevels', <int>[]);
     state = defaultProgress;
 
     debugPrint('GlobalProgressNotifier: Progress reset to $defaultProgress');
