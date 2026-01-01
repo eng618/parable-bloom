@@ -66,7 +66,6 @@ parable-bloom/
 - **Clean Architecture**: Strict separation of data/domain/presentation layers
 - **Riverpod**: Use for all state management (no setState, no Provider)
 - **Repository Pattern**: Abstract data sources (currently Hive, future Firebase)
-- **Dependency Injection**: Use `get_it` and `injectable` for service location
 
 ### Naming Conventions
 

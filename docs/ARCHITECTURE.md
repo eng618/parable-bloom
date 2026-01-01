@@ -20,88 +20,16 @@ We use **Riverpod** for reactive state management. This decouples the game logic
 - **`vineStatesProvider`**: Manages the dynamic "blocking" logic for all vines in the current level. It uses the `LevelSolver` to calculate which vines are movable based on snake-like path movement.
 - **`graceProvider`**: Manages Grace system (3 per level, 4 for Transcendent) with persistence.
 - **`currentLevelProvider`**: Holds the current level data with updated JSON schema (id, module_id, name, grid_size [rows, cols], difficulty, vines with head_direction). GridComponent now properly supports rectangular grids instead of assuming square dimensions.
-- **`currentLevelProvider`**: Holds the current level data with updated JSON schema (id, module_id, name, grid_size [rows, cols], difficulty, vines with head_direction). GridComponent now properly supports rectangular grids instead of assuming square dimensions.
-  
-  Note: Levels include both coordinate-based `ordered_path` (x,y) and an optional/expected `grid_size`. The canonical level format for the app is coordinate paths plus `grid_size` to help the UI compute bounds; clients should validate that `grid_size` is consistent with vine coordinates.
+- Note: Levels include both coordinate-based `ordered_path` (x,y) and an optional/expected `grid_size`. The canonical level format for the app is coordinate paths plus `grid_size` to help the UI compute bounds; clients should validate that `grid_size` is consistent with vine coordinates.
 
   Recent changes and conventions:
-  - `grid_size` is retained for UI/backwards-compatibility; LevelData still computes bounds from coordinates when needed.
-  - Visual masking: `LevelData` now supports an optional `mask` (modes: `hide`, `show`, `show-all`) that lists grid points to hide or show for purely visual shapes (e.g., smiley faces). Rendering should consult `mask` but the solver and collision logic continue to operate on the full rectangular grid.
-  - Solver consolidation: the canonical coordinate-based `LevelSolver` implementation lives in `lib/providers/game_providers.dart`. A legacy row/col solver was removed/replaced with a deprecation stub to avoid duplicated logic.
+
+- `grid_size` is retained for UI/backwards-compatibility; LevelData still computes bounds from coordinates when needed.
+- Visual masking: `LevelData` now supports an optional `mask` (modes: `hide`, `show`, `show-all`) that lists grid points to hide or show for purely visual shapes (e.g., smiley faces). Rendering should consult `mask` but the solver and collision logic continue to operate on the full rectangular grid.
+- Solver consolidation: the canonical coordinate-based `LevelSolver` implementation lives in `lib/providers/game_providers.dart`. A legacy row/col solver was removed/replaced with a deprecation stub to avoid duplicated logic.
 
   Tests: new unit tests validate mask parsing and enforce that vine coordinates use `(0,0)` as the lower-left origin and fit within provided or computed `grid_size`.
 
-- **`gameInstanceProvider`**: Bridges Flutter UI with Flame game engine instance.
-- **Transient State Providers**: Level completion, game over, and analytics tracking providers.
-
-### 2. Local Persistence (Hive)
-
-We use **Hive** for fast, local-first key-value storage.
-
-- **Initialization**: Hive is initialized in `main.dart` and the `Box` is injected into the Riverpod `ProviderScope`.
-- **Sync Logic**: The `GameProgressNotifier` and `ModuleProgressNotifier` handle the synchronization between the in-memory state and the Hive storage.
-
----
-
-## 🔍 Validation & Technical Assessment
-
-| Feature | Current Status | Assessment |
-|---------|----------------|------------|
-| **Decoupling** | High | UI components are fully isolated from the persistence layer. |
-| **Logic Integrity** | Solid | The `LevelSolver` (BFS) ensures all levels are solvable and blocking is accurate. |
-| **Persistence Coupling** | Moderate | `GameProgressNotifier` currently calls Hive directly. This is fine for MVP but needs abstraction for Firebase. |
-| **Performance** | Excellent | Hive's synchronous reads/writes are perfect for game state without blocking the UI thread. |
-
----
-
-## ☁️ Path to Firebase Integration
-
-The current setup is "Firebase Ready" because of the use of Riverpod. To add Firebase, we will implement the **Repository Pattern**.
-
-### Proposed Refactor for Firebase
-
-1. **Define an Abstract Repository**:
-
-```dart
-abstract class ProgressRepository {
-  Future<GameProgress> loadProgress();
-  Future<void> saveProgress(GameProgress progress);
-}
-```
-
-1. **Implement Hive & Firebase Repositories**:
-
-- `HiveProgressRepository` (Local-first)
-- `FirebaseProgressRepository` (Cloud sync)
-
-1. **Update Provider**:
-The `gameProgressProvider` will then depend on the `progressRepositoryProvider` instead of the Hive `Box` directly.
-
-```mermaid
-graph TD
-    UI[Flutter UI] --> |watch| RP[Riverpod Provider]
-    RP --> |use| GPN[GameProgressNotifier]
-    GPN --> |interact| Repo[Progress Repository]
-    Repo --> |impl| Hive[Hive - Local]
-    Repo --> |impl| FB[Firebase - Cloud]
-```
-
-### Benefits of this Approach
-
-- **Offline First**: Users can play without internet (Hive), and progress syncs to Firebase once online.
-- **Lazy Cloud Integration**: We can launch with Hive and add the Firebase implementation later without changing a single line of UI code.
-- **Cross-Platform Sync**: Users can pick up where they left off on different devices.
-
-## 🏗️ Current Architecture
-
-### 1. State Management (Riverpod)
-
-We use **Riverpod** for reactive state management. This decouples the game logic from the UI and allows for easy testing and debugging.
-
-- **`moduleProgressProvider`**: Tracks current module, level within module, and completed modules with Hive persistence.
-- **`vineStatesProvider`**: Manages the dynamic "blocking" logic for all vines in the current level. It uses the `LevelSolver` to calculate which vines are movable based on snake-like path movement.
-- **`graceProvider`**: Manages Grace system (3 per level, 4 for Transcendent) with persistence.
-- **`currentLevelProvider`**: Holds the current level data with updated JSON schema (id, module_id, name, grid_size, difficulty, vines with head_direction).
 - **`gameInstanceProvider`**: Bridges Flutter UI with Flame game engine instance.
 - **Transient State Providers**: Level completion, game over, and analytics tracking providers.
 

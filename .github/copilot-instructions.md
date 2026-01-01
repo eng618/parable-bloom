@@ -1,69 +1,17 @@
-## Copilot / AI Agent Instructions — Parable Bloom (parable-bloom)
+## Copilot / AI Agent Instructions — Parable Bloom
 
-Be concise. Below are targeted, repository-specific instructions to get an AI coding agent productive quickly.
+Be concise. Prioritize solver/provider integrity, Hive-backed persistence, and level data fidelity.
 
-1. Big picture
+- **Big picture**: Flutter + Flame game. Riverpod providers drive state; Hive is the on-device source of truth; `LevelSolver` (BFS, canonical) lives in [lib/providers/game_providers.dart](lib/providers/game_providers.dart) and powers blocking/unblocking logic.
+- **Key files**: [lib/providers/game_providers.dart](lib/providers/game_providers.dart) (providers, solver, notifiers), [lib/main.dart](lib/main.dart) (Hive init/ProviderScope), [lib/features/game/presentation/widgets/garden_game.dart](lib/features/game/presentation/widgets/garden_game.dart) (Flame bridge), [lib/features/game/domain/repositories/game_progress_repository.dart](lib/features/game/domain/repositories/game_progress_repository.dart) (repo contracts), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/TECHNICAL_IMPLEMENTATION.md](docs/TECHNICAL_IMPLEMENTATION.md) for rationale.
+- **State/persistence rules**: `moduleProgressProvider`, `vineStatesProvider`, `graceProvider`, `currentLevelProvider`, and `gameInstanceProvider` are the authoritative flows—extend/override via providers, not ad-hoc globals. `GameProgressNotifier` and `ModuleProgressNotifier` write directly to Hive; prefer introducing `ProgressRepository` adapters (Hive + Firebase) rather than bypassing existing writes.
+- **Level format**: JSON under [assets/levels](assets/levels) with `grid_size` `[rows, cols]`, coordinate `ordered_path` using origin `(0,0)` lower-left, optional `mask` (`hide`/`show`/`show-all`) for visuals only. Update [pubspec.yaml](pubspec.yaml) assets when adding folders. Keep rectangular-grid assumptions intact (non-square allowed).
+- **Patterns**: Keep UI thin; complex logic belongs in Riverpod notifiers/`LevelSolver`. Use the coordinate-based solver in [lib/providers/game_providers.dart](lib/providers/game_providers.dart); the legacy stub in [lib/features/game/domain/services/level_solver.dart](lib/features/game/domain/services/level_solver.dart) is deprecated. Maintain local-first behavior—Hive stays the primary store even when adding Firebase; wire cloud through the repository/provider layer.
+- **Workflows**: `flutter pub get`, `flutter run`, `flutter test`, targeted solver tests `flutter test test/level_validation_test.dart`, `flutter format lib/`, `flutter analyze`. Level data checks: `python scripts/validate_levels.py` (or `validate_levels_enhanced.py`) before shipping new JSON.
+- **Testing focus**: Level/solver behavior in [test/level_validation_test.dart](test/level_validation_test.dart) and animation logic in [test/vine_animation_test.dart](test/vine_animation_test.dart). Use provider overrides for deterministic tests. When changing persistence, add or update cases in [test/hive_repository_test.dart](test/hive_repository_test.dart) or the mock in [test/mock_repository_example_test.dart](test/mock_repository_example_test.dart).
+- **Integration points**: `gameInstanceProvider` bridges Riverpod <-> Flame; changes here affect rendering lifecycle. Hive boxes are opened in [lib/main.dart](lib/main.dart); keep initialization early and awaited before `runApp`. Coordinate/animation history drives clear/blocked states—do not shortcut through the UI layer.
+- **Conventions**: Prefer double quotes and `const` where possible (see [.clinerules/coding-standards.md](.clinerules/coding-standards.md)). Keep providers in dedicated files; add `copyWith`/equality for data classes; document non-obvious logic with brief comments.
+- **When adding cloud sync**: Create `ProgressRepository` implementations (Hive + Firebase) and swap via a provider override; do not delete Hive paths. Document migration notes in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- **CI/quality**: Run `flutter test`, `flutter analyze`, `flutter format lib/` after changes. Repository policy expects Codacy CLI analysis per edited file; when adding dependencies, run a Trivy scan via Codacy. Keep changes small; update architecture docs if altering state/persistence boundaries.
 
-- App: Flutter UI + Flame game engine. UI widgets live under `lib/` while canonical game logic (solver, providers) is implemented in `lib/providers/game_providers.dart`.
-- `LevelSolver` (BFS) is the canonical solver and lives in `lib/providers/game_providers.dart` (legacy stub: `lib/features/game/domain/services/level_solver.dart`).
-- State uses Riverpod providers (see `lib/providers/game_providers.dart` and `lib/providers/`); Hive is the on-device source-of-truth (initialized in `lib/main.dart`).
-- Levels: JSON files in `assets/levels/` (e.g., `level_1.json`, `modules.json`) — update `pubspec.yaml` when adding assets.
-
-2. Key files to open first
-
-- `lib/providers/game_providers.dart` — `LevelSolver`, `gameInstanceProvider`, `GameProgressNotifier`, `moduleProgressProvider`, `vineStatesProvider`, `graceProvider`, `currentLevelProvider`.
-- `lib/main.dart` — Hive initialization and app bootstrapping.
-- `lib/features/game/presentation/widgets/garden_game.dart` — `GardenGame` integration with Flame and UI.
-- `docs/ARCHITECTURE.md` and `docs/TECHNICAL_IMPLEMENTATION.md` — architecture rationale and sync patterns.
-
-3. Quick commands (copyable)
-
-```
-flutter pub get
-flutter run
-flutter test test/level_validation_test.dart
-flutter test
-flutter format lib/
-flutter analyze
-```
-
-Run a single failing test: `flutter test test/path/to_test.dart -r expanded`.
-
-4. Project conventions and patterns
-
-- Local-first: Hive is the primary store. Do not remove or bypass Hive reads/writes; add a `ProgressRepository` abstraction for any cloud sync and implement `HiveProgressRepository` as the default.
-- Keep UI thin: move business logic into Riverpod notifiers and `LevelSolver` for testability.
-- Solver is coordinate-based and canonical in `lib/providers/game_providers.dart`; prefer it over deprecated solver code.
-
-5. Integration points & external deps
-
-- Firebase libs exist in `pubspec.yaml` — adding dependencies requires a security scan (Codacy/Trivy) per repo policy.
-- Flame integration point: `gameInstanceProvider` bridges Riverpod <-> `GardenGame` (Flame). Modifying this provider affects rendering and game lifecycle.
-
-6. Tests & debugging tips
-
-- Level logic: tests under `test/` (e.g., `level_validation_test.dart`, `vine_animation_test.dart`) exercise `LevelSolver` and provider behavior — run those first when changing solver/provider code.
-- Logs: `LevelSolver` emits debug prints. Use `flutter test -r expanded` to see solver traces.
-
-7. Minimal change checklist for PRs
-
-- Update `docs/ARCHITECTURE.md` for any cross-cutting changes (persistence, provider topology, solver behavior).
-- Run `flutter test`, `flutter analyze`, and `flutter format` locally.
-- Run Codacy CLI analyze for edited files (repository uses Codacy checks).
-
-Questions to ask the maintainers
-
-- Do you want a migration utility for Hive data when introducing Firebase sync?
-- Are there platform-specific constraints (iOS entitlements or Android permissions) to consider for cloud sync features?
-
----
-
-## Example: Mock Repository for Testing
-
-The repository pattern is already implemented at `lib/features/game/domain/repositories/game_progress_repository.dart`. To test without Hive, use the mock example in `test/mock_repository_example_test.dart`:
-
-- **Mock Repository**: `MockGameProgressRepository` implements `GameProgressRepository` in-memory
-- **Real Hive Tests**: See `test/hive_repository_test.dart` for integration tests
-- **Firebase Impl**: `lib/features/game/data/repositories/firebase_game_progress_repository.dart`
-
-Run the mock test: `flutter test test/mock_repository_example_test.dart`
+If any section feels thin (e.g., provider wiring or level JSON examples), say which area to expand and I’ll add targeted guidance.

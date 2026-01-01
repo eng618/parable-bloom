@@ -397,13 +397,16 @@ class SettingsScreen extends ConsumerWidget {
       ref.invalidate(themeModeProvider);
 
       // 4. Close the loading dialog safely
-      if (loadingContext != null && Navigator.canPop(loadingContext)) {
+      if (loadingContext != null &&
+          loadingContext.mounted &&
+          Navigator.canPop(loadingContext)) {
         Navigator.of(loadingContext).pop();
       }
 
+      if (!originalContext.mounted) return;
+
       // 5. Show success message and restart app
       debugPrint('ResetData: Showing success message...');
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(originalContext).showSnackBar(
         const SnackBar(
           content: Text('All data reset successfully. Restarting app...'),
@@ -415,7 +418,7 @@ class SettingsScreen extends ConsumerWidget {
       debugPrint('ResetData: Restarting app...');
       await Future.delayed(const Duration(seconds: 2));
 
-      // ignore: use_build_context_synchronously
+      if (!originalContext.mounted) return;
       Navigator.of(
         originalContext,
       ).pushNamedAndRemoveUntil('/', (route) => false);
@@ -423,12 +426,14 @@ class SettingsScreen extends ConsumerWidget {
       debugPrint('ResetData: Error during reset: $e');
 
       // Close loading dialog safely
-      if (loadingContext != null && Navigator.canPop(loadingContext)) {
+      if (loadingContext != null &&
+          loadingContext.mounted &&
+          Navigator.canPop(loadingContext)) {
         Navigator.of(loadingContext).pop();
       }
 
+      if (!originalContext.mounted) return;
       // Show error message
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(originalContext).showSnackBar(
         SnackBar(
           content: Text('Error resetting data: ${e.toString()}'),
