@@ -1,7 +1,7 @@
 ---
 title: "Parable Bloom - Level Design Requirements"
 version: "1.0"
-last_updated: "2025-12-27"
+last_updated: "2026-01-01"
 status: "Active Development"
 type: "Level Design Documentation"
 ---
@@ -14,44 +14,43 @@ This document outlines the formal requirements for designing levels in Parable B
 
 ### Module Organization
 
-Levels are organized into modules for content management and parable unlocks. Modules are **internal concepts only** - users see continuous level numbering.
+Levels are organized into modules for content management and parable unlocks. Modules are **internal concepts only** — users see continuous level numbering.
+
+Levels are stored as a single flat sequence of JSON files under `assets/levels/`:
 
 ```
 assets/levels/
-├── module_1/                # Tutorial Module (5 levels)
-│   ├── module.json          # Tutorial metadata and welcome content
-│   ├── level_1.json         # Global level 1 - Single vine, no blocking
-│   ├── level_2.json         # Global level 2 - Two vines, no blocking
-│   ├── level_3.json         # Global level 3 - Two vines with blocking
-│   ├── level_4.json         # Global level 4 - Three vines with blocking
-│   └── level_5.json         # Global level 5 - Simple puzzle
-├── module_2/                # Mustard Seed Module (15 levels)
-│   ├── module.json          # Parable content for reflection
-│   ├── level_1.json         # Global level 6
-│   ├── level_2.json         # Global level 7
-│   └── ...                  # Up to level_15.json (global levels 8-20)
-├── module_3/                # Sower Module (15 levels)
-│   └── ...                  # Global levels 21-35
-└── ...
+  level_1.json
+  level_2.json
+  ...
+  level_100.json
+  modules.json        # defines module level ranges + parables
 ```
+
+Module membership is defined in `assets/levels/modules.json` via `level_range: [start, end]`.
 
 ### Module JSON Schema
 
-Each module must have a `module.json` file:
+Modules live in `assets/levels/modules.json`:
 
 ```json
 {
-  "id": 1,
-  "name": "The Mustard Seed",
-  "level_count": 15,
-  "parable": {
-    "title": "The Parable of the Mustard Seed",
-    "scripture": "Matthew 13:31-32",
-    "content": "He told them another parable: 'The kingdom of heaven is like a mustard seed, which a man took and planted in his field. Though it is the smallest of all seeds, yet when it grows, it is the largest of garden plants and becomes a tree, so that the birds come and perch in its branches.'",
-    "reflection": "How does God use small beginnings to create great things in your life?",
-    "background_image": "parable_mustard_seed.jpg"
-  },
-  "unlock_message": "Module complete! Take time to reflect on the parable."
+  "version": "1.0",
+  "modules": [
+    {
+      "id": 1,
+      "name": "Tutorial",
+      "level_range": [1, 5],
+      "parable": {
+        "title": "Welcome to Parable Bloom",
+        "scripture": "Psalm 1:3",
+        "content": "They are like a tree planted by streams of water...",
+        "reflection": "Just as a tree grows strong by the water...",
+        "background_image": "tutorial_welcome.jpg"
+      },
+      "unlock_message": "Tutorial complete! Now let's begin your parable journey."
+    }
+  ]
 }
 ```
 
@@ -84,7 +83,7 @@ Each level file must include:
 {
   "id": 1,
   "name": "First Steps",
-  "grid_size": [9, 16],
+  "grid_size": [6, 8],
   "difficulty": "Seedling",
   "vines": [
     {
@@ -104,6 +103,14 @@ Each level file must include:
   "grace": 3
 }
 ```
+
+### Grid Aspect Ratio (Portrait-first)
+
+To fit portrait mobile screens, keep levels on a consistent **3:4 width:height** aspect ratio.
+
+- Recommended sizes: `6×8`, `9×12`, `12×16`, `15×20`, ...
+- Larger, more difficult levels should scale **up** while keeping the same aspect ratio.
+- Pinch-to-zoom support is planned for large boards so players can comfortably view dense late-game layouts.
 
 ### Global Level Numbering
 
