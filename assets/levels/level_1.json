@@ -2,17 +2,17 @@
   "id": 1,
   "name": "First Steps",
   "difficulty": "Tutorial",
-  "grid_size": [5, 5],
+  "grid_size": [6, 8],
+  "mask": {"mode": "show-all", "points": []},
   "vines": [
     {
       "id": "vine_a",
-      "head_direction": "right",
+      "head_direction": "left",
       "ordered_path": [
-        { "x": 4, "y": 0 },
-        { "x": 3, "y": 0 },
-        { "x": 2, "y": 0 },
+        { "x": 0, "y": 0 },
         { "x": 1, "y": 0 },
-        { "x": 0, "y": 0 }
+        { "x": 1, "y": 1 },
+        { "x": 1, "y": 2 }
       ],
       "vine_color": "default"
     },
@@ -20,53 +20,60 @@
       "id": "vine_b",
       "head_direction": "right",
       "ordered_path": [
+        { "x": 5, "y": 0 },
+        { "x": 4, "y": 0 },
         { "x": 4, "y": 1 },
-        { "x": 3, "y": 1 },
-        { "x": 2, "y": 1 },
-        { "x": 1, "y": 1 },
-        { "x": 0, "y": 1 }
+        { "x": 4, "y": 2 }
       ],
       "vine_color": "default"
     },
     {
       "id": "vine_c",
-      "head_direction": "right",
+      "head_direction": "up",
       "ordered_path": [
-        { "x": 4, "y": 2 },
-        { "x": 3, "y": 2 },
-        { "x": 2, "y": 2 },
-        { "x": 1, "y": 2 },
-        { "x": 0, "y": 2 }
+        { "x": 2, "y": 5 },
+        { "x": 2, "y": 4 },
+        { "x": 3, "y": 4 },
+        { "x": 3, "y": 3 }
       ],
       "vine_color": "default"
     },
     {
       "id": "vine_d",
-      "head_direction": "right",
+      "head_direction": "down",
       "ordered_path": [
-        { "x": 4, "y": 3 },
-        { "x": 3, "y": 3 },
-        { "x": 2, "y": 3 },
-        { "x": 1, "y": 3 },
-        { "x": 0, "y": 3 }
+        { "x": 3, "y": 0 },
+        { "x": 3, "y": 1 },
+        { "x": 2, "y": 1 },
+        { "x": 2, "y": 2 }
       ],
       "vine_color": "default"
     },
     {
       "id": "vine_e",
+      "head_direction": "left",
+      "ordered_path": [
+        { "x": 0, "y": 5 },
+        { "x": 1, "y": 5 },
+        { "x": 1, "y": 4 },
+        { "x": 1, "y": 3 }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_f",
       "head_direction": "right",
       "ordered_path": [
+        { "x": 5, "y": 5 },
+        { "x": 4, "y": 5 },
         { "x": 4, "y": 4 },
-        { "x": 3, "y": 4 },
-        { "x": 2, "y": 4 },
-        { "x": 1, "y": 4 },
-        { "x": 0, "y": 4 }
+        { "x": 4, "y": 3 }
       ],
       "vine_color": "default"
     }
   ],
-  "max_moves": 7,
-  "min_moves": 5,
+  "max_moves": 8,
+  "min_moves": 0,
   "complexity": "tutorial",
   "grace": 3
 }
