@@ -23,7 +23,10 @@ class BackgroundAudioController {
       _loaded = true;
     }
 
-    await _player.play();
+    try {
+      await _player.play();
+    } catch (_) {
+    }
   }
 
   Future<void> dispose() async {
