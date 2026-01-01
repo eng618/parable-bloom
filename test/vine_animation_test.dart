@@ -71,13 +71,13 @@ void main() {
         id: 'test_vine',
         headDirection: 'right',
         orderedPath: path,
-        color: 'green',
+        vineColor: 'default',
       );
 
       expect(vine.id, 'test_vine');
       expect(vine.headDirection, 'right');
       expect(vine.orderedPath, path);
-      expect(vine.color, 'green');
+      expect(vine.vineColor, 'default');
     });
 
     test('LevelData structure is valid', () {
@@ -85,11 +85,14 @@ void main() {
         id: 1,
         name: 'Test Level',
         difficulty: 'Seedling',
+        gridWidth: 5,
+        gridHeight: 5,
         vines: [],
         maxMoves: 5,
         minMoves: 2,
         complexity: 'low',
         grace: 3,
+        mask: MaskData(mode: 'show-all', points: const []),
       );
 
       expect(level.id, 1);
@@ -107,6 +110,8 @@ void main() {
         id: 3,
         name: 'Solvable Level',
         difficulty: 'Seedling',
+        gridWidth: 5,
+        gridHeight: 5,
         vines: [
           VineData(
             id: 'clearable',
@@ -116,13 +121,14 @@ void main() {
               {'x': 1, 'y': 2},
               {'x': 2, 'y': 2},
             ],
-            color: 'green',
+            vineColor: 'default',
           ),
         ],
         maxMoves: 5,
         minMoves: 2,
         complexity: 'low',
         grace: 3,
+        mask: MaskData(mode: 'show-all', points: const []),
       );
 
       final solver = LevelSolverService();

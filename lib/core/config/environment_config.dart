@@ -6,14 +6,18 @@ enum AppEnvironment { dev, preview, prod }
 class EnvironmentConfig {
   static const String _envVarName = 'APP_ENV';
 
+  static const String _rawEnv = String.fromEnvironment(
+    _envVarName,
+    defaultValue: 'dev',
+  );
+
   /// Current application environment (defaults to dev if not specified).
   static AppEnvironment current = _parseEnvironment();
 
   /// Parses the APP_ENV dart-define to determine the current environment.
   static AppEnvironment _parseEnvironment() {
-    final env = String.fromEnvironment(_envVarName, defaultValue: 'dev');
     return AppEnvironment.values.firstWhere(
-      (e) => e.name == env,
+      (e) => e.name == _rawEnv,
       orElse: () => AppEnvironment.dev,
     );
   }

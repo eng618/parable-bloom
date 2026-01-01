@@ -18,6 +18,8 @@ import '../features/game/domain/services/level_solver_service.dart';
 import '../features/game/presentation/widgets/garden_game.dart';
 import '../features/settings/data/repositories/hive_settings_repository.dart';
 import '../features/settings/domain/repositories/settings_repository.dart';
+import '../core/vine_color_palette.dart';
+import '../services/background_audio_controller.dart';
 import '../services/analytics_service.dart';
 
 // Module data model
@@ -25,6 +27,8 @@ class ModuleData {
   final int id;
   final String name;
   final int levelCount;
+  final int startLevel;
+  final int endLevel;
   final Map<String, dynamic> parable;
   final String unlockMessage;
 
@@ -32,15 +36,22 @@ class ModuleData {
     required this.id,
     required this.name,
     required this.levelCount,
+    required this.startLevel,
+    required this.endLevel,
     required this.parable,
     required this.unlockMessage,
   });
 
   factory ModuleData.fromJson(Map<String, dynamic> json) {
+    final range = (json['level_range'] as List<dynamic>?) ?? const [];
+    final start = range.isNotEmpty ? (range[0] as num).toInt() : 1;
+    final end = range.length > 1 ? (range[1] as num).toInt() : start;
     return ModuleData(
       id: json['id'],
       name: json['name'],
-      levelCount: json['level_count'],
+      levelCount: (json['level_count'] as num?)?.toInt() ?? (end - start + 1),
+      startLevel: start,
+      endLevel: end,
       parable: json['parable'],
       unlockMessage: json['unlock_message'],
     );
@@ -84,10 +95,14 @@ final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
 
     return modulesList.map((moduleJson) {
       final range = moduleJson['level_range'] as List<dynamic>;
+      final startLevel = (range[0] as num).toInt();
+      final endLevel = (range[1] as num).toInt();
       return ModuleData(
         id: moduleJson['id'],
         name: moduleJson['name'],
-        levelCount: range[1] - range[0] + 1, // Calculate level count from range
+        levelCount: endLevel - startLevel + 1,
+        startLevel: startLevel,
+        endLevel: endLevel,
         parable: moduleJson['parable'],
         unlockMessage: moduleJson['unlock_message'],
       );
@@ -104,16 +119,22 @@ class VineData {
   final String headDirection;
   final List<Map<String, int>>
   orderedPath; // Ordered from head (index 0) to tail (last)
-  final String color;
+  final String? vineColor;
 
   VineData({
     required this.id,
     required this.headDirection,
     required this.orderedPath,
-    required this.color,
+    this.vineColor,
   });
 
   factory VineData.fromJson(Map<String, dynamic> json) {
+    final vineColor = json['vine_color']?.toString().trim();
+    if (vineColor != null && vineColor.isNotEmpty) {
+      if (!VineColorPalette.isKnownKey(vineColor)) {
+        throw FormatException('Unknown vine_color key: $vineColor');
+      }
+    }
     return VineData(
       id: json['id'].toString(),
       headDirection: json['head_direction'],
@@ -122,7 +143,7 @@ class VineData {
           (cell) => {'x': cell['x'] as int, 'y': cell['y'] as int},
         ),
       ),
-      color: json['color'],
+      vineColor: vineColor,
     );
   }
 }
@@ -131,73 +152,123 @@ class LevelData {
   final int id; // Global level ID (1, 2, 3...)
   final String name;
   final String difficulty;
+
+  /// Canonical grid size for the level.
+  ///
+  /// Ordering is `[width, height]` where:
+  /// - x in `[0, width-1]`
+  /// - y in `[0, height-1]`
+  final int gridWidth;
+  final int gridHeight;
   final List<VineData> vines;
   final int maxMoves;
   final int minMoves;
   final String complexity;
   final int grace;
-  final MaskData? mask;
+  final MaskData mask;
 
   LevelData({
     required this.id,
     required this.name,
     required this.difficulty,
+    required this.gridWidth,
+    required this.gridHeight,
     required this.vines,
     required this.maxMoves,
     required this.minMoves,
     required this.complexity,
     required this.grace,
-    this.mask,
+    required this.mask,
   });
 
   factory LevelData.fromJson(Map<String, dynamic> json) {
+    final gridSize = json['grid_size'];
+    if (gridSize is! List || gridSize.length < 2) {
+      throw const FormatException(
+        'Level JSON must include grid_size: [width, height]',
+      );
+    }
+
+    final gridWidth = (gridSize[0] as num).toInt();
+    final gridHeight = (gridSize[1] as num).toInt();
+    if (gridWidth <= 0 || gridHeight <= 0) {
+      throw FormatException(
+        'grid_size must be positive; got [$gridWidth, $gridHeight]',
+      );
+    }
+
+    final vines = List<VineData>.from(
+      json['vines'].map((vine) => VineData.fromJson(vine)),
+    );
+
+    // Validate vine coordinates are within bounds.
+    for (final vine in vines) {
+      for (final cell in vine.orderedPath) {
+        final x = cell['x'] as int;
+        final y = cell['y'] as int;
+        if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight) {
+          throw FormatException(
+            'Vine ${vine.id} has cell ($x,$y) outside grid_size [$gridWidth,$gridHeight]',
+          );
+        }
+      }
+    }
+
+    final mask = MaskData.fromJson(json['mask']);
+
+    // For MVP, mask is visual-only, but we validate that vines never occupy masked-out cells.
+    for (final vine in vines) {
+      for (final cell in vine.orderedPath) {
+        final x = cell['x'] as int;
+        final y = cell['y'] as int;
+        if (!_isCellVisibleWithMask(mask, x, y)) {
+          throw FormatException(
+            'Vine ${vine.id} occupies masked-out cell ($x,$y)',
+          );
+        }
+      }
+    }
+
     return LevelData(
       id: json['id'],
       name: json['name'],
       difficulty: json['difficulty'],
-      vines: List<VineData>.from(
-        json['vines'].map((vine) => VineData.fromJson(vine)),
-      ),
+      gridWidth: gridWidth,
+      gridHeight: gridHeight,
+      vines: vines,
       maxMoves: json['max_moves'],
       minMoves: json['min_moves'],
       complexity: json['complexity'],
       grace: json['grace'],
-      mask: json.containsKey('mask') ? MaskData.fromJson(json['mask']) : null,
+      mask: mask,
     );
   }
 
-  // Calculate bounds dynamically from vine positions
+  bool isCellVisible(int x, int y) {
+    return _isCellVisibleWithMask(mask, x, y);
+  }
+
+  // Bounds are now driven by grid_size.
   ({int minX, int maxX, int minY, int maxY}) getBounds() {
-    if (vines.isEmpty || vines.first.orderedPath.isEmpty) {
-      return (minX: 0, maxX: 8, minY: 0, maxY: 8); // Default fallback
-    }
-
-    int minX = vines
-        .expand((vine) => vine.orderedPath)
-        .map((pos) => pos['x'] as int)
-        .reduce((a, b) => a < b ? a : b);
-
-    int maxX = vines
-        .expand((vine) => vine.orderedPath)
-        .map((pos) => pos['x'] as int)
-        .reduce((a, b) => a > b ? a : b);
-
-    int minY = vines
-        .expand((vine) => vine.orderedPath)
-        .map((pos) => pos['y'] as int)
-        .reduce((a, b) => a < b ? a : b);
-
-    int maxY = vines
-        .expand((vine) => vine.orderedPath)
-        .map((pos) => pos['y'] as int)
-        .reduce((a, b) => a > b ? a : b);
-
-    return (minX: minX, maxX: maxX, minY: minY, maxY: maxY);
+    return (minX: 0, maxX: gridWidth - 1, minY: 0, maxY: gridHeight - 1);
   }
 
   // Get dimensions for backwards compatibility
-  int get width => getBounds().maxX - getBounds().minX + 1;
-  int get height => getBounds().maxY - getBounds().minY + 1;
+  int get width => gridWidth;
+  int get height => gridHeight;
+
+  static bool _isCellVisibleWithMask(MaskData mask, int x, int y) {
+    switch (mask.mode) {
+      case 'show-all':
+        return true;
+      case 'hide':
+        return !mask.points.any((p) => p['x'] == x && p['y'] == y);
+      case 'show':
+        return mask.points.any((p) => p['x'] == x && p['y'] == y);
+      default:
+        return true;
+    }
+  }
 }
 
 // Providers
@@ -438,13 +509,8 @@ class GlobalProgress {
   // Check if a module is completed (all levels in the module are done)
   bool isModuleCompleted(int moduleId, List<ModuleData> modules) {
     final module = modules.firstWhere((m) => m.id == moduleId);
-    final startLevel =
-        modules
-            .take(moduleId - 1)
-            .fold<int>(0, (total, m) => total + m.levelCount) +
-        1;
     return completedLevels.containsAll(
-      List.generate(module.levelCount, (i) => startLevel + i),
+      List.generate(module.levelCount, (i) => module.startLevel + i),
     );
   }
 
@@ -495,6 +561,7 @@ class GlobalProgressNotifier extends Notifier<GlobalProgress> {
 
   Future<void> completeLevel(int globalLevelNumber) async {
     final repository = ref.read(globalLevelRepositoryProvider);
+    final box = ref.read(hiveBoxProvider);
 
     final newCompletedLevels = Set<int>.from(state.completedLevels)
       ..add(globalLevelNumber);
@@ -505,6 +572,7 @@ class GlobalProgressNotifier extends Notifier<GlobalProgress> {
     );
 
     await repository.setCurrentGlobalLevel(newState.currentGlobalLevel);
+    await box.put('completedLevels', newState.completedLevels.toList());
     state = newState;
 
     debugPrint(
@@ -514,6 +582,7 @@ class GlobalProgressNotifier extends Notifier<GlobalProgress> {
 
   Future<void> resetProgress() async {
     final repository = ref.read(globalLevelRepositoryProvider);
+    final box = ref.read(hiveBoxProvider);
 
     const defaultProgress = GlobalProgress(
       currentGlobalLevel: 1,
@@ -521,6 +590,7 @@ class GlobalProgressNotifier extends Notifier<GlobalProgress> {
     );
 
     await repository.setCurrentGlobalLevel(defaultProgress.currentGlobalLevel);
+    await box.put('completedLevels', <int>[]);
     state = defaultProgress;
 
     debugPrint('GlobalProgressNotifier: Progress reset to $defaultProgress');
@@ -629,6 +699,46 @@ class ThemeModeNotifier extends Notifier<AppThemeMode> {
     await repository.setThemeMode(mode.name);
   }
 }
+
+// Background audio enabled setting
+final backgroundAudioEnabledProvider =
+    NotifierProvider<BackgroundAudioEnabledNotifier, bool>(
+      BackgroundAudioEnabledNotifier.new,
+    );
+
+class BackgroundAudioEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final box = ref.watch(hiveBoxProvider);
+    return box.get('backgroundAudioEnabled', defaultValue: true) as bool;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setBackgroundAudioEnabled(enabled);
+  }
+}
+
+// Background audio controller (plays/loops based on backgroundAudioEnabledProvider)
+final backgroundAudioControllerProvider = Provider<BackgroundAudioController>((
+  ref,
+) {
+  final controller = BackgroundAudioController();
+
+  ref.onDispose(() {
+    unawaited(controller.dispose());
+  });
+
+  ref.listen<bool>(backgroundAudioEnabledProvider, (previous, next) {
+    unawaited(controller.setEnabled(next));
+  });
+
+  // Apply initial state.
+  unawaited(controller.setEnabled(ref.read(backgroundAudioEnabledProvider)));
+
+  return controller;
+});
 
 class GameInstanceNotifier extends Notifier<GardenGame?> {
   @override

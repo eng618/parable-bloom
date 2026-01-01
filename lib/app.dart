@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/app_theme.dart';
 import 'core/config/environment_config.dart';
 import 'features/game/presentation/screens/game_screen.dart';
+import 'features/journal/presentation/screens/journal_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 import 'providers/game_providers.dart';
 import 'screens/home_screen.dart';
@@ -14,6 +15,7 @@ class ParableBloomApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    ref.watch(backgroundAudioControllerProvider);
 
     return MaterialApp(
       title: 'Parable Bloom',
@@ -24,6 +26,7 @@ class ParableBloomApp extends ConsumerWidget {
       home: _buildHome(),
       routes: {
         '/game': (context) => const GameScreen(),
+        '/journal': (context) => const JournalScreen(),
         '/settings': (context) => const SettingsScreen(),
       },
     );

@@ -167,6 +167,8 @@ For smaller grids: Allow ±5% variance
 
 ## 📋 Enhanced Level JSON Template
 
+Note: The runtime schema uses `id`, `name`, `grid_size`, `difficulty`, `vines`, `max_moves`, `min_moves`, `complexity`, `grace` (+ optional `mask`). Fields like `module_id`/`global_level_number` are designer metadata and are ignored by the app.
+
 ```json
 {
   "id": 1,
@@ -180,7 +182,7 @@ For smaller grids: Allow ±5% variance
   "vines": [
     {
       "id": "vine_1",
-      "color": "moss_green",
+      "vine_color": "default",
       "head_direction": "right",
       "ordered_path": [
         {"x": 2, "y": 0},

@@ -8,4 +8,10 @@ abstract class SettingsRepository {
   /// Set the theme mode.
   /// [mode] should be 'light', 'dark', or 'system'.
   Future<void> setThemeMode(String mode);
+
+  /// Whether background audio is enabled.
+  Future<bool> getBackgroundAudioEnabled();
+
+  /// Enable/disable background audio.
+  Future<void> setBackgroundAudioEnabled(bool enabled);
 }

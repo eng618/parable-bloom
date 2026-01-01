@@ -19,16 +19,17 @@ We use **Riverpod** for reactive state management. This decouples the game logic
 - **`moduleProgressProvider`**: Tracks current module, level within module, and completed modules with Hive persistence.
 - **`vineStatesProvider`**: Manages the dynamic "blocking" logic for all vines in the current level. It uses the `LevelSolver` to calculate which vines are movable based on snake-like path movement.
 - **`graceProvider`**: Manages Grace system (3 per level, 4 for Transcendent) with persistence.
-- **`currentLevelProvider`**: Holds the current level data with updated JSON schema (id, module_id, name, grid_size [rows, cols], difficulty, vines with head_direction). GridComponent now properly supports rectangular grids instead of assuming square dimensions.
-- Note: Levels include both coordinate-based `ordered_path` (x,y) and an optional/expected `grid_size`. The canonical level format for the app is coordinate paths plus `grid_size` to help the UI compute bounds; clients should validate that `grid_size` is consistent with vine coordinates.
+- **`currentLevelProvider`**: Holds the current level data with the canonical JSON schema (id, name, grid_size `[width, height]`, difficulty, vines with head_direction).
+- Note: Levels use coordinate-based `ordered_path` (x,y) and require `grid_size` so the UI/solver have a single authoritative rectangular board.
 
   Recent changes and conventions:
 
-- `grid_size` is retained for UI/backwards-compatibility; LevelData still computes bounds from coordinates when needed.
-- Visual masking: `LevelData` now supports an optional `mask` (modes: `hide`, `show`, `show-all`) that lists grid points to hide or show for purely visual shapes (e.g., smiley faces). Rendering should consult `mask` but the solver and collision logic continue to operate on the full rectangular grid.
+- `grid_size` is required (ordering `[width, height]`); LevelData derives bounds directly from it.
+- Visual masking: `LevelData` supports an optional `mask` (modes: `hide`, `show`, `show-all`) listing grid points to hide/show. Rendering and input consult `mask`; solver/collision logic still operate on the full rectangular grid.
+- Mask safety: vines are validated to never occupy masked-out cells.
 - Solver consolidation: the canonical coordinate-based `LevelSolver` implementation lives in `lib/providers/game_providers.dart`. A legacy row/col solver was removed/replaced with a deprecation stub to avoid duplicated logic.
 
-  Tests: new unit tests validate mask parsing and enforce that vine coordinates use `(0,0)` as the lower-left origin and fit within provided or computed `grid_size`.
+  Tests: unit tests validate mask parsing and enforce that vine coordinates use `(0,0)` as the lower-left origin and fit within `grid_size`.
 
 - **`gameInstanceProvider`**: Bridges Flutter UI with Flame game engine instance.
 - **Transient State Providers**: Level completion, game over, and analytics tracking providers.

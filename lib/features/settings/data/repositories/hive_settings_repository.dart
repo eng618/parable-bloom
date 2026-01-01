@@ -9,6 +9,9 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _themeModeKey = 'themeMode';
   static const String _defaultThemeMode = 'system';
 
+  static const String _backgroundAudioEnabledKey = 'backgroundAudioEnabled';
+  static const bool _defaultBackgroundAudioEnabled = true;
+
   HiveSettingsRepository(this.hiveBox);
 
   @override
@@ -20,5 +23,19 @@ class HiveSettingsRepository implements SettingsRepository {
   @override
   Future<void> setThemeMode(String mode) async {
     await hiveBox.put(_themeModeKey, mode);
+  }
+
+  @override
+  Future<bool> getBackgroundAudioEnabled() async {
+    return hiveBox.get(
+          _backgroundAudioEnabledKey,
+          defaultValue: _defaultBackgroundAudioEnabled,
+        )
+        as bool;
+  }
+
+  @override
+  Future<void> setBackgroundAudioEnabled(bool enabled) async {
+    await hiveBox.put(_backgroundAudioEnabledKey, enabled);
   }
 }
