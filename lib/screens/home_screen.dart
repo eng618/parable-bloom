@@ -78,6 +78,27 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 12),
+
+              // Journal Button
+              OutlinedButton.icon(
+                onPressed: () => _openJournal(context),
+                icon: const Icon(Icons.menu_book),
+                label: const Text('Journal'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -91,6 +112,10 @@ class HomeScreen extends ConsumerWidget {
 
   void _openSettings(BuildContext context) {
     Navigator.of(context).pushNamed('/settings');
+  }
+
+  void _openJournal(BuildContext context) {
+    Navigator.of(context).pushNamed('/journal');
   }
 }
 
