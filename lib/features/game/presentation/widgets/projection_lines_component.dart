@@ -45,7 +45,7 @@ class ProjectionLinesComponent extends PositionComponent
 
     // Paint for projection lines - semi-transparent gray
     final linePaint = Paint()
-      ..color = Colors.grey.withValues(alpha: 0.2)
+      ..color = Colors.grey.withOpacity(0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
