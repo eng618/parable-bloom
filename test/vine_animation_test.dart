@@ -117,9 +117,9 @@ void main() {
             id: 'clearable',
             headDirection: 'right',
             orderedPath: [
-              {'x': 0, 'y': 2},
-              {'x': 1, 'y': 2},
               {'x': 2, 'y': 2},
+              {'x': 1, 'y': 2},
+              {'x': 0, 'y': 2},
             ],
             vineColor: 'default',
           ),

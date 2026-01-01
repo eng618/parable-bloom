@@ -7,17 +7,209 @@ import '../../../../providers/game_providers.dart' show LevelData, VineData;
 /// Domain service for solving vine puzzle levels using BFS/A* algorithm.
 /// Pure business logic with no UI or state management dependencies.
 class LevelSolverService {
-  /// Solves the level and returns one optimal sequence of vine IDs to clear.
-  /// Returns null if the level is unsolvable.
-  List<String>? solve(LevelData level) {
-    debugPrint('LevelSolverService: Attempting to solve level ${level.id}');
+  /// Returns a vine-clear order if solvable, else null.
+  ///
+  /// This is primarily used by unit tests and debugging; for validation runs
+  /// prefer [isSolvable] which is cheaper.
+  List<String>? solve(LevelData level, {int maxStates = 100000}) {
+    final vineCount = level.vines.length;
+    if (vineCount == 0) return <String>[];
+
+    if (vineCount <= 24) {
+      return _solveExact(level);
+    }
+
+    // For unusually large levels, fall back to a best-effort heuristic.
+    return _solveHeuristic(level, maxStates: maxStates);
+  }
+
+  /// Fast solvability check.
+  ///
+  /// Returns true iff the level is solvable within the search budget.
+  /// This avoids building a full sequence, which makes level test runs faster.
+  bool isSolvable(LevelData level, {int maxStates = 100000}) {
+    final vineCount = level.vines.length;
+    if (vineCount == 0) return true;
+
+    // Exact subset BFS is fast and reliable for typical vine counts.
+    if (vineCount <= 24) {
+      return _isSolvableExact(level);
+    }
+
+    // Fallback for unusually large levels.
+    return _isSolvableHeuristic(level, maxStates: maxStates);
+  }
+
+  bool _isSolvableExact(LevelData level) {
+    final vines = level.vines.toList(growable: false);
+    final vineCount = vines.length;
+
+    final vineCells = <String, Set<String>>{
+      for (final v in vines)
+        v.id: {for (final s in v.orderedPath) '${s['x']},${s['y']}'},
+    };
+
+    final fullMask = (1 << vineCount) - 1;
+    final visited = List<bool>.filled(1 << vineCount, false);
+    final queue = <int>[fullMask];
+    visited[fullMask] = true;
+
+    while (queue.isNotEmpty) {
+      final mask = queue.removeAt(0);
+      if (mask == 0) return true;
+
+      final occupiedAll = <String>{};
+      for (var i = 0; i < vineCount; i++) {
+        if ((mask & (1 << i)) == 0) continue;
+        occupiedAll.addAll(vineCells[vines[i].id]!);
+      }
+
+      for (var i = 0; i < vineCount; i++) {
+        if ((mask & (1 << i)) == 0) continue;
+        final vine = vines[i];
+        if (!_canVineClearExact(
+          level,
+          vine,
+          occupiedAll,
+          vineCells[vine.id]!,
+        )) {
+          continue;
+        }
+
+        final next = mask & ~(1 << i);
+        if (!visited[next]) {
+          visited[next] = true;
+          queue.add(next);
+        }
+      }
+    }
+
+    return false;
+  }
+
+  List<String>? _solveExact(LevelData level) {
+    final vines = level.vines.toList(growable: false);
+    final vineCount = vines.length;
+    if (vineCount == 0) return <String>[];
+
+    final vineCells = <String, Set<String>>{
+      for (final v in vines)
+        v.id: {for (final s in v.orderedPath) '${s['x']},${s['y']}'},
+    };
+
+    final fullMask = (1 << vineCount) - 1;
+    final visited = List<bool>.filled(1 << vineCount, false);
+    final prevMask = List<int>.filled(1 << vineCount, -1);
+    final removedIndex = List<int>.filled(1 << vineCount, -1);
+
+    final queue = <int>[fullMask];
+    visited[fullMask] = true;
+
+    while (queue.isNotEmpty) {
+      final mask = queue.removeAt(0);
+      if (mask == 0) {
+        // Reconstruct removal order.
+        final reversed = <String>[];
+        var cur = 0;
+        while (cur != fullMask) {
+          final idx = removedIndex[cur];
+          if (idx < 0) break;
+          reversed.add(vines[idx].id);
+          cur = prevMask[cur];
+          if (cur < 0) break;
+        }
+        return reversed.reversed.toList(growable: false);
+      }
+
+      final occupiedAll = <String>{};
+      for (var i = 0; i < vineCount; i++) {
+        if ((mask & (1 << i)) == 0) continue;
+        occupiedAll.addAll(vineCells[vines[i].id]!);
+      }
+
+      for (var i = 0; i < vineCount; i++) {
+        if ((mask & (1 << i)) == 0) continue;
+        final vine = vines[i];
+        if (!_canVineClearExact(
+          level,
+          vine,
+          occupiedAll,
+          vineCells[vine.id]!,
+        )) {
+          continue;
+        }
+
+        final next = mask & ~(1 << i);
+        if (!visited[next]) {
+          visited[next] = true;
+          prevMask[next] = mask;
+          removedIndex[next] = i;
+          queue.add(next);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  bool _canVineClearExact(
+    LevelData level,
+    VineData vine,
+    Set<String> occupiedAll,
+    Set<String> selfCells,
+  ) {
+    if (vine.orderedPath.isEmpty) return false;
+
+    var currentPositions = List<Map<String, int>>.from(vine.orderedPath);
+    final maxCheckDistance =
+        (level.gridWidth + level.gridHeight + vine.orderedPath.length + 10)
+            .clamp(10, 300);
+
+    for (var step = 0; step < maxCheckDistance; step++) {
+      final newPositions = _simulateVineMovementFromPositions(
+        currentPositions,
+        vine.headDirection,
+      );
+
+      final seen = <String>{};
+      for (final newPos in newPositions) {
+        final k = '${newPos['x']},${newPos['y']}';
+
+        // Self-overlap after movement is not allowed.
+        if (!seen.add(k)) return false;
+
+        // Collision with any other vine.
+        if (occupiedAll.contains(k) && !selfCells.contains(k)) {
+          return false;
+        }
+      }
+
+      final newHead = newPositions.first;
+      final headX = newHead['x'] as int;
+      final headY = newHead['y'] as int;
+      if (headX < 0 ||
+          headX >= level.gridWidth ||
+          headY < 0 ||
+          headY >= level.gridHeight) {
+        return true;
+      }
+
+      currentPositions = newPositions;
+    }
+
+    return false;
+  }
+
+  bool _isSolvableHeuristic(LevelData level, {required int maxStates}) {
+    debugPrint(
+      'LevelSolverService: Checking solvability for level ${level.id}',
+    );
+
     final initialVines = level.vines.map((v) => v.id).toList();
 
-    // Pre-compute blocking relationships for optimization
     final blockingCache = <String, Set<String>>{};
     final blockedByCache = <String, Set<String>>{};
 
-    // Build dependency graph
     for (final vine in level.vines) {
       blockingCache[vine.id] = <String>{};
       blockedByCache[vine.id] = <String>{};
@@ -25,71 +217,59 @@ class LevelSolverService {
 
     for (final vine in level.vines) {
       for (final otherVine in level.vines) {
-        if (vine.id != otherVine.id) {
-          if (_doesVineBlock(level, vine.id, otherVine.id)) {
-            blockingCache[vine.id]!.add(otherVine.id);
-            blockedByCache[otherVine.id]!.add(vine.id);
-          }
+        if (vine.id == otherVine.id) continue;
+        if (_doesVineBlock(level, vine.id, otherVine.id)) {
+          blockingCache[vine.id]!.add(otherVine.id);
+          blockedByCache[otherVine.id]!.add(vine.id);
         }
       }
     }
 
-    // Use priority-based search with heuristics
-    final queue = _PriorityQueue<(List<String>, List<String>)>();
-    queue.add((
+    final queue = _PriorityQueue<List<String>>();
+    queue.add(
       initialVines,
-      [],
-    ), _calculatePriority(level, initialVines, blockingCache, blockedByCache));
+      _calculatePriority(level, initialVines, blockingCache, blockedByCache),
+    );
 
-    final visited = <String>{};
-    visited.add(_getStateKey(initialVines));
-
+    final visited = <String>{_getStateKey(initialVines)};
     int statesExplored = 0;
-    const maxStates = 100000; // Prevent infinite loops on unsolvable levels
 
     while (queue.isNotEmpty && statesExplored < maxStates) {
-      final (currentVines, sequence) = queue.removeFirst();
+      final currentVines = queue.removeFirst();
       statesExplored++;
 
       if (currentVines.isEmpty) {
         debugPrint(
-          'LevelSolverService: Solvable! Sequence: $sequence (explored $statesExplored states)',
+          'LevelSolverService: Solvable (explored $statesExplored states)',
         );
-        return sequence;
+        return true;
       }
 
-      // Get clearable vines.
-      // A vine is clearable iff it can slide until its head exits the grid
-      // without colliding with any other active vine.
       final movableVines = currentVines
           .where(
             (vineId) => getDistanceToBlocker(level, vineId, currentVines) > 0,
           )
           .toList();
 
-      // Sort by heuristic: prefer vines that unblock the most others
       movableVines.sort((a, b) {
         final aUnblocks = blockingCache[a]!.where(currentVines.contains).length;
         final bUnblocks = blockingCache[b]!.where(currentVines.contains).length;
-        return bUnblocks.compareTo(
-          aUnblocks,
-        ); // Higher unblocking potential first
+        return bUnblocks.compareTo(aUnblocks);
       });
 
       for (final vineId in movableVines) {
         final nextVines = List<String>.from(currentVines)..remove(vineId);
         final key = _getStateKey(nextVines);
+        if (visited.contains(key)) continue;
+        visited.add(key);
 
-        if (!visited.contains(key)) {
-          visited.add(key);
-          final priority = _calculatePriority(
-            level,
-            nextVines,
-            blockingCache,
-            blockedByCache,
-          );
-          queue.add((nextVines, [...sequence, vineId]), priority);
-        }
+        final priority = _calculatePriority(
+          level,
+          nextVines,
+          blockingCache,
+          blockedByCache,
+        );
+        queue.add(nextVines, priority);
       }
     }
 
@@ -100,6 +280,75 @@ class LevelSolverService {
     } else {
       debugPrint('LevelSolverService: UNSOLVABLE level ${level.id}');
     }
+    return false;
+  }
+
+  List<String>? _solveHeuristic(LevelData level, {required int maxStates}) {
+    final initialVines = level.vines.map((v) => v.id).toList();
+
+    final blockingCache = <String, Set<String>>{};
+    final blockedByCache = <String, Set<String>>{};
+
+    for (final vine in level.vines) {
+      blockingCache[vine.id] = <String>{};
+      blockedByCache[vine.id] = <String>{};
+    }
+
+    for (final vine in level.vines) {
+      for (final otherVine in level.vines) {
+        if (vine.id == otherVine.id) continue;
+        if (_doesVineBlock(level, vine.id, otherVine.id)) {
+          blockingCache[vine.id]!.add(otherVine.id);
+          blockedByCache[otherVine.id]!.add(vine.id);
+        }
+      }
+    }
+
+    final queue = _PriorityQueue<(List<String> remaining, List<String> seq)>();
+    queue.add((
+      initialVines,
+      <String>[],
+    ), _calculatePriority(level, initialVines, blockingCache, blockedByCache));
+
+    final visited = <String>{_getStateKey(initialVines)};
+    int statesExplored = 0;
+
+    while (queue.isNotEmpty && statesExplored < maxStates) {
+      final state = queue.removeFirst();
+      final currentVines = state.$1;
+      final sequence = state.$2;
+      statesExplored++;
+
+      if (currentVines.isEmpty) return sequence;
+
+      final movableVines = currentVines
+          .where(
+            (vineId) => getDistanceToBlocker(level, vineId, currentVines) > 0,
+          )
+          .toList();
+
+      movableVines.sort((a, b) {
+        final aUnblocks = blockingCache[a]!.where(currentVines.contains).length;
+        final bUnblocks = blockingCache[b]!.where(currentVines.contains).length;
+        return bUnblocks.compareTo(aUnblocks);
+      });
+
+      for (final vineId in movableVines) {
+        final nextVines = List<String>.from(currentVines)..remove(vineId);
+        final key = _getStateKey(nextVines);
+        if (visited.contains(key)) continue;
+        visited.add(key);
+
+        final priority = _calculatePriority(
+          level,
+          nextVines,
+          blockingCache,
+          blockedByCache,
+        );
+        queue.add((nextVines, [...sequence, vineId]), priority);
+      }
+    }
+
     return null;
   }
 
