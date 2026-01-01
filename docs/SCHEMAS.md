@@ -308,7 +308,7 @@ assets/levels/
 - Only orthogonal movement (up, down, left, right)
 - No overlapping vine segments
 - `ordered_path[0]` is the head and `ordered_path[1]` is the first body segment (neck)
-- `head_direction` must match the direction from neck 0 head (so the neck is one cell opposite the head direction)
+- `head_direction` must match the direction from neck to head (so the neck is one cell opposite the head direction)
 
 ### Dynamic Bounds
 
