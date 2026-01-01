@@ -58,9 +58,13 @@ class LevelSolverService {
         return sequence;
       }
 
-      // Get movable vines sorted by priority (most blocking first)
+      // Get clearable vines.
+      // A vine is clearable iff it can slide until its head exits the grid
+      // without colliding with any other active vine.
       final movableVines = currentVines
-          .where((vineId) => !isVineBlockedInState(level, vineId, currentVines))
+          .where(
+            (vineId) => getDistanceToBlocker(level, vineId, currentVines) > 0,
+          )
           .toList();
 
       // Sort by heuristic: prefer vines that unblock the most others
@@ -235,8 +239,10 @@ class LevelSolverService {
     var currentPositions = List<Map<String, int>>.from(vine.orderedPath);
     int distance = 0;
 
-    // Check up to a reasonable distance for blocking (no grid bounds in coordinate system)
-    const int maxCheckDistance = 50; // Prevent infinite loops
+    // Upper bound: enough steps for head to exit the grid from anywhere.
+    final maxCheckDistance =
+        (level.gridWidth + level.gridHeight + vine.orderedPath.length + 10)
+            .clamp(50, 300);
 
     for (int step = 0; step < maxCheckDistance; step++) {
       // Simulate one step of movement
@@ -260,12 +266,24 @@ class LevelSolverService {
         }
       }
 
+      // If the head exits the grid (without collision), the vine can clear.
+      final newHead = newPositions.first;
+      final headX = newHead['x'] as int;
+      final headY = newHead['y'] as int;
+      if (headX < 0 ||
+          headX >= level.gridWidth ||
+          headY < 0 ||
+          headY >= level.gridHeight) {
+        return distance + 1;
+      }
+
       // Move to next positions
       currentPositions = newPositions;
       distance++;
     }
 
-    return maxCheckDistance; // Positive = can move far without being blocked
+    // If we never hit a collision or exited, treat as blocked (conservative).
+    return -(distance + 1);
   }
 
   /// Simulates snake-like movement from given positions.

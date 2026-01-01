@@ -104,16 +104,17 @@ class VineData {
   final String headDirection;
   final List<Map<String, int>>
   orderedPath; // Ordered from head (index 0) to tail (last)
-  final String color;
+  final String? vineColor;
 
   VineData({
     required this.id,
     required this.headDirection,
     required this.orderedPath,
-    required this.color,
+    this.vineColor,
   });
 
   factory VineData.fromJson(Map<String, dynamic> json) {
+    final vineColor = (json['vine_color'] ?? json['color'])?.toString();
     return VineData(
       id: json['id'].toString(),
       headDirection: json['head_direction'],
@@ -122,7 +123,7 @@ class VineData {
           (cell) => {'x': cell['x'] as int, 'y': cell['y'] as int},
         ),
       ),
-      color: json['color'],
+      vineColor: vineColor,
     );
   }
 }
@@ -131,73 +132,123 @@ class LevelData {
   final int id; // Global level ID (1, 2, 3...)
   final String name;
   final String difficulty;
+
+  /// Canonical grid size for the level.
+  ///
+  /// Ordering is `[width, height]` where:
+  /// - x in `[0, width-1]`
+  /// - y in `[0, height-1]`
+  final int gridWidth;
+  final int gridHeight;
   final List<VineData> vines;
   final int maxMoves;
   final int minMoves;
   final String complexity;
   final int grace;
-  final MaskData? mask;
+  final MaskData mask;
 
   LevelData({
     required this.id,
     required this.name,
     required this.difficulty,
+    required this.gridWidth,
+    required this.gridHeight,
     required this.vines,
     required this.maxMoves,
     required this.minMoves,
     required this.complexity,
     required this.grace,
-    this.mask,
+    required this.mask,
   });
 
   factory LevelData.fromJson(Map<String, dynamic> json) {
+    final gridSize = json['grid_size'];
+    if (gridSize is! List || gridSize.length < 2) {
+      throw const FormatException(
+        'Level JSON must include grid_size: [width, height]',
+      );
+    }
+
+    final gridWidth = (gridSize[0] as num).toInt();
+    final gridHeight = (gridSize[1] as num).toInt();
+    if (gridWidth <= 0 || gridHeight <= 0) {
+      throw FormatException(
+        'grid_size must be positive; got [$gridWidth, $gridHeight]',
+      );
+    }
+
+    final vines = List<VineData>.from(
+      json['vines'].map((vine) => VineData.fromJson(vine)),
+    );
+
+    // Validate vine coordinates are within bounds.
+    for (final vine in vines) {
+      for (final cell in vine.orderedPath) {
+        final x = cell['x'] as int;
+        final y = cell['y'] as int;
+        if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight) {
+          throw FormatException(
+            'Vine ${vine.id} has cell ($x,$y) outside grid_size [$gridWidth,$gridHeight]',
+          );
+        }
+      }
+    }
+
+    final mask = MaskData.fromJson(json['mask']);
+
+    // For MVP, mask is visual-only, but we validate that vines never occupy masked-out cells.
+    for (final vine in vines) {
+      for (final cell in vine.orderedPath) {
+        final x = cell['x'] as int;
+        final y = cell['y'] as int;
+        if (!_isCellVisibleWithMask(mask, x, y)) {
+          throw FormatException(
+            'Vine ${vine.id} occupies masked-out cell ($x,$y)',
+          );
+        }
+      }
+    }
+
     return LevelData(
       id: json['id'],
       name: json['name'],
       difficulty: json['difficulty'],
-      vines: List<VineData>.from(
-        json['vines'].map((vine) => VineData.fromJson(vine)),
-      ),
+      gridWidth: gridWidth,
+      gridHeight: gridHeight,
+      vines: vines,
       maxMoves: json['max_moves'],
       minMoves: json['min_moves'],
       complexity: json['complexity'],
       grace: json['grace'],
-      mask: json.containsKey('mask') ? MaskData.fromJson(json['mask']) : null,
+      mask: mask,
     );
   }
 
-  // Calculate bounds dynamically from vine positions
+  bool isCellVisible(int x, int y) {
+    return _isCellVisibleWithMask(mask, x, y);
+  }
+
+  // Bounds are now driven by grid_size.
   ({int minX, int maxX, int minY, int maxY}) getBounds() {
-    if (vines.isEmpty || vines.first.orderedPath.isEmpty) {
-      return (minX: 0, maxX: 8, minY: 0, maxY: 8); // Default fallback
-    }
-
-    int minX = vines
-        .expand((vine) => vine.orderedPath)
-        .map((pos) => pos['x'] as int)
-        .reduce((a, b) => a < b ? a : b);
-
-    int maxX = vines
-        .expand((vine) => vine.orderedPath)
-        .map((pos) => pos['x'] as int)
-        .reduce((a, b) => a > b ? a : b);
-
-    int minY = vines
-        .expand((vine) => vine.orderedPath)
-        .map((pos) => pos['y'] as int)
-        .reduce((a, b) => a < b ? a : b);
-
-    int maxY = vines
-        .expand((vine) => vine.orderedPath)
-        .map((pos) => pos['y'] as int)
-        .reduce((a, b) => a > b ? a : b);
-
-    return (minX: minX, maxX: maxX, minY: minY, maxY: maxY);
+    return (minX: 0, maxX: gridWidth - 1, minY: 0, maxY: gridHeight - 1);
   }
 
   // Get dimensions for backwards compatibility
-  int get width => getBounds().maxX - getBounds().minX + 1;
-  int get height => getBounds().maxY - getBounds().minY + 1;
+  int get width => gridWidth;
+  int get height => gridHeight;
+
+  static bool _isCellVisibleWithMask(MaskData mask, int x, int y) {
+    switch (mask.mode) {
+      case 'show-all':
+        return true;
+      case 'hide':
+        return !mask.points.any((p) => p['x'] == x && p['y'] == y);
+      case 'show':
+        return mask.points.any((p) => p['x'] == x && p['y'] == y);
+      default:
+        return true;
+    }
+  }
 }
 
 // Providers

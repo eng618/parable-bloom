@@ -94,10 +94,8 @@ class GardenGame extends FlameGame {
   void _createLevelComponents() {
     if (_currentLevelData == null) return;
 
-    // Calculate bounds from vine positions
-    final bounds = _currentLevelData!.getBounds();
-    final cols = bounds.maxX - bounds.minX + 1;
-    final rows = bounds.maxY - bounds.minY + 1;
+    final cols = _currentLevelData!.gridWidth;
+    final rows = _currentLevelData!.gridHeight;
 
     // Grid background
     _gridBackground = RectangleComponent(
@@ -278,6 +276,8 @@ class GardenGame extends FlameGame {
       id: 999,
       name: 'Fallback Level',
       difficulty: 'Seedling',
+      gridWidth: 5,
+      gridHeight: 5,
       vines: [
         VineData(
           id: 'fallback_vine',
@@ -289,13 +289,14 @@ class GardenGame extends FlameGame {
               'y': 4,
             }, // First segment LEFT of head (x decreases, opposite direction)
           ],
-          color: 'moss_green',
+          vineColor: null,
         ),
       ],
       maxMoves: 5,
       minMoves: 1,
       complexity: 'low',
       grace: 3,
+      mask: MaskData(mode: 'show-all', points: []),
     );
   }
 }
