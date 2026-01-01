@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/app_theme.dart';
+import '../../../../core/vine_color_palette.dart';
 import '../../../../providers/game_providers.dart';
 import 'grid_component.dart';
 
@@ -32,7 +33,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Bloom effect after clearing
   bool _isShowingBloomEffect = false;
   double _bloomEffectTimer = 0.0;
-  final double _bloomEffectDuration = 0.5; // seconds - reduced for faster level completion
+  final double _bloomEffectDuration =
+      0.5; // seconds - reduced for faster level completion
   Offset? _bloomEffectPosition; // Where to show the bloom effect
 
   // Track if we've already notified parent of clearing
@@ -69,14 +71,24 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final vineState = parent.getCurrentVineState(vineData.id);
     if (vineState == null) return;
 
+    final level = parent.getCurrentLevelData();
+    if (level == null) return;
+
     // For optimization, we allow rendering even if cleared during animation
     // The vine should complete its animation sequence before disappearing
 
     final isBlocked = vineState.isBlocked;
     final isAttempted = vineState.hasBeenAttempted;
 
-    // Use centralized theme colors
-    final baseColor = isAttempted ? AppTheme.vineAttempted : AppTheme.vineGreen;
+    // Determine vine color.
+    // - `vine_color` is primarily a palette key resolved via VineColorPalette.
+    // - Back-compat: hex strings (#RRGGBB / #AARRGGBB) are accepted.
+    // - Apply a calm deterministic variation per vine id.
+    final seedColor = VineColorPalette.resolve(vineData.vineColor);
+    final calmColor = _deriveCalmVariant(seedColor, vineData.id);
+    final baseColor = isAttempted
+        ? (Color.lerp(calmColor, AppTheme.vineAttempted, 0.25) ?? calmColor)
+        : calmColor;
 
     // Calculate direction from vine data
     final direction = _calculateVineDirection();
@@ -88,9 +100,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
 
-    // Calculate bounds for coordinate transformation
-    final bounds = parent.getCurrentLevelData()!.getBounds();
-    final visualHeight = bounds.maxY - bounds.minY + 1;
+    final visualHeight = level.gridHeight;
 
     for (int i = 0; i < _currentVisualPositions.length - 1; i++) {
       final currentCell = _currentVisualPositions[i];
@@ -102,15 +112,15 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final nextY = nextCell['y'] as int;
 
       // Transform to visual coordinates (y=0 at bottom)
-      final currentVisualY = visualHeight - 1 - (currentY - bounds.minY);
-      final nextVisualY = visualHeight - 1 - (nextY - bounds.minY);
+      final currentVisualY = visualHeight - 1 - currentY;
+      final nextVisualY = visualHeight - 1 - nextY;
 
       final start = Offset(
-        (currentX - bounds.minX) * cellSize + cellSize / 2,
+        currentX * cellSize + cellSize / 2,
         currentVisualY * cellSize + cellSize / 2,
       );
       final end = Offset(
-        (nextX - bounds.minX) * cellSize + cellSize / 2,
+        nextX * cellSize + cellSize / 2,
         nextVisualY * cellSize + cellSize / 2,
       );
 
@@ -124,13 +134,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final y = cell['y'] as int;
 
       // Transform to visual coordinates (y=0 at bottom)
-      final visualY = visualHeight - 1 - (y - bounds.minY);
+      final visualY = visualHeight - 1 - y;
 
       final isHead = direction != null && i == 0; // Head is at position 0
 
       final rect = Rect.fromCenter(
         center: Offset(
-          (x - bounds.minX) * cellSize + cellSize / 2,
+          x * cellSize + cellSize / 2,
           visualY * cellSize + cellSize / 2,
         ),
         width: cellSize * 0.6,
@@ -464,9 +474,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
   // Check if all vine segments have exited the visible grid area (no margin)
   bool _hasExitedVisibleGrid() {
-    final bounds = parent.getCurrentLevelData()!.getBounds();
-    final gridCols = bounds.maxX - bounds.minX + 1;
-    final gridRows = bounds.maxY - bounds.minY + 1;
+    final level = parent.getCurrentLevelData();
+    if (level == null) return true;
+    final gridCols = level.gridWidth;
+    final gridRows = level.gridHeight;
 
     // If no visual positions, consider it exited
     if (_currentVisualPositions.isEmpty) return true;
@@ -477,18 +488,16 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final x = headPos['x'] as int;
     final y = headPos['y'] as int;
 
-    final gridX = x - bounds.minX;
-    final gridY = y - bounds.minY;
-
     // Head is outside visible grid when it's <0 or >= cols/rows
-    return gridX < 0 || gridX >= gridCols || gridY < 0 || gridY >= gridRows;
+    return x < 0 || x >= gridCols || y < 0 || y >= gridRows;
   }
 
   // Check if all vine segments are fully off-screen (with margin)
   bool _isFullyOffScreen() {
-    final bounds = parent.getCurrentLevelData()!.getBounds();
-    final gridCols = bounds.maxX - bounds.minX + 1;
-    final gridRows = bounds.maxY - bounds.minY + 1;
+    final level = parent.getCurrentLevelData();
+    if (level == null) return true;
+    final gridCols = level.gridWidth;
+    final gridRows = level.gridHeight;
     const int offScreenMargin =
         3; // Extra cells to ensure vine is fully off-screen
 
@@ -497,15 +506,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final x = pos['x'] as int;
       final y = pos['y'] as int;
 
-      // Convert to grid-relative coordinates
-      final gridX = x - bounds.minX;
-      final gridY = y - bounds.minY;
-
       // If any segment is still within extended bounds (includes margin)
-      if (gridX >= -offScreenMargin &&
-          gridX < gridCols + offScreenMargin &&
-          gridY >= -offScreenMargin &&
-          gridY < gridRows + offScreenMargin) {
+      if (x >= -offScreenMargin &&
+          x < gridCols + offScreenMargin &&
+          y >= -offScreenMargin &&
+          y < gridRows + offScreenMargin) {
         return false; // Still visible with margin
       }
     }
@@ -532,7 +537,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // Calculate bloom position at the grid edge where the vine exited.
     // The bloom should appear at the boundary edge, clamped to valid grid coordinates.
     if (_currentVisualPositions.isNotEmpty) {
-      final bounds = parent.getCurrentLevelData()!.getBounds();
+      final level = parent.getCurrentLevelData();
+      if (level == null) return;
 
       final headPos = _currentVisualPositions[0]; // Head is at index 0
       final headX = headPos['x'] as int;
@@ -545,37 +551,37 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       switch (vineData.headDirection) {
         case 'right':
           // Head exited right edge - bloom at right boundary
-          bloomX = bounds.maxX;
+          bloomX = level.gridWidth - 1;
           // Clamp Y to valid grid range
-          bloomY = headY.clamp(bounds.minY, bounds.maxY);
+          bloomY = headY.clamp(0, level.gridHeight - 1);
           break;
         case 'left':
           // Head exited left edge - bloom at left boundary
-          bloomX = bounds.minX;
+          bloomX = 0;
           // Clamp Y to valid grid range
-          bloomY = headY.clamp(bounds.minY, bounds.maxY);
+          bloomY = headY.clamp(0, level.gridHeight - 1);
           break;
         case 'up':
           // Head exited top edge - bloom at top boundary
-          bloomY = bounds.maxY;
+          bloomY = level.gridHeight - 1;
           // Clamp X to valid grid range
-          bloomX = headX.clamp(bounds.minX, bounds.maxX);
+          bloomX = headX.clamp(0, level.gridWidth - 1);
           break;
         case 'down':
           // Head exited bottom edge - bloom at bottom boundary
-          bloomY = bounds.minY;
+          bloomY = 0;
           // Clamp X to valid grid range
-          bloomX = headX.clamp(bounds.minX, bounds.maxX);
+          bloomX = headX.clamp(0, level.gridWidth - 1);
           break;
       }
 
       // Transform to visual coordinates (y=0 at bottom)
-      final visualHeight = bounds.maxY - bounds.minY + 1;
-      final visualY = visualHeight - 1 - (bloomY - bounds.minY);
+      final visualHeight = level.gridHeight;
+      final visualY = visualHeight - 1 - bloomY;
 
       // Position the bloom effect at the grid edge exit point
       _bloomEffectPosition = Offset(
-        (bloomX - bounds.minX) * cellSize + cellSize / 2,
+        bloomX * cellSize + cellSize / 2,
         visualY * cellSize + cellSize / 2,
       );
 
@@ -619,11 +625,14 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final progress = _bloomEffectTimer / _bloomEffectDuration;
     final center = _bloomEffectPosition!;
 
+    final seedColor = VineColorPalette.resolve(vineData.vineColor);
+    final calmColor = _deriveCalmVariant(seedColor, vineData.id);
+
     // Create expanding sparkle rings
     final sparkleColors = [
-      AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.8),
-      AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.6),
-      AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.4),
+      calmColor.withValues(alpha: (1.0 - progress) * 0.8),
+      calmColor.withValues(alpha: (1.0 - progress) * 0.6),
+      calmColor.withValues(alpha: (1.0 - progress) * 0.4),
     ];
 
     final maxRadius = cellSize * 2.0;
@@ -647,7 +656,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final glowRadius = progress * cellSize * 0.8;
     if (glowRadius > 0) {
       final glowPaint = Paint()
-        ..color = AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.5)
+        ..color = calmColor.withValues(alpha: (1.0 - progress) * 0.5)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(center, glowRadius, glowPaint);
@@ -662,10 +671,36 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final particleY = center.dy + distance * math.sin(angle);
 
       final particlePaint = Paint()
-        ..color = AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.9)
+        ..color = calmColor.withValues(alpha: (1.0 - progress) * 0.9)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(particleX, particleY), 2.0, particlePaint);
     }
+  }
+
+  static Color _deriveCalmVariant(Color base, String seed) {
+    // Deterministic per-vine variation without high-contrast colors.
+    // We keep saturation muted and only nudge lightness slightly.
+    final hash = _fnv1a32(seed);
+    final bucket = hash % 7; // 0..6
+    final lightnessDelta = (bucket - 3) * 0.02; // -0.06..+0.06
+
+    final hsl = HSLColor.fromColor(base);
+    final adjusted = hsl
+        .withSaturation((hsl.saturation * 0.85).clamp(0.0, 1.0))
+        .withLightness((hsl.lightness + lightnessDelta).clamp(0.0, 1.0));
+    return adjusted.toColor();
+  }
+
+  static int _fnv1a32(String input) {
+    const int fnvOffset = 0x811C9DC5;
+    const int fnvPrime = 0x01000193;
+
+    var hash = fnvOffset;
+    for (final unit in input.codeUnits) {
+      hash ^= unit;
+      hash = (hash * fnvPrime) & 0xFFFFFFFF;
+    }
+    return hash;
   }
 }

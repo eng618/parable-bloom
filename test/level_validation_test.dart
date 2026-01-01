@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parable_bloom/providers/game_providers.dart';
 import 'package:parable_bloom/features/game/domain/services/level_solver_service.dart';
+import 'package:parable_bloom/core/vine_color_palette.dart';
 
 void main() {
   test('Clean: validate levels and helper logic', () async {
@@ -15,13 +16,69 @@ void main() {
 
     for (final levelFile in levelFiles) {
       final jsonMap = json.decode(await levelFile.readAsString());
+
+      expect(
+        jsonMap is Map && jsonMap.containsKey('grid_size'),
+        isTrue,
+        reason: 'Missing grid_size in ${levelFile.path}',
+      );
+
       final level = LevelData.fromJson(jsonMap);
+
+      expect(level.gridWidth, greaterThan(0));
+      expect(level.gridHeight, greaterThan(0));
 
       // simple structural checks
       final occupied = <String, String>{};
       for (final vine in level.vines) {
+        // Optional vine_color is a palette key (preferred) or a hex string
+        // (#RRGGBB or #AARRGGBB) for backward compatibility.
+        if (vine.vineColor != null) {
+          final v = vine.vineColor!.trim();
+
+          if (v.startsWith('#')) {
+            final hex = v.substring(1);
+            expect(
+              hex.length == 6 || hex.length == 8,
+              isTrue,
+              reason:
+                  'Invalid vine_color format in ${levelFile.path} ${vine.id}: ${vine.vineColor}',
+            );
+            expect(
+              int.tryParse(hex, radix: 16) != null,
+              isTrue,
+              reason:
+                  'Invalid vine_color hex in ${levelFile.path} ${vine.id}: ${vine.vineColor}',
+            );
+          } else {
+            expect(
+              VineColorPalette.isKnownKey(v),
+              isTrue,
+              reason:
+                  'Unknown vine_color key in ${levelFile.path} ${vine.id}: ${vine.vineColor}',
+            );
+          }
+        }
+
         for (final seg in vine.orderedPath) {
           final k = '${seg['x']},${seg['y']}';
+
+          final x = seg['x'] as int;
+          final y = seg['y'] as int;
+          expect(
+            x >= 0 && x < level.gridWidth && y >= 0 && y < level.gridHeight,
+            isTrue,
+            reason:
+                'Out of bounds cell ($x,$y) in ${levelFile.path} ${vine.id} grid_size=[${level.gridWidth},${level.gridHeight}]',
+          );
+
+          expect(
+            level.isCellVisible(x, y),
+            isTrue,
+            reason:
+                'Vine occupies masked-out cell ($x,$y) in ${levelFile.path} ${vine.id}',
+          );
+
           expect(
             occupied.containsKey(k),
             isFalse,
@@ -123,11 +180,15 @@ void main() {
 bool _detectCircularBlocking(LevelData level) {
   final occupied = <String, String>{};
   for (final vine in level.vines) {
-    for (final s in vine.orderedPath) occupied['${s['x']},${s['y']}'] = vine.id;
+    for (final s in vine.orderedPath) {
+      occupied['${s['x']},${s['y']}'] = vine.id;
+    }
   }
 
   final graph = <String, Set<String>>{};
-  for (final vine in level.vines) graph[vine.id] = <String>{};
+  for (final vine in level.vines) {
+    graph[vine.id] = <String>{};
+  }
 
   for (final a in level.vines) {
     for (final b in level.vines) {
@@ -138,8 +199,11 @@ bool _detectCircularBlocking(LevelData level) {
 
   final visited = <String>{};
   final stack = <String>{};
-  for (final id in graph.keys)
-    if (_hasCircularDependency(id, graph, visited, stack)) return true;
+  for (final id in graph.keys) {
+    if (_hasCircularDependency(id, graph, visited, stack)) {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -182,8 +246,11 @@ bool _hasCircularDependency(
   if (vis.contains(cur)) return false;
   vis.add(cur);
   stack.add(cur);
-  for (final n in g[cur] ?? {})
-    if (_hasCircularDependency(n, g, vis, stack)) return true;
+  for (final n in g[cur] ?? {}) {
+    if (_hasCircularDependency(n, g, vis, stack)) {
+      return true;
+    }
+  }
   stack.remove(cur);
   return false;
 }

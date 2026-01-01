@@ -2,6 +2,7 @@
   "id": 5,
   "name": "Alternating Lines",
   "difficulty": "Tutorial",
+  "grid_size": [5, 5],
   "vines": [
     {
       "id": "vine_a",
@@ -13,7 +14,7 @@
         { "x": 0, "y": 1 },
         { "x": 0, "y": 0 }
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     },
     {
       "id": "vine_b",
@@ -25,7 +26,7 @@
         { "x": 1, "y": 3 },
         { "x": 1, "y": 4 }
       ],
-      "color": "emerald"
+      "vine_color": "default"
     },
     {
       "id": "vine_c",
@@ -37,7 +38,7 @@
         { "x": 2, "y": 1 },
         { "x": 2, "y": 0 }
       ],
-      "color": "olive"
+      "vine_color": "default"
     },
     {
       "id": "vine_d",
@@ -49,7 +50,7 @@
         { "x": 3, "y": 3 },
         { "x": 3, "y": 4 }
       ],
-      "color": "sage"
+      "vine_color": "default"
     },
     {
       "id": "vine_e",
@@ -61,7 +62,7 @@
         { "x": 4, "y": 1 },
         { "x": 4, "y": 0 }
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     }
   ],
   "max_moves": 9,

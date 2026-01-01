@@ -2,6 +2,7 @@
   "id": 1,
   "name": "First Steps",
   "difficulty": "Tutorial",
+  "grid_size": [5, 5],
   "vines": [
     {
       "id": "vine_a",
@@ -13,7 +14,7 @@
         { "x": 1, "y": 0 },
         { "x": 0, "y": 0 }
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     },
     {
       "id": "vine_b",
@@ -25,7 +26,7 @@
         { "x": 1, "y": 1 },
         { "x": 0, "y": 1 }
       ],
-      "color": "sage"
+      "vine_color": "default"
     },
     {
       "id": "vine_c",
@@ -37,7 +38,7 @@
         { "x": 1, "y": 2 },
         { "x": 0, "y": 2 }
       ],
-      "color": "olive"
+      "vine_color": "default"
     },
     {
       "id": "vine_d",
@@ -49,7 +50,7 @@
         { "x": 1, "y": 3 },
         { "x": 0, "y": 3 }
       ],
-      "color": "emerald"
+      "vine_color": "default"
     },
     {
       "id": "vine_e",
@@ -61,7 +62,7 @@
         { "x": 1, "y": 4 },
         { "x": 0, "y": 4 }
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     }
   ],
   "max_moves": 7,
