@@ -8,11 +8,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/game_providers.dart';
 import 'grid_component.dart';
+import 'projection_lines_component.dart';
 
 class GardenGame extends FlameGame {
   static const double cellSize = 40.0; // Pixels per cell
 
   late GridComponent grid;
+  late ProjectionLinesComponent projectionLines;
   final WidgetRef ref;
   LevelData? _currentLevelData;
   RectangleComponent? _gridBackground;
@@ -87,8 +89,25 @@ class GardenGame extends FlameGame {
       }
     });
 
+    // Listen to projection lines visibility and animation state
+    ref.listenManual(projectionLinesVisibleProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listenManual(anyVineAnimatingProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
     // Center camera
     camera.viewport.size = size;
+  }
+
+  void _updateProjectionLinesVisibility() {
+    final shouldShow = ref.read(projectionLinesVisibleProvider);
+    final isAnimating = ref.read(anyVineAnimatingProvider);
+
+    // Hide projection lines when any vine is animating
+    projectionLines.setVisible(shouldShow && !isAnimating);
   }
 
   void _createLevelComponents() {
@@ -138,6 +157,15 @@ class GardenGame extends FlameGame {
       },
     );
     add(grid);
+
+    // Projection lines component (rendered above grid)
+    projectionLines = ProjectionLinesComponent(cellSize: cellSize);
+    add(projectionLines);
+
+    // Set initial level data on projection lines
+    if (_currentLevelData != null) {
+      projectionLines.setLevelData(_currentLevelData!);
+    }
   }
 
   Future<void> _loadCurrentLevel() async {
@@ -252,8 +280,9 @@ class GardenGame extends FlameGame {
     // Check if grid is initialized and mounted before removing
     try {
       if (grid.isMounted) remove(grid);
+      if (projectionLines.isMounted) remove(projectionLines);
     } catch (e) {
-      // Ignore if grid wasn't initialized
+      // Ignore if grid/projectionLines weren't initialized
     }
 
     await _loadCurrentLevel();
@@ -267,6 +296,9 @@ class GardenGame extends FlameGame {
       ref.read(gameInstanceProvider.notifier).resetGrace();
 
       await _setLevelDataOnGrid();
+
+      // Reset projection lines visibility
+      ref.read(projectionLinesVisibleProvider.notifier).state = false;
     }
   }
 

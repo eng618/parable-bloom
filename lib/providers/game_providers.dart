@@ -950,3 +950,15 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
     state = _calculateVineStates(levelData, {});
   }
 }
+
+// Provider for projection lines visibility
+final projectionLinesVisibleProvider =
+    StateProvider<bool>((ref) => false);
+
+// Provider to determine if any vine is currently animating
+final anyVineAnimatingProvider = Provider<bool>((ref) {
+  final vineStates = ref.watch(vineStatesProvider);
+  return vineStates.values.any((state) =>
+      state.animationState == VineAnimationState.animatingClear ||
+      state.animationState == VineAnimationState.animatingBlocked);
+});

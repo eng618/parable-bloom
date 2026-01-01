@@ -155,6 +155,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ),
         ],
       ),
+      floatingActionButton: _buildProjectionLinesFAB(),
       body: Stack(
         children: [
           GameWidget<GardenGame>(
@@ -165,6 +166,24 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           if (_isLevelCompleteOverlayVisible) _buildLevelCompleteOverlay(),
         ],
       ),
+    );
+  }
+
+  Widget _buildProjectionLinesFAB() {
+    final isVisible = ref.watch(projectionLinesVisibleProvider);
+    final isAnimating = ref.watch(anyVineAnimatingProvider);
+
+    // Hide FAB when any vine is animating
+    if (isAnimating) {
+      return const SizedBox.shrink();
+    }
+
+    return FloatingActionButton(
+      onPressed: () {
+        ref.read(projectionLinesVisibleProvider.notifier).state = !isVisible;
+      },
+      tooltip: 'Toggle projection lines',
+      child: const Icon(Icons.tag),
     );
   }
 
