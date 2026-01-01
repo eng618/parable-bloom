@@ -86,6 +86,8 @@ class GardenGame extends FlameGame {
     ref.listenManual(vineStatesProvider, (previous, next) {
       if (_currentLevelData != null) {
         grid.setLevelData(_currentLevelData!, next);
+        // Force projection lines to redraw when vine states change
+        projectionLines.update(0);
       }
     });
 
