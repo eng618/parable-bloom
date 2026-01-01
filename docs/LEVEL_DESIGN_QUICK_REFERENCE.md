@@ -26,39 +26,35 @@
 
 ```json
 {
-  "id": 1,                           // Position within module (1-15)
-  "module_id": 1,                    // Which module this belongs to
-  "global_level_number": 1,          // What player sees (continuous)
+  "id": 1,                           // Global level id (1,2,3...)
   "name": "Level Name",              // Display name
-  "parable_reference": "Matthew X",  // Biblical reference
-  "grid_size": [10, 14],            // [width, height]
+  "grid_size": [10, 14],             // [width, height]
   "difficulty": "Nurturing",         // One of the tiers
   "vines": [...],                    // Array of vine objects
-  "blocking_graph": {...},           // Maps vine IDs to blocked vines
-  "blocking_depth": 2,               // Max depth of blocking chains
-  "color_distribution": {...},       // Percentage of each color
   "complexity": "medium",            // low/medium/high
   "max_moves": 12,                   // Upper bound for solution
   "min_moves": 6,                    // Lower bound for solution
-  "grace": 3,                        // Lives per level
-  "designer_notes": "..."            // Strategy explanation
+  "grace": 3                         // Lives per level
 }
 ```
+
+Notes:
+
+- The runtime only requires/uses the fields shown above (+ optional `mask`).
+- Additional designer metadata fields are allowed but ignored by the app.
 
 ## Vine Object Template
 
 ```json
 {
   "id": "vine_1",                    // Unique ID string
-  "color": "moss_green",             // From color palette
+  "vine_color": "default",            // Optional palette key (preferred). Hex also supported for back-compat.
   "head_direction": "right",         // up/down/left/right
   "ordered_path": [                  // Head first, tail last
     {"x": 0, "y": 0},
     {"x": 1, "y": 0},
     {"x": 2, "y": 0}
-  ],
-  "role": "blocker",                 // blocker/intermediate/quick_clear
-  "blocks": ["vine_2", "vine_3"]     // IDs this vine blocks
+  ]
 }
 ```
 
@@ -77,6 +73,14 @@ Before finalizing a level, verify:
 - [ ] **Length**: Matches difficulty tier averages
 - [ ] **Complexity**: Matches difficulty tier
 - [ ] **Solution**: Non-trivial and findable
+
+## Level Generation
+
+Generate a batch of rectangular starter levels:
+
+- `flutter pub run tool/generate_levels.dart --count 100`
+- By default, starts at the next available id in `assets/levels/`.
+- Use `--start 1 --overwrite` to regenerate from level 1.
 
 ## Quick Design Process
 

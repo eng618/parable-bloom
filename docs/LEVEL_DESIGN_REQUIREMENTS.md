@@ -83,8 +83,6 @@ Each level file must include:
 ```json
 {
   "id": 1,
-  "module_id": 1,
-  "global_level_number": 1,
   "name": "First Steps",
   "grid_size": [9, 16],
   "difficulty": "Seedling",
@@ -97,7 +95,7 @@ Each level file must include:
         {"x": 1, "y": 0},
         {"x": 2, "y": 0}
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     }
   ],
   "max_moves": 5,
@@ -109,10 +107,8 @@ Each level file must include:
 
 ### Global Level Numbering
 
-- `global_level_number` is what users see (continuous 1, 2, 3...)
-- Computed as: `(module_id - 1) * levels_per_module + id`
-- Internal `id` remains 1-15 within each module
-- `module_id` identifies which module the level belongs to
+- Level files use a single global `id` (1, 2, 3...).
+- Module membership is defined in `assets/levels/modules.json` via `level_range`.
 
 ## 📏 Difficulty Tiers & Validation Rules
 

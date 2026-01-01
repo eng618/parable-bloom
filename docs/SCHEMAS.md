@@ -166,7 +166,7 @@ This document defines the JSON schemas for Parable Bloom's data structures, upda
       "example": 3
     }
   },
-  "required": ["id", "name", "difficulty", "vines", "max_moves", "min_moves", "complexity", "grace"],
+  "required": ["id", "name", "difficulty", "grid_size", "vines", "max_moves", "min_moves", "complexity", "grace"],
 
   "$defs": {
     "vine": {
@@ -193,29 +193,28 @@ This document defines the JSON schemas for Parable Bloom's data structures, upda
           "minItems": 2,
           "uniqueItems": true
         },
-        "color": {
+        "vine_color": {
           "type": "string",
-          "description": "Vine color theme",
-          "enum": ["moss_green", "emerald", "olive", "sage"],
-          "example": "moss_green"
+          "description": "Optional vine color. Preferred: palette key (e.g. \"default\"). Back-compat: hex string (#RRGGBB or #AARRGGBB). If omitted/invalid/unknown, the client uses a default seed color.",
+          "example": "#4F8A5B"
         }
       },
-      "required": ["id", "head_direction", "ordered_path", "color"]
+      "required": ["id", "head_direction", "ordered_path"]
     },
 
     "coordinate": {
       "type": "object",
-      "description": "X,Y coordinate in world space (no grid bounds)",
+      "description": "X,Y coordinate in grid space (must fit within grid_size)",
       "properties": {
         "x": {
           "type": "integer",
-          "description": "X coordinate (can be any integer)",
-          "example": 15
+          "description": "X coordinate (0 <= x < grid_size[0])",
+          "example": 4
         },
         "y": {
           "type": "integer",
-          "description": "Y coordinate (can be any integer)",
-          "example": 0
+          "description": "Y coordinate (0 <= y < grid_size[1])",
+          "example": 2
         }
       },
       "required": ["x", "y"]
@@ -251,7 +250,8 @@ Rules & recommendations:
 
 - `mode` may be `hide`, `show`, or `show-all` (default). `hide` lists points to hide; `show` lists points to render; `show-all` means no mask.
 - `points` supports either array pairs `[x,y]` or objects `{x: <int>, y: <int>}` for author convenience.
-- Keep masks visual-only unless you intentionally want hidden cells to be non-playable; changing solver/collision semantics requires explicit schema and code updates.
+- Mask affects rendering and input only. Solver/collision continue to operate on the full rectangular grid.
+- Vines must never occupy masked-out cells.
 
 This approach keeps level data compact for the common case (most points visible) while allowing expressive visual shapes without changing the core rectangular grid logic.
 
@@ -263,9 +263,9 @@ This approach keeps level data compact for the common case (most points visible)
 
 ### Coordinate System Refactor
 
-- **Retained**: `grid_size` field (kept for UI/grid bounds compatibility). Levels use coordinate-based paths and may include `grid_size` to help the client compute bounds; `grid_size` should be consistent with vine coordinates.
+- **Required**: `grid_size` field (authoritative board size). Levels use coordinate-based paths and must include `grid_size`.
 - **Added**: Pure x,y coordinates for vine paths (no row/column transformation required)
-- **Changed**: Vines can exist at any coordinate position; clients compute dynamic bounds but may use `grid_size` when present.
+- **Changed**: Vine coordinates must fit within `grid_size`.
 
 ### Module Structure Simplification
 
@@ -312,9 +312,9 @@ assets/levels/
 
 ### Dynamic Bounds
 
-- Grid bounds calculated from vine coordinate ranges
-- No fixed grid size constraints
-- Levels can be any shape or size
+- Grid bounds come directly from `grid_size` (`[width, height]`)
+- Vine coordinates must be within bounds
+- Visual shapes are achieved via `mask`, while gameplay remains on the full rectangular grid
 
 ### Module Validation
 
@@ -369,6 +369,7 @@ assets/levels/
   "id": 6,
   "name": "First Steps",
   "difficulty": "Seedling",
+  "grid_size": [5, 5],
   "vines": [
     {
       "id": "vine_1",
@@ -380,7 +381,7 @@ assets/levels/
         {"x": 1, "y": 2},
         {"x": 0, "y": 2}
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     }
   ],
   "max_moves": 5,
@@ -394,15 +395,15 @@ assets/levels/
 
 ## 🛠️ Schema Benefits
 
-### For Go Level Generator
+### For Level Generator
 
 - **Clean Input**: Simple coordinate-based level definitions
 - **Validation Ready**: JSON schema validation ensures correctness
-- **Flexible Layout**: No grid constraints for creative level design
+- **Flexible Layout**: Supports rectangles and visual shapes via `mask`
 
 ### For Flutter App
 
-- **Dynamic Bounds**: Grid size calculated from vine positions
+- **Stable Bounds**: Grid size comes directly from `grid_size`
 - **Pure Coordinates**: Eliminates row/column transformation bugs
 - **Scalable**: Easy to add new modules and levels
 

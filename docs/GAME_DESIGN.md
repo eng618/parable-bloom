@@ -66,25 +66,24 @@ type: "Game Design Document"
 
 ### JSON Schema for Levels
 
-Hardened for procedural content generation (PCG) in Golang and snake-like movement:
+Hardened for procedural content generation (PCG) in Dart and snake-like movement:
 
 ```json
 {
   "id": 1,
-  "module_id": 1,
   "name": "First Sprout",
   "grid_size": [9, 9],
   "difficulty": "Seedling",
   "vines": [
     {
-      "id": 1,
+      "id": "vine_1",
       "head_direction": "right",
       "ordered_path": [
-        {"x": 2, "y": 3},  // HEAD (index 0) - moving RIGHT
-        {"x": 3, "y": 3},  // First segment LEFT of head (opposite direction)
-        {"x": 4, "y": 3}   // TAIL (last) - continues rightward
+        {"x": 2, "y": 3},  // HEAD (index 0)
+        {"x": 1, "y": 3},  // NECK (index 1) - one cell opposite head_direction
+        {"x": 0, "y": 3}   // TAIL (last)
       ],
-      "color": "moss_green"
+      "vine_color": "default"
     }
   ],
   "max_moves": 5,
