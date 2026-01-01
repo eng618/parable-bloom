@@ -435,18 +435,6 @@ class GlobalProgress {
     return (moduleId: lastModule.id, levelInModule: lastModule.levelCount);
   }
 
-  // Legacy getters for backward compatibility - these assume 15 levels per module
-  // TODO: Remove these once all code is updated to use getCurrentModuleAndLevel
-  @Deprecated(
-    'Use getCurrentModuleAndLevel() instead for variable module sizes',
-  )
-  int get currentModule => ((currentGlobalLevel - 1) ~/ 15) + 1;
-
-  @Deprecated(
-    'Use getCurrentModuleAndLevel() instead for variable module sizes',
-  )
-  int get currentLevelInModule => ((currentGlobalLevel - 1) % 15) + 1;
-
   // Check if a module is completed (all levels in the module are done)
   bool isModuleCompleted(int moduleId, List<ModuleData> modules) {
     final module = modules.firstWhere((m) => m.id == moduleId);
