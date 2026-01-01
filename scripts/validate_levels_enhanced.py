@@ -15,7 +15,7 @@ import json
 import os
 import sys
 from collections import Counter, defaultdict
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple
 
 LEVELS_DIR = 'assets/levels'
 
@@ -218,7 +218,7 @@ class LevelValidator:
         lengths = [len(vine.get('ordered_path', [])) for vine in vines]
         avg_length = sum(lengths) / len(lengths) if lengths else 0
         min_length = min(lengths) if lengths else 0
-        max_length = max(lengths) if lengths else 0
+        # max_length = max(lengths) if lengths else 0
 
         spec = DIFFICULTY_SPECS[difficulty]
         avg_range = spec['avg_length_range']
