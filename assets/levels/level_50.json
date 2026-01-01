@@ -1,0 +1,292 @@
+{
+  "id": 50,
+  "name": "Level 50",
+  "difficulty": "Transcendent",
+  "grid_size": [
+    12,
+    16
+  ],
+  "mask": {
+    "mode": "show-all",
+    "points": []
+  },
+  "vines": [
+    {
+      "id": "vine_1",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 1
+        },
+        {
+          "x": 4,
+          "y": 1
+        },
+        {
+          "x": 4,
+          "y": 0
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_2",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 11
+        },
+        {
+          "x": 10,
+          "y": 11
+        },
+        {
+          "x": 9,
+          "y": 11
+        },
+        {
+          "x": 9,
+          "y": 10
+        },
+        {
+          "x": 9,
+          "y": 9
+        },
+        {
+          "x": 9,
+          "y": 8
+        },
+        {
+          "x": 8,
+          "y": 8
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_3",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 8,
+          "y": 15
+        },
+        {
+          "x": 8,
+          "y": 14
+        },
+        {
+          "x": 7,
+          "y": 14
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_4",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 15
+        },
+        {
+          "x": 10,
+          "y": 15
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_5",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_6",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_7",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 9,
+          "y": 7
+        },
+        {
+          "x": 9,
+          "y": 6
+        },
+        {
+          "x": 8,
+          "y": 6
+        },
+        {
+          "x": 8,
+          "y": 7
+        },
+        {
+          "x": 7,
+          "y": 7
+        },
+        {
+          "x": 7,
+          "y": 6
+        },
+        {
+          "x": 7,
+          "y": 5
+        },
+        {
+          "x": 7,
+          "y": 4
+        },
+        {
+          "x": 6,
+          "y": 4
+        },
+        {
+          "x": 5,
+          "y": 4
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_8",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 10,
+          "y": 9
+        },
+        {
+          "x": 11,
+          "y": 9
+        },
+        {
+          "x": 11,
+          "y": 8
+        },
+        {
+          "x": 10,
+          "y": 8
+        },
+        {
+          "x": 10,
+          "y": 7
+        },
+        {
+          "x": 10,
+          "y": 6
+        },
+        {
+          "x": 10,
+          "y": 5
+        },
+        {
+          "x": 9,
+          "y": 5
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_9",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 5,
+          "y": 0
+        },
+        {
+          "x": 5,
+          "y": 1
+        },
+        {
+          "x": 5,
+          "y": 2
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_10",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 0,
+          "y": 6
+        },
+        {
+          "x": 1,
+          "y": 6
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_11",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 10
+        },
+        {
+          "x": 10,
+          "y": 10
+        }
+      ],
+      "vine_color": "default"
+    }
+  ],
+  "max_moves": 13,
+  "min_moves": 0,
+  "complexity": "extreme",
+  "grace": 4
+}

@@ -4,10 +4,7 @@
     {
       "id": 1,
       "name": "Tutorial",
-      "level_range": [
-        1,
-        5
-      ],
+      "level_range": [1, 5],
       "parable": {
         "title": "Welcome to Parable Bloom",
         "scripture": "Psalm 1:3",
@@ -20,10 +17,7 @@
     {
       "id": 2,
       "name": "The Mustard Seed",
-      "level_range": [
-        6,
-        10
-      ],
+      "level_range": [6, 20],
       "parable": {
         "title": "The Parable of the Mustard Seed",
         "scripture": "Matthew 13:31-32",
@@ -32,6 +26,84 @@
         "background_image": "parable_mustard_seed.jpg"
       },
       "unlock_message": "Module complete! Take time to reflect on the parable."
+    },
+    {
+      "id": 3,
+      "name": "The Sower",
+      "level_range": [21, 35],
+      "parable": {
+        "title": "The Parable of the Sower",
+        "scripture": "Matthew 13:3-9",
+        "content": "A sower scatters seed, but it lands on different kinds of soil. Only good soil produces lasting growth.",
+        "reflection": "What kind of soil is your heart today — and what would help it receive the word more deeply?",
+        "background_image": "parable_sower.jpg"
+      },
+      "unlock_message": "Parable unlocked! Consider what helps you grow."
+    },
+    {
+      "id": 4,
+      "name": "Wheat and Weeds",
+      "level_range": [36, 50],
+      "parable": {
+        "title": "The Parable of the Wheat and the Weeds",
+        "scripture": "Matthew 13:24-30",
+        "content": "Wheat and weeds grow together for a season. Patience and wisdom are needed until the right time.",
+        "reflection": "Where do you need patience — trusting God to bring clarity and fruit in time?",
+        "background_image": "parable_wheat_weeds.jpg"
+      },
+      "unlock_message": "Parable unlocked! Practice patience and discernment."
+    },
+    {
+      "id": 5,
+      "name": "The Lost Sheep",
+      "level_range": [51, 65],
+      "parable": {
+        "title": "The Parable of the Lost Sheep",
+        "scripture": "Luke 15:4-7",
+        "content": "A shepherd leaves the ninety-nine to search for the one that is lost — then rejoices when it is found.",
+        "reflection": "How does being sought and found change the way you see yourself and others?",
+        "background_image": "parable_lost_sheep.jpg"
+      },
+      "unlock_message": "Parable unlocked! You are seen and pursued."
+    },
+    {
+      "id": 6,
+      "name": "The Prodigal Son",
+      "level_range": [66, 80],
+      "parable": {
+        "title": "The Parable of the Prodigal Son",
+        "scripture": "Luke 15:11-32",
+        "content": "A son returns home after wandering. The father runs to meet him with mercy — and invites everyone into restoration.",
+        "reflection": "Where might God be inviting you into return, forgiveness, or celebration?",
+        "background_image": "parable_prodigal.jpg"
+      },
+      "unlock_message": "Parable unlocked! Welcome home."
+    },
+    {
+      "id": 7,
+      "name": "The Hidden Treasure",
+      "level_range": [81, 90],
+      "parable": {
+        "title": "The Parable of the Hidden Treasure",
+        "scripture": "Matthew 13:44",
+        "content": "A person discovers a hidden treasure and joyfully gives everything to gain it.",
+        "reflection": "What would it look like to value God's kingdom above comfort or convenience?",
+        "background_image": "parable_hidden_treasure.jpg"
+      },
+      "unlock_message": "Parable unlocked! Joy worth everything."
+    },
+    {
+      "id": 8,
+      "name": "The Pearl of Great Price",
+      "level_range": [91, 100],
+      "parable": {
+        "title": "The Parable of the Pearl of Great Price",
+        "scripture": "Matthew 13:45-46",
+        "content": "A merchant finds a pearl of great value and gives everything to obtain it.",
+        "reflection": "What helps you recognize what is truly valuable — and respond with wholeheartedness?",
+        "background_image": "parable_pearl.jpg"
+      },
+      "unlock_message": "Parable unlocked! Hold fast to what matters most."
     }
   ],
   "color_distribution": {},

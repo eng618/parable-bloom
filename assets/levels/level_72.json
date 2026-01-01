@@ -1,0 +1,262 @@
+{
+  "id": 72,
+  "name": "Level 72",
+  "difficulty": "Flourishing",
+  "grid_size": [
+    12,
+    16
+  ],
+  "mask": {
+    "mode": "show-all",
+    "points": []
+  },
+  "vines": [
+    {
+      "id": "vine_1",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 1,
+          "y": 15
+        },
+        {
+          "x": 1,
+          "y": 14
+        },
+        {
+          "x": 1,
+          "y": 13
+        },
+        {
+          "x": 2,
+          "y": 13
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_2",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 0,
+          "y": 7
+        },
+        {
+          "x": 1,
+          "y": 7
+        },
+        {
+          "x": 1,
+          "y": 6
+        },
+        {
+          "x": 2,
+          "y": 6
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_3",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 14
+        },
+        {
+          "x": 10,
+          "y": 14
+        },
+        {
+          "x": 10,
+          "y": 13
+        },
+        {
+          "x": 9,
+          "y": 13
+        },
+        {
+          "x": 9,
+          "y": 14
+        },
+        {
+          "x": 8,
+          "y": 14
+        },
+        {
+          "x": 8,
+          "y": 13
+        },
+        {
+          "x": 7,
+          "y": 13
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_4",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 1
+        },
+        {
+          "x": 10,
+          "y": 1
+        },
+        {
+          "x": 9,
+          "y": 1
+        },
+        {
+          "x": 9,
+          "y": 2
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_5",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 3,
+          "y": 13
+        },
+        {
+          "x": 4,
+          "y": 13
+        },
+        {
+          "x": 4,
+          "y": 14
+        },
+        {
+          "x": 3,
+          "y": 14
+        },
+        {
+          "x": 3,
+          "y": 15
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_6",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 9,
+          "y": 12
+        },
+        {
+          "x": 9,
+          "y": 11
+        },
+        {
+          "x": 8,
+          "y": 11
+        },
+        {
+          "x": 8,
+          "y": 12
+        },
+        {
+          "x": 7,
+          "y": 12
+        },
+        {
+          "x": 7,
+          "y": 11
+        },
+        {
+          "x": 6,
+          "y": 11
+        },
+        {
+          "x": 6,
+          "y": 10
+        },
+        {
+          "x": 5,
+          "y": 10
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_7",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 5,
+          "y": 0
+        },
+        {
+          "x": 5,
+          "y": 1
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_8",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 3,
+          "y": 0
+        },
+        {
+          "x": 3,
+          "y": 1
+        },
+        {
+          "x": 4,
+          "y": 1
+        },
+        {
+          "x": 4,
+          "y": 0
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_9",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 11,
+          "y": 10
+        },
+        {
+          "x": 10,
+          "y": 10
+        },
+        {
+          "x": 9,
+          "y": 10
+        },
+        {
+          "x": 9,
+          "y": 9
+        },
+        {
+          "x": 9,
+          "y": 8
+        }
+      ],
+      "vine_color": "default"
+    }
+  ],
+  "max_moves": 9,
+  "min_moves": 0,
+  "complexity": "high",
+  "grace": 3
+}

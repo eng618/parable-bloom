@@ -27,8 +27,8 @@ void main() {
             id: '1',
             headDirection: 'right',
             orderedPath: [
-              {'x': 0, 'y': 0},
               {'x': 1, 'y': 0},
+              {'x': 0, 'y': 0},
             ],
             vineColor: 'default',
           ),

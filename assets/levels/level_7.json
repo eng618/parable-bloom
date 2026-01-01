@@ -1,0 +1,180 @@
+{
+  "id": 7,
+  "name": "Level 7",
+  "difficulty": "Sprout",
+  "grid_size": [
+    9,
+    12
+  ],
+  "mask": {
+    "mode": "show-all",
+    "points": []
+  },
+  "vines": [
+    {
+      "id": "vine_1",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 8,
+          "y": 11
+        },
+        {
+          "x": 8,
+          "y": 10
+        },
+        {
+          "x": 7,
+          "y": 10
+        },
+        {
+          "x": 7,
+          "y": 11
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_2",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 0,
+          "y": 10
+        },
+        {
+          "x": 1,
+          "y": 10
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_3",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 6,
+          "y": 10
+        },
+        {
+          "x": 5,
+          "y": 10
+        },
+        {
+          "x": 5,
+          "y": 11
+        },
+        {
+          "x": 6,
+          "y": 11
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_4",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 4,
+          "y": 0
+        },
+        {
+          "x": 4,
+          "y": 1
+        },
+        {
+          "x": 5,
+          "y": 1
+        },
+        {
+          "x": 6,
+          "y": 1
+        },
+        {
+          "x": 6,
+          "y": 0
+        },
+        {
+          "x": 7,
+          "y": 0
+        },
+        {
+          "x": 7,
+          "y": 1
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_5",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 2
+        },
+        {
+          "x": 0,
+          "y": 3
+        },
+        {
+          "x": 0,
+          "y": 4
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_6",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 1,
+          "y": 0
+        },
+        {
+          "x": 1,
+          "y": 1
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_7",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 8,
+          "y": 3
+        },
+        {
+          "x": 7,
+          "y": 3
+        },
+        {
+          "x": 6,
+          "y": 3
+        },
+        {
+          "x": 6,
+          "y": 4
+        }
+      ],
+      "vine_color": "default"
+    }
+  ],
+  "max_moves": 7,
+  "min_moves": 0,
+  "complexity": "low",
+  "grace": 3
+}
