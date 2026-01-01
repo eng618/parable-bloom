@@ -195,8 +195,8 @@ This document defines the JSON schemas for Parable Bloom's data structures, upda
         },
         "vine_color": {
           "type": "string",
-          "description": "Optional vine color. Preferred: palette key (e.g. \"default\"). Back-compat: hex string (#RRGGBB or #AARRGGBB). If omitted/invalid/unknown, the client uses a default seed color.",
-          "example": "#4F8A5B"
+          "description": "Optional vine color palette key (e.g. \"default\"). If omitted, the client uses a default seed color.",
+          "example": "default"
         }
       },
       "required": ["id", "head_direction", "ordered_path"]

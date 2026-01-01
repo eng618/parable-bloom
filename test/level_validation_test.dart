@@ -31,33 +31,15 @@ void main() {
       // simple structural checks
       final occupied = <String, String>{};
       for (final vine in level.vines) {
-        // Optional vine_color is a palette key (preferred) or a hex string
-        // (#RRGGBB or #AARRGGBB) for backward compatibility.
+        // Optional vine_color is a palette key.
         if (vine.vineColor != null) {
           final v = vine.vineColor!.trim();
-
-          if (v.startsWith('#')) {
-            final hex = v.substring(1);
-            expect(
-              hex.length == 6 || hex.length == 8,
-              isTrue,
-              reason:
-                  'Invalid vine_color format in ${levelFile.path} ${vine.id}: ${vine.vineColor}',
-            );
-            expect(
-              int.tryParse(hex, radix: 16) != null,
-              isTrue,
-              reason:
-                  'Invalid vine_color hex in ${levelFile.path} ${vine.id}: ${vine.vineColor}',
-            );
-          } else {
-            expect(
-              VineColorPalette.isKnownKey(v),
-              isTrue,
-              reason:
-                  'Unknown vine_color key in ${levelFile.path} ${vine.id}: ${vine.vineColor}',
-            );
-          }
+          expect(
+            VineColorPalette.isKnownKey(v),
+            isTrue,
+            reason:
+                'Unknown vine_color key in ${levelFile.path} ${vine.id}: ${vine.vineColor}',
+          );
         }
 
         for (final seg in vine.orderedPath) {

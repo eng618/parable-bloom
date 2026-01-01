@@ -48,7 +48,7 @@ Notes:
 ```json
 {
   "id": "vine_1",                    // Unique ID string
-  "vine_color": "default",            // Optional palette key (preferred). Hex also supported for back-compat.
+  "vine_color": "default",            // Optional palette key
   "head_direction": "right",         // up/down/left/right
   "ordered_path": [                  // Head first, tail last
     {"x": 0, "y": 0},

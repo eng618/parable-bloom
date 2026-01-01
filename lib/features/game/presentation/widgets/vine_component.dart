@@ -81,8 +81,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final isAttempted = vineState.hasBeenAttempted;
 
     // Determine vine color.
-    // - `vine_color` is primarily a palette key resolved via VineColorPalette.
-    // - Back-compat: hex strings (#RRGGBB / #AARRGGBB) are accepted.
+    // - `vine_color` is a palette key resolved via VineColorPalette.
     // - Apply a calm deterministic variation per vine id.
     final seedColor = VineColorPalette.resolve(vineData.vineColor);
     final calmColor = _deriveCalmVariant(seedColor, vineData.id);

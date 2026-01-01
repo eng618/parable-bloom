@@ -18,6 +18,7 @@ import '../features/game/domain/services/level_solver_service.dart';
 import '../features/game/presentation/widgets/garden_game.dart';
 import '../features/settings/data/repositories/hive_settings_repository.dart';
 import '../features/settings/domain/repositories/settings_repository.dart';
+import '../core/vine_color_palette.dart';
 import '../services/analytics_service.dart';
 
 // Module data model
@@ -114,7 +115,12 @@ class VineData {
   });
 
   factory VineData.fromJson(Map<String, dynamic> json) {
-    final vineColor = (json['vine_color'] ?? json['color'])?.toString();
+    final vineColor = json['vine_color']?.toString().trim();
+    if (vineColor != null && vineColor.isNotEmpty) {
+      if (!VineColorPalette.isKnownKey(vineColor)) {
+        throw FormatException('Unknown vine_color key: $vineColor');
+      }
+    }
     return VineData(
       id: json['id'].toString(),
       headDirection: json['head_direction'],
