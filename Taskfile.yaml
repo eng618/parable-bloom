@@ -159,6 +159,69 @@ tasks:
       - flutter run
 
   # -----------------------------------------------------------------------------
+  # Environment-Specific Tasks
+
+  serve:dev:
+    desc: Run the application in development environment
+    cmds:
+      - flutter run --dart-define=APP_ENV=dev
+
+  serve:dev:web:
+    desc: Run the web application in development environment
+    cmds:
+      - flutter run -d chrome --dart-define=APP_ENV=dev
+
+  serve:preview:
+    desc: Run the application in preview environment
+    cmds:
+      - flutter run --dart-define=APP_ENV=preview
+
+  serve:preview:web:
+    desc: Run the web application in preview environment
+    cmds:
+      - flutter run -d chrome --dart-define=APP_ENV=preview
+
+  serve:prod:
+    desc: Run the application in production environment
+    cmds:
+      - flutter run --dart-define=APP_ENV=prod
+
+  serve:prod:web:
+    desc: Run the web application in production environment
+    cmds:
+      - flutter run -d chrome --dart-define=APP_ENV=prod
+
+  build:web:dev:
+    desc: Build the web application for development environment
+    cmds:
+      - flutter build web --dart-define=APP_ENV=dev
+
+  build:web:preview:
+    desc: Build the web application for preview environment
+    cmds:
+      - flutter build web --dart-define=APP_ENV=preview
+
+  build:web:prod:
+    desc: Build the web application for production environment
+    cmds:
+      - flutter build web --dart-define=APP_ENV=prod
+
+  test:dev:
+    desc: Run tests in development environment
+    cmds:
+      - flutter test --dart-define=APP_ENV=dev
+
+  test:preview:
+    desc: Run tests in preview environment
+    cmds:
+      - flutter test --dart-define=APP_ENV=preview
+
+  test:prod:
+    desc: Run tests in production environment
+    cmds:
+      - flutter test --dart-define=APP_ENV=prod
+
+  # -----------------------------------------------------------------------------
   # Deploy
 
   deploy:

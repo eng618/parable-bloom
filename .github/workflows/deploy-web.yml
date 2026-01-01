@@ -41,8 +41,17 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
 
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_run" && "${{ github.event.workflow_run.head_branch }}" == "main" ]]; then
+            echo "APP_ENV=prod" >> $GITHUB_ENV
+          else
+            echo "APP_ENV=preview" >> $GITHUB_ENV
+          fi
+
       - name: Build Web
-        run: flutter build web --release
+        run: flutter build web --release --dart-define=APP_ENV=${{ env.APP_ENV }}
 
       - name: Deploy to Hosting
         run: firebase deploy --only hosting --token ${{ secrets.FIREBASE_CI_TOKEN }}

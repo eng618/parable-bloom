@@ -39,3 +39,5 @@ jobs:
 
       - name: Run task validate
         run: task validate
+        env:
+          APP_ENV: dev
