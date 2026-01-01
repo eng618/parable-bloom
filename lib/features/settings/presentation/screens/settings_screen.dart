@@ -30,6 +30,9 @@ class SettingsScreen extends ConsumerWidget {
             title: const Text('Version'),
             subtitle: const Text('1.0.0'),
           ),
+          const Divider(),
+          _buildSectionHeader(context, 'Danger Zone'),
+          _buildResetDataTile(context, ref),
         ],
       ),
     );
@@ -224,6 +227,219 @@ class SettingsScreen extends ConsumerWidget {
       return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
     } else {
       return 'just now';
+    }
+  }
+
+  Widget _buildResetDataTile(BuildContext context, WidgetRef ref) {
+    return ListTile(
+      leading: Icon(
+        Icons.delete_forever,
+        color: Theme.of(context).colorScheme.error,
+      ),
+      title: Text(
+        'Reset All Data',
+        style: TextStyle(color: Theme.of(context).colorScheme.error),
+      ),
+      subtitle: const Text('Delete all progress, settings, and cloud data'),
+      onTap: () => _showResetDataDialog(context, ref),
+    );
+  }
+
+  void _showResetDataDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning,
+              color: Theme.of(dialogContext).colorScheme.error,
+            ),
+            const SizedBox(width: 8),
+            const Text('Reset All Data'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This action cannot be undone. This will permanently delete:',
+              style: Theme.of(dialogContext).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            _buildWarningItem(dialogContext, 'Local game progress'),
+            _buildWarningItem(dialogContext, 'Module completion data'),
+            _buildWarningItem(dialogContext, 'Settings and preferences'),
+            _buildWarningItem(dialogContext, 'Cloud sync data'),
+            const SizedBox(height: 16),
+            Text(
+              'The app will restart with a fresh installation.',
+              style: Theme.of(
+                dialogContext,
+              ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => _performDataReset(dialogContext, ref),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+            ),
+            child: const Text('Reset Everything'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWarningItem(BuildContext context, String item) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(
+            Icons.delete,
+            size: 16,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(width: 8),
+          Text(item, style: Theme.of(context).textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+
+  void _performDataReset(BuildContext context, WidgetRef ref) {
+    // Close the confirmation dialog immediately (before any async work)
+    Navigator.of(context).pop();
+
+    // Store service references before async operations
+    final firestore = ref.read(firestoreProvider);
+    final auth = ref.read(firebaseAuthProvider);
+    final box = ref.read(hiveBoxProvider);
+
+    // Show loading dialog and capture its context
+    BuildContext? loadingContext;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        loadingContext = ctx;
+        return const AlertDialog(
+          title: Text('Resetting Data...'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('This may take a moment...'),
+            ],
+          ),
+        );
+      },
+    );
+
+    // Perform async operations without awaiting, using .then() and .catchError()
+    _performResetAsync(
+      firestore: firestore,
+      auth: auth,
+      box: box,
+      ref: ref,
+      loadingContext: loadingContext,
+      originalContext: context,
+    );
+  }
+
+  Future<void> _performResetAsync({
+    required dynamic firestore,
+    required dynamic auth,
+    required dynamic box,
+    required WidgetRef ref,
+    required BuildContext? loadingContext,
+    required BuildContext originalContext,
+  }) async {
+    try {
+      // 1. Clear Firebase data
+      debugPrint('ResetData: Clearing Firebase data...');
+      final user = auth.currentUser;
+
+      if (user != null) {
+        // Clear user's cloud data
+        final userDoc = firestore.collection('users').doc(user.uid);
+        await userDoc.delete();
+        debugPrint('ResetData: Firebase data cleared for user ${user.uid}');
+      }
+
+      // 2. Clear Hive data
+      debugPrint('ResetData: Clearing Hive data...');
+      await box.clear();
+      debugPrint('ResetData: Hive data cleared');
+
+      // 3. Invalidate all Riverpod providers to force fresh state
+      debugPrint('ResetData: Invalidating providers...');
+      ref.invalidate(gameProgressProvider);
+      ref.invalidate(globalProgressProvider);
+      ref.invalidate(currentLevelProvider);
+      ref.invalidate(levelCompleteProvider);
+      ref.invalidate(gameCompletedProvider);
+      ref.invalidate(gameOverProvider);
+      ref.invalidate(graceProvider);
+      ref.invalidate(levelTotalTapsProvider);
+      ref.invalidate(levelWrongTapsProvider);
+      ref.invalidate(vineStatesProvider);
+      ref.invalidate(themeModeProvider);
+
+      // 4. Close the loading dialog safely
+      if (loadingContext != null &&
+          loadingContext.mounted &&
+          Navigator.canPop(loadingContext)) {
+        Navigator.of(loadingContext).pop();
+      }
+
+      if (!originalContext.mounted) return;
+
+      // 5. Show success message and restart app
+      debugPrint('ResetData: Showing success message...');
+      ScaffoldMessenger.of(originalContext).showSnackBar(
+        const SnackBar(
+          content: Text('All data reset successfully. Restarting app...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // 6. Restart the app by navigating to home and clearing navigation stack
+      debugPrint('ResetData: Restarting app...');
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (!originalContext.mounted) return;
+      Navigator.of(
+        originalContext,
+      ).pushNamedAndRemoveUntil('/', (route) => false);
+    } catch (e) {
+      debugPrint('ResetData: Error during reset: $e');
+
+      // Close loading dialog safely
+      if (loadingContext != null &&
+          loadingContext.mounted &&
+          Navigator.canPop(loadingContext)) {
+        Navigator.of(loadingContext).pop();
+      }
+
+      if (!originalContext.mounted) return;
+      // Show error message
+      ScaffoldMessenger.of(originalContext).showSnackBar(
+        SnackBar(
+          content: Text('Error resetting data: ${e.toString()}'),
+          backgroundColor: Theme.of(originalContext).colorScheme.error,
+        ),
+      );
     }
   }
 

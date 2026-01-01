@@ -1,3 +1,11 @@
+---
+title: "Parable Bloom - Technical Implementation Guide"
+version: "3.4"
+last_updated: "2025-12-24"
+status: "Snake Mechanics & Module System Implementation Complete"
+type: "Technical Documentation"
+---
+
 # Parable Bloom - Technical Implementation Guide
 
 ## Complete Development Roadmap for Solo Developer
@@ -29,10 +37,11 @@
   - Add VineComponent class with head/body sprites
   - Implement basic tap detection on vines
   - Hive setup for coins/lives persistence
-- [ ] **Week 2**: Vine slide/wilt mechanics
-  - Tap-to-slide: scan forward, tween max empty cells
-  - Wilt on blocked taps (+1 wrong counter)
-  - Clear on overflow edge (bloom SFX, coin reward)
+- [x] **Week 2**: Vine slide/wilt mechanics **COMPLETED**
+  - History-based snake animation: head moves first, body follows previous segment's old position
+  - Forward movement: tap triggers snake-like sliding in head direction
+  - Blocked vines: animate backwards through position history to return to start
+  - Clearing: continue snake movement until all segments exit grid
   - Win condition: all vines cleared
 - [ ] **Week 3**: 10 levels + UI polish
   - JSON level loader for simple vine definitions
@@ -101,6 +110,10 @@ We have moved beyond the initial "Weeks" roadmap into a mature implementation of
 
 - **Infinite Level Flow**: Dynamic loading of JSON levels from `assets/levels`.
 - **Bullet-Proof Logic**: Every level is automatically validated for solvability before launch.
+- **History-Based Animation**: Snake-like movement where head moves first, body follows previous segment's old position. Blocked vines animate backwards through position history.
+- **Bloom Effect**: Beautiful particle animation (expanding rings, central glow, sparkle particles) triggered when vines fully clear off-screen, positioned at exit location.
+- **Clean Animation State Management**: Four distinct vine animation states (normal, animatingClear, animatingBlocked, cleared) ensure proper separation between blocking logic and visual animation.
+- **Fluid Gameplay Optimization**: Clearable vines are immediately removed from blocking calculations when tapped, allowing other vines to be tapped without incorrect blocking during animation.
 - **Minimalist UX**: Reactive visuals that provide instant feedback without noise.
 
 #### Core Domain Entities
@@ -850,6 +863,121 @@ lib/
 
 ---
 
+## 🎬 Vine Click Animation & Grace System
+
+### Animation Flow Overview
+
+The vine click animation follows a **two-branch decision tree** based on whether the vine's path is clear to the edge of the grid:
+
+#### **When Path is Clear (Vine Can Exit)**
+
+1. **Check blocking**: Use `LevelSolver.getDistanceToBlocker()` to verify no vines block the path to grid edge
+2. **Immediately clear** (technically): Remove vine from blocking calculations via `VineAnimationState.animatingClear`
+   - Vine is no longer eligible to block other vines
+   - Visual animation continues (vine still visible on screen)
+3. **Animate off-screen**: Head-body snake animation moves vine toward grid edge, then continues beyond bounds
+4. **Bloom effect**: When vine head exits visible grid (`_hasExitedVisibleGrid()`), trigger bloom animation at exit position
+5. **Complete**: When last vine segment fully exits grid (`_isFullyOffScreen()`) and bloom completes, permanently remove vine
+
+**Code Flow**:
+
+- `handleCellTap()` → `comp.slideOut()` → Check blocking via `_calculateMovementDistance()` → Animate with `_willClearAfterAnimation=true` → `_startBloomEffect()` → `_finishAnimation()`
+
+#### **When Path is Blocked (Vine Hits Obstacle)**
+
+1. **Check blocking**: `LevelSolver.getDistanceToBlocker()` returns negative distance to obstacle
+2. **Animate forward**: Snake animation moves head-first toward blocking vine until collision
+3. **Turn red/blocked**: Vine color changes to indicate failed attempt (uses `AppTheme.vineAttemptedColor`)
+4. **Mark attempted**: Call `markVineAttempted(vineId)` which:
+   - Sets `hasBeenAttempted=true` flag
+   - Increments `levelWrongTapsProvider` counter
+   - Calls `decrementGrace()` to lose 1 heart/grace
+   - Logs wrong tap analytics
+5. **Reverse animation**: Play backward through position history to return to original state
+6. **Complete**: Return vine to normal animation state
+
+**Code Flow**:
+
+- `handleCellTap()` → `comp.slideOut()` → Check blocking via `_calculateMovementDistance()` (returns negative) → Animate with `_isBlockedAnimation=true` → `markVineAttempted()` (decrments grace) → Reverse through `_positionHistory`
+
+### Grace System (Hearts/Lives)
+
+**Definition**: Grace is a per-level resource representing "attempts remaining". Each failed vine tap costs 1 Grace.
+
+**Implementation**:
+
+- **Provider**: `graceProvider` (Riverpod `NotifierProvider<GraceNotifier, int>`)
+- **Initial value**: 3 per level (can be overridden in level JSON via `"grace": 4`)
+- **Decrement trigger**: `GraceNotifier.decrementGrace()` called from `VineStatesNotifier.markAttempted()`
+- **Visual feedback**: Grace counter displayed in UI (hearts/gems icon + number)
+
+**Timing**:
+
+- Grace is decremented **immediately when vine hits obstacle** (during `markVineAttempted()`)
+- Happens **before** reverse animation plays (visual feedback is synchronous with game mechanic)
+- If grace reaches 0, game over screen appears
+
+**Code Locations**:
+
+- `lib/providers/game_providers.dart`: `GraceNotifier` class (lines ~559-634)
+- `lib/features/game/presentation/widgets/garden_game.dart`: `resetGrace()` called on level load
+- `lib/features/game/presentation/widgets/vine_component.dart`: Animation logic (lines ~240-450)
+- `lib/features/game/presentation/widgets/grid_component.dart`: Tap handler & `markVineAttempted()` call
+
+### Vine Animation States
+
+Four distinct animation states prevent incorrect blocking during animation:
+
+| State | Meaning | Blocks Other Vines? | Removable? | Rendering |
+|-------|---------|-------------------|-----------|-----------|
+| `normal` | Default, stationary | Yes (if clear path) | No | Normal color + direction indicator |
+| `animatingClear` | Sliding off-screen | **No** | Yes (immediately) | Current color, animating |
+| `animatingBlocked` | Hitting obstacle, reversing | Yes | No | Red/attempted color, animating |
+| `cleared` | Fully off-screen, complete | No | Yes (permanent) | Not rendered |
+
+**Key Insight**: `animatingClear` vines don't block others, so you can tap multiple vines in sequence without stuttering.
+
+### Color Scheme for Vine States
+
+- **Normal**: `AppTheme.vineGreen` (default vine color)
+- **Attempted**: `AppTheme.vineAttempted` (red tint, applied during blocked animation)
+- **Head Direction**: Arrow indicator (right, left, up, down) rendered on head segment
+
+### Bloom Effect Positioning
+
+The bloom effect (expanding circles, glow, sparkles) appears at the **grid edge where the vine exits**, not at the vine head's current position:
+
+- **Exit calculation**: When vine head crosses grid boundary, bloom is positioned at the nearest grid boundary cell
+  - Head direction determines which edge: right → maxX, left → minX, up → maxY, down → minY
+  - Perpendicular axis is clamped to valid grid range (e.g., if moving right and head Y goes out of bounds, Y is clamped to minY or maxY)
+- **Timing**: Starts when vine head leaves visible grid (`_hasExitedVisibleGrid()`)
+- **Duration**: 0.5 second particle animation (optimized for faster level completion)
+- **Removal**: Vine removed only when **both** bloom completes AND all segments off-screen (`_isFullyOffScreen()`)
+- **Debug logs**: `_startBloomEffect()` prints bloom position for verification
+
+### Animation Timing Parameters
+
+The following timing parameters control animation speed and can be tuned for performance/gameplay balance:
+
+| Parameter | Location | Default Value | Purpose |
+|-----------|----------|---------------|---------|
+| `_stepDuration` | `vine_component.dart:25` | `0.03s` | Time per step for vine movement animation |
+| `_bloomEffectDuration` | `vine_component.dart:35` | `0.5s` | Duration of bloom particle effect after clearing |
+| `_stepDuration` (bump) | `vine_component.dart:524` | `0.05s` | Time per step for bump animation (blocked vines, set locally in method) |
+| Level complete overlay | `game_screen.dart:319` | `2s` | Display time for congratulations message |
+
+**Performance notes**:
+- Reducing `_stepDuration` makes animations faster but may appear choppy on lower-end devices
+- Reducing `_bloomEffectDuration` speeds up level completion but may feel abrupt
+- The level complete overlay delay should be long enough to appreciate the victory but short enough to maintain game flow
+- Current values are optimized for 60 FPS gameplay with smooth, responsive animations
+
+**Total end-of-level time**: ~1-2 seconds (vine animation, varies by length) + 0.5s (bloom) + 2s (overlay) = ~3.5-4.5 seconds total
+**Previous total time**: ~1-2 seconds (vine animation) + 1.0s (bloom) + 3s (overlay) = ~5-6 seconds total
+**Time saved**: ~1.5-2 seconds per level completion
+
+---
+
 ## 🐛 Troubleshooting Common Issues
 
 ### Development Issues
@@ -950,7 +1078,3 @@ lib/
 - Remember: shipping is the goal, perfection is the enemy
 
 ---
-
-*Version 1.0 - Technical Implementation Guide*
-*Date: December 16, 2025*
-*Status: Ready for Development*

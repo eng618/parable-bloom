@@ -1,6 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flame/components.dart';
-import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../core/app_theme.dart';
 import '../../../../providers/game_providers.dart';
 import 'grid_component.dart';
@@ -8,21 +10,56 @@ import 'grid_component.dart';
 class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final VineData vineData;
   final double cellSize;
-  final int gridSize;
 
   bool _isAnimating = false;
+  bool _willClearAfterAnimation =
+      false; // Whether this vine should be cleared when animation completes
 
-  VineComponent({
-    required this.vineData,
-    required this.cellSize,
-    required this.gridSize,
-  });
+  // Track current visual positions during animation (separate from vineData.path)
+  List<Map<String, int>> _currentVisualPositions = [];
+
+  // Animation state
+  int _currentAnimationStep = 0;
+  int _totalAnimationSteps = 0;
+  double _animationTimer = 0.0;
+  double _stepDuration =
+      0.03; // seconds per step - optimized for smooth, responsive animation
+
+  // History-based animation (snake-like movement)
+  List<List<Map<String, int>>> _positionHistory = [];
+  bool _isBlockedAnimation = false;
+
+  // Bloom effect after clearing
+  bool _isShowingBloomEffect = false;
+  double _bloomEffectTimer = 0.0;
+  final double _bloomEffectDuration = 0.5; // seconds - reduced for faster level completion
+  Offset? _bloomEffectPosition; // Where to show the bloom effect
+
+  // Track if we've already notified parent of clearing
+  final bool _alreadyNotifiedCleared = false;
+
+  VineComponent({required this.vineData, required this.cellSize}) {
+    // Initialize visual positions directly from vine data (pure x,y coordinates)
+    _currentVisualPositions = List<Map<String, int>>.from(
+      vineData.orderedPath.map((cell) => Map<String, int>.from(cell)),
+    );
+  }
 
   @override
   Future<void> onLoad() async {
     // Initial position is zero within GridComponent coordinate space
     position = Vector2.zero();
     size = parent.size;
+
+    // Visual positions are already initialized in constructor
+    // This is just for logging
+
+    debugPrint('VineComponent loaded for vine ${vineData.id}');
+    debugPrint(
+      'Vine ordered path: ${vineData.orderedPath.map((p) => "(${p['x']},${p['y']})").join(' -> ')}',
+    );
+    debugPrint('Head direction: ${vineData.headDirection}');
+    debugPrint('Calculated direction: ${_calculateVineDirection()}');
   }
 
   @override
@@ -30,7 +67,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     super.render(canvas);
 
     final vineState = parent.getCurrentVineState(vineData.id);
-    if (vineState == null || (vineState.isCleared && !_isAnimating)) return;
+    if (vineState == null) return;
+
+    // For optimization, we allow rendering even if cleared during animation
+    // The vine should complete its animation sequence before disappearing
 
     final isBlocked = vineState.isBlocked;
     final isAttempted = vineState.hasBeenAttempted;
@@ -38,50 +78,63 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // Use centralized theme colors
     final baseColor = isAttempted ? AppTheme.vineAttempted : AppTheme.vineGreen;
 
-    // Calculate direction from vine path
+    // Calculate direction from vine data
     final direction = _calculateVineDirection();
 
     // Draw line segments connecting cells (tails)
-    final segmentAlpha = isBlocked ? 0.3 : 0.8;
     final segmentPaint = Paint()
-      ..color = baseColor.withValues(alpha: segmentAlpha * 255)
+      ..color = baseColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
 
-    for (int i = 0; i < vineData.path.length - 1; i++) {
-      final currentCell = vineData.path[i];
-      final nextCell = vineData.path[i + 1];
+    // Calculate bounds for coordinate transformation
+    final bounds = parent.getCurrentLevelData()!.getBounds();
+    final visualHeight = bounds.maxY - bounds.minY + 1;
 
-      final currentVisualRow = gridSize - 1 - (currentCell['row'] as int);
-      final nextVisualRow = gridSize - 1 - (nextCell['row'] as int);
+    for (int i = 0; i < _currentVisualPositions.length - 1; i++) {
+      final currentCell = _currentVisualPositions[i];
+      final nextCell = _currentVisualPositions[i + 1];
+
+      final currentX = currentCell['x'] as int;
+      final currentY = currentCell['y'] as int;
+      final nextX = nextCell['x'] as int;
+      final nextY = nextCell['y'] as int;
+
+      // Transform to visual coordinates (y=0 at bottom)
+      final currentVisualY = visualHeight - 1 - (currentY - bounds.minY);
+      final nextVisualY = visualHeight - 1 - (nextY - bounds.minY);
 
       final start = Offset(
-        (currentCell['col'] as int) * cellSize + cellSize / 2,
-        currentVisualRow * cellSize + cellSize / 2,
+        (currentX - bounds.minX) * cellSize + cellSize / 2,
+        currentVisualY * cellSize + cellSize / 2,
       );
       final end = Offset(
-        (nextCell['col'] as int) * cellSize + cellSize / 2,
-        nextVisualRow * cellSize + cellSize / 2,
+        (nextX - bounds.minX) * cellSize + cellSize / 2,
+        nextVisualY * cellSize + cellSize / 2,
       );
 
       canvas.drawLine(start, end, segmentPaint);
     }
 
     // Draw dots and heads
-    for (int i = 0; i < vineData.path.length; i++) {
-      final cell = vineData.path[i];
-      final row = cell['row'] as int;
-      final col = cell['col'] as int;
-      final visualRow = gridSize - 1 - row;
+    for (int i = 0; i < _currentVisualPositions.length; i++) {
+      final cell = _currentVisualPositions[i];
+      final x = cell['x'] as int;
+      final y = cell['y'] as int;
 
-      final isHead = direction != null && i == vineData.path.length - 1;
+      // Transform to visual coordinates (y=0 at bottom)
+      final visualY = visualHeight - 1 - (y - bounds.minY);
 
-      final rect = Rect.fromLTWH(
-        col * cellSize + 5,
-        visualRow * cellSize + 5,
-        cellSize - 10,
-        cellSize - 10,
+      final isHead = direction != null && i == 0; // Head is at position 0
+
+      final rect = Rect.fromCenter(
+        center: Offset(
+          (x - bounds.minX) * cellSize + cellSize / 2,
+          visualY * cellSize + cellSize / 2,
+        ),
+        width: cellSize * 0.6,
+        height: cellSize * 0.6,
       );
 
       if (isHead) {
@@ -94,12 +147,16 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           isAttempted,
         );
       } else {
-        final alpha = isBlocked ? 0.3 : 0.8;
         final bodyPaint = Paint()
-          ..color = baseColor.withValues(alpha: alpha * 255)
+          ..color = baseColor
           ..style = PaintingStyle.fill;
-        canvas.drawCircle(rect.center, 4, bodyPaint);
+        canvas.drawCircle(rect.center, 3, bodyPaint);
       }
+    }
+
+    // Draw bloom effect if active
+    if (_isShowingBloomEffect && _bloomEffectPosition != null) {
+      _drawBloomEffect(canvas);
     }
   }
 
@@ -155,9 +212,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
     canvas.drawPath(path.shift(const Offset(2, 2)), shadowPaint);
 
-    final arrowAlpha = isBlocked ? 0.4 : 0.9;
     final arrowPaint = Paint()
-      ..color = color.withValues(alpha: arrowAlpha * 255)
+      ..color = color
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, arrowPaint);
 
@@ -169,110 +225,447 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   }
 
   String? _calculateVineDirection() {
-    if (vineData.path.length < 2) return 'right';
-
-    final headCell = vineData.path.last;
-    final secondLastCell = vineData.path[vineData.path.length - 2];
-
-    final headRow = headCell['row'] as int;
-    final headCol = headCell['col'] as int;
-    final prevRow = secondLastCell['row'] as int;
-    final prevCol = secondLastCell['col'] as int;
-
-    if (headCol > prevCol) return 'right';
-    if (headCol < prevCol) return 'left';
-    if (headRow > prevRow) return 'up';
-    if (headRow < prevRow) return 'down';
-
-    return 'right';
+    // Direction comes directly from the level data, not calculated from positions
+    return vineData.headDirection;
   }
 
   void slideOut() {
     if (_isAnimating) return;
     _isAnimating = true;
 
-    final direction = _calculateVineDirection();
-    Vector2 delta;
+    // Initialize history-based animation
+    _positionHistory = [];
+    _currentAnimationStep = 0;
+    _isBlockedAnimation = false;
+    _animationTimer = 0.0;
 
-    // Slide off the grid: gridSize + 5 cells to be safe
-    final slideDistance = (gridSize + 5) * cellSize;
+    final rawDistance = _calculateMovementDistance();
+    final canClear = rawDistance > 0;
+    final maxDistance = rawDistance.abs();
 
-    switch (direction) {
-      case 'right':
-        delta = Vector2(slideDistance, 0);
-        break;
-      case 'left':
-        delta = Vector2(-slideDistance, 0);
-        break;
-      case 'up':
-        delta = Vector2(0, -slideDistance);
-        break; // Visual Y is up
-      case 'down':
-        delta = Vector2(0, slideDistance);
-        break;
-      default:
-        delta = Vector2.zero();
+    if (canClear) {
+      // Vine can reach edge - calculate steps needed to exit completely off-screen
+      // Add extra steps to ensure vine moves well beyond the visible area
+      const int extraOffScreenSteps = 6; // Ensure vine is far off-screen
+      _totalAnimationSteps =
+          maxDistance + vineData.orderedPath.length + extraOffScreenSteps;
+      _willClearAfterAnimation = true;
+
+      // Set animation state to animatingClear - this removes it from blocking calculations
+      // but allows the animation to continue and complete properly
+      parent.setVineAnimationState(
+        vineData.id,
+        VineAnimationState.animatingClear,
+      );
+    } else {
+      // Vine is blocked - move forward to blocker, then reverse
+      _totalAnimationSteps = maxDistance * 2;
+      _willClearAfterAnimation = false;
+
+      // Set animation state to animatingBlocked
+      parent.setVineAnimationState(
+        vineData.id,
+        VineAnimationState.animatingBlocked,
+      );
+    }
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    if (!_isAnimating) return;
+
+    _animationTimer += dt;
+
+    if (_animationTimer >= _stepDuration) {
+      _animationTimer = 0.0;
+
+      if (_isBlockedAnimation) {
+        // Animate backwards through history
+        final historyIndex =
+            _positionHistory.length - 1 - _currentAnimationStep;
+        if (historyIndex >= 0) {
+          // Set vine positions to historical state
+          _currentVisualPositions = List<Map<String, int>>.from(
+            _positionHistory[historyIndex].map(
+              (pos) => Map<String, int>.from(pos),
+            ),
+          );
+        }
+
+        _currentAnimationStep++;
+
+        if (_currentAnimationStep >= _positionHistory.length) {
+          // Finished reverse animation - return to normal state
+          _positionHistory.clear();
+          _isAnimating = false;
+          _isBlockedAnimation = false;
+
+          // Reset animation state to normal
+          parent.setVineAnimationState(vineData.id, VineAnimationState.normal);
+        }
+        return;
+      }
+
+      // Normal forward movement (history-based snake animation)
+      final rawDistance = _calculateMovementDistance();
+      final canClear = rawDistance > 0;
+      final maxForwardDistance = rawDistance.abs();
+
+      if (_currentAnimationStep <= maxForwardDistance) {
+        // Save current positions to history
+        _positionHistory.add(
+          List<Map<String, int>>.from(
+            _currentVisualPositions.map((pos) => Map<String, int>.from(pos)),
+          ),
+        );
+
+        // Move head based on direction
+        final headIndex = 0;
+        final headPos = _currentVisualPositions[headIndex];
+        var newHeadX = headPos['x'] as int;
+        var newHeadY = headPos['y'] as int;
+
+        switch (vineData.headDirection) {
+          case 'right':
+            newHeadX += 1;
+            break;
+          case 'left':
+            newHeadX -= 1;
+            break;
+          case 'up':
+            newHeadY += 1; // Up increases y
+            break;
+          case 'down':
+            newHeadY -= 1; // Down decreases y
+            break;
+        }
+
+        // Update each following segment to previous segment's old position
+        var prevX = headPos['x'] as int;
+        var prevY = headPos['y'] as int;
+
+        for (int i = 1; i < _currentVisualPositions.length; i++) {
+          final tempX = _currentVisualPositions[i]['x'] as int;
+          final tempY = _currentVisualPositions[i]['y'] as int;
+
+          _currentVisualPositions[i]['x'] = prevX;
+          _currentVisualPositions[i]['y'] = prevY;
+
+          prevX = tempX;
+          prevY = tempY;
+        }
+
+        // Move head to new position
+        _currentVisualPositions[headIndex]['x'] = newHeadX;
+        _currentVisualPositions[headIndex]['y'] = newHeadY;
+
+        _currentAnimationStep++;
+
+        // Check if we've reached the blocker
+        if (_currentAnimationStep > maxForwardDistance && !canClear) {
+          // Hit blocker - start reverse animation
+          parent.markVineAttempted(vineData.id);
+          _isBlockedAnimation = true;
+          _currentAnimationStep = 0;
+        }
+      } else if (_willClearAfterAnimation) {
+        // Continue moving off screen for clearing vines
+        // Save current positions to history
+        _positionHistory.add(
+          List<Map<String, int>>.from(
+            _currentVisualPositions.map((pos) => Map<String, int>.from(pos)),
+          ),
+        );
+
+        // Move head further in direction
+        final headIndex = 0;
+        final headPos = _currentVisualPositions[headIndex];
+        var newHeadX = headPos['x'] as int;
+        var newHeadY = headPos['y'] as int;
+
+        switch (vineData.headDirection) {
+          case 'right':
+            newHeadX += 1;
+            break;
+          case 'left':
+            newHeadX -= 1;
+            break;
+          case 'up':
+            newHeadY += 1; // Up increases y
+            break;
+          case 'down':
+            newHeadY -= 1; // Down decreases y
+            break;
+        }
+
+        // Update each following segment to previous segment's old position
+        var prevX = headPos['x'] as int;
+        var prevY = headPos['y'] as int;
+
+        for (int i = 1; i < _currentVisualPositions.length; i++) {
+          final tempX = _currentVisualPositions[i]['x'] as int;
+          final tempY = _currentVisualPositions[i]['y'] as int;
+
+          _currentVisualPositions[i]['x'] = prevX;
+          _currentVisualPositions[i]['y'] = prevY;
+
+          prevX = tempX;
+          prevY = tempY;
+        }
+
+        // Move head to new position
+        _currentVisualPositions[headIndex]['x'] = newHeadX;
+        _currentVisualPositions[headIndex]['y'] = newHeadY;
+
+        _currentAnimationStep++;
+
+        // Check vine position relative to visible grid bounds
+        // Use `_hasExitedVisibleGrid()` to detect when the vine head has left
+        // the visible grid area so we can start the bloom immediately.
+        final isHeadExitedVisibleGrid = _hasExitedVisibleGrid();
+        final isFullyOffScreen = _isFullyOffScreen();
+
+        // Start bloom effect as soon as vine head leaves the visible grid
+        if (isHeadExitedVisibleGrid && !_isShowingBloomEffect) {
+          _startBloomEffect();
+        }
+
+        // Update bloom effect continuously while vine is animating off-screen
+        if (_isShowingBloomEffect) {
+          _updateBloomEffect(dt);
+
+          // Continue bloom effect while vine animates, but check for completion when fully off-screen
+          if (isFullyOffScreen && _bloomEffectTimer >= _bloomEffectDuration) {
+            // Bloom effect finished and vine is fully off-screen - remove vine
+            _finishAnimation();
+          }
+        } else if (_currentAnimationStep >= _totalAnimationSteps) {
+          // Fallback: if animation times out, still show effect
+          _startBloomEffect();
+        }
+      }
+    }
+  }
+
+  int _calculateMovementDistance() {
+    // Get distance from solver service - this tells us how far we can move before being blocked
+    // Use the active IDs that exclude animatingClear vines (they don't block others)
+    final activeIds = parent.getActiveVineIds();
+    final solver = parent.getLevelSolverService();
+
+    return solver.getDistanceToBlocker(
+      parent.getCurrentLevelData()!,
+      vineData.id,
+      activeIds,
+    );
+  }
+
+  // Check if all vine segments have exited the visible grid area (no margin)
+  bool _hasExitedVisibleGrid() {
+    final bounds = parent.getCurrentLevelData()!.getBounds();
+    final gridCols = bounds.maxX - bounds.minX + 1;
+    final gridRows = bounds.maxY - bounds.minY + 1;
+
+    // If no visual positions, consider it exited
+    if (_currentVisualPositions.isEmpty) return true;
+
+    // Only check the head position: we want the bloom to start as soon as
+    // the head has left the visible grid area.
+    final headPos = _currentVisualPositions[0];
+    final x = headPos['x'] as int;
+    final y = headPos['y'] as int;
+
+    final gridX = x - bounds.minX;
+    final gridY = y - bounds.minY;
+
+    // Head is outside visible grid when it's <0 or >= cols/rows
+    return gridX < 0 || gridX >= gridCols || gridY < 0 || gridY >= gridRows;
+  }
+
+  // Check if all vine segments are fully off-screen (with margin)
+  bool _isFullyOffScreen() {
+    final bounds = parent.getCurrentLevelData()!.getBounds();
+    final gridCols = bounds.maxX - bounds.minX + 1;
+    final gridRows = bounds.maxY - bounds.minY + 1;
+    const int offScreenMargin =
+        3; // Extra cells to ensure vine is fully off-screen
+
+    // Check if any segment is still visible on screen (with margin)
+    for (final pos in _currentVisualPositions) {
+      final x = pos['x'] as int;
+      final y = pos['y'] as int;
+
+      // Convert to grid-relative coordinates
+      final gridX = x - bounds.minX;
+      final gridY = y - bounds.minY;
+
+      // If any segment is still within extended bounds (includes margin)
+      if (gridX >= -offScreenMargin &&
+          gridX < gridCols + offScreenMargin &&
+          gridY >= -offScreenMargin &&
+          gridY < gridRows + offScreenMargin) {
+        return false; // Still visible with margin
+      }
     }
 
-    add(
-      MoveByEffect(
-        delta,
-        EffectController(duration: 0.5, curve: Curves.easeIn),
-        onComplete: () {
-          // Notify parent to update Riverpod state
-          parent.notifyVineCleared(vineData.id);
-          removeFromParent();
-        },
-      ),
-    );
+    return true; // All segments are fully off-screen
   }
 
   void slideBump(int distanceInCells) {
     if (_isAnimating) return;
     _isAnimating = true;
 
-    final direction = _calculateVineDirection();
+    // Initialize bump animation state
+    _currentAnimationStep = 0;
+    _totalAnimationSteps = distanceInCells * 2; // forward + backward
+    _animationTimer = 0.0;
+    _stepDuration = 0.05; // faster for bump animation
+    // Note: slideBump not implemented with history-based animation yet
+  }
 
-    // Animate to blocker + half a cell for a "bump" feel
-    final bumpDistance = (distanceInCells + 0.4) * cellSize;
-    Vector2 delta;
+  void _startBloomEffect() {
+    _isShowingBloomEffect = true;
+    _bloomEffectTimer = 0.0;
 
-    switch (direction) {
-      case 'right':
-        delta = Vector2(bumpDistance, 0);
-        break;
-      case 'left':
-        delta = Vector2(-bumpDistance, 0);
-        break;
-      case 'up':
-        delta = Vector2(0, -bumpDistance);
-        break;
-      case 'down':
-        delta = Vector2(0, bumpDistance);
-        break;
-      default:
-        delta = Vector2.zero();
+    // Calculate bloom position at the grid edge where the vine exited.
+    // The bloom should appear at the boundary edge, clamped to valid grid coordinates.
+    if (_currentVisualPositions.isNotEmpty) {
+      final bounds = parent.getCurrentLevelData()!.getBounds();
+
+      final headPos = _currentVisualPositions[0]; // Head is at index 0
+      final headX = headPos['x'] as int;
+      final headY = headPos['y'] as int;
+
+      // Determine bloom position at the grid boundary (perpendicular axis clamped to grid)
+      int bloomX = headX;
+      int bloomY = headY;
+
+      switch (vineData.headDirection) {
+        case 'right':
+          // Head exited right edge - bloom at right boundary
+          bloomX = bounds.maxX;
+          // Clamp Y to valid grid range
+          bloomY = headY.clamp(bounds.minY, bounds.maxY);
+          break;
+        case 'left':
+          // Head exited left edge - bloom at left boundary
+          bloomX = bounds.minX;
+          // Clamp Y to valid grid range
+          bloomY = headY.clamp(bounds.minY, bounds.maxY);
+          break;
+        case 'up':
+          // Head exited top edge - bloom at top boundary
+          bloomY = bounds.maxY;
+          // Clamp X to valid grid range
+          bloomX = headX.clamp(bounds.minX, bounds.maxX);
+          break;
+        case 'down':
+          // Head exited bottom edge - bloom at bottom boundary
+          bloomY = bounds.minY;
+          // Clamp X to valid grid range
+          bloomX = headX.clamp(bounds.minX, bounds.maxX);
+          break;
+      }
+
+      // Transform to visual coordinates (y=0 at bottom)
+      final visualHeight = bounds.maxY - bounds.minY + 1;
+      final visualY = visualHeight - 1 - (bloomY - bounds.minY);
+
+      // Position the bloom effect at the grid edge exit point
+      _bloomEffectPosition = Offset(
+        (bloomX - bounds.minX) * cellSize + cellSize / 2,
+        visualY * cellSize + cellSize / 2,
+      );
+
+      debugPrint(
+        'Bloom effect started at grid edge: head($headX,$headY) -> bloom($bloomX,$bloomY)',
+      );
+    }
+  }
+
+  void _updateBloomEffect(double dt) {
+    _bloomEffectTimer += dt;
+
+    // Bloom effect continues while vine animates - no early termination
+  }
+
+  void _finishAnimation() {
+    // Clean up animation state
+    _isAnimating = false;
+    _isShowingBloomEffect = false;
+    _bloomEffectPosition = null;
+    _positionHistory.clear();
+    _currentAnimationStep = 0;
+    _totalAnimationSteps = 0;
+    _animationTimer = 0.0;
+
+    // Set animation state to cleared - this properly marks the vine as cleared
+    parent.setVineAnimationState(vineData.id, VineAnimationState.cleared);
+
+    // Notify parent of clearing (only once)
+    if (!_alreadyNotifiedCleared) {
+      parent.notifyVineCleared(vineData.id);
     }
 
-    // Move forward, then move back
-    add(
-      SequenceEffect([
-        MoveByEffect(
-          delta,
-          EffectController(duration: 0.2, curve: Curves.easeOut),
-          onComplete: () {
-            // Trigger persistent state update (turns red)
-            parent.markVineAttempted(vineData.id);
-          },
-        ),
-        MoveByEffect(
-          -delta,
-          EffectController(duration: 0.2, curve: Curves.easeIn),
-          onComplete: () {
-            _isAnimating = false;
-          },
-        ),
-      ]),
-    );
+    // Remove the vine component from the scene
+    removeFromParent();
+  }
+
+  void _drawBloomEffect(Canvas canvas) {
+    if (_bloomEffectPosition == null) return;
+
+    final progress = _bloomEffectTimer / _bloomEffectDuration;
+    final center = _bloomEffectPosition!;
+
+    // Create expanding sparkle rings
+    final sparkleColors = [
+      AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.8),
+      AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.6),
+      AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.4),
+    ];
+
+    final maxRadius = cellSize * 2.0;
+    final ringCount = 3;
+
+    for (int i = 0; i < ringCount; i++) {
+      final ringProgress = (progress + i * 0.2) % 1.0; // Staggered timing
+      final radius = ringProgress * maxRadius;
+
+      if (radius > 0) {
+        final paint = Paint()
+          ..color = sparkleColors[i % sparkleColors.length]
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3.0 * (1.0 - ringProgress); // Thinner as they expand
+
+        canvas.drawCircle(center, radius, paint);
+      }
+    }
+
+    // Add central glow
+    final glowRadius = progress * cellSize * 0.8;
+    if (glowRadius > 0) {
+      final glowPaint = Paint()
+        ..color = AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.5)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(center, glowRadius, glowPaint);
+    }
+
+    // Add sparkle particles
+    final particleCount = 8;
+    for (int i = 0; i < particleCount; i++) {
+      final angle = (i / particleCount) * 2 * math.pi;
+      final distance = progress * cellSize * 1.5;
+      final particleX = center.dx + distance * math.cos(angle);
+      final particleY = center.dy + distance * math.sin(angle);
+
+      final particlePaint = Paint()
+        ..color = AppTheme.vineGreen.withValues(alpha: (1.0 - progress) * 0.9)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(Offset(particleX, particleY), 2.0, particlePaint);
+    }
   }
 }

@@ -1,44 +1,71 @@
 {
-    "levelId": "level_002_blocking",
-    "levelNumber": 2,
-    "title": "Clear the Path",
-    "difficulty": 1,
-    "grid": {
-        "rows": 4,
-        "columns": 4
+  "id": 2,
+  "name": "Open Paths",
+  "difficulty": "Tutorial",
+  "vines": [
+    {
+      "id": "vine_a",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 4, "y": 0 },
+        { "x": 3, "y": 0 },
+        { "x": 2, "y": 0 },
+        { "x": 1, "y": 0 },
+        { "x": 0, "y": 0 }
+      ],
+      "color": "moss_green"
     },
-    "vines": [
-        {
-            "id": "vine_1",
-            "color": "#8B4513",
-            "description": "Brown arrow blocked by green",
-            "path": [
-                { "row": 1, "col": 0 },
-                { "row": 1, "col": 1 }
-            ],
-            "blockingVines": []
-        },
-        {
-            "id": "vine_2",
-            "color": "#6B8E23",
-            "description": "Green arrow blocking brown",
-            "path": [
-                { "row": 0, "col": 2 },
-                { "row": 1, "col": 2 }
-            ],
-            "blockingVines": []
-        }
-    ],
-    "parable": {
-        "title": "Clear Impediments",
-        "scripture": "Hebrews 12:1",
-        "content": "Let us throw off everything that hinders...",
-        "reflection": "What is blocking your spiritual progress?",
-        "backgroundImage": "assets/parables/vine_branches.jpg"
+    {
+      "id": "vine_b",
+      "head_direction": "left",
+      "ordered_path": [
+        { "x": 0, "y": 1 },
+        { "x": 1, "y": 1 },
+        { "x": 2, "y": 1 },
+        { "x": 3, "y": 1 },
+        { "x": 4, "y": 1 }
+      ],
+      "color": "emerald"
     },
-    "hints": [
-        "One arrow is blocking the other. Which one can move first?"
-    ],
-    "optimalSequence": ["vine_2", "vine_1"],
-    "optimalMoves": 2
+    {
+      "id": "vine_c",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 4, "y": 2 },
+        { "x": 3, "y": 2 },
+        { "x": 2, "y": 2 },
+        { "x": 1, "y": 2 },
+        { "x": 0, "y": 2 }
+      ],
+      "color": "olive"
+    },
+    {
+      "id": "vine_d",
+      "head_direction": "left",
+      "ordered_path": [
+        { "x": 0, "y": 3 },
+        { "x": 1, "y": 3 },
+        { "x": 2, "y": 3 },
+        { "x": 3, "y": 3 },
+        { "x": 4, "y": 3 }
+      ],
+      "color": "sage"
+    },
+    {
+      "id": "vine_e",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 4, "y": 4 },
+        { "x": 3, "y": 4 },
+        { "x": 2, "y": 4 },
+        { "x": 1, "y": 4 },
+        { "x": 0, "y": 4 }
+      ],
+      "color": "moss_green"
+    }
+  ],
+  "max_moves": 8,
+  "min_moves": 5,
+  "complexity": "tutorial",
+  "grace": 3
 }

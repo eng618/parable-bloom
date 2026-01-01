@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../../../core/config/environment_config.dart';
 import '../../domain/entities/game_progress.dart';
 import '../../domain/repositories/game_progress_repository.dart';
 
@@ -13,8 +14,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
-  // Collection and document paths
-  static const String _collection = 'game_progress';
+  // Document path
   static const String _progressDoc = 'progress';
 
   // Local storage keys
@@ -24,6 +24,10 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
   static const String _userIdKey = 'firebase_user_id';
 
   FirebaseGameProgressRepository(this._localBox, this._firestore, this._auth);
+
+  /// Returns the Firestore collection name for the current environment.
+  static String get _collectionName =>
+      EnvironmentConfig.getFirestoreCollection();
 
   /// Gets the current user ID for Firestore document path.
   /// Uses anonymous auth - creates user if none exists.
@@ -94,7 +98,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
         final userId = await _getUserId();
         if (userId != null) {
           await _firestore
-              .collection(_collection)
+              .collection(_collectionName)
               .doc(userId)
               .collection('data')
               .doc(_progressDoc)
@@ -119,7 +123,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     try {
       // Get existing cloud data for conflict resolution
       final cloudDoc = await _firestore
-          .collection(_collection)
+          .collection(_collectionName)
           .doc(userId)
           .collection('data')
           .doc(_progressDoc)
@@ -143,7 +147,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
       if (shouldSyncToCloud) {
         await _firestore
-            .collection(_collection)
+            .collection(_collectionName)
             .doc(userId)
             .collection('data')
             .doc(_progressDoc)
@@ -210,7 +214,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
     try {
       final cloudDoc = await _firestore
-          .collection(_collection)
+          .collection(_collectionName)
           .doc(userId)
           .collection('data')
           .doc(_progressDoc)

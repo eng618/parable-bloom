@@ -1,0 +1,30 @@
+{
+  "id": 1001,
+  "name": "Solvable: Simple Blocking",
+  "difficulty": "Seedling",
+  "vines": [
+    {
+      "id": "blocker",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 1, "y": 2 },
+        { "x": 2, "y": 2 },
+        { "x": 3, "y": 2 }
+      ],
+      "color": "moss_green"
+    },
+    {
+      "id": "blocked",
+      "head_direction": "right",
+      "ordered_path": [
+        { "x": 4, "y": 2 },
+        { "x": 5, "y": 2 }
+      ],
+      "color": "emerald"
+    }
+  ],
+  "max_moves": 2,
+  "min_moves": 2,
+  "complexity": "low",
+  "grace": 3
+}

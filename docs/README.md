@@ -1,24 +1,33 @@
-# Parable Bloom - Master Documentation Index
+---
+title: "Parable Bloom – Master Documentation Index"
+version: "3.4"
+last_updated: "2025-12-24"
+status: "Snake Mechanics & History-Based Animation Implementation Complete"
+type: "Master Index"
+---
+
+# Parable Bloom – Master Documentation Index
 
 ## 🌿 Welcome to Parable Bloom
 
-**Parable Bloom** is a **zen hyper-casual arrow puzzle** where players clear a "garden" by untangling arrows to reveal parabolic blooms. It combines a minimalist aesthetic with deep strategic puzzle logic.
+**Parable Bloom** is a **zen hyper-casual arrow puzzle game** with faith-based themes, where players tap directional vines to slide them off a grid in the direction of their head, mimicking Snake's movement. Body segments follow as a queue, and blocked vines animate back with spiritual messaging.
 
 ---
 
 ## 🎮 Core Gameplay
 
-- **Zen Mechanics**: Tap arrows to clear paths. Move all arrows to "bloom" the level.
-- **Minimalist Aesthetic**: Subtle dots for the grid and clean line-segments for arrows reduce visual noise and improve clarity.
-- **Lives System**: 3 hearts per level. Tapping a blocked arrow costs a life, adding a layer of thoughtful strategy.
-- **Parable Integration**: Completing a level reveals a "parable bloom" with scripture and reflection.
+- **Snake-Like Movement**: Vines slide in head direction with body segments following as queue.
+- **Grace System**: 3 Grace per level (4 for Transcendent), "God's grace is endless—try again!" messaging.
+- **Module Structure**: 5 modules with 15 levels each, unlocking parables in the Journal.
+- **Strategic Depth**: Blocking is dynamic—clearing one vine unblocks others.
+- **Faith Integration**: Parables reveal spiritual reflections and scripture.
 
 ## 🛠️ Technical Architecture
 
-- **Riverpod**: Reactive state management for logical integrity and complete decoupling from the UI.
-- **Hive**: High-performance local persistence for progress, lives, and settings.
-- **Flame**: Powerful 2D game engine ensuring smooth 60fps interactions on mobile.
-- **LevelSolver**: Built-in BFS-based solver used for both real-time blocking calculation and automated level validation.
+- **Riverpod**: Reactive state management with providers for module progress, grace, vine states, and level data.
+- **Hive**: Local persistence for module progression, grace system, and settings.
+- **Flame**: 2D game engine with custom vine components and snake-like animations.
+- **LevelSolver**: BFS-based solver ensuring all levels are solvable with directional path mechanics.
 
 ---
 
@@ -37,7 +46,3 @@
 - **Scalability**: JSON-based level loading system allowing for infinite content expansion.
 
 ---
-
-*Version 2.1 - Master Documentation Index*
-*Date: December 20, 2025*
-*Status: Architecture Pivot & Minimalist Refinement Complete*

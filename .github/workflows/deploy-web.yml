@@ -4,18 +4,25 @@ on:
   workflow_run:
     workflows: ['CI']
     types: [completed]
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.event.pull_request.head.sha }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -30,20 +37,42 @@ jobs:
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
       - name: Generate firebase_options.dart
-        run: flutterfire configure --project=parableweave --out=lib/firebase_options.dart --platforms=web --yes
+        run: flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
 
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_run" && "${{ github.event.workflow_run.head_branch }}" == "main" ]]; then
+            echo "APP_ENV=prod" >> $GITHUB_ENV
+          else
+            echo "APP_ENV=preview" >> $GITHUB_ENV
+          fi
+
       - name: Build Web
-        run: flutter build web --release
+        run: flutter build web --release --dart-define=APP_ENV=${{ env.APP_ENV }}
 
       - name: Deploy to Hosting
         run: firebase deploy --only hosting --token ${{ secrets.FIREBASE_CI_TOKEN }}
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main'
+
+      - name: Deploy Preview (develop branch)
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop'
+        run: firebase hosting:channel:deploy preview --token ${{ secrets.FIREBASE_CI_TOKEN }}
 
       - name: Deploy Preview (PR only)
         if: github.event_name == 'pull_request'
-        run: firebase hosting:channel:deploy pr-${{ github.event.pull_request.number }} --token ${{ secrets.FIREBASE_CI_TOKEN }}
+        id: deploy-preview
+        run: |
+          CHANNEL_NAME="pr-${{ github.event.pull_request.number }}"
+          firebase hosting:channel:deploy $CHANNEL_NAME --token ${{ secrets.FIREBASE_CI_TOKEN }} > deploy_output.txt 2>&1
+          cat deploy_output.txt
+          # Extract URL from Firebase CLI output - look for Firebase hosting preview URL pattern
+          # Format: PROJECT_ID--CHANNEL_ID-RANDOM_HASH.web.app
+          PREVIEW_URL=$(grep -oP 'https://[a-zA-Z0-9\-]+--[a-zA-Z0-9\-]+-[a-zA-Z0-9]+\.web\.app' deploy_output.txt | head -1)
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+          echo "Channel deployed to: $PREVIEW_URL"
 
       - name: Comment PR with Preview URL
         if: github.event_name == 'pull_request'
@@ -51,7 +80,7 @@ jobs:
         with:
           script: |
             const prNumber = context.issue.number;
-            const previewUrl = `https://parableweave--pr-${prNumber}.web.app`;
+            const previewUrl = '${{ steps.deploy-preview.outputs.preview_url }}';
 
             github.rest.issues.createComment({
               issue_number: prNumber,

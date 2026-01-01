@@ -120,9 +120,106 @@ tasks:
       - flutter run -d 'SM S901U'
 
   serve:ios:
-    desc: Serve the application on iOS
+    desc: Serve the application on iOS simulator (auto-selects available simulator)
     cmds:
-      - flutter run -d ios
+      - task: get
+      - cd ios && pod install
+      - |
+        # Auto-select iOS simulator - find booted simulator or boot the first available one
+        BOOTED_SIM=$(xcrun simctl list devices booted | grep -E "iPhone|iPad" | head -1 | awk -F'[()]' '{print $2}')
+        if [ -z "$BOOTED_SIM" ]; then
+          # No booted simulator, find and boot the first available iPhone simulator
+          SIM_ID=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | awk -F'[()]' '{print $2}')
+          if [ -n "$SIM_ID" ]; then
+            echo "Booting iOS simulator: $SIM_ID"
+            xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+            sleep 2
+          fi
+        fi
+      - flutter run
+
+  serve:ios:clean:
+    desc: Clean and serve the application on iOS simulator
+    cmds:
+      - task: clean
+      - task: get
+      - cd ios && pod install
+      - |
+        # Auto-select iOS simulator - find booted simulator or boot the first available one
+        BOOTED_SIM=$(xcrun simctl list devices booted | grep -E "iPhone|iPad" | head -1 | awk -F'[()]' '{print $2}')
+        if [ -z "$BOOTED_SIM" ]; then
+          # No booted simulator, find and boot the first available iPhone simulator
+          SIM_ID=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | awk -F'[()]' '{print $2}')
+          if [ -n "$SIM_ID" ]; then
+            echo "Booting iOS simulator: $SIM_ID"
+            xcrun simctl boot "$SIM_ID" 2>/dev/null || true
+            sleep 2
+          fi
+        fi
+      - flutter run
+
+  # -----------------------------------------------------------------------------
+  # Environment-Specific Tasks
+
+  serve:dev:
+    desc: Run the application in development environment
+    cmds:
+      - flutter run --dart-define=APP_ENV=dev
+
+  serve:dev:web:
+    desc: Run the web application in development environment
+    cmds:
+      - flutter run -d chrome --dart-define=APP_ENV=dev
+
+  serve:preview:
+    desc: Run the application in preview environment
+    cmds:
+      - flutter run --dart-define=APP_ENV=preview
+
+  serve:preview:web:
+    desc: Run the web application in preview environment
+    cmds:
+      - flutter run -d chrome --dart-define=APP_ENV=preview
+
+  serve:prod:
+    desc: Run the application in production environment
+    cmds:
+      - flutter run --dart-define=APP_ENV=prod
+
+  serve:prod:web:
+    desc: Run the web application in production environment
+    cmds:
+      - flutter run -d chrome --dart-define=APP_ENV=prod
+
+  build:web:dev:
+    desc: Build the web application for development environment
+    cmds:
+      - flutter build web --dart-define=APP_ENV=dev
+
+  build:web:preview:
+    desc: Build the web application for preview environment
+    cmds:
+      - flutter build web --dart-define=APP_ENV=preview
+
+  build:web:prod:
+    desc: Build the web application for production environment
+    cmds:
+      - flutter build web --dart-define=APP_ENV=prod
+
+  test:dev:
+    desc: Run tests in development environment
+    cmds:
+      - flutter test --dart-define=APP_ENV=dev
+
+  test:preview:
+    desc: Run tests in preview environment
+    cmds:
+      - flutter test --dart-define=APP_ENV=preview
+
+  test:prod:
+    desc: Run tests in production environment
+    cmds:
+      - flutter test --dart-define=APP_ENV=prod
 
   # -----------------------------------------------------------------------------
   # Deploy
@@ -130,7 +227,7 @@ tasks:
   deploy:
     desc: Deploy the application to Firebase Hosting
     deps:
-      - build
+      - build:web
     cmds:
       - firebase deploy --only hosting
 
@@ -138,11 +235,9 @@ tasks:
   # Firebase Hosting
 
   hosting:deploy:
-    desc: Deploy to Firebase Hosting (manual token)
+    desc: Deploy to Firebase Hosting (uses Bitwarden Secrets Manager token)
     cmds:
-      - firebase deploy --only hosting
-    env:
-      FIREBASE_TOKEN: '{{bitwarden "item" "parableweave" "field" "firebase_token"}}' # Generate once via firebase login:ci
+      - firebase deploy --only hosting --token "$(bws secret get FIREBASE_CI_TOKEN)"
 
   hosting:preview:
     desc: Deploy preview channel
@@ -271,19 +366,19 @@ tasks:
   firebase:configure:
     desc: Configure Firebase using FlutterFire CLI for local development (requires Firebase CLI auth)
     cmds:
-      - flutterfire configure --project=parableweave --platforms=android,ios,web --yes
+      - flutterfire configure --project=parable-bloom --platforms=android,ios,web --yes
 
   firebase:configure:android:
     desc: Configure Firebase for Android only (local development)
     cmds:
-      - flutterfire configure --project=parableweave --platforms=android --yes
+      - flutterfire configure --project=parable-bloom --platforms=android --yes
 
   firebase:configure:ios:
     desc: Configure Firebase for iOS only (local development)
     cmds:
-      - flutterfire configure --project=parableweave --platforms=ios --yes
+      - flutterfire configure --project=parable-bloom --platforms=ios --yes
 
   firebase:configure:web:
     desc: Configure Firebase for Web only (local development)
     cmds:
-      - flutterfire configure --project=parableweave --platforms=web --yes
+      - flutterfire configure --project=parable-bloom --platforms=web --yes

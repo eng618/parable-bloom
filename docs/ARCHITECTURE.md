@@ -1,3 +1,11 @@
+---
+title: "Parable Bloom - Architecture & State Management"
+version: "3.4"
+last_updated: "2025-12-24"
+status: "Implementation Complete"
+type: "Architecture Documentation"
+---
+
 # Parable Bloom - Architecture & State Management
 
 This document explains the current state management and persistence implementation using Riverpod and Hive, and outlines the strategy for integrating Firebase in the future.
@@ -8,17 +16,29 @@ This document explains the current state management and persistence implementati
 
 We use **Riverpod** for reactive state management. This decouples the game logic from the UI and allows for easy testing and debugging.
 
-- **`gameProgressProvider`**: The central source of truth for the user's progress (current level, completed levels).
-- **`vineStatesProvider`**: Manages the dynamic "blocking" logic for all arrows in the current level. It uses the `LevelSolver` to calculate which arrows are movable.
-- **`gameInstanceProvider`**: Holds the reference to the active `GardenGame` instance, allowing UI components and providers to interact with the game engine.
-- **Transient State Providers**: Small providers for lives, level completion, and game-over states.
+- **`moduleProgressProvider`**: Tracks current module, level within module, and completed modules with Hive persistence.
+- **`vineStatesProvider`**: Manages the dynamic "blocking" logic for all vines in the current level. It uses the `LevelSolver` to calculate which vines are movable based on snake-like path movement.
+- **`graceProvider`**: Manages Grace system (3 per level, 4 for Transcendent) with persistence.
+- **`currentLevelProvider`**: Holds the current level data with updated JSON schema (id, module_id, name, grid_size [rows, cols], difficulty, vines with head_direction). GridComponent now properly supports rectangular grids instead of assuming square dimensions.
+- Note: Levels include both coordinate-based `ordered_path` (x,y) and an optional/expected `grid_size`. The canonical level format for the app is coordinate paths plus `grid_size` to help the UI compute bounds; clients should validate that `grid_size` is consistent with vine coordinates.
+
+  Recent changes and conventions:
+
+- `grid_size` is retained for UI/backwards-compatibility; LevelData still computes bounds from coordinates when needed.
+- Visual masking: `LevelData` now supports an optional `mask` (modes: `hide`, `show`, `show-all`) that lists grid points to hide or show for purely visual shapes (e.g., smiley faces). Rendering should consult `mask` but the solver and collision logic continue to operate on the full rectangular grid.
+- Solver consolidation: the canonical coordinate-based `LevelSolver` implementation lives in `lib/providers/game_providers.dart`. A legacy row/col solver was removed/replaced with a deprecation stub to avoid duplicated logic.
+
+  Tests: new unit tests validate mask parsing and enforce that vine coordinates use `(0,0)` as the lower-left origin and fit within provided or computed `grid_size`.
+
+- **`gameInstanceProvider`**: Bridges Flutter UI with Flame game engine instance.
+- **Transient State Providers**: Level completion, game over, and analytics tracking providers.
 
 ### 2. Local Persistence (Hive)
 
 We use **Hive** for fast, local-first key-value storage.
 
 - **Initialization**: Hive is initialized in `main.dart` and the `Box` is injected into the Riverpod `ProviderScope`.
-- **Sync Logic**: The `GameProgressNotifier` handles the synchronization between the in-memory state and the Hive storage.
+- **Sync Logic**: The `GameProgressNotifier` and `ModuleProgressNotifier` handle the synchronization between the in-memory state and the Hive storage.
 
 ---
 

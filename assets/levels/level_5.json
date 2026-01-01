@@ -1,60 +1,71 @@
 {
-    "levelId": "level_005_complex",
-    "levelNumber": 5,
-    "title": "Master Gardener",
-    "difficulty": 3,
-    "grid": {
-        "rows": 5,
-        "columns": 5
+  "id": 5,
+  "name": "Alternating Lines",
+  "difficulty": "Tutorial",
+  "vines": [
+    {
+      "id": "vine_a",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 0, "y": 4 },
+        { "x": 0, "y": 3 },
+        { "x": 0, "y": 2 },
+        { "x": 0, "y": 1 },
+        { "x": 0, "y": 0 }
+      ],
+      "color": "moss_green"
     },
-    "vines": [
-        {
-            "id": "vine_1",
-            "color": "#8B4513",
-            "path": [ { "row": 0, "col": 0 }, { "row": 0, "col": 1 } ],
-            "description": "Right (Blocked by vine_2)",
-            "blockingVines": []
-        },
-        {
-            "id": "vine_2",
-            "color": "#6B8E23",
-            "path": [ { "row": 0, "col": 3 }, { "row": 0, "col": 4 } ],
-            "description": "Right (Clear)",
-            "blockingVines": []
-        },
-        {
-            "id": "vine_3",
-            "color": "#4682B4",
-            "path": [ { "row": 2, "col": 2 }, { "row": 1, "col": 2 } ],
-            "description": "Down (Clear)",
-            "blockingVines": []
-        },
-        {
-            "id": "vine_4",
-            "color": "#DAA520",
-            "path": [ { "row": 4, "col": 0 }, { "row": 3, "col": 0 } ],
-            "description": "Down (Clear)",
-            "blockingVines": []
-        },
-        {
-            "id": "vine_5",
-            "color": "#FF6347",
-            "path": [ { "row": 1, "col": 0 }, { "row": 1, "col": 1 } ],
-            "description": "Right (Blocked by vine_3)",
-            "blockingVines": []
-        }
-    ],
-    "parable": {
-        "title": "Faithful in Little",
-        "scripture": "Luke 16:10",
-        "content": "Whoever can be trusted with very little can also be trusted with much...",
-        "reflection": "How are you using the 'little' things God has given you?",
-        "backgroundImage": "assets/parables/vine_branches.jpg"
+    {
+      "id": "vine_b",
+      "head_direction": "down",
+      "ordered_path": [
+        { "x": 1, "y": 0 },
+        { "x": 1, "y": 1 },
+        { "x": 1, "y": 2 },
+        { "x": 1, "y": 3 },
+        { "x": 1, "y": 4 }
+      ],
+      "color": "emerald"
     },
-    "hints": [
-        "Focus on the arrows that have a clear path to the edge.",
-        "Clear vine_2 and vine_3 first to free up others."
-    ],
-    "optimalSequence": ["vine_2", "vine_3", "vine_1", "vine_4", "vine_5"],
-    "optimalMoves": 5
+    {
+      "id": "vine_c",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 2, "y": 4 },
+        { "x": 2, "y": 3 },
+        { "x": 2, "y": 2 },
+        { "x": 2, "y": 1 },
+        { "x": 2, "y": 0 }
+      ],
+      "color": "olive"
+    },
+    {
+      "id": "vine_d",
+      "head_direction": "down",
+      "ordered_path": [
+        { "x": 3, "y": 0 },
+        { "x": 3, "y": 1 },
+        { "x": 3, "y": 2 },
+        { "x": 3, "y": 3 },
+        { "x": 3, "y": 4 }
+      ],
+      "color": "sage"
+    },
+    {
+      "id": "vine_e",
+      "head_direction": "up",
+      "ordered_path": [
+        { "x": 4, "y": 4 },
+        { "x": 4, "y": 3 },
+        { "x": 4, "y": 2 },
+        { "x": 4, "y": 1 },
+        { "x": 4, "y": 0 }
+      ],
+      "color": "moss_green"
+    }
+  ],
+  "max_moves": 9,
+  "min_moves": 5,
+  "complexity": "tutorial",
+  "grace": 3
 }

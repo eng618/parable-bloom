@@ -1,0 +1,457 @@
+# Parable Bloom (parable-bloom) - Cline Instruction File
+
+## Project Overview
+
+This is **Parable Bloom**, a zen hyper-casual arrow puzzle game built with Flutter and Flame. The game features faith-based themes where players tap directional vines to slide them off a grid in Snake-like movement. The game includes:
+
+- **Snake-like Movement**: Vines slide in head direction with body segments following as a queue
+- **Grace System**: 3 Grace per level (4 for Transcendent) with faith-based messaging
+- **Module Structure**: 5 modules with 15 levels each, unlocking spiritual parables
+- **Cross-Platform**: iOS, Android, and Web support
+- **Offline-First**: Local persistence with Firebase cloud sync planned
+
+## Core Technologies
+
+- **Framework**: Flutter 3.24+ with Flame game engine
+- **State Management**: Riverpod (reactive, centralized)
+- **Local Persistence**: Hive (high-performance key-value storage)
+- **Backend**: Firebase (Firestore, Auth, Analytics - planned)
+- **Architecture**: Clean Architecture (data/domain/presentation layers)
+- **Validation**: Built-in LevelSolver (BFS) for puzzle solvability
+
+## Key Dependencies
+
+- `flame: ^1.34.0` - Game engine
+- `riverpod: ^3.0.3` - State management
+- `flutter_riverpod: ^3.0.3` - Flutter integration
+- `hive: ^2.2.3` - Local storage
+- `firebase_core: ^4.3.0` - Firebase integration
+- `just_audio: ^0.10.5` - Audio playback
+- `confetti: ^0.8.0` - Celebration effects
+
+## Project Structure
+
+```
+parable-bloom/
+├── lib/
+│   ├── core/              # App-wide utilities, themes, DI
+│   ├── features/          # Feature modules (game, settings)
+│   │   ├── game/         # Game logic, UI, domain
+│   │   └── settings/     # Settings & preferences
+│   ├── providers/        # Riverpod state providers
+│   ├── shared/           # Shared utilities
+│   ├── game/             # Flame game engine components
+│   ├── screens/          # Main app screens
+│   └── services/         # External services (analytics)
+├── assets/               # Game assets & levels
+│   ├── levels/          # Module-structured JSON levels
+│   └── art/             # Sprites, textures, audio
+├── docs/                # Comprehensive documentation
+├── test/                # Unit & integration tests
+└── platform dirs        # iOS/Android/Web specifics
+```
+
+## Coding Standards & Best Practices
+
+### Flutter/Dart Standards
+
+- Follow the [Flutter Style Guide](https://flutter.dev/docs/development/tools/formatting)
+- Use `flutter format` and `flutter analyze` before commits
+- Target Flutter 3.24+ and Dart 3.0+
+- Use `const` constructors wherever possible
+- Prefer immutable data structures
+
+### Architecture Guidelines
+
+- **Clean Architecture**: Strict separation of data/domain/presentation layers
+- **Riverpod**: Use for all state management (no setState, no Provider)
+- **Repository Pattern**: Abstract data sources (currently Hive, future Firebase)
+
+### Naming Conventions
+
+- **Files**: snake_case (e.g., `game_board.dart`, `vine_component.dart`)
+- **Classes**: PascalCase (e.g., `GameBoard`, `VineComponent`)
+- **Variables**: camelCase (e.g., `currentLevel`, `gameProgress`)
+- **Constants**: SCREAMING_SNAKE_CASE (e.g., `GRID_SIZE`, `CELL_SIZE`)
+
+### State Management Patterns
+
+```dart
+// Provider definition
+@riverpod
+class GameProgress extends _$GameProgress {
+  @override
+  GameProgressState build() {
+    // Initialize from Hive
+    return GameProgressState.initial();
+  }
+
+  Future<void> completeLevel(String levelId) async {
+    state = state.copyWith(completedLevels: {...state.completedLevels, levelId});
+    // Persist to Hive
+  }
+}
+
+// Usage in widgets
+class GameScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gameProgress = ref.watch(gameProgressProvider);
+    // Use state reactively
+  }
+}
+```
+
+## Development Workflow
+
+### Local Development
+
+```bash
+# Setup
+flutter pub get
+flutter precache --ios  # For iOS development
+flutter doctor --android-licenses  # For Android
+
+# Development
+flutter run  # Hot reload enabled
+flutter test  # Run all tests
+flutter analyze  # Code analysis
+flutter format lib/  # Format code
+
+# Building
+flutter build apk --release  # Android APK
+flutter build ios --release  # iOS (requires macOS)
+```
+
+### Git Workflow
+
+- **Branching**: `feature/feature-name`, `bugfix/bug-description`
+- **Commits**: Conventional commit messages
+- **PRs**: Include screenshots for UI changes, test coverage for logic changes
+- **Code Review**: Required for all changes
+
+### Testing Requirements
+
+- **Unit Tests**: All domain logic, utilities, and data models
+- **Widget Tests**: UI components and state interactions
+- **Integration Tests**: Complete level playthroughs
+- **Level Validation**: Every level must pass `LevelValidator` checks
+- **Performance**: Maintain 60 FPS gameplay
+
+## Game Logic Guidelines
+
+### Vine Movement Mechanics
+
+- **Snake-like**: Head determines direction, body follows as queue
+- **Blocking**: Vines can block others until cleared
+- **Validation**: Use `LevelSolver` (BFS) to ensure levels are solvable
+- **Grace System**: 3 lives per level (4 for Transcendent difficulty)
+
+### Level Design Principles
+
+- **Progressive Difficulty**: Seedling → Nurturing → Flourishing → Transcendent
+- **Faith Integration**: Each level unlocks spiritual parables
+- **Solvability**: Every level must have at least one unblocked vine initially
+- **No Circular Dependencies**: Blocking relationships must be acyclic
+
+### JSON Level Format
+
+```json
+{
+  "levelId": "level_001_vine_branches",
+  "levelNumber": 1,
+  "title": "The Vine & Branches",
+  "difficulty": 1,
+  "grid": {"rows": 6, "columns": 6},
+  "vines": [
+    {
+      "id": "vine_main",
+      "color": "#8B4513",
+      "description": "Main vine trunk",
+      "path": [{"row": 2, "col": 0}, {"row": 2, "col": 1}],
+      "blockingVines": []
+    }
+  ],
+  "parable": {
+    "title": "The Vine & Branches",
+    "scripture": "John 15:1-5",
+    "content": "...",
+    "reflection": "..."
+  }
+}
+```
+
+## Asset Guidelines
+
+### Vine Sprites
+
+- **Size**: 256x256px PNG with transparency
+- **Colors**: Rich brown, olive green, deep purple, burgundy red
+- **Types**: Straight, corner, T-junction, cross-junction segments
+
+### Audio Assets
+
+- **Format**: MP3/OGG for background music, WAV for SFX
+- **Categories**: Tap feedback, level complete, vine clearing, ambient zen
+- **Licensing**: Royalty-free or original compositions
+
+### Performance Targets
+
+- **App Size**: <20MB download
+- **Frame Rate**: 60 FPS consistent gameplay
+- **Memory**: Efficient asset loading and disposal
+- **Battery**: <5% drain per hour
+
+## Firebase Integration (Planned)
+
+### Current State
+
+- **Local-First**: All data stored in Hive boxes
+- **Firebase Ready**: Architecture supports cloud sync
+- **Anonymous Auth**: Planned for cross-device progress
+
+### Future Implementation
+
+- **Repository Pattern**: Abstract Hive behind Firebase repositories
+- **Offline Sync**: Local cache with background cloud synchronization
+- **Progress Backup**: User level completion and statistics
+
+## Common Patterns & Gotchas
+
+### Flame Game Engine
+
+```dart
+class GardenGame extends FlameGame with HasTappables {
+  @override
+  Future<void> onLoad() async {
+    // Load assets first
+    await images.loadAll(['vine_head.png', 'vine_body.png']);
+
+    // Add components
+    add(GridComponent());
+    add(VineComponent());
+
+    // Position camera
+    camera.worldBounds = Rect.fromLTWH(0, 0, gridWidth, gridHeight);
+  }
+}
+```
+
+### Riverpod Best Practices
+
+- **Auto-Dispose**: Use `autoDispose` for temporary state
+- **Family**: Parameterize providers with `.family`
+- **Keep Alive**: Use `keepAlive()` for persistent state
+- **Async**: Handle loading/error states properly
+
+### Error Handling
+
+```dart
+try {
+  final level = await levelLoader.loadLevel(levelId);
+  // Validate level
+  final errors = LevelValidator.validate(level);
+  if (errors.isNotEmpty) {
+    throw LevelValidationException(errors);
+  }
+} catch (e) {
+  // Handle gracefully - show user-friendly message
+  ref.read(errorProvider.notifier).setError(e.toString());
+}
+```
+
+### Testing Patterns
+
+```dart
+void main() {
+  test('LevelValidator detects overlapping vines', () {
+    final invalidLevel = createLevelWithOverlap();
+    final errors = LevelValidator.validate(invalidLevel);
+    expect(errors, contains('Two vines occupy same cell'));
+  });
+
+  testWidgets('Game board updates on vine tap', (tester) async {
+    await tester.pumpWidget(createTestApp());
+    await tester.tap(find.byKey(Key('vine_1')));
+    await tester.pump();
+    expect(find.text('Level Complete'), findsOneWidget);
+  });
+}
+```
+
+## Deployment Checklist
+
+### Pre-Release
+
+- [ ] All tests passing (`flutter test`)
+- [ ] Code analysis clean (`flutter analyze`)
+- [ ] Performance benchmarks met (60 FPS, <20MB)
+- [ ] Level validation on all assets
+- [ ] Accessibility compliance (WCAG 2.1 AA)
+- [ ] Content review and biblical accuracy
+
+### Platform-Specific
+
+- **iOS**: TestFlight beta testing, App Store Connect setup
+- **Android**: Internal testing track, Play Store preparation
+- **Web**: Firebase hosting configuration
+
+### Post-Launch Monitoring
+
+- Crash reporting via Firebase Crashlytics
+- Performance monitoring and optimization
+- User feedback collection and iteration
+
+## Documentation Maintenance
+
+### Documentation Update Requirements
+
+**CRITICAL**: All documentation in `docs/` must be kept synchronized with code changes. Documentation is the source of truth for understanding the system and must reflect current implementation.
+
+#### When to Update Documentation
+
+- **Before committing changes** that affect architecture, game logic, or user-facing features
+- **After implementing new features** or significant refactoring
+- **When changing dependencies** or versions in `pubspec.yaml`
+- **After fixing bugs** that reveal incorrect documentation
+- **During PR review** - ensure docs are updated as part of the change
+
+#### Documentation Files and Update Triggers
+
+**`docs/README.md` (Master Index)**
+
+- Update when adding/removing documentation files
+- Modify version numbers and last_updated dates
+- Update status descriptions when implementation milestones are reached
+- Change success metrics or technical details as they evolve
+
+**`docs/ARCHITECTURE.md` (Architecture & State Management)**
+
+- **Update when:**
+  - Adding/modifying Riverpod providers (gameProgressProvider, vineStatesProvider, etc.)
+  - Changing state management patterns or persistence logic
+  - Implementing Firebase integration or repository pattern changes
+  - Modifying data flow between UI, providers, and persistence layers
+- **Required updates:**
+  - Provider definitions and usage examples
+  - State synchronization logic changes
+  - Persistence coupling assessments
+  - Firebase integration roadmap progress
+
+**`docs/GAME_DESIGN.md` (Game Design Document)**
+
+- **Update when:**
+  - Changing game mechanics (vine movement, blocking rules, Grace system)
+  - Modifying level progression or difficulty tiers
+  - Adding new parable content or journal features
+  - Updating visual design, audio, or UI specifications
+- **Required updates:**
+  - Core mechanics descriptions and examples
+  - JSON schema changes for levels/parables
+  - Asset specifications and generation prompts
+  - Technical implementation details that affect gameplay
+
+**`docs/TECHNICAL_IMPLEMENTATION.md` (Technical Implementation Guide)**
+
+- **Update when:**
+  - Adding new domain entities or changing existing ones
+  - Modifying data models or JSON schemas
+  - Implementing new Flame components or game engine features
+  - Changing validation logic or testing strategies
+  - Updating development roadmap or implementation milestones
+- **Required updates:**
+  - Code examples and implementation details
+  - Domain entity definitions and relationships
+  - JSON models and validation logic
+  - Game engine implementation details
+  - Development checklist progress and timelines
+
+#### Documentation Standards
+
+**Version Control & Metadata**
+
+- **Version numbering**: Use semantic versioning (MAJOR.MINOR.PATCH)
+  - MAJOR: Breaking changes to core mechanics/architecture
+  - MINOR: New features or significant improvements
+  - PATCH: Bug fixes, clarifications, or minor updates
+- **Last updated dates**: Always update to current date in YYYY-MM-DD format
+- **Status field**: Update implementation status as work progresses
+
+**Content Quality**
+
+- **Accuracy first**: Documentation must reflect actual implementation, not intended design
+- **Code examples**: Must be functional and match current codebase
+- **Cross-references**: Ensure links between docs are current
+- **Completeness**: Cover all aspects of changes, not just highlights
+
+**Maintenance Workflow**
+
+```bash
+# Before committing changes that affect docs:
+1. Review all affected documentation files
+2. Update version numbers and dates
+3. Test any code examples in docs
+4. Commit docs changes with code changes
+5. Run: flutter analyze && flutter test (verify nothing broken)
+```
+
+#### Common Documentation Debt to Avoid
+
+- **Outdated code examples** that no longer compile
+- **Missing implementation details** for completed features
+- **Incorrect provider names** or state management patterns
+- **Stale version numbers** or last-updated dates
+- **Broken cross-references** between documentation files
+
+#### Documentation as Code
+
+Treat documentation with the same rigor as code:
+
+- **Review docs in PRs** alongside code changes
+- **Test doc accuracy** by following instructions yourself
+- **Version docs with code** using the same commit
+- **Use consistent formatting** and terminology across all files
+
+## Documentation Requirements
+
+### Code Documentation
+
+- All public APIs must have dartdoc comments
+- Complex algorithms explained with examples
+- TODO comments for future improvements
+
+### Architecture Documentation
+
+- Update `docs/ARCHITECTURE.md` for state management changes
+- Update `docs/TECHNICAL_IMPLEMENTATION.md` for technical changes
+- Maintain accurate dependency versions
+
+### Changelog
+
+- Keep `CHANGELOG.md` updated with user-facing changes
+- Follow semantic versioning (MAJOR.MINOR.PATCH)
+
+## Getting Help
+
+### Documentation First
+
+1. Check `docs/` folder for detailed guides
+2. Review existing code for patterns
+3. Check GitHub issues for known problems
+
+### Development Resources
+
+- **Flame Documentation**: <https://flame-engine.org>
+- **Riverpod Documentation**: <https://riverpod.dev>
+- **Flutter Documentation**: <https://flutter.dev/docs>
+- **Firebase Documentation**: <https://firebase.google.com/docs>
+
+### Community Support
+
+- **Flutter Discord**: For general Flutter questions
+- **Game Dev Communities**: For game design advice
+- **GitHub Issues**: For project-specific problems
+
+---
+
+*This instruction file ensures consistent development practices and maintains code quality across the Parable Bloom codebase. Update this file when introducing new patterns or technologies.*

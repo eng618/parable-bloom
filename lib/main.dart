@@ -4,11 +4,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
-import 'core/di/injection_container.dart' as di;
 import 'firebase_options.dart';
 import 'providers/game_providers.dart';
 import 'services/analytics_service.dart';
 
+/// Entry point for Parable Bloom.
+///
+/// Environment Configuration:
+/// The app supports three environments via the APP_ENV dart-define variable:
+/// - Development (dev):   Uses game_progress_dev Firestore collection
+/// - Preview (preview):   Uses game_progress_preview Firestore collection
+/// - Production (prod):   Uses game_progress_prod Firestore collection
+///
+/// Run the app with a specific environment:
+/// - flutter run --dart-define=APP_ENV=dev       # Development (default)
+/// - flutter run --dart-define=APP_ENV=preview   # Preview
+/// - flutter run --dart-define=APP_ENV=prod      # Production
+///
+/// Run tests with a specific environment:
+/// - flutter test --dart-define=APP_ENV=dev
+///
+/// Build web with a specific environment:
+/// - flutter build web --dart-define=APP_ENV=prod
+/// - flutter build web --dart-define=APP_ENV=preview
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -22,9 +40,6 @@ void main() async {
   // Initialize Hive
   await Hive.initFlutter();
   final hiveBox = await Hive.openBox('garden_save');
-
-  // Setup dependency injection
-  await di.setupDependencies(hiveBox);
 
   runApp(
     ProviderScope(
