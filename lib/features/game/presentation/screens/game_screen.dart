@@ -425,23 +425,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     ).showSnackBar(const SnackBar(content: Text('Level restarted')));
   }
 
-  void _resetProgress() {
-    debugPrint('_resetProgress: Starting progress reset');
-    ref.read(gameProgressProvider.notifier).resetProgress();
-    ref.read(globalProgressProvider.notifier).resetProgress();
-    // Invalidate the progress provider to force refresh
-    ref.invalidate(gameProgressProvider);
-    ref.invalidate(globalProgressProvider);
-    ref.read(currentLevelProvider.notifier).setLevel(null);
-    ref.read(levelCompleteProvider.notifier).setComplete(false);
-    ref.read(gameCompletedProvider.notifier).setCompleted(false);
-    _game?.reloadLevel();
-    debugPrint('_resetProgress: Progress reset completed');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Progress reset and level reloaded')),
-    );
-  }
-
   void _showGameCompletedDialog() {
     showDialog(
       context: context,

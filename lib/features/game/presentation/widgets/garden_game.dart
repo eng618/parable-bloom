@@ -22,13 +22,11 @@ class GardenGame extends FlameGame {
   // Theme colors - updated dynamically from app theme
   late Color _backgroundColor;
   late Color _surfaceColor;
-  late Color _gridColor;
 
   GardenGame({required this.ref}) {
     // Initialize with default theme colors - will be updated by game screen
     _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
     _surfaceColor = const Color(0xFF2C3E50); // Default dark surface
-    _gridColor = const Color(0xFF3E5366); // Default dark grid
   }
 
   void updateThemeColors(
@@ -41,7 +39,7 @@ class GardenGame extends FlameGame {
     );
     _backgroundColor = backgroundColor;
     _surfaceColor = surfaceColor;
-    _gridColor = gridColor;
+    // gridColor parameter kept for API compatibility but not currently used
 
     // Update existing components if they exist - must replace the Paint to trigger redraw
     if (_gameBackground != null) {
@@ -115,9 +113,6 @@ class GardenGame extends FlameGame {
 
   void _createLevelComponents() {
     if (_currentLevelData == null) return;
-
-    final cols = _currentLevelData!.gridWidth;
-    final rows = _currentLevelData!.gridHeight;
 
     // Interactive grid
     grid = GridComponent(
