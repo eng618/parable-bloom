@@ -41,10 +41,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     _isLevelCompleteOverlayVisible = false;
     _currentCongratulationMessage = '';
     _leftConfettiController = ConfettiController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 500),
     );
     _rightConfettiController = ConfettiController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 500),
     );
   }
 
@@ -90,8 +90,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         debugPrint(
           '_GameScreen: Right controller state before play: ${_rightConfettiController.state}',
         );
-        _leftConfettiController.play();
-        _rightConfettiController.play();
+        // Confetti playback moved to _showLevelCompleteOverlay to ensure widget is built
         debugPrint(
           '_GameScreen: Left controller state after play: ${_leftConfettiController.state}',
         );
@@ -218,8 +217,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           child: ConfettiWidget(
             confettiController: _leftConfettiController,
             blastDirection: -3.14159 / 3, // -60 degrees (up and left)
-            emissionFrequency: 0.05, // Increased from 0.03 for more particles
-            numberOfParticles: 35, // Increased from 25 for more confetti
+            emissionFrequency: 0.5, // High frequency for immediate burst
+            numberOfParticles: 50, // Increased for denser blast
             maxBlastForce: 80, // Increased from 50 for longer/faster distance
             minBlastForce: 55, // Increased from 35 for more power
             gravity: 0.4, // Increased from 0.2 for faster falling
@@ -241,8 +240,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           child: ConfettiWidget(
             confettiController: _rightConfettiController,
             blastDirection: -2 * 3.14159 / 3, // -120 degrees (up and right)
-            emissionFrequency: 0.05, // Increased from 0.03 for more particles
-            numberOfParticles: 35, // Increased from 25 for more confetti
+            emissionFrequency: 0.5, // High frequency for immediate burst
+            numberOfParticles: 50, // Increased for denser blast
             maxBlastForce: 80, // Increased from 50 for longer/faster distance
             minBlastForce: 55, // Increased from 35 for more power
             gravity: 0.4, // Increased from 0.2 for faster falling
@@ -312,6 +311,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     setState(() {
       _isLevelCompleteOverlayVisible = true;
+    });
+
+    // Play confetti after the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _leftConfettiController.play();
+      _rightConfettiController.play();
     });
 
     // Advance to next level
