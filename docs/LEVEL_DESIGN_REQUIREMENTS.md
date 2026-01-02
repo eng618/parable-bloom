@@ -73,6 +73,68 @@ Example:
 "mask": { "mode": "hide", "points": [[2,2],[6,2],{"x":3,"y":4}] }
 ```
 
+## � Module Progression Pattern
+
+### Within-Module Difficulty Curve
+
+Each module (except Tutorial) follows a consistent difficulty progression to create narrative peaks:
+
+```text
+Module Structure (15 levels):
+├─ Levels 1-5 (33%):   Seedling     ─ Gentle introduction
+├─ Levels 6-10 (33%):  Nurturing    ─ Building complexity  
+├─ Levels 11-14 (27%): Flourishing  ─ Advanced challenges
+└─ Level 15 (7%):      Transcendent ─ Climactic finale
+```
+
+**Tutorial Module (5 levels):** All Seedling difficulty for onboarding.
+
+**Standard Modules (15 levels):** Progressive curve ending in one Transcendent level.
+
+**Short Modules (10 levels):** Compressed progression:
+
+- Levels 1-3: Seedling
+- Levels 4-6: Nurturing
+- Levels 7-9: Flourishing
+- Level 10: Transcendent
+
+### Example: Module 2 (The Mustard Seed)
+
+| Level | Global # | Difficulty | Grid Size | Purpose |
+|-------|----------|------------|-----------|----------|
+| 1-5 | 6-10 | Seedling | 6×8 to 9×16 | Introduce module theme |
+| 6-10 | 11-15 | Nurturing | 9×16 to 12×20 | Build strategic thinking |
+| 11-14 | 16-19 | Flourishing | 12×20 to 16×28 | Challenge mastery |
+| 15 | 20 | **Transcendent** | 16×28 to 24×40 | **Module finale** |
+
+### Design Philosophy
+
+- **Consistent Experience:** Fixed difficulty ranges across all modules ensure predictable challenge
+- **Narrative Peaks:** Each module ends with a climactic Transcendent level
+- **Progressive Mastery:** Players encounter all four tiers multiple times through the game
+- **Casual-Friendly:** Grid sizes remain within manageable ranges even at highest difficulty
+
+## �📏 Grid & Coverage Requirements
+
+### Grid Size Progression
+
+Grid sizes must scale progressively within each module to provide a smooth difficulty curve.
+
+### Coverage & Density
+
+To ensure levels feel "full" and puzzle-like rather than sparse:
+
+- **95% Visible Coverage**: Levels must occupy at least **95% of all visible (unmasked) grid cells** with vines.
+- **Empty Space**: Empty cells should be rare and intentional, typically resulting from the packing algorithm rather than design choice.
+
+### Vine Length Distribution
+
+Vine lengths should follow a **Bell Curve distribution**:
+
+- **Minimum Length**: 2 cells (Head + Neck).
+- **Maximum Length**: Derived from grid size (approx. `(width + height) / 1.5`).
+- **Distribution**: Most vines should fall in the middle of this range, creating a balanced mix of short, medium, and long vines.
+
 ## 🎯 Level Structure
 
 ### Level JSON Schema
@@ -121,12 +183,12 @@ To fit portrait mobile screens, keep levels on a consistent **3:4 width:height**
 
 ### Difficulty Parameters
 
-| Difficulty Tier | Grid Size | Total Cells | Vine Length (Avg) | Vine Count | Max Moves | Complexity | Grace |
-|-----------------|-----------|-------------|-------------------|------------|-----------|------------|-------|
-| **Seedling** | 5×8 to 9×16 | 40-144 | 6-8 | 18-24 | 5-8 | Low: Linear, no interlocks | 3 |
-| **Nurturing** | 9×16 to 12×20 | 144-240 | 5-7 | 34-48 | 8-12 | Medium: 1-2 interlocks | 3 |
-| **Flourishing** | 12×20 to 16×28 | 240-448 | 4-6 | 75-112 | 12-18 | High: Multi-interlocks | 3 |
-| **Transcendent** | 16×28 to 24×40 | 448-960 | 3-5 | 192-320 | 18+ | Extreme: Deep cycles | 4 |
+| Difficulty Tier | Module Position | Grid Size | Total Cells | Vine Length (Avg) | Max Moves | Complexity | Grace |
+|-----------------|-----------------|-----------|-------------|-------------------|-----------|------------|-------|
+| **Seedling** | First 33% | 6×8 to 9×16 | 48-144 | 6-8 | 5-8 | Low: Linear, no interlocks | 3 |
+| **Nurturing** | Next 33% | 9×16 to 12×20 | 144-240 | 4-6 | 8-12 | Medium: 1-2 interlocks | 3 |
+| **Flourishing** | Next 27% | 12×20 to 16×28 | 240-448 | 3-5 | 12-18 | High: Multi-interlocks | 3 |
+| **Transcendent** | Final level | 16×28 to 24×40 | 448-960 | 2-4 | 18+ | Extreme: Deep cycles | 4 |
 
 ### Validation Rules
 

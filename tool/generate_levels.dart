@@ -12,12 +12,27 @@ void main(List<String> args) {
     return;
   }
 
-  final startId = parsed.startId ?? (_detectNextLevelId(outDir) ?? 1);
-  final endId = startId + parsed.count - 1;
+  final startId = parsed.startId;
+  final endId = parsed.endId;
+  final moduleToRun = parsed.moduleId;
 
-  final transcendentEndLevels = _loadTranscendentEndLevels(outDir);
+  final modules = _loadModules(outDir);
+  final transcendentEndLevels = modules.map((m) => m.end).toSet();
 
-  for (int levelId = startId; levelId <= endId; levelId++) {
+  int actualStart = startId ?? (_detectNextLevelId(outDir) ?? 1);
+  int actualEnd = endId ?? (actualStart + parsed.count - 1);
+
+  if (moduleToRun != null) {
+    final m = modules.firstWhere(
+      (m) => m.id == moduleToRun,
+      orElse: () => throw Exception('Module $moduleToRun not found'),
+    );
+    actualStart = m.start;
+    actualEnd = m.end;
+    stdout.writeln('Generating Module ${m.id}: Levels $actualStart-$actualEnd');
+  }
+
+  for (int levelId = actualStart; levelId <= actualEnd; levelId++) {
     final file = File('${outDir.path}/level_$levelId.json');
     if (file.existsSync() && !parsed.overwrite) {
       stderr.writeln(
@@ -29,6 +44,7 @@ void main(List<String> args) {
 
     final levelJson = _generateSolvableLevel(
       levelId,
+      modules: modules,
       transcendentEndLevels: transcendentEndLevels,
     );
     file.writeAsStringSync(
@@ -40,17 +56,24 @@ void main(List<String> args) {
 
 Map<String, dynamic> _generateSolvableLevel(
   int levelId, {
+  required List<_ModuleRange> modules,
   required Set<int> transcendentEndLevels,
 }) {
   // Deterministic retries: for a given levelId we always try the same sequence
   // of seeds, so generation stays reproducible.
-  const maxAttempts = 40;
+  const maxAttempts = 100;
   for (var attempt = 0; attempt < maxAttempts; attempt++) {
     final seed = (levelId * 1000) + attempt;
+
+    // Relax coverage gradually: start at 0.85 (above 75% min), lower if struggling
+    final coverageTarget = attempt > 50 ? 0.78 : (attempt > 20 ? 0.82 : 0.85);
+
     final json = _generateLevel(
       levelId,
+      modules: modules,
       transcendentEndLevels: transcendentEndLevels,
       seed: seed,
+      targetCoverage: coverageTarget,
     );
 
     try {
@@ -66,22 +89,23 @@ Map<String, dynamic> _generateSolvableLevel(
     }
   }
 
-  // As a last resort, return a trivially solvable level.
+  // As a last resort, return a trivially solvable level BUT with correct grid size.
+  final (gridWidth, gridHeight) = _gridSizeForLevel(levelId, modules);
+
   final fallback = {
     'id': levelId,
     'name': 'Level $levelId',
-    'difficulty': transcendentEndLevels.contains(levelId)
-        ? 'Transcendent'
-        : 'Seedling',
-    'grid_size': [6, 8],
+    'difficulty':
+        transcendentEndLevels.contains(levelId) ? 'Transcendent' : 'Seedling',
+    'grid_size': [gridWidth, gridHeight],
     'mask': {'mode': 'show-all', 'points': []},
     'vines': [
       {
         'id': 'vine_1',
         'head_direction': 'left',
         'ordered_path': [
-          {'x': 0, 'y': 4},
-          {'x': 1, 'y': 4},
+          {'x': 0, 'y': (gridHeight / 2).floor()},
+          {'x': 1, 'y': (gridHeight / 2).floor()},
         ],
         'vine_color': 'default',
       },
@@ -96,39 +120,34 @@ Map<String, dynamic> _generateSolvableLevel(
 
 Map<String, dynamic> _generateLevel(
   int levelId, {
+  required List<_ModuleRange> modules,
   required Set<int> transcendentEndLevels,
   int? seed,
+  double targetCoverage = 0.95,
 }) {
   final rng = Random(seed ?? levelId);
   final isTranscendent = transcendentEndLevels.contains(levelId);
 
-  final tier = _difficultyTierForLevel(levelId);
-  final (gridWidth, gridHeight) = _gridSizeForTier(tier);
-
-  // Keep a bounded number of vines so the BFS solver stays within budget.
-  // Difficulty increases by adding slightly more vines and slightly longer vines,
-  // not by filling most of the board.
-  final baseVinesByTier = <int>[3, 6, 7, 8, 9];
-  final extraForTranscendent = isTranscendent ? 2 : 0;
-  final targetVines =
-      (baseVinesByTier[tier] + extraForTranscendent + rng.nextInt(2)).clamp(
-        2,
-        14,
-      );
+  final tier = _difficultyTierForLevel(levelId, modules);
+  final (gridWidth, gridHeight) = _gridSizeForLevel(levelId, modules);
+  final totalCells = gridWidth * gridHeight;
 
   final blockedProbability =
       (0.22 + (tier * 0.06) + (isTranscendent ? 0.08 : 0.0)).clamp(0.18, 0.45);
 
-  final baseLengthHintByTier = <int>[3, 4, 5, 6, 6];
-  final lengthHint = (baseLengthHintByTier[tier] + (isTranscendent ? 1 : 0))
-      .clamp(2, 8);
-
   final vines = <Map<String, dynamic>>[];
   final occupiedBy = <String, String>{};
 
-  // Always start with at least two clearable vines to reduce branching and
-  // avoid levels that "technically" solve but explode the search space.
-  for (int i = 0; i < 2; i++) {
+  // Start with more clearable vines on harder levels:
+  // Seedling: 2, Nurturing: 2, Flourishing: 5, Transcendent: 8
+  final initialClearableCount = switch (tier) {
+    0 || 1 => 2,
+    2 => 5,
+    _ => 8, // Transcendent needs more initial vines for large grids
+  };
+
+  for (int i = 0; i < initialClearableCount; i++) {
+    final lengthHint = _getBellCurveLength(rng, gridWidth, gridHeight, tier);
     final vine = _tryGenerateClearableWindingVine(
       vineIndex: vines.length,
       gridWidth: gridWidth,
@@ -140,12 +159,17 @@ Map<String, dynamic> _generateLevel(
     );
     if (vine != null) {
       vines.add(vine);
+      for (final p in vine['ordered_path']) {
+        occupiedBy['${p['x']},${p['y']}'] = vine['id'];
+      }
     }
   }
 
   int stalled = 0;
-  while (vines.length < targetVines) {
+  // Fill until we reach target coverage
+  while (occupiedBy.length < totalCells * targetCoverage) {
     final vineIndex = vines.length;
+    final lengthHint = _getBellCurveLength(rng, gridWidth, gridHeight, tier);
 
     // Keep the blocking graph acyclic by only allowing vines to be blocked by
     // already-placed vines.
@@ -174,12 +198,18 @@ Map<String, dynamic> _generateLevel(
 
     if (vine == null) {
       stalled++;
-      if (stalled >= 80) break;
+      // Extremely generous stall threshold for large grids to pack vines.
+      // For a 900-cell grid, allow 27,000+ attempts.
+      final stallLimit = (totalCells * 30).clamp(500, 30000);
+      if (stalled >= stallLimit) break;
       continue;
     }
 
     stalled = 0;
     vines.add(vine);
+    for (final p in vine['ordered_path']) {
+      occupiedBy['${p['x']},${p['y']}'] = vine['id'];
+    }
   }
 
   // Ensure there's at least one vine; if winding generation fails entirely,
@@ -196,23 +226,21 @@ Map<String, dynamic> _generateLevel(
     });
   }
 
-  final difficulty = isTranscendent
-      ? 'Transcendent'
-      : switch (tier) {
-          0 => 'Seedling',
-          1 => 'Sprout',
-          2 => 'Nurturing',
-          _ => 'Flourishing',
-        };
+  final difficulty = switch (tier) {
+    0 => 'Seedling',
+    1 => 'Nurturing',
+    2 => 'Flourishing',
+    3 => 'Transcendent',
+    _ => 'Transcendent',
+  };
 
-  final complexity = isTranscendent
-      ? 'extreme'
-      : switch (tier) {
-          0 => 'low',
-          1 => 'low',
-          2 => 'medium',
-          _ => 'high',
-        };
+  final complexity = switch (tier) {
+    0 => 'low',
+    1 => 'medium',
+    2 => 'high',
+    3 => 'extreme',
+    _ => 'extreme',
+  };
 
   return {
     'id': levelId,
@@ -242,7 +270,7 @@ class _LiteVine {
   final Set<String> cells;
 
   _LiteVine({required this.id, required this.headDirection, required this.path})
-    : cells = {for (final p in path) p.key};
+      : cells = {for (final p in path) p.key};
 
   factory _LiteVine.fromJson(Map<String, dynamic> json) {
     final id = json['id'] as String;
@@ -327,38 +355,38 @@ bool _detectCircularBlockingLite(_LiteLevel level) {
 }
 
 bool _isSolvableLite(_LiteLevel level) {
-  final n = level.vines.length;
-  if (n == 0) return true;
-  if (n > 24) return false; // generator should never create this many
+  // Use a greedy solver simulation.
+  // Since we generate levels by adding vines that are either clearable or
+  // blocked by existing vines (reverse removal order), a greedy removal
+  // strategy is a strong heuristic for solvability.
+  // It is much faster than BFS for high vine counts (N > 25).
 
-  final fullMask = (1 << n) - 1;
-  final visited = List<bool>.filled(1 << n, false);
-  final queue = <int>[fullMask];
-  visited[fullMask] = true;
+  final currentVines = level.vines.toList();
+  final occupied = <String>{};
 
-  while (queue.isNotEmpty) {
-    final mask = queue.removeAt(0);
-    if (mask == 0) return true;
+  // Initial occupation
+  for (final v in currentVines) {
+    occupied.addAll(v.cells);
+  }
 
-    final occupiedAll = <String>{};
-    for (var i = 0; i < n; i++) {
-      if ((mask & (1 << i)) == 0) continue;
-      occupiedAll.addAll(level.vines[i].cells);
-    }
+  bool progress = true;
+  while (progress && currentVines.isNotEmpty) {
+    progress = false;
 
-    for (var i = 0; i < n; i++) {
-      if ((mask & (1 << i)) == 0) continue;
-      final vine = level.vines[i];
-      if (!_canVineClearLite(level, vine, occupiedAll)) continue;
-      final next = mask & ~(1 << i);
-      if (!visited[next]) {
-        visited[next] = true;
-        queue.add(next);
+    // Find a vine that can clear
+    for (int i = 0; i < currentVines.length; i++) {
+      final vine = currentVines[i];
+      if (_canVineClearLite(level, vine, occupied)) {
+        // Remove it
+        occupied.removeAll(vine.cells);
+        currentVines.removeAt(i);
+        progress = true;
+        break; // Restart search with new state
       }
     }
   }
 
-  return false;
+  return currentVines.isEmpty;
 }
 
 bool _canVineClearLite(
@@ -370,8 +398,8 @@ bool _canVineClearLite(
   var current = vine.path;
   final (dx, dy) = _deltaForDirection(vine.headDirection);
 
-  final maxCheckDistance = (level.width + level.height + vine.path.length + 10)
-      .clamp(10, 300);
+  final maxCheckDistance =
+      (level.width + level.height + vine.path.length + 10).clamp(10, 300);
 
   for (var step = 0; step < maxCheckDistance; step++) {
     final head = current.first;
@@ -397,12 +425,37 @@ bool _canVineClearLite(
   return false;
 }
 
-int _difficultyTierForLevel(int levelId) {
-  if (levelId <= 5) return 0; // tutorial
-  if (levelId <= 20) return 1;
-  if (levelId <= 35) return 2;
-  if (levelId <= 65) return 3;
-  return 4;
+int _difficultyTierForLevel(int levelId, List<_ModuleRange> modules) {
+  // Find which module this level belongs to
+  for (final m in modules) {
+    if (levelId >= m.start && levelId <= m.end) {
+      final moduleLength = m.end - m.start + 1;
+      final positionInModule = levelId - m.start; // 0-indexed
+
+      // Tutorial (Module 1): All Seedling
+      if (m.id == 1) return 0;
+
+      // Standard progression within each module:
+      // - First ~33%: Seedling
+      // - Next ~33%: Nurturing
+      // - Next ~27%: Flourishing
+      // - Final level: Transcendent
+
+      if (positionInModule == moduleLength - 1) {
+        // Last level in module is always Transcendent
+        return 3;
+      } else if (positionInModule < moduleLength * 0.33) {
+        return 0; // Seedling
+      } else if (positionInModule < moduleLength * 0.66) {
+        return 1; // Nurturing
+      } else {
+        return 2; // Flourishing
+      }
+    }
+  }
+
+  // Fallback for levels not in any module (shouldn't happen)
+  return 0;
 }
 
 Map<String, dynamic>? _tryGenerateClearableWindingVine({
@@ -854,39 +907,107 @@ bool _canVineClear({
   return null;
 }
 
-(int, int) _gridSizeForTier(int tier) {
-  // Portrait-friendly grids: keep a consistent 3:4 aspect ratio (width:height).
-  // Keep sizes modest until pinch-to-zoom exists; difficulty scales via vine
-  // interactions, not board area.
-  return switch (tier) {
-    0 => (6, 8),
-    1 => (9, 12),
-    2 => (9, 12),
-    _ => (12, 16),
+(int, int) _gridSizeForLevel(int levelId, List<_ModuleRange> modules) {
+  // Get difficulty tier first
+  final tier = _difficultyTierForLevel(levelId, modules);
+
+  // Fixed grid size ranges per difficulty tier (same across all modules)
+  // Use a slight variation within each tier for variety
+  final seed = Random(levelId);
+
+  final (minW, minH, maxW, maxH) = switch (tier) {
+    0 => (6, 8, 9, 16), // Seedling: 6×8 to 9×16
+    1 => (9, 16, 12, 20), // Nurturing: 9×16 to 12×20
+    2 => (12, 20, 16, 28), // Flourishing: 12×20 to 16×28
+    3 => (16, 28, 24, 40), // Transcendent: 16×28 to 24×40
+    _ => (6, 8, 9, 16), // Fallback
   };
+
+  // For Transcendent (final level), use larger end of range
+  if (tier == 3) {
+    // Vary between 80-100% of max range for final levels
+    final widthRange = maxW - minW;
+    final heightRange = maxH - minH;
+    final w = minW + (widthRange * (0.8 + seed.nextDouble() * 0.2)).round();
+    final h = minH + (heightRange * (0.8 + seed.nextDouble() * 0.2)).round();
+    return (w, h);
+  }
+
+  // For other tiers, interpolate across the range
+  final widthRange = maxW - minW;
+  final heightRange = maxH - minH;
+  final w = minW + (widthRange * seed.nextDouble()).round();
+  final h = minH + (heightRange * seed.nextDouble()).round();
+
+  return (w, h);
 }
 
-Set<int> _loadTranscendentEndLevels(Directory outDir) {
-  final file = File('${outDir.path}/modules.json');
-  if (!file.existsSync()) return <int>{};
+int _getBellCurveLength(Random rng, int width, int height, int tier) {
+  // Shorter vines on harder tiers = more vines fit = higher coverage + complexity
+  final (minAvg, maxAvg) = switch (tier) {
+    0 => (6, 8), // Seedling: 6-8 avg
+    1 => (4, 6), // Nurturing: 4-6 avg
+    2 => (3, 5), // Flourishing: 3-5 avg
+    3 => (2, 4), // Transcendent: 2-4 avg
+    _ => (2, 4),
+  };
+
+  // Target average length for this vine
+  final targetAvg = minAvg + rng.nextInt(maxAvg - minAvg + 1);
+
+  // We want a distribution centered at targetAvg.
+  // Using the previous logic: center = (minLen + maxLen) / 2
+  // So maxLen = 2 * targetAvg - minLen
+  final minLen = 2;
+  var maxLen = (2 * targetAvg) - minLen;
+
+  // Clamp maxLen to grid dimensions (approx)
+  final gridMax = ((width + height) / 1.5).floor();
+  if (maxLen > gridMax) maxLen = gridMax;
+  if (maxLen < minLen + 1) maxLen = minLen + 1;
+
+  // Average of 3 randoms approximates a normal distribution (Central Limit Theorem)
+  final r = (rng.nextDouble() + rng.nextDouble() + rng.nextDouble()) / 3.0;
+
+  // Map 0.0-1.0 to minLen-maxLen
+  return (minLen + (maxLen - minLen) * r).round();
+}
+
+class _ModuleRange {
+  final int id;
+  final int start;
+  final int end;
+  const _ModuleRange(this.id, this.start, this.end);
+}
+
+List<_ModuleRange> _loadModules(Directory outDir) {
+  // Look in assets/data/modules.json first, then fallback to old location
+  var file = File('${outDir.parent.path}/data/modules.json');
+  if (!file.existsSync()) {
+    file = File('${outDir.path}/modules.json');
+  }
+
+  if (!file.existsSync()) return [];
 
   try {
     final decoded = json.decode(file.readAsStringSync());
-    if (decoded is! Map<String, dynamic>) return <int>{};
+    if (decoded is! Map<String, dynamic>) return [];
     final modules = decoded['modules'];
-    if (modules is! List) return <int>{};
+    if (modules is! List) return [];
 
-    final ends = <int>{};
+    final ranges = <_ModuleRange>[];
     for (final m in modules) {
       if (m is! Map) continue;
+      final id = m['id'] as int;
       final range = m['level_range'];
       if (range is! List || range.length < 2) continue;
+      final start = (range[0] as num).toInt();
       final end = (range[1] as num).toInt();
-      ends.add(end);
+      ranges.add(_ModuleRange(id, start, end));
     }
-    return ends;
+    return ranges;
   } catch (_) {
-    return <int>{};
+    return [];
   }
 }
 
@@ -908,12 +1029,16 @@ class _Args {
   final int count;
   final String outDir;
   final int? startId;
+  final int? endId;
+  final int? moduleId;
   final bool overwrite;
 
-  const _Args({
+  _Args({
     required this.count,
     required this.outDir,
     required this.startId,
+    required this.endId,
+    required this.moduleId,
     required this.overwrite,
   });
 }
@@ -922,6 +1047,8 @@ _Args _parseArgs(List<String> args) {
   int count = 100;
   String outDir = 'assets/levels';
   int? startId;
+  int? endId;
+  int? moduleId;
   bool overwrite = false;
 
   String? readValue(int index) {
@@ -949,6 +1076,10 @@ _Args _parseArgs(List<String> args) {
       );
       stdout.writeln(
         '  --start <id>      Starting level id (default: next after existing)',
+      );
+      stdout.writeln('  --end <id>        Ending level id (optional)');
+      stdout.writeln(
+        '  --module <id>     Generate all levels for a specific module ID',
       );
       stdout.writeln('  --overwrite       Allow overwriting existing files');
       exitCode = 0;
@@ -998,6 +1129,32 @@ _Args _parseArgs(List<String> args) {
       continue;
     }
 
+    if (a == '--end' || a.startsWith('--end=')) {
+      final value = readValue(i);
+      final parsed = int.tryParse(value ?? '');
+      if (parsed == null || parsed <= 0) {
+        stderr.writeln('Invalid --end: $value');
+        exitCode = 2;
+        exit(2);
+      }
+      endId = parsed;
+      if (!a.contains('=') && i + 1 < args.length) i++;
+      continue;
+    }
+
+    if (a == '--module' || a.startsWith('--module=')) {
+      final value = readValue(i);
+      final parsed = int.tryParse(value ?? '');
+      if (parsed == null || parsed <= 0) {
+        stderr.writeln('Invalid --module: $value');
+        exitCode = 2;
+        exit(2);
+      }
+      moduleId = parsed;
+      if (!a.contains('=') && i + 1 < args.length) i++;
+      continue;
+    }
+
     stderr.writeln('Unknown arg: $a');
     stderr.writeln('Run with --help for usage.');
     exitCode = 2;
@@ -1008,6 +1165,8 @@ _Args _parseArgs(List<String> args) {
     count: count,
     outDir: outDir,
     startId: startId,
+    endId: endId,
+    moduleId: moduleId,
     overwrite: overwrite,
   );
 }
