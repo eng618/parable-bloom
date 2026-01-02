@@ -108,6 +108,12 @@ class GardenGame extends FlameGame {
     final shouldShow = ref.read(projectionLinesVisibleProvider);
     final isAnimating = ref.read(anyVineAnimatingProvider);
 
+    // When animation starts, turn off projection lines visibility
+    // so they don't reappear when animation ends
+    if (isAnimating && shouldShow) {
+      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+    }
+
     // Hide projection lines when any vine is animating
     projectionLines.setVisible(shouldShow && !isAnimating);
   }
