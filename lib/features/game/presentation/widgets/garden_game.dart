@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,25 +10,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/game_providers.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
+import 'pulse_effect_component.dart';
 
-class GardenGame extends FlameGame {
-  static const double cellSize = 36.0; // Pixels per cell
+class GardenGame extends FlameGame with void TapCallbacks {
+  const double cellSize = 40.0; // Pixels per cell
 
   late GridComponent grid;
   late ProjectionLinesComponent projectionLines;
   final WidgetRef ref;
-  LevelData? _currentLevelData;
-  RectangleComponent? _gameBackground;
+  LevelData? currentLevelData;
+  RectangleComponent? gameBackground;
 
   // Theme colors - updated dynamically from app theme
-  late Color _backgroundColor;
-  late Color _surfaceColor;
+  @override
+  late Color backgroundColor;
+  late Color surfaceColor;
 
   GardenGame({required this.ref}) {
     debugPrint('GardenGame: Constructor called - creating new instance');
     // Initialize with default theme colors - will be updated by game screen
-    _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
-    _surfaceColor = const Color(0xFF2C3E50); // Default dark surface
+    backgroundColor = const Color(0xFF1A2E3F); // Default dark background
+    surfaceColor = const Color(0xFF2C3E50); // Default dark surface
   }
 
   void updateThemeColors(
@@ -38,14 +41,14 @@ class GardenGame extends FlameGame {
     debugPrint(
       'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor',
     );
-    _backgroundColor = backgroundColor;
-    _surfaceColor = surfaceColor;
+    backgroundColor = backgroundColor;
+    surfaceColor = surfaceColor;
     // gridColor parameter kept for API compatibility but not currently used
 
     // Update existing components if they exist - must replace the Paint to trigger redraw
-    if (_gameBackground != null) {
-      debugPrint('GardenGame: Updating _gameBackground to $_surfaceColor');
-      _gameBackground!.paint = Paint()..color = _surfaceColor;
+    if (gameBackground != null) {
+      debugPrint('GardenGame: Updating _gameBackground to $surfaceColor');
+      gameBackground!.paint = Paint()..color = surfaceColor;
     }
   }
 
@@ -58,29 +61,29 @@ class GardenGame extends FlameGame {
     ref.read(gameInstanceProvider.notifier).resetGrace();
 
     // Load current level first
-    await _loadCurrentLevel();
+    await loadCurrentLevel();
 
     // TODO: Replace with actual parable background image
     // Load parable background
-    _gameBackground = RectangleComponent(
+    gameBackground = RectangleComponent(
       size: size,
-      paint: Paint()..color = _surfaceColor,
+      paint: Paint()..color = surfaceColor,
       priority: -2,
     );
-    add(_gameBackground!);
+    add(gameBackground!);
 
     // Create grid and background components
-    _createLevelComponents();
+    createLevelComponents();
 
     // Set level data on grid after it's created
-    if (_currentLevelData != null) {
-      await _setLevelDataOnGrid();
+    if (currentLevelData != null) {
+      await setLevelDataOnGrid();
     }
 
     // Listen to vine state changes (blocking/clearing updates)
     ref.listenManual(vineStatesProvider, (previous, next) {
-      if (_currentLevelData != null) {
-        grid.setLevelData(_currentLevelData!, next);
+      if (currentLevelData != null) {
+        grid.setLevelData(currentLevelData!, next);
         // Force projection lines to redraw when vine states change
         projectionLines.update(0);
       }
@@ -88,18 +91,18 @@ class GardenGame extends FlameGame {
 
     // Listen to projection lines visibility and animation state
     ref.listenManual(projectionLinesVisibleProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
+      updateProjectionLinesVisibility();
     });
 
     ref.listenManual(anyVineAnimatingProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
+      updateProjectionLinesVisibility();
     });
 
     // Center camera
     camera.viewport.size = size;
   }
 
-  void _updateProjectionLinesVisibility() {
+  void updateProjectionLinesVisibility() {
     final shouldShow = ref.read(projectionLinesVisibleProvider);
     final isAnimating = ref.read(anyVineAnimatingProvider);
 
@@ -113,8 +116,8 @@ class GardenGame extends FlameGame {
     projectionLines.setVisible(shouldShow && !isAnimating);
   }
 
-  void _createLevelComponents() {
-    if (_currentLevelData == null) return;
+  void createLevelComponents() {
+    if (currentLevelData == null) return;
 
     // Interactive grid
     grid = GridComponent(
@@ -151,12 +154,12 @@ class GardenGame extends FlameGame {
     add(projectionLines);
 
     // Set initial level data on projection lines
-    if (_currentLevelData != null) {
-      projectionLines.setLevelData(_currentLevelData!);
+    if (currentLevelData != null) {
+      projectionLines.setLevelData(currentLevelData!);
     }
   }
 
-  Future<void> _loadCurrentLevel() async {
+  Future<void> loadCurrentLevel() async {
     final gameProgress = ref.read(gameProgressProvider);
     final levelNumber = gameProgress.currentLevel;
 
@@ -178,13 +181,13 @@ class GardenGame extends FlameGame {
       final jsonMap = json.decode(levelJson);
       debugPrint('GardenGame: Successfully parsed JSON: $jsonMap');
 
-      _currentLevelData = LevelData.fromJson(jsonMap);
+      currentLevelData = LevelData.fromJson(jsonMap);
       debugPrint(
-        'GardenGame: Successfully created LevelData: ${_currentLevelData!.name}',
+        'GardenGame: Successfully created LevelData: ${currentLevelData!.name}',
       );
 
       // Update providers
-      ref.read(currentLevelProvider.notifier).setLevel(_currentLevelData);
+      ref.read(currentLevelProvider.notifier).setLevel(currentLevelData);
 
       // Ensure gameCompleted is false if we found a level
       ref.read(gameCompletedProvider.notifier).setCompleted(false);
@@ -194,9 +197,9 @@ class GardenGame extends FlameGame {
       ref.read(levelWrongTapsProvider.notifier).reset();
 
       // Log level start analytics
-      ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
+      ref.read(analyticsServiceProvider).logLevelStart(currentLevelData!.id);
 
-      debugPrint('Loaded level $levelNumber: ${_currentLevelData!.name}');
+      debugPrint('Loaded level $levelNumber: ${currentLevelData!.name}');
     } catch (e, stackTrace) {
       debugPrint('Error loading level $levelNumber: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -236,18 +239,18 @@ class GardenGame extends FlameGame {
     }
   }
 
-  Future<void> _setLevelDataOnGrid() async {
-    if (_currentLevelData == null) return;
+  Future<void> setLevelDataOnGrid() async {
+    if (currentLevelData == null) return;
 
     // Get current vine states from the provider
     final vineStates = ref.read(vineStatesProvider);
 
     // Set data on grid
-    grid.setLevelData(_currentLevelData!, vineStates);
+    grid.setLevelData(currentLevelData!, vineStates);
   }
 
   @override
-  Color backgroundColor() => _backgroundColor;
+  Color backgroundColor() => backgroundColor;
 
   @override
   void onRemove() {
@@ -265,20 +268,69 @@ class GardenGame extends FlameGame {
       // Ignore if grid/projectionLines weren't initialized
     }
 
-    await _loadCurrentLevel();
+    await loadCurrentLevel();
 
-    if (_currentLevelData != null) {
-      _createLevelComponents();
+    if (currentLevelData != null) {
+      createLevelComponents();
 
       // Reset vine states for the new level
-      ref.read(vineStatesProvider.notifier).resetForLevel(_currentLevelData!);
+      ref.read(vineStatesProvider.notifier).resetForLevel(currentLevelData!);
       // Reset grace for the new level
       ref.read(gameInstanceProvider.notifier).resetGrace();
 
-      await _setLevelDataOnGrid();
+      await setLevelDataOnGrid();
 
       // Reset projection lines visibility
       ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
     }
+  }
+
+  LevelData createFallbackLevel() {
+    // Create a simple fallback level programmatically
+    return LevelData(
+      id: 999,
+      name: 'Fallback Level',
+      difficulty: 'Seedling',
+      gridWidth: 5,
+      gridHeight: 5,
+      vines: [
+        VineData(
+          id: 'fallback_vine',
+          headDirection: 'right',
+          orderedPath: [
+            {'x': 4, 'y': 4}, // Head (moving right)
+            {
+              'x': 3,
+              'y': 4,
+            }, // First segment LEFT of head (x decreases, opposite direction)
+          ],
+          vineColor: null,
+        ),
+      ],
+      maxMoves: 5,
+      minMoves: 1,
+      complexity: 'low',
+      grace: 3,
+      mask: MaskData(mode: 'show-all', points: []),
+    );
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    super.onTapDown(event);
+
+    // Create pulse effect at tap position
+    // Use a theme-aware color
+    final pulseColor = surfaceColor.computeLuminance() > 0.5
+        ? Colors.black.withValues(alpha: 0.4)
+        : Colors.white.withValues(alpha: 0.5);
+
+    final pulseEffect = PulseEffectComponent(
+      position: event.localPosition,
+      color: pulseColor,
+    );
+
+    // Add to world so it appears above everything except overlays
+    add(pulseEffect);
   }
 }
