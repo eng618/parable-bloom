@@ -17,7 +17,6 @@ class GardenGame extends FlameGame {
   late ProjectionLinesComponent projectionLines;
   final WidgetRef ref;
   LevelData? _currentLevelData;
-  RectangleComponent? _gridBackground;
   RectangleComponent? _gameBackground;
 
   // Theme colors - updated dynamically from app theme
@@ -48,10 +47,6 @@ class GardenGame extends FlameGame {
     if (_gameBackground != null) {
       debugPrint('GardenGame: Updating _gameBackground to $_surfaceColor');
       _gameBackground!.paint = Paint()..color = _surfaceColor;
-    }
-    if (_gridBackground != null) {
-      debugPrint('GardenGame: Updating _gridBackground to $_gridColor');
-      _gridBackground!.paint = Paint()..color = _gridColor;
     }
   }
 
@@ -123,18 +118,6 @@ class GardenGame extends FlameGame {
 
     final cols = _currentLevelData!.gridWidth;
     final rows = _currentLevelData!.gridHeight;
-
-    // Grid background
-    _gridBackground = RectangleComponent(
-      size: Vector2(cols * cellSize + 20, rows * cellSize + 20),
-      position: Vector2(
-        (size.x - (cols * cellSize + 20)) / 2,
-        (size.y - (rows * cellSize + 20)) / 2,
-      ),
-      paint: Paint()..color = _gridColor,
-      priority: -1,
-    );
-    add(_gridBackground!);
 
     // Interactive grid
     grid = GridComponent(
@@ -279,12 +262,6 @@ class GardenGame extends FlameGame {
 
   // Method to reload the current level (called when progress is reset or level completed)
   Future<void> reloadLevel() async {
-    // Remove existing components
-    if (_gridBackground != null) {
-      if (_gridBackground!.isMounted) remove(_gridBackground!);
-      _gridBackground = null;
-    }
-
     // Check if grid is initialized and mounted before removing
     try {
       if (grid.isMounted) remove(grid);
