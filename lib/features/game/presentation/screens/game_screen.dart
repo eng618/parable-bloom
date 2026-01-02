@@ -155,6 +155,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ),
         ],
       ),
+      floatingActionButton: _buildProjectionLinesFAB(),
       body: Stack(
         children: [
           GameWidget<GardenGame>(
@@ -165,6 +166,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           if (_isLevelCompleteOverlayVisible) _buildLevelCompleteOverlay(),
         ],
       ),
+    );
+  }
+
+  Widget _buildProjectionLinesFAB() {
+    return FloatingActionButton(
+      onPressed: () {
+        ref.read(projectionLinesVisibleProvider.notifier).toggle();
+      },
+      tooltip: 'Toggle projection lines',
+      child: const Icon(Icons.tag),
     );
   }
 
