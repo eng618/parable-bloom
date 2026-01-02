@@ -740,6 +740,26 @@ final backgroundAudioControllerProvider = Provider<BackgroundAudioController>((
   return controller;
 });
 
+// Debug setting for showing grid coordinates
+final debugShowGridCoordinatesProvider =
+    NotifierProvider<DebugShowGridCoordinatesNotifier, bool>(
+      DebugShowGridCoordinatesNotifier.new,
+    );
+
+class DebugShowGridCoordinatesNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final box = ref.watch(hiveBoxProvider);
+    return box.get('debugShowGridCoordinates', defaultValue: false) as bool;
+  }
+
+  Future<void> setShowCoordinates(bool show) async {
+    state = show;
+    final box = ref.read(hiveBoxProvider);
+    await box.put('debugShowGridCoordinates', show);
+  }
+}
+
 class GameInstanceNotifier extends Notifier<GardenGame?> {
   @override
   GardenGame? build() => null;

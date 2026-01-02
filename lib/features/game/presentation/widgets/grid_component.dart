@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../providers/game_providers.dart';
@@ -267,17 +268,23 @@ class CellComponent extends RectangleComponent
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, 4, dotPaint);
 
-    // Debug: draw x,y labels in corner with theme-aware colors
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
-    textPainter.text = TextSpan(
-      text: '$gridX,$gridY',
-      style: TextStyle(
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-        fontSize: 10,
-      ),
-    );
-    textPainter.layout();
-    textPainter.paint(canvas, const Offset(2, 2));
+    // Debug: draw x,y labels in corner only if debug mode is enabled
+    final gardenGame = game as GardenGame;
+    final ref = gardenGame.ref;
+    final showCoordinates = ref.read(debugShowGridCoordinatesProvider);
+
+    if (kDebugMode && showCoordinates) {
+      final textPainter = TextPainter(textDirection: TextDirection.ltr);
+      textPainter.text = TextSpan(
+        text: '$gridX,$gridY',
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+          fontSize: 10,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(canvas, const Offset(2, 2));
+    }
   }
 
   @override

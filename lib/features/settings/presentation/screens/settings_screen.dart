@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -52,6 +53,11 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: const Text('1.0.0'),
           ),
           const Divider(),
+          if (kDebugMode) ...[
+            _buildSectionHeader(context, 'Debug'),
+            _buildDebugGridCoordinatesTile(context, ref),
+            const Divider(),
+          ],
           _buildSectionHeader(context, 'Danger Zone'),
           _buildResetDataTile(context, ref),
         ],
@@ -263,6 +269,27 @@ class SettingsScreen extends ConsumerWidget {
       ),
       subtitle: const Text('Delete all progress, settings, and cloud data'),
       onTap: () => _showResetDataDialog(context, ref),
+    );
+  }
+
+  Widget _buildDebugGridCoordinatesTile(BuildContext context, WidgetRef ref) {
+    final showCoordinates = ref.watch(debugShowGridCoordinatesProvider);
+
+    return SwitchListTile(
+      secondary: Icon(
+        Icons.grid_on,
+        color: showCoordinates
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+      ),
+      title: const Text('Show Grid Coordinates'),
+      subtitle: const Text('Display coordinate labels on grid cells'),
+      value: showCoordinates,
+      onChanged: (value) async {
+        await ref
+            .read(debugShowGridCoordinatesProvider.notifier)
+            .setShowCoordinates(value);
+      },
     );
   }
 
