@@ -320,17 +320,20 @@ class GardenGame extends FlameGame with void TapCallbacks {
     super.onTapDown(event);
 
     // Create pulse effect at tap position
-    // Use a theme-aware color
-    final pulseColor = surfaceColor.computeLuminance() > 0.5
-        ? Colors.black.withValues(alpha: 0.4)
-        : Colors.white.withValues(alpha: 0.5);
+    // Use a theme-aware color with higher visibility
+    final pulseColor = _surfaceColor.computeLuminance() > 0.5
+        ? Colors.black.withValues(alpha: 0.6) // Darker pulse on light background
+        : Colors.white.withValues(alpha: 0.7); // Lighter pulse on dark background
+
+    debugPrint('GardenGame: Creating pulse effect at ${event.localPosition}');
 
     final pulseEffect = PulseEffectComponent(
       position: event.localPosition,
       color: pulseColor,
     );
 
-    // Add to world so it appears above everything except overlays
+    // Add to world so it appears above everything
     add(pulseEffect);
+    debugPrint('GardenGame: Pulse effect added with priority ${pulseEffect.priority}');
   }
 }

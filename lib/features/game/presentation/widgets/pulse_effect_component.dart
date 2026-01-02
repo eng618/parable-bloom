@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 /// A tiny pulse effect that appears at tap location.
 /// Shows a brief expanding/contracting ring effect.
 class PulseEffectComponent extends PositionComponent {
-  static const double _maxRadius = 20.0; // Small max radius
-  static const double _duration = 0.3; // Brief duration (300ms)
-  static const double _lineWidth = 2.0;
+  static const double _maxRadius = 30.0; // Slightly larger for visibility
+  static const double _duration = 0.4; // Slightly longer duration (400ms)
+  static const double _lineWidth = 3.0; // Thicker line for visibility
 
   double _elapsed = 0.0;
   final Color _color;
@@ -14,11 +14,12 @@ class PulseEffectComponent extends PositionComponent {
   PulseEffectComponent({
     required Vector2 position,
     Color? color,
-  })  : _color = color ?? Colors.white.withValues(alpha: 0.6),
+  })  : _color = color ?? Colors.white.withValues(alpha: 0.8),
         super(
           position: position,
           size: Vector2.all(_maxRadius * 2),
           anchor: Anchor.center,
+          priority: 100, // High priority to render above other components
         );
 
   @override
