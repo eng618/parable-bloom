@@ -780,6 +780,26 @@ class DebugShowGridCoordinatesNotifier extends Notifier<bool> {
   }
 }
 
+// Debug setting for vine animation logging
+final debugVineAnimationLoggingProvider =
+    NotifierProvider<DebugVineAnimationLoggingNotifier, bool>(
+      DebugVineAnimationLoggingNotifier.new,
+    );
+
+class DebugVineAnimationLoggingNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final box = ref.watch(hiveBoxProvider);
+    return box.get('debugVineAnimationLogging', defaultValue: false) as bool;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final box = ref.read(hiveBoxProvider);
+    await box.put('debugVineAnimationLogging', enabled);
+  }
+}
+
 class GameInstanceNotifier extends Notifier<GardenGame?> {
   @override
   GardenGame? build() => null;

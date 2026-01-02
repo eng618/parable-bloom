@@ -269,7 +269,7 @@ class CellComponent extends RectangleComponent
     canvas.drawCircle(center, 4, dotPaint);
 
     // Debug: draw x,y labels in corner only if debug mode is enabled
-    final gardenGame = game as GardenGame;
+    final gardenGame = game;
     final ref = gardenGame.ref;
     final showCoordinates = ref.read(debugShowGridCoordinatesProvider);
 

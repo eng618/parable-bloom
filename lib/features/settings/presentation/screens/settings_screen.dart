@@ -73,6 +73,7 @@ class SettingsScreen extends ConsumerWidget {
           if (kDebugMode) ...[
             _buildSectionHeader(context, 'Debug'),
             _buildDebugGridCoordinatesTile(context, ref),
+            _buildDebugVineAnimationLoggingTile(context, ref),
             const Divider(),
           ],
           _buildSectionHeader(context, 'Danger Zone'),
@@ -306,6 +307,30 @@ class SettingsScreen extends ConsumerWidget {
         await ref
             .read(debugShowGridCoordinatesProvider.notifier)
             .setShowCoordinates(value);
+      },
+    );
+  }
+
+  Widget _buildDebugVineAnimationLoggingTile(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+    final loggingEnabled = ref.watch(debugVineAnimationLoggingProvider);
+
+    return SwitchListTile(
+      secondary: Icon(
+        Icons.animation,
+        color: loggingEnabled
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+      ),
+      title: const Text('Vine Animation Logging'),
+      subtitle: const Text('Log vine animation details to console'),
+      value: loggingEnabled,
+      onChanged: (value) async {
+        await ref
+            .read(debugVineAnimationLoggingProvider.notifier)
+            .setEnabled(value);
       },
     );
   }

@@ -266,6 +266,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         vineData.id,
         VineAnimationState.animatingClear,
       );
+
+      _logDebug(
+        'Starting CLEAR animation: vineId=${vineData.id}, '
+        'maxDistance=$maxDistance, totalSteps=$_totalAnimationSteps, '
+        'headPos=(${_currentVisualPositions[0]['x']},${_currentVisualPositions[0]['y']}), '
+        'direction=${vineData.headDirection}',
+      );
     } else {
       // Vine is blocked - move forward to blocker, then reverse
       _totalAnimationSteps = maxDistance * 2;
@@ -275,6 +282,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       parent.setVineAnimationState(
         vineData.id,
         VineAnimationState.animatingBlocked,
+      );
+
+      _logDebug(
+        'Starting BLOCKED animation: vineId=${vineData.id}, '
+        'maxDistance=$maxDistance, totalSteps=$_totalAnimationSteps, '
+        'headPos=(${_currentVisualPositions[0]['x']},${_currentVisualPositions[0]['y']}), '
+        'direction=${vineData.headDirection}',
       );
     }
   }
@@ -322,7 +336,21 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final canClear = rawDistance > 0;
       final maxForwardDistance = rawDistance.abs();
 
-      if (_currentAnimationStep <= maxForwardDistance) {
+      if (_currentAnimationStep < maxForwardDistance) {
+        // Check if next step would hit blocker (before moving)
+        if (_currentAnimationStep + 1 >= maxForwardDistance && !canClear) {
+          // Would hit blocker on next move - start reverse animation
+          _logDebug(
+            'COLLISION detected: vineId=${vineData.id}, '
+            'step=$_currentAnimationStep, maxDistance=$maxForwardDistance, '
+            'headPos=(${_currentVisualPositions[0]['x']},${_currentVisualPositions[0]['y']})',
+          );
+          parent.markVineAttempted(vineData.id);
+          _isBlockedAnimation = true;
+          _currentAnimationStep = 0;
+          return;
+        }
+
         // Save current positions to history
         _positionHistory.add(
           List<Map<String, int>>.from(
@@ -371,14 +399,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         _currentVisualPositions[headIndex]['y'] = newHeadY;
 
         _currentAnimationStep++;
-
-        // Check if we've reached the blocker
-        if (_currentAnimationStep > maxForwardDistance && !canClear) {
-          // Hit blocker - start reverse animation
-          parent.markVineAttempted(vineData.id);
-          _isBlockedAnimation = true;
-          _currentAnimationStep = 0;
-        }
       } else if (_willClearAfterAnimation) {
         // Continue moving off screen for clearing vines
         // Save current positions to history
@@ -438,6 +458,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
         // Start bloom effect as soon as vine head leaves the visible grid
         if (isHeadExitedVisibleGrid && !_isShowingBloomEffect) {
+          _logDebug(
+            'Head exited visible grid: vineId=${vineData.id}, '
+            'starting bloom effect',
+          );
           _startBloomEffect();
         }
 
@@ -448,6 +472,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           // Continue bloom effect while vine animates, but check for completion when fully off-screen
           if (isFullyOffScreen && _bloomEffectTimer >= _bloomEffectDuration) {
             // Bloom effect finished and vine is fully off-screen - remove vine
+            _logDebug(
+              'Fully off-screen and bloom complete: vineId=${vineData.id}, '
+              'calling _finishAnimation()',
+            );
             _finishAnimation();
           }
         } else if (_currentAnimationStep >= _totalAnimationSteps) {
@@ -609,6 +637,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // Set animation state to cleared - this properly marks the vine as cleared
     parent.setVineAnimationState(vineData.id, VineAnimationState.cleared);
 
+    _logDebug(
+      'Animation finished: vineId=${vineData.id}, '
+      'state=cleared, notifying parent and removing component',
+    );
+
     // Notify parent of clearing (only once)
     if (!_alreadyNotifiedCleared) {
       parent.notifyVineCleared(vineData.id);
@@ -616,6 +649,17 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     // Remove the vine component from the scene
     removeFromParent();
+  }
+
+  /// Helper method for conditional debug logging
+  void _logDebug(String message) {
+    // Check if debug logging is enabled via the provider
+    final debugEnabled = parent.parent.ref.read(
+      debugVineAnimationLoggingProvider,
+    );
+    if (debugEnabled) {
+      debugPrint('VineComponent: $message');
+    }
   }
 
   void _drawBloomEffect(Canvas canvas) {
