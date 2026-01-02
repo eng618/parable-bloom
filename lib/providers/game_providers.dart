@@ -720,6 +720,26 @@ class BackgroundAudioEnabledNotifier extends Notifier<bool> {
   }
 }
 
+// Haptics enabled setting
+// TODO: Implement actual haptic feedback logic in the game events
+final hapticsEnabledProvider = NotifierProvider<HapticsEnabledNotifier, bool>(
+  HapticsEnabledNotifier.new,
+);
+
+class HapticsEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final box = ref.watch(hiveBoxProvider);
+    return box.get('hapticsEnabled', defaultValue: true) as bool;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setHapticsEnabled(enabled);
+  }
+}
+
 // Background audio controller (plays/loops based on backgroundAudioEnabledProvider)
 final backgroundAudioControllerProvider = Provider<BackgroundAudioController>((
   ref,
@@ -974,8 +994,8 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
 // Provider for projection lines visibility
 final projectionLinesVisibleProvider =
     NotifierProvider<ProjectionLinesVisibleNotifier, bool>(
-  ProjectionLinesVisibleNotifier.new,
-);
+      ProjectionLinesVisibleNotifier.new,
+    );
 
 class ProjectionLinesVisibleNotifier extends Notifier<bool> {
   @override
@@ -993,7 +1013,9 @@ class ProjectionLinesVisibleNotifier extends Notifier<bool> {
 // Provider to determine if any vine is currently animating
 final anyVineAnimatingProvider = Provider<bool>((ref) {
   final vineStates = ref.watch(vineStatesProvider);
-  return vineStates.values.any((state) =>
-      state.animationState == VineAnimationState.animatingClear ||
-      state.animationState == VineAnimationState.animatingBlocked);
+  return vineStates.values.any(
+    (state) =>
+        state.animationState == VineAnimationState.animatingClear ||
+        state.animationState == VineAnimationState.animatingBlocked,
+  );
 });

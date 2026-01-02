@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
 import '../../../../providers/game_providers.dart';
+import '../widgets/game_header.dart';
 import '../widgets/garden_game.dart';
+import '../widgets/pause_menu_dialog.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -119,41 +121,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            const Text('Parable Bloom'),
-            const SizedBox(width: 16),
-            _buildGraceDisplay(),
-            const SizedBox(width: 16),
-            _buildCurrentLevelDisplay(),
-          ],
-        ),
-        backgroundColor: colorScheme.surfaceContainerHighest,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.lightbulb),
-            onPressed: () => debugPrint('Hint button pressed - placeholder'),
-            tooltip: 'Hint (placeholder)',
-          ),
-          IconButton(
-            icon: const Icon(Icons.replay),
-            onPressed: _restartLevel,
-            tooltip: 'Restart Level',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _resetProgress,
-            tooltip: 'Debug: Reset Progress',
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.of(context).pushNamed('/settings'),
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
       floatingActionButton: _buildProjectionLinesFAB(),
       body: Stack(
         children: [
@@ -162,8 +129,30 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             loadingBuilder: (_) =>
                 const Center(child: CircularProgressIndicator()),
           ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: GameHeader(onPause: _showPauseMenu),
+            ),
+          ),
           if (_isLevelCompleteOverlayVisible) _buildLevelCompleteOverlay(),
         ],
+      ),
+    );
+  }
+
+  void _showPauseMenu() {
+    showDialog(
+      context: context,
+      builder: (context) => PauseMenuDialog(
+        onRestart: () {
+          Navigator.of(context).pop(); // Close dialog
+          _restartLevel();
+        },
+        onHome: () {
+          Navigator.of(context).pop(); // Close dialog
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        },
       ),
     );
   }
@@ -175,34 +164,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       },
       tooltip: 'Toggle projection lines',
       child: const Icon(Icons.tag),
-    );
-  }
-
-  Widget _buildGraceDisplay() {
-    final grace = ref.watch(graceProvider);
-    return Row(
-      children: List.generate(3, (index) {
-        return Icon(
-          index < grace ? Icons.favorite : Icons.favorite_border,
-          color: Colors.redAccent,
-          size: 20,
-        );
-      }),
-    );
-  }
-
-  Widget _buildCurrentLevelDisplay() {
-    final globalProgress = ref.watch(globalProgressProvider);
-    final currentLevel = ref.watch(currentLevelProvider);
-
-    debugPrint('GameScreen: Global progress: $globalProgress');
-    debugPrint('GameScreen: Current level: ${currentLevel?.name ?? "null"}');
-
-    if (currentLevel == null) return const SizedBox.shrink();
-
-    return Text(
-      'Level ${currentLevel.id}: ${currentLevel.name}',
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
     );
   }
 

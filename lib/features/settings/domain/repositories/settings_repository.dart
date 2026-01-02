@@ -14,4 +14,10 @@ abstract class SettingsRepository {
 
   /// Enable/disable background audio.
   Future<void> setBackgroundAudioEnabled(bool enabled);
+
+  /// Whether haptic feedback is enabled.
+  Future<bool> getHapticsEnabled();
+
+  /// Enable/disable haptic feedback.
+  Future<void> setHapticsEnabled(bool enabled);
 }

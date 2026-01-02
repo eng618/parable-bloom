@@ -11,6 +11,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     final backgroundAudioEnabled = ref.watch(backgroundAudioEnabledProvider);
+    final hapticsEnabled = ref.watch(hapticsEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -23,7 +24,7 @@ class SettingsScreen extends ConsumerWidget {
           _buildSectionHeader(context, 'Appearance'),
           _buildThemeTile(context, ref, themeMode),
           const Divider(),
-          _buildSectionHeader(context, 'Audio'),
+          _buildSectionHeader(context, 'Audio & Haptics'),
           SwitchListTile(
             secondary: Icon(
               backgroundAudioEnabled ? Icons.music_note : Icons.music_off,
@@ -40,6 +41,22 @@ class SettingsScreen extends ConsumerWidget {
               await ref
                   .read(backgroundAudioEnabledProvider.notifier)
                   .setEnabled(value);
+            },
+          ),
+          SwitchListTile(
+            secondary: Icon(
+              hapticsEnabled ? Icons.vibration : Icons.smartphone,
+              color: hapticsEnabled
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+            title: const Text('Haptic Feedback'),
+            subtitle: const Text('Vibrate on game events'),
+            value: hapticsEnabled,
+            onChanged: (value) async {
+              await ref.read(hapticsEnabledProvider.notifier).setEnabled(value);
             },
           ),
           const Divider(),
