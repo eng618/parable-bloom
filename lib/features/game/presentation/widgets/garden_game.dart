@@ -300,7 +300,7 @@ class GardenGame extends FlameGame {
       await _setLevelDataOnGrid();
 
       // Reset projection lines visibility
-      ref.read(projectionLinesVisibleProvider.notifier).state = false;
+      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
     }
   }
 

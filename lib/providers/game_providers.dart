@@ -953,7 +953,22 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
 
 // Provider for projection lines visibility
 final projectionLinesVisibleProvider =
-    StateProvider<bool>((ref) => false);
+    NotifierProvider<ProjectionLinesVisibleNotifier, bool>(
+  ProjectionLinesVisibleNotifier.new,
+);
+
+class ProjectionLinesVisibleNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void toggle() {
+    state = !state;
+  }
+
+  void setVisible(bool visible) {
+    state = visible;
+  }
+}
 
 // Provider to determine if any vine is currently animating
 final anyVineAnimatingProvider = Provider<bool>((ref) {

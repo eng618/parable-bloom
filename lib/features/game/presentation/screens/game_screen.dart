@@ -170,7 +170,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Widget _buildProjectionLinesFAB() {
-    final isVisible = ref.watch(projectionLinesVisibleProvider);
     final isAnimating = ref.watch(anyVineAnimatingProvider);
 
     // Hide FAB when any vine is animating
@@ -180,7 +179,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     return FloatingActionButton(
       onPressed: () {
-        ref.read(projectionLinesVisibleProvider.notifier).state = !isVisible;
+        ref.read(projectionLinesVisibleProvider.notifier).toggle();
       },
       tooltip: 'Toggle projection lines',
       child: const Icon(Icons.tag),

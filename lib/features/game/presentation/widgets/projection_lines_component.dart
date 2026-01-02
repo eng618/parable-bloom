@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../providers/game_providers.dart';
 import 'garden_game.dart';
-import 'grid_component.dart';
 
 /// Component that renders projection lines from vine heads
 /// extending in their facing direction off-screen
@@ -45,7 +44,7 @@ class ProjectionLinesComponent extends PositionComponent
 
     // Paint for projection lines - semi-transparent gray
     final linePaint = Paint()
-      ..color = Colors.grey.withOpacity(0.2)
+      ..color = Colors.grey.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;

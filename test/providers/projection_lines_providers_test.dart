@@ -2,6 +2,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parable_bloom/providers/game_providers.dart';
 
+// Mock notifier for testing
+class MockVineStatesNotifier extends VineStatesNotifier {
+  final Map<String, VineState> mockState;
+
+  MockVineStatesNotifier(this.mockState);
+
+  @override
+  Map<String, VineState> build() {
+    return mockState;
+  }
+}
+
 void main() {
   group('Projection Lines Providers', () {
     test('projectionLinesVisibleProvider should initialize with false', () {
@@ -19,20 +31,24 @@ void main() {
       // Initially false
       expect(container.read(projectionLinesVisibleProvider), false);
 
-      // Toggle to true
-      container.read(projectionLinesVisibleProvider.notifier).state = true;
+      // Set to true
+      container.read(projectionLinesVisibleProvider.notifier).setVisible(true);
       expect(container.read(projectionLinesVisibleProvider), true);
 
-      // Toggle back to false
-      container.read(projectionLinesVisibleProvider.notifier).state = false;
+      // Toggle using toggle method
+      container.read(projectionLinesVisibleProvider.notifier).toggle();
       expect(container.read(projectionLinesVisibleProvider), false);
+
+      // Toggle back to true
+      container.read(projectionLinesVisibleProvider.notifier).toggle();
+      expect(container.read(projectionLinesVisibleProvider), true);
     });
 
     test('anyVineAnimatingProvider should return false when no vines animating',
         () {
       final container = ProviderContainer(
         overrides: [
-          vineStatesProvider.overrideWith((ref) => {}),
+          vineStatesProvider.overrideWith(() => MockVineStatesNotifier({})),
         ],
       );
       addTearDown(container.dispose);
@@ -46,14 +62,14 @@ void main() {
         () {
       final container = ProviderContainer(
         overrides: [
-          vineStatesProvider.overrideWith((ref) => {
+          vineStatesProvider.overrideWith(() => MockVineStatesNotifier({
                 'vine1': VineState(
                   id: 'vine1',
                   isBlocked: false,
                   isCleared: false,
                   animationState: VineAnimationState.animatingClear,
                 ),
-              }),
+              })),
         ],
       );
       addTearDown(container.dispose);
@@ -67,14 +83,14 @@ void main() {
         () {
       final container = ProviderContainer(
         overrides: [
-          vineStatesProvider.overrideWith((ref) => {
+          vineStatesProvider.overrideWith(() => MockVineStatesNotifier({
                 'vine1': VineState(
                   id: 'vine1',
                   isBlocked: true,
                   isCleared: false,
                   animationState: VineAnimationState.animatingBlocked,
                 ),
-              }),
+              })),
         ],
       );
       addTearDown(container.dispose);
@@ -88,14 +104,14 @@ void main() {
         () {
       final container = ProviderContainer(
         overrides: [
-          vineStatesProvider.overrideWith((ref) => {
+          vineStatesProvider.overrideWith(() => MockVineStatesNotifier({
                 'vine1': VineState(
                   id: 'vine1',
                   isBlocked: false,
                   isCleared: false,
                   animationState: VineAnimationState.normal,
                 ),
-              }),
+              })),
         ],
       );
       addTearDown(container.dispose);
@@ -109,7 +125,7 @@ void main() {
         () {
       final container = ProviderContainer(
         overrides: [
-          vineStatesProvider.overrideWith((ref) => {
+          vineStatesProvider.overrideWith(() => MockVineStatesNotifier({
                 'vine1': VineState(
                   id: 'vine1',
                   isBlocked: false,
@@ -128,7 +144,7 @@ void main() {
                   isCleared: false,
                   animationState: VineAnimationState.normal,
                 ),
-              }),
+              })),
         ],
       );
       addTearDown(container.dispose);
