@@ -13,7 +13,7 @@ import 'projection_lines_component.dart';
 import 'pulse_effect_component.dart';
 
 class GardenGame extends FlameGame with void TapCallbacks {
-  const double cellSize = 40.0; // Pixels per cell
+  const double cellSize = 36.0; // Pixels per cell
 
   late GridComponent grid;
   late ProjectionLinesComponent projectionLines;
@@ -117,7 +117,7 @@ class GardenGame extends FlameGame with void TapCallbacks {
   }
 
   void createLevelComponents() {
-    if (currentLevelData == null) return;
+    if (_currentLevelData == null) return;
 
     // Interactive grid
     grid = GridComponent(
@@ -199,7 +199,7 @@ class GardenGame extends FlameGame with void TapCallbacks {
       // Log level start analytics
       ref.read(analyticsServiceProvider).logLevelStart(currentLevelData!.id);
 
-      debugPrint('Loaded level $levelNumber: ${currentLevelData!.name}');
+      debugPrint('Loaded level $levelNumber: ${_currentLevelData!.name}');
     } catch (e, stackTrace) {
       debugPrint('Error loading level $levelNumber: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -285,43 +285,13 @@ class GardenGame extends FlameGame with void TapCallbacks {
     }
   }
 
-  LevelData createFallbackLevel() {
-    // Create a simple fallback level programmatically
-    return LevelData(
-      id: 999,
-      name: 'Fallback Level',
-      difficulty: 'Seedling',
-      gridWidth: 5,
-      gridHeight: 5,
-      vines: [
-        VineData(
-          id: 'fallback_vine',
-          headDirection: 'right',
-          orderedPath: [
-            {'x': 4, 'y': 4}, // Head (moving right)
-            {
-              'x': 3,
-              'y': 4,
-            }, // First segment LEFT of head (x decreases, opposite direction)
-          ],
-          vineColor: null,
-        ),
-      ],
-      maxMoves: 5,
-      minMoves: 1,
-      complexity: 'low',
-      grace: 3,
-      mask: MaskData(mode: 'show-all', points: []),
-    );
-  }
-
   @override
   void onTapDown(TapDownEvent event) {
     super.onTapDown(event);
 
     // Create pulse effect at tap position
     // Use a theme-aware color with higher visibility
-    final pulseColor = _surfaceColor.computeLuminance() > 0.5
+    final pulseColor = surfaceColor0.computeLuminance() > 0.5
         ? Colors.black.withValues(alpha: 0.6) // Darker pulse on light background
         : Colors.white.withValues(alpha: 0.7); // Lighter pulse on dark background
 
