@@ -88,7 +88,7 @@ class MaskData {
 final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
   try {
     final jsonString = await rootBundle.loadString(
-      'assets/levels/modules.json',
+      'assets/data/modules.json',
     );
     final jsonMap = json.decode(jsonString);
     final modulesList = jsonMap['modules'] as List<dynamic>;

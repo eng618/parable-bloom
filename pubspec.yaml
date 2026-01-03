@@ -73,6 +73,7 @@ flutter:
   assets:
     - assets/art/
     - assets/audio/
+    - assets/data/
     - assets/levels/
 
   # An image asset can refer to one or more resolution-specific "variants", see

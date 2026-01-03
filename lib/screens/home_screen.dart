@@ -8,7 +8,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final globalProgress = ref.watch(globalProgressProvider);
+    final gameProgress = ref.watch(gameProgressProvider);
     final modulesAsync = ref.watch(modulesProvider);
 
     return Scaffold(
@@ -44,7 +44,7 @@ class HomeScreen extends ConsumerWidget {
                         sum + (module.endLevel - module.startLevel + 1),
                   );
                   final allLevelsCompleted =
-                      globalProgress.currentGlobalLevel > totalLevels;
+                      gameProgress.currentLevel > totalLevels;
 
                   if (allLevelsCompleted) {
                     return Column(
@@ -103,7 +103,7 @@ class HomeScreen extends ConsumerWidget {
                       elevation: 4,
                     ),
                     child: Text(
-                      'Play Level ${globalProgress.currentGlobalLevel}',
+                      'Play Level ${gameProgress.currentLevel}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -127,7 +127,7 @@ class HomeScreen extends ConsumerWidget {
                     elevation: 4,
                   ),
                   child: Text(
-                    'Play Level ${globalProgress.currentGlobalLevel}',
+                    'Play Level ${gameProgress.currentLevel}',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

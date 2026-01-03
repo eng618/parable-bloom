@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/game_providers.dart';
+import '../../../../screens/home_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -89,9 +90,9 @@ class SettingsScreen extends ConsumerWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
-        ),
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
       ),
     );
   }
@@ -202,8 +203,8 @@ class SettingsScreen extends ConsumerWidget {
                       child: Text(
                         availabilityText,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: availabilityColor,
-                        ),
+                              color: availabilityColor,
+                            ),
                       ),
                     ),
                   ],
@@ -241,10 +242,10 @@ class SettingsScreen extends ConsumerWidget {
                       child: Text(
                         'Last synced $timeAgo',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.6),
-                        ),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
                       ),
                     ),
                   ],
@@ -456,7 +457,7 @@ class SettingsScreen extends ConsumerWidget {
     required BuildContext originalContext,
   }) async {
     try {
-      // 1. Clear Firebase data
+      // 1. Clear Firebase data first
       debugPrint('ResetData: Clearing Firebase data...');
       final user = auth.currentUser;
 
@@ -472,46 +473,43 @@ class SettingsScreen extends ConsumerWidget {
       await box.clear();
       debugPrint('ResetData: Hive data cleared');
 
-      // 3. Invalidate all Riverpod providers to force fresh state
-      debugPrint('ResetData: Invalidating providers...');
-      ref.invalidate(gameProgressProvider);
-      ref.invalidate(globalProgressProvider);
-      ref.invalidate(currentLevelProvider);
-      ref.invalidate(levelCompleteProvider);
-      ref.invalidate(gameCompletedProvider);
-      ref.invalidate(gameOverProvider);
-      ref.invalidate(graceProvider);
-      ref.invalidate(levelTotalTapsProvider);
-      ref.invalidate(levelWrongTapsProvider);
-      ref.invalidate(vineStatesProvider);
-      ref.invalidate(themeModeProvider);
-
-      // 4. Close the loading dialog safely
-      if (loadingContext != null &&
-          loadingContext.mounted &&
-          Navigator.canPop(loadingContext)) {
-        Navigator.of(loadingContext).pop();
+      // 3. Close the loading dialog immediately (before invalidating providers)
+      debugPrint('ResetData: Attempting to close loading dialog...');
+      try {
+        if (loadingContext != null && loadingContext.mounted) {
+          Navigator.of(loadingContext).pop();
+          debugPrint('ResetData: Loading dialog closed');
+        }
+      } catch (dialogError) {
+        debugPrint('ResetData: Error closing dialog: $dialogError');
       }
 
-      if (!originalContext.mounted) return;
+      // 4. Check context before continuing
+      if (!originalContext.mounted) {
+        debugPrint('ResetData: Original context not mounted, aborting');
+        return;
+      }
 
-      // 5. Show success message and restart app
-      debugPrint('ResetData: Showing success message...');
-      ScaffoldMessenger.of(originalContext).showSnackBar(
-        const SnackBar(
-          content: Text('All data reset successfully. Restarting app...'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      // 5. Navigate to home immediately (before invalidating UI providers)
+      debugPrint('ResetData: Navigating to home screen...');
+      try {
+        await Navigator.of(originalContext).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+        debugPrint('ResetData: Navigation completed');
+      } catch (navError) {
+        debugPrint('ResetData: Navigation error: $navError');
+        return;
+      }
 
-      // 6. Restart the app by navigating to home and clearing navigation stack
-      debugPrint('ResetData: Restarting app...');
-      await Future.delayed(const Duration(seconds: 2));
+      // 6. NOW invalidate only essential progress/level providers
+      // (after navigation is complete)
+      // These providers will rebuild with cleared data when HomeScreen loads
+      debugPrint('ResetData: Invalidating progress providers...');
+      ref.invalidate(gameProgressProvider);
 
-      if (!originalContext.mounted) return;
-      Navigator.of(
-        originalContext,
-      ).pushNamedAndRemoveUntil('/', (route) => false);
+      debugPrint('ResetData: Reset completed successfully');
     } catch (e) {
       debugPrint('ResetData: Error during reset: $e');
 
