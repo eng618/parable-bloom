@@ -1,66 +1,57 @@
 ---
-title: "Parable Bloom - Architecture & State Management"
-version: "3.4"
-last_updated: "2025-12-24"
-status: "Implementation Complete"
+title: "Parable Bloom - Architecture & Technical Reference"
+version: "4.0"
+last_updated: "2026-01-03"
+status: "Live"
 type: "Architecture Documentation"
 ---
 
-# Parable Bloom - Architecture & State Management
+# Parable Bloom - Architecture & Technical Reference
 
-This document explains the current state management and persistence implementation using Riverpod and Hive, and outlines the strategy for integrating Firebase in the future.
+## 1. Technology Stack
 
-## 🏗️ Current Architecture
-
-### 1. State Management (Riverpod)
-
-We use **Riverpod** for reactive state management. This decouples the game logic from the UI and allows for easy testing and debugging.
-
-- **`moduleProgressProvider`**: Tracks current module, level within module, and completed modules with Hive persistence.
-- **`vineStatesProvider`**: Manages the dynamic "blocking" logic for all vines in the current level. It uses the `LevelSolver` to calculate which vines are movable based on snake-like path movement.
-- **`graceProvider`**: Manages Grace system (3 per level, 4 for Transcendent) with persistence.
-- **`currentLevelProvider`**: Holds the current level data with the canonical JSON schema (id, name, grid_size `[width, height]`, difficulty, vines with head_direction).
-- Note: Levels use coordinate-based `ordered_path` (x,y) and require `grid_size` so the UI/solver have a single authoritative rectangular board.
-
-  Recent changes and conventions:
-
-- `grid_size` is required (ordering `[width, height]`); LevelData derives bounds directly from it.
-- Visual masking: `LevelData` supports an optional `mask` (modes: `hide`, `show`, `show-all`) listing grid points to hide/show. Rendering and input consult `mask`; solver/collision logic still operate on the full rectangular grid.
-- Mask safety: vines are validated to never occupy masked-out cells.
-- Solver consolidation: the canonical coordinate-based `LevelSolver` implementation lives in `lib/providers/game_providers.dart`. A legacy row/col solver was removed/replaced with a deprecation stub to avoid duplicated logic.
-
-  Tests: unit tests validate mask parsing and enforce that vine coordinates use `(0,0)` as the lower-left origin and fit within `grid_size`.
-
-- **`gameInstanceProvider`**: Bridges Flutter UI with Flame game engine instance.
-- **Transient State Providers**: Level completion, game over, and analytics tracking providers.
-
-### 2. Local Persistence (Hive)
-
-We use **Hive** for fast, local-first key-value storage.
-
-- **Initialization**: Hive is initialized in `main.dart` and the `Box` is injected into the Riverpod `ProviderScope`.
-- **Sync Logic**: The `GameProgressNotifier` and `ModuleProgressNotifier` handle the synchronization between the in-memory state and the Hive storage.
+- **Framework**: Flutter 3.24+
+- **Game Engine**: Flame (Rendering, Input)
+- **State Management**: Riverpod (Reactive, Decoupled)
+- **Local Persistence**: Hive (Key-Value Store)
+- **Cloud Backend**: Firebase (Firestore, Auth) - *Planned/In-Progress*
+- **Language**: Dart
 
 ---
 
-## 🔍 Validation & Technical Assessment
+## 2. State Management (Riverpod)
 
-| Feature | Current Status | Assessment |
-|---------|----------------|------------|
-| **Decoupling** | High | UI components are fully isolated from the persistence layer. |
-| **Logic Integrity** | Solid | The `LevelSolver` (BFS) ensures all levels are solvable and blocking is accurate. |
-| **Persistence Coupling** | Moderate | `GameProgressNotifier` currently calls Hive directly. This is fine for MVP but needs abstraction for Firebase. |
-| **Performance** | Excellent | Hive's synchronous reads/writes are perfect for game state without blocking the UI thread. |
+The application uses a reactive architecture where the UI and Game Engine observe centralized providers.
+
+### 2.1 Core Providers
+
+- **`moduleProgressProvider`**: Tracks the player's progress (current module, current level, unlocked parables). Persisted via Hive.
+- **`vineStatesProvider`**: Manages the dynamic state of the board. It uses the `LevelSolver` to calculate which vines are blocked or free to move.
+- **`graceProvider`**: Manages the "Grace" (lives) system.
+- **`currentLevelProvider`**: Holds the canonical data for the active level (grid size, vine positions).
+- **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
+
+### 2.2 Logic & Solvers
+
+- **`LevelSolver`**: A Breadth-First Search (BFS) solver that validates level solvability and determines blocking relationships.
+- **Blocking Logic**: A vine is "blocked" if its path is obstructed by another vine. This is recalculated dynamically after every move.
 
 ---
 
-## ☁️ Path to Firebase Integration
+## 3. Persistence Layer
 
-The current setup is "Firebase Ready" because of the use of Riverpod. To add Firebase, we will implement the **Repository Pattern**.
+### 3.1 Local-First (Hive)
 
-### Proposed Refactor for Firebase
+We use **Hive** for immediate, offline-capable storage.
 
-1. **Define an Abstract Repository**:
+- **Boxes**: `game_progress`, `settings`.
+- **Sync**: `GameProgressNotifier` writes to Hive synchronously to ensure no data loss.
+
+### 3.2 Cloud Sync (Firebase)
+
+We implement the **Repository Pattern** to support cloud synchronization without coupling the UI to Firebase.
+
+**Interface**:
 
 ```dart
 abstract class ProgressRepository {
@@ -69,25 +60,45 @@ abstract class ProgressRepository {
 }
 ```
 
-1. **Implement Hive & Firebase Repositories**:
+**Implementations**:
 
-- `HiveProgressRepository` (Local-first)
-- `FirebaseProgressRepository` (Cloud sync)
+- `HiveProgressRepository`: Local storage (Default).
+- `FirebaseProgressRepository`: Cloud storage (Syncs when online).
 
-1. **Update Provider**:
-The `gameProgressProvider` will then depend on the `progressRepositoryProvider` instead of the Hive `Box` directly.
+---
 
-```mermaid
-graph TD
-    UI[Flutter UI] --> |watch| RP[Riverpod Provider]
-    RP --> |use| GPN[GameProgressNotifier]
-    GPN --> |interact| Repo[Progress Repository]
-    Repo --> |impl| Hive[Hive - Local]
-    Repo --> |impl| FB[Firebase - Cloud]
+## 4. Environment Strategy
+
+We use a **Single Firebase Project** strategy with **Collection-Based Isolation** to manage environments without complex build flavors.
+
+### 4.1 Collections
+
+- **Development**: `game_progress_dev/{userId}/...`
+- **Preview/Staging**: `game_progress_preview/{userId}/...`
+- **Production**: `game_progress_prod/{userId}/...`
+
+### 4.2 Configuration
+
+The environment is determined at runtime via `EnvironmentConfig` (e.g., using `String.fromEnvironment` or `.env` files), which selects the appropriate Firestore collection suffix.
+
+**Benefits**:
+
+- Simplifies CI/CD (one set of credentials).
+- Isolates test data from production.
+- Allows easy promotion of features.
+
+---
+
+## 5. Directory Structure
+
+```text
+lib/
+├── core/               # Config, Constants, Utils
+├── features/
+│   ├── game/           # Flame components, Logic, UI
+│   ├── journal/        # Parable reader
+│   └── menu/           # Main menu, Level selector
+├── providers/          # Riverpod providers (State)
+├── services/           # Audio, Haptics, Analytics
+└── shared/             # Common widgets, Themes
 ```
-
-### Benefits of this Approach
-
-- **Offline First**: Users can play without internet (Hive), and progress syncs to Firebase once online.
-- **Lazy Cloud Integration**: We can launch with Hive and add the Firebase implementation later without changing a single line of UI code.
-- **Cross-Platform Sync**: Users can pick up where they left off on different devices.
