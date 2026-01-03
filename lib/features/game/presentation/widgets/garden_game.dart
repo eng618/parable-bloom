@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,8 +10,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/game_providers.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
+import 'pulse_effect_component.dart';
 
-class GardenGame extends FlameGame {
+class GardenGame extends FlameGame with TapCallbacks {
   static const double cellSize = 36.0; // Pixels per cell
 
   late GridComponent grid;
@@ -38,8 +40,8 @@ class GardenGame extends FlameGame {
     debugPrint(
       'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor',
     );
-    _backgroundColor = backgroundColor;
-    _surfaceColor = surfaceColor;
+    this._backgroundColor = backgroundColor;
+    this._surfaceColor = surfaceColor;
     // gridColor parameter kept for API compatibility but not currently used
 
     // Update existing components if they exist - must replace the Paint to trigger redraw
@@ -58,7 +60,7 @@ class GardenGame extends FlameGame {
     ref.read(gameInstanceProvider.notifier).resetGrace();
 
     // Load current level first
-    await _loadCurrentLevel();
+    await loadCurrentLevel();
 
     // TODO: Replace with actual parable background image
     // Load parable background
@@ -70,11 +72,11 @@ class GardenGame extends FlameGame {
     add(_gameBackground!);
 
     // Create grid and background components
-    _createLevelComponents();
+    createLevelComponents();
 
     // Set level data on grid after it's created
     if (_currentLevelData != null) {
-      await _setLevelDataOnGrid();
+      await setLevelDataOnGrid();
     }
 
     // Listen to vine state changes (blocking/clearing updates)
@@ -88,18 +90,18 @@ class GardenGame extends FlameGame {
 
     // Listen to projection lines visibility and animation state
     ref.listenManual(projectionLinesVisibleProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
+      updateProjectionLinesVisibility();
     });
 
     ref.listenManual(anyVineAnimatingProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
+      updateProjectionLinesVisibility();
     });
 
     // Center camera
     camera.viewport.size = size;
   }
 
-  void _updateProjectionLinesVisibility() {
+  void updateProjectionLinesVisibility() {
     final shouldShow = ref.read(projectionLinesVisibleProvider);
     final isAnimating = ref.read(anyVineAnimatingProvider);
 
@@ -113,7 +115,7 @@ class GardenGame extends FlameGame {
     projectionLines.setVisible(shouldShow && !isAnimating);
   }
 
-  void _createLevelComponents() {
+  void createLevelComponents() {
     if (_currentLevelData == null) return;
 
     // Interactive grid
@@ -156,7 +158,7 @@ class GardenGame extends FlameGame {
     }
   }
 
-  Future<void> _loadCurrentLevel() async {
+  Future<void> loadCurrentLevel() async {
     final gameProgress = ref.read(gameProgressProvider);
     final levelNumber = gameProgress.currentLevel;
 
@@ -236,7 +238,7 @@ class GardenGame extends FlameGame {
     }
   }
 
-  Future<void> _setLevelDataOnGrid() async {
+  Future<void> setLevelDataOnGrid() async {
     if (_currentLevelData == null) return;
 
     // Get current vine states from the provider
@@ -245,9 +247,6 @@ class GardenGame extends FlameGame {
     // Set data on grid
     grid.setLevelData(_currentLevelData!, vineStates);
   }
-
-  @override
-  Color backgroundColor() => _backgroundColor;
 
   @override
   void onRemove() {
@@ -265,20 +264,39 @@ class GardenGame extends FlameGame {
       // Ignore if grid/projectionLines weren't initialized
     }
 
-    await _loadCurrentLevel();
+    await loadCurrentLevel();
 
     if (_currentLevelData != null) {
-      _createLevelComponents();
+      createLevelComponents();
 
       // Reset vine states for the new level
       ref.read(vineStatesProvider.notifier).resetForLevel(_currentLevelData!);
       // Reset grace for the new level
       ref.read(gameInstanceProvider.notifier).resetGrace();
 
-      await _setLevelDataOnGrid();
+      await setLevelDataOnGrid();
 
       // Reset projection lines visibility
       ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
     }
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    super.onTapDown(event);
+
+    // Create pulse effect at tap position
+    // Use a theme-aware color with higher visibility
+    final pulseColor = _surfaceColor.computeLuminance() > 0.5
+        ? Colors.black.withValues(alpha: 0.6) // Darker pulse on light background
+        : Colors.white.withValues(alpha: 0.7); // Lighter pulse on dark background
+
+    final pulseEffect = PulseEffectComponent(
+      position: event.localPosition,
+      color: pulseColor,
+    );
+
+    // Add to world so it appears above everything
+    add(pulseEffect);
   }
 }
