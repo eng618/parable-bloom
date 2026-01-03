@@ -11,7 +11,7 @@ import 'grid_component.dart';
 import 'projection_lines_component.dart';
 
 class GardenGame extends FlameGame {
-  static const double cellSize = 40.0; // Pixels per cell
+  static const double cellSize = 36.0; // Pixels per cell
 
   late GridComponent grid;
   late ProjectionLinesComponent projectionLines;

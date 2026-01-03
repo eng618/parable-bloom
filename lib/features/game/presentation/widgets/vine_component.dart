@@ -142,8 +142,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           x * cellSize + cellSize / 2,
           visualY * cellSize + cellSize / 2,
         ),
-        width: cellSize * 0.6,
-        height: cellSize * 0.6,
+        width: cellSize * 0.73,
+        height: cellSize * 0.73,
       );
 
       if (isHead) {
@@ -180,7 +180,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final center = rect.center;
     final path = Path();
 
-    final scale = 0.45;
+    final scale = 0.55;
     final h = rect.height * scale;
     final w = rect.width * scale;
 
