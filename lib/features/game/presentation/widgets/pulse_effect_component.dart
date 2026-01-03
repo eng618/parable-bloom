@@ -2,7 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 /// A tiny pulse effect that appears at tap location.
-/// Shows a brief expanding/contracting ring effect.
+/// Shows a brief expanding ring effect.
 class PulseEffectComponent extends PositionComponent {
   static const double _maxRadius = 30.0; // Slightly larger for visibility
   static const double _duration = 0.4; // Slightly longer duration (400ms)

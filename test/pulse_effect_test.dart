@@ -24,20 +24,13 @@ void main() {
       expect(pulse.position, Vector2(50, 50));
     });
 
-    test('should update elapsed time', () {
+    test('should have correct priority for rendering above other components', () {
       final pulse = PulseEffectComponent(
         position: Vector2(100, 100),
       );
 
-      // Initial state
-      expect(pulse.isMounted, false);
-
-      // Simulate update
-      pulse.update(0.1);
-      pulse.update(0.1);
-
-      // Component should have processed updates
-      expect(pulse.position, Vector2(100, 100));
+      // Verify high priority to render above grid/vines
+      expect(pulse.priority, 100);
     });
   });
 }

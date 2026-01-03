@@ -295,8 +295,6 @@ class GardenGame extends FlameGame with void TapCallbacks {
         ? Colors.black.withValues(alpha: 0.6) // Darker pulse on light background
         : Colors.white.withValues(alpha: 0.7); // Lighter pulse on dark background
 
-    debugPrint('GardenGame: Creating pulse effect at ${event.localPosition}');
-
     final pulseEffect = PulseEffectComponent(
       position: event.localPosition,
       color: pulseColor,
@@ -304,6 +302,5 @@ class GardenGame extends FlameGame with void TapCallbacks {
 
     // Add to world so it appears above everything
     add(pulseEffect);
-    debugPrint('GardenGame: Pulse effect added with priority ${pulseEffect.priority}');
   }
 }
