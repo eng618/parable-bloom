@@ -22,13 +22,11 @@ class GardenGame extends FlameGame with TapCallbacks {
   RectangleComponent? _gameBackground;
 
   // Theme colors - updated dynamically from app theme
-  late Color _backgroundColor;
   late Color _surfaceColor;
 
   GardenGame({required this.ref}) {
     debugPrint('GardenGame: Constructor called - creating new instance');
     // Initialize with default theme colors - will be updated by game screen
-    _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
     _surfaceColor = const Color(0xFF2C3E50); // Default dark surface
   }
 
@@ -40,9 +38,8 @@ class GardenGame extends FlameGame with TapCallbacks {
     debugPrint(
       'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor',
     );
-    this._backgroundColor = backgroundColor;
-    this._surfaceColor = surfaceColor;
-    // gridColor parameter kept for API compatibility but not currently used
+    _surfaceColor = surfaceColor;
+    // gridColor parameter and backgroundColor kept for API compatibility but not currently used
 
     // Update existing components if they exist - must replace the Paint to trigger redraw
     if (_gameBackground != null) {
@@ -288,8 +285,10 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Create pulse effect at tap position
     // Use a theme-aware color with higher visibility
     final pulseColor = _surfaceColor.computeLuminance() > 0.5
-        ? Colors.black.withValues(alpha: 0.6) // Darker pulse on light background
-        : Colors.white.withValues(alpha: 0.7); // Lighter pulse on dark background
+        ? Colors.black
+            .withValues(alpha: 0.6) // Darker pulse on light background
+        : Colors.white
+            .withValues(alpha: 0.7); // Lighter pulse on dark background
 
     final pulseEffect = PulseEffectComponent(
       position: event.localPosition,
