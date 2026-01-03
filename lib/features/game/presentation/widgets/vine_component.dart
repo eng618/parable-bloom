@@ -250,14 +250,17 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     final rawDistance = _calculateMovementDistance();
     final canClear = rawDistance > 0;
-    final maxDistance = rawDistance.abs();
+    // For blocked vines, rawDistance is negative, abs() gives distance to blocker
+    // We animate TO the blocker (not past it), so use the full distance
+    final distanceToBlocker = rawDistance.abs();
+    final maxForwardSteps = distanceToBlocker;
 
     if (canClear) {
       // Vine can reach edge - calculate steps needed to exit completely off-screen
       // Add extra steps to ensure vine moves well beyond the visible area
       const int extraOffScreenSteps = 6; // Ensure vine is far off-screen
       _totalAnimationSteps =
-          maxDistance + vineData.orderedPath.length + extraOffScreenSteps;
+          maxForwardSteps + vineData.orderedPath.length + extraOffScreenSteps;
       _willClearAfterAnimation = true;
 
       // Set animation state to animatingClear - this removes it from blocking calculations
@@ -269,13 +272,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       _logDebug(
         'Starting CLEAR animation: vineId=${vineData.id}, '
-        'maxDistance=$maxDistance, totalSteps=$_totalAnimationSteps, '
+        'maxForwardSteps=$maxForwardSteps, totalSteps=$_totalAnimationSteps, '
         'headPos=(${_currentVisualPositions[0]['x']},${_currentVisualPositions[0]['y']}), '
         'direction=${vineData.headDirection}',
       );
     } else {
-      // Vine is blocked - move forward to blocker, then reverse
-      _totalAnimationSteps = maxDistance * 2;
+      // Vine is blocked - move forward to the blocking cell, then reverse
+      _totalAnimationSteps = maxForwardSteps * 2;
       _willClearAfterAnimation = false;
 
       // Set animation state to animatingBlocked
@@ -286,7 +289,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       _logDebug(
         'Starting BLOCKED animation: vineId=${vineData.id}, '
-        'maxDistance=$maxDistance, totalSteps=$_totalAnimationSteps, '
+        'maxForwardSteps=$maxForwardSteps (to blocker cell), totalSteps=$_totalAnimationSteps, '
         'headPos=(${_currentVisualPositions[0]['x']},${_currentVisualPositions[0]['y']}), '
         'direction=${vineData.headDirection}',
       );
@@ -337,18 +340,14 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final maxForwardDistance = rawDistance.abs();
 
       if (_currentAnimationStep < maxForwardDistance) {
-        // Check if next step would hit blocker (before moving)
+        // Check if we've reached the blocker position for a blocked vine
         if (_currentAnimationStep + 1 >= maxForwardDistance && !canClear) {
-          // Would hit blocker on next move - start reverse animation
+          // About to reach the blocker cell - mark as attempted before the final forward step
           _logDebug(
-            'COLLISION detected: vineId=${vineData.id}, '
-            'step=$_currentAnimationStep, maxDistance=$maxForwardDistance, '
-            'headPos=(${_currentVisualPositions[0]['x']},${_currentVisualPositions[0]['y']})',
+            'Marking vine attempted before reaching blocker: vineId=${vineData.id}, '
+            'step=$_currentAnimationStep, maxDistance=$maxForwardDistance',
           );
           parent.markVineAttempted(vineData.id);
-          _isBlockedAnimation = true;
-          _currentAnimationStep = 0;
-          return;
         }
 
         // Save current positions to history
@@ -399,6 +398,19 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         _currentVisualPositions[headIndex]['y'] = newHeadY;
 
         _currentAnimationStep++;
+
+        // Check if we've completed the forward animation for a blocked vine
+        if (_currentAnimationStep >= maxForwardDistance && !canClear) {
+          // Reached the blocker cell - start reverse animation
+          _logDebug(
+            'Reached blocker cell, starting reverse: vineId=${vineData.id}, '
+            'step=$_currentAnimationStep, maxDistance=$maxForwardDistance, '
+            'headPos=(${_currentVisualPositions[0]['x']},${_currentVisualPositions[0]['y']})',
+          );
+          _isBlockedAnimation = true;
+          _currentAnimationStep = 0;
+          return;
+        }
       } else if (_willClearAfterAnimation) {
         // Continue moving off screen for clearing vines
         // Save current positions to history
