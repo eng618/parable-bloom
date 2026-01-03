@@ -1,0 +1,3 @@
+app_identifier("com.garciaericn.parable_bloom")
+json_key_data(ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"])
+package_name("com.garciaericn.parable_bloom")
