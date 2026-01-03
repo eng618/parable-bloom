@@ -25,6 +25,16 @@ class GameProgress {
     );
   }
 
+  // Check if a module is completed (all levels in the module are done)
+  bool isModuleCompleted(int moduleId, List<dynamic> modules) {
+    final module = modules.firstWhere((m) => m.id == moduleId);
+    final moduleLevels = List.generate(
+      module.endLevel - module.startLevel + 1,
+      (i) => module.startLevel + i,
+    );
+    return moduleLevels.every(completedLevels.contains);
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'currentLevel': currentLevel,

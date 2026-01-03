@@ -9,7 +9,7 @@ class JournalScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final modulesAsync = ref.watch(modulesProvider);
-    final progress = ref.watch(globalProgressProvider);
+    final progress = ref.watch(gameProgressProvider);
 
     return Scaffold(
       appBar: AppBar(

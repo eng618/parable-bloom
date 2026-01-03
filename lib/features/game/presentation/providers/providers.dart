@@ -3,5 +3,4 @@
 
 export 'analytics_providers.dart';
 export 'game_state_providers.dart';
-export 'progress_providers.dart';
 export 'vine_states_provider.dart';

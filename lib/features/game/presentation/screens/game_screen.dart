@@ -293,7 +293,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       }
 
       await ref
-          .read(globalProgressProvider.notifier)
+          .read(gameProgressProvider.notifier)
           .completeLevel(currentLevel.id);
     }
     ref.read(levelCompleteProvider.notifier).setComplete(false);

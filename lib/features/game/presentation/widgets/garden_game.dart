@@ -155,17 +155,17 @@ class GardenGame extends FlameGame {
   }
 
   Future<void> _loadCurrentLevel() async {
-    final globalProgress = ref.read(globalProgressProvider);
-    final globalLevelNumber = globalProgress.currentGlobalLevel;
+    final gameProgress = ref.read(gameProgressProvider);
+    final levelNumber = gameProgress.currentLevel;
 
     debugPrint(
-      'GardenGame: Attempting to load global level $globalLevelNumber',
+      'GardenGame: Attempting to load level $levelNumber',
     );
-    debugPrint('GardenGame: Global progress: $globalProgress');
+    debugPrint('GardenGame: Game progress: $gameProgress');
 
     try {
-      // Load level data directly by global level number
-      final assetPath = 'assets/levels/level_$globalLevelNumber.json';
+      // Load level data directly by level number
+      final assetPath = 'assets/levels/level_$levelNumber.json';
       debugPrint('GardenGame: Loading asset: $assetPath');
 
       final levelJson = await rootBundle.loadString(assetPath);
@@ -194,9 +194,9 @@ class GardenGame extends FlameGame {
       // Log level start analytics
       ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
 
-      debugPrint('Loaded level $globalLevelNumber: ${_currentLevelData!.name}');
+      debugPrint('Loaded level $levelNumber: ${_currentLevelData!.name}');
     } catch (e, stackTrace) {
-      debugPrint('Error loading level $globalLevelNumber: $e');
+      debugPrint('Error loading level $levelNumber: $e');
       debugPrint('Stack trace: $stackTrace');
 
       // Check if this is because we've completed all levels
@@ -211,7 +211,11 @@ class GardenGame extends FlameGame {
         (maxEnd, module) => module.endLevel > maxEnd ? module.endLevel : maxEnd,
       );
 
-      if (globalLevelNumber > totalLevels) {
+      debugPrint(
+        'GardenGame: Level $levelNumber failed to load. Total levels: $totalLevels',
+      );
+
+      if (levelNumber > totalLevels) {
         debugPrint(
           'GardenGame: All levels completed! Setting game as completed.',
         );

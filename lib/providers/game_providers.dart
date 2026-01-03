@@ -10,10 +10,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../features/game/data/repositories/firebase_game_progress_repository.dart';
 import '../features/game/data/repositories/hive_game_progress_repository.dart';
-import '../features/game/data/repositories/hive_global_level_repository.dart';
 import '../features/game/domain/entities/game_progress.dart';
 import '../features/game/domain/repositories/game_progress_repository.dart';
-import '../features/game/domain/repositories/global_level_repository.dart';
 import '../features/game/domain/services/level_solver_service.dart';
 import '../features/game/presentation/widgets/garden_game.dart';
 import '../features/settings/data/repositories/hive_settings_repository.dart';
@@ -358,12 +356,6 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return HiveSettingsRepository(box);
 });
 
-// Global level repository provider
-final globalLevelRepositoryProvider = Provider<GlobalLevelRepository>((ref) {
-  final box = ref.watch(hiveBoxProvider);
-  return HiveGlobalLevelRepository(box);
-});
-
 final gameProgressProvider =
     NotifierProvider<GameProgressNotifier, GameProgress>(
       GameProgressNotifier.new,
@@ -476,124 +468,6 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       // Reload local data after sync
       await initialize();
     }
-  }
-}
-
-// Global progression (continuous level numbering)
-class GlobalProgress {
-  final int currentGlobalLevel;
-  final Set<int> completedLevels; // Global level numbers: 1, 2, 3...
-
-  const GlobalProgress({
-    this.currentGlobalLevel = 1,
-    this.completedLevels = const {},
-  });
-
-  // Helper methods to convert between global and module-based numbering
-  // These require module data to be passed in since level counts vary per module
-  ({int moduleId, int levelInModule}) getCurrentModuleAndLevel(
-    List<ModuleData> modules,
-  ) {
-    int globalLevel = currentGlobalLevel;
-    for (final module in modules) {
-      if (globalLevel <= module.levelCount) {
-        return (moduleId: module.id, levelInModule: globalLevel);
-      }
-      globalLevel -= module.levelCount;
-    }
-    // If we've exceeded all modules, return the last module's last level
-    final lastModule = modules.last;
-    return (moduleId: lastModule.id, levelInModule: lastModule.levelCount);
-  }
-
-  // Check if a module is completed (all levels in the module are done)
-  bool isModuleCompleted(int moduleId, List<ModuleData> modules) {
-    final module = modules.firstWhere((m) => m.id == moduleId);
-    return completedLevels.containsAll(
-      List.generate(module.levelCount, (i) => module.startLevel + i),
-    );
-  }
-
-  @override
-  String toString() {
-    return 'GlobalProgress(currentGlobalLevel: $currentGlobalLevel, completedLevels: $completedLevels)';
-  }
-
-  GlobalProgress copyWith({
-    int? currentGlobalLevel,
-    Set<int>? completedLevels,
-  }) {
-    return GlobalProgress(
-      currentGlobalLevel: currentGlobalLevel ?? this.currentGlobalLevel,
-      completedLevels: completedLevels ?? this.completedLevels,
-    );
-  }
-}
-
-final globalProgressProvider =
-    NotifierProvider<GlobalProgressNotifier, GlobalProgress>(
-      GlobalProgressNotifier.new,
-    );
-
-class GlobalProgressNotifier extends Notifier<GlobalProgress> {
-  @override
-  GlobalProgress build() {
-    // Load from repository synchronously at build time
-    final box = ref.watch(hiveBoxProvider);
-
-    // Use Hive directly for synchronous read at build time
-    // The repository provides abstraction for mutations (completeLevel, resetProgress)
-    final currentGlobalLevel =
-        box.get('currentGlobalLevel', defaultValue: 1) as int;
-    final completedLevels = Set<int>.from(
-      box.get('completedLevels', defaultValue: <int>[]),
-    );
-
-    final progress = GlobalProgress(
-      currentGlobalLevel: currentGlobalLevel,
-      completedLevels: completedLevels,
-    );
-
-    debugPrint('GlobalProgressNotifier: Built with $progress');
-
-    return progress;
-  }
-
-  Future<void> completeLevel(int globalLevelNumber) async {
-    final repository = ref.read(globalLevelRepositoryProvider);
-    final box = ref.read(hiveBoxProvider);
-
-    final newCompletedLevels = Set<int>.from(state.completedLevels)
-      ..add(globalLevelNumber);
-
-    final newState = state.copyWith(
-      currentGlobalLevel: globalLevelNumber + 1,
-      completedLevels: newCompletedLevels,
-    );
-
-    await repository.setCurrentGlobalLevel(newState.currentGlobalLevel);
-    await box.put('completedLevels', newState.completedLevels.toList());
-    state = newState;
-
-    debugPrint(
-      'GlobalProgressNotifier: Completed level $globalLevelNumber, advanced to ${newState.currentGlobalLevel}',
-    );
-  }
-
-  Future<void> resetProgress() async {
-    final repository = ref.read(globalLevelRepositoryProvider);
-    final box = ref.read(hiveBoxProvider);
-
-    const defaultProgress = GlobalProgress(
-      currentGlobalLevel: 1,
-      completedLevels: {},
-    );
-
-    await repository.setCurrentGlobalLevel(defaultProgress.currentGlobalLevel);
-    await box.put('completedLevels', <int>[]);
-    state = defaultProgress;
-
-    debugPrint('GlobalProgressNotifier: Progress reset to $defaultProgress');
   }
 }
 
