@@ -19,6 +19,52 @@ import '../features/settings/domain/repositories/settings_repository.dart';
 import '../core/vine_color_palette.dart';
 import '../services/background_audio_controller.dart';
 import '../services/analytics_service.dart';
+import 'package:vector_math/vector_math_64.dart' as vm;
+
+// Camera state for zoom and pan
+class CameraState {
+  final double
+      zoom; // Scale factor (1.0 = normal, <1.0 = zoomed out, >1.0 = zoomed in)
+  final vm.Vector2 panOffset; // Pan offset in pixels
+  final double minZoom; // Minimum allowed zoom (dynamic based on level)
+  final double maxZoom; // Maximum allowed zoom
+  final bool isAnimating; // Whether camera is currently animating
+
+  const CameraState({
+    required this.zoom,
+    required this.panOffset,
+    required this.minZoom,
+    required this.maxZoom,
+    this.isAnimating = false,
+  });
+
+  CameraState copyWith({
+    double? zoom,
+    vm.Vector2? panOffset,
+    double? minZoom,
+    double? maxZoom,
+    bool? isAnimating,
+  }) {
+    return CameraState(
+      zoom: zoom ?? this.zoom,
+      panOffset: panOffset ?? this.panOffset,
+      minZoom: minZoom ?? this.minZoom,
+      maxZoom: maxZoom ?? this.maxZoom,
+      isAnimating: isAnimating ?? this.isAnimating,
+    );
+  }
+
+  // Default camera state
+  static CameraState defaultState() {
+    return CameraState(
+      zoom: 1.0,
+      panOffset: vm.Vector2.zero(),
+      minZoom: 0.5,
+      maxZoom: 2.0,
+      isAnimating: false,
+    );
+  }
+}
 
 // Module data model
 class ModuleData {
@@ -116,7 +162,7 @@ class VineData {
   final String id;
   final String headDirection;
   final List<Map<String, int>>
-  orderedPath; // Ordered from head (index 0) to tail (last)
+      orderedPath; // Ordered from head (index 0) to tail (last)
   final String? vineColor;
 
   VineData({
@@ -360,8 +406,8 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
 
 final gameProgressProvider =
     NotifierProvider<GameProgressNotifier, GameProgress>(
-      GameProgressNotifier.new,
-    );
+  GameProgressNotifier.new,
+);
 
 // Cloud sync state provider
 final cloudSyncEnabledProvider = FutureProvider<bool>((ref) async {
@@ -556,8 +602,8 @@ class GameOverNotifier extends Notifier<bool> {
 // Game instance provider
 final gameInstanceProvider =
     NotifierProvider<GameInstanceNotifier, GardenGame?>(
-      GameInstanceNotifier.new,
-    );
+  GameInstanceNotifier.new,
+);
 
 // Theme mode provider with Hive persistence
 enum AppThemeMode { light, dark, system }
@@ -591,8 +637,8 @@ class ThemeModeNotifier extends Notifier<AppThemeMode> {
 // Background audio enabled setting
 final backgroundAudioEnabledProvider =
     NotifierProvider<BackgroundAudioEnabledNotifier, bool>(
-      BackgroundAudioEnabledNotifier.new,
-    );
+  BackgroundAudioEnabledNotifier.new,
+);
 
 class BackgroundAudioEnabledNotifier extends Notifier<bool> {
   @override
@@ -651,8 +697,8 @@ final backgroundAudioControllerProvider = Provider<BackgroundAudioController>((
 // Debug setting for showing grid coordinates
 final debugShowGridCoordinatesProvider =
     NotifierProvider<DebugShowGridCoordinatesNotifier, bool>(
-      DebugShowGridCoordinatesNotifier.new,
-    );
+  DebugShowGridCoordinatesNotifier.new,
+);
 
 class DebugShowGridCoordinatesNotifier extends Notifier<bool> {
   @override
@@ -671,8 +717,8 @@ class DebugShowGridCoordinatesNotifier extends Notifier<bool> {
 // Debug setting for vine animation logging
 final debugVineAnimationLoggingProvider =
     NotifierProvider<DebugVineAnimationLoggingNotifier, bool>(
-      DebugVineAnimationLoggingNotifier.new,
-    );
+  DebugVineAnimationLoggingNotifier.new,
+);
 
 class DebugVineAnimationLoggingNotifier extends Notifier<bool> {
   @override
@@ -753,8 +799,8 @@ class VineState {
 
 final vineStatesProvider =
     NotifierProvider<VineStatesNotifier, Map<String, VineState>>(
-      VineStatesNotifier.new,
-    );
+  VineStatesNotifier.new,
+);
 
 class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   LevelData? _levelData;
@@ -902,8 +948,8 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
 // Provider for projection lines visibility
 final projectionLinesVisibleProvider =
     NotifierProvider<ProjectionLinesVisibleNotifier, bool>(
-      ProjectionLinesVisibleNotifier.new,
-    );
+  ProjectionLinesVisibleNotifier.new,
+);
 
 class ProjectionLinesVisibleNotifier extends Notifier<bool> {
   @override
@@ -927,3 +973,225 @@ final anyVineAnimatingProvider = Provider<bool>((ref) {
         state.animationState == VineAnimationState.animatingBlocked,
   );
 });
+
+// Camera state provider for zoom and pan
+final cameraStateProvider = NotifierProvider<CameraStateNotifier, CameraState>(
+  CameraStateNotifier.new,
+);
+
+class CameraStateNotifier extends Notifier<CameraState> {
+  Timer? _animationTimer;
+  double _animationStartZoom = 1.0;
+  double _animationTargetZoom = 1.0;
+  vm.Vector2 _animationStartOffset = vm.Vector2.zero();
+  vm.Vector2 _animationTargetOffset = vm.Vector2.zero();
+  double _animationProgress = 0.0;
+  static const double _animationDurationSeconds = 0.8;
+
+  @override
+  CameraState build() {
+    return CameraState.defaultState();
+  }
+
+  // Calculate dynamic zoom bounds based on screen and grid size
+  void updateZoomBounds({
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+    required double cellSize,
+  }) {
+    // Calculate how much we need to zoom out to fit the entire board
+    final gridWidth = gridCols * cellSize;
+    final gridHeight = gridRows * cellSize;
+
+    // Add padding around the grid (10% on each side)
+    const padding = 0.9; // Use 90% of screen space
+
+    final zoomToFitWidth = (screenWidth * padding) / gridWidth;
+    final zoomToFitHeight = (screenHeight * padding) / gridHeight;
+
+    // Use the smaller zoom to ensure entire board fits
+    final zoomToFit =
+        zoomToFitWidth < zoomToFitHeight ? zoomToFitWidth : zoomToFitHeight;
+
+    // Min zoom is slightly less than fit-to-screen (show a bit more context)
+    final minZoom = (zoomToFit * 0.85).clamp(0.3, 1.0);
+
+    // Max zoom allows comfortable zooming in, but not excessively
+    final maxZoom = 2.5;
+
+    debugPrint(
+      'CameraStateNotifier: Updated zoom bounds - min: $minZoom, max: $maxZoom (fit: $zoomToFit)',
+    );
+
+    state = state.copyWith(
+      minZoom: minZoom,
+      maxZoom: maxZoom,
+    );
+  }
+
+  // Start animated zoom from full-board view to 1.0x
+  void animateToDefaultZoom({
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+    required double cellSize,
+  }) {
+    // Calculate initial "fit full board" zoom
+    final gridWidth = gridCols * cellSize;
+    final gridHeight = gridRows * cellSize;
+
+    const padding = 0.9;
+    final zoomToFitWidth = (screenWidth * padding) / gridWidth;
+    final zoomToFitHeight = (screenHeight * padding) / gridHeight;
+    final initialZoom =
+        zoomToFitWidth < zoomToFitHeight ? zoomToFitWidth : zoomToFitHeight;
+
+    // Start from fit-to-screen, animate to 1.0x
+    _animationStartZoom = initialZoom;
+    _animationTargetZoom = 1.0;
+    _animationStartOffset = vm.Vector2.zero();
+    _animationTargetOffset = vm.Vector2.zero();
+    _animationProgress = 0.0;
+
+    // Set initial state
+    state = state.copyWith(
+      zoom: initialZoom,
+      panOffset: vm.Vector2.zero(),
+      isAnimating: true,
+    );
+
+    debugPrint(
+      'CameraStateNotifier: Starting animation from zoom $initialZoom to 1.0',
+    );
+
+    // Start animation timer
+    _animationTimer?.cancel();
+    final startTime = DateTime.now();
+    _animationTimer = Timer.periodic(
+      const Duration(milliseconds: 16), // ~60 FPS
+      (timer) {
+        final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+        _animationProgress =
+            (elapsed / (_animationDurationSeconds * 1000)).clamp(0.0, 1.0);
+
+        // Ease-in-out interpolation
+        final t = _easeInOutCubic(_animationProgress);
+
+        final newZoom = _animationStartZoom +
+            (_animationTargetZoom - _animationStartZoom) * t;
+        final newOffset = vm.Vector2(
+          _animationStartOffset.x +
+              (_animationTargetOffset.x - _animationStartOffset.x) * t,
+          _animationStartOffset.y +
+              (_animationTargetOffset.y - _animationStartOffset.y) * t,
+        );
+
+        state = state.copyWith(
+          zoom: newZoom,
+          panOffset: newOffset,
+        );
+
+        if (_animationProgress >= 1.0) {
+          timer.cancel();
+          state = state.copyWith(isAnimating: false);
+          debugPrint('CameraStateNotifier: Animation complete');
+        }
+      },
+    );
+  }
+
+  // Cubic ease-in-out function
+  double _easeInOutCubic(double t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2;
+  }
+
+  // Update zoom (from gesture)
+  void updateZoom(double newZoom, {bool clamp = true}) {
+    if (state.isAnimating)
+      return; // Don't allow manual control during animation
+
+    final clampedZoom =
+        clamp ? newZoom.clamp(state.minZoom, state.maxZoom) : newZoom;
+
+    state = state.copyWith(zoom: clampedZoom);
+  }
+
+  // Update pan offset (from gesture)
+  void updatePanOffset(
+    vm.Vector2 newOffset, {
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+    required double cellSize,
+  }) {
+    if (state.isAnimating)
+      return; // Don't allow manual control during animation
+
+    // Calculate constrained offset to keep grid visible
+    final constrainedOffset = _constrainPanOffset(
+      newOffset,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridCols: gridCols,
+      gridRows: gridRows,
+      cellSize: cellSize,
+    );
+
+    state = state.copyWith(panOffset: constrainedOffset);
+  }
+
+  // Constrain pan offset to keep grid visible
+  vm.Vector2 _constrainPanOffset(
+    vm.Vector2 offset, {
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+    required double cellSize,
+  }) {
+    final scaledCellSize = cellSize * state.zoom;
+    final gridWidth = gridCols * scaledCellSize;
+    final gridHeight = gridRows * scaledCellSize;
+
+    // Calculate centered position
+    final centeredX = (screenWidth - gridWidth) / 2;
+    final centeredY = (screenHeight - gridHeight) / 2;
+
+    // Allow panning but keep at least 20% of grid visible
+    const visibleThreshold = 0.2;
+    final maxOffsetX = gridWidth * (1 - visibleThreshold);
+    final maxOffsetY = gridHeight * (1 - visibleThreshold);
+
+    // Constrain offset
+    final constrainedX = offset.x.clamp(
+      centeredX - maxOffsetX,
+      centeredX + maxOffsetX,
+    );
+    final constrainedY = offset.y.clamp(
+      centeredY - maxOffsetY,
+      centeredY + maxOffsetY,
+    );
+
+    return vm.Vector2(constrainedX, constrainedY);
+  }
+
+  // Reset to default zoom and centered position
+  void reset() {
+    _animationTimer?.cancel();
+    state = CameraState.defaultState();
+  }
+
+  double pow(double x, int exp) {
+    if (exp == 0) return 1;
+    if (exp == 1) return x;
+    double result = 1;
+    for (int i = 0; i < exp.abs(); i++) {
+      result *= x;
+    }
+    return exp > 0 ? result : 1 / result;
+  }
+}

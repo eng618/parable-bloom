@@ -20,6 +20,10 @@ class GridComponent extends PositionComponent
   late int rows;
   late int cols;
 
+  // Camera transform properties
+  double _screenWidth = 0.0;
+  double _screenHeight = 0.0;
+
   // Current level data - will be set by Riverpod
   LevelData? _currentLevel;
 
@@ -96,6 +100,38 @@ class GridComponent extends PositionComponent
     _clearVine(vineId);
   }
 
+  // Apply camera transform (zoom and pan)
+  void applyCameraTransform({
+    required double zoom,
+    required Vector2 panOffset,
+    required double screenWidth,
+    required double screenHeight,
+  }) {
+    _screenWidth = screenWidth;
+    _screenHeight = screenHeight;
+
+    // Update grid scale
+    scale = Vector2.all(zoom);
+
+    // Calculate scaled dimensions
+    final scaledWidth = cols * cellSize * zoom;
+    final scaledHeight = rows * cellSize * zoom;
+
+    // Calculate centered position with pan offset
+    final centeredX = (screenWidth - scaledWidth) / 2;
+    final centeredY = (screenHeight - scaledHeight) / 2;
+
+    position = Vector2(
+      centeredX + panOffset.x,
+      centeredY + panOffset.y,
+    );
+
+    // Update all vine components with the new zoom
+    for (final comp in _vineComponents.values) {
+      comp.updateZoom(zoom);
+    }
+  }
+
   List<String> getActiveVineIds() {
     return _vineStates.entries
         .where(
@@ -154,12 +190,17 @@ class GridComponent extends PositionComponent
       }
     }
 
-    // Update grid size and position
+    // Update grid size
     size = Vector2(cols * cellSize, rows * cellSize);
-    position = Vector2(
-      (parent.size.x - width) / 2,
-      (parent.size.y - height) / 2,
-    );
+
+    // Position will be set by camera transform
+    // Initialize with centered position if camera not yet applied
+    if (_screenWidth == 0.0 || _screenHeight == 0.0) {
+      position = Vector2(
+        (parent.size.x - width) / 2,
+        (parent.size.y - height) / 2,
+      );
+    }
   }
 
   // Individual vines are now rendered by VineComponent children
@@ -240,9 +281,9 @@ class CellComponent extends RectangleComponent
     required super.size,
     required super.position,
   }) : super(
-         paint: Paint()..color = Colors.transparent,
-         anchor: Anchor.topLeft,
-       );
+          paint: Paint()..color = Colors.transparent,
+          anchor: Anchor.topLeft,
+        );
 
   @override
   void render(Canvas canvas) {

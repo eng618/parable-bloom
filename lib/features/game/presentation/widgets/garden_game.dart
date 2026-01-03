@@ -95,8 +95,62 @@ class GardenGame extends FlameGame {
       _updateProjectionLinesVisibility();
     });
 
+    // Listen to camera state changes and apply transforms
+    ref.listenManual(cameraStateProvider, (previous, next) {
+      _applyCameraTransform(next);
+    });
+
+    // Initialize camera state for the current level
+    _initializeCameraForLevel();
+
     // Center camera
     camera.viewport.size = size;
+  }
+
+  void _initializeCameraForLevel() {
+    if (_currentLevelData == null) return;
+
+    final cameraNotifier = ref.read(cameraStateProvider.notifier);
+
+    // Update zoom bounds based on screen and grid size
+    cameraNotifier.updateZoomBounds(
+      screenWidth: size.x,
+      screenHeight: size.y,
+      gridCols: _currentLevelData!.gridWidth,
+      gridRows: _currentLevelData!.gridHeight,
+      cellSize: cellSize,
+    );
+
+    // Start animation from full-board view to 1.0x
+    cameraNotifier.animateToDefaultZoom(
+      screenWidth: size.x,
+      screenHeight: size.y,
+      gridCols: _currentLevelData!.gridWidth,
+      gridRows: _currentLevelData!.gridHeight,
+      cellSize: cellSize,
+    );
+  }
+
+  void _applyCameraTransform(CameraState cameraState) {
+    // Apply zoom and pan to grid
+    if (grid.isMounted) {
+      grid.applyCameraTransform(
+        zoom: cameraState.zoom,
+        panOffset: Vector2(cameraState.panOffset.x, cameraState.panOffset.y),
+        screenWidth: size.x,
+        screenHeight: size.y,
+      );
+    }
+
+    // Apply to projection lines
+    if (projectionLines.isMounted) {
+      projectionLines.applyCameraTransform(
+        zoom: cameraState.zoom,
+        panOffset: Vector2(cameraState.panOffset.x, cameraState.panOffset.y),
+        screenWidth: size.x,
+        screenHeight: size.y,
+      );
+    }
   }
 
   void _updateProjectionLinesVisibility() {
@@ -279,6 +333,9 @@ class GardenGame extends FlameGame {
 
       // Reset projection lines visibility
       ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+
+      // Re-initialize camera for the new level
+      _initializeCameraForLevel();
     }
   }
 }

@@ -296,6 +296,12 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     }
   }
 
+  // Update zoom level for rendering adjustments
+  void updateZoom(double zoom) {
+    // Zoom updates are handled via parent scale transform
+    // This method kept for API compatibility
+  }
+
   @override
   void update(double dt) {
     super.update(dt);

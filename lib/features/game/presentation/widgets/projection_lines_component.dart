@@ -13,24 +13,61 @@ class ProjectionLinesComponent extends PositionComponent
   LevelData? _currentLevel;
   bool _isVisible = false;
 
+  // Camera transform properties
+  double _screenWidth = 0.0;
+  double _screenHeight = 0.0;
+
   ProjectionLinesComponent({required this.cellSize}) : super(priority: 5);
 
   void setLevelData(LevelData levelData) {
     _currentLevel = levelData;
 
-    // Update size and position to match grid layout
+    // Update size
     final cols = levelData.gridWidth;
     final rows = levelData.gridHeight;
-
     size = Vector2(cols * cellSize, rows * cellSize);
-    position = Vector2(
-      (parent.size.x - width) / 2,
-      (parent.size.y - height) / 2,
-    );
+
+    // Position will be set by camera transform
+    // Initialize with centered position if camera not yet applied
+    if (_screenWidth == 0.0 || _screenHeight == 0.0) {
+      position = Vector2(
+        (parent.size.x - width) / 2,
+        (parent.size.y - height) / 2,
+      );
+    }
   }
 
   void setVisible(bool visible) {
     _isVisible = visible;
+  }
+
+  // Apply camera transform (zoom and pan)
+  void applyCameraTransform({
+    required double zoom,
+    required Vector2 panOffset,
+    required double screenWidth,
+    required double screenHeight,
+  }) {
+    _screenWidth = screenWidth;
+    _screenHeight = screenHeight;
+
+    // Update scale
+    scale = Vector2.all(zoom);
+
+    // Calculate scaled dimensions
+    if (_currentLevel != null) {
+      final scaledWidth = _currentLevel!.gridWidth * cellSize * zoom;
+      final scaledHeight = _currentLevel!.gridHeight * cellSize * zoom;
+
+      // Calculate centered position with pan offset
+      final centeredX = (screenWidth - scaledWidth) / 2;
+      final centeredY = (screenHeight - scaledHeight) / 2;
+
+      position = Vector2(
+        centeredX + panOffset.x,
+        centeredY + panOffset.y,
+      );
+    }
   }
 
   @override
@@ -101,11 +138,10 @@ class ProjectionLinesComponent extends PositionComponent
 
       // Calculate end point far off-screen
       // Extend the line to go well beyond the visible area
-      final maxDimension =
-          (_currentLevel!.gridWidth > _currentLevel!.gridHeight
-                  ? _currentLevel!.gridWidth
-                  : _currentLevel!.gridHeight) *
-              cellSize;
+      final maxDimension = (_currentLevel!.gridWidth > _currentLevel!.gridHeight
+              ? _currentLevel!.gridWidth
+              : _currentLevel!.gridHeight) *
+          cellSize;
       final extensionLength = maxDimension * 2; // Go 2x the max dimension
 
       final endPoint = Offset(

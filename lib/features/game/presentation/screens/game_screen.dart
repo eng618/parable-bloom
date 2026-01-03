@@ -2,6 +2,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vector_math/vector_math_64.dart' as vm;
 
 import '../../../../core/app_theme.dart';
 import '../../../../providers/game_providers.dart';
@@ -126,14 +127,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       floatingActionButton: _buildProjectionLinesFAB(),
       body: Stack(
         children: [
-          GameWidget<GardenGame>(
-            game: _game ??= () {
-              debugPrint('GameScreen: Creating new GardenGame instance');
-              return GardenGame(ref: ref);
-            }(),
-            loadingBuilder: (_) =>
-                const Center(child: CircularProgressIndicator()),
-          ),
+          _buildGameWidgetWithGestures(),
           SafeArea(
             child: Align(
               alignment: Alignment.topCenter,
@@ -144,6 +138,86 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildGameWidgetWithGestures() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GestureDetector(
+          onScaleStart: _handleScaleStart,
+          onScaleUpdate: (details) => _handleScaleUpdate(
+            details,
+            constraints.maxWidth,
+            constraints.maxHeight,
+          ),
+          onScaleEnd: _handleScaleEnd,
+          child: GameWidget<GardenGame>(
+            game: _game ??= () {
+              debugPrint('GameScreen: Creating new GardenGame instance');
+              return GardenGame(ref: ref);
+            }(),
+            loadingBuilder: (_) =>
+                const Center(child: CircularProgressIndicator()),
+          ),
+        );
+      },
+    );
+  }
+
+  double _lastScale = 1.0;
+  vm.Vector2 _lastFocalPoint = vm.Vector2.zero();
+  vm.Vector2 _panStartOffset = vm.Vector2.zero();
+
+  void _handleScaleStart(ScaleStartDetails details) {
+    final cameraState = ref.read(cameraStateProvider);
+    _lastScale = cameraState.zoom;
+    _lastFocalPoint = vm.Vector2(
+      details.focalPoint.dx,
+      details.focalPoint.dy,
+    );
+    _panStartOffset = cameraState.panOffset;
+  }
+
+  void _handleScaleUpdate(
+    ScaleUpdateDetails details,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    final currentLevel = ref.read(currentLevelProvider);
+    if (currentLevel == null) return;
+
+    final cameraNotifier = ref.read(cameraStateProvider.notifier);
+
+    // Handle zoom (pinch)
+    if (details.scale != 1.0) {
+      final newZoom = _lastScale * details.scale;
+      cameraNotifier.updateZoom(newZoom);
+    }
+
+    // Handle pan (drag) - only when not zooming significantly
+    if ((details.scale - 1.0).abs() < 0.1) {
+      final focalDelta = vm.Vector2(
+        details.focalPoint.dx - _lastFocalPoint.x,
+        details.focalPoint.dy - _lastFocalPoint.y,
+      );
+
+      final newOffset = _panStartOffset + focalDelta;
+
+      cameraNotifier.updatePanOffset(
+        newOffset,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+        gridCols: currentLevel.gridWidth,
+        gridRows: currentLevel.gridHeight,
+        cellSize: GardenGame.cellSize,
+      );
+    }
+  }
+
+  void _handleScaleEnd(ScaleEndDetails details) {
+    // Scale gesture ended - store final state
+    _lastScale = ref.read(cameraStateProvider).zoom;
+    _panStartOffset = ref.read(cameraStateProvider).panOffset;
   }
 
   void _showPauseMenu() {
@@ -477,7 +551,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
                   }
-                  Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/', (route) => false);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
