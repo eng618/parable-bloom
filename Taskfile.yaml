@@ -80,6 +80,110 @@ tasks:
       - task: build:macos
 
   # -----------------------------------------------------------------------------
+  # Version Management
+
+  version:bump:patch:
+    desc: Bump patch version (1.0.0 → 1.0.1)
+    cmds:
+      - dart run scripts/bump_version.dart --patch
+
+  version:bump:minor:
+    desc: Bump minor version (1.0.0 → 1.1.0)
+    cmds:
+      - dart run scripts/bump_version.dart --minor
+
+  version:bump:major:
+    desc: Bump major version (1.0.0 → 2.0.0)
+    cmds:
+      - dart run scripts/bump_version.dart --major
+
+  version:bump:build:
+    desc: Bump build number only (1.0.0+1 → 1.0.0+2)
+    cmds:
+      - dart run scripts/bump_version.dart --build
+
+  version:set:
+    desc: Set specific version (usage - task version:set VERSION=2.0.0+5)
+    cmds:
+      - dart run scripts/bump_version.dart --set {{.VERSION}}
+
+  changelog:update:
+    desc: Update CHANGELOG.md from git commits
+    cmds:
+      - dart run scripts/update_changelog.dart
+
+  changelog:preview:
+    desc: Preview changelog updates without writing
+    cmds:
+      - dart run scripts/update_changelog.dart --dry-run
+
+  # -----------------------------------------------------------------------------
+  # Fastlane - Android
+
+  fastlane:android:deploy:
+    desc: Deploy Android to Google Play (Internal Testing) via Fastlane
+    dir: android
+    cmds:
+      - fastlane deploy
+
+  fastlane:android:beta:
+    desc: Deploy Android to Google Play Beta Track via Fastlane
+    dir: android
+    cmds:
+      - fastlane beta
+
+  fastlane:android:build:
+    desc: Build Android release bundle via Fastlane (no upload)
+    dir: android
+    cmds:
+      - fastlane build_release
+
+  fastlane:android:validate:
+    desc: Validate Android bundle and credentials
+    dir: android
+    cmds:
+      - fastlane validate
+
+  # -----------------------------------------------------------------------------
+  # Fastlane - iOS
+
+  fastlane:ios:beta:
+    desc: Deploy iOS to TestFlight via Fastlane
+    dir: ios
+    cmds:
+      - fastlane beta
+
+  fastlane:ios:release:
+    desc: Deploy iOS to App Store via Fastlane
+    dir: ios
+    cmds:
+      - fastlane release
+
+  fastlane:ios:build:
+    desc: Build iOS IPA via Fastlane (no upload)
+    dir: ios
+    cmds:
+      - fastlane build_release
+
+  fastlane:ios:validate:
+    desc: Validate iOS credentials and configuration
+    dir: ios
+    cmds:
+      - fastlane validate
+
+  fastlane:ios:setup:
+    desc: Setup iOS keychain for CI
+    dir: ios
+    cmds:
+      - fastlane setup_keychain
+
+  fastlane:ios:cleanup:
+    desc: Clean up iOS CI artifacts
+    dir: ios
+    cmds:
+      - fastlane cleanup
+
+  # -----------------------------------------------------------------------------
   # Flutter server
 
   serve:web:

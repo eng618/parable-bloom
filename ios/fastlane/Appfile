@@ -1,0 +1,4 @@
+app_identifier("com.garciaericn.parablebloom")
+apple_id(ENV["APPLE_ID"])
+itc_team_id(ENV["IOS_TEAM_ID"])
+team_id(ENV["IOS_TEAM_ID"])

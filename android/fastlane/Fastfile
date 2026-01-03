@@ -1,0 +1,139 @@
+# Fastfile for Android - Parable Bloom
+# Documentation: https://docs.fastlane.tools/
+
+default_platform(:android)
+
+platform :android do
+  desc "Deploy a new version to the Google Play Console (Internal Testing)"
+  lane :deploy do
+    # Decode secrets from environment variables (set by GitHub Actions via BWS)
+    keystore_path = ENV["ANDROID_KEYSTORE_PATH"] || "/tmp/parable-bloom.jks"
+    
+    # Build the release bundle
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      properties: {
+        "android.injected.signing.store.file" => keystore_path,
+        "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
+      }
+    )
+
+    # Upload to Play Console (internal track for testing)
+    upload_to_play_store(
+      track: 'internal',
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"]
+    )
+
+    UI.success("✅ Successfully deployed to Google Play Console (Internal Testing)")
+  end
+
+  desc "Deploy to Google Play Console Beta Track"
+  lane :beta do
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      properties: {
+        "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_PATH"] || "/tmp/parable-bloom.jks",
+        "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
+      }
+    )
+
+    upload_to_play_store(
+      track: 'beta',
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_metadata: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"]
+    )
+
+    UI.success("✅ Successfully deployed to Beta track")
+  end
+
+  desc "Promote Internal to Beta"
+  lane :promote_to_beta do
+    upload_to_play_store(
+      track: 'internal',
+      track_promote_to: 'beta',
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"]
+    )
+
+    UI.success("✅ Successfully promoted to Beta")
+  end
+
+  desc "Deploy to Production"
+  lane :production do
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      properties: {
+        "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_PATH"] || "/tmp/parable-bloom.jks",
+        "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
+      }
+    )
+
+    upload_to_play_store(
+      track: 'production',
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_metadata: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"]
+    )
+
+    UI.success("✅ Successfully deployed to Production!")
+  end
+
+  desc "Build release bundle only (no upload)"
+  lane :build_release do
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      properties: {
+        "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_PATH"] || "/tmp/parable-bloom.jks",
+        "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
+      }
+    )
+
+    UI.success("✅ Release bundle built successfully")
+    UI.message("📦 Bundle location: ../build/app/outputs/bundle/release/app-release.aab")
+  end
+
+  desc "Validate bundle before upload"
+  lane :validate do
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      properties: {
+        "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_PATH"] || "/tmp/parable-bloom.jks",
+        "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
+      }
+    )
+
+    # Validate the bundle
+    validate_play_store_json_key(
+      json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"]
+    )
+
+    UI.success("✅ Bundle and credentials validated successfully")
+  end
+end
