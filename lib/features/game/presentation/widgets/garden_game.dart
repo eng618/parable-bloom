@@ -12,25 +12,24 @@ import 'grid_component.dart';
 import 'projection_lines_component.dart';
 import 'pulse_effect_component.dart';
 
-class GardenGame extends FlameGame with void TapCallbacks {
-  const double cellSize = 36.0; // Pixels per cell
+class GardenGame extends FlameGame with TapCallbacks {
+  static const double cellSize = 36.0; // Pixels per cell
 
   late GridComponent grid;
   late ProjectionLinesComponent projectionLines;
   final WidgetRef ref;
-  LevelData? currentLevelData;
-  RectangleComponent? gameBackground;
+  LevelData? _currentLevelData;
+  RectangleComponent? _gameBackground;
 
   // Theme colors - updated dynamically from app theme
-  @override
-  late Color backgroundColor;
-  late Color surfaceColor;
+  late Color _backgroundColor;
+  late Color _surfaceColor;
 
   GardenGame({required this.ref}) {
     debugPrint('GardenGame: Constructor called - creating new instance');
     // Initialize with default theme colors - will be updated by game screen
-    backgroundColor = const Color(0xFF1A2E3F); // Default dark background
-    surfaceColor = const Color(0xFF2C3E50); // Default dark surface
+    _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
+    _surfaceColor = const Color(0xFF2C3E50); // Default dark surface
   }
 
   void updateThemeColors(
@@ -41,14 +40,14 @@ class GardenGame extends FlameGame with void TapCallbacks {
     debugPrint(
       'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor',
     );
-    backgroundColor = backgroundColor;
-    surfaceColor = surfaceColor;
+    this._backgroundColor = backgroundColor;
+    this._surfaceColor = surfaceColor;
     // gridColor parameter kept for API compatibility but not currently used
 
     // Update existing components if they exist - must replace the Paint to trigger redraw
-    if (gameBackground != null) {
-      debugPrint('GardenGame: Updating _gameBackground to $surfaceColor');
-      gameBackground!.paint = Paint()..color = surfaceColor;
+    if (_gameBackground != null) {
+      debugPrint('GardenGame: Updating _gameBackground to $_surfaceColor');
+      _gameBackground!.paint = Paint()..color = _surfaceColor;
     }
   }
 
@@ -65,25 +64,25 @@ class GardenGame extends FlameGame with void TapCallbacks {
 
     // TODO: Replace with actual parable background image
     // Load parable background
-    gameBackground = RectangleComponent(
+    _gameBackground = RectangleComponent(
       size: size,
-      paint: Paint()..color = surfaceColor,
+      paint: Paint()..color = _surfaceColor,
       priority: -2,
     );
-    add(gameBackground!);
+    add(_gameBackground!);
 
     // Create grid and background components
     createLevelComponents();
 
     // Set level data on grid after it's created
-    if (currentLevelData != null) {
+    if (_currentLevelData != null) {
       await setLevelDataOnGrid();
     }
 
     // Listen to vine state changes (blocking/clearing updates)
     ref.listenManual(vineStatesProvider, (previous, next) {
-      if (currentLevelData != null) {
-        grid.setLevelData(currentLevelData!, next);
+      if (_currentLevelData != null) {
+        grid.setLevelData(_currentLevelData!, next);
         // Force projection lines to redraw when vine states change
         projectionLines.update(0);
       }
@@ -154,8 +153,8 @@ class GardenGame extends FlameGame with void TapCallbacks {
     add(projectionLines);
 
     // Set initial level data on projection lines
-    if (currentLevelData != null) {
-      projectionLines.setLevelData(currentLevelData!);
+    if (_currentLevelData != null) {
+      projectionLines.setLevelData(_currentLevelData!);
     }
   }
 
@@ -181,13 +180,13 @@ class GardenGame extends FlameGame with void TapCallbacks {
       final jsonMap = json.decode(levelJson);
       debugPrint('GardenGame: Successfully parsed JSON: $jsonMap');
 
-      currentLevelData = LevelData.fromJson(jsonMap);
+      _currentLevelData = LevelData.fromJson(jsonMap);
       debugPrint(
-        'GardenGame: Successfully created LevelData: ${currentLevelData!.name}',
+        'GardenGame: Successfully created LevelData: ${_currentLevelData!.name}',
       );
 
       // Update providers
-      ref.read(currentLevelProvider.notifier).setLevel(currentLevelData);
+      ref.read(currentLevelProvider.notifier).setLevel(_currentLevelData);
 
       // Ensure gameCompleted is false if we found a level
       ref.read(gameCompletedProvider.notifier).setCompleted(false);
@@ -197,7 +196,7 @@ class GardenGame extends FlameGame with void TapCallbacks {
       ref.read(levelWrongTapsProvider.notifier).reset();
 
       // Log level start analytics
-      ref.read(analyticsServiceProvider).logLevelStart(currentLevelData!.id);
+      ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
 
       debugPrint('Loaded level $levelNumber: ${_currentLevelData!.name}');
     } catch (e, stackTrace) {
@@ -240,17 +239,14 @@ class GardenGame extends FlameGame with void TapCallbacks {
   }
 
   Future<void> setLevelDataOnGrid() async {
-    if (currentLevelData == null) return;
+    if (_currentLevelData == null) return;
 
     // Get current vine states from the provider
     final vineStates = ref.read(vineStatesProvider);
 
     // Set data on grid
-    grid.setLevelData(currentLevelData!, vineStates);
+    grid.setLevelData(_currentLevelData!, vineStates);
   }
-
-  @override
-  Color backgroundColor() => backgroundColor;
 
   @override
   void onRemove() {
@@ -270,11 +266,11 @@ class GardenGame extends FlameGame with void TapCallbacks {
 
     await loadCurrentLevel();
 
-    if (currentLevelData != null) {
+    if (_currentLevelData != null) {
       createLevelComponents();
 
       // Reset vine states for the new level
-      ref.read(vineStatesProvider.notifier).resetForLevel(currentLevelData!);
+      ref.read(vineStatesProvider.notifier).resetForLevel(_currentLevelData!);
       // Reset grace for the new level
       ref.read(gameInstanceProvider.notifier).resetGrace();
 
@@ -291,7 +287,7 @@ class GardenGame extends FlameGame with void TapCallbacks {
 
     // Create pulse effect at tap position
     // Use a theme-aware color with higher visibility
-    final pulseColor = surfaceColor0.computeLuminance() > 0.5
+    final pulseColor = _surfaceColor.computeLuminance() > 0.5
         ? Colors.black.withValues(alpha: 0.6) // Darker pulse on light background
         : Colors.white.withValues(alpha: 0.7); // Lighter pulse on dark background
 
