@@ -130,7 +130,9 @@ class VineData {
     final vineColor = json['vine_color']?.toString().trim();
     if (vineColor != null && vineColor.isNotEmpty) {
       if (!VineColorPalette.isKnownKey(vineColor)) {
-        throw FormatException('Unknown vine_color key: $vineColor');
+        debugPrint(
+          'Warning: Unknown vine_color "$vineColor" will use default color',
+        );
       }
     }
     return VineData(
