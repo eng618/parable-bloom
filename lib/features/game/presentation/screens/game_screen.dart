@@ -467,23 +467,18 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  debugPrint('_showGameCompletedDialog: Resetting for replay');
+                  debugPrint('_showGameCompletedDialog: Returning to home');
                   ref.read(gameCompletedProvider.notifier).setCompleted(false);
-                  ref.read(gameProgressProvider.notifier).resetProgress();
-                  ref.read(globalProgressProvider.notifier).resetProgress();
-                  ref.invalidate(gameProgressProvider);
-                  ref.invalidate(globalProgressProvider);
-                  ref.read(currentLevelProvider.notifier).setLevel(null);
-                  _game?.reloadLevel();
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
                   }
+                  Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 ),
-                child: const Text('PLAY AGAIN'),
+                child: const Text('BACK TO HOME'),
               ),
             ),
           ],

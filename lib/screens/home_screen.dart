@@ -9,6 +9,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final globalProgress = ref.watch(globalProgressProvider);
+    final modulesAsync = ref.watch(modulesProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -22,9 +23,9 @@ class HomeScreen extends ConsumerWidget {
               Text(
                 'Parable Bloom',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
@@ -34,26 +35,103 @@ class HomeScreen extends ConsumerWidget {
 
               const SizedBox(height: 48),
 
-              // Play Next Level Button
-              ElevatedButton(
-                onPressed: () => _playNextLevel(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 48,
-                    vertical: 16,
+              // Play Next Level Button or Completed Message
+              modulesAsync.when(
+                data: (modules) {
+                  final totalLevels = modules.fold<int>(
+                    0,
+                    (sum, module) =>
+                        sum + (module.endLevel - module.startLevel + 1),
+                  );
+                  final allLevelsCompleted =
+                      globalProgress.currentGlobalLevel > totalLevels;
+
+                  if (allLevelsCompleted) {
+                    return Column(
+                      children: [
+                        ElevatedButton(
+                          onPressed: null, // Disabled
+                          style: ElevatedButton.styleFrom(
+                            disabledBackgroundColor: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
+                            disabledForegroundColor:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 48,
+                              vertical: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text(
+                            'All Levels Complete',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'More levels coming soon!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ElevatedButton(
+                    onPressed: () => _playNextLevel(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 48,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 4,
+                    ),
+                    child: Text(
+                      'Play Level ${globalProgress.currentGlobalLevel}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
+                loading: () => const CircularProgressIndicator(),
+                error: (_, __) => ElevatedButton(
+                  onPressed: () => _playNextLevel(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 48,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 4,
-                ),
-                child: Text(
-                  'Play Level ${globalProgress.currentGlobalLevel}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  child: Text(
+                    'Play Level ${globalProgress.currentGlobalLevel}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -157,14 +235,14 @@ class GridPainter extends CustomPainter {
     final ThemeData theme = Theme.of(context);
 
     final paint = Paint()
-      ..color = theme.colorScheme.secondary
-          .withValues(alpha: 0.6) // Medium green
+      ..color =
+          theme.colorScheme.secondary.withValues(alpha: 0.6) // Medium green
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = theme.colorScheme.secondary
-          .withValues(alpha: 0.1) // Light green tint
+      ..color =
+          theme.colorScheme.secondary.withValues(alpha: 0.1) // Light green tint
       ..style = PaintingStyle.fill;
 
     const gridSize = 5;
@@ -184,8 +262,8 @@ class GridPainter extends CustomPainter {
 
     // Draw some decorative vine-like elements
     final vinePaint = Paint()
-      ..color = theme.colorScheme.secondary
-          .withValues(alpha: 0.8) // Stronger green
+      ..color =
+          theme.colorScheme.secondary.withValues(alpha: 0.8) // Stronger green
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -214,9 +292,7 @@ class GridPainter extends CustomPainter {
 
     // Draw some small circles to represent vine heads
     final circlePaint = Paint()
-      ..color = theme
-          .colorScheme
-          .secondary // Pure secondary green
+      ..color = theme.colorScheme.secondary // Pure secondary green
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(Offset(cellSize * 1, cellSize * 1), 4, circlePaint);
