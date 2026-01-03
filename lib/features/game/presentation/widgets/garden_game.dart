@@ -24,6 +24,7 @@ class GardenGame extends FlameGame {
   late Color _surfaceColor;
 
   GardenGame({required this.ref}) {
+    debugPrint('GardenGame: Constructor called - creating new instance');
     // Initialize with default theme colors - will be updated by game screen
     _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
     _surfaceColor = const Color(0xFF2C3E50); // Default dark surface
@@ -50,6 +51,7 @@ class GardenGame extends FlameGame {
 
   @override
   Future<void> onLoad() async {
+    debugPrint('GardenGame: onLoad called');
     await super.onLoad();
 
     // Reset grace for new level
@@ -220,23 +222,17 @@ class GardenGame extends FlameGame {
           'GardenGame: All levels completed! Setting game as completed.',
         );
         ref.read(gameCompletedProvider.notifier).setCompleted(true);
-        return;
+      } else {
+        // Level should exist but failed to load - this is an error
+        debugPrint(
+          'GardenGame: CRITICAL ERROR - Level $levelNumber should exist but failed to load!',
+        );
+        debugPrint(
+          'GardenGame: Expected asset path: assets/levels/level_$levelNumber.json',
+        );
+        ref.read(gameOverProvider.notifier).setGameOver(true);
       }
-
-      // Otherwise, it's a loading error
-      debugPrint('GardenGame: Level loading failed, creating fallback level');
-
-      // Create a fallback level programmatically
-      _currentLevelData = _createFallbackLevel();
-      debugPrint(
-        'GardenGame: Created fallback level: ${_currentLevelData!.name}',
-      );
-
-      // Update providers with fallback level
-      ref.read(currentLevelProvider.notifier).setLevel(_currentLevelData);
-      ref.read(gameCompletedProvider.notifier).setCompleted(false);
-      ref.read(levelTotalTapsProvider.notifier).reset();
-      ref.read(levelWrongTapsProvider.notifier).reset();
+      return;
     }
   }
 
@@ -284,35 +280,5 @@ class GardenGame extends FlameGame {
       // Reset projection lines visibility
       ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
     }
-  }
-
-  LevelData _createFallbackLevel() {
-    // Create a simple fallback level programmatically
-    return LevelData(
-      id: 999,
-      name: 'Fallback Level',
-      difficulty: 'Seedling',
-      gridWidth: 5,
-      gridHeight: 5,
-      vines: [
-        VineData(
-          id: 'fallback_vine',
-          headDirection: 'right',
-          orderedPath: [
-            {'x': 4, 'y': 4}, // Head (moving right)
-            {
-              'x': 3,
-              'y': 4,
-            }, // First segment LEFT of head (x decreases, opposite direction)
-          ],
-          vineColor: null,
-        ),
-      ],
-      maxMoves: 5,
-      minMoves: 1,
-      complexity: 'low',
-      grace: 3,
-      mask: MaskData(mode: 'show-all', points: []),
-    );
   }
 }

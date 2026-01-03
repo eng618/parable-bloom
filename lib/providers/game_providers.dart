@@ -397,6 +397,10 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   }
 
   Future<void> completeLevel(int levelNumber) async {
+    debugPrint(
+      'GameProgressNotifier: Completing level $levelNumber, current state: $state',
+    );
+
     final newCompletedLevels = Set<int>.from(state.completedLevels)
       ..add(levelNumber);
     // Increment level number - GardenGame will handle detection of end of levels
@@ -407,7 +411,15 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       currentLevel: newCurrentLevel,
     );
 
+    debugPrint(
+      'GameProgressNotifier: New progress: $newProgress',
+    );
+
     await _saveProgress(newProgress);
+
+    debugPrint(
+      'GameProgressNotifier: After save, state is: $state',
+    );
 
     // Log level complete analytics
     final totalTaps = ref.read(levelTotalTapsProvider);

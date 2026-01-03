@@ -40,6 +40,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('GameScreen: initState called, _game is null: ${_game == null}');
     _isLevelCompleteOverlayVisible = false;
     _currentCongratulationMessage = '';
     _leftConfettiController = ConfettiController(
@@ -52,6 +53,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   @override
   void dispose() {
+    debugPrint('GameScreen: dispose called');
     _leftConfettiController.dispose();
     _rightConfettiController.dispose();
     super.dispose();
@@ -125,7 +127,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       body: Stack(
         children: [
           GameWidget<GardenGame>(
-            game: _game ??= GardenGame(ref: ref),
+            game: _game ??= () {
+              debugPrint('GameScreen: Creating new GardenGame instance');
+              return GardenGame(ref: ref);
+            }(),
             loadingBuilder: (_) =>
                 const Center(child: CircularProgressIndicator()),
           ),
