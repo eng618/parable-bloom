@@ -24,7 +24,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   int _totalAnimationSteps = 0;
   double _animationTimer = 0.0;
   double _stepDuration =
-      0.03; // seconds per step - optimized for smooth, responsive animation
+      0.05; // seconds per step - smoother animation with slightly slower pace
 
   // History-based animation (snake-like movement)
   List<List<Map<String, int>>> _positionHistory = [];
