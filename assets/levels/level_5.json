@@ -2,17 +2,35 @@
   "id": 5,
   "name": "Tutorial Capstone",
   "difficulty": "Tutorial",
-  "grid_size": [6, 8],
-  "mask": { "mode": "show-all", "points": [] },
+  "grid_size": [
+    6,
+    8
+  ],
+  "mask": {
+    "mode": "show-all",
+    "points": []
+  },
   "vines": [
     {
       "id": "vine_a",
       "head_direction": "up",
       "ordered_path": [
-        { "x": 0, "y": 5 },
-        { "x": 0, "y": 4 },
-        { "x": 0, "y": 3 },
-        { "x": 1, "y": 3 }
+        {
+          "x": 0,
+          "y": 5
+        },
+        {
+          "x": 0,
+          "y": 4
+        },
+        {
+          "x": 0,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 3
+        }
       ],
       "vine_color": "default"
     },
@@ -20,12 +38,30 @@
       "id": "vine_b",
       "head_direction": "left",
       "ordered_path": [
-        { "x": 1, "y": 4 },
-        { "x": 2, "y": 4 },
-        { "x": 2, "y": 3 },
-        { "x": 3, "y": 3 },
-        { "x": 3, "y": 2 },
-        { "x": 2, "y": 2 }
+        {
+          "x": 1,
+          "y": 4
+        },
+        {
+          "x": 2,
+          "y": 4
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 2
+        }
       ],
       "vine_color": "default"
     },
@@ -33,10 +69,22 @@
       "id": "vine_c",
       "head_direction": "left",
       "ordered_path": [
-        { "x": 4, "y": 2 },
-        { "x": 5, "y": 2 },
-        { "x": 5, "y": 1 },
-        { "x": 4, "y": 1 }
+        {
+          "x": 4,
+          "y": 2
+        },
+        {
+          "x": 5,
+          "y": 2
+        },
+        {
+          "x": 5,
+          "y": 1
+        },
+        {
+          "x": 4,
+          "y": 1
+        }
       ],
       "vine_color": "default"
     },
@@ -44,10 +92,22 @@
       "id": "vine_d",
       "head_direction": "right",
       "ordered_path": [
-        { "x": 5, "y": 0 },
-        { "x": 4, "y": 0 },
-        { "x": 3, "y": 0 },
-        { "x": 3, "y": 1 }
+        {
+          "x": 5,
+          "y": 0
+        },
+        {
+          "x": 4,
+          "y": 0
+        },
+        {
+          "x": 3,
+          "y": 0
+        },
+        {
+          "x": 3,
+          "y": 1
+        }
       ],
       "vine_color": "default"
     },
@@ -55,10 +115,22 @@
       "id": "vine_e",
       "head_direction": "right",
       "ordered_path": [
-        { "x": 5, "y": 5 },
-        { "x": 4, "y": 5 },
-        { "x": 4, "y": 4 },
-        { "x": 5, "y": 4 }
+        {
+          "x": 5,
+          "y": 5
+        },
+        {
+          "x": 4,
+          "y": 5
+        },
+        {
+          "x": 4,
+          "y": 4
+        },
+        {
+          "x": 5,
+          "y": 4
+        }
       ],
       "vine_color": "default"
     },
@@ -66,10 +138,22 @@
       "id": "vine_f",
       "head_direction": "down",
       "ordered_path": [
-        { "x": 2, "y": 0 },
-        { "x": 2, "y": 1 },
-        { "x": 1, "y": 1 },
-        { "x": 1, "y": 0 }
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 0
+        }
       ],
       "vine_color": "default"
     }
@@ -77,5 +161,10 @@
   "max_moves": 14,
   "min_moves": 0,
   "complexity": "tutorial",
-  "grace": 3
+  "grace": 3,
+  "occupancy_percent": 54.2,
+  "color_distribution": {
+    "unknown": 1.0
+  },
+  "blocking_graph": {}
 }
