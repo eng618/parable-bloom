@@ -1,5 +1,6 @@
 import 'package:confetti/confetti.dart';
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
@@ -134,6 +135,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               child: GameHeader(onPause: _showPauseMenu),
             ),
           ),
+          if (kIsWeb) _buildZoomControls(),
           if (_isLevelCompleteOverlayVisible) _buildLevelCompleteOverlay(),
         ],
       ),
@@ -243,6 +245,73 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       },
       tooltip: 'Toggle projection lines',
       child: const Icon(Icons.tag),
+    );
+  }
+
+  Widget _buildZoomControls() {
+    final currentLevel = ref.watch(currentLevelProvider);
+    if (currentLevel == null) return const SizedBox.shrink();
+
+    final cameraState = ref.watch(cameraStateProvider);
+
+    return Positioned(
+      right: 16,
+      bottom: 80, // Position above FAB
+      child: Card(
+        elevation: 4,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Zoom In',
+              onPressed: cameraState.zoom >= cameraState.maxZoom
+                  ? null
+                  : () {
+                      final newZoom =
+                          (cameraState.zoom + 0.2).clamp(
+                            cameraState.minZoom,
+                            cameraState.maxZoom,
+                          );
+                      ref
+                          .read(cameraStateProvider.notifier)
+                          .updateZoom(newZoom);
+                    },
+            ),
+            const Divider(height: 1),
+            IconButton(
+              icon: const Icon(Icons.remove),
+              tooltip: 'Zoom Out',
+              onPressed: cameraState.zoom <= cameraState.minZoom
+                  ? null
+                  : () {
+                      final newZoom =
+                          (cameraState.zoom - 0.2).clamp(
+                            cameraState.minZoom,
+                            cameraState.maxZoom,
+                          );
+                      ref
+                          .read(cameraStateProvider.notifier)
+                          .updateZoom(newZoom);
+                    },
+            ),
+            const Divider(height: 1),
+            IconButton(
+              icon: const Icon(Icons.center_focus_strong),
+              tooltip: 'Reset Zoom',
+              onPressed: () {
+                ref.read(cameraStateProvider.notifier).resetToCenter(
+                      screenWidth: MediaQuery.of(context).size.width,
+                      screenHeight: MediaQuery.of(context).size.height,
+                      gridCols: currentLevel.gridWidth,
+                      gridRows: currentLevel.gridHeight,
+                      cellSize: GardenGame.cellSize,
+                    );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 

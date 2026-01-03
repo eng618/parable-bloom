@@ -1185,6 +1185,23 @@ class CameraStateNotifier extends Notifier<CameraState> {
     state = CameraState.defaultState();
   }
 
+  // Reset to 1.0x zoom and centered position (for manual reset)
+  void resetToCenter({
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+    required double cellSize,
+  }) {
+    if (state.isAnimating) return;
+
+    // Set zoom to 1.0 and pan offset to zero (which centers the grid)
+    state = state.copyWith(
+      zoom: 1.0,
+      panOffset: vm.Vector2.zero(),
+    );
+  }
+
   double pow(double x, int exp) {
     if (exp == 0) return 1;
     if (exp == 1) return x;
