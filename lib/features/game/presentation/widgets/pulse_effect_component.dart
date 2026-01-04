@@ -28,7 +28,8 @@ class PulseEffectComponent extends PositionComponent {
     _elapsed += dt;
 
     // Remove component after animation completes
-    if (_elapsed >= _duration) {
+    // Schedule removal to avoid concurrent modification during iteration
+    if (_elapsed >= _duration && !isRemoving) {
       removeFromParent();
     }
   }

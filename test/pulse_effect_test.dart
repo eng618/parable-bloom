@@ -58,6 +58,9 @@ void main() {
 
       // Update past the duration (0.4 seconds + small buffer)
       game.update(0.5);
+      
+      // Give Flame time to process the removal queue
+      game.update(0.01);
 
       // Component should remove itself after animation completes
       expect(game.children.contains(pulse), false);
