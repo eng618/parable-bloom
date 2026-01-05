@@ -29,6 +29,7 @@ platform :android do
     # Upload to Play Console (internal track for testing)
     # Authentication via Appfile (json_key or json_key_data)
     upload_to_play_store(
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json',
       track: 'internal',
       aab: '../build/app/outputs/bundle/release/app-release.aab',
       skip_upload_metadata: true,
@@ -47,6 +48,7 @@ platform :android do
 
     # Authentication via Appfile (json_key or json_key_data)
     upload_to_play_store(
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json',
       track: 'beta',
       aab: '../build/app/outputs/bundle/release/app-release.aab',
       skip_upload_metadata: false,
@@ -62,6 +64,7 @@ platform :android do
   lane :promote_to_beta do
     # Authentication via Appfile (json_key or json_key_data)
     upload_to_play_store(
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json',
       track: 'internal',
       track_promote_to: 'beta',
       skip_upload_aab: true,
@@ -81,6 +84,7 @@ platform :android do
 
     # Authentication via Appfile (json_key or json_key_data)
     upload_to_play_store(
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json',
       track: 'production',
       aab: '../build/app/outputs/bundle/release/app-release.aab',
       skip_upload_metadata: false,
