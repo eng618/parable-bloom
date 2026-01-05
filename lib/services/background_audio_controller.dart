@@ -6,7 +6,7 @@ class BackgroundAudioController {
   bool _loaded = false;
 
   BackgroundAudioController({AudioPlayer? player})
-    : _player = player ?? AudioPlayer();
+      : _player = player ?? AudioPlayer();
 
   Future<void> setEnabled(bool enabled) async {
     if (_enabled == enabled) return;
@@ -25,8 +25,7 @@ class BackgroundAudioController {
 
     try {
       await _player.play();
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<void> dispose() async {

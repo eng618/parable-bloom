@@ -31,5 +31,4 @@ class VineColorPalette {
   }
 
   static bool isKnownKey(String key) => colors.containsKey(key);
-
 }

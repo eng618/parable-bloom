@@ -48,6 +48,7 @@ dependencies:
   cloud_firestore: ^6.1.1
   firebase_analytics: ^12.1.0
 
+  vector_math: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

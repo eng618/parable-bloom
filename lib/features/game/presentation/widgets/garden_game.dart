@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,8 +10,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/game_providers.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
+import 'tap_effect_component.dart';
 
-class GardenGame extends FlameGame {
+class GardenGame extends FlameGame with TapCallbacks {
   static const double cellSize = 36.0; // Pixels per cell
 
   late GridComponent grid;
@@ -22,24 +24,30 @@ class GardenGame extends FlameGame {
   // Theme colors - updated dynamically from app theme
   late Color _backgroundColor;
   late Color _surfaceColor;
+  late Color _tapEffectColor;
 
   GardenGame({required this.ref}) {
     debugPrint('GardenGame: Constructor called - creating new instance');
     // Initialize with default theme colors - will be updated by game screen
     _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
     _surfaceColor = const Color(0xFF2C3E50); // Default dark surface
+    _tapEffectColor = const Color(0xFFE6E1E5); // Default light for dark theme
   }
 
   void updateThemeColors(
     Color backgroundColor,
     Color surfaceColor,
-    Color gridColor,
-  ) {
+    Color gridColor, {
+    Color? tapEffectColor,
+  }) {
     debugPrint(
-      'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor',
+      'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor, tap=$tapEffectColor',
     );
     _backgroundColor = backgroundColor;
     _surfaceColor = surfaceColor;
+    if (tapEffectColor != null) {
+      _tapEffectColor = tapEffectColor;
+    }
     // gridColor parameter kept for API compatibility but not currently used
 
     // Update existing components if they exist - must replace the Paint to trigger redraw
@@ -197,6 +205,16 @@ class GardenGame extends FlameGame {
           ref.read(levelTotalTapsProvider.notifier).increment();
         }
       },
+      onTapEffect: (position) {
+        // Create and add tap effect at the tapped position
+        final tapEffect = TapEffectComponent(
+          tapPosition: position,
+          color: _tapEffectColor,
+          maxRadius: 25.0,
+          duration: 0.4,
+        );
+        grid.add(tapEffect);
+      },
     );
     add(grid);
 
@@ -307,6 +325,30 @@ class GardenGame extends FlameGame {
   void onRemove() {
     // No need to dispose ref or container
     super.onRemove();
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    super.onTapDown(event);
+
+    // Handle taps outside the grid (for play area but not on grid cells)
+    // Grid and cells handle their own taps, so this only catches taps in empty space
+    final tapPos = event.canvasPosition;
+
+    // Check if tap is outside the grid bounds
+    final gridBounds = grid.toRect();
+    final isOutsideGrid = !gridBounds.contains(tapPos.toOffset());
+
+    if (isOutsideGrid) {
+      // Create tap effect at canvas position
+      final tapEffect = TapEffectComponent(
+        tapPosition: tapPos,
+        color: _tapEffectColor,
+        maxRadius: 25.0,
+        duration: 0.4,
+      );
+      add(tapEffect);
+    }
   }
 
   // Method to reload the current level (called when progress is reset or level completed)

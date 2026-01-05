@@ -138,8 +138,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
       }
 
       // Last-write-wins strategy with timestamps
-      final shouldSyncToCloud =
-          cloudProgress == null ||
+      final shouldSyncToCloud = cloudProgress == null ||
           localProgress.currentLevel > cloudProgress.currentLevel ||
           (localProgress.currentLevel == cloudProgress.currentLevel &&
               localProgress.completedLevels.length >
@@ -152,10 +151,10 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
             .collection('data')
             .doc(_progressDoc)
             .set({
-              ...localProgress.toJson(),
-              'lastUpdated': now.toIso8601String(),
-              'syncTimestamp': now.millisecondsSinceEpoch,
-            });
+          ...localProgress.toJson(),
+          'lastUpdated': now.toIso8601String(),
+          'syncTimestamp': now.millisecondsSinceEpoch,
+        });
 
         // Update local sync timestamp
         await _localBox.put(_lastSyncTimeKey, now.millisecondsSinceEpoch);
@@ -229,8 +228,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
           final cloudTimestamp = cloudData['syncTimestamp'] as int?;
           final localTimestamp = _localBox.get(_lastSyncTimeKey) as int?;
 
-          final shouldUpdateLocal =
-              cloudTimestamp != null &&
+          final shouldUpdateLocal = cloudTimestamp != null &&
               (localTimestamp == null || cloudTimestamp > localTimestamp);
 
           if (shouldUpdateLocal) {

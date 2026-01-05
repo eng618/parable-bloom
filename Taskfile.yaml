@@ -256,6 +256,14 @@ tasks:
       - task: test
       - task: build:web
 
+  validate:fix:
+    desc: Fix code quality, linting issues, and format code
+    cmds:
+      - task: format
+      - task: lint:fix
+      - task: analyze
+      - task: test
+
   clean:
     desc: Clean the Flutter build cache
     cmds:
@@ -285,6 +293,11 @@ tasks:
     desc: Run Flutter linting
     cmds:
       - flutter analyze --no-fatal-infos --no-fatal-warnings
+
+  lint:fix:
+    desc: Fix Flutter linting issues
+    cmds:
+      - dart fix --apply
 
   # -----------------------------------------------------------------------------
   # Icons

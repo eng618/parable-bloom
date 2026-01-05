@@ -24,7 +24,8 @@ class AnalyticsService {
         'level_id': levelId,
         'taps_total': taps,
         'wrong_taps': wrongTaps,
-        'perfect': wrongTaps == 0 ? 1 : 0, // Firebase requires num/string, not bool
+        'perfect':
+            wrongTaps == 0 ? 1 : 0, // Firebase requires num/string, not bool
       },
     );
   }

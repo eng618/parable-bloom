@@ -77,8 +77,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         final gridBackground = AppTheme.getGridBackground(
           Theme.of(context).brightness,
         );
+        final tapEffectColor = AppTheme.getTapEffectColor(
+          Theme.of(context).brightness,
+        );
 
-        _game!.updateThemeColors(gameBackground, gameSurface, gridBackground);
+        _game!.updateThemeColors(
+          gameBackground,
+          gameSurface,
+          gridBackground,
+          tapEffectColor: tapEffectColor,
+        );
       }
     });
 
@@ -268,11 +276,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               onPressed: cameraState.zoom >= cameraState.maxZoom
                   ? null
                   : () {
-                      final newZoom =
-                          (cameraState.zoom + 0.2).clamp(
-                            cameraState.minZoom,
-                            cameraState.maxZoom,
-                          );
+                      final newZoom = (cameraState.zoom + 0.2).clamp(
+                        cameraState.minZoom,
+                        cameraState.maxZoom,
+                      );
                       ref
                           .read(cameraStateProvider.notifier)
                           .updateZoom(newZoom);
@@ -285,11 +292,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               onPressed: cameraState.zoom <= cameraState.minZoom
                   ? null
                   : () {
-                      final newZoom =
-                          (cameraState.zoom - 0.2).clamp(
-                            cameraState.minZoom,
-                            cameraState.maxZoom,
-                          );
+                      final newZoom = (cameraState.zoom - 0.2).clamp(
+                        cameraState.minZoom,
+                        cameraState.maxZoom,
+                      );
                       ref
                           .read(cameraStateProvider.notifier)
                           .updateZoom(newZoom);

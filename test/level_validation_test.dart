@@ -41,7 +41,8 @@ void main() {
 
   // Group by batches of 10
   for (var i = 0; i < filtered.length; i += batchSize) {
-    final end = (i + batchSize < filtered.length) ? i + batchSize : filtered.length;
+    final end =
+        (i + batchSize < filtered.length) ? i + batchSize : filtered.length;
     final batch = filtered.sublist(i, end);
     if (batch.isEmpty) continue;
 
@@ -180,11 +181,9 @@ Future<void> _validateLevel(File levelFile) async {
     }
 
     for (int i = 1; i < vine.orderedPath.length; i++) {
-      final dx =
-          (vine.orderedPath[i]['x'] as int) -
+      final dx = (vine.orderedPath[i]['x'] as int) -
           (vine.orderedPath[i - 1]['x'] as int);
-      final dy =
-          (vine.orderedPath[i]['y'] as int) -
+      final dy = (vine.orderedPath[i]['y'] as int) -
           (vine.orderedPath[i - 1]['y'] as int);
       expect((dx.abs() + dy.abs()), equals(1));
     }

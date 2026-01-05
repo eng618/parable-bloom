@@ -8,8 +8,8 @@ import '../../domain/services/level_solver_service.dart';
 
 final vineStatesProvider =
     NotifierProvider<VineStatesNotifier, Map<String, VineState>>(
-      VineStatesNotifier.new,
-    );
+  VineStatesNotifier.new,
+);
 
 class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   LevelData? _levelData;

@@ -31,10 +31,9 @@ class HiveSettingsRepository implements SettingsRepository {
   @override
   Future<bool> getBackgroundAudioEnabled() async {
     return hiveBox.get(
-          _backgroundAudioEnabledKey,
-          defaultValue: _defaultBackgroundAudioEnabled,
-        )
-        as bool;
+      _backgroundAudioEnabledKey,
+      defaultValue: _defaultBackgroundAudioEnabled,
+    ) as bool;
   }
 
   @override

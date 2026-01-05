@@ -33,8 +33,8 @@ class GameOverNotifier extends Notifier<bool> {
 
 final gameInstanceProvider =
     NotifierProvider<GameInstanceNotifier, GardenGame?>(
-      GameInstanceNotifier.new,
-    );
+  GameInstanceNotifier.new,
+);
 
 class GameInstanceNotifier extends Notifier<GardenGame?> {
   @override

@@ -20,10 +20,9 @@ class JournalScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text("Error: $error")),
         data: (modules) {
-          final unlocked =
-              modules
-                  .where((m) => progress.isModuleCompleted(m.id, modules))
-                  .toList();
+          final unlocked = modules
+              .where((m) => progress.isModuleCompleted(m.id, modules))
+              .toList();
 
           if (unlocked.isEmpty) {
             return const Center(

@@ -37,6 +37,8 @@ class GridComponent extends PositionComponent
   final Function(String, VineAnimationState)? onVineAnimationStateChanged;
   final Function(String)? onVineAttempted;
   final Function(int)? onTapIncrement; // Callback to increment tap counter
+  final Function(Vector2)?
+      onTapEffect; // Callback to create tap effect at position
 
   // Map to track active vine components
   final Map<String, VineComponent> _vineComponents = {};
@@ -49,6 +51,7 @@ class GridComponent extends PositionComponent
     this.onVineAnimationStateChanged,
     this.onVineAttempted,
     this.onTapIncrement,
+    this.onTapEffect,
   }) : super(position: Vector2.zero());
 
   // Set level data and vine states from Riverpod providers
@@ -330,10 +333,16 @@ class CellComponent extends RectangleComponent
 
   @override
   void onTapUp(TapUpEvent event) {
+    final gridParent = parent as GridComponent;
+
+    // Create tap effect at the tap position
+    // Convert cell-local position to grid-local position
+    final gridLocalPos = position + event.localPosition;
+
+    // Trigger tap effect
+    gridParent.onTapEffect?.call(gridLocalPos);
+
     // Delegate to parent GridComponent for vine handling
-    (parent as GridComponent).handleCellTap(
-      gridY,
-      gridX,
-    ); // Convert x,y to row,col for GridComponent
+    gridParent.handleCellTap(gridY, gridX);
   }
 }

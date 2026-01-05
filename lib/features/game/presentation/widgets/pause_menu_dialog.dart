@@ -28,9 +28,9 @@ class PauseMenuDialog extends ConsumerWidget {
             Text(
               'Paused',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
             ),
             const SizedBox(height: 24),
 
@@ -157,9 +157,8 @@ class PauseMenuDialog extends ConsumerWidget {
     required bool isPrimary,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final bgColor = isPrimary
-        ? colorScheme.primary
-        : colorScheme.surfaceContainerHighest;
+    final bgColor =
+        isPrimary ? colorScheme.primary : colorScheme.surfaceContainerHighest;
     final fgColor = isPrimary ? colorScheme.onPrimary : colorScheme.onSurface;
 
     return Column(
