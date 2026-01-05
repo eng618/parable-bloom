@@ -275,7 +275,17 @@ tasks:
       - flutter analyze
 
   test:
-    desc: Run Flutter tests
+    desc: Run Flutter tests (excludes level solver tests)
+    cmds:
+      - flutter test --exclude-tags=level-solver
+
+  test:levels:
+    desc: Run level solver tests only (for when adding new levels)
+    cmds:
+      - flutter test test/level_validation_test.dart
+
+  test:all:
+    desc: Run all tests including level solver tests
     cmds:
       - flutter test
 

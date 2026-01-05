@@ -49,14 +49,22 @@ void main() {
     final startId = batch.first.path.split('level_').last.split('.').first;
     final endId = batch.last.path.split('level_').last.split('.').first;
 
-    group('Levels $startId-$endId', () {
-      for (final file in batch) {
-        final levelId = file.path.split('level_').last.split('.').first;
-        test('Level $levelId validation', () async {
-          await _validateLevel(file);
-        });
-      }
-    });
+    group(
+      'Levels $startId-$endId',
+      () {
+        for (final file in batch) {
+          final levelId = file.path.split('level_').last.split('.').first;
+          test(
+            'Level $levelId validation',
+            () async {
+              await _validateLevel(file);
+            },
+            tags: ['level-solver'],
+          );
+        }
+      },
+      skip: false,
+    );
   }
 }
 
