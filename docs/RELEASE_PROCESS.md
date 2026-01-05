@@ -118,17 +118,21 @@ bws secret list
 ### Creating Secrets in BWS
 
 ```bash
-# Create secret
-bws secret create "PARABLE_BLOOM_ANDROID_KEYSTORE" --value "<base64-string>" --project-id "<project-id>"
+# First, get your project ID
+bws project list
+# Copy the "id" field from your project
 
-# Update secret
-bws secret edit "PARABLE_BLOOM_ANDROID_KEYSTORE" --value "<new-value>"
+# Create secret (syntax: KEY VALUE PROJECT_ID)
+bws secret create "PARABLE_BLOOM_ANDROID_KEYSTORE" "<base64-string>" "<project-id>"
 
-# List all secrets
+# List all secrets (shows UUIDs and keys)
 bws secret list
 
-# Get secret value
-bws secret get PARABLE_BLOOM_ANDROID_KEYSTORE
+# Get secret value by UUID (copy UUID from list output)
+bws secret get "<secret-uuid>"
+
+# Update secret by UUID
+bws secret edit "<secret-uuid>" "<new-value>"
 ```
 
 ### GitHub Actions Integration
@@ -181,10 +185,20 @@ base64 -i ~/parable-bloom-upload.jks | pbcopy
 ### Step 3: Store Secrets in BWS
 
 ```bash
-bws secret create "PARABLE_BLOOM_ANDROID_KEYSTORE" --value "$(base64 -i ~/parable-bloom-upload.jks)"
-bws secret create "PARABLE_BLOOM_ANDROID_KEY_ALIAS" --value "upload"
-bws secret create "PARABLE_BLOOM_ANDROID_KEY_PASSWORD" --value "<your-key-password>"
-bws secret create "PARABLE_BLOOM_ANDROID_STORE_PASSWORD" --value "<your-store-password>"
+# First, get your project ID
+PROJECT_ID=$(bws project list | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+
+# Or manually: bws project list
+# Copy the "id" value, then use it below
+
+# Create secrets (replace <PROJECT_ID> with your actual project ID)
+bws secret create "PARABLE_BLOOM_ANDROID_KEYSTORE" "$(base64 -i ~/parable-bloom-upload.jks)" "$PROJECT_ID"
+bws secret create "PARABLE_BLOOM_ANDROID_KEY_ALIAS" "upload" "$PROJECT_ID"
+bws secret create "PARABLE_BLOOM_ANDROID_KEY_PASSWORD" "<your-key-password>" "$PROJECT_ID"
+bws secret create "PARABLE_BLOOM_ANDROID_STORE_PASSWORD" "<your-store-password>" "$PROJECT_ID"
+
+# Verify creation
+bws secret list
 ```
 
 ### Step 4: Update `android/app/build.gradle.kts`
@@ -216,14 +230,20 @@ android {
 ### Step 5: Test Local Build
 
 ```bash
+# Get secret values from BWS (filter by key name)
+KEYSTORE_ID=$(bws secret list | grep PARABLE_BLOOM_ANDROID_KEYSTORE | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+ALIAS_ID=$(bws secret list | grep PARABLE_BLOOM_ANDROID_KEY_ALIAS | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+KEY_PASS_ID=$(bws secret list | grep PARABLE_BLOOM_ANDROID_KEY_PASSWORD | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+STORE_PASS_ID=$(bws secret list | grep PARABLE_BLOOM_ANDROID_STORE_PASSWORD | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+
 # Decode keystore from BWS
-bws secret get PARABLE_BLOOM_ANDROID_KEYSTORE | base64 -d > /tmp/parable-bloom.jks
+bws secret get "$KEYSTORE_ID" | grep -o '"value":"[^"]*' | cut -d'"' -f4 | base64 -d > /tmp/parable-bloom.jks
 
 # Set environment variables
 export ANDROID_KEYSTORE_PATH=/tmp/parable-bloom.jks
-export ANDROID_STORE_PASSWORD="$(bws secret get PARABLE_BLOOM_ANDROID_STORE_PASSWORD)"
-export ANDROID_KEY_ALIAS="$(bws secret get PARABLE_BLOOM_ANDROID_KEY_ALIAS)"
-export ANDROID_KEY_PASSWORD="$(bws secret get PARABLE_BLOOM_ANDROID_KEY_PASSWORD)"
+export ANDROID_STORE_PASSWORD="$(bws secret get "$STORE_PASS_ID" | grep -o '"value":"[^"]*' | cut -d'"' -f4)"
+export ANDROID_KEY_ALIAS="$(bws secret get "$ALIAS_ID" | grep -o '"value":"[^"]*' | cut -d'"' -f4)"
+export ANDROID_KEY_PASSWORD="$(bws secret get "$KEY_PASS_ID" | grep -o '"value":"[^"]*' | cut -d'"' -f4)"
 
 # Build release bundle
 flutter build appbundle --release
@@ -269,18 +289,19 @@ security cms -D -i ~/Downloads/ParableBloomAppStore.mobileprovision | grep -A1 U
 ### Step 4: Encode and Store in BWS
 
 ```bash
+# Get your project ID
+PROJECT_ID=$(bws project list | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+
 # Certificate
-base64 -i ~/path/to/distribution-cert.p12 | pbcopy
-bws secret create "PARABLE_BLOOM_IOS_CERTIFICATE_P12" --value "$(base64 -i ~/path/to/cert.p12)"
-bws secret create "PARABLE_BLOOM_IOS_CERTIFICATE_PASSWORD" --value "<your-p12-password>"
+bws secret create "PARABLE_BLOOM_IOS_CERTIFICATE_P12" "$(base64 -i ~/path/to/cert.p12)" "$PROJECT_ID"
+bws secret create "PARABLE_BLOOM_IOS_CERTIFICATE_PASSWORD" "<your-p12-password>" "$PROJECT_ID"
 
 # Provisioning Profile
-base64 -i ~/Downloads/ParableBloomAppStore.mobileprovision | pbcopy
-bws secret create "PARABLE_BLOOM_IOS_PROVISIONING_PROFILE" --value "$(base64 -i ~/Downloads/ParableBloomAppStore.mobileprovision)"
-bws secret create "PARABLE_BLOOM_IOS_PROVISIONING_PROFILE_UUID" --value "<uuid-from-step-3>"
+bws secret create "PARABLE_BLOOM_IOS_PROVISIONING_PROFILE" "$(base64 -i ~/Downloads/ParableBloomAppStore.mobileprovision)" "$PROJECT_ID"
+bws secret create "PARABLE_BLOOM_IOS_PROVISIONING_PROFILE_UUID" "<uuid-from-step-3>" "$PROJECT_ID"
 
 # Team ID (find in Apple Developer portal)
-bws secret create "PARABLE_BLOOM_IOS_TEAM_ID" --value "<your-team-id>"
+bws secret create "PARABLE_BLOOM_IOS_TEAM_ID" "<your-team-id>" "$PROJECT_ID"
 ```
 
 ### Step 5: Create App Store Connect API Key
@@ -293,11 +314,13 @@ bws secret create "PARABLE_BLOOM_IOS_TEAM_ID" --value "<your-team-id>"
 6. **Note**: Key ID and Issuer ID from the page
 
 ```bash
+# Get your project ID
+PROJECT_ID=$(bws project list | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+
 # Store API key
-base64 -i ~/Downloads/AuthKey_ABC123DEFG.p8 | pbcopy
-bws secret create "PARABLE_BLOOM_APP_STORE_CONNECT_KEY" --value "$(base64 -i ~/Downloads/AuthKey_*.p8)"
-bws secret create "PARABLE_BLOOM_APP_STORE_CONNECT_KEY_ID" --value "ABC123DEFG"
-bws secret create "PARABLE_BLOOM_APP_STORE_CONNECT_ISSUER_ID" --value "<issuer-uuid>"
+bws secret create "PARABLE_BLOOM_APP_STORE_CONNECT_KEY" "$(base64 -i ~/Downloads/AuthKey_*.p8)" "$PROJECT_ID"
+bws secret create "PARABLE_BLOOM_APP_STORE_CONNECT_KEY_ID" "ABC123DEFG" "$PROJECT_ID"
+bws secret create "PARABLE_BLOOM_APP_STORE_CONNECT_ISSUER_ID" "<issuer-uuid>" "$PROJECT_ID"
 ```
 
 ### Step 6: Create ExportOptions.plist
@@ -342,8 +365,11 @@ Fastlane automates store uploads, beta distributions, and metadata management.
 5. **Store in BWS**:
 
    ```bash
-   base64 -i ~/Downloads/service-account.json | pbcopy
-   bws secret create "PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" --value "$(base64 -i ~/Downloads/service-account.json)"
+   # Get your project ID
+   PROJECT_ID=$(bws project list | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
+   
+   # Create secret
+   bws secret create "PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" "$(base64 -i ~/Downloads/service-account.json)" "$PROJECT_ID"
    ```
 
 #### Step 2: Initialize Fastlane
