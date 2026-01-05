@@ -1110,8 +1110,9 @@ class CameraStateNotifier extends Notifier<CameraState> {
 
   // Update zoom (from gesture)
   void updateZoom(double newZoom, {bool clamp = true}) {
-    if (state.isAnimating)
+    if (state.isAnimating) {
       return; // Don't allow manual control during animation
+    }
 
     final clampedZoom =
         clamp ? newZoom.clamp(state.minZoom, state.maxZoom) : newZoom;
@@ -1128,8 +1129,9 @@ class CameraStateNotifier extends Notifier<CameraState> {
     required int gridRows,
     required double cellSize,
   }) {
-    if (state.isAnimating)
+    if (state.isAnimating) {
       return; // Don't allow manual control during animation
+    }
 
     // Calculate constrained offset to keep grid visible
     final constrainedOffset = _constrainPanOffset(
