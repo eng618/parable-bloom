@@ -8,20 +8,8 @@ default_platform(:android)
 platform :android do
   desc "Deploy a new version to the Google Play Console (Internal Testing)"
   lane :deploy do
-    # Decode secrets from environment variables (set by GitHub Actions via BWS)
-    keystore_path = ENV["ANDROID_KEYSTORE_PATH"] || "/tmp/parable-bloom.jks"
-    
-    # Build the release bundle
-    gradle(
-      task: "bundle",
-      build_type: "Release",
-      properties: {
-        "android.injected.signing.store.file" => keystore_path,
-        "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
-        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
-        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
-      }
-    )
+    # The release bundle is expected to be built + signed by Flutter
+    # (e.g. `flutter build appbundle --release --build-number ...`) before calling this lane.
 
     # Upload to Play Console (internal track for testing)
     upload_to_play_store(
@@ -38,16 +26,8 @@ platform :android do
 
   desc "Deploy to Google Play Console Beta Track"
   lane :beta do
-    gradle(
-      task: "bundle",
-      build_type: "Release",
-      properties: {
-        "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_PATH"] || "/tmp/parable-bloom.jks",
-        "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
-        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
-        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
-      }
-    )
+    # The release bundle is expected to be built + signed by Flutter
+    # (e.g. `flutter build appbundle --release --build-number ...`) before calling this lane.
 
     upload_to_play_store(
       track: 'beta',
@@ -78,16 +58,8 @@ platform :android do
 
   desc "Deploy to Production"
   lane :production do
-    gradle(
-      task: "bundle",
-      build_type: "Release",
-      properties: {
-        "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_PATH"] || "/tmp/parable-bloom.jks",
-        "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
-        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
-        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
-      }
-    )
+    # The release bundle is expected to be built + signed by Flutter
+    # (e.g. `flutter build appbundle --release --build-number ...`) before calling this lane.
 
     upload_to_play_store(
       track: 'production',
@@ -103,16 +75,13 @@ platform :android do
 
   desc "Build release bundle only (no upload)"
   lane :build_release do
-    gradle(
-      task: "bundle",
-      build_type: "Release",
-      properties: {
-        "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_PATH"] || "/tmp/parable-bloom.jks",
-        "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
-        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
-        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
-      }
-    )
+    build_number = ENV["BUILD_NUMBER"] || "1"
+    build_name = ENV["BUILD_NAME"]
+
+    cmd = "flutter build appbundle --release --build-number #{build_number}"
+    cmd += " --build-name #{build_name}" if build_name && !build_name.empty?
+
+    sh("cd .. && #{cmd}")
 
     UI.success("✅ Release bundle built successfully")
     UI.message("📦 Bundle location: ../build/app/outputs/bundle/release/app-release.aab")
@@ -144,7 +113,10 @@ platform :android do
     device_id = ENV["ANDROID_SCREENSHOT_DEVICE"] || "emulator-5554"
     UI.message("📱 Using device #{device_id} for screenshots")
 
-    sh("cd .. && flutter test integration_test/app_screenshots_test.dart -d #{device_id}")
+    project_root = File.expand_path('..', __dir__)
+    test_path = File.join(project_root, 'integration_test', 'app_screenshots_test.dart')
+
+    sh("cd #{project_root} && flutter test #{test_path} -d #{device_id}")
 
     metadata_dir = File.expand_path('metadata/android/en-US/images/phoneScreenshots', __dir__)
     source_dir = File.expand_path('../../build/integration_test_screenshots', __dir__)

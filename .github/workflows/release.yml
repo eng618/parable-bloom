@@ -239,8 +239,15 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Set Android build version
+        run: |
+          BUILD_NAME="${GITHUB_REF_NAME#v}"
+          BUILD_NUMBER=$((GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT))
+          echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+
       - name: Build Android App Bundle
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --build-name "$BUILD_NAME" --build-number "$BUILD_NUMBER"
 
       - name: Check Play upload availability
         id: play
