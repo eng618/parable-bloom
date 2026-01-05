@@ -247,11 +247,14 @@ jobs:
 
       - name: Deploy to Google Play (Internal Testing)
         if: steps.play.outputs.upload == 'true'
+        run: |
+          # Decode service account JSON to file
+          echo "$PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" | base64 -d > /tmp/service-account.json
+          
+          cd android
+          fastlane deploy --json_key_data_path /tmp/service-account.json
         env:
           GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ env.PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
-        run: |
-          cd android
-          fastlane deploy
 
       - name: Skip Play upload (service account not configured)
         if: steps.play.outputs.upload != 'true'
@@ -265,7 +268,9 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: rm -f /tmp/parable-bloom.jks
+        run: |
+          rm -f /tmp/parable-bloom.jks
+          rm -f /tmp/service-account.json
 
   build-ios:
     if: false # Temporarily disabled until Apple Developer account is ready
