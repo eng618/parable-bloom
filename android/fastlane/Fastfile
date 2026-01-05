@@ -1,6 +1,8 @@
 # Fastfile for Android - Parable Bloom
 # Documentation: https://docs.fastlane.tools/
 
+require 'fileutils'
+
 default_platform(:android)
 
 platform :android do
@@ -135,5 +137,28 @@ platform :android do
     )
 
     UI.success("✅ Bundle and credentials validated successfully")
+  end
+
+  desc "Generate Play Store screenshots via Flutter integration test"
+  lane :screenshots do
+    device_id = ENV["ANDROID_SCREENSHOT_DEVICE"] || "emulator-5554"
+    UI.message("📱 Using device #{device_id} for screenshots")
+
+    sh("cd .. && flutter test integration_test/app_screenshots_test.dart -d #{device_id}")
+
+    metadata_dir = File.expand_path('metadata/android/en-US/images/phoneScreenshots', __dir__)
+    source_dir = File.expand_path('../../build/integration_test_screenshots', __dir__)
+
+    FileUtils.mkdir_p(metadata_dir)
+    FileUtils.rm_f(Dir[File.join(metadata_dir, '*.png')])
+
+    screenshots = Dir[File.join(source_dir, '*.png')]
+    raise "No screenshots found in #{source_dir}" if screenshots.empty?
+
+    screenshots.each do |file|
+      FileUtils.cp(file, metadata_dir)
+    end
+
+    UI.success("📸 Screenshots copied to #{metadata_dir}")
   end
 end
