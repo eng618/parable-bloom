@@ -135,6 +135,15 @@ jobs:
       - name: Build Android App Bundle
         run: flutter build appbundle --release
 
+      - name: Check Play upload availability
+        id: play
+        run: |
+          if [ -n "${PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON}" ]; then
+            echo "upload=true" >> $GITHUB_OUTPUT
+          else
+            echo "upload=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Setup Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
@@ -148,11 +157,16 @@ jobs:
           gem install fastlane
 
       - name: Deploy to Google Play (Internal Testing)
+        if: steps.play.outputs.upload == 'true'
         env:
           GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ env.PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
           cd android
           fastlane deploy
+
+      - name: Skip Play upload (service account not configured)
+        if: steps.play.outputs.upload != 'true'
+        run: echo "Skipping Play Console upload because PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is not set."
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v6
@@ -165,6 +179,7 @@ jobs:
         run: rm -f /tmp/parable-bloom.jks
 
   build-ios:
+    if: false # Temporarily disabled until Apple Developer account is ready
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6.0.1
@@ -248,15 +263,7 @@ jobs:
           cd ios && fastlane cleanup
 
   release:
-    needs:
-      [
-        build-web,
-        build-linux,
-        build-windows,
-        build-macos,
-        build-android,
-        build-ios,
-      ]
+    needs: [build-web, build-linux, build-windows, build-macos, build-android]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
