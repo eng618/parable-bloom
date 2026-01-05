@@ -96,16 +96,16 @@ void main(List<String> arguments) async {
         major++;
         minor = 0;
         patch = 0;
-        build++;
+        build = 1;
         break;
       case '--minor':
         minor++;
         patch = 0;
-        build++;
+        build = 1;
         break;
       case '--patch':
         patch++;
-        build++;
+        build = 1;
         break;
       case '--build':
         build++;
