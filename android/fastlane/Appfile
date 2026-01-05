@@ -1,3 +1,2 @@
 app_identifier("com.garciaericn.parable_bloom")
-json_key(ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || "/tmp/service-account.json")
 package_name("com.garciaericn.parable_bloom")
