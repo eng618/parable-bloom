@@ -60,7 +60,8 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   firebase_auth_mocks: ^0.15.1
-  yaml: ^3.1.2  # Required for version bump script
+  yaml: ^3.1.2 # Required for version bump script
+  flutter_launcher_icons: ^0.14.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -103,3 +104,20 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  image_path: assets/art/app_icon.png
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: assets/art/app_icon.png
+  macos:
+    generate: true
+    image_path: assets/art/app_icon.png
+  windows:
+    generate: true
+    image_path: assets/art/app_icon.png
+  linux:
+    generate: true
+    image_path: assets/art/app_icon.png
