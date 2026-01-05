@@ -548,9 +548,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil('/journal', (route) => false);
+                Navigator.of(context).pop(); // pop game screen to home
+                Navigator.of(context).pushNamed('/journal');
               },
               child: const Text('GO TO JOURNAL'),
             ),
