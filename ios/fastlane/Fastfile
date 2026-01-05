@@ -4,12 +4,10 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Push a new build to TestFlight"
-  lane :beta do
-    # Setup certificates and provisioning profiles
+  # Private helper to setup certificates and provisioning profiles
+  private_lane :_setup_signing do
     setup_ci if ENV['CI']
 
-    # Import certificate from environment variable (set by GitHub Actions via BWS)
     import_certificate(
       certificate_path: ENV["IOS_CERTIFICATE_PATH"] || "/tmp/distribution-cert.p12",
       certificate_password: ENV["IOS_CERTIFICATE_PASSWORD"],
@@ -17,16 +15,13 @@ platform :ios do
       keychain_password: ENV["KEYCHAIN_PASSWORD"] || "ci_password"
     )
 
-    # Install provisioning profile
     install_provisioning_profile(path: ENV["IOS_PROVISIONING_PROFILE_PATH"] || "/tmp/profile.mobileprovision")
+  end
 
-    # Increment build number automatically
-    increment_build_number(
-      build_number: latest_testflight_build_number + 1,
-      xcodeproj: "Runner.xcodeproj"
-    )
+  # Private helper to build IPA
+  private_lane :_build_ipa do
+    _setup_signing
 
-    # Build the app
     build_app(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
@@ -38,10 +33,31 @@ platform :ios do
       },
       output_directory: "../build/ios/ipa"
     )
+  end
 
-    # Upload to TestFlight
+  # Private helper to setup App Store Connect API authentication
+  private_lane :_setup_app_store_connect_auth do
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_KEY"],
+      is_key_content_base64: true
+    )
+  end
+
+  desc "Push a new build to TestFlight"
+  lane :beta do
+    _setup_app_store_connect_auth
+    _build_ipa
+
+    # Increment build number for next build
+    increment_build_number(
+      build_number: latest_testflight_build_number + 1,
+      xcodeproj: "Runner.xcodeproj"
+    )
+
+    # Upload to TestFlight (uses authenticated session from _setup_app_store_connect_auth)
     upload_to_testflight(
-      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
       skip_waiting_for_build_processing: true,
       skip_submission: true,
       distribute_external: false
@@ -52,34 +68,11 @@ platform :ios do
 
   desc "Deploy to App Store"
   lane :release do
-    # Setup certificates and provisioning profiles
-    setup_ci if ENV['CI']
+    _setup_app_store_connect_auth
+    _build_ipa
 
-    import_certificate(
-      certificate_path: ENV["IOS_CERTIFICATE_PATH"] || "/tmp/distribution-cert.p12",
-      certificate_password: ENV["IOS_CERTIFICATE_PASSWORD"],
-      keychain_name: ENV["KEYCHAIN_NAME"] || "ci.keychain",
-      keychain_password: ENV["KEYCHAIN_PASSWORD"] || "ci_password"
-    )
-
-    install_provisioning_profile(path: ENV["IOS_PROVISIONING_PROFILE_PATH"] || "/tmp/profile.mobileprovision")
-
-    # Build the app
-    build_app(
-      workspace: "Runner.xcworkspace",
-      scheme: "Runner",
-      export_method: "app-store",
-      export_options: {
-        provisioningProfiles: {
-          "com.garciaericn.parablebloom" => ENV["IOS_PROVISIONING_PROFILE_SPECIFIER"] || "Parable Bloom App Store"
-        }
-      },
-      output_directory: "../build/ios/ipa"
-    )
-
-    # Upload to App Store
+    # Upload to App Store (uses authenticated session from _setup_app_store_connect_auth)
     upload_to_app_store(
-      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
       skip_metadata: true,
       skip_screenshots: true,
       force: true,
@@ -91,28 +84,7 @@ platform :ios do
 
   desc "Build IPA without uploading"
   lane :build_release do
-    setup_ci if ENV['CI']
-
-    import_certificate(
-      certificate_path: ENV["IOS_CERTIFICATE_PATH"] || "/tmp/distribution-cert.p12",
-      certificate_password: ENV["IOS_CERTIFICATE_PASSWORD"],
-      keychain_name: ENV["KEYCHAIN_NAME"] || "ci.keychain",
-      keychain_password: ENV["KEYCHAIN_PASSWORD"] || "ci_password"
-    )
-
-    install_provisioning_profile(path: ENV["IOS_PROVISIONING_PROFILE_PATH"] || "/tmp/profile.mobileprovision")
-
-    build_app(
-      workspace: "Runner.xcworkspace",
-      scheme: "Runner",
-      export_method: "app-store",
-      export_options: {
-        provisioningProfiles: {
-          "com.garciaericn.parablebloom" => ENV["IOS_PROVISIONING_PROFILE_SPECIFIER"] || "Parable Bloom App Store"
-        }
-      },
-      output_directory: "../build/ios/ipa"
-    )
+    _build_ipa
 
     UI.success("✅ IPA built successfully")
     UI.message("📦 IPA location: ../build/ios/ipa/Runner.ipa")
@@ -121,12 +93,7 @@ platform :ios do
   desc "Validate credentials and configuration"
   lane :validate do
     # Validate App Store Connect API Key
-    app_store_connect_api_key(
-      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_KEY"],
-      is_key_content_base64: true
-    )
+    _setup_app_store_connect_auth
 
     UI.success("✅ App Store Connect API key validated")
 

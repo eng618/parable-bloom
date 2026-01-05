@@ -7,13 +7,16 @@ Comprehensive guide for automating Android/iOS releases with Bitwarden Secrets M
 Parable Bloom uses a fully automated release pipeline that:
 
 - ✅ Manages secrets via Bitwarden Secrets Manager (BWS)
-- ✅ Auto-increments versions in `pubspec.yaml`
+- ✅ Auto-increments versions in `pubspec.yaml` (semantic version + build number)
 - ✅ Generates changelog from git commits
-- ✅ Builds signed Android `.aab` and iOS `.ipa` files
-- ✅ Creates GitHub releases with artifacts
-- ✅ Auto-uploads to Google Play Console and TestFlight via Fastlane
+- ✅ Builds signed Android `.aab` for Google Play Console
+- ✅ Builds Web (Firebase Hosting), Linux & Windows (for testing)
+- ✅ Auto-uploads Android to Google Play Console (internal testing track) via Fastlane
+- ✅ Creates lightweight GitHub releases (tag + auto-generated release notes)
+- ⏳ iOS support temporarily disabled (awaiting Apple Developer account setup)
+- ⏳ macOS support temporarily disabled (build issues to resolve later)
 
-**Trigger**: Push git tag matching `v*` pattern (e.g., `v1.0.0`, `v1.2.3-beta`)
+**Trigger**: Git tag matching `v*` pattern (e.g., `v1.0.0+1`, `v1.2.3-beta+5`). Tags include build number for reproducibility.
 
 ---
 
@@ -372,21 +375,17 @@ Fastlane automates store uploads, beta distributions, and metadata management.
    bws secret create "PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" "$(base64 -i ~/Downloads/service-account.json)" "$PROJECT_ID"
    ```
 
-#### Step 2: Initialize Fastlane
+### Fastlane Lanes
 
-**TODO**: Run setup and create configuration files:
+**Android Fastlane** (`android/fastlane/Fastfile`):
 
-```bash
-cd android
-fastlane init
+- `fastlane deploy` — Upload internal testing track to Google Play (draft status)
+- `fastlane beta` — Upload beta track to Google Play
+- `fastlane production` — Upload production track to Google Play
+- `fastlane promote_to_beta` — Promote internal → beta
+- `fastlane build_release` — Build only (no upload)
 
-# Select: 4. Manual setup
-# Follow prompts to configure package name
-```
-
-#### Step 3: Create Fastfile
-
-**TODO**: Create `android/fastlane/Fastfile` (will be created by automation script)
+All lanes assume the `.aab` is pre-built (e.g., via `flutter build appbundle --release`). They handle upload only.
 
 ### iOS Fastlane Setup
 
@@ -590,12 +589,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    flutter test
    ```
 
-3. **Bump version**:
+3. **Bump version** (choose one):
 
    ```bash
-   dart run scripts/bump_version.dart --patch
-   # This auto-generates changelog, commits, and creates tag
+   # Semantic version bumps (each creates a unique tag vX.Y.Z+BUILD)
+   task version:bump:patch    # 1.0.0+1 → 1.0.1+2
+   task version:bump:minor    # 1.0.0+1 → 1.1.0+2
+   task version:bump:major    # 1.0.0+1 → 2.0.0+2
+   
+   # Build number only bump (also creates tag)
+   task version:bump:build    # 1.0.0+1 → 1.0.0+2
    ```
+
+   This auto-generates changelog, commits changes, and creates a git tag.
 
 4. **Push to GitHub**:
 
@@ -603,56 +609,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    git push origin develop --tags
    ```
 
-5. **Create Pull Request**: `develop` → `main`
-   - Title: `Release v1.0.1`
-   - Review and merge
-
-6. **Trigger release**: Merge to `main` triggers GitHub Actions workflow
+5. **GitHub Actions release triggers automatically** when tag is pushed matching `v*` pattern. No PR merge needed.
 
 ### Automated Release Process (CI/CD)
 
-**Trigger**: Git tag pushed matching `v*` pattern
+**Trigger**: Git tag pushed matching `v*` pattern (e.g., `v1.0.0+1`, `v1.2.3-beta+5`)
 
 **Workflow** (`.github/workflows/release.yml`):
 
-1. **Setup** (parallel across runners):
-   - `ubuntu-latest`: Android + Linux + Web
-   - `windows-latest`: Windows
-   - `macos-latest`: iOS + macOS
+#### Job: firebase-config (ubuntu-latest)
 
-2. **Fetch secrets from BWS**:
+- Checks out code, sets up Flutter + npm
+- Installs Firebase CLI and FlutterFire CLI
+- Runs `flutterfire configure` for Android, Web, Linux, Windows platforms
+- Uploads `lib/firebase_options.dart` as shared artifact for build jobs
 
-   ```yaml
-   - name: Fetch secrets from Bitwarden
-     uses: bitwarden/sm-action@v2
-     with:
-       access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
-       secrets: |
-         PARABLE_BLOOM_ANDROID_KEYSTORE
-         PARABLE_BLOOM_ANDROID_KEY_ALIAS
-         ...
-   ```
+#### Job: build-android (ubuntu-latest)
 
-3. **Android build**:
-   - Decode keystore from base64
-   - Set signing environment variables
-   - `flutter build appbundle --release`
-   - Upload to Google Play (internal track) via Fastlane
-   - Upload `.aab` to GitHub release
+- Fetches secrets from Bitwarden (Android signing credentials, google-services.json, Play service account)
+- Downloads firebase_options.dart from firebase-config job
+- Sets up Flutter (with cache), Java, Gradle cache
+- Decodes and configures Android keystore + google-services.json
+- Calculates unique build version: `BUILD_NUMBER = GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT`
+- Runs `task build:android BUILD_NAME=... BUILD_NUMBER=...`
+- Uploads signed `.aab` to Google Play Console internal testing track via Fastlane (draft release)
+- Uploads `.aab` artifact to Actions for reference
 
-4. **iOS build**:
-   - Import certificate to keychain
-   - Install provisioning profile
-   - `flutter build ipa --release`
-   - Upload to TestFlight via Fastlane
-   - Upload `.ipa` to GitHub release
+#### Job: build-web (ubuntu-latest)
 
-5. **Other platforms**: Web, Linux, Windows, macOS (existing workflow)
+- Downloads firebase_options.dart
+- Sets up Flutter with caching
+- Runs `task build:web`
+- Packages and uploads web build artifact
 
-6. **Create GitHub Release**:
-   - Auto-generate release notes from commits
-   - Attach all platform artifacts
-   - Mark as pre-release if tag contains `-beta`, `-alpha`, etc.
+#### Job: build-linux (ubuntu-latest)
+
+- Installs GTK development libraries
+- Downloads firebase_options.dart
+- Sets up Flutter with caching
+- Runs `task build:linux`
+- Packages and uploads Linux build artifact
+
+#### Job: build-windows (windows-latest)
+
+- Downloads firebase_options.dart
+- Sets up Flutter with caching
+- Runs `task build:windows`
+- Packages and uploads Windows build artifact
+
+#### Job: build-ios (macos-latest)
+
+- **Currently disabled** (`if: false`) — awaiting Apple Developer account setup
+
+#### Job: build-macos (macos-latest)
+
+- **Currently disabled** (`if: false`) — known build issues to resolve later
+
+#### Job: release (ubuntu-latest)
+
+- Depends on all build jobs completing
+- Creates lightweight GitHub release:
+  - Uses tag name as release title
+  - Auto-generates release notes from commit history
+  - **Does not attach artifacts** (focuses on app store releases)
+- Requires `contents: write` permission to create releases
 
 ### Post-Release Tasks
 
