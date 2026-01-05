@@ -55,6 +55,29 @@ android/app/google-services.json
 web/firebase-config.js
 macos/Runner/GoogleService-Info.plist
 
+# Fastlane
+*/fastlane/report.xml
+*/fastlane/Preview.html
+*/fastlane/screenshots
+*/fastlane/test_output
+*/fastlane/.env*
+
+# Android signing
+android/key.properties
+*.jks
+*.keystore
+
+# iOS signing
+*.p12
+*.mobileprovision
+*.cer
+*.certSigningRequest
+ios/ExportOptions-*.plist
+
+# App Store Connect API keys
+*.p8
+private_keys/
+
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
 .codacy/cli-config.yaml

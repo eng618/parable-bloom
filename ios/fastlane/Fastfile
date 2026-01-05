@@ -1,0 +1,136 @@
+# Fastfile for iOS - Parable Bloom
+# Documentation: https://docs.fastlane.tools/
+
+default_platform(:ios)
+
+platform :ios do
+  # Private helper to setup certificates and provisioning profiles
+  private_lane :_setup_signing do
+    setup_ci if ENV['CI']
+
+    import_certificate(
+      certificate_path: ENV["IOS_CERTIFICATE_PATH"] || "/tmp/distribution-cert.p12",
+      certificate_password: ENV["IOS_CERTIFICATE_PASSWORD"],
+      keychain_name: ENV["KEYCHAIN_NAME"] || "ci.keychain",
+      keychain_password: ENV["KEYCHAIN_PASSWORD"] || "ci_password"
+    )
+
+    install_provisioning_profile(path: ENV["IOS_PROVISIONING_PROFILE_PATH"] || "/tmp/profile.mobileprovision")
+  end
+
+  # Private helper to build IPA
+  private_lane :_build_ipa do
+    _setup_signing
+
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          "com.garciaericn.parablebloom" => ENV["IOS_PROVISIONING_PROFILE_SPECIFIER"] || "Parable Bloom App Store"
+        }
+      },
+      output_directory: "../build/ios/ipa"
+    )
+  end
+
+  # Private helper to setup App Store Connect API authentication
+  private_lane :_setup_app_store_connect_auth do
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_KEY"],
+      is_key_content_base64: true
+    )
+  end
+
+  desc "Push a new build to TestFlight"
+  lane :beta do
+    _setup_app_store_connect_auth
+    _build_ipa
+
+    # Increment build number for next build
+    increment_build_number(
+      build_number: latest_testflight_build_number + 1,
+      xcodeproj: "Runner.xcodeproj"
+    )
+
+    # Upload to TestFlight (uses authenticated session from _setup_app_store_connect_auth)
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      skip_submission: true,
+      distribute_external: false
+    )
+
+    UI.success("✅ Successfully uploaded to TestFlight")
+  end
+
+  desc "Deploy to App Store"
+  lane :release do
+    _setup_app_store_connect_auth
+    _build_ipa
+
+    # Upload to App Store (uses authenticated session from _setup_app_store_connect_auth)
+    upload_to_app_store(
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true,
+      submit_for_review: false
+    )
+
+    UI.success("✅ Successfully uploaded to App Store")
+  end
+
+  desc "Build IPA without uploading"
+  lane :build_release do
+    _build_ipa
+
+    UI.success("✅ IPA built successfully")
+    UI.message("📦 IPA location: ../build/ios/ipa/Runner.ipa")
+  end
+
+  desc "Validate credentials and configuration"
+  lane :validate do
+    # Validate App Store Connect API Key
+    _setup_app_store_connect_auth
+
+    UI.success("✅ App Store Connect API key validated")
+
+    # Check if certificate exists
+    if ENV["IOS_CERTIFICATE_PATH"] && File.exist?(ENV["IOS_CERTIFICATE_PATH"])
+      UI.success("✅ Distribution certificate found")
+    else
+      UI.error("❌ Distribution certificate not found at #{ENV['IOS_CERTIFICATE_PATH']}")
+    end
+
+    # Check if provisioning profile exists
+    if ENV["IOS_PROVISIONING_PROFILE_PATH"] && File.exist?(ENV["IOS_PROVISIONING_PROFILE_PATH"])
+      UI.success("✅ Provisioning profile found")
+    else
+      UI.error("❌ Provisioning profile not found at #{ENV['IOS_PROVISIONING_PROFILE_PATH']}")
+    end
+  end
+
+  desc "Setup keychain for CI"
+  lane :setup_keychain do
+    create_keychain(
+      name: ENV["KEYCHAIN_NAME"] || "ci.keychain",
+      password: ENV["KEYCHAIN_PASSWORD"] || "ci_password",
+      default_keychain: true,
+      unlock: true,
+      timeout: 3600,
+      add_to_search_list: true
+    )
+
+    UI.success("✅ Keychain created and configured")
+  end
+
+  desc "Clean up CI artifacts"
+  lane :cleanup do
+    if ENV['CI']
+      delete_keychain(name: ENV["KEYCHAIN_NAME"] || "ci.keychain") if File.exist?(File.expand_path("~/Library/Keychains/ci.keychain-db"))
+      UI.success("✅ Cleaned up CI artifacts")
+    end
+  end
+end

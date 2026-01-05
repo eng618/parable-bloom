@@ -138,6 +138,7 @@ flutter build ios --release
 - **[🏗️ Architecture Guide](docs/ARCHITECTURE.md)** - State management, persistence, and Firebase roadmap
 - **[💻 Technical Implementation](docs/TECHNICAL_IMPLEMENTATION.md)** - Code structure, testing, and deployment
 - **[📖 API Reference](https://pub.dev/documentation)** - Generated API docs
+- **[🚀 Release Process](docs/RELEASE_PROCESS.md)** - Automated release and deployment guide
 
 ## 🤝 Contributing
 

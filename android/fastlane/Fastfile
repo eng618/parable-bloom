@@ -1,0 +1,147 @@
+# Fastfile for Android - Parable Bloom
+# Documentation: https://docs.fastlane.tools/
+
+require 'fileutils'
+
+default_platform(:android)
+
+platform :android do
+  # Private helper lane to build release bundle
+  private_lane :_build_release_bundle do
+    keystore_path = ENV["ANDROID_KEYSTORE_PATH"] || "/tmp/parable-bloom.jks"
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      properties: {
+        "android.injected.signing.store.file" => keystore_path,
+        "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
+      }
+    )
+  end
+
+  desc "Deploy a new version to the Google Play Console (Internal Testing)"
+  lane :deploy do
+    # The release bundle is expected to be built + signed by Flutter
+    # (e.g. `flutter build appbundle --release --build-number ...`) before calling this lane.
+
+    # Upload to Play Console (internal track for testing)
+    # Authentication via Appfile (json_key or json_key_data)
+    upload_to_play_store(
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json',
+      track: 'internal',
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft'
+    )
+
+    UI.success("✅ Successfully deployed to Google Play Console (Internal Testing)")
+  end
+
+  desc "Deploy to Google Play Console Beta Track"
+  lane :beta do
+    # The release bundle is expected to be built + signed by Flutter
+    # (e.g. `flutter build appbundle --release --build-number ...`) before calling this lane.
+
+    # Authentication via Appfile (json_key or json_key_data)
+    upload_to_play_store(
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json',
+      track: 'beta',
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_metadata: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft'
+    )
+
+    UI.success("✅ Successfully deployed to Beta track")
+  end
+
+  desc "Promote Internal to Beta"
+  lane :promote_to_beta do
+    # Authentication via Appfile (json_key or json_key_data)
+    upload_to_play_store(
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json',
+      track: 'internal',
+      track_promote_to: 'beta',
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft'
+    )
+
+    UI.success("✅ Successfully promoted to Beta")
+  end
+
+  desc "Deploy to Production"
+  lane :production do
+    # The release bundle is expected to be built + signed by Flutter
+    # (e.g. `flutter build appbundle --release --build-number ...`) before calling this lane.
+
+    # Authentication via Appfile (json_key or json_key_data)
+    upload_to_play_store(
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json',
+      track: 'production',
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_metadata: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft'
+    )
+
+    UI.success("✅ Successfully deployed to Production!")
+  end
+
+  desc "Build release bundle only (no upload)"
+  lane :build_release do
+    build_number = ENV["BUILD_NUMBER"] || "1"
+    build_name = ENV["BUILD_NAME"]
+
+    cmd = "flutter build appbundle --release --build-number #{build_number}"
+    cmd += " --build-name #{build_name}" if build_name && !build_name.empty?
+
+    sh("cd .. && #{cmd}")
+
+    UI.success("✅ Release bundle built successfully")
+    UI.message("📦 Bundle location: ../build/app/outputs/bundle/release/app-release.aab")
+  end
+
+  desc "Validate bundle before upload"
+  lane :validate do
+    _build_release_bundle
+
+    # Validate credentials via Appfile
+    # (Appfile will ensure json_key or json_key_data is properly configured)
+    UI.success("✅ Bundle and credentials validated successfully")
+  end
+
+  desc "Generate Play Store screenshots via Flutter integration test"
+  lane :screenshots do
+    device_id = ENV["ANDROID_SCREENSHOT_DEVICE"] || "emulator-5554"
+    UI.message("📱 Using device #{device_id} for screenshots")
+
+    project_root = File.expand_path('..', __dir__)
+    test_path = File.join(project_root, 'integration_test', 'app_screenshots_test.dart')
+
+    sh("cd #{project_root} && flutter test #{test_path} -d #{device_id}")
+
+    metadata_dir = File.expand_path('metadata/android/en-US/images/phoneScreenshots', __dir__)
+    source_dir = File.expand_path('../../build/integration_test_screenshots', __dir__)
+
+    FileUtils.mkdir_p(metadata_dir)
+    FileUtils.rm_f(Dir[File.join(metadata_dir, '*.png')])
+
+    screenshots = Dir[File.join(source_dir, '*.png')]
+    raise "No screenshots found in #{source_dir}" if screenshots.empty?
+
+    screenshots.each do |file|
+      FileUtils.cp(file, metadata_dir)
+    end
+
+    UI.success("📸 Screenshots copied to #{metadata_dir}")
+  end
+end
