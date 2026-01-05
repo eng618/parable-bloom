@@ -16,7 +16,7 @@ jobs:
         with:
           channel: 'stable'
 
-              firebase-config,
+      - name: Install Firebase & FlutterFire CLI
         env:
           FIREBASE_CI_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
         run: |
@@ -324,7 +324,15 @@ jobs:
           cd ios && fastlane cleanup
 
   release:
-    needs: [build-web, build-linux, build-windows, build-macos, build-android]
+    needs:
+      [
+        firebase-config,
+        build-web,
+        build-linux,
+        build-windows,
+        build-macos,
+        build-android,
+      ]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
