@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../providers/game_providers.dart';
 import '../../../game/domain/services/level_solver_service.dart';
@@ -333,6 +334,12 @@ class CellComponent extends RectangleComponent
 
   @override
   void onTapUp(TapUpEvent event) {
+    // Trigger haptic feedback on tap if enabled
+    final hapticsEnabled = game.ref.watch(hapticsEnabledProvider);
+    if (hapticsEnabled) {
+      HapticFeedback.lightImpact();
+    }
+
     final gridParent = parent as GridComponent;
 
     // Create tap effect at the tap position

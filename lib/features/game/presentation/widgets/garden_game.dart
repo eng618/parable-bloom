@@ -331,6 +331,12 @@ class GardenGame extends FlameGame with TapCallbacks {
   void onTapDown(TapDownEvent event) {
     super.onTapDown(event);
 
+    // Trigger haptic feedback on tap if enabled
+    final hapticsEnabled = ref.watch(hapticsEnabledProvider);
+    if (hapticsEnabled) {
+      HapticFeedback.lightImpact();
+    }
+
     // Handle taps outside the grid (for play area but not on grid cells)
     // Grid and cells handle their own taps, so this only catches taps in empty space
     final tapPos = event.canvasPosition;
