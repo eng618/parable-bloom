@@ -7,12 +7,15 @@ tasks:
   build:web:
     desc: Build the Flutter application
     cmds:
-      - flutter build web
+      - flutter build web --release
 
   build:android:
     desc: Build the Android application
     cmds:
-      - flutter build appbundle --release
+      - |
+        flutter build appbundle --release \
+          {{if .BUILD_NAME}}--build-name "{{.BUILD_NAME}}"{{end}} \
+          {{if .BUILD_NUMBER}}--build-number "{{.BUILD_NUMBER}}"{{end}}
 
   build:ios:
     desc: Build the iOS application
