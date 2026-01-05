@@ -1,4 +1,5 @@
 #!/usr/bin/env dart
+// ignore_for_file: avoid_print
 
 import 'dart:io';
 import 'package:yaml/yaml.dart';
@@ -63,7 +64,6 @@ void main(List<String> arguments) async {
   final pubspecContent = pubspecFile.readAsStringSync();
   final pubspec = loadYaml(pubspecContent) as Map;
   final currentVersion = pubspec['version'] as String;
-  final currentSemanticOnly = currentVersion.split('+').first;
 
   print('📦 Current version: $currentVersion');
 
@@ -116,8 +116,6 @@ void main(List<String> arguments) async {
     final bumpName = bumpType.replaceAll('--', '').toUpperCase();
     print('⬆️  Bumping $bumpName version to: $newVersion');
   }
-
-  final newSemanticOnly = newVersion.split('+').first;
 
   // Tag full version (including build number) so build-only bumps can be tagged uniquely.
   // Example: 1.0.0+2 => v1.0.0+2

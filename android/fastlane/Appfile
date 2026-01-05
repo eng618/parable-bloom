@@ -1,2 +1,4 @@
 app_identifier("com.garciaericn.parable_bloom")
 package_name("com.garciaericn.parable_bloom")
+# Google Play authentication
+json_key_data_path(ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"]) if ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"]
