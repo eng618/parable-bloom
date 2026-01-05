@@ -270,9 +270,9 @@ jobs:
           echo "$PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" | base64 -d > /tmp/service-account.json
           
           cd android
-          fastlane deploy --json_key_data_path /tmp/service-account.json
+          fastlane deploy
         env:
-          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ env.PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_PATH: /tmp/service-account.json
 
       - name: Skip Play upload (service account not configured)
         if: steps.play.outputs.upload != 'true'

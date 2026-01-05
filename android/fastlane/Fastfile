@@ -28,7 +28,7 @@ platform :android do
       skip_upload_metadata: true,
       skip_upload_images: true,
       skip_upload_screenshots: true,
-      json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"]
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json'
     )
 
     UI.success("✅ Successfully deployed to Google Play Console (Internal Testing)")
@@ -53,7 +53,7 @@ platform :android do
       skip_upload_metadata: false,
       skip_upload_images: true,
       skip_upload_screenshots: true,
-      json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"]
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json'
     )
 
     UI.success("✅ Successfully deployed to Beta track")
@@ -68,7 +68,7 @@ platform :android do
       skip_upload_metadata: true,
       skip_upload_images: true,
       skip_upload_screenshots: true,
-      json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"]
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json'
     )
 
     UI.success("✅ Successfully promoted to Beta")
@@ -93,7 +93,7 @@ platform :android do
       skip_upload_metadata: false,
       skip_upload_images: true,
       skip_upload_screenshots: true,
-      json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"]
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json'
     )
 
     UI.success("✅ Successfully deployed to Production!")
