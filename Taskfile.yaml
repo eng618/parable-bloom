@@ -101,7 +101,7 @@ tasks:
       - dart run scripts/bump_version.dart --major
 
   version:bump:build:
-    desc: Bump build number only (no tag) (1.0.0+1 → 1.0.0+2)
+    desc: Bump build number and tag (tag includes build) (1.0.0+1 → 1.0.0+2)
     cmds:
       - dart run scripts/bump_version.dart --build
 

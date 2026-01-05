@@ -18,6 +18,7 @@ platform :android do
       skip_upload_metadata: true,
       skip_upload_images: true,
       skip_upload_screenshots: true,
+      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft',
       json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json'
     )
 
@@ -35,6 +36,7 @@ platform :android do
       skip_upload_metadata: false,
       skip_upload_images: true,
       skip_upload_screenshots: true,
+      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft',
       json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json'
     )
 
@@ -50,6 +52,7 @@ platform :android do
       skip_upload_metadata: true,
       skip_upload_images: true,
       skip_upload_screenshots: true,
+      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft',
       json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json'
     )
 
@@ -67,6 +70,7 @@ platform :android do
       skip_upload_metadata: false,
       skip_upload_images: true,
       skip_upload_screenshots: true,
+      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft',
       json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json'
     )
 

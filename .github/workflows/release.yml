@@ -293,6 +293,7 @@ jobs:
           fastlane deploy
         env:
           GOOGLE_PLAY_SERVICE_ACCOUNT_PATH: /tmp/service-account.json
+          GOOGLE_PLAY_RELEASE_STATUS: draft
 
       - name: Skip Play upload (service account not configured)
         if: steps.play.outputs.upload != 'true'
