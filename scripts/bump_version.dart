@@ -63,6 +63,7 @@ void main(List<String> arguments) async {
   final pubspecContent = pubspecFile.readAsStringSync();
   final pubspec = loadYaml(pubspecContent) as Map;
   final currentVersion = pubspec['version'] as String;
+  final currentSemanticOnly = currentVersion.split('+').first;
 
   print('📦 Current version: $currentVersion');
 
@@ -116,6 +117,10 @@ void main(List<String> arguments) async {
     print('⬆️  Bumping $bumpName version to: $newVersion');
   }
 
+  final newSemanticOnly = newVersion.split('+').first;
+  final shouldCreateTag = !noCommit && newSemanticOnly != currentSemanticOnly;
+  final tagName = 'v$newSemanticOnly';
+
   if (newVersion == currentVersion) {
     print('⚠️  Warning: New version is same as current version');
   }
@@ -134,7 +139,11 @@ void main(List<String> arguments) async {
     }
     if (!noCommit) {
       print('3. Create git commit: "chore: bump version to $newVersion"');
-      print('4. Create git tag: v$major.$minor.$patch');
+      if (shouldCreateTag) {
+        print('4. Create git tag: $tagName');
+      } else {
+        print('4. Skip git tag (semantic version unchanged)');
+      }
     }
     exit(0);
   }
@@ -185,13 +194,16 @@ void main(List<String> arguments) async {
           print('❌ Failed to create commit: ${commitResult.stderr}');
         }
 
-        // Create tag
-        final tagName = 'v$major.$minor.$patch';
-        final tagResult = await Process.run('git', ['tag', tagName]);
-        if (tagResult.exitCode == 0) {
-          print('✅ Created tag: $tagName');
+        // Create tag (only when semantic version changes)
+        if (shouldCreateTag) {
+          final tagResult = await Process.run('git', ['tag', tagName]);
+          if (tagResult.exitCode == 0) {
+            print('✅ Created tag: $tagName');
+          } else {
+            print('❌ Failed to create tag: ${tagResult.stderr}');
+          }
         } else {
-          print('❌ Failed to create tag: ${tagResult.stderr}');
+          print('ℹ️  Skipping tag (semantic version unchanged)');
         }
 
         print('\n🎉 Version bump complete!');
@@ -209,7 +221,11 @@ void main(List<String> arguments) async {
     print('  1. Commit changes: git add pubspec.yaml CHANGELOG.md');
     print(
         '  2. Create commit: git commit -m "chore: bump version to $newVersion"');
-    print('  3. Create tag: git tag v$major.$minor.$patch');
+    if (newSemanticOnly != currentSemanticOnly) {
+      print('  3. Create tag: git tag $tagName');
+    } else {
+      print('  3. Skip tag (semantic version unchanged)');
+    }
     print('  4. Push: git push origin develop --tags');
   }
 }

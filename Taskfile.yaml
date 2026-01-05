@@ -86,22 +86,22 @@ tasks:
   # Version Management
 
   version:bump:patch:
-    desc: Bump patch version (1.0.0 → 1.0.1)
+    desc: Bump patch version and tag (1.0.0 → 1.0.1)
     cmds:
       - dart run scripts/bump_version.dart --patch
 
   version:bump:minor:
-    desc: Bump minor version (1.0.0 → 1.1.0)
+    desc: Bump minor version and tag (1.0.0 → 1.1.0)
     cmds:
       - dart run scripts/bump_version.dart --minor
 
   version:bump:major:
-    desc: Bump major version (1.0.0 → 2.0.0)
+    desc: Bump major version and tag (1.0.0 → 2.0.0)
     cmds:
       - dart run scripts/bump_version.dart --major
 
   version:bump:build:
-    desc: Bump build number only (1.0.0+1 → 1.0.0+2)
+    desc: Bump build number only (no tag) (1.0.0+1 → 1.0.0+2)
     cmds:
       - dart run scripts/bump_version.dart --build
 
@@ -491,7 +491,7 @@ tasks:
       - firebase deploy
 
   # -----------------------------------------------------------------------------
-  # Firebase
+  # Firebase - FlutterFire
 
   firebase:configure:
     desc: Configure Firebase using FlutterFire CLI for local development (requires Firebase CLI auth)
