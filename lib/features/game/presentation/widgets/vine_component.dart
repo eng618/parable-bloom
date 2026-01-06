@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/app_theme.dart';
 import '../../../../core/vine_color_palette.dart';
 import '../../../../providers/game_providers.dart';
 import 'grid_component.dart';
@@ -85,9 +84,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // - Apply a calm deterministic variation per vine id.
     final seedColor = VineColorPalette.resolve(vineData.vineColor);
     final calmColor = _deriveCalmVariant(seedColor, vineData.id);
-    final baseColor = isAttempted
-        ? (Color.lerp(calmColor, AppTheme.vineAttempted, 0.25) ?? calmColor)
-        : calmColor;
+    // Compute final render color. Attempted/blocked color applies only when
+    // the vine has been attempted and is currently blocked (bounce-back).
+    final baseColor = VineComponent.computeRenderColor(
+      calmColor,
+      isAttempted,
+      (parent.parent).vineAttemptedColor,
+    );
 
     // Calculate direction from vine data
     final direction = _calculateVineDirection();
@@ -227,7 +230,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     canvas.drawPath(path, arrowPaint);
 
     final borderPaint = Paint()
-      ..color = color.withValues(alpha: 1.0 * 255)
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawPath(path, borderPaint);
@@ -689,11 +692,19 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final seedColor = VineColorPalette.resolve(vineData.vineColor);
     final calmColor = _deriveCalmVariant(seedColor, vineData.id);
 
+    // Respect the render color (including blocked/attempted state) for bloom visuals
+    final vineState = parent.getCurrentVineState(vineData.id);
+    final renderColor = VineComponent.computeRenderColor(
+      calmColor,
+      vineState?.hasBeenAttempted ?? false,
+      (parent.parent).vineAttemptedColor,
+    );
+
     // Create expanding sparkle rings
     final sparkleColors = [
-      calmColor.withValues(alpha: (1.0 - progress) * 0.8),
-      calmColor.withValues(alpha: (1.0 - progress) * 0.6),
-      calmColor.withValues(alpha: (1.0 - progress) * 0.4),
+      renderColor.withValues(alpha: (1.0 - progress) * 0.8),
+      renderColor.withValues(alpha: (1.0 - progress) * 0.6),
+      renderColor.withValues(alpha: (1.0 - progress) * 0.4),
     ];
 
     final maxRadius = cellSize * 2.0;
@@ -717,7 +728,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final glowRadius = progress * cellSize * 0.8;
     if (glowRadius > 0) {
       final glowPaint = Paint()
-        ..color = calmColor.withValues(alpha: (1.0 - progress) * 0.5)
+        ..color = renderColor.withValues(alpha: (1.0 - progress) * 0.5)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(center, glowRadius, glowPaint);
@@ -732,7 +743,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final particleY = center.dy + distance * math.sin(angle);
 
       final particlePaint = Paint()
-        ..color = calmColor.withValues(alpha: (1.0 - progress) * 0.9)
+        ..color = renderColor.withValues(alpha: (1.0 - progress) * 0.9)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(particleX, particleY), 2.0, particlePaint);
@@ -763,5 +774,23 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       hash = (hash * fnvPrime) & 0xFFFFFFFF;
     }
     return hash;
+  }
+
+  /// Compute the color used for rendering a vine based on its calm color and
+  /// current state. This is made public and static so it can be tested in
+  /// isolation.
+  static Color computeRenderColor(
+    Color calmColor,
+    bool isAttempted,
+    Color attemptedColor,
+  ) {
+    // Simplified rule: if the vine has been attempted at any time, use the
+    // attempted/error color for the rest of the level. This keeps the logic
+    // straightforward and avoids additional persistent flags.
+    if (isAttempted) {
+      return attemptedColor;
+    }
+
+    return calmColor;
   }
 }

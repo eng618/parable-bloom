@@ -71,12 +71,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         final tapEffectColor = AppTheme.getTapEffectColor(
           Theme.of(context).brightness,
         );
+        final vineAttemptedColor =
+            AppTheme.getVineAttemptedColor(Theme.of(context).brightness);
 
         _game!.updateThemeColors(
           gameBackground,
           gameSurface,
           gridBackground,
           tapEffectColor: tapEffectColor,
+          vineAttemptedColor: vineAttemptedColor,
         );
       }
     });

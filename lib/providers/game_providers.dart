@@ -912,7 +912,11 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
       debugPrint(
         'VineStatesNotifier: Marking $vineId as attempted and decrementing life',
       );
-      state = {...state, vineId: s.copyWith(hasBeenAttempted: true)};
+
+      state = {
+        ...state,
+        vineId: s.copyWith(hasBeenAttempted: true),
+      };
 
       // Increment wrong taps counter
       ref.read(levelWrongTapsProvider.notifier).increment();

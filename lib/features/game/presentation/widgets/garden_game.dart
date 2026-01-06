@@ -25,6 +25,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   late Color _backgroundColor;
   late Color _surfaceColor;
   late Color _tapEffectColor;
+  late Color _vineAttemptedColor;
 
   GardenGame({required this.ref}) {
     debugPrint('GardenGame: Constructor called - creating new instance');
@@ -32,6 +33,7 @@ class GardenGame extends FlameGame with TapCallbacks {
     _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
     _surfaceColor = const Color(0xFF2C3E50); // Default dark surface
     _tapEffectColor = const Color(0xFFE6E1E5); // Default light for dark theme
+    _vineAttemptedColor = const Color(0xFFFFFFFF);
   }
 
   void updateThemeColors(
@@ -39,14 +41,18 @@ class GardenGame extends FlameGame with TapCallbacks {
     Color surfaceColor,
     Color gridColor, {
     Color? tapEffectColor,
+    Color? vineAttemptedColor,
   }) {
     debugPrint(
-      'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor, tap=$tapEffectColor',
+      'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor, tap=$tapEffectColor, vineAttempted=$vineAttemptedColor',
     );
     _backgroundColor = backgroundColor;
     _surfaceColor = surfaceColor;
     if (tapEffectColor != null) {
       _tapEffectColor = tapEffectColor;
+    }
+    if (vineAttemptedColor != null) {
+      _vineAttemptedColor = vineAttemptedColor;
     }
     // gridColor parameter kept for API compatibility but not currently used
 
@@ -56,6 +62,9 @@ class GardenGame extends FlameGame with TapCallbacks {
       _gameBackground!.paint = Paint()..color = _surfaceColor;
     }
   }
+
+  /// Expose current vine-attempted color for renderers (VineComponent)
+  Color get vineAttemptedColor => _vineAttemptedColor;
 
   @override
   Future<void> onLoad() async {

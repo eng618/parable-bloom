@@ -23,8 +23,19 @@ class AppTheme {
   /// Color for active/unblocked vines (uses secondary for bracelet tie-in)
   static const Color vineGreen = secondarySeed;
 
-  /// Color for attempted/failed vines
-  static const Color vineAttempted = Colors.red;
+  /// Theme-aware color for attempted/failed vines.
+  /// On light theme this is black; on dark theme this is white. Use
+  /// `AppTheme.getVineAttemptedColor(brightness)` to pick the correct variant.
+  static const Color vineAttemptedLight =
+      Color(0xFF000000); // black for light theme
+  static const Color vineAttemptedDark =
+      Color(0xFFFFFFFF); // white for dark theme
+
+  static Color getVineAttemptedColor(Brightness brightness) {
+    return brightness == Brightness.dark
+        ? vineAttemptedDark
+        : vineAttemptedLight;
+  }
 
   /// Grid dot color (light mode) - subtle beige tint
   static const Color gridDotLight = Color(0x26E2D6C4); // 15% beige

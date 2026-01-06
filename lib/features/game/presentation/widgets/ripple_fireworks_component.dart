@@ -77,7 +77,9 @@ class RippleFireworksComponent extends Component with HasGameReference {
           start: f.start,
           target: f.target,
           travelTime: f.travelTime,
-          color: colors.isEmpty ? Colors.white : colors[_rng.nextInt(colors.length)],
+          color: colors.isEmpty
+              ? Colors.white
+              : colors[_rng.nextInt(colors.length)],
           onImpact: (impactAt) {
             // Spawn ripple at impact
             game.add(
