@@ -249,8 +249,22 @@ jobs:
         run: |
           rm -f /tmp/parable-bloom.jks
           rm -f /tmp/service-account.json
+
+  build-disabled:
+    if: false # Temporarily disabled until configurations are ready
+    needs: firebase-config
+    strategy:
+      matrix:
+        include:
+          - platform: macos
+            os: macos-latest
+          - platform: ios
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
       - uses: actions/checkout@v6.0.1
       - name: Download firebase_options.dart
+        if: matrix.platform == 'macos'
         uses: actions/download-artifact@v7
         with:
           name: firebase_options
@@ -277,21 +291,106 @@ jobs:
           key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock', 'macos/Podfile.lock') }}
           restore-keys: ${{ runner.os }}-pods-
 
+      - name: Fetch secrets from Bitwarden
+        if: matrix.platform == 'ios'
+        uses: bitwarden/sm-action@v2
+        with:
+          access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
+          secrets: |
+            PARABLE_BLOOM_IOS_CERTIFICATE_P12
+            PARABLE_BLOOM_IOS_CERTIFICATE_PASSWORD
+            PARABLE_BLOOM_IOS_PROVISIONING_PROFILE
+            PARABLE_BLOOM_IOS_PROVISIONING_PROFILE_UUID
+            PARABLE_BLOOM_IOS_TEAM_ID
+            PARABLE_BLOOM_APP_STORE_CONNECT_KEY_ID
+            PARABLE_BLOOM_APP_STORE_CONNECT_ISSUER_ID
+            PARABLE_BLOOM_APP_STORE_CONNECT_KEY
+
+      - name: Setup certificates and profiles
+        if: matrix.platform == 'ios'
+        run: |
+          # Decode certificate
+          echo "$PARABLE_BLOOM_IOS_CERTIFICATE_P12" | base64 -d > /tmp/distribution-cert.p12
+
+          # Decode provisioning profile
+          echo "$PARABLE_BLOOM_IOS_PROVISIONING_PROFILE" | base64 -d > /tmp/profile.mobileprovision
+
+          # Create App Store Connect API key
+          mkdir -p ~/private_keys
+          echo "$PARABLE_BLOOM_APP_STORE_CONNECT_KEY" | base64 -d > ~/private_keys/AuthKey_${PARABLE_BLOOM_APP_STORE_CONNECT_KEY_ID}.p8
+
+          # Set environment variables
+          echo "IOS_CERTIFICATE_PATH=/tmp/distribution-cert.p12" >> $GITHUB_ENV
+          echo "IOS_CERTIFICATE_PASSWORD=$PARABLE_BLOOM_IOS_CERTIFICATE_PASSWORD" >> $GITHUB_ENV
+          echo "IOS_PROVISIONING_PROFILE_PATH=/tmp/profile.mobileprovision" >> $GITHUB_ENV
+          echo "IOS_TEAM_ID=$PARABLE_BLOOM_IOS_TEAM_ID" >> $GITHUB_ENV
+          echo "APP_STORE_CONNECT_KEY_ID=$PARABLE_BLOOM_APP_STORE_CONNECT_KEY_ID" >> $GITHUB_ENV
+          echo "APP_STORE_CONNECT_ISSUER_ID=$PARABLE_BLOOM_APP_STORE_CONNECT_ISSUER_ID" >> $GITHUB_ENV
+          echo "APP_STORE_CONNECT_API_KEY_PATH=~/private_keys/AuthKey_${PARABLE_BLOOM_APP_STORE_CONNECT_KEY_ID}.p8" >> $GITHUB_ENV
+          echo "KEYCHAIN_NAME=ci.keychain" >> $GITHUB_ENV
+          echo "KEYCHAIN_PASSWORD=ci_password" >> $GITHUB_ENV
+
       - name: Install dependencies
-        run: flutter pub get
+        run: |
+          flutter pub get
+          if [ "${{ matrix.platform }}" == "ios" ]; then
+            cd ios && pod install
+          fi
+
       - name: Build macOS
+        if: matrix.platform == 'macos'
         run: flutter build macos --release
+
+      - name: Setup Ruby for Fastlane
+        if: matrix.platform == 'ios'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Install Fastlane
+        if: matrix.platform == 'ios'
+        run: |
+          cd ios
+          gem install fastlane
+
+      - name: Deploy to TestFlight
+        if: matrix.platform == 'ios'
+        run: |
+          cd ios
+          fastlane beta
+
       - name: Package macOS build
+        if: matrix.platform == 'macos'
         run: |
           cd build/macos/Build/Products/Release
           tar -czf ../../../../../parable-bloom-macos-${{ github.ref_name }}.tar.gz ParableBloom.app
+
       - name: Upload macOS artifact
+        if: matrix.platform == 'macos'
         uses: actions/upload-artifact@v6
         with:
           name: macos-build
           path: parable-bloom-macos-${{ github.ref_name }}.tar.gz
 
+      - name: Upload iOS artifact
+        if: matrix.platform == 'ios'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ios-build
+          path: build/ios/ipa/*.ipa
 
+      - name: Cleanup
+        if: matrix.platform == 'ios' && always()
+        run: |
+          rm -f /tmp/distribution-cert.p12
+          rm -f /tmp/profile.mobileprovision
+          rm -rf ~/private_keys
+          cd ios && fastlane cleanup
+
+
+  release:
     needs:
       [
         firebase-config,
