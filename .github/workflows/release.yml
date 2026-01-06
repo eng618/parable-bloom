@@ -105,7 +105,7 @@ jobs:
       - name: Package Linux build
         run: |
           cd build/linux/x64/release/bundle
-          tar -czf ../../../../parable-bloom-linux-${{ github.ref_name }}.tar.gz *
+          tar -czf ../../../../../parable-bloom-linux-${{ github.ref_name }}.tar.gz *
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v6
         with:
@@ -136,7 +136,7 @@ jobs:
       - name: Package Windows build
         run: |
           cd build\windows\x64\runner\Release
-          Compress-Archive -Path * -DestinationPath ..\..\..\..\parable-bloom-windows-${{ github.ref_name }}.zip
+          Compress-Archive -Path * -DestinationPath $env:GITHUB_WORKSPACE\parable-bloom-windows-${{ github.ref_name }}.zip
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v6
         with:
@@ -183,7 +183,7 @@ jobs:
       - name: Package macOS build
         run: |
           cd build/macos/Build/Products/Release
-          tar -czf ../../../../parable-bloom-macos-${{ github.ref_name }}.tar.gz ParableBloom.app
+          tar -czf ../../../../../parable-bloom-macos-${{ github.ref_name }}.tar.gz ParableBloom.app
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v6
         with:
