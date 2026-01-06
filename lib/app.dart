@@ -9,11 +9,43 @@ import 'features/settings/presentation/screens/settings_screen.dart';
 import 'providers/game_providers.dart';
 import 'screens/home_screen.dart';
 
-class ParableBloomApp extends ConsumerWidget {
+class ParableBloomApp extends ConsumerStatefulWidget {
   const ParableBloomApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ParableBloomApp> createState() => _ParableBloomAppState();
+}
+
+class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    final controller = ref.read(backgroundAudioControllerProvider);
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      // Stop audio when app loses focus
+      controller.setEnabled(false);
+    } else if (state == AppLifecycleState.resumed) {
+      // Resume audio if it was enabled
+      final enabled = ref.read(backgroundAudioEnabledProvider);
+      controller.setEnabled(enabled);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     ref.watch(backgroundAudioControllerProvider);
 
