@@ -1,4 +1,3 @@
-import 'package:confetti/confetti.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -10,6 +9,8 @@ import '../../../../providers/game_providers.dart';
 import '../widgets/game_header.dart';
 import '../widgets/garden_game.dart';
 import '../widgets/pause_menu_dialog.dart';
+import '../widgets/pond_ripple_effect_component.dart';
+import '../widgets/ripple_fireworks_component.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -19,8 +20,6 @@ class GameScreen extends ConsumerStatefulWidget {
 }
 
 class _GameScreenState extends ConsumerState<GameScreen> {
-  late ConfettiController _leftConfettiController;
-  late ConfettiController _rightConfettiController;
   GardenGame? _game;
   late bool _isLevelCompleteOverlayVisible;
   late String _currentCongratulationMessage;
@@ -45,19 +44,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     debugPrint('GameScreen: initState called, _game is null: ${_game == null}');
     _isLevelCompleteOverlayVisible = false;
     _currentCongratulationMessage = '';
-    _leftConfettiController = ConfettiController(
-      duration: const Duration(milliseconds: 500),
-    );
-    _rightConfettiController = ConfettiController(
-      duration: const Duration(milliseconds: 500),
-    );
   }
 
   @override
   void dispose() {
     debugPrint('GameScreen: dispose called');
-    _leftConfettiController.dispose();
-    _rightConfettiController.dispose();
     super.dispose();
   }
 
@@ -97,20 +88,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
       if (next && (previous == null || !previous)) {
         debugPrint('_GameScreen: Showing level complete overlay');
-        debugPrint('_GameScreen: Starting both confetti cannons');
-        debugPrint(
-          '_GameScreen: Left controller state before play: ${_leftConfettiController.state}',
-        );
-        debugPrint(
-          '_GameScreen: Right controller state before play: ${_rightConfettiController.state}',
-        );
-        // Confetti playback moved to _showLevelCompleteOverlay to ensure widget is built
-        debugPrint(
-          '_GameScreen: Left controller state after play: ${_leftConfettiController.state}',
-        );
-        debugPrint(
-          '_GameScreen: Right controller state after play: ${_rightConfettiController.state}',
-        );
         _showLevelCompleteOverlay();
       }
     });
@@ -321,74 +298,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 
-  Widget _buildConfetti() {
-    // Ensure controllers are properly initialized
-    return Stack(
-      children: [
-        // Left cannon - positioned at bottom-left corner
-        Positioned(
-          bottom: 20,
-          left: 20,
-          child: ConfettiWidget(
-            confettiController: _leftConfettiController,
-            blastDirection: -3.14159 / 3, // -60 degrees (up and left)
-            emissionFrequency: 0.5, // High frequency for immediate burst
-            numberOfParticles: 50, // Increased for denser blast
-            maxBlastForce: 80, // Increased from 50 for longer/faster distance
-            minBlastForce: 55, // Increased from 35 for more power
-            gravity: 0.4, // Increased from 0.2 for faster falling
-            shouldLoop: false,
-            colors: const [
-              Colors.red,
-              Colors.blue,
-              Colors.green,
-              Colors.yellow,
-              Colors.purple,
-              Colors.orange,
-            ],
-          ),
-        ),
-        // Right cannon - positioned at bottom-right corner
-        Positioned(
-          bottom: 20,
-          right: 20,
-          child: ConfettiWidget(
-            confettiController: _rightConfettiController,
-            blastDirection: -2 * 3.14159 / 3, // -120 degrees (up and right)
-            emissionFrequency: 0.5, // High frequency for immediate burst
-            numberOfParticles: 50, // Increased for denser blast
-            maxBlastForce: 80, // Increased from 50 for longer/faster distance
-            minBlastForce: 55, // Increased from 35 for more power
-            gravity: 0.4, // Increased from 0.2 for faster falling
-            shouldLoop: false,
-            colors: const [
-              Colors.red,
-              Colors.blue,
-              Colors.green,
-              Colors.yellow,
-              Colors.purple,
-              Colors.orange,
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  // Confetti implementation removed; celebration handled via in-game ripple effect.
 
   Widget _buildLevelCompleteOverlay() {
     return Stack(
       children: [
-        // Confetti (no background overlay - completely transparent)
-        _buildConfetti(),
-        // Content
+        // Content only (no rigid colored box), with subtle text shadow
         Center(
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            margin: const EdgeInsets.symmetric(horizontal: 32),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(24),
-            ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
@@ -396,20 +314,31 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 Text(
                   _currentCongratulationMessage,
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    // Subtle drop shadow to lift text from the scene
                     shadows: [
                       Shadow(
                         blurRadius: 10.0,
-                        color: Colors.black.withValues(alpha: 1.0),
+                        color: Colors.black.withValues(alpha: 0.6),
                         offset: const Offset(2.0, 2.0),
                       ),
                     ],
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 20),
-                const Icon(Icons.celebration, color: Colors.yellow, size: 80),
+                const SizedBox(height: 16),
+                Icon(
+                  Icons.celebration,
+                  color: Theme.of(context).colorScheme.tertiary,
+                  size: 72,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 8.0,
+                      color: Colors.black.withValues(alpha: 0.4),
+                      offset: const Offset(1.5, 1.5),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -428,10 +357,44 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _isLevelCompleteOverlayVisible = true;
     });
 
-    // Play confetti after the widget is built
+    // Add subtle pond ripple effect to the game scene
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _leftConfettiController.play();
-      _rightConfettiController.play();
+      if (_game != null) {
+        final cs = Theme.of(context).colorScheme;
+        final center = Vector2(_game!.size.x / 2, _game!.size.y / 2);
+        final effect = ref.read(celebrationEffectProvider);
+        switch (effect) {
+          case CelebrationEffect.pondRipples:
+            _game!.add(
+              PondRippleEffectComponent(
+                center: center,
+                maxRadius: (_game!.size.y * 0.45),
+                ringCount: 4,
+                duration: 2.0,
+                colors: [cs.primary, cs.secondary],
+              ),
+            );
+            break;
+          case CelebrationEffect.rippleFireworks:
+            _game!.add(
+              RippleFireworksComponent(
+                count: 8,
+                duration: 2.0,
+                minRippleRadius: 30,
+                maxRippleRadius: 64,
+                colors: [cs.primary, cs.secondary],
+                paddingRatio: 0.12,
+              ),
+            );
+            break;
+          case CelebrationEffect.leafPetals:
+            // Future: add leaf petals effect
+            break;
+          case CelebrationEffect.confetti:
+            // Deprecated: previously used external package
+            break;
+        }
+      }
     });
 
     // Advance to next level

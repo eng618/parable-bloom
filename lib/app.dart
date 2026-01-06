@@ -34,7 +34,8 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     final controller = ref.read(backgroundAudioControllerProvider);
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       // Stop audio when app loses focus
       controller.setEnabled(false);
     } else if (state == AppLifecycleState.resumed) {

@@ -758,6 +758,32 @@ class GameInstanceNotifier extends Notifier<GardenGame?> {
   }
 }
 
+// Internal celebration effect selection (not user-facing)
+enum CelebrationEffect {
+  pondRipples,
+  // Future options
+  leafPetals,
+  confetti,
+  rippleFireworks,
+}
+
+final celebrationEffectProvider =
+    NotifierProvider<CelebrationEffectNotifier, CelebrationEffect>(
+  CelebrationEffectNotifier.new,
+);
+
+class CelebrationEffectNotifier extends Notifier<CelebrationEffect> {
+  @override
+  CelebrationEffect build() {
+    // Default effect; can be overridden programmatically for seasonal themes
+    return CelebrationEffect.rippleFireworks;
+  }
+
+  void setEffect(CelebrationEffect effect) {
+    state = effect;
+  }
+}
+
 // Vine state for current level
 enum VineAnimationState {
   normal, // On board, tappable, blocks others
@@ -910,9 +936,9 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   }
 
   void _checkLevelComplete() {
-    final allFinished = state.values.every((vineState) => 
-      vineState.isCleared || vineState.animationState == VineAnimationState.animatingClear
-    );
+    final allFinished = state.values.every((vineState) =>
+        vineState.isCleared ||
+        vineState.animationState == VineAnimationState.animatingClear);
     debugPrint(
       'VineStatesNotifier: Checking completion - all finished: $allFinished, total vines: ${state.length}',
     );
