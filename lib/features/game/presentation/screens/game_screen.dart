@@ -26,16 +26,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   // List of congratulatory messages
   static const List<String> _congratulationMessages = [
-    'Awesome!',
-    'Great Job!',
-    'Excellent!',
-    'Well Done!',
-    'Fantastic!',
-    'Outstanding!',
-    'Brilliant!',
-    'Perfect!',
-    'Superb!',
-    'Amazing!',
+    'Well done, good and faithful servant!',
+    'Blessed are you!',
+    'Your faith has made you well!',
+    'The Lord is with you!',
+    'Rejoice in the Lord!',
+    'Grace upon grace!',
+    'In His strength!',
+    'Abundant life!',
+    'Fruitful harvest!',
+    'Seeds of faith!',
   ];
 
   @override
