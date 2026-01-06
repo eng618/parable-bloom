@@ -85,9 +85,6 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
 
     // Recalculate blocking for all
     state = _calculateVineStates(_levelData, mapWithCleared);
-
-    // Check if level is complete
-    _checkLevelComplete();
   }
 
   void markAttempted(String vineId) {
@@ -122,11 +119,13 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   }
 
   void _checkLevelComplete() {
-    final allCleared = state.values.every((vineState) => vineState.isCleared);
-    debugPrint(
-      'VineStatesNotifier: Checking completion - all cleared: $allCleared, total vines: ${state.length}',
+    final allFinished = state.values.every((vineState) => 
+      vineState.isCleared || vineState.animationState == VineAnimationState.animatingClear
     );
-    if (allCleared) {
+    debugPrint(
+      'VineStatesNotifier: Checking completion - all finished: $allFinished, total vines: ${state.length}',
+    );
+    if (allFinished) {
       debugPrint(
         'VineStatesNotifier: LEVEL COMPLETE detected! Setting levelCompleteProvider to true',
       );
@@ -146,6 +145,11 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
 
     // Recalculate blocking states when animation state changes
     state = _calculateVineStates(_levelData, state);
+
+    // Check if level is complete when a vine starts clearing animation
+    if (animationState == VineAnimationState.animatingClear) {
+      _checkLevelComplete();
+    }
   }
 
   void resetForLevel(LevelData levelData) {
