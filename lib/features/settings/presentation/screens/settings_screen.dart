@@ -378,7 +378,9 @@ class SettingsScreen extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () => _performDataReset(dialogContext, ref),
+            // Use the outer screen context (not the dialog's) so subsequent
+            // navigation and dialogs operate on a mounted navigator.
+            onPressed: () => _performDataReset(context, ref),
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(dialogContext).colorScheme.error,
               foregroundColor: Theme.of(dialogContext).colorScheme.onError,
