@@ -18,6 +18,7 @@ class GameHeader extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.pause_rounded),
             onPressed: onPause,
+            splashColor: Colors.transparent,
             style: IconButton.styleFrom(
               backgroundColor: Theme.of(
                 context,

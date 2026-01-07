@@ -444,7 +444,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     // Persist selection immediately in the debug provider so the Play
                     // button reflects the choice and other code can react sooner.
                     if (value != null) {
-                      ref.read(debugSelectedLevelProvider.notifier).setLevel(value);
+                      ref
+                          .read(debugSelectedLevelProvider.notifier)
+                          .setLevel(value);
                     }
                   },
                   isExpanded: true,
@@ -476,7 +478,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
       },
     );
-
   }
 
   Future<Map<int, String>> _loadLabels(List<int> levels) async {

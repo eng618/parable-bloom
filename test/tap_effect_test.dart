@@ -38,7 +38,7 @@ void main() {
 
       expect(component.tapPosition, tapPos);
       expect(component.color, Colors.white);
-      expect(component.maxRadius, 30.0);
+      expect(component.maxRadius, 15.0);
       expect(component.duration, 0.4);
     });
 
@@ -163,7 +163,7 @@ void main() {
       final component = TapEffectComponent(
         tapPosition: Vector2(50, 50),
         color: Colors.red,
-        maxRadius: 25.0,
+        maxRadius: 15.0,
         duration: 0.4,
       );
 

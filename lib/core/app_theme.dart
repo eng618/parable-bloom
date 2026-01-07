@@ -72,8 +72,10 @@ class AppTheme {
 
   static const _lightBackground = Color(0xFFF8F5EF); // Lightened beige
   static const _lightSurface = Color(0xFFFFFFFF);
-  static const _lightSurfaceContainerLow = Color(0xFFEFF3ED); // Subtle green tint
-  static const _lightSurfaceContainerHigh = Color(0xFFE8E4DE); // Darker beige for depth
+  static const _lightSurfaceContainerLow =
+      Color(0xFFEFF3ED); // Subtle green tint
+  static const _lightSurfaceContainerHigh =
+      Color(0xFFE8E4DE); // Darker beige for depth
   static const _lightOnSurface = Color(0xFF1C1B1F);
   static const _lightOnSurfaceVariant = Color(0xFF49454F);
 
@@ -83,8 +85,10 @@ class AppTheme {
 
   static const _darkBackground = Color(0xFF1A2E3F); // Dark blue
   static const _darkSurface = Color(0xFF2C3E50); // Deeper blue
-  static const _darkSurfaceContainerLow = Color(0xFF3E5366); // Blue with green hint
-  static const _darkSurfaceContainerHigh = Color(0xFF4A5F72); // Deeper blue-green for depth
+  static const _darkSurfaceContainerLow =
+      Color(0xFF3E5366); // Blue with green hint
+  static const _darkSurfaceContainerHigh =
+      Color(0xFF4A5F72); // Deeper blue-green for depth
   static const _darkOnSurface = Color(0xFFE6E1E5);
   static const _darkOnSurfaceVariant = Color(0xFFCAC4D0);
 
@@ -227,7 +231,8 @@ class AppTheme {
   }
 
   /// Create dynamic color scheme for Android 12+ based on system wallpaper
-  static Future<ColorScheme?> getDynamicColorScheme(Brightness brightness) async {
+  static Future<ColorScheme?> getDynamicColorScheme(
+      Brightness brightness) async {
     try {
       final corePalette = await DynamicColorPlugin.getCorePalette();
       if (corePalette != null) {

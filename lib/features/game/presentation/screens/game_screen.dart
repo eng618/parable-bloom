@@ -59,6 +59,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Update game theme colors when theme changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_game != null) {
+        final extension = Theme.of(context).extension<AppThemeExtension>()!;
         final gameBackground = AppTheme.getGameBackground(
           Theme.of(context).brightness,
         );
@@ -68,18 +69,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         final gridBackground = AppTheme.getGridBackground(
           Theme.of(context).brightness,
         );
-        final tapEffectColor = AppTheme.getTapEffectColor(
-          Theme.of(context).brightness,
-        );
-        final vineAttemptedColor =
-            AppTheme.getVineAttemptedColor(Theme.of(context).brightness);
 
         _game!.updateThemeColors(
           gameBackground,
           gameSurface,
           gridBackground,
-          tapEffectColor: tapEffectColor,
-          vineAttemptedColor: vineAttemptedColor,
+          tapEffectColor: extension.tapEffect,
+          vineAttemptedColor: extension.vineAttempted,
         );
       }
     });
@@ -253,6 +249,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             IconButton(
               icon: const Icon(Icons.add),
               tooltip: 'Zoom In',
+              splashColor: Colors.transparent,
               onPressed: cameraState.zoom >= cameraState.maxZoom
                   ? null
                   : () {
@@ -269,6 +266,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             IconButton(
               icon: const Icon(Icons.remove),
               tooltip: 'Zoom Out',
+              splashColor: Colors.transparent,
               onPressed: cameraState.zoom <= cameraState.minZoom
                   ? null
                   : () {
@@ -285,6 +283,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             IconButton(
               icon: const Icon(Icons.center_focus_strong),
               tooltip: 'Reset Zoom',
+              splashColor: Colors.transparent,
               onPressed: () {
                 ref.read(cameraStateProvider.notifier).resetToCenter(
                       screenWidth: MediaQuery.of(context).size.width,

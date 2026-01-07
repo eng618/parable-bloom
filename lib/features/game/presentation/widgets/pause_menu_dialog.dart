@@ -138,6 +138,7 @@ class PauseMenuDialog extends ConsumerWidget {
         ),
         IconButton(
           icon: const Icon(Icons.chevron_right),
+          splashColor: Colors.transparent,
           onPressed: () {
             // Cycle through themes
             final nextMode = AppThemeMode

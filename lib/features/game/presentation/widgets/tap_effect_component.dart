@@ -15,7 +15,7 @@ class TapEffectComponent extends PositionComponent {
   TapEffectComponent({
     required this.tapPosition,
     this.color = Colors.white,
-    this.maxRadius = 30.0,
+    this.maxRadius = 15.0, // Reduced default to prevent large effects
     this.duration = 0.4,
   }) : super(
           position: tapPosition,
@@ -41,8 +41,8 @@ class TapEffectComponent extends PositionComponent {
 
     if (_elapsed >= duration) return;
 
-    // Calculate progress (0.0 to 1.0)
-    final progress = _elapsed / duration;
+    // Calculate progress (0.0 to 1.0), clamped to prevent oversized effects
+    final progress = (_elapsed / duration).clamp(0.0, 1.0);
 
     // Expand radius from 0 to maxRadius
     final currentRadius = maxRadius * progress;
