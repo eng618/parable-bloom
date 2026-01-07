@@ -1,15 +1,23 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/game_providers.dart';
 import '../../../../screens/home_screen.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final backgroundAudioEnabled = ref.watch(backgroundAudioEnabledProvider);
     final hapticsEnabled = ref.watch(hapticsEnabledProvider);
@@ -67,10 +75,11 @@ class SettingsScreen extends ConsumerWidget {
           _buildSectionHeader(context, 'About'),
           _buildVersionTile(context, ref),
           const Divider(),
-          if (kDebugMode) ...[
+          if (kDebugMode || ref.watch(debugUiEnabledForTestsProvider)) ...[
             _buildSectionHeader(context, 'Debug'),
             _buildDebugGridCoordinatesTile(context, ref),
             _buildDebugVineAnimationLoggingTile(context, ref),
+            _buildDebugLevelPickerTile(context, ref),
             const Divider(),
           ],
           _buildSectionHeader(context, 'Danger Zone'),
@@ -352,6 +361,138 @@ class SettingsScreen extends ConsumerWidget {
             .setEnabled(value);
       },
     );
+  }
+
+  Widget _buildDebugLevelPickerTile(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(debugSelectedLevelProvider);
+    final subtitle =
+        selected == null ? 'No level selected' : 'Selected: Level $selected';
+
+    return ListTile(
+      leading: Icon(
+        Icons.gamepad,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: const Text('Play Any Level (Debug)'),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () async {
+        final modules = await ref.read(modulesProvider.future);
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          _showDebugLevelPickerDialog(context, ref, modules);
+        });
+      },
+    );
+  }
+
+  void _showDebugLevelPickerDialog(
+      BuildContext context, WidgetRef ref, List<dynamic> modules) {
+    final safeContext = context;
+
+    // Fetch modules and build level list
+    final levels = <int>[];
+    for (final m in modules) {
+      for (int i = m.startLevel; i <= m.endLevel; i++) {
+        levels.add(i);
+      }
+    }
+
+    if (levels.isEmpty) {
+      ScaffoldMessenger.of(safeContext).showSnackBar(
+        const SnackBar(content: Text('No levels available')),
+      );
+      return;
+    }
+
+    int? selected = ref.read(debugSelectedLevelProvider);
+
+    showDialog(
+      context: safeContext,
+      builder: (dialogContext) {
+        return FutureBuilder<Map<int, String>>(
+          future: _loadLabels(levels),
+          builder: (ctx, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return AlertDialog(
+                title: const Text('Debug: Select Level to Play'),
+                content: const CircularProgressIndicator(),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              );
+            }
+            final labels = snapshot.data ?? {};
+            return AlertDialog(
+              title: const Text('Debug: Select Level to Play'),
+              content: StatefulBuilder(builder: (ctx, setState) {
+                return DropdownButtonFormField<int>(
+                  isDense: true,
+                  initialValue: selected,
+                  items: levels
+                      .map((lvl) => DropdownMenuItem<int>(
+                            value: lvl,
+                            child: Text(labels[lvl] ?? 'Level $lvl'),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selected = value;
+                    });
+                    // Persist selection immediately in the debug provider so the Play
+                    // button reflects the choice and other code can react sooner.
+                    if (value != null) {
+                      ref.read(debugSelectedLevelProvider.notifier).setLevel(value);
+                    }
+                  },
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Level',
+                  ),
+                );
+              }),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: selected == null
+                      ? null
+                      : () {
+                          ref
+                              .read(debugSelectedLevelProvider.notifier)
+                              .setLevel(selected);
+                          Navigator.of(dialogContext).pop();
+                          Navigator.of(dialogContext).pushNamed('/game');
+                        },
+                  child: const Text('Play'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+  }
+
+  Future<Map<int, String>> _loadLabels(List<int> levels) async {
+    final labels = <int, String>{};
+    for (final lvl in levels) {
+      try {
+        final jsonStr =
+            await rootBundle.loadString('assets/levels/level_$lvl.json');
+        final jsonMap = jsonDecode(jsonStr) as Map<String, dynamic>;
+        final difficulty = (jsonMap['difficulty'] ?? 'Unknown').toString();
+        labels[lvl] = 'Level $lvl — $difficulty';
+      } catch (_) {
+        labels[lvl] = 'Level $lvl';
+      }
+    }
+    return labels;
   }
 
   void _showResetDataDialog(BuildContext context, WidgetRef ref) {

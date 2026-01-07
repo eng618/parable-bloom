@@ -238,8 +238,14 @@ class GardenGame extends FlameGame with TapCallbacks {
   }
 
   Future<void> _loadCurrentLevel() async {
+    final debugSelected = ref.read(debugSelectedLevelProvider);
     final gameProgress = ref.read(gameProgressProvider);
-    final levelNumber = gameProgress.currentLevel;
+    final levelNumber = debugSelected ?? gameProgress.currentLevel;
+
+    if (debugSelected != null) {
+      debugPrint(
+          'GardenGame: Debug selected level $debugSelected — loading temporarily without changing saved progress');
+    }
 
     debugPrint(
       'GardenGame: Attempting to load level $levelNumber',
@@ -274,8 +280,10 @@ class GardenGame extends FlameGame with TapCallbacks {
       ref.read(levelTotalTapsProvider.notifier).reset();
       ref.read(levelWrongTapsProvider.notifier).reset();
 
-      // Log level start analytics
-      ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
+      // Log level start analytics (skip for debug play sessions)
+      if (!ref.read(debugPlayModeProvider)) {
+        ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
+      }
 
       debugPrint('Loaded level $levelNumber: ${_currentLevelData!.name}');
     } catch (e, stackTrace) {

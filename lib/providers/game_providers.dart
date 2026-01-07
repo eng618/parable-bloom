@@ -728,6 +728,10 @@ final debugVineAnimationLoggingProvider =
   DebugVineAnimationLoggingNotifier.new,
 );
 
+// Test-only override to make debug UI visible during widget tests. Defaults
+// to false in normal builds.
+final debugUiEnabledForTestsProvider = Provider<bool>((ref) => false);
+
 class DebugVineAnimationLoggingNotifier extends Notifier<bool> {
   @override
   bool build() {
@@ -741,6 +745,24 @@ class DebugVineAnimationLoggingNotifier extends Notifier<bool> {
     await box.put('debugVineAnimationLogging', enabled);
   }
 }
+
+// Debug-only selected level for temporary play sessions (debug builds only)
+class DebugSelectedLevelNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  void setLevel(int? level) => state = level;
+}
+
+final debugSelectedLevelProvider =
+    NotifierProvider<DebugSelectedLevelNotifier, int?>(
+  DebugSelectedLevelNotifier.new,
+);
+
+// Whether we're in a debug play session (true when debugSelectedLevelProvider is non-null)
+final debugPlayModeProvider = Provider<bool>((ref) {
+  return ref.watch(debugSelectedLevelProvider) != null;
+});
 
 class GameInstanceNotifier extends Notifier<GardenGame?> {
   @override

@@ -412,9 +412,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         }
       }
 
-      await ref
-          .read(gameProgressProvider.notifier)
-          .completeLevel(currentLevel.id);
+      final isDebugPlay = ref.read(debugPlayModeProvider);
+      if (!isDebugPlay) {
+        await ref
+            .read(gameProgressProvider.notifier)
+            .completeLevel(currentLevel.id);
+      } else {
+        debugPrint(
+            'GameScreen: Debug play — skipping persistence for level ${currentLevel.id}');
+      }
     }
     ref.read(levelCompleteProvider.notifier).setComplete(false);
 
@@ -431,8 +437,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
 
     if (completedModule != null) {
+      // Clear debug selection if active
+      if (ref.read(debugPlayModeProvider)) {
+        ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
+      }
       await _showParableUnlockedDialog(completedModule);
       return;
+    }
+
+    // Clear debug selection if active before navigating home
+    if (ref.read(debugPlayModeProvider)) {
+      ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
     }
 
     // Navigate back to home screen and clear game screen from stack
