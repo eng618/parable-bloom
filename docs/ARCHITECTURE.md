@@ -94,6 +94,8 @@ The environment is determined at runtime via `EnvironmentConfig` (e.g., using `S
 ```text
 lib/
 ├── core/               # Config, Constants, Utils
+│   ├── app_theme.dart  # Centralized theme system with Material 3, brand colors, and game-specific extensions
+│   └── ...
 ├── features/
 │   ├── game/           # Flame components, Logic, UI
 │   ├── journal/        # Parable reader
