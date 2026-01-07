@@ -335,7 +335,8 @@ final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
   throw UnimplementedError('AnalyticsService must be initialized in main');
 });
 
-// App version provider - fetches version from pubspec.yaml via PackageInfo
+// App version provider - fetches version from platform configuration
+// (populated from pubspec.yaml during build)
 final appVersionProvider = FutureProvider<String>((ref) async {
   final packageInfo = await PackageInfo.fromPlatform();
   return '${packageInfo.version}+${packageInfo.buildNumber}';
