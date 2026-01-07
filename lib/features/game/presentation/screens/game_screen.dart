@@ -321,7 +321,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     shadows: [
                       Shadow(
                         blurRadius: 10.0,
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .shadow
+                            .withValues(alpha: 0.6),
                         offset: const Offset(2.0, 2.0),
                       ),
                     ],
@@ -331,12 +334,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 const SizedBox(height: 16),
                 Icon(
                   Icons.celebration,
-                  color: Theme.of(context).colorScheme.tertiary,
+                  color: Theme.of(context).colorScheme.onSurface,
                   size: 72,
                   shadows: [
                     Shadow(
                       blurRadius: 8.0,
-                      color: Colors.black.withValues(alpha: 0.4),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .shadow
+                          .withValues(alpha: 0.4),
                       offset: const Offset(1.5, 1.5),
                     ),
                   ],
@@ -581,7 +587,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.emoji_events, color: Colors.amber, size: 64),
+              Icon(Icons.emoji_events, color: cs.onSurface, size: 64),
               const SizedBox(height: 16),
               Text(
                 'You have completed the game!',
