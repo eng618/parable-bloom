@@ -8,15 +8,11 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      final versionAsync = container.read(appVersionProvider);
+      // Wait for the future to complete
+      final version = await container.read(appVersionProvider.future);
       
-      // The provider should eventually provide a version string
-      await expectLater(
-        versionAsync.future,
-        completion(isA<String>()),
-      );
-      
-      final version = await versionAsync.future;
+      // Version should be a string
+      expect(version, isA<String>());
       
       // Version should be in format "X.Y.Z+N" where X, Y, Z are numbers
       // and N is a build number
@@ -27,8 +23,7 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      final versionAsync = container.read(appVersionProvider);
-      final version = await versionAsync.future;
+      final version = await container.read(appVersionProvider.future);
       
       expect(version, isNotEmpty);
     });
