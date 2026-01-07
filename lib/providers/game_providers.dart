@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../features/game/data/repositories/firebase_game_progress_repository.dart';
 import '../features/game/data/repositories/hive_game_progress_repository.dart';
@@ -332,6 +333,12 @@ final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
 
 final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
   throw UnimplementedError('AnalyticsService must be initialized in main');
+});
+
+// App version provider - fetches version from pubspec.yaml via PackageInfo
+final appVersionProvider = FutureProvider<String>((ref) async {
+  final packageInfo = await PackageInfo.fromPlatform();
+  return '${packageInfo.version}+${packageInfo.buildNumber}';
 });
 
 // Level solver service provider
