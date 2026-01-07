@@ -94,11 +94,11 @@ Colors are used functionally to indicate vine roles and difficulty.
 
 ## 5. Level Design Principles
 
-### The 95% Rule (Occupancy)
+### Full Coverage Rule (Occupancy)
 
-- **Principle**: Levels must feel lush and overgrown.
-- **Rule**: At least **95%** of the grid cells must be occupied by vines.
-- **Reasoning**: High density eliminates "empty" space, making the puzzle feel tighter and more interconnected.
+- **Principle**: Levels should be fully tiled by vines — no empty coordinates in the visible grid.
+- **Rule**: **100%** of visible grid cells should be occupied by vines. If a `mask` hides cells, allow **≥99%** coverage of visible cells to permit a reserved visual cell.
+- **Reasoning**: Full coverage (or 99–100% when masked) maintains consistent visual density and simplifies generation by making the problem a complete-tiling task for the generator.
 
 ### Flow & Blocking
 

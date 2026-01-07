@@ -85,7 +85,7 @@ The schemas are divided into **Tier A (Runtime-Critical)** fields, which are req
     },
     "difficulty": {
       "type": "string",
-      "enum": ["Tutorial", "Seedling", "Nurturing", "Flourishing", "Transcendent"]
+      "enum": ["Tutorial", "Seedling", "Sprout", "Nurturing", "Flourishing", "Transcendent"]
     },
     "complexity": {
       "type": "string",
@@ -248,10 +248,10 @@ Levels must pass strict validation rules to be playable. These are enforced by `
     - No self-intersections.
     - `head_direction` must align with the first segment.
 4. **Solvability**: The level must be solvable (no deadlocks) within the `max_moves` limit.
-5. **Occupancy**:
-    - **Tutorial/Seedling**: ≥ 30% (Target 95% for visual density)
-    - **Nurturing**: ≥ 60%
-    - **Flourishing/Transcendent**: ≥ 75%
+5. **Occupancy (Full Coverage)**:
+    - **Principle**: No empty coordinates — generated levels should assign every *visible* cell to exactly one vine.
+    - **Rule**: Require **100% coverage** of visible cells. If a `mask` hides cells (mode: "hide"), allow **≥99%** coverage of visible cells to permit a reserved visual cell.
+    - **Rationale**: This aligns the validator and generator on a strict, unambiguous requirement: levels are full-tilings of the visible grid (no overlaps, no gaps). Validation will flag overlaps as violations and incomplete coverage as violations (or near-complete coverage as a warning when a mask is present).
 
 ### Tier B (Design) Checks
 
@@ -284,15 +284,15 @@ Levels must pass strict validation rules to be playable. These are enforced by `
 
 | Tier | Grid Size | Vines | Occupancy Target |
 | :--- | :--- | :--- | :--- |
-| **Seedling** | 6×8 - 8×10 | 6-8 | ≥95% |
-| **Sprout** | 8×10 - 10×12 | 10-14 | ≥95% |
-| **Nurturing** | 10×14 - 12×16 | 18-28 | ≥95% |
-| **Flourishing** | 12×16 - 16×20 | 36-50 | ≥95% |
-| **Transcendent** | 16×24+ | 60+ | ≥95% |
+| **Seedling** | 6×8 - 8×10 | 6-8 | 100% (visible cells; mask may allow 99%) |
+| **Sprout** | 8×10 - 10×12 | 10-14 | 100% (visible cells; mask may allow 99%) |
+| **Nurturing** | 10×14 - 12×16 | 18-28 | 100% (visible cells; mask may allow 99%) |
+| **Flourishing** | 12×16 - 16×20 | 36-50 | 100% (visible cells; mask may allow 99%) |
+| **Transcendent** | 16×24+ | 60+ | 100% (visible cells; mask may allow 99%) |
 
 ### Checklist
 
-- [ ] **Occupancy**: Is the grid ≥95% filled?
+- [ ] **Occupancy**: Is the grid fully filled (100% of visible cells)? No overlaps, no empty coordinates.
 - [ ] **Colors**: Are 3-5 distinct colors used?
 - [ ] **Path Validity**: Are all paths contiguous with correct head directions?
 - [ ] **Solvability**: Is there at least one valid first move?

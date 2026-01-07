@@ -3,7 +3,7 @@
 Enhanced Level Validation Script for Parable Bloom
 
 Validates levels against comprehensive design rules including:
-- Grid occupancy (95%+)
+- Grid occupancy (100% coverage; no empty coordinates)
 - Color distribution constraints
 - Vine length requirements
 - Blocking relationship integrity
@@ -43,31 +43,31 @@ VINE_COLORS = {
 DIFFICULTY_SPECS = {
     'Seedling': {
         'vine_count_range': (4, 60), # Relaxed for dense grids
-        'avg_length_range': (3, 10),
+        'avg_length_range': (6, 8),  # GDD: Seedling 6–8
         'max_blocking_depth': 1,
         'color_count_range': (1, 5), # Allow single color (default)
     },
     'Sprout': {
         'vine_count_range': (8, 80),
-        'avg_length_range': (3, 8),
+        'avg_length_range': (5, 7),  # GDD: Sprout 5–7
         'max_blocking_depth': 2,
         'color_count_range': (1, 5),
     },
     'Nurturing': {
         'vine_count_range': (12, 100),
-        'avg_length_range': (3, 8),
+        'avg_length_range': (4, 6),  # GDD: Nurturing 4–6
         'max_blocking_depth': 3,
         'color_count_range': (1, 6),
     },
     'Flourishing': {
         'vine_count_range': (15, 150),
-        'avg_length_range': (2, 6),
+        'avg_length_range': (3, 5),  # GDD: Flourishing 3–5
         'max_blocking_depth': 4,
         'color_count_range': (1, 6),
     },
     'Transcendent': {
         'vine_count_range': (15, 200),
-        'avg_length_range': (2, 6),
+        'avg_length_range': (2, 4),  # GDD: Transcendent 2–4
         'max_blocking_depth': 4,
         'color_count_range': (1, 6),
     },
@@ -148,32 +148,71 @@ class LevelValidator:
                 )
 
     def _validate_grid_occupancy(self):
-        """Validate 95%+ grid occupancy."""
+        """Validate full-coverage grid occupancy (no empty coordinates and no overlaps)."""
         grid_size = self.data.get('grid_size', [])
         if not grid_size or len(grid_size) != 2:
             return
 
-        total_cells = grid_size[0] * grid_size[1]
-        occupied_cells = sum(
-            len(vine.get('ordered_path', [])) for vine in self.data.get('vines', [])
-        )
+        width, height = grid_size
+        total_cells = width * height
 
-        occupancy = occupied_cells / total_cells if total_cells > 0 else 0
+        # Build set of occupied coordinates and track duplicates
+        occupied = {}
+        duplicates = defaultdict(list)
+        vines = self.data.get('vines', [])
+        for vine in vines:
+            vine_id = vine.get('id', 'unknown')
+            for cell in vine.get('ordered_path', []):
+                coord = (cell['x'], cell['y'])
+                if coord in occupied:
+                    duplicates[coord].append((occupied[coord], vine_id))
+                else:
+                    occupied[coord] = vine_id
+
+        unique_occupied = len(occupied)
+
+        # If a mask hides cells, treat those as not part of the visible grid
+        mask = self.data.get('mask', {}) or {}
+        hidden_coords = set()
+        if mask.get('mode') == 'hide' and isinstance(mask.get('points', None), list):
+            for p in mask['points']:
+                if isinstance(p, list) and len(p) == 2:
+                    hidden_coords.add((p[0], p[1]))
+                elif isinstance(p, dict) and 'x' in p and 'y' in p:
+                    hidden_coords.add((p['x'], p['y']))
+
+        effective_total = total_cells - len(hidden_coords)
+        effective_total = max(effective_total, 0)
+
+        occupancy = (unique_occupied / effective_total) if effective_total > 0 else 0
         self.data['occupancy_percent'] = round(occupancy * 100, 1)
 
-        difficulty = self.data.get('difficulty', 'Seedling')
-        min_occupancy = 0.30 if difficulty in ['Seedling', 'Tutorial'] else 0.75
-
-        if occupancy < min_occupancy:
+        # Overlap checks (violations)
+        if duplicates:
+            sample = list(duplicates.items())[:5]
             self.violations.append(
-                f"Grid occupancy too low: {occupancy:.1%} "
-                f"({occupied_cells}/{total_cells} cells). "
-                f"Minimum required: {min_occupancy:.0%}"
+                f"Overlapping vines detected at {len(duplicates)} cells; sample: {sample}"
             )
-        elif occupancy < (min_occupancy + 0.10):
-            self.warnings.append(
-                f"Grid occupancy near minimum: {occupancy:.1%}"
-            )
+
+        # Enforce full coverage (allow minor tolerance when masked)
+        if hidden_coords:
+            # If mask hides cells, allow ≥99% coverage of visible cells (soft allowance)
+            if occupancy < 0.99:
+                self.violations.append(
+                    f"Grid coverage incomplete: {self.data['occupancy_percent']}% of visible cells occupied; "
+                    f"expected ≥99% when mask is used"
+                )
+            elif occupancy < 1.0:
+                self.warnings.append(
+                    f"Grid coverage near-complete: {self.data['occupancy_percent']}% (mask hides {len(hidden_coords)} cells)"
+                )
+        else:
+            # No mask — require complete tiling (no empty coordinates)
+            if unique_occupied < effective_total:
+                self.violations.append(
+                    f"Grid not fully tiled: {unique_occupied}/{effective_total} cells occupied ({self.data['occupancy_percent']}%). "
+                    f"Generator must produce a full tiling with no empty coordinates."
+                )
 
     def _validate_colors(self):
         """Validate color usage and distribution."""
@@ -285,7 +324,32 @@ class LevelValidator:
         if not clearable_at_start:
             self.violations.append("No vines are clearable at level start (deadlock)")
         
+        # Compute maximum blocking depth (longest path in the blocking DAG)
+        def longest_path(node, memo):
+            if node in memo:
+                return memo[node]
+            max_len = 0
+            for child in blocking_graph.get(node, []):
+                max_len = max(max_len, 1 + longest_path(child, memo))
+            memo[node] = max_len
+            return max_len
+
+        memo = {}
+        max_depth = 0
+        for n in blocking_graph.keys():
+            max_depth = max(max_depth, longest_path(n, memo))
+
         self.data['blocking_graph'] = dict(blocking_graph)
+        self.data['blocking_depth'] = max_depth
+
+        # Blocking depth is a soft, scored target: warn if above difficulty target, but do not fail
+        difficulty = self.data.get('difficulty', '')
+        if difficulty in DIFFICULTY_SPECS:
+            goal = DIFFICULTY_SPECS[difficulty].get('max_blocking_depth', None)
+            if goal is not None and max_depth > goal:
+                self.warnings.append(
+                    f"Blocking depth {max_depth} exceeds soft target {goal} for {difficulty} (scored target, not a hard requirement)"
+                )
 
     def _validate_directional_balance(self):
         """Validate directional distribution."""
