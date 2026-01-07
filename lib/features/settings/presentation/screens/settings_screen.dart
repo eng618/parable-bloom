@@ -65,11 +65,7 @@ class SettingsScreen extends ConsumerWidget {
           _buildCloudSyncTile(context, ref),
           const Divider(),
           _buildSectionHeader(context, 'About'),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('Version'),
-            subtitle: const Text('1.0.0'),
-          ),
+          _buildVersionTile(context, ref),
           const Divider(),
           if (kDebugMode) ...[
             _buildSectionHeader(context, 'Debug'),
@@ -130,6 +126,28 @@ class SettingsScreen extends ConsumerWidget {
       case AppThemeMode.system:
         return 'System';
     }
+  }
+
+  Widget _buildVersionTile(BuildContext context, WidgetRef ref) {
+    final versionAsync = ref.watch(appVersionProvider);
+
+    return versionAsync.when(
+      data: (version) => ListTile(
+        leading: const Icon(Icons.info_outline),
+        title: const Text('Version'),
+        subtitle: Text(version),
+      ),
+      loading: () => const ListTile(
+        leading: Icon(Icons.info_outline),
+        title: Text('Version'),
+        subtitle: Text('Loading...'),
+      ),
+      error: (error, stack) => const ListTile(
+        leading: Icon(Icons.info_outline),
+        title: Text('Version'),
+        subtitle: Text('Unknown'),
+      ),
+    );
   }
 
   Widget _buildCloudSyncTile(BuildContext context, WidgetRef ref) {
