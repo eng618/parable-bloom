@@ -219,7 +219,7 @@ class GardenGame extends FlameGame with TapCallbacks {
         final tapEffect = TapEffectComponent(
           tapPosition: position,
           color: _tapEffectColor,
-          maxRadius: 25.0,
+          maxRadius: 15.0, // Reduced to prevent large effects
           duration: 0.4,
         );
         grid.add(tapEffect);
@@ -367,7 +367,7 @@ class GardenGame extends FlameGame with TapCallbacks {
       final tapEffect = TapEffectComponent(
         tapPosition: tapPos,
         color: _tapEffectColor,
-        maxRadius: 25.0,
+        maxRadius: 15.0, // Reduced to prevent large effects
         duration: 0.4,
       );
       add(tapEffect);
