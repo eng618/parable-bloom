@@ -90,3 +90,4 @@ private_keys/
 .codacy/tools-configs/semgrep.yaml
 .codacy/tools-configs/trivy.yaml
 assets/levels_backup/levels_20260107T012417Z.tar.gz
+results.sarif
