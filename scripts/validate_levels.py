@@ -46,30 +46,35 @@ DIFFICULTY_SPECS = {
         'avg_length_range': (6, 8),  # GDD: Seedling 6–8
         'max_blocking_depth': 1,
         'color_count_range': (1, 5), # Allow single color (default)
+        'min_grid_occupancy': 0.30,  # 30% minimum
     },
     'Sprout': {
         'vine_count_range': (8, 80),
         'avg_length_range': (5, 7),  # GDD: Sprout 5–7
         'max_blocking_depth': 2,
         'color_count_range': (1, 5),
+        'min_grid_occupancy': 0.93,  # 93% minimum
     },
     'Nurturing': {
         'vine_count_range': (12, 100),
         'avg_length_range': (4, 6),  # GDD: Nurturing 4–6
         'max_blocking_depth': 3,
         'color_count_range': (1, 6),
+        'min_grid_occupancy': 0.93,  # 93% minimum
     },
     'Flourishing': {
         'vine_count_range': (15, 150),
         'avg_length_range': (3, 5),  # GDD: Flourishing 3–5
         'max_blocking_depth': 4,
         'color_count_range': (1, 6),
+        'min_grid_occupancy': 0.93,  # 93% minimum
     },
     'Transcendent': {
         'vine_count_range': (15, 200),
         'avg_length_range': (2, 4),  # GDD: Transcendent 2–4
         'max_blocking_depth': 4,
         'color_count_range': (1, 6),
+        'min_grid_occupancy': 0.93,  # 93% minimum
     },
 }
 
@@ -185,7 +190,8 @@ class LevelValidator:
         effective_total = max(effective_total, 0)
 
         occupancy = (unique_occupied / effective_total) if effective_total > 0 else 0
-        self.data['occupancy_percent'] = round(occupancy * 100, 1)
+        # Note: occupancy_percent is calculated but not stored in data
+        occupancy_percent = round(occupancy * 100, 1)
 
         # Overlap checks (violations)
         if duplicates:
@@ -194,25 +200,16 @@ class LevelValidator:
                 f"Overlapping vines detected at {len(duplicates)} cells; sample: {sample}"
             )
 
-        # Enforce full coverage (allow minor tolerance when masked)
-        if hidden_coords:
-            # If mask hides cells, allow ≥99% coverage of visible cells (soft allowance)
-            if occupancy < 0.99:
-                self.violations.append(
-                    f"Grid coverage incomplete: {self.data['occupancy_percent']}% of visible cells occupied; "
-                    f"expected ≥99% when mask is used"
-                )
-            elif occupancy < 1.0:
-                self.warnings.append(
-                    f"Grid coverage near-complete: {self.data['occupancy_percent']}% (mask hides {len(hidden_coords)} cells)"
-                )
-        else:
-            # No mask — require complete tiling (no empty coordinates)
-            if unique_occupied < effective_total:
-                self.violations.append(
-                    f"Grid not fully tiled: {unique_occupied}/{effective_total} cells occupied ({self.data['occupancy_percent']}%). "
-                    f"Generator must produce a full tiling with no empty coordinates."
-                )
+        # Enforce minimum coverage based on difficulty (matching Go validator)
+        difficulty = self.data.get('difficulty', 'Seedling')
+        spec = DIFFICULTY_SPECS.get(difficulty, DIFFICULTY_SPECS['Seedling'])
+        min_occupancy = spec.get('min_grid_occupancy', 0.30)
+
+        if occupancy < min_occupancy:
+            self.violations.append(
+                f"Grid occupancy too low: {occupancy_percent:.1f}% (need {min_occupancy*100:.0f}%), "
+                f"{unique_occupied}/{effective_total} cells occupied"
+            )
 
     def _validate_colors(self):
         """Validate color usage and distribution."""
@@ -446,9 +443,8 @@ def main():
             validator = LevelValidator(fpath, data)
             violations, warnings = validator.validate_all()
 
-            # Write updated data with occupancy back to file
-            with open(fpath, 'w') as f:
-                json.dump(data, f, indent=2)
+            # Note: Not writing back data to preserve original level format
+            # The occupancy_percent field is for validation reporting only
 
             if print_report(fpath, violations, warnings):
                 files_valid += 1

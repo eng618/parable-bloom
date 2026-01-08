@@ -116,5 +116,6 @@
   "color_distribution": {
     "unknown": 1.0
   },
-  "blocking_graph": {}
+  "blocking_graph": {},
+  "blocking_depth": 0
 }
