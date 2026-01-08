@@ -428,51 +428,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             return AlertDialog(
               title: const Text('Debug: Select Level to Play'),
               content: StatefulBuilder(builder: (ctx, setState) {
-                return DropdownButtonFormField<int>(
-                  isDense: true,
-                  initialValue: selected,
-                  items: levels
-                      .map((lvl) => DropdownMenuItem<int>(
-                            value: lvl,
-                            child: Text(labels[lvl] ?? 'Level $lvl'),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selected = value;
-                    });
-                    // Persist selection immediately in the debug provider so the Play
-                    // button reflects the choice and other code can react sooner.
-                    if (value != null) {
-                      ref
-                          .read(debugSelectedLevelProvider.notifier)
-                          .setLevel(value);
-                    }
-                  },
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Level',
-                  ),
-                );
-              }),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: selected == null
-                      ? null
-                      : () {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<int>(
+                      isDense: true,
+                      initialValue: selected,
+                      items: levels
+                          .map((lvl) => DropdownMenuItem<int>(
+                                value: lvl,
+                                child: Text(labels[lvl] ?? 'Level $lvl'),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selected = value;
+                        });
+                        // Persist selection immediately in the debug provider so the Play
+                        // button reflects the choice and other code can react sooner.
+                        if (value != null) {
                           ref
                               .read(debugSelectedLevelProvider.notifier)
-                              .setLevel(selected);
-                          Navigator.of(dialogContext).pop();
-                          Navigator.of(dialogContext).pushNamed('/game');
-                        },
-                  child: const Text('Play'),
-                ),
-              ],
+                              .setLevel(value);
+                        }
+                      },
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Level',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: selected == null
+                              ? null
+                              : () {
+                                  ref
+                                      .read(debugSelectedLevelProvider.notifier)
+                                      .setLevel(selected);
+                                  Navigator.of(dialogContext).pop();
+                                  Navigator.of(dialogContext).pushNamed('/game');
+                                },
+                          child: const Text('Play'),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              }),
             );
           },
         );
