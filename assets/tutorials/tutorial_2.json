@@ -1,0 +1,71 @@
+{
+  "id": 2,
+  "name": "Single Block",
+  "difficulty": "Tutorial",
+  "grid_size": [
+    4,
+    6
+  ],
+  "mask": {
+    "mode": "show-all",
+    "points": []
+  },
+  "vines": [
+    {
+      "id": "vine_a",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 1,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 0
+        }
+      ],
+      "vine_color": "default"
+    },
+    {
+      "id": "vine_b",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 4
+        }
+      ],
+      "vine_color": "default"
+    }
+  ],
+  "max_moves": 8,
+  "min_moves": 0,
+  "complexity": "tutorial",
+  "grace": 999,
+  "occupancy_percent": 30.0,
+  "color_distribution": {
+    "unknown": 1.0
+  },
+  "blocking_graph": {
+    "vine_b": [
+      "vine_a"
+    ]
+  },
+  "blocking_depth": 1
+}

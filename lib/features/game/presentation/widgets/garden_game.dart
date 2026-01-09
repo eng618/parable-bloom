@@ -254,7 +254,9 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     try {
       // Load level data directly by level number
-      final assetPath = 'assets/levels/level_$levelNumber.json';
+      final assetPath = gameProgress.tutorialCompleted
+          ? 'assets/levels/level_$levelNumber.json'
+          : 'assets/tutorials/tutorial_$levelNumber.json';
       debugPrint('GardenGame: Loading asset: $assetPath');
 
       final levelJson = await rootBundle.loadString(assetPath);
@@ -317,7 +319,7 @@ class GardenGame extends FlameGame with TapCallbacks {
           'GardenGame: CRITICAL ERROR - Level $levelNumber should exist but failed to load!',
         );
         debugPrint(
-          'GardenGame: Expected asset path: assets/levels/level_$levelNumber.json',
+          'GardenGame: Expected asset path: ${gameProgress.tutorialCompleted ? 'assets/levels/level_$levelNumber.json' : 'assets/tutorials/tutorial_$levelNumber.json'}',
         );
         ref.read(gameOverProvider.notifier).setGameOver(true);
       }

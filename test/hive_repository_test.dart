@@ -53,6 +53,7 @@ void main() {
       final originalProgress = GameProgress(
         currentLevel: 3,
         completedLevels: {1, 2},
+        tutorialCompleted: false,
       );
 
       await repository.saveProgress(originalProgress);
@@ -66,6 +67,7 @@ void main() {
       final progress = GameProgress(
         currentLevel: 5,
         completedLevels: {1, 2, 3, 4},
+        tutorialCompleted: false,
       );
 
       await repository.saveProgress(progress);
@@ -77,7 +79,11 @@ void main() {
     });
 
     test('should handle empty completed levels set', () async {
-      final progress = GameProgress(currentLevel: 2, completedLevels: {});
+      final progress = GameProgress(
+        currentLevel: 2,
+        completedLevels: {},
+        tutorialCompleted: false,
+      );
 
       await repository.saveProgress(progress);
       final retrievedProgress = await repository.getProgress();
@@ -90,6 +96,7 @@ void main() {
       final progress1 = GameProgress(
         currentLevel: 4,
         completedLevels: {1, 2, 3},
+        tutorialCompleted: false,
       );
 
       await repository.saveProgress(progress1);

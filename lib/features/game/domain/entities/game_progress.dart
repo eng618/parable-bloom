@@ -1,18 +1,29 @@
 class GameProgress {
   final int currentLevel;
   final Set<int> completedLevels;
+  final bool tutorialCompleted;
 
-  GameProgress({required this.currentLevel, required this.completedLevels});
+  GameProgress({
+    required this.currentLevel,
+    required this.completedLevels,
+    required this.tutorialCompleted,
+  });
 
-  GameProgress copyWith({int? currentLevel, Set<int>? completedLevels}) {
+  GameProgress copyWith({
+    int? currentLevel,
+    Set<int>? completedLevels,
+    bool? tutorialCompleted,
+  }) {
     return GameProgress(
       currentLevel: currentLevel ?? this.currentLevel,
       completedLevels: completedLevels ?? this.completedLevels,
+      tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
     );
   }
 
   factory GameProgress.initial() {
-    return GameProgress(currentLevel: 1, completedLevels: {});
+    return GameProgress(
+        currentLevel: 1, completedLevels: {}, tutorialCompleted: false);
   }
 
   GameProgress completeLevel(int levelNumber) {
@@ -39,6 +50,7 @@ class GameProgress {
     return {
       'currentLevel': currentLevel,
       'completedLevels': completedLevels.toList(),
+      'tutorialCompleted': tutorialCompleted,
     };
   }
 
@@ -46,6 +58,7 @@ class GameProgress {
     return GameProgress(
       currentLevel: json['currentLevel'] ?? 1,
       completedLevels: Set<int>.from(json['completedLevels'] ?? []),
+      tutorialCompleted: json['tutorialCompleted'] ?? false,
     );
   }
 

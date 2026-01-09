@@ -48,15 +48,17 @@ The game scales difficulty through grid size, vine count, and blocking complexit
 | **Flourishing** | 12×16 to 16×20 | 36-50 | 3-5 | Deep blocking | 3-4 |
 | **Transcendent** | 16×24+ | 60+ | 2-4 | Cascading locks | 4+ |
 
-### Tutorial Strategy (Levels 1-5)
+### Tutorial Strategy (Pre-Level)
 
-The first module serves as an invisible tutorial, introducing mechanics step-by-step without text walls.
+Tutorials run once at game start, separate from main levels. They introduce progressive blocking mechanics with in-game guidance.
 
-1. **Level 1 (Your First Vine)**: 6-8 vines, no blocking. Teaches tap-to-move.
-2. **Level 2 (Colors)**: Introduces color variety. No blocking.
-3. **Level 3 (First Blocker)**: Introduces a single blocking pair (A blocks B).
-4. **Level 4 (The Chain)**: Introduces a 3-step dependency (A blocks B blocks C).
-5. **Level 5 (Multi-Block)**: Two independent blocking chains.
+1. **Tutorial 1 (Basic Movement)**: 3×9 grid with 3 vertical arrows covering the entire grid. Shows easy clicking to clear vines.
+2. **Tutorial 2 (Single Blocking)**: Demonstrates one level of blocking.
+3. **Tutorial 3 (Multiple Blocking)**: Demonstrates multiple levels of blocking.
+4. **Tutorial 4**: Further progression.
+5. **Tutorial 5**: Capstone tutorial.
+
+Tutorials include animated arrows and text hints guiding the player through correct taps.
 
 ### Modules & Narrative
 

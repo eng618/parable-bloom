@@ -61,6 +61,7 @@ void main() {
       final newProgress = GameProgress(
         currentLevel: 5,
         completedLevels: {1, 2, 3, 4},
+        tutorialCompleted: false,
       );
 
       await repository.saveProgress(newProgress);
@@ -72,7 +73,11 @@ void main() {
 
     test('should reset to initial state', () async {
       await repository.saveProgress(
-        GameProgress(currentLevel: 10, completedLevels: {1, 2, 3}),
+        GameProgress(
+          currentLevel: 10,
+          completedLevels: {1, 2, 3},
+          tutorialCompleted: false,
+        ),
       );
 
       await repository.resetProgress();

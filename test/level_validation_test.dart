@@ -7,9 +7,18 @@ import 'package:parable_bloom/core/vine_color_palette.dart';
 
 void main() {
   final levelsDir = Directory('assets/levels');
+  final tutorialsDir = Directory('assets/tutorials');
+
   if (!levelsDir.existsSync()) {
     test('Setup', () {
       fail('assets/levels directory not found');
+    });
+    return;
+  }
+
+  if (!tutorialsDir.existsSync()) {
+    test('Setup', () {
+      fail('assets/tutorials directory not found');
     });
     return;
   }
@@ -20,20 +29,28 @@ void main() {
       .where((f) => f.path.contains('level_') && f.path.endsWith('.json'))
       .toList();
 
+  final tutorialFiles = tutorialsDir
+      .listSync()
+      .whereType<File>()
+      .where((f) => f.path.contains('tutorial_') && f.path.endsWith('.json'))
+      .toList();
+
+  final allFiles = [...levelFiles, ...tutorialFiles];
+
   final env = Platform.environment;
   final startFilter = int.tryParse(env['PB_LEVEL_START'] ?? '');
   final endFilter = int.tryParse(env['PB_LEVEL_END'] ?? '');
   final batchSize = int.tryParse(env['PB_LEVEL_BATCH'] ?? '') ?? 10;
 
   // Sort files by level ID
-  levelFiles.sort((a, b) {
-    final idA = int.parse(a.path.split('level_').last.split('.').first);
-    final idB = int.parse(b.path.split('level_').last.split('.').first);
+  allFiles.sort((a, b) {
+    final idA = _extractId(a.path);
+    final idB = _extractId(b.path);
     return idA.compareTo(idB);
   });
 
-  final filtered = levelFiles.where((file) {
-    final id = int.parse(file.path.split('level_').last.split('.').first);
+  final filtered = allFiles.where((file) {
+    final id = _extractId(file.path);
     if (startFilter != null && id < startFilter) return false;
     if (endFilter != null && id > endFilter) return false;
     return true;
@@ -46,16 +63,16 @@ void main() {
     final batch = filtered.sublist(i, end);
     if (batch.isEmpty) continue;
 
-    final startId = batch.first.path.split('level_').last.split('.').first;
-    final endId = batch.last.path.split('level_').last.split('.').first;
+    final startId = _extractId(batch.first.path);
+    final endId = _extractId(batch.last.path);
 
     group(
-      'Levels $startId-$endId',
+      'Levels/Tutorials $startId-$endId',
       () {
         for (final file in batch) {
-          final levelId = file.path.split('level_').last.split('.').first;
+          final levelId = _extractId(file.path);
           test(
-            'Level $levelId validation',
+            'Level/Tutorial $levelId validation',
             () async {
               await _validateLevel(file);
             },
@@ -65,6 +82,16 @@ void main() {
       },
       skip: false,
     );
+  }
+}
+
+int _extractId(String path) {
+  if (path.contains('level_')) {
+    return int.parse(path.split('level_').last.split('.').first);
+  } else if (path.contains('tutorial_')) {
+    return int.parse(path.split('tutorial_').last.split('.').first);
+  } else {
+    throw ArgumentError('Invalid file path: $path');
   }
 }
 
