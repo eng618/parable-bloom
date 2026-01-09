@@ -71,6 +71,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           _buildSectionHeader(context, 'Data & Sync'),
           _buildCloudSyncTile(context, ref),
+          _buildRedoTutorialTile(context, ref),
           const Divider(),
           _buildSectionHeader(context, 'About'),
           _buildVersionTile(context, ref),
@@ -303,6 +304,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Widget _buildRedoTutorialTile(BuildContext context, WidgetRef ref) {
+    return ListTile(
+      leading: const Icon(Icons.replay),
+      title: const Text('Redo Tutorial'),
+      subtitle: const Text('Restart the tutorial levels'),
+      onTap: () => _showRedoTutorialDialog(context, ref),
+    );
+  }
+
   Widget _buildResetDataTile(BuildContext context, WidgetRef ref) {
     return ListTile(
       leading: Icon(
@@ -473,7 +483,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       .read(debugSelectedLevelProvider.notifier)
                                       .setLevel(selected);
                                   Navigator.of(dialogContext).pop();
-                                  Navigator.of(dialogContext).pushNamed('/game');
+                                  Navigator.of(dialogContext)
+                                      .pushNamed('/game');
                                 },
                           child: const Text('Play'),
                         ),
@@ -573,6 +584,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(width: 8),
           Text(item, style: Theme.of(context).textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+
+  void _showRedoTutorialDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Redo Tutorial'),
+        content: const Text(
+          'This will reset your tutorial progress and allow you to play through the tutorial levels again. Your main game progress will not be affected.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => _performRedoTutorial(context, ref),
+            child: const Text('Redo Tutorial'),
+          ),
         ],
       ),
     );
@@ -700,6 +733,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       );
     }
+  }
+
+  void _performRedoTutorial(BuildContext context, WidgetRef ref) {
+    Navigator.of(context).pop(); // Close dialog
+
+    ref.read(gameProgressProvider.notifier).resetTutorial();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('Tutorial reset. You can now replay the tutorial.')),
+    );
   }
 
   void _showThemeDialog(

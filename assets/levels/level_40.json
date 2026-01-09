@@ -1,10 +1,10 @@
 {
-  "id": 40,
-  "name": "Level 40",
-  "difficulty": "Sprout",
+  "id": 45,
+  "name": "Level 45",
+  "difficulty": "Nurturing",
   "grid_size": [
-    9,
-    13
+    10,
+    16
   ],
   "mask": {
     "mode": "show-all",
@@ -13,195 +13,164 @@
   "vines": [
     {
       "id": "vine_0",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 7,
-          "y": 2
+          "x": 4,
+          "y": 10
         },
         {
-          "x": 8,
-          "y": 2
+          "x": 3,
+          "y": 10
+        },
+        {
+          "x": 2,
+          "y": 10
+        },
+        {
+          "x": 1,
+          "y": 10
+        },
+        {
+          "x": 0,
+          "y": 10
         }
       ],
-      "vine_color": "moss_green",
+      "vine_color": "sunset_orange",
       "blocks": [
-        "vine_3",
-        "vine_21",
-        "vine_26"
+        "vine_14",
+        "vine_25",
+        "vine_42"
       ]
     },
     {
       "id": "vine_1",
-      "head_direction": "down",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 4,
+          "y": 11
+        },
+        {
+          "x": 5,
+          "y": 11
+        },
+        {
+          "x": 6,
+          "y": 11
+        },
+        {
+          "x": 7,
+          "y": 11
+        },
+        {
+          "x": 8,
+          "y": 11
+        },
+        {
+          "x": 9,
+          "y": 11
+        }
+      ],
+      "vine_color": "golden_yellow",
+      "blocks": [
+        "vine_20",
+        "vine_28"
+      ]
+    },
+    {
+      "id": "vine_2",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 12
+        },
+        {
+          "x": 3,
+          "y": 12
+        },
+        {
+          "x": 4,
+          "y": 12
+        },
+        {
+          "x": 5,
+          "y": 12
+        },
+        {
+          "x": 6,
+          "y": 12
+        },
+        {
+          "x": 7,
+          "y": 12
+        },
+        {
+          "x": 8,
+          "y": 12
+        },
+        {
+          "x": 9,
+          "y": 12
+        }
+      ],
+      "vine_color": "sky_blue",
+      "blocks": [
+        "vine_20",
+        "vine_28"
+      ]
+    },
+    {
+      "id": "vine_3",
+      "head_direction": "right",
       "ordered_path": [
         {
           "x": 2,
           "y": 3
         },
         {
-          "x": 2,
-          "y": 4
+          "x": 1,
+          "y": 3
         },
         {
-          "x": 2,
-          "y": 5
-        },
-        {
-          "x": 2,
-          "y": 6
-        },
-        {
-          "x": 2,
-          "y": 7
-        },
-        {
-          "x": 2,
-          "y": 8
-        },
-        {
-          "x": 2,
-          "y": 9
-        },
-        {
-          "x": 2,
-          "y": 10
-        },
-        {
-          "x": 2,
-          "y": 11
-        },
-        {
-          "x": 2,
-          "y": 12
-        }
-      ],
-      "vine_color": "sunset_orange",
-      "blocks": [
-        "vine_3"
-      ]
-    },
-    {
-      "id": "vine_2",
-      "head_direction": "down",
-      "ordered_path": [
-        {
-          "x": 6,
-          "y": 6
-        },
-        {
-          "x": 6,
-          "y": 7
-        },
-        {
-          "x": 6,
-          "y": 8
-        },
-        {
-          "x": 6,
-          "y": 9
-        },
-        {
-          "x": 6,
-          "y": 10
-        },
-        {
-          "x": 6,
-          "y": 11
-        },
-        {
-          "x": 6,
-          "y": 12
-        },
-        {
-          "x": 7,
-          "y": 12
-        },
-        {
-          "x": 8,
-          "y": 12
-        },
-        {
-          "x": 8,
-          "y": 11
-        },
-        {
-          "x": 7,
-          "y": 11
-        }
-      ],
-      "vine_color": "golden_yellow",
-      "blocks": [
-        "vine_3",
-        "vine_9",
-        "vine_17",
-        "vine_22",
-        "vine_23"
-      ]
-    },
-    {
-      "id": "vine_3",
-      "head_direction": "down",
-      "ordered_path": [
-        {
-          "x": 3,
-          "y": 0
-        },
-        {
-          "x": 3,
-          "y": 1
-        },
-        {
-          "x": 2,
-          "y": 1
-        },
-        {
-          "x": 2,
-          "y": 2
-        },
-        {
-          "x": 3,
-          "y": 2
-        },
-        {
-          "x": 4,
-          "y": 2
-        },
-        {
-          "x": 5,
-          "y": 2
-        },
-        {
-          "x": 6,
-          "y": 2
+          "x": 0,
+          "y": 3
         }
       ],
       "vine_color": "royal_purple",
-      "blocks": []
+      "blocks": [
+        "vine_9",
+        "vine_17",
+        "vine_18",
+        "vine_23",
+        "vine_24",
+        "vine_27"
+      ]
     },
     {
       "id": "vine_4",
       "head_direction": "left",
       "ordered_path": [
         {
-          "x": 7,
-          "y": 10
+          "x": 8,
+          "y": 6
         },
         {
-          "x": 8,
-          "y": 10
-        },
-        {
-          "x": 8,
-          "y": 9
+          "x": 9,
+          "y": 6
         }
       ],
-      "vine_color": "sky_blue",
+      "vine_color": "golden_yellow",
       "blocks": [
-        "vine_1",
-        "vine_2",
-        "vine_15",
-        "vine_21"
+        "vine_7",
+        "vine_9",
+        "vine_11",
+        "vine_16",
+        "vine_17",
+        "vine_18",
+        "vine_23",
+        "vine_38"
       ]
     },
     {
@@ -209,67 +178,104 @@
       "head_direction": "left",
       "ordered_path": [
         {
-          "x": 7,
-          "y": 1
-        },
-        {
-          "x": 8,
-          "y": 1
-        }
-      ],
-      "vine_color": "moss_green",
-      "blocks": [
-        "vine_3",
-        "vine_21",
-        "vine_23",
-        "vine_26"
-      ]
-    },
-    {
-      "id": "vine_6",
-      "head_direction": "down",
-      "ordered_path": [
-        {
-          "x": 0,
-          "y": 11
-        },
-        {
-          "x": 0,
-          "y": 12
-        }
-      ],
-      "vine_color": "sunset_orange",
-      "blocks": [
-        "vine_25",
-        "vine_26",
-        "vine_27",
-        "vine_28"
-      ]
-    },
-    {
-      "id": "vine_7",
-      "head_direction": "right",
-      "ordered_path": [
-        {
-          "x": 5,
-          "y": 5
+          "x": 3,
+          "y": 14
         },
         {
           "x": 4,
-          "y": 5
+          "y": 14
         },
         {
-          "x": 3,
-          "y": 5
+          "x": 5,
+          "y": 14
         },
         {
-          "x": 3,
-          "y": 4
+          "x": 6,
+          "y": 14
+        },
+        {
+          "x": 7,
+          "y": 14
+        },
+        {
+          "x": 8,
+          "y": 14
+        },
+        {
+          "x": 9,
+          "y": 14
         }
       ],
       "vine_color": "golden_yellow",
       "blocks": [
-        "vine_22"
+        "vine_36"
+      ]
+    },
+    {
+      "id": "vine_6",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 5,
+          "y": 0
+        },
+        {
+          "x": 4,
+          "y": 0
+        },
+        {
+          "x": 3,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 1,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "vine_color": "sky_blue",
+      "blocks": [
+        "vine_18",
+        "vine_32"
+      ]
+    },
+    {
+      "id": "vine_7",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 5
+        },
+        {
+          "x": 2,
+          "y": 6
+        },
+        {
+          "x": 2,
+          "y": 7
+        },
+        {
+          "x": 2,
+          "y": 8
+        },
+        {
+          "x": 2,
+          "y": 9
+        }
+      ],
+      "vine_color": "sky_blue",
+      "blocks": [
+        "vine_3",
+        "vine_6",
+        "vine_26"
       ]
     },
     {
@@ -277,156 +283,191 @@
       "head_direction": "left",
       "ordered_path": [
         {
-          "x": 3,
-          "y": 9
+          "x": 6,
+          "y": 15
         },
         {
-          "x": 4,
-          "y": 9
+          "x": 7,
+          "y": 15
         },
         {
-          "x": 5,
-          "y": 9
+          "x": 8,
+          "y": 15
+        },
+        {
+          "x": 9,
+          "y": 15
         }
       ],
-      "vine_color": "royal_purple",
+      "vine_color": "sunset_orange",
       "blocks": [
-        "vine_1",
-        "vine_21"
+        "vine_29"
       ]
     },
     {
       "id": "vine_9",
-      "head_direction": "right",
+      "head_direction": "up",
       "ordered_path": [
         {
-          "x": 8,
-          "y": 3
-        },
-        {
-          "x": 7,
-          "y": 3
-        },
-        {
-          "x": 6,
-          "y": 3
-        }
-      ],
-      "vine_color": "sky_blue",
-      "blocks": []
-    },
-    {
-      "id": "vine_10",
-      "head_direction": "left",
-      "ordered_path": [
-        {
-          "x": 4,
+          "x": 3,
           "y": 6
         },
         {
-          "x": 5,
-          "y": 6
+          "x": 3,
+          "y": 5
+        },
+        {
+          "x": 3,
+          "y": 4
+        },
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 1
         }
       ],
       "vine_color": "moss_green",
       "blocks": [
-        "vine_1",
+        "vine_0",
+        "vine_2",
+        "vine_5",
+        "vine_12",
         "vine_21",
-        "vine_28"
+        "vine_29",
+        "vine_41"
+      ]
+    },
+    {
+      "id": "vine_10",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 2
+        }
+      ],
+      "vine_color": "sunset_orange",
+      "blocks": [
+        "vine_6"
       ]
     },
     {
       "id": "vine_11",
-      "head_direction": "left",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 1,
+          "y": 8
+        },
+        {
+          "x": 1,
+          "y": 7
+        },
+        {
+          "x": 1,
+          "y": 6
+        },
+        {
+          "x": 1,
+          "y": 5
+        },
+        {
+          "x": 1,
+          "y": 4
+        }
+      ],
+      "vine_color": "golden_yellow",
+      "blocks": [
+        "vine_0",
+        "vine_12",
+        "vine_20",
+        "vine_29",
+        "vine_33",
+        "vine_36"
+      ]
+    },
+    {
+      "id": "vine_12",
+      "head_direction": "right",
       "ordered_path": [
         {
           "x": 4,
-          "y": 4
+          "y": 13
+        },
+        {
+          "x": 3,
+          "y": 13
+        },
+        {
+          "x": 2,
+          "y": 13
+        },
+        {
+          "x": 1,
+          "y": 13
+        },
+        {
+          "x": 0,
+          "y": 13
+        }
+      ],
+      "vine_color": "moss_green",
+      "blocks": [
+        "vine_34"
+      ]
+    },
+    {
+      "id": "vine_13",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 5,
+          "y": 2
         },
         {
           "x": 5,
-          "y": 4
-        },
-        {
-          "x": 5,
-          "y": 3
+          "y": 1
         }
       ],
       "vine_color": "sunset_orange",
       "blocks": [
         "vine_1",
-        "vine_7",
-        "vine_21",
-        "vine_27"
-      ]
-    },
-    {
-      "id": "vine_12",
-      "head_direction": "up",
-      "ordered_path": [
-        {
-          "x": 7,
-          "y": 9
-        },
-        {
-          "x": 7,
-          "y": 8
-        },
-        {
-          "x": 7,
-          "y": 7
-        },
-        {
-          "x": 7,
-          "y": 6
-        }
-      ],
-      "vine_color": "golden_yellow",
-      "blocks": [
         "vine_2",
-        "vine_4"
-      ]
-    },
-    {
-      "id": "vine_13",
-      "head_direction": "left",
-      "ordered_path": [
-        {
-          "x": 4,
-          "y": 7
-        },
-        {
-          "x": 5,
-          "y": 7
-        }
-      ],
-      "vine_color": "royal_purple",
-      "blocks": [
-        "vine_1",
-        "vine_21"
+        "vine_5",
+        "vine_14",
+        "vine_17",
+        "vine_29",
+        "vine_34"
       ]
     },
     {
       "id": "vine_14",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 3,
-          "y": 8
-        },
-        {
-          "x": 4,
-          "y": 8
+          "x": 6,
+          "y": 10
         },
         {
           "x": 5,
-          "y": 8
+          "y": 10
         }
       ],
-      "vine_color": "sky_blue",
+      "vine_color": "moss_green",
       "blocks": [
-        "vine_1",
-        "vine_21"
+        "vine_25",
+        "vine_42"
       ]
     },
     {
@@ -434,129 +475,175 @@
       "head_direction": "up",
       "ordered_path": [
         {
-          "x": 3,
-          "y": 12
+          "x": 9,
+          "y": 9
         },
         {
-          "x": 3,
-          "y": 11
+          "x": 9,
+          "y": 8
         },
         {
-          "x": 3,
-          "y": 10
-        },
-        {
-          "x": 4,
-          "y": 10
-        },
-        {
-          "x": 5,
-          "y": 10
+          "x": 9,
+          "y": 7
         }
       ],
-      "vine_color": "moss_green",
-      "blocks": []
+      "vine_color": "royal_purple",
+      "blocks": [
+        "vine_1",
+        "vine_2",
+        "vine_5",
+        "vine_8",
+        "vine_42"
+      ]
     },
     {
       "id": "vine_16",
-      "head_direction": "right",
+      "head_direction": "down",
       "ordered_path": [
         {
-          "x": 5,
-          "y": 11
+          "x": 6,
+          "y": 6
         },
         {
-          "x": 4,
-          "y": 11
+          "x": 6,
+          "y": 7
+        },
+        {
+          "x": 6,
+          "y": 8
+        },
+        {
+          "x": 6,
+          "y": 9
         }
       ],
-      "vine_color": "sunset_orange",
+      "vine_color": "sky_blue",
       "blocks": [
-        "vine_2"
+        "vine_24",
+        "vine_43"
       ]
     },
     {
       "id": "vine_17",
-      "head_direction": "right",
+      "head_direction": "up",
       "ordered_path": [
         {
-          "x": 8,
-          "y": 0
+          "x": 5,
+          "y": 9
         },
         {
-          "x": 7,
-          "y": 0
+          "x": 5,
+          "y": 8
         },
         {
-          "x": 6,
-          "y": 0
+          "x": 5,
+          "y": 7
+        },
+        {
+          "x": 5,
+          "y": 6
+        },
+        {
+          "x": 5,
+          "y": 5
+        },
+        {
+          "x": 5,
+          "y": 4
+        },
+        {
+          "x": 5,
+          "y": 3
         }
       ],
       "vine_color": "golden_yellow",
-      "blocks": []
+      "blocks": [
+        "vine_1",
+        "vine_2",
+        "vine_5",
+        "vine_14",
+        "vine_29",
+        "vine_34"
+      ]
     },
     {
       "id": "vine_18",
       "head_direction": "up",
       "ordered_path": [
         {
-          "x": 8,
+          "x": 7,
           "y": 8
         },
         {
-          "x": 8,
+          "x": 7,
           "y": 7
         },
         {
-          "x": 8,
+          "x": 7,
           "y": 6
-        }
-      ],
-      "vine_color": "royal_purple",
-      "blocks": [
-        "vine_2",
-        "vine_4"
-      ]
-    },
-    {
-      "id": "vine_19",
-      "head_direction": "right",
-      "ordered_path": [
-        {
-          "x": 5,
-          "y": 12
         },
         {
-          "x": 4,
-          "y": 12
+          "x": 7,
+          "y": 5
+        },
+        {
+          "x": 7,
+          "y": 4
+        },
+        {
+          "x": 7,
+          "y": 3
+        },
+        {
+          "x": 7,
+          "y": 2
+        },
+        {
+          "x": 7,
+          "y": 1
+        },
+        {
+          "x": 7,
+          "y": 0
         }
       ],
       "vine_color": "sky_blue",
       "blocks": [
-        "vine_2"
+        "vine_1",
+        "vine_2",
+        "vine_5",
+        "vine_8",
+        "vine_25"
+      ]
+    },
+    {
+      "id": "vine_19",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 0,
+          "y": 2
+        },
+        {
+          "x": 0,
+          "y": 1
+        }
+      ],
+      "vine_color": "royal_purple",
+      "blocks": [
+        "vine_0",
+        "vine_3",
+        "vine_12",
+        "vine_28",
+        "vine_29",
+        "vine_30",
+        "vine_33",
+        "vine_36",
+        "vine_38"
       ]
     },
     {
       "id": "vine_20",
-      "head_direction": "right",
-      "ordered_path": [
-        {
-          "x": 4,
-          "y": 3
-        },
-        {
-          "x": 3,
-          "y": 3
-        }
-      ],
-      "vine_color": "moss_green",
-      "blocks": [
-        "vine_9",
-        "vine_11"
-      ]
-    },
-    {
-      "id": "vine_21",
       "head_direction": "up",
       "ordered_path": [
         {
@@ -566,123 +653,269 @@
         {
           "x": 1,
           "y": 11
-        },
+        }
+      ],
+      "vine_color": "moss_green",
+      "blocks": [
+        "vine_12",
+        "vine_29",
+        "vine_36"
+      ]
+    },
+    {
+      "id": "vine_21",
+      "head_direction": "right",
+      "ordered_path": [
         {
-          "x": 1,
-          "y": 10
-        },
-        {
-          "x": 1,
-          "y": 9
-        },
-        {
-          "x": 1,
-          "y": 8
-        },
-        {
-          "x": 1,
+          "x": 4,
           "y": 7
         },
         {
-          "x": 1,
-          "y": 6
+          "x": 3,
+          "y": 7
+        }
+      ],
+      "vine_color": "sky_blue",
+      "blocks": [
+        "vine_15",
+        "vine_16",
+        "vine_17",
+        "vine_18",
+        "vine_37"
+      ]
+    },
+    {
+      "id": "vine_22",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 4,
+          "y": 9
         },
         {
-          "x": 1,
-          "y": 5
-        },
+          "x": 4,
+          "y": 8
+        }
+      ],
+      "vine_color": "moss_green",
+      "blocks": [
+        "vine_0",
+        "vine_1",
+        "vine_2",
+        "vine_5",
+        "vine_12",
+        "vine_29"
+      ]
+    },
+    {
+      "id": "vine_23",
+      "head_direction": "down",
+      "ordered_path": [
         {
-          "x": 1,
-          "y": 4
-        },
-        {
-          "x": 1,
+          "x": 4,
           "y": 3
         },
         {
-          "x": 1,
+          "x": 4,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 5
+        },
+        {
+          "x": 4,
+          "y": 6
+        }
+      ],
+      "vine_color": "golden_yellow",
+      "blocks": [
+        "vine_6",
+        "vine_40"
+      ]
+    },
+    {
+      "id": "vine_24",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 6,
+          "y": 3
+        },
+        {
+          "x": 6,
+          "y": 4
+        },
+        {
+          "x": 6,
+          "y": 5
+        }
+      ],
+      "vine_color": "moss_green",
+      "blocks": [
+        "vine_43"
+      ]
+    },
+    {
+      "id": "vine_25",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 7,
+          "y": 10
+        },
+        {
+          "x": 7,
+          "y": 9
+        }
+      ],
+      "vine_color": "royal_purple",
+      "blocks": [
+        "vine_1",
+        "vine_2",
+        "vine_5",
+        "vine_8"
+      ]
+    },
+    {
+      "id": "vine_26",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 2,
           "y": 2
+        }
+      ],
+      "vine_color": "sky_blue",
+      "blocks": [
+        "vine_6"
+      ]
+    },
+    {
+      "id": "vine_27",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 9,
+          "y": 3
+        },
+        {
+          "x": 8,
+          "y": 3
+        }
+      ],
+      "vine_color": "moss_green",
+      "blocks": []
+    },
+    {
+      "id": "vine_28",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 0,
+          "y": 12
+        },
+        {
+          "x": 0,
+          "y": 11
+        }
+      ],
+      "vine_color": "golden_yellow",
+      "blocks": [
+        "vine_12",
+        "vine_29",
+        "vine_36"
+      ]
+    },
+    {
+      "id": "vine_29",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 0,
+          "y": 15
         },
         {
           "x": 1,
-          "y": 1
+          "y": 15
+        },
+        {
+          "x": 2,
+          "y": 15
+        },
+        {
+          "x": 3,
+          "y": 15
+        },
+        {
+          "x": 4,
+          "y": 15
+        },
+        {
+          "x": 5,
+          "y": 15
         }
       ],
       "vine_color": "sunset_orange",
       "blocks": []
     },
     {
-      "id": "vine_22",
-      "head_direction": "right",
+      "id": "vine_30",
+      "head_direction": "up",
       "ordered_path": [
         {
-          "x": 8,
-          "y": 4
-        },
-        {
-          "x": 7,
-          "y": 4
-        },
-        {
-          "x": 6,
-          "y": 4
-        },
-        {
-          "x": 6,
+          "x": 0,
           "y": 5
         },
         {
-          "x": 7,
-          "y": 5
+          "x": 0,
+          "y": 4
+        }
+      ],
+      "vine_color": "golden_yellow",
+      "blocks": [
+        "vine_0",
+        "vine_12",
+        "vine_28",
+        "vine_29",
+        "vine_33",
+        "vine_36",
+        "vine_38"
+      ]
+    },
+    {
+      "id": "vine_31",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 9,
+          "y": 4
         },
         {
-          "x": 8,
+          "x": 9,
           "y": 5
         }
       ],
       "vine_color": "golden_yellow",
-      "blocks": []
-    },
-    {
-      "id": "vine_23",
-      "head_direction": "right",
-      "ordered_path": [
-        {
-          "x": 5,
-          "y": 0
-        },
-        {
-          "x": 4,
-          "y": 0
-        },
-        {
-          "x": 4,
-          "y": 1
-        },
-        {
-          "x": 5,
-          "y": 1
-        },
-        {
-          "x": 6,
-          "y": 1
-        }
-      ],
-      "vine_color": "royal_purple",
       "blocks": [
-        "vine_17"
+        "vine_27",
+        "vine_32"
       ]
     },
     {
-      "id": "vine_25",
-      "head_direction": "left",
+      "id": "vine_32",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 0,
+          "x": 9,
           "y": 0
         },
         {
-          "x": 1,
+          "x": 8,
           "y": 0
         }
       ],
@@ -690,67 +923,242 @@
       "blocks": []
     },
     {
-      "id": "vine_26",
-      "head_direction": "down",
+      "id": "vine_33",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 0,
-          "y": 1
+          "x": 1,
+          "y": 9
         },
         {
           "x": 0,
-          "y": 2
+          "y": 9
         }
       ],
       "vine_color": "moss_green",
       "blocks": [
-        "vine_25"
+        "vine_7",
+        "vine_15",
+        "vine_16",
+        "vine_17",
+        "vine_22",
+        "vine_25",
+        "vine_37",
+        "vine_41"
       ]
     },
     {
-      "id": "vine_27",
-      "head_direction": "down",
+      "id": "vine_34",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 6,
+          "y": 13
+        },
+        {
+          "x": 5,
+          "y": 13
+        }
+      ],
+      "vine_color": "moss_green",
+      "blocks": []
+    },
+    {
+      "id": "vine_35",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 8,
+          "y": 2
+        },
+        {
+          "x": 8,
+          "y": 1
+        }
+      ],
+      "vine_color": "golden_yellow",
+      "blocks": [
+        "vine_1",
+        "vine_2",
+        "vine_4",
+        "vine_5",
+        "vine_8",
+        "vine_27",
+        "vine_37",
+        "vine_39",
+        "vine_42"
+      ]
+    },
+    {
+      "id": "vine_36",
+      "head_direction": "left",
       "ordered_path": [
         {
           "x": 0,
-          "y": 3
+          "y": 14
         },
         {
-          "x": 0,
-          "y": 4
+          "x": 1,
+          "y": 14
+        },
+        {
+          "x": 2,
+          "y": 14
+        }
+      ],
+      "vine_color": "golden_yellow",
+      "blocks": []
+    },
+    {
+      "id": "vine_37",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 8,
+          "y": 9
+        },
+        {
+          "x": 8,
+          "y": 8
+        },
+        {
+          "x": 8,
+          "y": 7
         }
       ],
       "vine_color": "sunset_orange",
       "blocks": [
-        "vine_25",
-        "vine_26"
+        "vine_1",
+        "vine_2",
+        "vine_5",
+        "vine_8",
+        "vine_42"
       ]
     },
     {
-      "id": "vine_28",
-      "head_direction": "down",
+      "id": "vine_38",
+      "head_direction": "up",
       "ordered_path": [
         {
           "x": 0,
-          "y": 5
+          "y": 7
         },
         {
           "x": 0,
           "y": 6
         }
       ],
-      "vine_color": "golden_yellow",
+      "vine_color": "royal_purple",
       "blocks": [
-        "vine_25",
-        "vine_26",
-        "vine_27"
+        "vine_0",
+        "vine_12",
+        "vine_28",
+        "vine_29",
+        "vine_33",
+        "vine_36"
       ]
+    },
+    {
+      "id": "vine_39",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 8,
+          "y": 5
+        },
+        {
+          "x": 8,
+          "y": 4
+        }
+      ],
+      "vine_color": "sky_blue",
+      "blocks": [
+        "vine_1",
+        "vine_2",
+        "vine_4",
+        "vine_5",
+        "vine_8",
+        "vine_37",
+        "vine_42"
+      ]
+    },
+    {
+      "id": "vine_40",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 4,
+          "y": 1
+        },
+        {
+          "x": 4,
+          "y": 2
+        }
+      ],
+      "vine_color": "royal_purple",
+      "blocks": [
+        "vine_6"
+      ]
+    },
+    {
+      "id": "vine_41",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 3,
+          "y": 9
+        },
+        {
+          "x": 3,
+          "y": 8
+        }
+      ],
+      "vine_color": "sky_blue",
+      "blocks": [
+        "vine_0",
+        "vine_2",
+        "vine_5",
+        "vine_12",
+        "vine_29"
+      ]
+    },
+    {
+      "id": "vine_42",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 9,
+          "y": 10
+        },
+        {
+          "x": 8,
+          "y": 10
+        }
+      ],
+      "vine_color": "moss_green",
+      "blocks": []
+    },
+    {
+      "id": "vine_43",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 6,
+          "y": 1
+        },
+        {
+          "x": 6,
+          "y": 2
+        }
+      ],
+      "vine_color": "golden_yellow",
+      "blocks": []
     }
   ],
-  "max_moves": 10,
-  "min_moves": 5,
-  "complexity": "low",
+  "max_moves": 12,
+  "min_moves": 6,
+  "complexity": "medium",
   "grace": 3,
-  "generation_seed": 68040,
-  "generation_attempts": 68
+  "generation_seed": 1045,
+  "generation_attempts": 1
 }

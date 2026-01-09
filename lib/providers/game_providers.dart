@@ -459,12 +459,23 @@ class GameProgressNotifier extends Notifier<GameProgress> {
 
     final newCompletedLevels = Set<int>.from(state.completedLevels)
       ..add(levelNumber);
-    // Increment level number - GardenGame will handle detection of end of levels
-    final newCurrentLevel = levelNumber + 1;
+
+    bool newTutorialCompleted = state.tutorialCompleted;
+    int newCurrentLevel;
+
+    if (levelNumber == 5 && !state.tutorialCompleted) {
+      // Tutorial completed, start main levels from 1
+      newTutorialCompleted = true;
+      newCurrentLevel = 1;
+    } else {
+      // Increment level number - GardenGame will handle detection of end of levels
+      newCurrentLevel = levelNumber + 1;
+    }
 
     final newProgress = state.copyWith(
       completedLevels: newCompletedLevels,
       currentLevel: newCurrentLevel,
+      tutorialCompleted: newTutorialCompleted,
     );
 
     debugPrint(
@@ -485,6 +496,20 @@ class GameProgressNotifier extends Notifier<GameProgress> {
           .read(analyticsServiceProvider)
           .logLevelComplete(levelNumber, totalTaps, wrongTaps),
     );
+  }
+
+  Future<void> resetTutorial() async {
+    final newCompletedLevels = Set<int>.from(state.completedLevels)
+      ..removeWhere(
+          (level) => level >= 1 && level <= 5); // Remove tutorial levels
+
+    final newProgress = state.copyWith(
+      tutorialCompleted: false,
+      currentLevel: 1,
+      completedLevels: newCompletedLevels,
+    );
+
+    await _saveProgress(newProgress);
   }
 
   Future<void> resetProgress() async {
