@@ -254,6 +254,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     try {
       // Load level data directly by level number
+      // Tutorials use the tutorial_X.json convention
       final assetPath = gameProgress.tutorialCompleted
           ? 'assets/levels/level_$levelNumber.json'
           : 'assets/tutorials/tutorial_$levelNumber.json';

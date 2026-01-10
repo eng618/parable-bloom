@@ -1,202 +1,91 @@
 {
-  "id": 24,
-  "name": "Level 24",
-  "difficulty": "Seedling",
+  "id": 19,
   "grid_size": [
     6,
-    10
+    8
   ],
-  "mask": {
-    "mode": "show-all",
-    "points": []
-  },
   "vines": [
     {
-      "id": "vine_0",
-      "head_direction": "down",
-      "ordered_path": [
-        {
-          "x": 4,
-          "y": 8
-        },
-        {
-          "x": 4,
-          "y": 9
-        }
-      ],
-      "vine_color": "moss_green",
-      "blocks": [
-        "vine_1",
-        "vine_3",
-        "vine_5"
-      ]
-    },
-    {
       "id": "vine_1",
-      "head_direction": "up",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 0,
-          "y": 8
-        },
-        {
-          "x": 0,
-          "y": 7
-        },
-        {
-          "x": 0,
-          "y": 6
-        },
-        {
-          "x": 0,
-          "y": 5
-        },
-        {
-          "x": 0,
-          "y": 4
-        },
-        {
-          "x": 0,
-          "y": 3
-        },
-        {
-          "x": 0,
+          "x": 4,
           "y": 2
-        },
-        {
-          "x": 0,
-          "y": 1
-        },
-        {
-          "x": 0,
-          "y": 0
-        },
-        {
-          "x": 1,
-          "y": 0
-        },
-        {
-          "x": 2,
-          "y": 0
         },
         {
           "x": 3,
-          "y": 0
-        },
-        {
-          "x": 4,
-          "y": 0
-        },
-        {
-          "x": 5,
-          "y": 0
-        },
-        {
-          "x": 5,
-          "y": 1
-        },
-        {
-          "x": 5,
           "y": 2
-        },
-        {
-          "x": 4,
-          "y": 2
-        },
-        {
-          "x": 4,
-          "y": 3
-        },
-        {
-          "x": 3,
-          "y": 3
         }
       ],
-      "vine_color": "sunset_orange",
-      "blocks": []
+      "color_index": 2
     },
     {
       "id": "vine_2",
-      "head_direction": "down",
+      "head_direction": "up",
       "ordered_path": [
         {
-          "x": 3,
-          "y": 8
+          "x": 5,
+          "y": 7
         },
         {
-          "x": 3,
-          "y": 9
+          "x": 5,
+          "y": 6
+        },
+        {
+          "x": 4,
+          "y": 6
+        },
+        {
+          "x": 4,
+          "y": 5
+        },
+        {
+          "x": 5,
+          "y": 5
         }
       ],
-      "vine_color": "golden_yellow",
-      "blocks": [
-        "vine_1",
-        "vine_3",
-        "vine_5"
-      ]
+      "color_index": 4
     },
     {
       "id": "vine_3",
       "head_direction": "left",
       "ordered_path": [
         {
-          "x": 1,
-          "y": 6
-        },
-        {
-          "x": 2,
-          "y": 6
-        },
-        {
-          "x": 3,
-          "y": 6
-        },
-        {
-          "x": 4,
-          "y": 6
-        },
-        {
-          "x": 4,
+          "x": 0,
           "y": 7
         },
         {
-          "x": 3,
+          "x": 1,
           "y": 7
-        }
-      ],
-      "vine_color": "royal_purple",
-      "blocks": [
-        "vine_1"
-      ]
-    },
-    {
-      "id": "vine_4",
-      "head_direction": "down",
-      "ordered_path": [
-        {
-          "x": 1,
-          "y": 1
         },
         {
           "x": 1,
-          "y": 2
+          "y": 6
         },
         {
-          "x": 1,
-          "y": 3
+          "x": 0,
+          "y": 6
         },
         {
-          "x": 1,
-          "y": 4
-        },
-        {
-          "x": 1,
+          "x": 0,
           "y": 5
         }
       ],
-      "vine_color": "sky_blue",
-      "blocks": [
-        "vine_1"
+      "color_index": 4
+    },
+    {
+      "id": "vine_4",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 4,
+          "y": 3
+        }
       ]
     },
     {
@@ -205,14 +94,6 @@
       "ordered_path": [
         {
           "x": 2,
-          "y": 1
-        },
-        {
-          "x": 2,
-          "y": 2
-        },
-        {
-          "x": 2,
           "y": 3
         },
         {
@@ -222,102 +103,80 @@
         {
           "x": 2,
           "y": 5
-        },
-        {
-          "x": 3,
-          "y": 5
-        },
-        {
-          "x": 4,
-          "y": 5
-        },
-        {
-          "x": 4,
-          "y": 4
-        },
-        {
-          "x": 3,
-          "y": 4
         }
       ],
-      "vine_color": "moss_green",
-      "blocks": [
-        "vine_1"
-      ]
+      "color_index": 4
     },
     {
       "id": "vine_6",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 1,
-          "y": 8
+          "x": 4,
+          "y": 0
         },
         {
-          "x": 2,
-          "y": 8
+          "x": 3,
+          "y": 0
+        },
+        {
+          "x": 3,
+          "y": 1
+        },
+        {
+          "x": 4,
+          "y": 1
         }
       ],
-      "vine_color": "sunset_orange",
-      "blocks": [
-        "vine_1"
-      ]
+      "color_index": 4
     },
     {
       "id": "vine_7",
-      "head_direction": "down",
+      "head_direction": "left",
       "ordered_path": [
         {
-          "x": 5,
-          "y": 3
+          "x": 0,
+          "y": 0
         },
         {
-          "x": 5,
-          "y": 4
+          "x": 1,
+          "y": 0
         },
         {
-          "x": 5,
-          "y": 5
+          "x": 1,
+          "y": 1
         },
         {
-          "x": 5,
-          "y": 6
+          "x": 0,
+          "y": 1
         },
         {
-          "x": 5,
-          "y": 7
-        },
-        {
-          "x": 5,
-          "y": 8
-        },
-        {
-          "x": 5,
-          "y": 9
+          "x": 0,
+          "y": 2
         }
       ],
-      "vine_color": "golden_yellow",
-      "blocks": [
-        "vine_1"
-      ]
+      "color_index": 4
     },
     {
       "id": "vine_8",
       "head_direction": "right",
       "ordered_path": [
         {
-          "x": 2,
-          "y": 7
+          "x": 5,
+          "y": 4
         },
         {
-          "x": 1,
-          "y": 7
+          "x": 4,
+          "y": 4
+        },
+        {
+          "x": 3,
+          "y": 4
+        },
+        {
+          "x": 3,
+          "y": 5
         }
-      ],
-      "vine_color": "royal_purple",
-      "blocks": [
-        "vine_3",
-        "vine_7"
       ]
     },
     {
@@ -325,22 +184,118 @@
       "head_direction": "left",
       "ordered_path": [
         {
+          "x": 0,
+          "y": 3
+        },
+        {
           "x": 1,
-          "y": 9
+          "y": 3
+        }
+      ],
+      "color_index": 3
+    },
+    {
+      "id": "vine_10",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 7
         },
         {
           "x": 2,
-          "y": 9
+          "y": 6
+        },
+        {
+          "x": 3,
+          "y": 6
+        },
+        {
+          "x": 3,
+          "y": 7
+        },
+        {
+          "x": 4,
+          "y": 7
         }
       ],
-      "vine_color": "sky_blue",
-      "blocks": []
+      "color_index": 2
+    },
+    {
+      "id": "vine_11",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 5,
+          "y": 0
+        },
+        {
+          "x": 5,
+          "y": 1
+        },
+        {
+          "x": 5,
+          "y": 2
+        },
+        {
+          "x": 5,
+          "y": 3
+        }
+      ]
+    },
+    {
+      "id": "vine_12",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 0,
+          "y": 4
+        },
+        {
+          "x": 1,
+          "y": 4
+        },
+        {
+          "x": 1,
+          "y": 5
+        }
+      ],
+      "color_index": 1
+    },
+    {
+      "id": "vine_13",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        }
+      ]
     }
   ],
-  "max_moves": 8,
-  "min_moves": 4,
-  "complexity": "low",
+  "max_moves": 19,
   "grace": 3,
-  "generation_seed": 12024,
-  "generation_attempts": 12
+  "color_scheme": [
+    "#7CB342",
+    "#FF9800",
+    "#FFC107",
+    "#7C4DFF",
+    "#29B6F6"
+  ],
+  "name": "Level 19",
+  "difficulty": "Sprout",
+  "complexity": "medium",
+  "min_moves": 13
 }

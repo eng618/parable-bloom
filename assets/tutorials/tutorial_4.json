@@ -1,10 +1,11 @@
 {
     "id": 4,
-    "name": "Advanced Blocking",
+    "name": "Chain Reaction",
     "difficulty": "Tutorial",
+    "complexity": "tutorial",
     "grid_size": [
         6,
-        8
+        6
     ],
     "mask": {
         "mode": "show-all",
@@ -12,100 +13,73 @@
     },
     "vines": [
         {
-            "id": "vine_a",
+            "id": "vine_1",
             "head_direction": "right",
+            "color_index": 0,
             "ordered_path": [
                 {
                     "x": 0,
-                    "y": 0
-                },
-                {
-                    "x": 1,
-                    "y": 0
-                },
-                {
-                    "x": 2,
-                    "y": 0
-                }
-            ],
-            "vine_color": "default"
-        },
-        {
-            "id": "vine_b",
-            "head_direction": "down",
-            "ordered_path": [
-                {
-                    "x": 1,
-                    "y": 1
+                    "y": 2
                 },
                 {
                     "x": 1,
                     "y": 2
                 },
                 {
-                    "x": 1,
-                    "y": 3
+                    "x": 2,
+                    "y": 2
                 }
-            ],
-            "vine_color": "default"
+            ]
         },
         {
-            "id": "vine_c",
-            "head_direction": "up",
-            "ordered_path": [
-                {
-                    "x": 3,
-                    "y": 5
-                },
-                {
-                    "x": 3,
-                    "y": 4
-                },
-                {
-                    "x": 3,
-                    "y": 3
-                }
-            ],
-            "vine_color": "default"
-        },
-        {
-            "id": "vine_d",
-            "head_direction": "left",
+            "id": "vine_2",
+            "head_direction": "down",
+            "color_index": 1,
             "ordered_path": [
                 {
                     "x": 5,
-                    "y": 6
+                    "y": 1
                 },
                 {
+                    "x": 5,
+                    "y": 2
+                },
+                {
+                    "x": 5,
+                    "y": 3
+                }
+            ]
+        },
+        {
+            "id": "vine_3",
+            "head_direction": "left",
+            "color_index": 2,
+            "ordered_path": [
+                {
                     "x": 4,
-                    "y": 6
+                    "y": 3
                 },
                 {
                     "x": 3,
-                    "y": 6
+                    "y": 3
+                },
+                {
+                    "x": 2,
+                    "y": 3
                 }
-            ],
-            "vine_color": "default"
+            ]
         }
     ],
-    "max_moves": 8,
-    "min_moves": 0,
-    "complexity": "tutorial",
-    "grace": 999,
-    "occupancy_percent": 20.0,
-    "color_distribution": {
-        "unknown": 1.0
-    },
+    "max_moves": 3,
+    "min_moves": 3,
+    "grace": 5,
     "blocking_graph": {
-        "vine_b": [
-            "vine_a"
+        "vine_2": [
+            "vine_1"
         ],
-        "vine_c": [
-            "vine_b"
-        ],
-        "vine_d": [
-            "vine_c"
+        "vine_3": [
+            "vine_2"
         ]
     },
-    "blocking_depth": 3
+    "blocking_depth": 2
 }

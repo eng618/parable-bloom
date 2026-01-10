@@ -83,6 +83,33 @@ tasks:
       - task: build:macos
 
   # -----------------------------------------------------------------------------
+  # Level Management
+
+  levels:generate:
+    desc: Generate new levels using the Go tool (usage - task levels:generate COUNT=50)
+    dir: tools/level-builder
+    cmds:
+      - go run . generate --count {{.COUNT | default 50}}
+
+  levels:validate:
+    desc: Validate existing levels and modules using the Go tool
+    dir: tools/level-builder
+    cmds:
+      - go run . validate
+
+  tutorials:validate:
+    desc: Validate tutorial levels using the Go tool
+    dir: tools/level-builder
+    cmds:
+      - go run . validate-tutorials
+
+  levels:clean:
+    desc: Clean generated levels (removes assets/levels/* and modules.json)
+    dir: tools/level-builder
+    cmds:
+      - go run . clean
+
+  # -----------------------------------------------------------------------------
   # Version Management
 
   version:bump:patch:

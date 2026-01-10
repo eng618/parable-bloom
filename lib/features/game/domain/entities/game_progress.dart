@@ -2,34 +2,60 @@ class GameProgress {
   final int currentLevel;
   final Set<int> completedLevels;
   final bool tutorialCompleted;
+  final int? savedMainGameLevel; // Level to return to after tutorial replay
 
   GameProgress({
     required this.currentLevel,
     required this.completedLevels,
     required this.tutorialCompleted,
+    this.savedMainGameLevel,
   });
 
   GameProgress copyWith({
     int? currentLevel,
     Set<int>? completedLevels,
     bool? tutorialCompleted,
+    int? savedMainGameLevel,
   }) {
     return GameProgress(
       currentLevel: currentLevel ?? this.currentLevel,
       completedLevels: completedLevels ?? this.completedLevels,
       tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
+      savedMainGameLevel: savedMainGameLevel ?? this.savedMainGameLevel,
     );
   }
 
   factory GameProgress.initial() {
     return GameProgress(
-        currentLevel: 1, completedLevels: {}, tutorialCompleted: false);
+        currentLevel: 1,
+        completedLevels: {},
+        tutorialCompleted: false,
+        savedMainGameLevel: null);
   }
-
   GameProgress completeLevel(int levelNumber) {
     final newCompletedLevels = Set<int>.from(completedLevels)..add(levelNumber);
+    
+    // If completing level 5 (last tutorial)
+    if (levelNumber == 5) {
+      if (savedMainGameLevel != null) {
+        // User replayed tutorial from main game - restore their main game level
+        return copyWith(
+          completedLevels: newCompletedLevels,
+          currentLevel: savedMainGameLevel,
+          tutorialCompleted: true,
+          savedMainGameLevel: null, // Clear the saved level
+        );
+      } else {
+        // User completed tutorial for the first time - move to level 6 (first main level)
+        return copyWith(
+          completedLevels: newCompletedLevels,
+          currentLevel: 6,
+          tutorialCompleted: true,
+        );
+      }
+    }
+    
     final newCurrentLevel = levelNumber + 1;
-
     return copyWith(
       completedLevels: newCompletedLevels,
       currentLevel: newCurrentLevel,
@@ -51,6 +77,7 @@ class GameProgress {
       'currentLevel': currentLevel,
       'completedLevels': completedLevels.toList(),
       'tutorialCompleted': tutorialCompleted,
+      'savedMainGameLevel': savedMainGameLevel,
     };
   }
 
@@ -59,6 +86,7 @@ class GameProgress {
       currentLevel: json['currentLevel'] ?? 1,
       completedLevels: Set<int>.from(json['completedLevels'] ?? []),
       tutorialCompleted: json['tutorialCompleted'] ?? false,
+      savedMainGameLevel: json['savedMainGameLevel'],
     );
   }
 

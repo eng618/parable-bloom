@@ -735,15 +735,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  void _performRedoTutorial(BuildContext context, WidgetRef ref) {
+  Future<void> _performRedoTutorial(BuildContext context, WidgetRef ref) async {
     Navigator.of(context).pop(); // Close dialog
 
-    ref.read(gameProgressProvider.notifier).resetTutorial();
+    // Wait for tutorial reset to complete
+    await ref.read(gameProgressProvider.notifier).resetTutorial();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Tutorial reset. You can now replay the tutorial.')),
-    );
+    // Invalidate current level to force reload
+    ref.invalidate(currentLevelProvider);
+
+    // Navigate back to home, then to game to start tutorial
+    if (context.mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      Navigator.of(context).pushNamed('/game');
+    }
   }
 
   void _showThemeDialog(
