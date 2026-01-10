@@ -311,7 +311,7 @@ class CellComponent extends RectangleComponent
     final dotPaint = Paint()
       ..color = dotColor
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, 4, dotPaint);
+    canvas.drawCircle(center, 1.5, dotPaint);
 
     // Debug: draw x,y labels in corner only if debug mode is enabled
     final gardenGame = game;

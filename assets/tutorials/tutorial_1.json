@@ -1,10 +1,11 @@
 {
   "id": 1,
-  "name": "First Steps",
+  "name": "Your First Vine",
   "difficulty": "Tutorial",
+  "complexity": "tutorial",
   "grid_size": [
-    3,
-    9
+    4,
+    5
   ],
   "mask": {
     "mode": "show-all",
@@ -12,67 +13,10 @@
   },
   "vines": [
     {
-      "id": "vine_a",
-      "head_direction": "down",
+      "id": "vine_1",
+      "head_direction": "up",
+      "color_index": 0,
       "ordered_path": [
-        {
-          "x": 0,
-          "y": 0
-        },
-        {
-          "x": 0,
-          "y": 1
-        },
-        {
-          "x": 0,
-          "y": 2
-        },
-        {
-          "x": 0,
-          "y": 3
-        },
-        {
-          "x": 0,
-          "y": 4
-        }
-      ],
-      "vine_color": "default"
-    },
-    {
-      "id": "vine_b",
-      "head_direction": "down",
-      "ordered_path": [
-        {
-          "x": 1,
-          "y": 0
-        },
-        {
-          "x": 1,
-          "y": 1
-        },
-        {
-          "x": 1,
-          "y": 2
-        },
-        {
-          "x": 1,
-          "y": 3
-        },
-        {
-          "x": 1,
-          "y": 4
-        }
-      ],
-      "vine_color": "default"
-    },
-    {
-      "id": "vine_c",
-      "head_direction": "down",
-      "ordered_path": [
-        {
-          "x": 2,
-          "y": 0
-        },
         {
           "x": 2,
           "y": 1
@@ -84,23 +28,13 @@
         {
           "x": 2,
           "y": 3
-        },
-        {
-          "x": 2,
-          "y": 4
         }
-      ],
-      "vine_color": "default"
+      ]
     }
   ],
-  "max_moves": 8,
-  "min_moves": 0,
-  "complexity": "tutorial",
-  "grace": 999,
-  "occupancy_percent": 50.0,
-  "color_distribution": {
-    "unknown": 1.0
-  },
+  "max_moves": 1,
+  "min_moves": 1,
+  "grace": 5,
   "blocking_graph": {},
   "blocking_depth": 0
 }

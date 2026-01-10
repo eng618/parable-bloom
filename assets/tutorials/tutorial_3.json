@@ -1,93 +1,60 @@
 {
     "id": 3,
-    "name": "Multiple Blocks",
-    "difficulty": "Tutorial",
+    "name": "Crossing Paths",
+    "difficulty": "Seedling",
+    "complexity": "low",
     "grid_size": [
         5,
-        7
+        6
     ],
-    "mask": {
-        "mode": "show-all",
-        "points": []
-    },
     "vines": [
         {
-            "id": "vine_a",
+            "id": "vine_1",
             "head_direction": "right",
+            "color_index": 0,
             "ordered_path": [
                 {
                     "x": 0,
-                    "y": 0
-                },
-                {
-                    "x": 1,
-                    "y": 0
-                },
-                {
-                    "x": 2,
-                    "y": 0
-                }
-            ],
-            "vine_color": "default"
-        },
-        {
-            "id": "vine_b",
-            "head_direction": "down",
-            "ordered_path": [
-                {
-                    "x": 1,
-                    "y": 1
+                    "y": 2
                 },
                 {
                     "x": 1,
                     "y": 2
                 },
                 {
-                    "x": 1,
-                    "y": 3
+                    "x": 2,
+                    "y": 2
                 }
-            ],
-            "vine_color": "default"
+            ]
         },
         {
-            "id": "vine_c",
-            "head_direction": "left",
+            "id": "vine_2",
+            "head_direction": "up",
+            "color_index": 1,
             "ordered_path": [
                 {
-                    "x": 4,
-                    "y": 4
-                },
-                {
-                    "x": 3,
-                    "y": 4
+                    "x": 2,
+                    "y": 0
                 },
                 {
                     "x": 2,
-                    "y": 4
+                    "y": 1
                 },
                 {
-                    "x": 1,
-                    "y": 4
+                    "x": 2,
+                    "y": 3
                 }
-            ],
-            "vine_color": "default"
+            ]
         }
     ],
-    "max_moves": 8,
-    "min_moves": 0,
-    "complexity": "tutorial",
-    "grace": 999,
-    "occupancy_percent": 25.0,
-    "color_distribution": {
-        "unknown": 1.0
-    },
-    "blocking_graph": {
-        "vine_b": [
-            "vine_a"
-        ],
-        "vine_c": [
-            "vine_b"
-        ]
-    },
-    "blocking_depth": 2
+    "min_moves": 2,
+    "max_moves": 4,
+    "grace": 0,
+    "color_scheme": [
+        "#7CB342",
+        "#FF9800",
+        "#FFC107",
+        "#7C4DFF",
+        "#29B6F6"
+    ]
 }

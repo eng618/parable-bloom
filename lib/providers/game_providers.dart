@@ -71,34 +71,51 @@ class CameraState {
 class ModuleData {
   final int id;
   final String name;
-  final int levelCount;
-  final int startLevel;
-  final int endLevel;
+  final String themeSeed;
+  final List<int> levels;
+  final int challengeLevel;
   final Map<String, dynamic> parable;
   final String unlockMessage;
 
   ModuleData({
     required this.id,
     required this.name,
-    required this.levelCount,
-    required this.startLevel,
-    required this.endLevel,
+    required this.themeSeed,
+    required this.levels,
+    required this.challengeLevel,
     required this.parable,
     required this.unlockMessage,
   });
 
+  // Computed properties for backward compatibility and convenience
+  int get startLevel => levels.isNotEmpty ? levels.reduce((curr, next) => curr < next ? curr : next) : challengeLevel;
+  int get endLevel {
+    if (levels.isEmpty) return challengeLevel;
+    final maxLevel = levels.reduce((curr, next) => curr > next ? curr : next);
+    return challengeLevel > 0 ? (challengeLevel > maxLevel ? challengeLevel : maxLevel) : maxLevel;
+  }
+  int get levelCount => challengeLevel > 0 ? levels.length + 1 : levels.length;
+  List<int> get allLevels {
+    final result = [...levels];
+    if (challengeLevel > 0 && !result.contains(challengeLevel)) {
+      result.add(challengeLevel);
+    }
+    return result..sort();
+  }
+
+  bool containsLevel(int levelId) {
+    return levels.contains(levelId) || (challengeLevel > 0 && levelId == challengeLevel);
+  }
+
   factory ModuleData.fromJson(Map<String, dynamic> json) {
-    final range = (json['level_range'] as List<dynamic>?) ?? const [];
-    final start = range.isNotEmpty ? (range[0] as num).toInt() : 1;
-    final end = range.length > 1 ? (range[1] as num).toInt() : start;
     return ModuleData(
-      id: json['id'],
-      name: json['name'],
-      levelCount: (json['level_count'] as num?)?.toInt() ?? (end - start + 1),
-      startLevel: start,
-      endLevel: end,
-      parable: json['parable'],
-      unlockMessage: json['unlock_message'],
+      id: json['id'] as int,
+      name: json['name'] as String,
+      themeSeed: (json['theme_seed'] as String?) ?? 'forest',
+      levels: (json['levels'] as List<dynamic>?)?.map((e) => e as int).toList() ?? [],
+      challengeLevel: (json['challenge_level'] as int?) ?? 0,
+      parable: json['parable'] as Map<String, dynamic>,
+      unlockMessage: (json['unlock_message'] as String?) ?? '',
     );
   }
 }
@@ -138,20 +155,9 @@ final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
     final jsonMap = json.decode(jsonString);
     final modulesList = jsonMap['modules'] as List<dynamic>;
 
-    return modulesList.map((moduleJson) {
-      final range = moduleJson['level_range'] as List<dynamic>;
-      final startLevel = (range[0] as num).toInt();
-      final endLevel = (range[1] as num).toInt();
-      return ModuleData(
-        id: moduleJson['id'],
-        name: moduleJson['name'],
-        levelCount: endLevel - startLevel + 1,
-        startLevel: startLevel,
-        endLevel: endLevel,
-        parable: moduleJson['parable'],
-        unlockMessage: moduleJson['unlock_message'],
-      );
-    }).toList();
+    return modulesList
+        .map((moduleJson) => ModuleData.fromJson(moduleJson as Map<String, dynamic>))
+        .toList();
   } catch (e) {
     debugPrint('Error loading modules.json: $e');
     return [];
@@ -463,10 +469,14 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     bool newTutorialCompleted = state.tutorialCompleted;
     int newCurrentLevel;
 
-    if (levelNumber == 5 && !state.tutorialCompleted) {
+    // Main levels start at 1; tutorial ends at level 5
+    const int firstMainLevel = 1;
+    const int maxTutorialLevel = 5;
+
+    if (levelNumber == maxTutorialLevel && !state.tutorialCompleted) {
       // Tutorial completed, start main levels from 1
       newTutorialCompleted = true;
-      newCurrentLevel = 1;
+      newCurrentLevel = firstMainLevel;
     } else {
       // Increment level number - GardenGame will handle detection of end of levels
       newCurrentLevel = levelNumber + 1;
@@ -503,10 +513,15 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       ..removeWhere(
           (level) => level >= 1 && level <= 5); // Remove tutorial levels
 
+    // Only save the current level if user is already in the main game (level 6+)
+    // If they're still in tutorial (level 1-5), don't save anything
+    final savedLevel = state.currentLevel > 5 ? state.currentLevel : null;
+
     final newProgress = state.copyWith(
       tutorialCompleted: false,
       currentLevel: 1,
       completedLevels: newCompletedLevels,
+      savedMainGameLevel: savedLevel,
     );
 
     await _saveProgress(newProgress);

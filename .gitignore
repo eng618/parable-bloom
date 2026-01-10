@@ -89,14 +89,11 @@ private_keys/
 .codacy/tools-configs/ruleset.xml
 .codacy/tools-configs/semgrep.yaml
 .codacy/tools-configs/trivy.yaml
-assets/levels_backup/levels_20260107T012417Z.tar.gz
 results.sarif
-docs/example-levels/IMG_3931.PNG
-docs/example-levels/IMG_3932.PNG
-docs/example-levels/IMG_3933.PNG
-docs/example-levels/IMG_3934.PNG
-docs/example-levels/IMG_3942.PNG
-docs/example-levels/IMG_3946.PNG
-docs/example-levels/IMG_3947.PNG
-docs/example-levels/IMG_3948.PNG
-docs/example-levels/ScreenRecording_01-09-2026 01-42-55_1.mp4
+
+# Example level images and videos
+docs/example-levels/*
+assets/levels_backup/*
+
+# Build artifacts for level-builder tool
+tools/level-builder/level-builder

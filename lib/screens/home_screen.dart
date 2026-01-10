@@ -3,6 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/game_providers.dart';
 
+/// Helper function to format level display text.
+/// Shows "Lession X" for tutorial levels, "Level X" for main levels.
+String _formatLevelText(int levelNumber, bool tutorialCompleted) {
+  if (!tutorialCompleted && levelNumber >= 1 && levelNumber <= 5) {
+    return 'Lession $levelNumber';
+  }
+  return 'Level $levelNumber';
+}
+
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -103,7 +112,7 @@ class HomeScreen extends ConsumerWidget {
                       elevation: 4,
                     ),
                     child: Text(
-                      'Play Level ${gameProgress.currentLevel}',
+                      'Play ${_formatLevelText(gameProgress.currentLevel, gameProgress.tutorialCompleted)}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -127,7 +136,7 @@ class HomeScreen extends ConsumerWidget {
                     elevation: 4,
                   ),
                   child: Text(
-                    'Play Level ${gameProgress.currentLevel}',
+                    'Play ${_formatLevelText(gameProgress.currentLevel, gameProgress.tutorialCompleted)}',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
