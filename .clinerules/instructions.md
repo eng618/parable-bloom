@@ -4,14 +4,14 @@ Be concise. Focus on the game's state, persistence, and level logic when changin
 
 1. Big picture
 
-- Flutter + Flame game app. UI (Flutter widgets) is separated from game logic (Flame + `LevelSolver`). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- Flutter + Flame game app. UI (Flutter widgets) is separated from game logic (Flame + `LevelSolver`). See [documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md).
 - State is managed with Riverpod providers located under [lib/providers](lib/providers) and feature modules under [lib/features/game](lib/features/game).
 - Local persistence uses Hive (initialized in [lib/main.dart](lib/main.dart)). Levels are JSON under `assets/levels/module_*`.
 
 1. Key domain objects & locations
 
-- Level solving & blocking logic: `LevelSolver` (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and code under `lib/features/game`).
-- Providers to inspect: `moduleProgressProvider`, `vineStatesProvider`, `graceProvider`, `currentLevelProvider`, `gameInstanceProvider` (described in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+- Level solving & blocking logic: `LevelSolver` (see [**docs**/ARCHITECTURE.md](**docs**/ARCHITECTURE.md) and code under `lib/features/game`).
+- Providers to inspect: `moduleProgressProvider`, `vineStatesProvider`, `graceProvider`, `currentLevelProvider`, `gameInstanceProvider` (described in [documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md)).
 - Persistence notifiers: `GameProgressNotifier` / `ModuleProgressNotifier` interact directly with Hive — prefer introducing a `ProgressRepository` abstraction for cloud sync changes.
 
 1. Project-specific patterns and conventions
@@ -31,7 +31,7 @@ Be concise. Focus on the game's state, persistence, and level logic when changin
 
 - Update the provider in `lib/providers` and corresponding notifier under `lib/features/game`.
 - Add a new abstraction (`ProgressRepository`) when introducing Firebase sync. Keep Hive-backed implementation (`HiveProgressRepository`) and wire it behind a provider.
-- Update `docs/ARCHITECTURE.md` with a short note explaining the change and any migration steps.
+- Update `documentation/ARCHITECTURE.md` with a short note explaining the change and any migration steps.
 
 1. Code style & testing expectations
 
@@ -53,7 +53,7 @@ Be concise. Focus on the game's state, persistence, and level logic when changin
 
 - Provider patterns and persistence hooks: [lib/providers](lib/providers) and `GameProgressNotifier` in `lib/features/game`.
 - Level data shape and assets: `assets/levels/module_1/` and `pubspec.yaml` asset entries.
-- Architecture rationale: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [README.md](README.md).
+- Architecture rationale: [documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md) and [README.md](README.md).
 
 1. What to ask the author
 

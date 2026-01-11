@@ -46,7 +46,7 @@ parable-bloom/
 ├── assets/               # Game assets & levels
 │   ├── levels/          # Module-structured JSON levels
 │   └── art/             # Sprites, textures, audio
-├── docs/                # Comprehensive documentation
+├── documentation/                # Comprehensive documentation
 ├── test/                # Unit & integration tests
 └── platform dirs        # iOS/Android/Web specifics
 ```
@@ -306,7 +306,7 @@ void main() {
 
 ### Documentation Update Requirements
 
-**CRITICAL**: All documentation in `docs/` must be kept synchronized with code changes. Documentation is the source of truth for understanding the system and must reflect current implementation.
+**CRITICAL**: All documentation in `documentation/` must be kept synchronized with code changes. Documentation is the source of truth for understanding the system and must reflect current implementation.
 
 #### When to Update Documentation
 
@@ -318,14 +318,14 @@ void main() {
 
 #### Documentation Files and Update Triggers
 
-**`docs/README.md` (Master Index)**
+**`documentation/README.md` (Master Index)**
 
 - Update when adding/removing documentation files
 - Modify version numbers and last_updated dates
 - Update status descriptions when implementation milestones are reached
 - Change success metrics or technical details as they evolve
 
-**`docs/ARCHITECTURE.md` (Architecture & State Management)**
+**`documentation/ARCHITECTURE.md` (Architecture & State Management)**
 
 - **Update when:**
   - Adding/modifying Riverpod providers (gameProgressProvider, vineStatesProvider, etc.)
@@ -338,7 +338,7 @@ void main() {
   - Persistence coupling assessments
   - Firebase integration roadmap progress
 
-**`docs/GAME_DESIGN.md` (Game Design Document)**
+**`documentation/GAME_DESIGN.md` (Game Design Document)**
 
 - **Update when:**
   - Changing game mechanics (vine movement, blocking rules, Grace system)
@@ -351,7 +351,7 @@ void main() {
   - Asset specifications and generation prompts
   - Technical implementation details that affect gameplay
 
-**`docs/TECHNICAL_IMPLEMENTATION.md` (Technical Implementation Guide)**
+**`documentation/TECHNICAL_IMPLEMENTATION.md` (Technical Implementation Guide)**
 
 - **Update when:**
   - Adding new domain entities or changing existing ones
@@ -422,8 +422,8 @@ Treat documentation with the same rigor as code:
 
 ### Architecture Documentation
 
-- Update `docs/ARCHITECTURE.md` for state management changes
-- Update `docs/TECHNICAL_IMPLEMENTATION.md` for technical changes
+- Update `documentation/ARCHITECTURE.md` for state management changes
+- Update `documentation/TECHNICAL_IMPLEMENTATION.md` for technical changes
 - Maintain accurate dependency versions
 
 ### Changelog
@@ -435,7 +435,7 @@ Treat documentation with the same rigor as code:
 
 ### Documentation First
 
-1. Check `docs/` folder for detailed guides
+1. Check `documentation/` folder for detailed guides
 2. Review existing code for patterns
 3. Check GitHub issues for known problems
 
