@@ -85,7 +85,7 @@ flutter doctor --android-licenses
 
 ### Project Structure
 
-```
+```text
 parable-bloom/
 ├── lib/                    # Flutter source code
 │   ├── core/              # App-wide utilities & themes
@@ -97,7 +97,7 @@ parable-bloom/
 ├── assets/                # Game assets & levels
 │   ├── levels/            # Module-structured level JSONs
 │   └── art/               # Sprites & textures
-├── docs/                  # Documentation
+├── documentation/         # Documentation
 │   ├── GAME_DESIGN.md     # Complete GDD
 │   ├── ARCHITECTURE.md    # Technical architecture
 │   └── TECHNICAL_IMPLEMENTATION.md
@@ -134,11 +134,11 @@ flutter build ios --release
 
 ## 📚 Documentation
 
-- **[🎮 Game Design Document](docs/GAME_DESIGN.md)** - Complete mechanics, features, and design philosophy
-- **[🏗️ Architecture Guide](docs/ARCHITECTURE.md)** - State management, persistence, and Firebase roadmap
-- **[💻 Technical Implementation](docs/TECHNICAL_IMPLEMENTATION.md)** - Code structure, testing, and deployment
+- **[🎮 Game Design Document](documentation/GAME_DESIGN.md)** - Complete mechanics, features, and design philosophy
+- **[🏗️ Architecture Guide](documentation/ARCHITECTURE.md)** - State management, persistence, and Firebase roadmap
+- **[💻 Technical Implementation](documentation/TECHNICAL_IMPLEMENTATION.md)** - Code structure, testing, and deployment
 - **[📖 API Reference](https://pub.dev/documentation)** - Generated API docs
-- **[🚀 Release Process](docs/RELEASE_PROCESS.md)** - Automated release and deployment guide
+- **[🚀 Release Process](documentation/RELEASE_PROCESS.md)** - Automated release and deployment guide
 
 ## 🤝 Contributing
 

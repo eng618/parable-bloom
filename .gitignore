@@ -92,7 +92,7 @@ private_keys/
 results.sarif
 
 # Example level images and videos
-docs/example-levels/*
+documentation/example-levels/*
 assets/levels_backup/*
 
 # Build artifacts for level-builder tool
