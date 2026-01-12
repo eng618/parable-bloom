@@ -554,3 +554,29 @@ tasks:
     desc: Configure Firebase for Windows only (local development)
     cmds:
       - flutterfire configure --project=parable-bloom --platforms=windows --yes
+
+  # -----------------------------------------------------------------------------
+  # Hugo Site
+
+  hugo:install:
+    desc: Install Hugo extended edition via Go
+    cmds:
+      - go install -tags extended github.com/gohugoio/hugo@latest
+
+  hugo:serve:
+    desc: Start Hugo development server
+    dir: tools/hugo-site
+    cmds:
+      - hugo server -D
+
+  hugo:build:
+    desc: Build Hugo site to docs/
+    dir: tools/hugo-site
+    cmds:
+      - hugo --minify
+
+  hugo:new:
+    desc: Create new content page (usage - task hugo:new PAGE=privacy)
+    dir: tools/hugo-site
+    cmds:
+      - hugo new content {{.PAGE}}.md

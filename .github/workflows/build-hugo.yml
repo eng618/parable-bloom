@@ -1,0 +1,35 @@
+name: Build Hugo Site
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/hugo-site/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: 'latest'
+          extended: true
+
+      - name: Build Hugo site
+        working-directory: tools/hugo-site
+        run: hugo --destination ../../docs --minify
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs
+        #   cname: parable-bloom.github.io  # Optional: if you have a custom domain

@@ -97,3 +97,6 @@ assets/levels_backup/*
 
 # Build artifacts for level-builder tool
 tools/level-builder/level-builder
+
+# Hugo generated site
+docs/
