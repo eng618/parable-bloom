@@ -1,4 +1,14 @@
 {
-  "cSpell.words": ["firestore", "flutterfire", "riverpod", "tappable"],
-  "languageToolLinter.languageTool.ignoredWordsInWorkspace": ["firestore"]
+  "cSpell.words": [
+    "firestore",
+    "flutterfire",
+    "riverpod",
+    "tappable"
+  ],
+  "languageToolLinter.languageTool.ignoredWordsInWorkspace": [
+    "firestore"
+  ],
+  "chat.tools.terminal.autoApprove": {
+    "hugo": true
+  }
 }

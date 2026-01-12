@@ -1,0 +1,3 @@
+[submodule "tools/hugo-site/themes/blowfish"]
+	path = tools/hugo-site/themes/blowfish
+	url = https://github.com/nunocoracao/blowfish.git
