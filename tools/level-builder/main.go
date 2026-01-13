@@ -37,7 +37,7 @@ func main() {
 		checkSolvable := validateCmd.Bool("check-solvable", false, "Run solvability checks using the Dart solver (may be slow)")
 		maxStates := validateCmd.Int("max-states", 100000, "Max states for solver heuristic")
 		useAstar := validateCmd.Bool("use-astar", true, "Use A* guided search for exact solver (default: true)")
-		astarWeight := validateCmd.Int("astar-weight", 10, "Weight multiplier for blocked-count heuristic in A*")
+		astarWeight := validateCmd.Int("astar-weight", validator.DefaultAStarWeight, "Weight multiplier for blocked-count heuristic in A*")
 		validateCmd.Parse(os.Args[2:])
 
 		if err := validator.Validate(*checkSolvable, *maxStates, *useAstar, *astarWeight); err != nil {

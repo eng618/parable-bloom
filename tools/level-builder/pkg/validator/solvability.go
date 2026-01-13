@@ -11,6 +11,8 @@ import (
 // up to 24 vines (optionally A*) and a lightweight heuristic for larger levels.
 //
 // SolvabilityStats now contains extra instrumentation useful for experiments and diagnostics.
+const DefaultAStarWeight = 10
+
 type SolvabilityStats struct {
 	Solver         string `json:"solver"`
 	StatesExplored int    `json:"states_explored"`
@@ -21,7 +23,7 @@ type SolvabilityStats struct {
 // with default settings (no A*; heuristic for large levels).
 func IsSolvable(lvl model.Level, maxStates int) (bool, SolvabilityStats, error) {
 	// Backward-compatible helper: use default options (no A*, heuristic for large levels).
-	return IsSolvableWithOptions(lvl, maxStates, false, 10)
+	return IsSolvableWithOptions(lvl, maxStates, false, DefaultAStarWeight)
 }
 
 // IsSolvableWithOptions selects an appropriate solver (exact, A*, or heuristic) and returns
