@@ -41,7 +41,7 @@ func ValidateTutorials(checkSolvable bool, maxStates int) error {
 				return err
 			}
 
-			ok, stats, err := IsSolvableWithOptions(lvl, maxStates, false, 10)
+			ok, stats, err := IsSolvableWithOptions(lvl, maxStates, true, 10)
 			ls := LevelStat{
 				File:           f,
 				LevelID:        lvl.ID,
