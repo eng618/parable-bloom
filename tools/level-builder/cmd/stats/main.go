@@ -33,6 +33,10 @@ func summarize(path string) error {
 		totalTime += s.TimeMs
 	}
 	n := len(arr)
+	if n == 0 {
+		fmt.Printf("%s: levels=0 avg_states=0.0 max_states=0 avg_time_ms=0.0\n", path)
+		return nil
+	}
 	fmt.Printf("%s: levels=%d avg_states=%.1f max_states=%d avg_time_ms=%.1f\n", path, n, float64(totalStates)/float64(n), maxStates, float64(totalTime)/float64(n))
 	return nil
 }
