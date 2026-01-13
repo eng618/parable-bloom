@@ -77,7 +77,7 @@ void main() {
     });
 
     test('should save and retrieve progress correctly', () async {
-      final originalProgress = GameProgress(
+      final originalProgress = GameProgress.initial().copyWith(
         currentLevel: 3,
         completedLevels: {1, 2},
         tutorialCompleted: false,
@@ -91,7 +91,7 @@ void main() {
     });
 
     test('should reset progress correctly', () async {
-      final progress = GameProgress(
+      final progress = GameProgress.initial().copyWith(
         currentLevel: 5,
         completedLevels: {1, 2, 3, 4},
         tutorialCompleted: false,
@@ -143,7 +143,7 @@ void main() {
     test('should sync to cloud (basic functionality test)', () async {
       // This test verifies the sync method doesn't crash
       // In a real scenario, we'd mock Firestore responses
-      final progress = GameProgress(
+      final progress = GameProgress.initial().copyWith(
         currentLevel: 2,
         completedLevels: {1},
         tutorialCompleted: false,

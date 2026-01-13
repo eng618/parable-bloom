@@ -41,7 +41,7 @@ func ValidateTutorials(checkSolvable bool, maxStates int) error {
 				return err
 			}
 
-			ok, stats, err := IsSolvable(lvl, maxStates)
+			ok, stats, err := IsSolvableWithOptions(lvl, maxStates, true, DefaultAStarWeight)
 			ls := LevelStat{
 				File:           f,
 				LevelID:        lvl.ID,
@@ -125,9 +125,9 @@ func validateLessonFile(path string) error {
 		}
 	}
 
-	// 5. Structure: require max_moves >= 1
+	// 5. Structure: require max_moves >= 1.
 	if lvl.MaxMoves < 1 {
-		return fmt.Errorf("invalid max_moves")
+		return fmt.Errorf("missing or invalid max_moves in %s", base)
 	}
 
 	return nil

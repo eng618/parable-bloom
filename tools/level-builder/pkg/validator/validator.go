@@ -46,7 +46,7 @@ type LevelStat struct {
 //
 // Note: this function has side effects (printing to stdout and writing validation_stats.json) and performs
 // concurrent work that blocks until all checks complete.
-func Validate(checkSolvable bool, maxStates int) error {
+func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int) error {
 	// 1. Validate Modules
 	if err := validateModules(); err != nil {
 		return fmt.Errorf("module validation failed: %w", err)
@@ -91,7 +91,7 @@ func Validate(checkSolvable bool, maxStates int) error {
 			}
 
 			start := time.Now()
-			ok, stat, cerr := IsSolvableWithStats(lvl, maxStates)
+			ok, stat, cerr := IsSolvableWithStats(lvl, maxStates, useAstar, astarWeight)
 			dur := time.Since(start)
 			stat.TimeMs = dur.Milliseconds()
 			stat.File = f

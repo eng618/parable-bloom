@@ -50,7 +50,7 @@ void main() {
     });
 
     test('should save and retrieve progress correctly', () async {
-      final originalProgress = GameProgress(
+      final originalProgress = GameProgress.initial().copyWith(
         currentLevel: 3,
         completedLevels: {1, 2},
         tutorialCompleted: false,
@@ -64,7 +64,7 @@ void main() {
     });
 
     test('should reset progress correctly', () async {
-      final progress = GameProgress(
+      final progress = GameProgress.initial().copyWith(
         currentLevel: 5,
         completedLevels: {1, 2, 3, 4},
         tutorialCompleted: false,
@@ -79,7 +79,7 @@ void main() {
     });
 
     test('should handle empty completed levels set', () async {
-      final progress = GameProgress(
+      final progress = GameProgress.initial().copyWith(
         currentLevel: 2,
         completedLevels: {},
         tutorialCompleted: false,
@@ -93,7 +93,7 @@ void main() {
     });
 
     test('should persist data across repository instances', () async {
-      final progress1 = GameProgress(
+      final progress1 = GameProgress.initial().copyWith(
         currentLevel: 4,
         completedLevels: {1, 2, 3},
         tutorialCompleted: false,
