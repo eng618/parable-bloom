@@ -103,6 +103,18 @@ tasks:
     cmds:
       - go run . validate --check-solvable --max-states {{.MAX_STATES | default 100000}}
 
+  tutorials:validate:
+    desc: Validate tutorial lessons using the Go tool
+    dir: tools/level-builder
+    cmds:
+      - go run . validate-tutorials
+
+  tutorials:validate-solvable:
+    desc: Validate tutorial lessons and run solvability checks (may be slow)
+    dir: tools/level-builder
+    cmds:
+      - go run . validate-tutorials --check-solvable --max-states {{.MAX_STATES | default 100000}}
+
   levels:validate-experiments:
     desc: Run solvability experiments comparing BFS and A* (outputs bfs/astar stats)
     dir: tools/level-builder
