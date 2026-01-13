@@ -115,17 +115,7 @@ func heuristicPriority(mask int, lvl model.Level, vineCells []map[string]bool, w
 			continue
 		}
 		head := lvl.Vines[i].OrderedPath[0]
-		dx, dy := 0, 0
-		switch lvl.Vines[i].HeadDirection {
-		case "right":
-			dx = 1
-		case "left":
-			dx = -1
-		case "up":
-			dy = 1
-		case "down":
-			dy = -1
-		}
+		dx, dy := directionDelta(lvl.Vines[i].HeadDirection)
 		nxt := fmt.Sprintf("%d,%d", head.X+dx, head.Y+dy)
 		// if occupied by any active vine, count as blocked
 		for j := 0; j < len(lvl.Vines); j++ {
