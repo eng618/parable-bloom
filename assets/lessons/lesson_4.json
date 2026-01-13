@@ -11,7 +11,9 @@
     "grid_size": [
         6,
         6
-    ],    "max_moves": 999,    "vines": [
+    ],
+    "max_moves": 999,
+    "vines": [
         {
             "id": "vine_1",
             "head_direction": "right",
