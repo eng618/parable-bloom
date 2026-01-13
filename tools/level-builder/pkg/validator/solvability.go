@@ -15,6 +15,17 @@ type SolvabilityStats struct {
 	GaveUp         bool   `json:"gave_up"`
 }
 
+// IsSolvable determines whether the given level is solvable within a bounded search.
+// It chooses between strategies based on problem size: an exact solver is used when the
+// level has at most 24 vines, and a heuristic solver is used for larger levels. If the
+// level contains no vines it is considered trivially solvable.
+//
+// The maxStates parameter caps the number of search states the solver will explore.
+// If that limit is reached the solver may terminate early; the returned SolvabilityStats
+// will indicate which solver was used via the Solver field ("none", "exact", or "heuristic"),
+// report how many states were explored in StatesExplored, and set GaveUp to true when the
+// search stopped because the maxStates limit was hit. An error is returned if an internal
+// failure occurs within the chosen solver.
 func IsSolvable(lvl model.Level, maxStates int) (bool, SolvabilityStats, error) {
 	vineCount := len(lvl.Vines)
 	if vineCount == 0 {
@@ -30,7 +41,14 @@ func IsSolvable(lvl model.Level, maxStates int) (bool, SolvabilityStats, error) 
 	return ok, SolvabilityStats{Solver: "heuristic", StatesExplored: states, GaveUp: states >= maxStates}, nil
 }
 
-// Wrapper to match previous naming
+// IsSolvableWithStats reports whether the given level is solvable within the provided maxStates limit.
+// It delegates to IsSolvable and returns three values:
+//   - a boolean indicating whether a solution was found within the state limit,
+//   - a LevelStat containing a solver identifier (copied only if non-empty), the number of states explored,
+//     and the GaveUp flag indicating whether the solver stopped early,
+//   - and any error produced by the underlying solver.
+//
+// The returned LevelStat is always provided (may be zero-valued) so callers can inspect solver progress even when an error occurs.
 func IsSolvableWithStats(lvl model.Level, maxStates int) (bool, LevelStat, error) {
 	ok, stats, err := IsSolvable(lvl, maxStates)
 	stat := LevelStat{}

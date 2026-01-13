@@ -42,3 +42,12 @@ jobs:
         with:
           name: level-validation-logs
           path: tools/level-builder/validation.log
+
+      - name: Upload validation stats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: level-validation-stats
+          path: |
+            tools/level-builder/validation_stats.json
+            tools/level-builder/validation_stats_lessons.json
