@@ -18,7 +18,7 @@ type SolvabilityStats struct {
 }
 
 // IsSolvable is the backward-compatible helper that calls the options-aware solver
-// with memoization disabled by default.
+// with default settings (no A*; heuristic for large levels).
 func IsSolvable(lvl model.Level, maxStates int) (bool, SolvabilityStats, error) {
 	// Backward-compatible helper: use default options (no A*, heuristic for large levels).
 	return IsSolvableWithOptions(lvl, maxStates, false, 10)
