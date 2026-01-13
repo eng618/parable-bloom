@@ -98,6 +98,8 @@ assets/levels_backup/*
 # Build artifacts for level-builder tool
 tools/level-builder/level-builder
 tools/level-builder/validation_stats.json
+tools/level-builder/validation_stats*
+tools/level-builder/validation.log
 
 # Hugo generated site
 docs/

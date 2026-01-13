@@ -103,16 +103,42 @@ tasks:
     cmds:
       - go run . validate --check-solvable --max-states {{.MAX_STATES | default 100000}}
 
-  tutorials:validate:
-    desc: Validate tutorial levels using the Go tool
+  levels:validate-experiments:
+    desc: Run solvability experiments comparing BFS and A* (outputs bfs/astar stats)
     dir: tools/level-builder
     cmds:
-      - go run . validate-tutorials
+      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=false
+      - mv validation_stats.json validation_stats_bfs.json || true
+      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT | default 10}}
+      - mv validation_stats.json validation_stats_astar.json || true
+      - echo "Created validation_stats_bfs.json and validation_stats_astar.json"
 
-  levels:clean:
-    desc: Clean generated levels (removes assets/levels/* and modules.json)
+  levels:validate-astar-experiments:
+    desc: Run solvability experiments using A* vs BFS
     dir: tools/level-builder
     cmds:
+      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=false
+      - mv validation_stats.json validation_stats_bfs.json || true
+      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT | default 10}}
+      - mv validation_stats.json validation_stats_astar.json || true
+      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT | default 10}}
+      - echo "Created validation_stats_bfs.json, validation_stats_astar.json and validation_stats_astar_memo.json"  
+
+  levels:astar-weight-sweep:
+    desc: Sweep A* weight parameter and collect stats (weights comma-separated, default 5,10,20)
+    dir: tools/level-builder
+    cmds:
+      - |
+        WEIGHTS="${WEIGHTS:-5,10,20}"
+        OLD_IFS="$IFS"
+        IFS=','
+        for w in $WEIGHTS; do
+          echo "Running A* with weight=$w"
+          go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight $w
+          mv validation_stats.json validation_stats_astar_w${w}.json || true
+        done
+        IFS="$OLD_IFS"
+      - echo "Created validation_stats_astar_w*.json"
       - go run . clean
 
   # -----------------------------------------------------------------------------

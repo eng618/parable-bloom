@@ -80,18 +80,12 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
       allLessonsCompleted: allComplete,
     );
 
-    // Debug log for progression
-    print(
-        'TutorialProgressNotifier: Completed $lessonId -> next: $nextLesson allComplete: $allComplete');
-
     // Update game progress to reflect lesson completion
     await ref.read(gameProgressProvider.notifier).completeLesson(
           lessonId: lessonId,
           nextLesson: nextLesson,
           allLessonsCompleted: allComplete,
         );
-
-    print('TutorialProgressNotifier: GameProgress updated');
   }
 
   /// Resets all lessons (for replay)

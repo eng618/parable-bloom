@@ -7,56 +7,58 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
-// IsSolvable performs a bounded-search solvability check for a level.
-// It uses an exact BFS for up to 24 vines and a lightweight heuristic for larger levels.
+// IsSolvable performs a bounded-search solvability check for a level. It uses an exact BFS for
+// up to 24 vines (optionally A*) and a lightweight heuristic for larger levels.
+//
+// SolvabilityStats now contains extra instrumentation useful for experiments and diagnostics.
 type SolvabilityStats struct {
 	Solver         string `json:"solver"`
 	StatesExplored int    `json:"states_explored"`
 	GaveUp         bool   `json:"gave_up"`
 }
 
-// IsSolvable determines whether the given level is solvable within a bounded search.
-// It chooses between strategies based on problem size: an exact solver is used when the
-// level has at most 24 vines, and a heuristic solver is used for larger levels. If the
-// level contains no vines it is considered trivially solvable.
-//
-// The maxStates parameter caps the number of search states the solver will explore.
-// If that limit is reached the solver may terminate early; the returned SolvabilityStats
-// will indicate which solver was used via the Solver field ("none", "exact", or "heuristic"),
-// report how many states were explored in StatesExplored, and set GaveUp to true when the
-// search stopped because the maxStates limit was hit. An error is returned if an internal
-// failure occurs within the chosen solver.
+// IsSolvable is the backward-compatible helper that calls the options-aware solver
+// with memoization disabled by default.
 func IsSolvable(lvl model.Level, maxStates int) (bool, SolvabilityStats, error) {
+	// Backward-compatible helper: use default options (no A*, heuristic for large levels).
+	return IsSolvableWithOptions(lvl, maxStates, false, 10)
+}
+
+// IsSolvableWithOptions selects an appropriate solver (exact, A*, or heuristic) and returns
+// instrumentation stats. A* is used for small vine counts when requested.
+func IsSolvableWithOptions(lvl model.Level, maxStates int, useAstar bool, astarWeight int) (bool, SolvabilityStats, error) {
 	vineCount := len(lvl.Vines)
 	if vineCount == 0 {
 		return true, SolvabilityStats{Solver: "none", StatesExplored: 0, GaveUp: false}, nil
 	}
 
 	if vineCount <= 24 {
+		if useAstar {
+			ok, states := isSolvableExactAStarWithStats(lvl, maxStates, astarWeight)
+			stats := SolvabilityStats{Solver: "exact-astar", StatesExplored: states, GaveUp: states >= maxStates}
+			return ok, stats, nil
+		}
 		ok, states := isSolvableExactWithStats(lvl, maxStates)
-		return ok, SolvabilityStats{Solver: "exact", StatesExplored: states, GaveUp: states >= maxStates}, nil
+		stats := SolvabilityStats{Solver: "exact", StatesExplored: states, GaveUp: states >= maxStates}
+		return ok, stats, nil
 	}
 
 	ok, states := isSolvableHeuristicWithStats(lvl, maxStates)
-	return ok, SolvabilityStats{Solver: "heuristic", StatesExplored: states, GaveUp: states >= maxStates}, nil
+	stats := SolvabilityStats{Solver: "heuristic", StatesExplored: states, GaveUp: states >= maxStates}
+	return ok, stats, nil
 }
 
 // IsSolvableWithStats reports whether the given level is solvable within the provided maxStates limit.
-// It delegates to IsSolvable and returns three values:
-//   - a boolean indicating whether a solution was found within the state limit,
-//   - a LevelStat containing a solver identifier (copied only if non-empty), the number of states explored,
-//     and the GaveUp flag indicating whether the solver stopped early,
-//   - and any error produced by the underlying solver.
-//
-// The returned LevelStat is always provided (may be zero-valued) so callers can inspect solver progress even when an error occurs.
-func IsSolvableWithStats(lvl model.Level, maxStates int) (bool, LevelStat, error) {
-	ok, stats, err := IsSolvable(lvl, maxStates)
+// It delegates to the options-aware solver and populates a LevelStat suitable for JSON output.
+func IsSolvableWithStats(lvl model.Level, maxStates int, useAstar bool, astarWeight int) (bool, LevelStat, error) {
+	ok, stats, err := IsSolvableWithOptions(lvl, maxStates, useAstar, astarWeight)
 	stat := LevelStat{}
 	if stats.Solver != "" {
 		stat.Solver = stats.Solver
 	}
 	stat.StatesExplored = stats.StatesExplored
 	stat.GaveUp = stats.GaveUp
+	stat.MaxStates = maxStates
 	return ok, stat, err
 }
 
@@ -86,15 +88,7 @@ func isSolvableExact(lvl model.Level) bool {
 			return true
 		}
 
-		occupiedAll := map[string]bool{}
-		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) == 0 {
-				continue
-			}
-			for k := range vineCells[i] {
-				occupiedAll[k] = true
-			}
-		}
+		occupiedAll := computeOccupied(mask, vineCount, vineCells)
 
 		for i := 0; i < vineCount; i++ {
 			if (mask & (1 << uint(i))) == 0 {
@@ -133,20 +127,8 @@ func canVineClearExact(lvl model.Level, vineIndex int, occupiedAll map[string]bo
 	for step := 0; step < maxCheckDistance; step++ {
 		newPositions := simulateVineMovementFromPositions(positions, vine.HeadDirection)
 
-		seen := map[string]bool{}
-		for _, np := range newPositions {
-			k := fmt.Sprintf("%d,%d", np.X, np.Y)
-
-			// self-overlap
-			if seen[k] {
-				return false
-			}
-			seen[k] = true
-
-			// collision with other vines
-			if occupiedAll[k] && !selfCells[k] {
-				return false
-			}
+		if !validateNewPositions(newPositions, occupiedAll, selfCells) {
+			return false
 		}
 
 		// check head exit
@@ -159,6 +141,26 @@ func canVineClearExact(lvl model.Level, vineIndex int, occupiedAll map[string]bo
 	}
 
 	return false
+}
+
+func validateNewPositions(newPositions []model.Point, occupiedAll map[string]bool, selfCells map[string]bool) bool {
+	seen := map[string]bool{}
+	for _, np := range newPositions {
+		k := fmt.Sprintf("%d,%d", np.X, np.Y)
+
+		// Self-overlap after movement is not allowed.
+		if !seen[k] {
+			seen[k] = true
+		} else {
+			return false
+		}
+
+		// Collision with any other vine.
+		if occupiedAll[k] && !selfCells[k] {
+			return false
+		}
+	}
+	return true
 }
 
 func simulateVineMovementFromPositions(positions []model.Point, direction string) []model.Point {
@@ -194,7 +196,7 @@ func isSolvableHeuristic(lvl model.Level, maxStates int) bool {
 	return ok
 }
 
-// Exact solver that returns states explored for diagnostics
+// Exact solver that returns full stats including memoization metrics
 func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 	vines := lvl.Vines
 	vineCount := len(vines)
@@ -228,15 +230,7 @@ func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 			return true, states
 		}
 
-		occupiedAll := map[string]bool{}
-		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) == 0 {
-				continue
-			}
-			for k := range vineCells[i] {
-				occupiedAll[k] = true
-			}
-		}
+		occupiedAll := computeOccupied(mask, vineCount, vineCells)
 
 		for i := 0; i < vineCount; i++ {
 			if (mask & (1 << uint(i))) == 0 {
@@ -261,14 +255,7 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 	vineCount := len(vines)
 
 	// Precompute occupied cell sets
-	vineCells := make([]map[string]bool, vineCount)
-	for i, v := range vines {
-		m := map[string]bool{}
-		for _, p := range v.OrderedPath {
-			m[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
-		}
-		vineCells[i] = m
-	}
+	vineCells := buildVineCells(lvl)
 
 	fullMask := (1 << uint(vineCount)) - 1
 	// Use slice-backed visited queue for performance
@@ -291,45 +278,9 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 			return true, states
 		}
 
-		// build occupied map
-		occupied := map[string]bool{}
-		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) == 0 {
-				continue
-			}
-			for k := range vineCells[i] {
-				occupied[k] = true
-			}
-		}
+		occupied := computeOccupied(mask, vineCount, vineCells)
 
-		// determine movable vines
-		movable := make([]int, 0, 8)
-		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) == 0 {
-				continue
-			}
-			v := vines[i]
-			head := v.OrderedPath[0]
-			dx, dy := 0, 0
-			switch v.HeadDirection {
-			case "right":
-				dx = 1
-			case "left":
-				dx = -1
-			case "up":
-				dy = 1
-			case "down":
-				dy = -1
-			}
-			nxt := fmt.Sprintf("%d,%d", head.X+dx, head.Y+dy)
-			if head.X+dx < 0 || head.X+dx >= lvl.GridSize[0] || head.Y+dy < 0 || head.Y+dy >= lvl.GridSize[1] {
-				movable = append(movable, i)
-				continue
-			}
-			if !occupied[nxt] {
-				movable = append(movable, i)
-			}
-		}
+		movable := determineMovableVines(lvl, mask, occupied)
 
 		if len(movable) == 0 {
 			continue
@@ -347,4 +298,70 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 	}
 
 	return false, states
+}
+
+// Helper functions to reduce complexity
+func buildVineCells(lvl model.Level) []map[string]bool {
+	vines := lvl.Vines
+	vineCount := len(vines)
+	vineCells := make([]map[string]bool, vineCount)
+	for i, v := range vines {
+		m := map[string]bool{}
+		for _, p := range v.OrderedPath {
+			m[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
+		}
+		vineCells[i] = m
+	}
+	return vineCells
+}
+
+func computeOccupied(mask int, vineCount int, vineCells []map[string]bool) map[string]bool {
+	occupied := map[string]bool{}
+	for i := 0; i < vineCount; i++ {
+		if (mask & (1 << uint(i))) == 0 {
+			continue
+		}
+		for k := range vineCells[i] {
+			occupied[k] = true
+		}
+	}
+	return occupied
+}
+
+func determineMovableVines(lvl model.Level, mask int, occupied map[string]bool) []int {
+	vines := lvl.Vines
+	vineCount := len(vines)
+	movable := make([]int, 0, 8)
+	for i := 0; i < vineCount; i++ {
+		if (mask & (1 << uint(i))) == 0 {
+			continue
+		}
+		v := vines[i]
+		head := v.OrderedPath[0]
+		dx, dy := directionDelta(v.HeadDirection)
+		nxt := fmt.Sprintf("%d,%d", head.X+dx, head.Y+dy)
+		if head.X+dx < 0 || head.X+dx >= lvl.GridSize[0] || head.Y+dy < 0 || head.Y+dy >= lvl.GridSize[1] {
+			movable = append(movable, i)
+			continue
+		}
+		if !occupied[nxt] {
+			movable = append(movable, i)
+		}
+	}
+	return movable
+}
+
+func directionDelta(dir string) (int, int) {
+	switch dir {
+	case "right":
+		return 1, 0
+	case "left":
+		return -1, 0
+	case "up":
+		return 0, 1
+	case "down":
+		return 0, -1
+	default:
+		return 0, 0
+	}
 }

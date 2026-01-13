@@ -34,7 +34,7 @@ jobs:
       - name: Run solvability validation
         working-directory: tools/level-builder
         run: |
-          go run . validate --check-solvable --max-states=100000
+          go run . validate --check-solvable --max-states=100000 --use-astar=true --astar-weight=10
 
       - name: Upload validation logs on failure
         if: failure()

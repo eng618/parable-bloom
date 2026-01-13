@@ -212,4 +212,4 @@ The Go-based toolchain located in `tools/level-builder` handles all operations.
 
 - **Clean**: `go run . clean` (Removes generated levels)
 - **Generate**: `go run . generate --count 50` (Generates levels and modules.json)
-- **Validate**: `go run . validate` (Checks all assets against schema and logic)
+- **Validate**: `go run . validate` (Checks all assets against schema and logic). To run solvability checks use `--check-solvable --max-states <N> --use-astar=true --astar-weight=<W>`; CI runs A* by default.
