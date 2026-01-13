@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -53,11 +54,13 @@ func ValidateTutorials(checkSolvable bool, maxStates int) error {
 			}
 			if err != nil {
 				ls.Error = err.Error()
+				fmt.Printf("  Warning: %s\n", err.Error())
 			}
 			lessonStats = append(lessonStats, ls)
 			fmt.Printf("Lesson %d (%s): solvable=%v solver=%s states=%d gave_up=%v\n", lvl.ID, filepath.Base(f), ok, stats.Solver, stats.StatesExplored, stats.GaveUp)
 			if !ok {
-				// continue collection; return error after writing stats
+				common.Verbose("invalid lesson %d (%s)", lvl.ID, filepath.Base(f))
+				common.Verbose("continuing to next lesson despite failure...will return after collecting all stats")
 			}
 		}
 	}

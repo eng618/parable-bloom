@@ -64,7 +64,8 @@ func IsSolvableWithStats(lvl model.Level, maxStates int, useAstar bool, astarWei
 	return ok, stat, err
 }
 
-func isSolvableExact(lvl model.Level) bool {
+// isSolvableExactWithStats returns whether the level is solvable and the number of states explored.
+func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 	vines := lvl.Vines
 	vineCount := len(vines)
 
@@ -79,15 +80,22 @@ func isSolvableExact(lvl model.Level) bool {
 	}
 
 	fullMask := (1 << uint(vineCount)) - 1
-	visited := make(map[int]bool)
+	// Use a simple slice-backed queue for correctness and clarity.
+	visited := make([]bool, 1<<uint(vineCount))
 	queue := []int{fullMask}
 	visited[fullMask] = true
+	states := 0
 
 	for len(queue) > 0 {
+		if states >= maxStates {
+			return false, states
+		}
+
 		mask := queue[0]
 		queue = queue[1:]
+		states++
 		if mask == 0 {
-			return true
+			return true, states
 		}
 
 		occupiedAll := computeOccupied(mask, vineCount, vineCells)
@@ -106,7 +114,7 @@ func isSolvableExact(lvl model.Level) bool {
 		}
 	}
 
-	return false
+	return false, states
 }
 
 func canVineClearExact(lvl model.Level, vineIndex int, occupiedAll map[string]bool, selfCells map[string]bool) bool {
@@ -187,65 +195,6 @@ func simulateVineMovementFromPositions(positions []model.Point, direction string
 		newPositions = append(newPositions, positions[i-1])
 	}
 	return newPositions
-}
-
-// Heuristic solver: simple BFS using immediate head-cell blocking as the movable criteria.
-func isSolvableHeuristic(lvl model.Level, maxStates int) bool {
-	ok, _ := isSolvableHeuristicWithStats(lvl, maxStates)
-	return ok
-}
-
-// Exact solver that returns whether the level is solvable and the number of states explored.
-func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
-	vines := lvl.Vines
-	vineCount := len(vines)
-
-	// Build vine cells map
-	vineCells := make([]map[string]bool, vineCount)
-	for i, v := range vines {
-		m := map[string]bool{}
-		for _, p := range v.OrderedPath {
-			m[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
-		}
-		vineCells[i] = m
-	}
-
-	fullMask := (1 << uint(vineCount)) - 1
-	// Use a simple slice-backed queue for correctness and clarity.
-	visited := make([]bool, 1<<uint(vineCount))
-	queue := []int{fullMask}
-	visited[fullMask] = true
-	states := 0
-
-	for len(queue) > 0 {
-		if states >= maxStates {
-			return false, states
-		}
-
-		mask := queue[0]
-		queue = queue[1:]
-		states++
-		if mask == 0 {
-			return true, states
-		}
-
-		occupiedAll := computeOccupied(mask, vineCount, vineCells)
-
-		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) == 0 {
-				continue
-			}
-			if canVineClearExact(lvl, i, occupiedAll, vineCells[i]) {
-				next := mask & ^(1 << uint(i))
-				if !visited[next] {
-					visited[next] = true
-					queue = append(queue, next)
-				}
-			}
-		}
-	}
-
-	return false, states
 }
 
 // Heuristic solver with stats

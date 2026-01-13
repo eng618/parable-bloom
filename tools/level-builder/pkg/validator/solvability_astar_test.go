@@ -39,24 +39,6 @@ func loadLevel(t *testing.T, path string) model.Level {
 	return lvl
 }
 
-// warnIfAstarNotReducing logs a soft warning if A* explores the same or more states than BFS.
-// This can occur depending on heuristic quality or level structure while A* still being faster.
-func warnIfAstarNotReducing(t *testing.T, statesNo, statesYes int) {
-	t.Helper()
-
-	switch {
-	case statesYes < statesNo:
-		t.Logf("A* reduced explored states: bfs=%d astar=%d", statesNo, statesYes)
-	case statesYes == statesNo:
-		t.Logf("Note: A* explored the same number of states as BFS (=%d). This can be expected for some levels.", statesNo)
-	default:
-		t.Logf(
-			"Note: A* explored more states than BFS (bfs=%d astar=%d). Depending on heuristic/level structure, A* can still be faster due to ordering.",
-			statesNo, statesYes,
-		)
-	}
-}
-
 func TestAstarReducesWork_Level33(t *testing.T) {
 	lvl := loadLevel(t, "../../assets/levels/level_33.json")
 	// Run without A*
