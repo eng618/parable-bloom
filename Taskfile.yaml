@@ -122,7 +122,7 @@ tasks:
       - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT | default 10}}
       - mv validation_stats.json validation_stats_astar.json || true
       - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT | default 10}}
-      - echo "Created validation_stats_bfs.json, validation_stats_astar.json and validation_stats_astar_memo.json"  
+      - echo "Created validation_stats_bfs.json and validation_stats_astar.json"
 
   levels:astar-weight-sweep:
     desc: Sweep A* weight parameter and collect stats (weights comma-separated, default 5,10,20)
