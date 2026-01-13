@@ -133,8 +133,15 @@ tasks:
         OLD_IFS="$IFS"
         IFS=','
         for w in $WEIGHTS; do
+          # Validate that 'w' is a positive integer to avoid command injection
+          case "$w" in
+            ''|*[!0-9]*)
+              echo "Invalid weight: $w" >&2
+              exit 1
+              ;;
+          esac
           echo "Running A* with weight=$w"
-          go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight $w
+          go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight "$w"
           mv validation_stats.json validation_stats_astar_w${w}.json || true
         done
         IFS="$OLD_IFS"
