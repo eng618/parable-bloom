@@ -149,11 +149,10 @@ func validateNewPositions(newPositions []model.Point, occupiedAll map[string]boo
 		k := fmt.Sprintf("%d,%d", np.X, np.Y)
 
 		// Self-overlap after movement is not allowed.
-		if !seen[k] {
-			seen[k] = true
-		} else {
+		if seen[k] {
 			return false
 		}
+		seen[k] = true
 
 		// Collision with any other vine.
 		if occupiedAll[k] && !selfCells[k] {
