@@ -204,6 +204,7 @@ All levels must pass the strict validator in `tools/level-builder`.
 2. **Solvability**: The level must be solvable within `max_moves`.
 3. **Connectivity**: All vines must be contiguous. `head_direction` must be valid.
 4. **No Overlaps**: No two vine segments may share a coordinate.
+5. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
 
 ## 5. Tooling
 

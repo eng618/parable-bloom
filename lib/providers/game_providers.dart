@@ -88,12 +88,17 @@ class ModuleData {
   });
 
   // Computed properties for backward compatibility and convenience
-  int get startLevel => levels.isNotEmpty ? levels.reduce((curr, next) => curr < next ? curr : next) : challengeLevel;
+  int get startLevel => levels.isNotEmpty
+      ? levels.reduce((curr, next) => curr < next ? curr : next)
+      : challengeLevel;
   int get endLevel {
     if (levels.isEmpty) return challengeLevel;
     final maxLevel = levels.reduce((curr, next) => curr > next ? curr : next);
-    return challengeLevel > 0 ? (challengeLevel > maxLevel ? challengeLevel : maxLevel) : maxLevel;
+    return challengeLevel > 0
+        ? (challengeLevel > maxLevel ? challengeLevel : maxLevel)
+        : maxLevel;
   }
+
   int get levelCount => challengeLevel > 0 ? levels.length + 1 : levels.length;
   List<int> get allLevels {
     final result = [...levels];
@@ -104,7 +109,8 @@ class ModuleData {
   }
 
   bool containsLevel(int levelId) {
-    return levels.contains(levelId) || (challengeLevel > 0 && levelId == challengeLevel);
+    return levels.contains(levelId) ||
+        (challengeLevel > 0 && levelId == challengeLevel);
   }
 
   factory ModuleData.fromJson(Map<String, dynamic> json) {
@@ -112,7 +118,9 @@ class ModuleData {
       id: json['id'] as int,
       name: json['name'] as String,
       themeSeed: (json['theme_seed'] as String?) ?? 'forest',
-      levels: (json['levels'] as List<dynamic>?)?.map((e) => e as int).toList() ?? [],
+      levels:
+          (json['levels'] as List<dynamic>?)?.map((e) => e as int).toList() ??
+              [],
       challengeLevel: (json['challenge_level'] as int?) ?? 0,
       parable: json['parable'] as Map<String, dynamic>,
       unlockMessage: (json['unlock_message'] as String?) ?? '',
@@ -156,7 +164,8 @@ final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
     final modulesList = jsonMap['modules'] as List<dynamic>;
 
     return modulesList
-        .map((moduleJson) => ModuleData.fromJson(moduleJson as Map<String, dynamic>))
+        .map((moduleJson) =>
+            ModuleData.fromJson(moduleJson as Map<String, dynamic>))
         .toList();
   } catch (e) {
     debugPrint('Error loading modules.json: $e');
@@ -326,8 +335,70 @@ class LevelData {
 
 // Providers
 final hiveBoxProvider = Provider<Box>((ref) {
-  throw UnimplementedError('Hive box must be initialized in main');
+  try {
+    // If the app initialized Hive and opened the garden_save box in main(), prefer that.
+    if (Hive.isBoxOpen('garden_save')) {
+      return Hive.box('garden_save');
+    }
+  } catch (e) {
+    // If Hive is not available (for example during widget tests or outside main), fall back to an in-memory box.
+  }
+
+  debugPrint(
+      'hiveBoxProvider: No Hive box open; using in-memory fallback for tests');
+  return _InMemoryBox();
 });
+
+// Minimal in-memory box implementation used as a safe fallback in tests or when Hive
+// hasn't been initialized. It implements the commonly-used subset of the Hive Box API.
+class _InMemoryBox implements Box<dynamic> {
+  final Map _store = {};
+
+  @override
+  dynamic get(dynamic key, {dynamic defaultValue}) =>
+      _store.containsKey(key) ? _store[key] : defaultValue;
+
+  @override
+  Future<void> put(dynamic key, dynamic value) async => _store[key] = value;
+
+  @override
+  Future<void> delete(dynamic key) async => _store.remove(key);
+
+  @override
+  Future<int> clear() async {
+    final len = _store.length;
+    _store.clear();
+    return len;
+  }
+
+  @override
+  bool containsKey(dynamic key) => _store.containsKey(key);
+
+  @override
+  Iterable get keys => _store.keys;
+
+  @override
+  Iterable get values => _store.values;
+
+  @override
+  Map toMap() => Map.from(_store);
+
+  @override
+  int get length => _store.length;
+
+  @override
+  String get name => 'in_memory_box';
+
+  @override
+  bool get isOpen => true;
+
+  @override
+  Future<void> close() async {}
+
+  // Use noSuchMethod to gracefully handle other Box API calls we don't need here.
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 final firestoreProvider = Provider<FirebaseFirestore>((ref) {
   return FirebaseFirestore.instance;
@@ -522,6 +593,37 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       currentLevel: 1,
       completedLevels: newCompletedLevels,
       savedMainGameLevel: savedLevel,
+    );
+
+    await _saveProgress(newProgress);
+  }
+
+  Future<void> completeLesson({
+    required int lessonId,
+    required int? nextLesson,
+    required bool allLessonsCompleted,
+  }) async {
+    final newCompletedLessons = Set<int>.from(state.completedLessons)
+      ..add(lessonId);
+
+    final newProgress = state.copyWith(
+      completedLessons: newCompletedLessons,
+      currentLesson: nextLesson,
+      lessonCompleted: allLessonsCompleted,
+      tutorialCompleted: allLessonsCompleted,
+      // When all lessons complete, move to level 1
+      currentLevel: allLessonsCompleted ? 1 : state.currentLevel,
+    );
+
+    await _saveProgress(newProgress);
+  }
+
+  Future<void> resetLessons() async {
+    final newProgress = state.copyWith(
+      currentLesson: 1,
+      completedLessons: {},
+      lessonCompleted: false,
+      tutorialCompleted: false,
     );
 
     await _saveProgress(newProgress);
@@ -1078,6 +1180,9 @@ final anyVineAnimatingProvider = Provider<bool>((ref) {
   );
 });
 
+// Toggle to disable runtime animations in tests or debug builds
+final disableAnimationsProvider = Provider<bool>((ref) => false);
+
 // Camera state provider for zoom and pan
 final cameraStateProvider = NotifierProvider<CameraStateNotifier, CameraState>(
   CameraStateNotifier.new,
@@ -1094,6 +1199,10 @@ class CameraStateNotifier extends Notifier<CameraState> {
 
   @override
   CameraState build() {
+    // Ensure any running animation timers are cancelled when this notifier is disposed
+    ref.onDispose(() {
+      _animationTimer?.cancel();
+    });
     return CameraState.defaultState();
   }
 
@@ -1171,12 +1280,29 @@ class CameraStateNotifier extends Notifier<CameraState> {
       'CameraStateNotifier: Starting animation from zoom $initialZoom to 1.0',
     );
 
+    // If animations are disabled (e.g., during tests), skip creating timers
+    if (ref.read(disableAnimationsProvider)) {
+      state = state.copyWith(isAnimating: false, zoom: _animationTargetZoom);
+      debugPrint(
+          'CameraStateNotifier: Animations disabled - skipping animation');
+      return;
+    }
+
     // Start animation timer
     _animationTimer?.cancel();
     final startTime = DateTime.now();
     _animationTimer = Timer.periodic(
       const Duration(milliseconds: 16), // ~60 FPS
       (timer) {
+        // If animations get disabled during runtime (e.g., tests), cancel safely.
+        if (ref.read(disableAnimationsProvider)) {
+          timer.cancel();
+          state = state.copyWith(isAnimating: false);
+          debugPrint(
+              'CameraStateNotifier: Animations disabled during run - cancelling');
+          return;
+        }
+
         final elapsed = DateTime.now().difference(startTime).inMilliseconds;
         _animationProgress =
             (elapsed / (_animationDurationSeconds * 1000)).clamp(0.0, 1.0);

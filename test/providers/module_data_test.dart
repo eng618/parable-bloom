@@ -11,9 +11,11 @@ void main() {
     final jsonMap = json.decode(jsonString);
     final modulesList = jsonMap['modules'] as List<dynamic>;
 
-    expect(modulesList.isNotEmpty, true, reason: 'Should have at least one module');
+    expect(modulesList.isNotEmpty, true,
+        reason: 'Should have at least one module');
 
-    final firstModule = ModuleData.fromJson(modulesList[0] as Map<String, dynamic>);
+    final firstModule =
+        ModuleData.fromJson(modulesList[0] as Map<String, dynamic>);
 
     print('Module: ${firstModule.name}');
     print('Start level: ${firstModule.startLevel}');
@@ -22,12 +24,13 @@ void main() {
     print('Levels: ${firstModule.levels}');
 
     expect(firstModule.name, 'Seedling');
-    expect(firstModule.startLevel, 11, reason: 'Start level should be 11');
-    expect(firstModule.endLevel, 54, reason: 'End level should be 54 (max from levels array)');
-    expect(firstModule.levelCount, 44, reason: 'Should have 44 levels (11-54)');
-    expect(firstModule.containsLevel(11), true);
-    expect(firstModule.containsLevel(54), true);
-    expect(firstModule.containsLevel(10), false);
-    expect(firstModule.containsLevel(55), false);
+    expect(firstModule.startLevel, 1, reason: 'Start level should be 1');
+    expect(firstModule.endLevel, 44,
+        reason: 'End level should be 44 (max from levels array)');
+    expect(firstModule.levelCount, 44, reason: 'Should have 44 levels (1-44)');
+    expect(firstModule.containsLevel(1), true);
+    expect(firstModule.containsLevel(44), true);
+    expect(firstModule.containsLevel(0), false);
+    expect(firstModule.containsLevel(45), false);
   });
 }

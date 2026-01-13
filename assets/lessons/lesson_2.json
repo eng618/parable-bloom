@@ -1,0 +1,70 @@
+{
+    "id": 2,
+    "title": "Lesson 2: Clear Multiple Vines",
+    "objective": "Learn to clear multiple vines that don't block each other",
+    "instructions": "Tap any vine to clear it; order does not matter.",
+    "learning_points": [
+        "Vines clear independently",
+        "Any order is ok"
+    ],
+    "grid_size": [
+        5,
+        5
+    ],
+    "vines": [
+        {
+            "id": "vine_1",
+            "head_direction": "right",
+            "ordered_path": [
+                {
+                    "x": 2,
+                    "y": 1
+                },
+                {
+                    "x": 1,
+                    "y": 1
+                },
+                {
+                    "x": 0,
+                    "y": 1
+                }
+            ]
+        },
+        {
+            "id": "vine_2",
+            "head_direction": "down",
+            "ordered_path": [
+                {
+                    "x": 3,
+                    "y": 0
+                },
+                {
+                    "x": 3,
+                    "y": 1
+                },
+                {
+                    "x": 3,
+                    "y": 2
+                }
+            ]
+        },
+        {
+            "id": "vine_3",
+            "head_direction": "up",
+            "ordered_path": [
+                {
+                    "x": 2,
+                    "y": 4
+                },
+                {
+                    "x": 2,
+                    "y": 3
+                },
+                {
+                    "x": 2,
+                    "y": 2
+                }
+            ]
+        }
+    ]
+}

@@ -1,10 +1,20 @@
 class GameProgress {
-  final int currentLevel;
-  final Set<int> completedLevels;
-  final bool tutorialCompleted;
+  // Lesson tracking (separate from levels)
+  final int? currentLesson; // 1-5 if in tutorial, null if tutorial complete
+  final Set<int> completedLessons; // Which lessons (1-5) have been completed
+  final bool lessonCompleted; // True after all 5 lessons done
+
+  // Level tracking (main game)
+  final int
+      currentLevel; // Current main game level (starts at 1 after tutorials)
+  final Set<int> completedLevels; // Main game levels completed
+  final bool tutorialCompleted; // Legacy field - true when lessons complete
   final int? savedMainGameLevel; // Level to return to after tutorial replay
 
   GameProgress({
+    this.currentLesson,
+    required this.completedLessons,
+    required this.lessonCompleted,
     required this.currentLevel,
     required this.completedLevels,
     required this.tutorialCompleted,
@@ -12,12 +22,18 @@ class GameProgress {
   });
 
   GameProgress copyWith({
+    int? currentLesson,
+    Set<int>? completedLessons,
+    bool? lessonCompleted,
     int? currentLevel,
     Set<int>? completedLevels,
     bool? tutorialCompleted,
     int? savedMainGameLevel,
   }) {
     return GameProgress(
+      currentLesson: currentLesson ?? this.currentLesson,
+      completedLessons: completedLessons ?? this.completedLessons,
+      lessonCompleted: lessonCompleted ?? this.lessonCompleted,
       currentLevel: currentLevel ?? this.currentLevel,
       completedLevels: completedLevels ?? this.completedLevels,
       tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
@@ -27,14 +43,18 @@ class GameProgress {
 
   factory GameProgress.initial() {
     return GameProgress(
-        currentLevel: 1,
-        completedLevels: {},
-        tutorialCompleted: false,
-        savedMainGameLevel: null);
+      currentLesson: 1,
+      completedLessons: {},
+      lessonCompleted: false,
+      currentLevel: 1,
+      completedLevels: {},
+      tutorialCompleted: false,
+      savedMainGameLevel: null,
+    );
   }
   GameProgress completeLevel(int levelNumber) {
     final newCompletedLevels = Set<int>.from(completedLevels)..add(levelNumber);
-    
+
     // If completing level 5 (last tutorial)
     if (levelNumber == 5) {
       if (savedMainGameLevel != null) {
@@ -54,7 +74,7 @@ class GameProgress {
         );
       }
     }
-    
+
     final newCurrentLevel = levelNumber + 1;
     return copyWith(
       completedLevels: newCompletedLevels,
@@ -74,6 +94,9 @@ class GameProgress {
 
   Map<String, dynamic> toJson() {
     return {
+      'currentLesson': currentLesson,
+      'completedLessons': completedLessons.toList(),
+      'lessonCompleted': lessonCompleted,
       'currentLevel': currentLevel,
       'completedLevels': completedLevels.toList(),
       'tutorialCompleted': tutorialCompleted,
@@ -83,6 +106,9 @@ class GameProgress {
 
   factory GameProgress.fromJson(Map<String, dynamic> json) {
     return GameProgress(
+      currentLesson: json['currentLesson'],
+      completedLessons: Set<int>.from(json['completedLessons'] ?? []),
+      lessonCompleted: json['lessonCompleted'] ?? false,
       currentLevel: json['currentLevel'] ?? 1,
       completedLevels: Set<int>.from(json['completedLevels'] ?? []),
       tutorialCompleted: json['tutorialCompleted'] ?? false,

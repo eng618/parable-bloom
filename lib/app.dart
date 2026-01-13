@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'features/tutorial/presentation/screens/tutorial_flow_screen.dart';
 import 'core/app_theme.dart';
 import 'core/config/environment_config.dart';
 import 'features/game/presentation/screens/game_screen.dart';
@@ -58,6 +59,7 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
       themeMode: _convertToThemeMode(themeMode),
       home: _buildHome(),
       routes: {
+        '/tutorial': (context) => const TutorialFlowScreen(),
         '/game': (context) => const GameScreen(),
         '/journal': (context) => const JournalScreen(),
         '/settings': (context) => const SettingsScreen(),

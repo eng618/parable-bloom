@@ -744,10 +744,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Invalidate current level to force reload
     ref.invalidate(currentLevelProvider);
 
-    // Navigate back to home, then to game to start tutorial
+    // Navigate back to home, then to tutorial flow to start lessons
     if (context.mounted) {
       Navigator.of(context).popUntil((route) => route.isFirst);
-      Navigator.of(context).pushNamed('/game');
+      Navigator.of(context).pushNamed('/tutorial');
     }
   }
 

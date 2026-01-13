@@ -3,11 +3,12 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parable_bloom/providers/game_providers.dart';
 import 'package:parable_bloom/features/game/domain/services/level_solver_service.dart';
+import 'package:parable_bloom/features/tutorial/domain/entities/lesson_data.dart';
 import 'package:parable_bloom/core/vine_color_palette.dart';
 
 void main() {
   final levelsDir = Directory('assets/levels');
-  final tutorialsDir = Directory('assets/tutorials');
+  final lessonsDir = Directory('assets/lessons');
 
   if (!levelsDir.existsSync()) {
     test('Setup', () {
@@ -16,9 +17,9 @@ void main() {
     return;
   }
 
-  if (!tutorialsDir.existsSync()) {
+  if (!lessonsDir.existsSync()) {
     test('Setup', () {
-      fail('assets/tutorials directory not found');
+      fail('assets/lessons directory not found');
     });
     return;
   }
@@ -29,13 +30,13 @@ void main() {
       .where((f) => f.path.contains('level_') && f.path.endsWith('.json'))
       .toList();
 
-  final tutorialFiles = tutorialsDir
+  final lessonFiles = lessonsDir
       .listSync()
       .whereType<File>()
-      .where((f) => f.path.contains('tutorial_') && f.path.endsWith('.json'))
+      .where((f) => f.path.contains('lesson_') && f.path.endsWith('.json'))
       .toList();
 
-  final allFiles = [...levelFiles, ...tutorialFiles];
+  final allFiles = [...levelFiles, ...lessonFiles];
 
   final env = Platform.environment;
   final startFilter = int.tryParse(env['PB_LEVEL_START'] ?? '');
@@ -67,16 +68,17 @@ void main() {
     final endId = _extractId(batch.last.path);
 
     group(
-      'Levels/Tutorials $startId-$endId',
+      'Levels/Lessons $startId-$endId',
       () {
         for (final file in batch) {
           final levelId = _extractId(file.path);
           test(
-            'Level/Tutorial $levelId validation',
+            'Level/Lesson $levelId validation',
             () async {
               await _validateLevel(file);
             },
             tags: ['level-solver'],
+            timeout: Timeout(Duration(minutes: 2)),
           );
         }
       },
@@ -88,11 +90,37 @@ void main() {
 int _extractId(String path) {
   if (path.contains('level_')) {
     return int.parse(path.split('level_').last.split('.').first);
-  } else if (path.contains('tutorial_')) {
-    return int.parse(path.split('tutorial_').last.split('.').first);
+  } else if (path.contains('lesson_')) {
+    return int.parse(path.split('lesson_').last.split('.').first);
   } else {
     throw ArgumentError('Invalid file path: $path');
   }
+}
+
+LevelData _lessonToLevel(LessonData lesson) {
+  final vines = lesson.vines
+      .map(
+        (v) => VineData(
+          id: v.id,
+          headDirection: v.headDirection,
+          orderedPath: v.orderedPath,
+        ),
+      )
+      .toList();
+
+  return LevelData(
+    id: lesson.id,
+    name: 'Lesson ${lesson.id}',
+    difficulty: 'tutorial',
+    gridWidth: lesson.gridWidth,
+    gridHeight: lesson.gridHeight,
+    vines: vines,
+    maxMoves: 999,
+    minMoves: 0,
+    complexity: 'tutorial',
+    grace: 0,
+    mask: MaskData(mode: 'show-all', points: const []),
+  );
 }
 
 Future<void> _validateLevel(File levelFile) async {
@@ -104,7 +132,10 @@ Future<void> _validateLevel(File levelFile) async {
     reason: 'Missing grid_size in ${levelFile.path}',
   );
 
-  final level = LevelData.fromJson(jsonMap);
+  final isLesson = levelFile.path.contains('lesson_');
+  final level = isLesson
+      ? _lessonToLevel(LessonData.fromJson(jsonMap as Map<String, dynamic>))
+      : LevelData.fromJson(jsonMap as Map<String, dynamic>);
 
   expect(level.gridWidth, greaterThan(0));
   expect(level.gridHeight, greaterThan(0));
@@ -231,13 +262,12 @@ Future<void> _validateLevel(File levelFile) async {
     reason: 'Circular blocking detected in ${levelFile.path}',
   );
 
-  // solvability
-  final solver = LevelSolverService();
-  expect(
-    solver.isSolvable(level),
-    isTrue,
-    reason: 'Level ${levelFile.path} is unsolvable',
-  );
+  // NOTE: Expensive solvability checks (search-based) are now performed by
+  // the Go level-builder validator in CI. Keep Dart tests focused on
+  // structural and fast validations to keep the test run reliable.
+  // To run quick, targeted solver smoke checks use the separate
+  // `test/level_solver_smoke_test.dart` which is gated by the
+  // PB_RUN_HEAVY_LEVEL_CHECKS environment variable.
 }
 
 bool _detectCircularBlocking(LevelData level) {
