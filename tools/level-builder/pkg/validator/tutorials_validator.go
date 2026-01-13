@@ -125,9 +125,9 @@ func validateLessonFile(path string) error {
 		}
 	}
 
-	// 5. Structure: require max_moves >= 1
+	// 5. Structure: require max_moves >= 1.
 	if lvl.MaxMoves < 1 {
-		return fmt.Errorf("invalid max_moves")
+		return fmt.Errorf("missing or invalid max_moves in %s", base)
 	}
 
 	return nil
