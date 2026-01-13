@@ -210,23 +210,19 @@ func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 	}
 
 	fullMask := (1 << uint(vineCount)) - 1
-	// Use a slice for visited for performance when vineCount is reasonable
-	size := 1 << uint(vineCount)
-	visited := make([]bool, size)
-	queue := make([]int, size)
-	head, tail := 0, 0
-	queue[tail] = fullMask
-	tail++
+	// Use a simple slice-backed queue for correctness and clarity.
+	visited := make([]bool, 1<<uint(vineCount))
+	queue := []int{fullMask}
 	visited[fullMask] = true
 	states := 0
 
-	for head < tail {
+	for len(queue) > 0 {
 		if states >= maxStates {
 			return false, states
 		}
 
-		mask := queue[head]
-		head++
+		mask := queue[0]
+		queue = queue[1:]
 		states++
 		if mask == 0 {
 			return true, states
