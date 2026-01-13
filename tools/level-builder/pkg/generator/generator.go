@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -34,9 +35,13 @@ func Clean() error {
 		return err
 	}
 	for _, f := range files {
-		os.Remove(f)
+		if err := os.Remove(f); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to remove %s: %w", f, err)
+		}
 	}
-	os.Remove(ModulesFile)
+	if err := os.Remove(ModulesFile); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to remove %s: %w", ModulesFile, err)
+	}
 	return nil
 }
 
@@ -63,6 +68,17 @@ func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, diffi
 		WorkingDir:    cwd,
 	}
 
+	// If module ID is specified, generate entire module
+	if moduleID > 0 {
+		return generateModule(cfg)
+	}
+
+	// Otherwise, generate individual levels
+	return generateLevels(cfg)
+}
+
+// generateLevels generates a series of individual levels.
+func generateLevels(cfg GenerationConfig) error {
 	// Determine the starting level ID
 	startID := 1
 	existingLevels, err := common.ReadLevelsFromDir(LevelsDir)
@@ -78,7 +94,7 @@ func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, diffi
 	}
 
 	// Generate levels
-	for i := 0; i < count; i++ {
+	for i := 0; i < cfg.Count; i++ {
 		levelID := startID + i
 
 		// Determine seed for this level
@@ -113,19 +129,153 @@ func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, diffi
 			return fmt.Errorf("failed to write level %d: %w", levelID, err)
 		}
 
-		if (i+1)%10 == 0 || (i+1) == count {
-			common.Info("Generated %d/%d levels...", i+1, count)
+		if (i+1)%10 == 0 || (i+1) == cfg.Count {
+			common.Info("Generated %d/%d levels...", i+1, cfg.Count)
 		}
 	}
 
-	common.Info("Successfully generated %d levels", count)
+	common.Info("Successfully generated %d levels", cfg.Count)
 	return nil
+}
+
+// generateModule generates a complete module (9 regular + 1 challenge level).
+func generateModule(cfg GenerationConfig) error {
+	const levelsPerModule = 10
+	const regularLevels = 9
+
+	// Calculate starting level ID for this module
+	startID := (cfg.ModuleID-1)*levelsPerModule + 1
+
+	common.Info("Generating module %d (levels %d-%d)...", cfg.ModuleID, startID, startID+levelsPerModule-1)
+
+	// Generate 9 regular levels + 1 challenge level
+	for i := 0; i < levelsPerModule; i++ {
+		levelID := startID + i
+		isChallenge := i == regularLevels
+
+		// Determine seed
+		var levelSeed int64
+		if cfg.UseRandomSeed {
+			levelSeed = time.Now().UnixNano() + int64(i)
+		} else if cfg.BaseSeed != 0 {
+			levelSeed = cfg.BaseSeed + int64(i)
+		} else {
+			levelSeed = int64(levelID) * 31337
+		}
+
+		rng := rand.New(rand.NewSource(levelSeed))
+
+		// Determine difficulty tier
+		var difficultyTier string
+		if cfg.Difficulty != "" {
+			difficultyTier = cfg.Difficulty
+		} else {
+			difficultyTier = common.DifficultyForLevel(levelID)
+		}
+
+		// Generate level
+		level, err := generateSingleLevel(levelID, difficultyTier, levelSeed, rng)
+		if err != nil {
+			return fmt.Errorf("failed to generate level %d: %w", levelID, err)
+		}
+
+		// Mark as challenge if applicable
+		if isChallenge {
+			level.Name = fmt.Sprintf("Challenge %d", cfg.ModuleID)
+			level.Grace++ // Extra grace for challenge levels
+		}
+
+		// Write level to disk
+		filePath := filepath.Join(LevelsDir, fmt.Sprintf("level_%d.json", levelID))
+		if err := common.WriteLevel(filePath, &level, false); err != nil {
+			return fmt.Errorf("failed to write level %d: %w", levelID, err)
+		}
+
+		common.Verbose("Generated level %d (%s)", levelID, level.Name)
+	}
+
+	common.Info("✓ Module %d complete", cfg.ModuleID)
+
+	// Update modules.json registry
+	return updateModuleRegistry(cfg.ModuleID, startID)
+}
+
+// updateModuleRegistry updates or creates the modules.json file with the new module.
+func updateModuleRegistry(moduleID int, startID int) error {
+	registryPath := ModulesFile
+
+	// Read existing registry or create new one
+	var registry common.ModuleRegistry
+	data, err := os.ReadFile(registryPath)
+	if err == nil {
+		if err := json.Unmarshal(data, &registry); err != nil {
+			return fmt.Errorf("failed to parse existing modules.json: %w", err)
+		}
+	} else {
+		// Initialize new registry
+		registry = common.ModuleRegistry{
+			Version:   "2.0",
+			Tutorials: []int{1, 2, 3},
+			Modules:   []common.Module{},
+		}
+	}
+
+	// Build module entry
+	moduleEntry := common.Module{
+		ID:             moduleID,
+		Name:           fmt.Sprintf("Module %d", moduleID),
+		ThemeSeed:      getThemeSeed(moduleID),
+		Levels:         []int{},
+		ChallengeLevel: startID + 9, // 10th level is challenge
+	}
+
+	// Add the 9 regular levels
+	for i := 0; i < 9; i++ {
+		moduleEntry.Levels = append(moduleEntry.Levels, startID+i)
+	}
+
+	// Update or append module
+	found := false
+	for i, m := range registry.Modules {
+		if m.ID == moduleID {
+			registry.Modules[i] = moduleEntry
+			found = true
+			break
+		}
+	}
+	if !found {
+		registry.Modules = append(registry.Modules, moduleEntry)
+	}
+
+	// Write updated registry
+	jsonData, err := json.MarshalIndent(registry, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal modules.json: %w", err)
+	}
+
+	if err := os.WriteFile(registryPath, jsonData, 0644); err != nil {
+		return fmt.Errorf("failed to write modules.json: %w", err)
+	}
+
+	common.Verbose("Updated modules.json for module %d", moduleID)
+	return nil
+}
+
+// getThemeSeed returns a theme seed name for a module.
+func getThemeSeed(moduleID int) string {
+	themes := []string{"forest", "sunset", "ocean", "volcano", "lavender", "meadow", "twilight", "aurora"}
+	if moduleID > 0 && moduleID <= len(themes) {
+		return themes[moduleID-1]
+	}
+	return "default"
 }
 
 // generateSingleLevel creates a single level with the given parameters.
 // It uses the tiling algorithm and validates solvability.
 func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) (common.Level, error) {
 	const maxAttempts = 1000
+
+	startTime := time.Now()
 
 	// Get difficulty-specific constraints
 	spec, ok := common.DifficultySpecs[difficulty]
@@ -146,8 +296,18 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 	var attempts int
 
 	for attempts = 0; attempts < maxAttempts; attempts++ {
-		// Use tiling algorithm to partition grid into vines
-		vines, mask, err := TileGridIntoVines(gridSize, spec, profile, generatorCfg, rng)
+		var vines []common.Vine
+		var mask *common.Mask
+		var err error
+
+		// For higher difficulties, use solver-aware placement
+		if difficulty == "Nurturing" || difficulty == "Flourishing" || difficulty == "Transcendent" {
+			vines, mask, err = SolverAwarePlacement(gridSize, spec, profile, generatorCfg, rng)
+		} else {
+			// Use standard tiling for easier difficulties
+			vines, mask, err = TileGridIntoVines(gridSize, spec, profile, generatorCfg, rng)
+		}
+
 		if err != nil {
 			common.Verbose("Attempt %d failed: %v", attempts+1, err)
 			continue
@@ -169,6 +329,10 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 			Grace:       common.GraceForDifficulty(difficulty),
 			ColorScheme: common.ColorPalette, // Use standard palette
 			Mask:        mask,
+
+			// Generation metadata
+			GenerationSeed:     seed,
+			GenerationAttempts: attempts + 1,
 		}
 
 		// Validate solvability using the solver
@@ -194,11 +358,63 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 			level.MaxMoves = 5
 		}
 
-		common.Verbose("✓ Level %d generated successfully after %d attempts", id, attempts+1)
+		// Record generation time
+		elapsed := time.Since(startTime)
+		level.GenerationElapsedMS = elapsed.Milliseconds()
+
+		// Calculate a quality score based on vine count and complexity
+		level.GenerationScore = calculateLevelScore(&level, attempts+1)
+
+		common.Verbose("✓ Level %d generated successfully after %d attempts (%.2fs, score: %.2f)",
+			id, attempts+1, elapsed.Seconds(), level.GenerationScore)
 		return level, nil
 	}
 
 	return common.Level{}, fmt.Errorf("failed to generate solvable level after %d attempts", attempts)
+}
+
+// calculateLevelScore computes a quality score for the generated level.
+// Higher scores indicate better levels (good vine distribution, appropriate complexity).
+func calculateLevelScore(level *common.Level, attempts int) float64 {
+	score := 100.0
+
+	// Penalize for too many generation attempts
+	if attempts > 100 {
+		score -= float64(attempts-100) * 0.1
+	}
+
+	// Reward for good vine count relative to grid size
+	totalCells := level.GridSize[0] * level.GridSize[1]
+	occupiedCells := 0
+	for _, v := range level.Vines {
+		occupiedCells += len(v.OrderedPath)
+	}
+	occupancy := float64(occupiedCells) / float64(totalCells)
+
+	if occupancy >= 0.85 && occupancy <= 0.95 {
+		score += 10.0 // Good occupancy
+	} else if occupancy < 0.7 {
+		score -= 20.0 // Too sparse
+	}
+
+	// Reward for variety in vine lengths
+	if len(level.Vines) > 2 {
+		minLen := len(level.Vines[0].OrderedPath)
+		maxLen := minLen
+		for _, v := range level.Vines {
+			l := len(v.OrderedPath)
+			if l < minLen {
+				minLen = l
+			}
+			if l > maxLen {
+				maxLen = l
+			}
+		}
+		lengthVariety := float64(maxLen - minLen)
+		score += lengthVariety * 2.0
+	}
+
+	return score
 }
 
 // assignColorIndices assigns random color indices to vines from the palette.

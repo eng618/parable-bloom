@@ -162,6 +162,22 @@ tasks:
   # =============================================================================
   # Level Builder - Tool Management
 
+  level-builder:validate:
+    desc: Validate level-builder Go module
+    dir: tools/level-builder
+    cmds:
+      - task: level-builder:lint
+      - task: level-builder:test
+      - task: level-builder:build
+
+  level-builder:validate:fix:
+    desc: Fix level-builder Go module linting issues
+    dir: tools/level-builder
+    cmds:
+      - task: level-builder:lint:fix
+      - task: level-builder:test
+      - task: level-builder:build
+
   level-builder:get:
     desc: Get level-builder Go module dependencies
     dir: tools/level-builder
