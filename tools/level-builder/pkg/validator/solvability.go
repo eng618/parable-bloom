@@ -9,17 +9,37 @@ import (
 
 // IsSolvable performs a bounded-search solvability check for a level.
 // It uses an exact BFS for up to 24 vines and a lightweight heuristic for larger levels.
-func IsSolvable(lvl model.Level, maxStates int) (bool, error) {
+type SolvabilityStats struct {
+	Solver         string `json:"solver"`
+	StatesExplored int    `json:"states_explored"`
+	GaveUp         bool   `json:"gave_up"`
+}
+
+func IsSolvable(lvl model.Level, maxStates int) (bool, SolvabilityStats, error) {
 	vineCount := len(lvl.Vines)
 	if vineCount == 0 {
-		return true, nil
+		return true, SolvabilityStats{Solver: "none", StatesExplored: 0, GaveUp: false}, nil
 	}
 
 	if vineCount <= 24 {
-		return isSolvableExact(lvl), nil
+		ok, states := isSolvableExactWithStats(lvl, maxStates)
+		return ok, SolvabilityStats{Solver: "exact", StatesExplored: states, GaveUp: states >= maxStates}, nil
 	}
 
-	return isSolvableHeuristic(lvl, maxStates), nil
+	ok, states := isSolvableHeuristicWithStats(lvl, maxStates)
+	return ok, SolvabilityStats{Solver: "heuristic", StatesExplored: states, GaveUp: states >= maxStates}, nil
+}
+
+// Wrapper to match previous naming
+func IsSolvableWithStats(lvl model.Level, maxStates int) (bool, LevelStat, error) {
+	ok, stats, err := IsSolvable(lvl, maxStates)
+	stat := LevelStat{}
+	if stats.Solver != "" {
+		stat.Solver = stats.Solver
+	}
+	stat.StatesExplored = stats.StatesExplored
+	stat.GaveUp = stats.GaveUp
+	return ok, stat, err
 }
 
 func isSolvableExact(lvl model.Level) bool {
@@ -152,6 +172,77 @@ func simulateVineMovementFromPositions(positions []model.Point, direction string
 
 // Heuristic solver: simple BFS using immediate head-cell blocking as the movable criteria.
 func isSolvableHeuristic(lvl model.Level, maxStates int) bool {
+	ok, _ := isSolvableHeuristicWithStats(lvl, maxStates)
+	return ok
+}
+
+// Exact solver that returns states explored for diagnostics
+func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
+	vines := lvl.Vines
+	vineCount := len(vines)
+
+	// Build vine cells map
+	vineCells := make([]map[string]bool, vineCount)
+	for i, v := range vines {
+		m := map[string]bool{}
+		for _, p := range v.OrderedPath {
+			m[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
+		}
+		vineCells[i] = m
+	}
+
+	fullMask := (1 << uint(vineCount)) - 1
+	// Use a slice for visited for performance when vineCount is reasonable
+	size := 1 << uint(vineCount)
+	visited := make([]bool, size)
+	queue := make([]int, size)
+	head, tail := 0, 0
+	queue[tail] = fullMask
+	tail++
+	visited[fullMask] = true
+	states := 0
+
+	for head < tail {
+		if states >= maxStates {
+			return false, states
+		}
+
+		mask := queue[head]
+		head++
+		states++
+		if mask == 0 {
+			return true, states
+		}
+
+		occupiedAll := map[string]bool{}
+		for i := 0; i < vineCount; i++ {
+			if (mask & (1 << uint(i))) == 0 {
+				continue
+			}
+			for k := range vineCells[i] {
+				occupiedAll[k] = true
+			}
+		}
+
+		for i := 0; i < vineCount; i++ {
+			if (mask & (1 << uint(i))) == 0 {
+				continue
+			}
+			if canVineClearExact(lvl, i, occupiedAll, vineCells[i]) {
+				next := mask & ^(1 << uint(i))
+				if !visited[next] {
+					visited[next] = true
+					queue = append(queue, next)
+				}
+			}
+		}
+	}
+
+	return false, states
+}
+
+// Heuristic solver with stats
+func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 	vines := lvl.Vines
 	vineCount := len(vines)
 
@@ -166,8 +257,15 @@ func isSolvableHeuristic(lvl model.Level, maxStates int) bool {
 	}
 
 	fullMask := (1 << uint(vineCount)) - 1
-	visited := map[int]bool{fullMask: true}
-	queue := []int{fullMask}
+	// Use slice-backed visited queue for performance
+	size := 1 << uint(vineCount)
+	if size <= 0 {
+		size = 1
+	}
+	visited := make([]bool, size)
+	queue := make([]int, 0, 1024)
+	queue = append(queue, fullMask)
+	visited[fullMask] = true
 	states := 0
 
 	for len(queue) > 0 && states < maxStates {
@@ -176,7 +274,7 @@ func isSolvableHeuristic(lvl model.Level, maxStates int) bool {
 		states++
 
 		if mask == 0 {
-			return true
+			return true, states
 		}
 
 		// build occupied map
@@ -190,8 +288,8 @@ func isSolvableHeuristic(lvl model.Level, maxStates int) bool {
 			}
 		}
 
-		// determine movable vines: those whose next head cell is not occupied by others
-		movable := []int{}
+		// determine movable vines
+		movable := make([]int, 0, 8)
 		for i := 0; i < vineCount; i++ {
 			if (mask & (1 << uint(i))) == 0 {
 				continue
@@ -210,7 +308,6 @@ func isSolvableHeuristic(lvl model.Level, maxStates int) bool {
 				dy = -1
 			}
 			nxt := fmt.Sprintf("%d,%d", head.X+dx, head.Y+dy)
-			// If next cell is outside grid: it's movable
 			if head.X+dx < 0 || head.X+dx >= lvl.GridSize[0] || head.Y+dy < 0 || head.Y+dy >= lvl.GridSize[1] {
 				movable = append(movable, i)
 				continue
@@ -224,7 +321,8 @@ func isSolvableHeuristic(lvl model.Level, maxStates int) bool {
 			continue
 		}
 
-		// try removing movable vines
+		// expansion order: prefer vines that unblock most others (simple heuristic)
+		// For now, append in current order
 		for _, i := range movable {
 			next := mask & ^(1 << uint(i))
 			if !visited[next] {
@@ -234,5 +332,5 @@ func isSolvableHeuristic(lvl model.Level, maxStates int) bool {
 		}
 	}
 
-	return false
+	return false, states
 }

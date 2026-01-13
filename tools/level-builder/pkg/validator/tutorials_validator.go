@@ -25,13 +25,13 @@ func ValidateTutorials(checkSolvable bool, maxStates int) error {
 		return nil
 	}
 
+	var lessonStats []LevelStat
 	for _, f := range files {
 		if err := validateLessonFile(f); err != nil {
 			return fmt.Errorf("lesson %s validation failed: %w", filepath.Base(f), err)
 		}
 
 		if checkSolvable {
-			// Convert lesson to level model and run solvability
 			bytes, err := os.ReadFile(f)
 			if err != nil {
 				return err
@@ -40,12 +40,36 @@ func ValidateTutorials(checkSolvable bool, maxStates int) error {
 			if err := json.Unmarshal(bytes, &lvl); err != nil {
 				return err
 			}
-			ok, err := IsSolvable(lvl, maxStates)
-			if err != nil {
-				return fmt.Errorf("solvability check failed for %s: %w", filepath.Base(f), err)
+
+			ok, stats, err := IsSolvable(lvl, maxStates)
+			ls := LevelStat{
+				File:           f,
+				LevelID:        lvl.ID,
+				Solvable:       ok,
+				Solver:         stats.Solver,
+				StatesExplored: stats.StatesExplored,
+				MaxStates:      maxStates,
+				GaveUp:         stats.GaveUp,
 			}
+			if err != nil {
+				ls.Error = err.Error()
+			}
+			lessonStats = append(lessonStats, ls)
+			fmt.Printf("Lesson %d (%s): solvable=%v solver=%s states=%d gave_up=%v\n", lvl.ID, filepath.Base(f), ok, stats.Solver, stats.StatesExplored, stats.GaveUp)
 			if !ok {
-				return fmt.Errorf("lesson %s appears UNSOLVABLE (maxStates=%d)", filepath.Base(f), maxStates)
+				// continue collection; return error after writing stats
+			}
+		}
+	}
+
+	if checkSolvable {
+		// write lesson stats
+		b, _ := json.MarshalIndent(lessonStats, "", "  ")
+		_ = os.WriteFile("validation_stats_lessons.json", b, 0644)
+		// If any unsolvable, return error
+		for _, s := range lessonStats {
+			if !s.Solvable {
+				return fmt.Errorf("some lessons appear unsolvable (check validation_stats_lessons.json for details)")
 			}
 		}
 	}

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"sync"
+	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
@@ -13,6 +16,18 @@ const (
 	LevelsDir   = "../../assets/levels"
 	ModulesFile = "../../assets/data/modules.json"
 )
+
+type LevelStat struct {
+	File           string `json:"file"`
+	LevelID        int    `json:"level_id"`
+	Solvable       bool   `json:"solvable"`
+	Solver         string `json:"solver"` // "exact" or "heuristic"
+	StatesExplored int    `json:"states_explored"`
+	MaxStates      int    `json:"max_states"`
+	TimeMs         int64  `json:"time_ms"`
+	GaveUp         bool   `json:"gave_up"`
+	Error          string `json:"error,omitempty"`
+}
 
 func Validate(checkSolvable bool, maxStates int) error {
 	// 1. Validate Modules
@@ -26,20 +41,85 @@ func Validate(checkSolvable bool, maxStates int) error {
 		return err
 	}
 
+	if !checkSolvable {
+		for _, f := range files {
+			if _, err := readLevelFile(f); err != nil {
+				return fmt.Errorf("level %s validation failed: %w", filepath.Base(f), err)
+			}
+		}
+
+		fmt.Println("All levels and modules validated successfully.")
+		return nil
+	}
+
+	// If we reach here, we need to run solvability checks and collect stats.
+	concurrency := runtime.NumCPU()
+	sem := make(chan struct{}, concurrency)
+	var wg sync.WaitGroup
+	statsCh := make(chan LevelStat, len(files))
+	errCh := make(chan error, len(files))
+
 	for _, f := range files {
-		lvl, err := readLevelFile(f)
-		if err != nil {
-			return fmt.Errorf("level %s validation failed: %w", filepath.Base(f), err)
-		}
-		if checkSolvable {
-			ok, err := IsSolvable(lvl, maxStates)
+		f := f
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			lvl, err := readLevelFile(f)
 			if err != nil {
-				return fmt.Errorf("solvability check failed for %s: %w", filepath.Base(f), err)
+				errCh <- fmt.Errorf("level %s validation failed: %w", filepath.Base(f), err)
+				return
 			}
-			if !ok {
-				return fmt.Errorf("level %s appears UNSOLVABLE (maxStates=%d)", filepath.Base(f), maxStates)
+
+			start := time.Now()
+			ok, stat, cerr := IsSolvableWithStats(lvl, maxStates)
+			dur := time.Since(start)
+			stat.TimeMs = dur.Milliseconds()
+			stat.File = f
+			stat.LevelID = lvl.ID
+			stat.MaxStates = maxStates
+			stat.Solvable = ok
+			if cerr != nil {
+				stat.Error = cerr.Error()
 			}
+
+			if stat.GaveUp {
+				// mark as not solvable under budget
+				stat.Solvable = false
+			}
+
+			statsCh <- stat
+		}()
+	}
+
+	wg.Wait()
+	close(statsCh)
+	close(errCh)
+
+	if len(errCh) > 0 {
+		return <-errCh
+	}
+
+	// Collect stats
+	var allStats []LevelStat
+	unsolvable := []LevelStat{}
+	for s := range statsCh {
+		allStats = append(allStats, s)
+		fmt.Printf("Level %d (%s): solvable=%v solver=%s states=%d time=%dms gave_up=%v\n",
+			s.LevelID, filepath.Base(s.File), s.Solvable, s.Solver, s.StatesExplored, s.TimeMs, s.GaveUp)
+		if !s.Solvable {
+			unsolvable = append(unsolvable, s)
 		}
+	}
+
+	// Write stats to JSON artifact
+	b, _ := json.MarshalIndent(allStats, "", "  ")
+	_ = os.WriteFile("validation_stats.json", b, 0644)
+
+	if len(unsolvable) > 0 {
+		return fmt.Errorf("%d levels appear unsolvable (check validation_stats.json for details)", len(unsolvable))
 	}
 
 	fmt.Println("All levels and modules validated successfully.")
