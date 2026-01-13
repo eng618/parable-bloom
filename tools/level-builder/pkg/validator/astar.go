@@ -43,14 +43,7 @@ func isSolvableExactAStarWithStats(lvl model.Level, maxStates int, astarWeight i
 	vineCount := len(vines)
 
 	// Precompute vine cells
-	vineCells := make([]map[string]bool, vineCount)
-	for i, v := range vines {
-		m := map[string]bool{}
-		for _, p := range v.OrderedPath {
-			m[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
-		}
-		vineCells[i] = m
-	}
+	vineCells := buildVineCells(lvl)
 
 	fullMask := (1 << uint(vineCount)) - 1
 
