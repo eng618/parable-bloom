@@ -196,7 +196,7 @@ func isSolvableHeuristic(lvl model.Level, maxStates int) bool {
 	return ok
 }
 
-// Exact solver that returns full stats including memoization metrics
+// Exact solver that returns whether the level is solvable and the number of states explored.
 func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 	vines := lvl.Vines
 	vineCount := len(vines)
