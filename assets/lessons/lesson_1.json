@@ -1,0 +1,38 @@
+{
+    "id": 1,
+    "title": "Lesson 1: Clear the Vine",
+    "objective": "Learn to select and clear a single vine",
+    "instructions": "Tap the vine's cells from head to tail to clear it.",
+    "learning_points": [
+        "Tap head → tail",
+        "Clear all cells to finish"
+    ],
+    "grid_size": [
+        4,
+        4
+    ],
+    "vines": [
+        {
+            "id": "vine_1",
+            "head_direction": "right",
+            "ordered_path": [
+                {
+                    "x": 3,
+                    "y": 1
+                },
+                {
+                    "x": 2,
+                    "y": 1
+                },
+                {
+                    "x": 1,
+                    "y": 1
+                },
+                {
+                    "x": 0,
+                    "y": 1
+                }
+            ]
+        }
+    ]
+}

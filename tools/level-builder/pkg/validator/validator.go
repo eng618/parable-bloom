@@ -14,7 +14,7 @@ const (
 	ModulesFile = "../../assets/data/modules.json"
 )
 
-func Validate() error {
+func Validate(checkSolvable bool, maxStates int) error {
 	// 1. Validate Modules
 	if err := validateModules(); err != nil {
 		return fmt.Errorf("module validation failed: %w", err)
@@ -27,8 +27,18 @@ func Validate() error {
 	}
 
 	for _, f := range files {
-		if err := validateLevelFile(f); err != nil {
+		lvl, err := readLevelFile(f)
+		if err != nil {
 			return fmt.Errorf("level %s validation failed: %w", filepath.Base(f), err)
+		}
+		if checkSolvable {
+			ok, err := IsSolvable(lvl, maxStates)
+			if err != nil {
+				return fmt.Errorf("solvability check failed for %s: %w", filepath.Base(f), err)
+			}
+			if !ok {
+				return fmt.Errorf("level %s appears UNSOLVABLE (maxStates=%d)", filepath.Base(f), maxStates)
+			}
 		}
 	}
 
@@ -68,49 +78,49 @@ func validateModules() error {
 	return nil
 }
 
-func validateLevelFile(path string) error {
+func readLevelFile(path string) (model.Level, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return err
+		return model.Level{}, err
 	}
 	var lvl model.Level
 	if err := json.Unmarshal(bytes, &lvl); err != nil {
-		return err
+		return model.Level{}, err
 	}
 
 	// 1. Check ID matches filename
 	base := filepath.Base(path)
 	expectedName := fmt.Sprintf("level_%d.json", lvl.ID)
 	if base != expectedName {
-		return fmt.Errorf("filename %s does not match ID %d", base, lvl.ID)
+		return model.Level{}, fmt.Errorf("filename %s does not match ID %d", base, lvl.ID)
 	}
 
 	// 2. Check Grid Size
 	if len(lvl.GridSize) != 2 || lvl.GridSize[0] < 2 || lvl.GridSize[1] < 2 {
-		return fmt.Errorf("invalid grid size")
+		return model.Level{}, fmt.Errorf("invalid grid size")
 	}
 
 	// 3. Check Occupancy (Strict 100% or Mask)
 	if !checkOccupancy(lvl) {
-		return fmt.Errorf("grid not 100%% occupied")
+		return model.Level{}, fmt.Errorf("grid not 100%% occupied")
 	}
 
 	// 4. Check Colors
 	if len(lvl.ColorScheme) < 1 {
-		return fmt.Errorf("missing color_scheme")
+		return model.Level{}, fmt.Errorf("missing color_scheme")
 	}
 	for _, v := range lvl.Vines {
 		if v.ColorIndex >= len(lvl.ColorScheme) {
-			return fmt.Errorf("vine %s color_index out of bounds", v.ID)
+			return model.Level{}, fmt.Errorf("vine %s color_index out of bounds", v.ID)
 		}
 	}
 
 	// 5. Structure
 	if lvl.MaxMoves < 1 {
-		return fmt.Errorf("invalid max_moves")
+		return model.Level{}, fmt.Errorf("invalid max_moves")
 	}
 
-	return nil
+	return lvl, nil
 }
 
 func checkOccupancy(lvl model.Level) bool {

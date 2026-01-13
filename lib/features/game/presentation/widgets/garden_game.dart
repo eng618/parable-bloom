@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/game_providers.dart';
+import '../../../tutorial/domain/entities/lesson_data.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
 import 'tap_effect_component.dart';
@@ -19,6 +20,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   late ProjectionLinesComponent projectionLines;
   final WidgetRef ref;
   LevelData? _currentLevelData;
+  LessonData? _currentLessonData;
   RectangleComponent? _gameBackground;
 
   // Theme colors - updated dynamically from app theme
@@ -34,6 +36,14 @@ class GardenGame extends FlameGame with TapCallbacks {
     _surfaceColor = const Color(0xFF2C3E50); // Default dark surface
     _tapEffectColor = const Color(0xFFE6E1E5); // Default light for dark theme
     _vineAttemptedColor = const Color(0xFFFFFFFF);
+  }
+
+  /// Factory constructor for loading a lesson
+  factory GardenGame.fromLesson(LessonData lessonData,
+      {required WidgetRef ref}) {
+    final game = GardenGame(ref: ref);
+    game._currentLessonData = lessonData;
+    return game;
   }
 
   void updateThemeColors(
@@ -238,6 +248,13 @@ class GardenGame extends FlameGame with TapCallbacks {
   }
 
   Future<void> _loadCurrentLevel() async {
+    // If this is a lesson, use the pre-loaded lesson data
+    if (_currentLessonData != null) {
+      debugPrint('GardenGame: Loading lesson ${_currentLessonData!.id}');
+      _convertLessonToLevelData(_currentLessonData!);
+      return;
+    }
+
     final debugSelected = ref.read(debugSelectedLevelProvider);
     final gameProgress = ref.read(gameProgressProvider);
     final levelNumber = debugSelected ?? gameProgress.currentLevel;
@@ -254,10 +271,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     try {
       // Load level data directly by level number
-      // Tutorials use the tutorial_X.json convention
-      final assetPath = gameProgress.tutorialCompleted
-          ? 'assets/levels/level_$levelNumber.json'
-          : 'assets/tutorials/tutorial_$levelNumber.json';
+      final assetPath = 'assets/levels/level_$levelNumber.json';
       debugPrint('GardenGame: Loading asset: $assetPath');
 
       final levelJson = await rootBundle.loadString(assetPath);
@@ -293,7 +307,7 @@ class GardenGame extends FlameGame with TapCallbacks {
       debugPrint('Error loading level $levelNumber: $e');
       debugPrint('Stack trace: $stackTrace');
 
-      // Check if this is because we've completed all levels
+      // Determine if this error indicates all levels are completed
       final modulesAsync = ref.read(modulesProvider);
       final modules = modulesAsync.maybeWhen(
         data: (data) => data,
@@ -311,16 +325,12 @@ class GardenGame extends FlameGame with TapCallbacks {
 
       if (levelNumber > totalLevels) {
         debugPrint(
-          'GardenGame: All levels completed! Setting game as completed.',
-        );
+            'GardenGame: All levels completed! Setting game as completed.');
         ref.read(gameCompletedProvider.notifier).setCompleted(true);
       } else {
-        // Level should exist but failed to load - this is an error
+        // Level should exist but failed to load - critical error
         debugPrint(
           'GardenGame: CRITICAL ERROR - Level $levelNumber should exist but failed to load!',
-        );
-        debugPrint(
-          'GardenGame: Expected asset path: ${gameProgress.tutorialCompleted ? 'assets/levels/level_$levelNumber.json' : 'assets/tutorials/tutorial_$levelNumber.json'}',
         );
         ref.read(gameOverProvider.notifier).setGameOver(true);
       }
@@ -328,10 +338,49 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
   }
 
+  /// Converts lesson data to level data for rendering
+  void _convertLessonToLevelData(LessonData lesson) {
+    // Convert lesson vines to level vines
+    final vines = lesson.vines.map((lessonVine) {
+      return VineData(
+        id: lessonVine.id,
+        headDirection: lessonVine.headDirection,
+        orderedPath: lessonVine.orderedPath,
+      );
+    }).toList();
+
+    // Create level data from lesson
+    _currentLevelData = LevelData(
+      id: lesson.id,
+      name: 'Lesson ${lesson.id}',
+      difficulty: 'tutorial',
+      gridWidth: lesson.gridWidth,
+      gridHeight: lesson.gridHeight,
+      vines: vines,
+      maxMoves: 999, // Unlimited moves for lessons
+      minMoves: 0,
+      complexity: 'tutorial',
+      grace: 0, // No grace system for lessons
+      mask: MaskData(mode: 'show-all', points: []),
+    );
+
+    // Update providers
+    ref.read(currentLevelProvider.notifier).setLevel(_currentLevelData);
+    ref.read(gameCompletedProvider.notifier).setCompleted(false);
+    ref.read(levelTotalTapsProvider.notifier).reset();
+    ref.read(levelWrongTapsProvider.notifier).reset();
+    ref.read(levelCompleteProvider.notifier).setComplete(false);
+
+    debugPrint('Converted lesson ${lesson.id} to level data');
+  }
+
   Future<void> _setLevelDataOnGrid() async {
     if (_currentLevelData == null) return;
 
-    // Get current vine states from the provider
+    // Reset vine states for this level to ensure completion detection works
+    ref.read(vineStatesProvider.notifier).resetForLevel(_currentLevelData!);
+
+    // Get current vine states from the provider after reset
     final vineStates = ref.read(vineStatesProvider);
 
     // Set data on grid

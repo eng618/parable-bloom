@@ -58,7 +58,7 @@ void main() {
     });
 
     test('should save and retrieve progress', () async {
-      final newProgress = GameProgress(
+      final newProgress = GameProgress.initial().copyWith(
         currentLevel: 5,
         completedLevels: {1, 2, 3, 4},
         tutorialCompleted: false,
@@ -73,7 +73,7 @@ void main() {
 
     test('should reset to initial state', () async {
       await repository.saveProgress(
-        GameProgress(
+        GameProgress.initial().copyWith(
           currentLevel: 10,
           completedLevels: {1, 2, 3},
           tutorialCompleted: false,

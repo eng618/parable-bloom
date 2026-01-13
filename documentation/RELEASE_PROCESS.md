@@ -875,7 +875,7 @@ parable-bloom/
 ├── scripts/
 │   ├── bump_version.dart            # Version automation
 │   └── update_changelog.dart        # Changelog generation
-├── docs/
+├── documentation/
 │   └── RELEASE_PROCESS.md           # This file
 ├── CHANGELOG.md                     # Auto-generated changelog
 └── Taskfile.yaml                    # Updated with release tasks

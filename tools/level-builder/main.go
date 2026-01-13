@@ -33,13 +33,25 @@ func main() {
 			os.Exit(1)
 		}
 	case "validate":
-		if err := validator.Validate(); err != nil {
+		validateCmd := flag.NewFlagSet("validate", flag.ExitOnError)
+		checkSolvable := validateCmd.Bool("check-solvable", false, "Run solvability checks using the Dart solver (may be slow)")
+		maxStates := validateCmd.Int("max-states", 100000, "Max states for solver heuristic")
+		validateCmd.Parse(os.Args[2:])
+
+		if err := validator.Validate(*checkSolvable, *maxStates); err != nil {
 			fmt.Printf("Validation error: %v\n", err)
+			_ = os.WriteFile("validation.log", []byte(fmt.Sprintf("Validation error: %v\n", err)), 0644)
 			os.Exit(1)
 		}
 	case "validate-tutorials":
-		if err := validator.ValidateTutorials(); err != nil {
-			fmt.Printf("Tutorial validation error: %v\n", err)
+		tutorialsCmd := flag.NewFlagSet("validate-tutorials", flag.ExitOnError)
+		checkSolvableT := tutorialsCmd.Bool("check-solvable", false, "Also run solvability checks for lessons (may be slow)")
+		maxStatesT := tutorialsCmd.Int("max-states", 100000, "Max states for solver heuristic")
+		tutorialsCmd.Parse(os.Args[2:])
+
+		if err := validator.ValidateTutorials(*checkSolvableT, *maxStatesT); err != nil {
+			fmt.Printf("Lesson validation error: %v\n", err)
+			_ = os.WriteFile("validation.log", []byte(fmt.Sprintf("Lesson validation error: %v\n", err)), 0644)
 			os.Exit(1)
 		}
 	default:
@@ -53,5 +65,5 @@ func printUsage() {
 	fmt.Println("Commands:")
 	fmt.Println("  clean     Remove generated levels")
 	fmt.Println("  generate  Generate levels (flags: --count)")
-	fmt.Println("  validate  Validate existing levels")
+	fmt.Println("  validate  Validate existing levels (flags: --check-solvable --max-states)")
 }

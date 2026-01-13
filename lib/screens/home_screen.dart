@@ -4,19 +4,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/game_providers.dart';
 
 /// Helper function to format level display text.
-/// Shows "Lession X" for tutorial levels, "Level X" for main levels.
+/// Shows "Lesson X" for tutorial levels, "Level X" for main levels.
 String _formatLevelText(int levelNumber, bool tutorialCompleted) {
   if (!tutorialCompleted && levelNumber >= 1 && levelNumber <= 5) {
-    return 'Lession $levelNumber';
+    return 'Lesson $levelNumber';
   }
   return 'Level $levelNumber';
 }
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  Widget build(BuildContext context) {
     final gameProgress = ref.watch(gameProgressProvider);
     final modulesAsync = ref.watch(modulesProvider);
 
@@ -98,7 +103,7 @@ class HomeScreen extends ConsumerWidget {
                   }
 
                   return ElevatedButton(
-                    onPressed: () => _playNextLevel(context),
+                    onPressed: () => _playNextLevel(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -122,7 +127,7 @@ class HomeScreen extends ConsumerWidget {
                 },
                 loading: () => const CircularProgressIndicator(),
                 error: (_, __) => ElevatedButton(
-                  onPressed: () => _playNextLevel(context),
+                  onPressed: () => _playNextLevel(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -149,7 +154,7 @@ class HomeScreen extends ConsumerWidget {
 
               // Settings Button
               OutlinedButton.icon(
-                onPressed: () => _openSettings(context),
+                onPressed: () => _openSettings(),
                 icon: const Icon(Icons.settings),
                 label: const Text('Settings'),
                 style: OutlinedButton.styleFrom(
@@ -170,7 +175,7 @@ class HomeScreen extends ConsumerWidget {
 
               // Journal Button
               OutlinedButton.icon(
-                onPressed: () => _openJournal(context),
+                onPressed: () => _openJournal(),
                 icon: const Icon(Icons.menu_book),
                 label: const Text('Journal'),
                 style: OutlinedButton.styleFrom(
@@ -193,15 +198,24 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  void _playNextLevel(BuildContext context) {
-    Navigator.of(context).pushNamed('/game');
+  void _playNextLevel() {
+    // Check if there's an active lesson and route accordingly
+    final gameProgress = ref.read(gameProgressProvider);
+
+    if (gameProgress.currentLesson != null && !gameProgress.tutorialCompleted) {
+      // Route to tutorial flow if there's an active lesson
+      Navigator.of(context).pushNamed('/tutorial');
+    } else {
+      // Route to game for regular levels
+      Navigator.of(context).pushNamed('/game');
+    }
   }
 
-  void _openSettings(BuildContext context) {
+  void _openSettings() {
     Navigator.of(context).pushNamed('/settings');
   }
 
-  void _openJournal(BuildContext context) {
+  void _openJournal() {
     Navigator.of(context).pushNamed('/journal');
   }
 }
