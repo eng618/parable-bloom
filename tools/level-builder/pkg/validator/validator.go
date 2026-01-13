@@ -29,6 +29,23 @@ type LevelStat struct {
 	Error          string `json:"error,omitempty"`
 }
 
+// Validate validates the level builder's modules and level files, and optionally runs solvability checks.
+//
+// When checkSolvable is false, Validate only validates modules and parses all level files matching
+// LevelsDir/level_*.json, returning an error on the first failure. When checkSolvable is true, it
+// additionally runs solvability checks for each parsed level by calling IsSolvableWithStats with the
+// provided maxStates budget. Solvability checks are executed concurrently (bounded by runtime.NumCPU).
+//
+// For each level, Validate records a LevelStat (including fields such as LevelID, File, Solver,
+// StatesExplored, TimeMs, MaxStates, Solvable, GaveUp and any Error string), prints a per-level summary to
+// stdout, and writes all collected stats to validation_stats.json in the current working directory. A level
+// that reports GaveUp is treated as not solvable under the given budget. If any module validation or level
+// parsing fails, or if one or more levels are determined not solvable, Validate returns a non-nil error
+// (for unsolvable levels the error includes the count of such levels). On success it prints a confirmation
+// message and returns nil.
+//
+// Note: this function has side effects (printing to stdout and writing validation_stats.json) and performs
+// concurrent work that blocks until all checks complete.
 func Validate(checkSolvable bool, maxStates int) error {
 	// 1. Validate Modules
 	if err := validateModules(); err != nil {

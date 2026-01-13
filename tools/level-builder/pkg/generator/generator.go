@@ -17,6 +17,11 @@ const (
 	ModulesFile = DataDir + "/modules.json"
 )
 
+// Clean removes generated level and module files used by the level builder.
+// It deletes all files matching "level_*.json" in LevelsDir and the ModulesFile.
+// Only errors returned by filepath.Glob are propagated; errors from os.Remove
+// for individual files (including ModulesFile) are ignored, so Clean returns
+// nil unless the initial pattern match fails.
 func Clean() error {
 	files, err := filepath.Glob(filepath.Join(LevelsDir, "level_*.json"))
 	if err != nil {
@@ -29,6 +34,21 @@ func Clean() error {
 	return nil
 }
 
+// Generate creates and writes `count` levels to disk and assembles them into modules.
+//
+// It ensures the LevelsDir and DataDir directories exist, then repeatedly calls
+// generateLevel and writeLevel to produce level data. Levels are numbered starting
+// at 1 (levelID = 1 + i) and are grouped into modules of 10 levels (levelsPerModule = 10):
+// each 10th level is treated as the module's challenge level and closes the current module,
+// while preceding levels are appended to the module's Levels slice. Module IDs start at 1.
+// Progress is printed to stdout (including current working directory at start and a status
+// message every 10 levels).
+//
+// After generation, a ModuleRegistry (Version "2.0", Tutorials [1,2,3]) is marshaled with
+// indentation and written to ModulesFile. The function returns any error encountered while
+// creating directories, generating or writing levels, marshaling the registry, or writing
+// the modules file. Note: if `count` is not a multiple of 10, a partially filled current
+// module will not be added to the Modules list.
 func Generate(count int) error {
 	cwd, _ := os.Getwd()
 	fmt.Printf("Generating %d levels (CWD: %s)...\n", count, cwd)
