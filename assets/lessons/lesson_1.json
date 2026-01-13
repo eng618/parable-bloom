@@ -11,6 +11,7 @@
         4,
         4
     ],
+    "max_moves": 1,
     "vines": [
         {
             "id": "vine_1",
