@@ -22,8 +22,8 @@ type SolvabilityStats struct {
 // IsSolvable is the backward-compatible helper that calls the options-aware solver
 // with default settings (no A*; heuristic for large levels).
 func IsSolvable(lvl model.Level, maxStates int) (bool, SolvabilityStats, error) {
-	// Backward-compatible helper: use default options (no A*, heuristic for large levels).
-	return IsSolvableWithOptions(lvl, maxStates, false, DefaultAStarWeight)
+	// Default to A* for small vine counts; heuristic for larger levels.
+	return IsSolvableWithOptions(lvl, maxStates, true, DefaultAStarWeight)
 }
 
 // IsSolvableWithOptions selects an appropriate solver (exact, A*, or heuristic) and returns
