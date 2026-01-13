@@ -117,9 +117,7 @@ func canVineClearExact(lvl model.Level, vineIndex int, occupiedAll map[string]bo
 
 	// Prepare current positions as slice of points
 	positions := make([]model.Point, len(vine.OrderedPath))
-	for i, p := range vine.OrderedPath {
-		positions[i] = p
-	}
+	copy(positions, vine.OrderedPath)
 
 	w := lvl.GridSize[0]
 	h := lvl.GridSize[1]
