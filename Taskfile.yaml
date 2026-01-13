@@ -146,7 +146,6 @@ tasks:
         done
         IFS="$OLD_IFS"
       - echo "Created validation_stats_astar_w*.json"
-      - go run . clean
 
   # -----------------------------------------------------------------------------
   # Version Management
