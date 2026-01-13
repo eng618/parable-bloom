@@ -76,16 +76,8 @@ func isSolvableExactAStarWithStats(lvl model.Level, maxStates int, astarWeight i
 			return true, states
 		}
 
-		// build occupied
-		occupied := map[string]bool{}
-		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) == 0 {
-				continue
-			}
-			for k := range vineCells[i] {
-				occupied[k] = true
-			}
-		}
+		// build occupied using shared helper for consistency and efficiency
+		occupied := computeOccupied(mask, vineCells)
 
 		// movable vines
 		for i := 0; i < vineCount; i++ {
