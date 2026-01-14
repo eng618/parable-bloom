@@ -6,6 +6,22 @@ import 'package:parable_bloom/features/game/domain/services/level_solver_service
 import 'package:parable_bloom/features/tutorial/domain/entities/lesson_data.dart';
 import 'package:parable_bloom/core/vine_color_palette.dart';
 
+// NOTE: Comprehensive level validation is now performed by the Go level-builder CLI
+// at tools/level-builder. This Dart test file remains for Flutter-specific runtime
+// checks and as a lightweight smoke test during `flutter test` runs.
+//
+// For full validation including:
+//   - 4-connectivity checks
+//   - Head/neck orientation validation
+//   - Circular blocking detection
+//   - Mask validation
+//   - Comprehensive solvability checks
+//
+// Use: cd tools/level-builder && ./level-builder validate --check-solvable
+//
+// This allows the Go CLI to be the single source of truth for level validation,
+// eliminating duplication and ensuring consistency across all validation workflows.
+
 void main() {
   final levelsDir = Directory('assets/levels');
   final lessonsDir = Directory('assets/lessons');
