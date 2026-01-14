@@ -273,7 +273,10 @@ func getThemeSeed(moduleID int) string {
 // generateSingleLevel creates a single level with the given parameters.
 // It uses the tiling algorithm and validates solvability.
 func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) (common.Level, error) {
-	const maxAttempts = 1000
+	const maxAttempts = 10000        // Increased from 1000 (attempts are fast ~0.8ms each)
+	const maxGenerationTime = 60     // Circuit breaker: max 60 seconds per level
+	const occupancyRelaxation = 0.05 // Relax by 5% when stuck
+	const progressLogInterval = 100  // Log progress every N attempts
 
 	startTime := time.Now()
 
@@ -290,26 +293,91 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 	profile := common.GetPresetProfile(difficulty)
 	generatorCfg := common.GetGeneratorConfigForDifficulty(difficulty)
 
-	common.Verbose("Level %d: difficulty=%s, grid=%dx%d", id, difficulty, gridSize[0], gridSize[1])
+	originalOccupancy := spec.MinGridOccupancy
+	common.Verbose("Level %d: difficulty=%s, grid=%dx%d, target_occupancy=%.1f%%, max_attempts=%d",
+		id, difficulty, gridSize[0], gridSize[1], originalOccupancy*100, maxAttempts)
 
 	var level common.Level
 	var attempts int
+	tilingFailures := 0
+	greedyFailures := 0
+	bfsFailures := 0
 
 	for attempts = 0; attempts < maxAttempts; attempts++ {
+		// Time-based circuit breaker
+		elapsed := time.Since(startTime)
+		if elapsed.Seconds() > maxGenerationTime {
+			return common.Level{}, fmt.Errorf("generation timeout after %.1fs (%d attempts, tiling_fails=%d, greedy_fails=%d, bfs_fails=%d)",
+				elapsed.Seconds(), attempts, tilingFailures, greedyFailures, bfsFailures)
+		}
+
+		// Progressive occupancy relaxation after many failures
+		if attempts == 500 {
+			spec.MinGridOccupancy -= occupancyRelaxation
+			common.Verbose("⚠️  Relaxing occupancy to %.1f%% after %d attempts (from %.1f%%)",
+				spec.MinGridOccupancy*100, attempts, originalOccupancy*100)
+		} else if attempts == 1500 {
+			spec.MinGridOccupancy -= occupancyRelaxation
+			common.Verbose("⚠️  Further relaxing occupancy to %.1f%% after %d attempts",
+				spec.MinGridOccupancy*100, attempts)
+		} else if attempts == 3000 {
+			spec.MinGridOccupancy -= occupancyRelaxation
+			common.Verbose("⚠️  Final occupancy relaxation to %.1f%% after %d attempts",
+				spec.MinGridOccupancy*100, attempts)
+		}
+
+		// Log progress periodically
+		if attempts > 0 && attempts%progressLogInterval == 0 {
+			common.Verbose("⏱️  Progress: %d/%d attempts (%.1fs, tiling_fails=%d, greedy_fails=%d, bfs_fails=%d, success_rate=%.1f%%)",
+				attempts, maxAttempts, elapsed.Seconds(),
+				tilingFailures, greedyFailures, bfsFailures,
+				float64(attempts-tilingFailures-greedyFailures-bfsFailures)/float64(attempts)*100)
+		}
 		var vines []common.Vine
 		var mask *common.Mask
 		var err error
 
-		// For higher difficulties, use solver-aware placement
-		if difficulty == "Nurturing" || difficulty == "Flourishing" || difficulty == "Transcendent" {
+		// Determine which algorithm to use based on grid size and difficulty
+		gridArea := gridSize[0] * gridSize[1]
+		useClearableFirst := gridArea > 120 // Use clearable-first for grids larger than ~10x12
+
+		if useClearableFirst {
+			// For large grids, use clearable-first placement with incremental greedy checks
+			vines, err = ClearableFirstPlacement(gridSize, spec, profile, generatorCfg, rng.Int63(), 0.3, true)
+			if err == nil {
+				// Generate mask for empty cells (inline mask generation)
+				occupied := make(map[string]bool)
+				for _, v := range vines {
+					for _, p := range v.OrderedPath {
+						occupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
+					}
+				}
+				var emptyPoints []common.Point
+				for y := 0; y < gridSize[1]; y++ {
+					for x := 0; x < gridSize[0]; x++ {
+						key := fmt.Sprintf("%d,%d", x, y)
+						if !occupied[key] {
+							emptyPoints = append(emptyPoints, common.Point{X: x, Y: y})
+						}
+					}
+				}
+				if len(emptyPoints) > 0 {
+					mask = &common.Mask{Mode: "hide", Points: emptyPoints}
+				}
+			}
+		} else if difficulty == "Nurturing" || difficulty == "Flourishing" || difficulty == "Transcendent" {
+			// For higher difficulties on normal grids, use solver-aware placement
 			vines, mask, err = SolverAwarePlacement(gridSize, spec, profile, generatorCfg, rng)
 		} else {
-			// Use standard tiling for easier difficulties
+			// Use standard tiling for easier difficulties on normal grids
 			vines, mask, err = TileGridIntoVines(gridSize, spec, profile, generatorCfg, rng)
 		}
 
 		if err != nil {
-			common.Verbose("Attempt %d failed: %v", attempts+1, err)
+			tilingFailures++
+			if attempts < 10 || (attempts > 0 && attempts%100 == 0) {
+				common.Verbose("Attempt %d: Tiling failed - %v", attempts+1, err)
+			}
 			continue
 		}
 
@@ -338,14 +406,20 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 		// Validate solvability using the solver
 		solver := common.NewSolver(&level)
 		if !solver.IsSolvableGreedy() {
-			common.Verbose("Attempt %d: Level not solvable (greedy check)", attempts+1)
+			greedyFailures++
+			if attempts < 10 || (attempts > 0 && attempts%100 == 0) {
+				common.Verbose("Attempt %d: Level not solvable (greedy check)", attempts+1)
+			}
 			continue
 		}
 
 		// For higher difficulties, also check with BFS
 		if difficulty == "Nurturing" || difficulty == "Flourishing" || difficulty == "Transcendent" {
 			if !solver.IsSolvableBFS() {
-				common.Verbose("Attempt %d: Level not solvable (BFS check)", attempts+1)
+				bfsFailures++
+				if attempts < 10 || (attempts > 0 && attempts%100 == 0) {
+					common.Verbose("Attempt %d: Level not solvable (BFS check)", attempts+1)
+				}
 				continue
 			}
 		}
@@ -359,18 +433,20 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 		}
 
 		// Record generation time
-		elapsed := time.Since(startTime)
+		elapsed = time.Since(startTime)
 		level.GenerationElapsedMS = elapsed.Milliseconds()
 
 		// Calculate a quality score based on vine count and complexity
 		level.GenerationScore = calculateLevelScore(&level, attempts+1)
 
-		common.Verbose("✓ Level %d generated successfully after %d attempts (%.2fs, score: %.2f)",
-			id, attempts+1, elapsed.Seconds(), level.GenerationScore)
+		common.Verbose("✓ Level %d generated successfully after %d attempts (%.2fs, score: %.2f, tiling_fails=%d, greedy_fails=%d, bfs_fails=%d)",
+			id, attempts+1, elapsed.Seconds(), level.GenerationScore, tilingFailures, greedyFailures, bfsFailures)
 		return level, nil
 	}
 
-	return common.Level{}, fmt.Errorf("failed to generate solvable level after %d attempts", attempts)
+	elapsed := time.Since(startTime)
+	return common.Level{}, fmt.Errorf("failed to generate solvable level after %d attempts in %.1fs (tiling_fails=%d, greedy_fails=%d, bfs_fails=%d)",
+		attempts, elapsed.Seconds(), tilingFailures, greedyFailures, bfsFailures)
 }
 
 // calculateLevelScore computes a quality score for the generated level.

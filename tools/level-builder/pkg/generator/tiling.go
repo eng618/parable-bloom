@@ -176,6 +176,12 @@ func GrowFromSeed(
 	w := gridSize[0]
 	h := gridSize[1]
 
+	// DIRECTION-FIRST APPROACH: Choose head direction before growing vine
+	// This dramatically improves solvability by ensuring vines point toward exits
+	desiredHeadDir := chooseExitDirection(seed, gridSize, profile.DirBalance, rng)
+	headDx, headDy := deltaForDirection(desiredHeadDir)
+
+	// Start path with seed as the head
 	path := []common.Point{seed}
 	seen := map[string]bool{fmt.Sprintf("%d,%d", seed.X, seed.Y): true}
 	occ := make(map[string]bool)
@@ -184,30 +190,60 @@ func GrowFromSeed(
 	}
 	occ[fmt.Sprintf("%d,%d", seed.X, seed.Y)] = true
 
-	// choose first step biased by DirBalance if possible
+	// Grow vine segments, preferring to grow opposite to head direction (backward growth)
+	// This creates vines that naturally point toward exits
 	for len(path) < targetLen {
 		head := path[len(path)-1]
 		neighbors := availableNeighbors(head, w, h, occ)
 		if len(neighbors) == 0 {
-			// Stuck
-			return common.Vine{}, nil, fmt.Errorf("stuck at length %d, target %d", len(path), targetLen)
+			// Stuck - return what we have so far
+			return common.Vine{HeadDirection: desiredHeadDir, OrderedPath: path}, occ, nil
 		}
 
 		var chosen common.Point
-		if len(path) == 1 && len(profile.DirBalance) > 0 {
-			// try to bias initial direction
-			chosen = chooseNeighborByDirBias(head, neighbors, profile.DirBalance, rng)
-			// fall back if chosen is zero
-			if chosen == (common.Point{}) {
-				chosen = neighbors[rng.Intn(len(neighbors))]
+
+		if len(path) == 1 {
+			// First segment after head: prefer growing opposite to head direction
+			// This creates the "neck" segment
+			neckDx, neckDy := deltaForDirection(oppositeDirection(desiredHeadDir))
+			neck := common.Point{X: head.X + neckDx, Y: head.Y + neckDy}
+			
+			// Check if neck position is available
+			neckAvailable := false
+			for _, n := range neighbors {
+				if n.X == neck.X && n.Y == neck.Y {
+					neckAvailable = true
+					break
+				}
+			}
+			
+			if neckAvailable {
+				chosen = neck
+			} else {
+				// Neck position blocked, try adjacent cells
+				// Prefer cells that don't conflict with head direction
+				bestNeighbors := []common.Point{}
+				for _, n := range neighbors {
+					dx := n.X - head.X
+					dy := n.Y - head.Y
+					// Avoid growing in head direction
+					if dx != headDx || dy != headDy {
+						bestNeighbors = append(bestNeighbors, n)
+					}
+				}
+				if len(bestNeighbors) > 0 {
+					chosen = bestNeighbors[rng.Intn(len(bestNeighbors))]
+				} else {
+					chosen = neighbors[rng.Intn(len(neighbors))]
+				}
 			}
 		} else if len(path) >= 2 {
-			// prefer continuing straight vs turning based on TurnMix
+			// Continue growing: prefer straight vs turning based on TurnMix
 			prev := path[len(path)-2]
 			dx := head.X - prev.X
 			dy := head.Y - prev.Y
 			straight := common.Point{X: head.X + dx, Y: head.Y + dy}
-			// find if straight is available
+			
 			straightAvailable := false
 			for _, n := range neighbors {
 				if n.X == straight.X && n.Y == straight.Y {
@@ -215,13 +251,14 @@ func GrowFromSeed(
 					break
 				}
 			}
+			
 			if straightAvailable && rng.Float64() > profile.TurnMix {
 				chosen = straight
 			} else {
 				chosen = neighbors[rng.Intn(len(neighbors))]
 			}
 		} else {
-			// default random pick
+			// Fallback: random pick
 			chosen = neighbors[rng.Intn(len(neighbors))]
 		}
 
@@ -231,21 +268,8 @@ func GrowFromSeed(
 		occ[k] = true
 	}
 
-	// Heuristic head direction: head is path[0] -> path[1]
-	headDir := "up"
-	if len(path) >= 2 {
-		dx := path[1].X - path[0].X
-		dy := path[1].Y - path[0].Y
-		// HeadDirection should be the moving direction; neck-head is opposite of movement
-		for dir, d := range common.HeadDirections {
-			if d[0] == -dx && d[1] == -dy {
-				headDir = dir
-				break
-			}
-		}
-	}
-
-	return common.Vine{HeadDirection: headDir, OrderedPath: path}, occ, nil
+	// Return vine with predetermined head direction
+	return common.Vine{HeadDirection: desiredHeadDir, OrderedPath: path}, occ, nil
 }
 
 // availableNeighbors lists unoccupied Manhattan neighbors within grid.

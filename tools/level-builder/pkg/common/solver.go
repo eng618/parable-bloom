@@ -114,44 +114,86 @@ func (s *Solver) IsSolvableBFS() bool {
 }
 
 // canVineClear checks if a vine can move and eventually exit the grid.
+// This properly simulates snake-like movement where each segment follows the previous one.
 func (s *Solver) canVineClear(vine *Vine, occupiedCells map[string]bool) bool {
-	head := vine.GetHead()
-	delta := HeadDirections[vine.HeadDirection]
+	if len(vine.OrderedPath) == 0 {
+		return false
+	}
 
+	delta := HeadDirections[vine.HeadDirection]
 	if delta[0] == 0 && delta[1] == 0 {
 		return false
 	}
 
-	if len(vine.OrderedPath) < 2 {
-		return false
+	// Build a map of this vine's own cells so we can exclude them from collision checks
+	selfCells := make(map[string]bool)
+	for _, pt := range vine.OrderedPath {
+		selfCells[fmt.Sprintf("%d,%d", pt.X, pt.Y)] = true
 	}
+
+	// Start with current positions
+	positions := make([]Point, len(vine.OrderedPath))
+	copy(positions, vine.OrderedPath)
 
 	// Simulate movement for up to (width + height + path length) steps
 	maxSteps := s.level.GetGridWidth() + s.level.GetGridHeight() + len(vine.OrderedPath) + 10
 
 	for step := 0; step < maxSteps; step++ {
-		// Calculate head position after this move
-		nextX := head.X + delta[0]
-		nextY := head.Y + delta[1]
+		// Simulate one step of snake-like movement
+		newPositions := simulateVineMovement(positions, delta)
 
-		// Check if exited grid (vine clears)
-		if nextX < 0 || nextX >= s.level.GetGridWidth() ||
-			nextY < 0 || nextY >= s.level.GetGridHeight() {
+		// Check for self-overlap in the new positions
+		seen := make(map[string]bool)
+		for _, pos := range newPositions {
+			key := fmt.Sprintf("%d,%d", pos.X, pos.Y)
+			if seen[key] {
+				// Self-overlap after movement - impossible configuration
+				return false
+			}
+			seen[key] = true
+
+			// Check if this position collides with another vine
+			// (exclude cells that were originally occupied by this vine)
+			if occupiedCells[key] && !selfCells[key] {
+				// Blocked by another vine
+				return false
+			}
+		}
+
+		// Check if head has exited the grid (vine successfully clears)
+		head := newPositions[0]
+		if head.X < 0 || head.X >= s.level.GetGridWidth() ||
+			head.Y < 0 || head.Y >= s.level.GetGridHeight() {
 			return true
 		}
 
-		// Check if cell is occupied (by another vine)
-		cellKey := fmt.Sprintf("%d,%d", nextX, nextY)
-		if occupiedCells[cellKey] {
-			// Blocked, can't proceed
-			return false
-		}
-
-		// Continue from new position
-		head = Point{X: nextX, Y: nextY}
+		// Update positions for next iteration
+		positions = newPositions
 	}
 
+	// Timed out without clearing - assume blocked
 	return false
+}
+
+// simulateVineMovement simulates one step of snake-like movement.
+// The head moves in the given direction, and each segment moves to where the previous segment was.
+func simulateVineMovement(positions []Point, delta [2]int) []Point {
+	if len(positions) == 0 {
+		return positions
+	}
+
+	newPositions := make([]Point, len(positions))
+	
+	// New head position
+	head := positions[0]
+	newPositions[0] = Point{X: head.X + delta[0], Y: head.Y + delta[1]}
+	
+	// Each other segment moves to where the previous segment was
+	for i := 1; i < len(positions); i++ {
+		newPositions[i] = positions[i-1]
+	}
+	
+	return newPositions
 }
 
 // buildOccupiedMap creates a map of occupied cells from vines.
