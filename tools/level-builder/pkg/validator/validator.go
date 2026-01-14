@@ -217,6 +217,12 @@ func readLevelFile(path string) (model.Level, error) {
 		return model.Level{}, fmt.Errorf("invalid max_moves")
 	}
 
+	// 6. Comprehensive structural validation (ported from Dart tests)
+	if structuralErrors := ValidateStructural(lvl); len(structuralErrors) > 0 {
+		// Return first error for backward compatibility
+		return model.Level{}, structuralErrors[0]
+	}
+
 	return lvl, nil
 }
 
