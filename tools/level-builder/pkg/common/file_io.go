@@ -7,16 +7,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 // ReadLevel reads a single level from a JSON file.
-func ReadLevel(filePath string) (*Level, error) {
+func ReadLevel(filePath string) (*model.Level, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read level file %s: %w", filePath, err)
 	}
 
-	var level Level
+	var level model.Level
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 
@@ -30,7 +32,7 @@ func ReadLevel(filePath string) (*Level, error) {
 
 // WriteLevel writes a level to a JSON file with the new color_scheme format.
 // Returns error if file exists and overwrite is false.
-func WriteLevel(filePath string, level *Level, overwrite bool) error {
+func WriteLevel(filePath string, level *model.Level, overwrite bool) error {
 	// Check if file exists
 	_, err := os.Stat(filePath)
 	fileExists := err == nil
@@ -48,21 +50,21 @@ func WriteLevel(filePath string, level *Level, overwrite bool) error {
 	// Prepare a sanitized level for persistence (exclude runtime-only fields)
 	// NOTE: Uses ColorScheme []string instead of global color map
 	type persistLevel struct {
-		ID                  int      `json:"id"`
-		Name                string   `json:"name,omitempty"`
-		Difficulty          string   `json:"difficulty,omitempty"`
-		GridSize            []int    `json:"grid_size"` // Changed from [2]int to []int for compatibility
-		Mask                *Mask    `json:"mask,omitempty"`
-		Vines               []Vine   `json:"vines"`
-		MaxMoves            int      `json:"max_moves"`
-		MinMoves            int      `json:"min_moves,omitempty"`
-		Complexity          string   `json:"complexity,omitempty"`
-		Grace               int      `json:"grace"`
-		ColorScheme         []string `json:"color_scheme"`
-		GenerationSeed      int64    `json:"generation_seed,omitempty"`
-		GenerationAttempts  int      `json:"generation_attempts,omitempty"`
-		GenerationElapsedMS int64    `json:"generation_elapsed_ms,omitempty"`
-		GenerationScore     float64  `json:"generation_score,omitempty"`
+		ID                  int          `json:"id"`
+		Name                string       `json:"name,omitempty"`
+		Difficulty          string       `json:"difficulty,omitempty"`
+		GridSize            []int        `json:"grid_size"` // Changed from [2]int to []int for compatibility
+		Mask                *model.Mask  `json:"mask,omitempty"`
+		Vines               []model.Vine `json:"vines"`
+		MaxMoves            int          `json:"max_moves"`
+		MinMoves            int          `json:"min_moves,omitempty"`
+		Complexity          string       `json:"complexity,omitempty"`
+		Grace               int          `json:"grace"`
+		ColorScheme         []string     `json:"color_scheme"`
+		GenerationSeed      int64        `json:"generation_seed,omitempty"`
+		GenerationAttempts  int          `json:"generation_attempts,omitempty"`
+		GenerationElapsedMS int64        `json:"generation_elapsed_ms,omitempty"`
+		GenerationScore     float64      `json:"generation_score,omitempty"`
 	}
 
 	pLevel := persistLevel{
@@ -104,13 +106,13 @@ func WriteLevel(filePath string, level *Level, overwrite bool) error {
 }
 
 // ReadLevelsFromDir reads all level files from a directory.
-func ReadLevelsFromDir(dirPath string) ([]*Level, error) {
+func ReadLevelsFromDir(dirPath string) ([]*model.Level, error) {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory %s: %w", dirPath, err)
 	}
 
-	var levels []*Level
+	var levels []*model.Level
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue

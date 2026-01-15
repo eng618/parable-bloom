@@ -244,7 +244,7 @@ func updateModuleRegistry(moduleID int, startID int) error {
 	registryPath := ModulesFile
 
 	// Read existing registry or create new one
-	var registry common.ModuleRegistry
+	var registry model.ModuleRegistry
 	data, err := os.ReadFile(registryPath)
 	if err == nil {
 		if err := json.Unmarshal(data, &registry); err != nil {
@@ -252,15 +252,15 @@ func updateModuleRegistry(moduleID int, startID int) error {
 		}
 	} else {
 		// Initialize new registry
-		registry = common.ModuleRegistry{
+		registry = model.ModuleRegistry{
 			Version:   "2.0",
 			Tutorials: []int{1, 2, 3},
-			Modules:   []common.Module{},
+			Modules:   []model.Module{},
 		}
 	}
 
 	// Build module entry
-	moduleEntry := common.Module{
+	moduleEntry := model.Module{
 		ID:             moduleID,
 		Name:           fmt.Sprintf("Module %d", moduleID),
 		ThemeSeed:      getThemeSeed(moduleID),
@@ -311,7 +311,7 @@ func getThemeSeed(moduleID int) string {
 
 // generateSingleLevel creates a single level with the given parameters.
 // It uses the tiling algorithm and validates solvability.
-func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) (common.Level, error) {
+func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) (model.Level, error) {
 	const maxAttempts = 10000        // Increased from 1000 (attempts are fast ~0.8ms each)
 	const maxGenerationTime = 60     // Circuit breaker: max 60 seconds per level
 	const occupancyRelaxation = 0.05 // Relax by 5% when stuck
@@ -320,23 +320,23 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 	startTime := time.Now()
 
 	// Get difficulty-specific constraints
-	spec, ok := common.DifficultySpecs[difficulty]
+	spec, ok := DifficultySpecs[difficulty]
 	if !ok {
-		return common.Level{}, fmt.Errorf("unknown difficulty: %s", difficulty)
+		return model.Level{}, fmt.Errorf("unknown difficulty: %s", difficulty)
 	}
 
 	// Get grid size for this level
-	gridSize := common.GridSizeForLevel(id)
+	gridSize := GridSizeForLevel(id)
 
 	// Get variety profile and generator config for this difficulty
-	profile := common.GetPresetProfile(difficulty)
-	generatorCfg := common.GetGeneratorConfigForDifficulty(difficulty)
+	profile := GetPresetProfile(difficulty)
+	generatorCfg := GetGeneratorConfigForDifficulty(difficulty)
 
 	originalOccupancy := spec.MinGridOccupancy
 	common.Verbose("Level %d: difficulty=%s, grid=%dx%d, target_occupancy=%.1f%%, max_attempts=%d",
 		id, difficulty, gridSize[0], gridSize[1], originalOccupancy*100, maxAttempts)
 
-	var level common.Level
+	var level model.Level
 	var attempts int
 	tilingFailures := 0
 	greedyFailures := 0
@@ -347,7 +347,7 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 		// Time-based circuit breaker
 		elapsed := time.Since(startTime)
 		if elapsed.Seconds() > maxGenerationTime {
-			return common.Level{}, fmt.Errorf("generation timeout after %.1fs (%d attempts, tiling_fails=%d, greedy_fails=%d, bfs_fails=%d)",
+			return model.Level{}, fmt.Errorf("generation timeout after %.1fs (%d attempts, tiling_fails=%d, greedy_fails=%d, bfs_fails=%d)",
 				elapsed.Seconds(), attempts, tilingFailures, greedyFailures, bfsFailures)
 		}
 
@@ -376,8 +376,8 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 				tilingFailures, greedyFailures, bfsFailures, constraintFailures,
 				successRate)
 		}
-		var vines []common.Vine
-		var mask *common.Mask
+		var vines []model.Vine
+		var mask *model.Mask
 		var err error
 
 		// Create an attempt-local RNG to diversify retries (prevents repeating same trajectories)
@@ -409,17 +409,17 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 						occupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
 					}
 				}
-				var emptyPoints []common.Point
+				var emptyPoints []model.Point
 				for y := 0; y < gridSize[1]; y++ {
 					for x := 0; x < gridSize[0]; x++ {
 						key := fmt.Sprintf("%d,%d", x, y)
 						if !occupied[key] {
-							emptyPoints = append(emptyPoints, common.Point{X: x, Y: y})
+							emptyPoints = append(emptyPoints, model.Point{X: x, Y: y})
 						}
 					}
 				}
 				if len(emptyPoints) > 0 {
-					mask = &common.Mask{Mode: "hide", Points: emptyPoints}
+					mask = &model.Mask{Mode: "hide", Points: emptyPoints}
 				}
 			}
 		} else if difficulty == "Nurturing" || difficulty == "Flourishing" || difficulty == "Transcendent" {
@@ -439,10 +439,10 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 		}
 
 		// Assign color indices from palette
-		assignColorIndices(vines, len(common.ColorPalette), rng)
+		assignColorIndices(vines, len(ColorPalette), rng)
 
 		// Build level
-		level = common.Level{
+		level = model.Level{
 			ID:          id,
 			Name:        fmt.Sprintf("Level %d", id),
 			Difficulty:  difficulty,
@@ -451,8 +451,8 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 			MaxMoves:    0, // Will calculate below
 			MinMoves:    0, // Will calculate below
 			Complexity:  common.ComplexityForDifficulty(difficulty),
-			Grace:       common.GraceForDifficulty(difficulty),
-			ColorScheme: common.ColorPalette, // Use standard palette
+			Grace:       GraceForDifficulty(difficulty),
+			ColorScheme: ColorPalette, // Use standard palette
 			Mask:        mask,
 
 			// Generation metadata
@@ -512,13 +512,13 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 	}
 
 	elapsed := time.Since(startTime)
-	return common.Level{}, fmt.Errorf("failed to generate solvable level after %d attempts in %.1fs (tiling_fails=%d, greedy_fails=%d, bfs_fails=%d)",
+	return model.Level{}, fmt.Errorf("failed to generate solvable level after %d attempts in %.1fs (tiling_fails=%d, greedy_fails=%d, bfs_fails=%d)",
 		attempts, elapsed.Seconds(), tilingFailures, greedyFailures, bfsFailures)
 }
 
 // calculateLevelScore computes a quality score for the generated level.
 // Higher scores indicate better levels (good vine distribution, appropriate complexity).
-func calculateLevelScore(level *common.Level, attempts int) float64 {
+func calculateLevelScore(level *model.Level, attempts int) float64 {
 	score := 100.0
 
 	// Penalize for too many generation attempts
@@ -561,13 +561,13 @@ func calculateLevelScore(level *common.Level, attempts int) float64 {
 }
 
 // assignColorIndices assigns random color indices to vines from the palette.
-func assignColorIndices(vines []common.Vine, paletteSize int, rng *rand.Rand) {
+func assignColorIndices(vines []model.Vine, paletteSize int, rng *rand.Rand) {
 	for i := range vines {
 		vines[i].ColorIndex = rng.Intn(paletteSize)
 	}
 }
 
-func convertToModelLevel(level common.Level) model.Level {
+func convertToModelLevel(level model.Level) model.Level {
 	return model.Level{
 		ID:          level.ID,
 		Name:        level.Name,
@@ -583,7 +583,7 @@ func convertToModelLevel(level common.Level) model.Level {
 	}
 }
 
-func convertMask(mask *common.Mask) *model.Mask {
+func convertMask(mask *model.Mask) *model.Mask {
 	if mask == nil {
 		return nil
 	}
@@ -594,7 +594,7 @@ func convertMask(mask *common.Mask) *model.Mask {
 	return &model.Mask{Mode: mask.Mode, Points: points}
 }
 
-func convertVines(vines []common.Vine) []model.Vine {
+func convertVines(vines []model.Vine) []model.Vine {
 	out := make([]model.Vine, len(vines))
 	for i, v := range vines {
 		out[i] = model.Vine{
@@ -607,7 +607,7 @@ func convertVines(vines []common.Vine) []model.Vine {
 	return out
 }
 
-func convertPoints(points []common.Point) []model.Point {
+func convertPoints(points []model.Point) []model.Point {
 	out := make([]model.Point, len(points))
 	for i, p := range points {
 		out[i] = model.Point{X: p.X, Y: p.Y}

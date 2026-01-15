@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 // ClearableFirstPlacement implements a two-phase vine placement strategy:
@@ -15,13 +16,13 @@ import (
 // a base set of vines can always clear, preventing total blocking scenarios.
 func ClearableFirstPlacement(
 	gridSize []int,
-	constraints common.DifficultySpec,
-	profile common.VarietyProfile,
-	cfg common.GeneratorConfig,
+	constraints DifficultySpec,
+	profile VarietyProfile,
+	cfg GeneratorConfig,
 	seed int64,
 	anchorRatio float64, // e.g., 0.3 for 30% anchor vines
 	greedy bool, // if true, check solvability after each vine placement
-) ([]common.Vine, error) {
+) ([]model.Vine, error) {
 	rng := rand.New(rand.NewSource(seed))
 
 	if anchorRatio < 0 || anchorRatio > 1 {
@@ -41,7 +42,7 @@ func ClearableFirstPlacement(
 	}
 
 	occupied := make(map[string]bool)
-	var vines []common.Vine
+	var vines []model.Vine
 
 	// Track vine length distribution to ensure variety
 	lengthCounts := make(map[int]int)
@@ -104,7 +105,7 @@ func ClearableFirstPlacement(
 
 		// Verify solvability
 		if greedy {
-			testLevel := &common.Level{
+			testLevel := &model.Level{
 				GridSize: gridSize,
 				Vines:    append(vines, vine),
 			}
@@ -155,7 +156,7 @@ func ClearableFirstPlacement(
 		}
 
 		// Pick a seed; when stuck, prefer seeds in sparse regions
-		var seedPoint common.Point
+		var seedPoint model.Point
 		if fillFailures > maxConsecutiveFillFails/2 {
 			common.Verbose("⚠️  ClearableFirst: fill stuck (%d fails), preferring sparse seeds and reseeding", fillFailures)
 			seedPoint = pickRandomSeedWithPreference(gridSize, occupied, rng)
@@ -168,7 +169,7 @@ func ClearableFirstPlacement(
 			seedPoint = pickRandomSeed(gridSize, occupied, rng)
 		}
 
-		if seedPoint == (common.Point{}) {
+		if seedPoint == (model.Point{}) {
 			continue // no available seeds
 		}
 
@@ -191,7 +192,7 @@ func ClearableFirstPlacement(
 
 		// Check solvability
 		if greedy {
-			testLevel := &common.Level{
+			testLevel := &model.Level{
 				GridSize: gridSize,
 				Vines:    append(vines, vine),
 			}
@@ -263,7 +264,7 @@ func ClearableFirstPlacement(
 }
 
 // pickRandomSeed picks a random unoccupied cell anywhere in the grid.
-func pickRandomSeed(gridSize []int, occupied map[string]bool, rng *rand.Rand) common.Point {
+func pickRandomSeed(gridSize []int, occupied map[string]bool, rng *rand.Rand) model.Point {
 	w, h := gridSize[0], gridSize[1]
 	maxAttempts := w * h // try up to grid size attempts
 
@@ -272,18 +273,18 @@ func pickRandomSeed(gridSize []int, occupied map[string]bool, rng *rand.Rand) co
 		y := rng.Intn(h)
 		key := fmt.Sprintf("%d,%d", x, y)
 		if !occupied[key] {
-			return common.Point{X: x, Y: y}
+			return model.Point{X: x, Y: y}
 		}
 	}
 
-	return common.Point{} // no available seed found
+	return model.Point{} // no available seed found
 }
 
 // pickRandomSeedWithPreference prefers seeds in locally sparse areas (more empty neighbors)
 // This helps escape tight clusters where random picks keep failing.
-func pickRandomSeedWithPreference(gridSize []int, occupied map[string]bool, rng *rand.Rand) common.Point {
+func pickRandomSeedWithPreference(gridSize []int, occupied map[string]bool, rng *rand.Rand) model.Point {
 	w, h := gridSize[0], gridSize[1]
-	best := common.Point{}
+	best := model.Point{}
 	bestScore := -1
 
 	// Sample up to 60 candidates and pick one with the most empty neighbors
@@ -310,7 +311,7 @@ func pickRandomSeedWithPreference(gridSize []int, occupied map[string]bool, rng 
 
 		if score > bestScore {
 			bestScore = score
-			best = common.Point{X: x, Y: y}
+			best = model.Point{X: x, Y: y}
 			if score == 4 {
 				break // optimal
 			}

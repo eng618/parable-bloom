@@ -1,4 +1,4 @@
-package common
+package generator
 
 // GetPresetProfile returns a VarietyProfile tuned for the given difficulty tier.
 func GetPresetProfile(difficulty string) VarietyProfile {
@@ -54,5 +54,52 @@ func GetGeneratorConfigForDifficulty(difficulty string) GeneratorConfig {
 		return GeneratorConfig{MaxSeedRetries: 120, LocalRepairRadius: 5, RepairRetries: 8}
 	default:
 		return GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
+	}
+}
+
+// GraceForDifficulty returns the default grace value for a difficulty.
+func GraceForDifficulty(difficulty string) int {
+	if spec, ok := DifficultySpecs[difficulty]; ok {
+		return spec.DefaultGrace
+	}
+	return 3
+}
+
+// DefaultGridSize returns default grid size for a difficulty (used when not specified).
+func DefaultGridSize(difficulty string) []int {
+	ranges, ok := GridSizeRanges[difficulty]
+	if !ok {
+		return []int{9, 12}
+	}
+	// Return middle of range
+	w := (ranges.MinW + ranges.MaxW) / 2
+	h := (ranges.MinH + ranges.MaxH) / 2
+	return []int{w, h}
+}
+
+// GridSizeForLevel returns the appropriate grid size for a level ID.
+func GridSizeForLevel(levelID int) []int {
+	// This needs to be imported or duplicated. For now, let's duplicate the logic.
+	// TODO: Consider moving DifficultyForLevel to generator or creating a shared constant.
+	difficulty := difficultyForLevel(levelID)
+	return DefaultGridSize(difficulty)
+}
+
+// difficultyForLevel returns the difficulty tier for a given level ID.
+// Duplicated from common/utils.go to avoid import cycle.
+func difficultyForLevel(levelID int) string {
+	switch {
+	case levelID <= 5:
+		return "Tutorial"
+	case levelID <= 15:
+		return "Seedling"
+	case levelID <= 30:
+		return "Sprout"
+	case levelID <= 44:
+		return "Nurturing"
+	case levelID <= 50:
+		return "Flourishing"
+	default:
+		return "Transcendent"
 	}
 }

@@ -274,6 +274,34 @@ The **level-builder** is a Go-based CLI tool that serves as the single source of
 - CI/CD integration for tutorial quality
 - Pre-deployment validation of lesson changes
 
+#### Gen2 (Transcendent Levels)
+
+```bash
+# Generate transcendent difficulty levels with circuit-board aesthetics
+./level-builder gen2 --level-id 999 --grid-width 20 --grid-height 30 --vine-count 20 --max-moves 100
+
+# Generate with specific seed for reproducibility
+./level-builder gen2 --level-id 1000 --seed 12345 --overwrite
+
+# Generate with randomized seed
+./level-builder gen2 --level-id 1001 --randomize
+```
+
+**Features**:
+
+- **Circuit-Board Aesthetics**: Vines grow from edges with winding orthogonal patterns
+- **Deep Blocking Chains**: Creates complex blocking relationships (max depth 8+)
+- **Configurable Coverage**: Relaxed coverage requirements (55% vs 90% for regular levels)
+- **Reproducible Generation**: Seed-based generation for consistent results
+- **Performance Monitoring**: Reports generation time, blocking depth, coverage metrics
+
+**Use Cases**:
+
+- Generate challenging transcendent difficulty levels
+- Create levels with complex blocking relationships
+- Prototype new level aesthetics and mechanics
+- Batch generation for transcendent modules
+
 #### Generate (⚠️ Known Issue)
 
 ```bash
@@ -400,12 +428,14 @@ The level-builder performs **heavy validation** during development:
 - ✅ `level-builder render`: **Production ready** (unicode/ascii styles)
 - ✅ `level-builder repair`: **Production ready** (0 corrupted files detected)
 - ✅ `level-builder tutorials validate`: **Production ready** (all 5 lessons pass)
+- ✅ `level-builder gen2`: **Production ready** (circuit-board transcendent levels)
 - ❌ `level-builder generate`: **Blocked** (infinite loop bug, needs debugging)
 
 #### CI/CD Integration Status
 
 - ✅ **Ready**: Add `level-builder validate` to GitHub Actions, replace Dart validation
 - ✅ **Ready**: Add `level-builder tutorials validate` to GitHub Actions
+- ✅ **Ready**: Add `level-builder gen2` for transcendent level generation
 - ✅ **Ready**: Upload `validation_stats.json` as CI artifact for performance tracking
 - ❌ **Blocked**: Cannot add generation testing until generator bug fixed
 
@@ -419,9 +449,10 @@ The level-builder performs **heavy validation** during development:
 - ✅ Render: Both unicode/ascii styles work, useful for debugging
 - ✅ Repair: Deterministic regeneration ready, 0 corrupted files found
 - ✅ Tutorials: All 5 lessons validate successfully
+- ✅ Gen2: Circuit-board transcendent level generation working, 57.5% coverage, 8-depth blocking chains
 - ❌ Generation: **Critical bug** - infinite loop when attempting to create solvable levels
 
-**Recommended Action**: Proceed with CI/CD integration of validation/tutorials, address generator separately before full regeneration.
+**Recommended Action**: Proceed with CI/CD integration of validation/tutorials/gen2, address generator separately before full regeneration.
 
 ---
 

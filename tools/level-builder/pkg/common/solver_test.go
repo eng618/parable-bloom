@@ -2,26 +2,28 @@ package common
 
 import (
 	"testing"
+
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 // TestCanVineClear_SimpleMovement tests basic vine clearance scenarios
 func TestCanVineClear_SimpleMovement(t *testing.T) {
 	tests := []struct {
 		name     string
-		level    Level
+		level    model.Level
 		vineID   string
 		occupied map[string]bool
 		want     bool
 	}{
 		{
 			name: "Single cell vine moving right can clear",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{5, 5},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 2},
 						},
 					},
@@ -35,13 +37,13 @@ func TestCanVineClear_SimpleMovement(t *testing.T) {
 		},
 		{
 			name: "Two-segment vine moving right can clear",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{5, 5},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 2}, // head
 							{X: 1, Y: 2}, // tail
 						},
@@ -56,14 +58,14 @@ func TestCanVineClear_SimpleMovement(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "Vine blocked by another vine",
-			level: Level{
+			name: "model.Vine blocked by another vine",
+			level: model.Level{
 				GridSize: []int{5, 5},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 2},
 							{X: 1, Y: 2},
 						},
@@ -71,7 +73,7 @@ func TestCanVineClear_SimpleMovement(t *testing.T) {
 					{
 						ID:            "v2",
 						HeadDirection: "up",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 3, Y: 2}, // blocks v1
 							{X: 3, Y: 1},
 						},
@@ -89,13 +91,13 @@ func TestCanVineClear_SimpleMovement(t *testing.T) {
 		},
 		{
 			name: "Long vine can clear without self-collision",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{6, 3},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 1},
 							{X: 1, Y: 1},
 							{X: 0, Y: 1},
@@ -133,26 +135,26 @@ func TestCanVineClear_SimpleMovement(t *testing.T) {
 func TestIsSolvableGreedy_KnownConfigurations(t *testing.T) {
 	tests := []struct {
 		name  string
-		level Level
+		level model.Level
 		want  bool
 	}{
 		{
 			name: "Empty grid is solvable",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{5, 5},
-				Vines:    []Vine{},
+				Vines:    []model.Vine{},
 			},
 			want: true,
 		},
 		{
 			name: "Single vine moving away is solvable",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{5, 5},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 2},
 							{X: 1, Y: 2},
 						},
@@ -163,13 +165,13 @@ func TestIsSolvableGreedy_KnownConfigurations(t *testing.T) {
 		},
 		{
 			name: "Two independent vines are solvable",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{5, 5},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 1, Y: 1},
 							{X: 0, Y: 1},
 						},
@@ -177,7 +179,7 @@ func TestIsSolvableGreedy_KnownConfigurations(t *testing.T) {
 					{
 						ID:            "v2",
 						HeadDirection: "up",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 3, Y: 1},
 							{X: 3, Y: 0},
 						},
@@ -188,13 +190,13 @@ func TestIsSolvableGreedy_KnownConfigurations(t *testing.T) {
 		},
 		{
 			name: "Simple blocking scenario - v1 must clear first",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{5, 5},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 2},
 							{X: 1, Y: 2},
 						},
@@ -202,7 +204,7 @@ func TestIsSolvableGreedy_KnownConfigurations(t *testing.T) {
 					{
 						ID:            "v2",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 0, Y: 2}, // head at v1's tail position
 							{X: 0, Y: 1},
 						},
@@ -213,13 +215,13 @@ func TestIsSolvableGreedy_KnownConfigurations(t *testing.T) {
 		},
 		{
 			name: "Circular deadlock - two vines block each other",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{4, 4},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 1, Y: 2},
 							{X: 0, Y: 2},
 						},
@@ -227,7 +229,7 @@ func TestIsSolvableGreedy_KnownConfigurations(t *testing.T) {
 					{
 						ID:            "v2",
 						HeadDirection: "left",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 2},
 							{X: 3, Y: 2},
 						},
@@ -253,26 +255,26 @@ func TestIsSolvableGreedy_KnownConfigurations(t *testing.T) {
 func TestIsSolvableBFS_ComplexScenarios(t *testing.T) {
 	tests := []struct {
 		name  string
-		level Level
+		level model.Level
 		want  bool
 	}{
 		{
 			name: "Empty grid is solvable",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{5, 5},
-				Vines:    []Vine{},
+				Vines:    []model.Vine{},
 			},
 			want: true,
 		},
 		{
 			name: "Three independent vines are solvable",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{7, 7},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 1, Y: 1},
 							{X: 0, Y: 1},
 						},
@@ -280,7 +282,7 @@ func TestIsSolvableBFS_ComplexScenarios(t *testing.T) {
 					{
 						ID:            "v2",
 						HeadDirection: "up",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 3, Y: 1},
 							{X: 3, Y: 0},
 						},
@@ -288,7 +290,7 @@ func TestIsSolvableBFS_ComplexScenarios(t *testing.T) {
 					{
 						ID:            "v3",
 						HeadDirection: "left",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 6, Y: 3},
 							{X: 6, Y: 2},
 						},
@@ -299,13 +301,13 @@ func TestIsSolvableBFS_ComplexScenarios(t *testing.T) {
 		},
 		{
 			name: "Impossible configuration - three-way deadlock",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{4, 4},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 1, Y: 1},
 							{X: 0, Y: 1},
 						},
@@ -313,7 +315,7 @@ func TestIsSolvableBFS_ComplexScenarios(t *testing.T) {
 					{
 						ID:            "v2",
 						HeadDirection: "down",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 2},
 							{X: 2, Y: 3},
 						},
@@ -321,7 +323,7 @@ func TestIsSolvableBFS_ComplexScenarios(t *testing.T) {
 					{
 						ID:            "v3",
 						HeadDirection: "left",
-						OrderedPath: []Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 1}, // blocks v1
 							{X: 3, Y: 1},
 						},
@@ -347,35 +349,35 @@ func TestIsSolvableBFS_ComplexScenarios(t *testing.T) {
 func TestSolverAgreement(t *testing.T) {
 	tests := []struct {
 		name  string
-		level Level
+		level model.Level
 	}{
 		{
 			name: "Single vine",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{5, 5},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath:   []Point{{X: 2, Y: 2}, {X: 1, Y: 2}},
+						OrderedPath:   []model.Point{{X: 2, Y: 2}, {X: 1, Y: 2}},
 					},
 				},
 			},
 		},
 		{
 			name: "Two independent vines",
-			level: Level{
+			level: model.Level{
 				GridSize: []int{5, 5},
-				Vines: []Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath:   []Point{{X: 1, Y: 1}, {X: 0, Y: 1}},
+						OrderedPath:   []model.Point{{X: 1, Y: 1}, {X: 0, Y: 1}},
 					},
 					{
 						ID:            "v2",
 						HeadDirection: "up",
-						OrderedPath:   []Point{{X: 3, Y: 1}, {X: 3, Y: 0}},
+						OrderedPath:   []model.Point{{X: 3, Y: 1}, {X: 3, Y: 0}},
 					},
 				},
 			},
@@ -396,11 +398,11 @@ func TestSolverAgreement(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkIsSolvableGreedy_Simple(b *testing.B) {
-	level := Level{
+	level := model.Level{
 		GridSize: []int{7, 7},
-		Vines: []Vine{
-			{ID: "v1", HeadDirection: "right", OrderedPath: []Point{{X: 3, Y: 3}, {X: 2, Y: 3}}},
-			{ID: "v2", HeadDirection: "up", OrderedPath: []Point{{X: 4, Y: 2}, {X: 4, Y: 1}}},
+		Vines: []model.Vine{
+			{ID: "v1", HeadDirection: "right", OrderedPath: []model.Point{{X: 3, Y: 3}, {X: 2, Y: 3}}},
+			{ID: "v2", HeadDirection: "up", OrderedPath: []model.Point{{X: 4, Y: 2}, {X: 4, Y: 1}}},
 		},
 	}
 
@@ -412,13 +414,13 @@ func BenchmarkIsSolvableGreedy_Simple(b *testing.B) {
 }
 
 func BenchmarkIsSolvableBFS_Complex(b *testing.B) {
-	level := Level{
+	level := model.Level{
 		GridSize: []int{8, 8},
-		Vines: []Vine{
-			{ID: "v1", HeadDirection: "right", OrderedPath: []Point{{X: 2, Y: 3}, {X: 1, Y: 3}}},
-			{ID: "v2", HeadDirection: "up", OrderedPath: []Point{{X: 5, Y: 2}, {X: 5, Y: 1}}},
-			{ID: "v3", HeadDirection: "left", OrderedPath: []Point{{X: 3, Y: 3}, {X: 4, Y: 3}}},
-			{ID: "v4", HeadDirection: "down", OrderedPath: []Point{{X: 3, Y: 5}, {X: 3, Y: 6}}},
+		Vines: []model.Vine{
+			{ID: "v1", HeadDirection: "right", OrderedPath: []model.Point{{X: 2, Y: 3}, {X: 1, Y: 3}}},
+			{ID: "v2", HeadDirection: "up", OrderedPath: []model.Point{{X: 5, Y: 2}, {X: 5, Y: 1}}},
+			{ID: "v3", HeadDirection: "left", OrderedPath: []model.Point{{X: 3, Y: 3}, {X: 4, Y: 3}}},
+			{ID: "v4", HeadDirection: "down", OrderedPath: []model.Point{{X: 3, Y: 5}, {X: 3, Y: 6}}},
 		},
 	}
 

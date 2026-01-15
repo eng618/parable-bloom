@@ -9,6 +9,7 @@
     "firestore"
   ],
   "chat.tools.terminal.autoApprove": {
-    "hugo": true
+    "hugo": true,
+    "./level-builder": true
   }
 }

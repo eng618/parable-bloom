@@ -11,6 +11,7 @@ import (
 
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/clean"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/generate"
+	"github.com/eng618/parable-bloom/tools/level-builder/cmd/gen2"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/render"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/repair"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/tutorials"
@@ -81,6 +82,7 @@ func init() {
 
 	// Register subcommands
 	rootCmd.AddCommand(generate.GetCommand())
+	rootCmd.AddCommand(gen2.GetCommand())
 	rootCmd.AddCommand(validate.GetCommand())
 	rootCmd.AddCommand(render.RenderCmd)
 	rootCmd.AddCommand(repair.RepairCmd)
