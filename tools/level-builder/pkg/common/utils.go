@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 // GenerateLevelID generates a unique level ID starting from a base value.
@@ -19,7 +21,7 @@ func GenerateLevelID(baseDir string, start int) int {
 }
 
 // ComputeOccupancy calculates the grid occupancy percentage for a level.
-func ComputeOccupancy(level *Level) float64 {
+func ComputeOccupancy(level *model.Level) float64 {
 	total := level.GetTotalCells()
 	if total == 0 {
 		return 0
@@ -72,7 +74,7 @@ func DetectCircularBlocking(blockingGraph map[string][]string) bool {
 }
 
 // GetAverageVineLength computes average vine length.
-func GetAverageVineLength(vines []Vine) float64 {
+func GetAverageVineLength(vines []model.Vine) float64 {
 	if len(vines) == 0 {
 		return 0
 	}
@@ -84,7 +86,7 @@ func GetAverageVineLength(vines []Vine) float64 {
 }
 
 // GetMinimumVineLength returns the shortest vine length.
-func GetMinimumVineLength(vines []Vine) int {
+func GetMinimumVineLength(vines []model.Vine) int {
 	if len(vines) == 0 {
 		return 0
 	}
@@ -98,7 +100,7 @@ func GetMinimumVineLength(vines []Vine) int {
 }
 
 // GetMaximumVineLength returns the longest vine length.
-func GetMaximumVineLength(vines []Vine) int {
+func GetMaximumVineLength(vines []model.Vine) int {
 	if len(vines) == 0 {
 		return 0
 	}
@@ -112,8 +114,8 @@ func GetMaximumVineLength(vines []Vine) int {
 }
 
 // ShuffleVines randomly shuffles a slice of vines using a deterministic seed.
-func ShuffleVines(vines []Vine, seed int64) []Vine {
-	result := make([]Vine, len(vines))
+func ShuffleVines(vines []model.Vine, seed int64) []model.Vine {
+	result := make([]model.Vine, len(vines))
 	copy(result, vines)
 
 	rng := rand.New(rand.NewSource(seed))
@@ -126,7 +128,7 @@ func ShuffleVines(vines []Vine, seed int64) []Vine {
 }
 
 // FindVineByID finds a vine by its ID.
-func FindVineByID(vines []Vine, id string) *Vine {
+func FindVineByID(vines []model.Vine, id string) *model.Vine {
 	for i := range vines {
 		if vines[i].ID == id {
 			return &vines[i]
@@ -136,7 +138,7 @@ func FindVineByID(vines []Vine, id string) *Vine {
 }
 
 // CountVinesByColorIndex counts how many vines use each color index.
-func CountVinesByColorIndex(vines []Vine) map[int]int {
+func CountVinesByColorIndex(vines []model.Vine) map[int]int {
 	counts := make(map[int]int)
 	for _, vine := range vines {
 		counts[vine.ColorIndex]++
@@ -145,7 +147,7 @@ func CountVinesByColorIndex(vines []Vine) map[int]int {
 }
 
 // CountVinesByDirection counts how many vines face each direction.
-func CountVinesByDirection(vines []Vine) map[string]int {
+func CountVinesByDirection(vines []model.Vine) map[string]int {
 	counts := make(map[string]int)
 	for _, vine := range vines {
 		counts[vine.HeadDirection]++
@@ -154,8 +156,8 @@ func CountVinesByDirection(vines []Vine) map[string]int {
 }
 
 // SortVinesByID returns vines sorted by ID.
-func SortVinesByID(vines []Vine) []Vine {
-	result := make([]Vine, len(vines))
+func SortVinesByID(vines []model.Vine) []model.Vine {
+	result := make([]model.Vine, len(vines))
 	copy(result, vines)
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].ID < result[j].ID
@@ -183,26 +185,6 @@ func ComplexityForDifficulty(difficulty string) string {
 	}
 }
 
-// GraceForDifficulty returns the default grace value for a difficulty.
-func GraceForDifficulty(difficulty string) int {
-	if spec, ok := DifficultySpecs[difficulty]; ok {
-		return spec.DefaultGrace
-	}
-	return 3
-}
-
-// DefaultGridSize returns default grid size for a difficulty (used when not specified).
-func DefaultGridSize(difficulty string) []int {
-	ranges, ok := GridSizeRanges[difficulty]
-	if !ok {
-		return []int{9, 12}
-	}
-	// Return middle of range
-	w := (ranges.MinW + ranges.MaxW) / 2
-	h := (ranges.MinH + ranges.MaxH) / 2
-	return []int{w, h}
-}
-
 // DifficultyForLevel returns the difficulty tier for a given level ID.
 // Levels 1-10: Seedling
 // Levels 11-20: Sprout
@@ -228,14 +210,8 @@ func DifficultyForLevel(levelID int) string {
 	return "Transcendent"
 }
 
-// GridSizeForLevel returns the appropriate grid size for a level ID.
-func GridSizeForLevel(levelID int) []int {
-	difficulty := DifficultyForLevel(levelID)
-	return DefaultGridSize(difficulty)
-}
-
 // PointKey creates a unique key for a point (used in maps).
-func PointKey(pt Point) string {
+func PointKey(pt model.Point) string {
 	return fmt.Sprintf("%d,%d", pt.X, pt.Y)
 }
 

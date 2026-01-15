@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 // TestTileGridIntoVines_BasicGeneration tests if tiling can generate valid structures
@@ -29,13 +30,13 @@ func TestTileGridIntoVines_BasicGeneration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			spec, ok := common.DifficultySpecs[tt.difficulty]
+			spec, ok := DifficultySpecs[tt.difficulty]
 			if !ok {
 				t.Fatalf("Unknown difficulty: %s", tt.difficulty)
 			}
 
-			profile := common.GetPresetProfile(tt.difficulty)
-			cfg := common.GetGeneratorConfigForDifficulty(tt.difficulty)
+			profile := GetPresetProfile(tt.difficulty)
+			cfg := GetGeneratorConfigForDifficulty(tt.difficulty)
 			rng := rand.New(rand.NewSource(12345))
 
 			vines, mask, err := TileGridIntoVines(tt.gridSize, spec, profile, cfg, rng)
@@ -122,41 +123,41 @@ func TestGenerateSingleLevel_SmallGrid(t *testing.T) {
 // TestGrowFromSeed_BasicGrowth tests vine growth from a seed
 func TestGrowFromSeed_BasicGrowth(t *testing.T) {
 	gridSize := []int{10, 10}
-	profile := common.GetPresetProfile("Seedling")
-	cfg := common.GetGeneratorConfigForDifficulty("Seedling")
+	profile := GetPresetProfile("Seedling")
+	cfg := GetGeneratorConfigForDifficulty("Seedling")
 	rng := rand.New(rand.NewSource(12345))
 
 	tests := []struct {
 		name      string
-		seed      common.Point
+		seed      model.Point
 		targetLen int
 		occupied  map[string]bool
 		wantErr   bool
 	}{
 		{
 			name:      "Grow 3-cell vine from center",
-			seed:      common.Point{X: 5, Y: 5},
+			seed:      model.Point{X: 5, Y: 5},
 			targetLen: 3,
 			occupied:  make(map[string]bool),
 			wantErr:   false,
 		},
 		{
 			name:      "Grow 5-cell vine from corner",
-			seed:      common.Point{X: 1, Y: 1},
+			seed:      model.Point{X: 1, Y: 1},
 			targetLen: 5,
 			occupied:  make(map[string]bool),
 			wantErr:   false,
 		},
 		{
 			name:      "Cannot grow in fully occupied grid",
-			seed:      common.Point{X: 5, Y: 5},
+			seed:      model.Point{X: 5, Y: 5},
 			targetLen: 10,
 			occupied: func() map[string]bool {
 				occ := make(map[string]bool)
 				for y := 0; y < 10; y++ {
 					for x := 0; x < 10; x++ {
 						if x != 5 || y != 5 {
-							occ[common.PointKey(common.Point{X: x, Y: y})] = true
+							occ[common.PointKey(model.Point{X: x, Y: y})] = true
 						}
 					}
 				}
@@ -226,13 +227,13 @@ func TestTileGridIntoVines_SolvabilityRate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			spec, ok := common.DifficultySpecs[tt.difficulty]
+			spec, ok := DifficultySpecs[tt.difficulty]
 			if !ok {
 				t.Fatalf("Unknown difficulty: %s", tt.difficulty)
 			}
 
-			profile := common.GetPresetProfile(tt.difficulty)
-			cfg := common.GetGeneratorConfigForDifficulty(tt.difficulty)
+			profile := GetPresetProfile(tt.difficulty)
+			cfg := GetGeneratorConfigForDifficulty(tt.difficulty)
 
 			successCount := 0
 			greedySuccesses := 0
@@ -247,7 +248,7 @@ func TestTileGridIntoVines_SolvabilityRate(t *testing.T) {
 				}
 
 				// Build a test level
-				level := common.Level{
+				level := model.Level{
 					ID:         1,
 					Name:       "Test Level",
 					Difficulty: tt.difficulty,
@@ -297,20 +298,20 @@ func TestTileGridIntoVines_SolvabilityRate(t *testing.T) {
 func TestSolverAccuracyComparison(t *testing.T) {
 	tests := []struct {
 		name           string
-		level          common.Level
+		level          model.Level
 		expectSolvable bool
 	}{
 		{
 			name: "Simple clearable level",
-			level: common.Level{
+			level: model.Level{
 				ID:         1,
 				GridSize:   []int{5, 5},
 				Difficulty: "Seedling",
-				Vines: []common.Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []common.Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 2},
 							{X: 1, Y: 2},
 							{X: 0, Y: 2},
@@ -322,15 +323,15 @@ func TestSolverAccuracyComparison(t *testing.T) {
 		},
 		{
 			name: "Two independent vines",
-			level: common.Level{
+			level: model.Level{
 				ID:         2,
 				GridSize:   []int{6, 6},
 				Difficulty: "Seedling",
-				Vines: []common.Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []common.Point{
+						OrderedPath: []model.Point{
 							{X: 1, Y: 1},
 							{X: 0, Y: 1},
 						},
@@ -338,7 +339,7 @@ func TestSolverAccuracyComparison(t *testing.T) {
 					{
 						ID:            "v2",
 						HeadDirection: "up",
-						OrderedPath: []common.Point{
+						OrderedPath: []model.Point{
 							{X: 3, Y: 3},
 							{X: 3, Y: 2},
 						},
@@ -349,15 +350,15 @@ func TestSolverAccuracyComparison(t *testing.T) {
 		},
 		{
 			name: "Circular blocking (impossible)",
-			level: common.Level{
+			level: model.Level{
 				ID:         3,
 				GridSize:   []int{4, 4},
 				Difficulty: "Seedling",
-				Vines: []common.Vine{
+				Vines: []model.Vine{
 					{
 						ID:            "v1",
 						HeadDirection: "right",
-						OrderedPath: []common.Point{
+						OrderedPath: []model.Point{
 							{X: 1, Y: 1},
 							{X: 0, Y: 1},
 						},
@@ -365,7 +366,7 @@ func TestSolverAccuracyComparison(t *testing.T) {
 					{
 						ID:            "v2",
 						HeadDirection: "down",
-						OrderedPath: []common.Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 2},
 							{X: 2, Y: 3},
 						},
@@ -373,7 +374,7 @@ func TestSolverAccuracyComparison(t *testing.T) {
 					{
 						ID:            "v3",
 						HeadDirection: "left",
-						OrderedPath: []common.Point{
+						OrderedPath: []model.Point{
 							{X: 2, Y: 1}, // Blocks v1
 							{X: 3, Y: 1},
 						},
@@ -426,18 +427,18 @@ func BenchmarkSolverGreedy(b *testing.B) {
 	for _, size := range sizes {
 		b.Run(size.name, func(b *testing.B) {
 			// Create a test level
-			vines := make([]common.Vine, size.vineCount)
+			vines := make([]model.Vine, size.vineCount)
 			for i := 0; i < size.vineCount; i++ {
-				vines[i] = common.Vine{
+				vines[i] = model.Vine{
 					ID:            fmt.Sprintf("v%d", i),
 					HeadDirection: "right",
-					OrderedPath: []common.Point{
+					OrderedPath: []model.Point{
 						{X: i % size.gridSize[0], Y: i / size.gridSize[0]},
 					},
 				}
 			}
 
-			level := common.Level{
+			level := model.Level{
 				ID:       1,
 				GridSize: size.gridSize,
 				Vines:    vines,
@@ -468,18 +469,18 @@ func BenchmarkSolverBFS(b *testing.B) {
 	for _, size := range sizes {
 		b.Run(size.name, func(b *testing.B) {
 			// Create a test level
-			vines := make([]common.Vine, size.vineCount)
+			vines := make([]model.Vine, size.vineCount)
 			for i := 0; i < size.vineCount; i++ {
-				vines[i] = common.Vine{
+				vines[i] = model.Vine{
 					ID:            fmt.Sprintf("v%d", i),
 					HeadDirection: "right",
-					OrderedPath: []common.Point{
+					OrderedPath: []model.Point{
 						{X: i % size.gridSize[0], Y: i / size.gridSize[0]},
 					},
 				}
 			}
 
-			level := common.Level{
+			level := model.Level{
 				ID:       1,
 				GridSize: size.gridSize,
 				Vines:    vines,

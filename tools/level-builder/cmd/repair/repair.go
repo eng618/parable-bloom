@@ -12,6 +12,7 @@ import (
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 var (
@@ -107,19 +108,19 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun bool) (bool, error
 	// Use the generator package to regenerate the level
 	// This ensures consistency with the generation algorithm
 	difficulty := common.DifficultyForLevel(id)
-	gridSize := common.GridSizeForLevel(id)
+	gridSize := generator.GridSizeForLevel(id)
 	levelSeed := int64(id) * 31337
 
 	common.Verbose("Regenerating level %d (difficulty: %s, grid: %dx%d)", id, difficulty, gridSize[0], gridSize[1])
 
 	// Get difficulty spec
-	spec, ok := common.DifficultySpecs[difficulty]
+	spec, ok := generator.DifficultySpecs[difficulty]
 	if !ok {
 		return true, fmt.Errorf("unknown difficulty: %s", difficulty)
 	}
 
 	// Use a deterministic variety profile based on level ID
-	profile := common.VarietyProfile{
+	profile := generator.VarietyProfile{
 		LengthMix: map[string]float64{
 			"short":  0.3,
 			"medium": 0.5,
@@ -136,7 +137,7 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun bool) (bool, error
 	}
 
 	// Generator config
-	cfg := common.GeneratorConfig{
+	cfg := generator.GeneratorConfig{
 		MaxSeedRetries:    50,
 		LocalRepairRadius: 3,
 		RepairRetries:     10,
@@ -149,7 +150,7 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun bool) (bool, error
 		return true, fmt.Errorf("failed to generate vines for level %d: %w", id, genErr)
 	}
 
-	level := common.Level{
+	level := model.Level{
 		ID:          id,
 		Name:        fmt.Sprintf("Level %d", id),
 		Difficulty:  difficulty,
@@ -158,8 +159,8 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun bool) (bool, error
 		MaxMoves:    10,
 		MinMoves:    1,
 		Complexity:  difficulty,
-		Grace:       common.GraceForDifficulty(difficulty),
-		ColorScheme: common.ColorPalette,
+		Grace:       generator.GraceForDifficulty(difficulty),
+		ColorScheme: generator.ColorPalette,
 		Mask:        mask,
 	}
 

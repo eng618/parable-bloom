@@ -4,11 +4,12 @@ import (
 	"math/rand"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 // chooseExitDirection picks a head direction that points toward the nearest grid edge.
 // This dramatically improves solvability by ensuring vines can exit the grid.
-func chooseExitDirection(seed common.Point, gridSize []int, dirBalance map[string]float64, rng *rand.Rand) string {
+func chooseExitDirection(seed model.Point, gridSize []int, dirBalance map[string]float64, rng *rand.Rand) string {
 	width, height := gridSize[0], gridSize[1]
 	x, y := seed.X, seed.Y
 
@@ -102,7 +103,7 @@ func oppositeDirection(dir string) string {
 }
 
 // distanceToNearestEdge calculates the minimum distance from a point to any grid edge.
-func distanceToNearestEdge(pos common.Point, gridSize []int) int {
+func distanceToNearestEdge(pos model.Point, gridSize []int) int {
 	width, height := gridSize[0], gridSize[1]
 	x, y := pos.X, pos.Y
 
@@ -126,20 +127,19 @@ func distanceToNearestEdge(pos common.Point, gridSize []int) int {
 }
 
 // isNearEdge returns true if the point is within the specified distance from any edge.
-func isNearEdge(pos common.Point, gridSize []int, edgeDistance int) bool {
+func isNearEdge(pos model.Point, gridSize []int, edgeDistance int) bool {
 	return distanceToNearestEdge(pos, gridSize) <= edgeDistance
 }
 
 // pickEdgeSeed selects a random seed point near the grid edges.
 // This is useful for placing clearable "anchor" vines.
-func pickEdgeSeed(occupied map[string]bool, gridSize []int, edgeDistance int, rng *rand.Rand) (common.Point, bool) {
+func pickEdgeSeed(occupied map[string]bool, gridSize []int, edgeDistance int, rng *rand.Rand) (model.Point, bool) {
 	width, height := gridSize[0], gridSize[1]
 
-	var candidates []common.Point
-
+	var candidates []model.Point
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			pt := common.Point{X: x, Y: y}
+			pt := model.Point{X: x, Y: y}
 			key := common.PointKey(pt)
 
 			if !occupied[key] && isNearEdge(pt, gridSize, edgeDistance) {
@@ -149,7 +149,7 @@ func pickEdgeSeed(occupied map[string]bool, gridSize []int, edgeDistance int, rn
 	}
 
 	if len(candidates) == 0 {
-		return common.Point{}, false
+		return model.Point{}, false
 	}
 
 	return candidates[rng.Intn(len(candidates))], true

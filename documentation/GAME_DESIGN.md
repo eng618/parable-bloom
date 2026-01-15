@@ -109,3 +109,22 @@ Colors are used functionally to indicate vine roles and difficulty.
   - *Transcendent*: Depth 4+ (Requires unraveling a knot).
 - **Circular Dependencies**: **Strictly Forbidden**. A vine cannot block another vine that eventually blocks the first vine (A blocks B, B blocks A). This creates unsolvable deadlocks.
 - **Directional Balance**: Grids should utilize all four directions (Up, Down, Left, Right) to prevent visual monotony and repetitive gameplay.
+
+### Circuit Board Aesthetics (Transcendent Levels)
+
+Transcendent difficulty levels should evoke the complexity and interconnectedness of circuit boards:
+
+- **Vine Morphology**: Vines should be highly winding with frequent direction changes, resembling circuit traces rather than straight paths.
+  - Maximum 2-3 consecutive segments in the same direction before a turn.
+  - Prefer orthogonal turns (90-degree changes) over continuing straight.
+  - Avoid long straight segments that create visual monotony.
+
+- **Visual Complexity**: The arrangement should create layered, interwoven patterns that suggest electronic pathways.
+  - Deep blocking chains (4+ depths) create "circuit layers" of dependency.
+  - Vines should cross and weave around each other without creating deadlocks.
+  - Empty spaces should be minimized to maintain the dense, interconnected feel.
+
+- **Strategic Depth**: The circuit-board layout should reward careful observation and planning.
+  - Multiple solution paths exist but require different sequences.
+  - Blocking relationships form complex dependency webs.
+  - Visual patterns help players identify blocking chains and solution order.

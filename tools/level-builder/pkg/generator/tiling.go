@@ -6,14 +6,14 @@ import (
 	"math/rand"
 	"sort"
 
-	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 // calculateVineLengths computes the initial vine count and their lengths based on constraints and profile.
 func calculateVineLengths(
 	gridSize []int,
-	constraints common.DifficultySpec,
-	profile common.VarietyProfile,
+	constraints DifficultySpec,
+	profile VarietyProfile,
 	rng *rand.Rand,
 ) (int, []int) {
 	w := gridSize[0]
@@ -78,20 +78,20 @@ func calculateVineLengths(
 func growVines(
 	gridSize []int,
 	lengths []int,
-	profile common.VarietyProfile,
-	cfg common.GeneratorConfig,
+	profile VarietyProfile,
+	cfg GeneratorConfig,
 	rng *rand.Rand,
-) ([]common.Vine, map[string]bool, error) {
+) ([]model.Vine, map[string]bool, error) {
 	w := gridSize[0]
 	h := gridSize[1]
 
 	occupied := make(map[string]bool)
-	vines := make([]common.Vine, 0, len(lengths))
+	vines := make([]model.Vine, 0, len(lengths))
 
 	for i := 0; i < len(lengths); i++ {
 		target := lengths[i]
 		// Try to grow a vine with several seed attempts
-		var grown common.Vine
+		var grown model.Vine
 		var err error
 		for attempt := 0; attempt < cfg.MaxSeedRetries; attempt++ {
 			seed := pickSeedWithRegionBias(w, h, occupied, profile, rng)
@@ -116,7 +116,7 @@ func growVines(
 				return nil, nil, fmt.Errorf("unable to find empty cell for fallback: %w", err)
 			}
 			id := fmt.Sprintf("v%d", len(vines)+1)
-			v := common.Vine{ID: id, HeadDirection: "up", OrderedPath: []common.Point{*s}}
+			v := model.Vine{ID: id, HeadDirection: "up", OrderedPath: []model.Point{*s}}
 			vines = append(vines, v)
 			occupied[fmt.Sprintf("%d,%d", s.X, s.Y)] = true
 		} else {
@@ -132,11 +132,11 @@ func growVines(
 // difficulty constraints and a variety profile. It returns vines and a mask for empty cells.
 func TileGridIntoVines(
 	gridSize []int,
-	constraints common.DifficultySpec,
-	profile common.VarietyProfile,
-	cfg common.GeneratorConfig,
+	constraints DifficultySpec,
+	profile VarietyProfile,
+	cfg GeneratorConfig,
 	rng *rand.Rand,
-) ([]common.Vine, *common.Mask, error) {
+) ([]model.Vine, *model.Mask, error) {
 	_, lengths := calculateVineLengths(gridSize, constraints, profile, rng)
 
 	vines, occupied, err := growVines(gridSize, lengths, profile, cfg, rng)
@@ -145,20 +145,20 @@ func TileGridIntoVines(
 	}
 
 	// Collect empty cells for masking
-	var emptyPoints []common.Point
+	var emptyPoints []model.Point
 	w := gridSize[0]
 	h := gridSize[1]
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			key := fmt.Sprintf("%d,%d", x, y)
 			if !occupied[key] {
-				emptyPoints = append(emptyPoints, common.Point{X: x, Y: y})
+				emptyPoints = append(emptyPoints, model.Point{X: x, Y: y})
 			}
 		}
 	}
-	var mask *common.Mask
+	var mask *model.Mask
 	if len(emptyPoints) > 0 {
-		mask = &common.Mask{Mode: "hide", Points: emptyPoints}
+		mask = &model.Mask{Mode: "hide", Points: emptyPoints}
 	}
 
 	return vines, mask, nil
@@ -167,14 +167,14 @@ func TileGridIntoVines(
 // GrowFromSeed attempts to grow a vine starting from seed, avoiding occupied cells.
 // It returns the vine and the updated occupancy map on success.
 func GrowFromSeed(
-	seed common.Point,
+	seed model.Point,
 	occupied map[string]bool,
 	gridSize []int,
 	targetLen int,
-	profile common.VarietyProfile,
-	_ common.GeneratorConfig,
+	profile VarietyProfile,
+	_ GeneratorConfig,
 	rng *rand.Rand,
-) (common.Vine, map[string]bool, error) {
+) (model.Vine, map[string]bool, error) {
 	w := gridSize[0]
 	h := gridSize[1]
 
@@ -184,7 +184,7 @@ func GrowFromSeed(
 	headDx, headDy := deltaForDirection(desiredHeadDir)
 
 	// Start path with seed as the head
-	path := []common.Point{seed}
+	path := []model.Point{seed}
 	seen := map[string]bool{fmt.Sprintf("%d,%d", seed.X, seed.Y): true}
 	occ := make(map[string]bool)
 	for k, v := range occupied {
@@ -200,7 +200,7 @@ func GrowFromSeed(
 		if len(neighbors) == 0 {
 			// Stuck - validate minimum length before returning
 			if len(path) < 2 {
-				return common.Vine{}, nil, fmt.Errorf("cannot grow vine: stuck after %d cells (need at least 2)", len(path))
+				return model.Vine{}, nil, fmt.Errorf("cannot grow vine: stuck after %d cells (need at least 2)", len(path))
 			}
 			// Return what we have so far (at least 2 cells)
 			// CRITICAL: Calculate correct head direction based on actual head/neck positions
@@ -222,16 +222,16 @@ func GrowFromSeed(
 				actualHeadDir = desiredHeadDir
 			}
 
-			return common.Vine{HeadDirection: actualHeadDir, OrderedPath: path}, occ, nil
+			return model.Vine{HeadDirection: actualHeadDir, OrderedPath: path}, occ, nil
 		}
 
-		var chosen common.Point
+		var chosen model.Point
 
 		if len(path) == 1 {
 			// First segment after head: prefer growing opposite to head direction
 			// This creates the "neck" segment
 			neckDx, neckDy := deltaForDirection(oppositeDirection(desiredHeadDir))
-			neck := common.Point{X: head.X + neckDx, Y: head.Y + neckDy}
+			neck := model.Point{X: head.X + neckDx, Y: head.Y + neckDy}
 
 			// Check if neck position is available
 			neckAvailable := false
@@ -247,7 +247,7 @@ func GrowFromSeed(
 			} else {
 				// Neck position blocked, try adjacent cells
 				// Prefer cells that don't conflict with head direction
-				bestNeighbors := []common.Point{}
+				bestNeighbors := []model.Point{}
 				for _, n := range neighbors {
 					dx := n.X - head.X
 					dy := n.Y - head.Y
@@ -269,39 +269,39 @@ func GrowFromSeed(
 			} else {
 				// Score neighbors for density and gap-filling potential
 				type scoredNeighbor struct {
-					point common.Point
+					point model.Point
 					score float64
 				}
-				
+
 				scored := make([]scoredNeighbor, len(neighbors))
 				for i, n := range neighbors {
 					scored[i] = scoredNeighbor{
 						point: n,
 						score: calculateDensityScore(n, occ, gridSize),
 					}
-					
+
 					// Small bonus for continuing current direction (reduced from TurnMix logic)
 					prev := path[len(path)-2]
 					curr := path[len(path)-1]
 					dx := curr.X - prev.X
 					dy := curr.Y - prev.Y
-					
+
 					nextDx := n.X - curr.X
 					nextDy := n.Y - curr.Y
-					
+
 					if dx == nextDx && dy == nextDy {
 						scored[i].score += 0.5 // Small bonus for straight continuation
 					}
-					
+
 					// Add randomness to prevent deterministic patterns
 					scored[i].score += rng.Float64() * 0.3
 				}
-				
+
 				// Sort by score descending (highest first)
 				sort.Slice(scored, func(i, j int) bool {
 					return scored[i].score > scored[j].score
 				})
-				
+
 				// Weighted selection from top candidates
 				// 60% chance for best, 25% for second, 15% for third
 				randVal := rng.Float64()
@@ -328,7 +328,7 @@ func GrowFromSeed(
 
 	// CRITICAL VALIDATION: Vines must be at least 2 cells (head + neck)
 	if len(path) < 2 {
-		return common.Vine{}, nil, fmt.Errorf("vine too short: got %d cells, need at least 2", len(path))
+		return model.Vine{}, nil, fmt.Errorf("vine too short: got %d cells, need at least 2", len(path))
 	}
 
 	// CRITICAL FIX: Calculate the correct head direction based on actual head/neck positions
@@ -355,24 +355,24 @@ func GrowFromSeed(
 	}
 
 	// Return vine with CORRECT head direction based on actual path geometry
-	return common.Vine{HeadDirection: actualHeadDir, OrderedPath: path}, occ, nil
+	return model.Vine{HeadDirection: actualHeadDir, OrderedPath: path}, occ, nil
 }
 
 // calculateDensityScore evaluates how well a neighbor fills gaps and creates density.
 // Higher scores indicate better gap-filling potential.
-func calculateDensityScore(p common.Point, occupied map[string]bool, gridSize []int) float64 {
+func calculateDensityScore(p model.Point, occupied map[string]bool, gridSize []int) float64 {
 	w, h := gridSize[0], gridSize[1]
-	
+
 	// Count occupied neighbors (Manhattan distance 1)
 	occupiedCount := 0
 	totalPossible := 0
-	
-	deltas := []common.Point{
+
+	deltas := []model.Point{
 		{X: 1, Y: 0}, {X: -1, Y: 0}, {X: 0, Y: 1}, {X: 0, Y: -1},
 	}
-	
+
 	for _, d := range deltas {
-		nx, ny := p.X + d.X, p.Y + d.Y
+		nx, ny := p.X+d.X, p.Y+d.Y
 		if nx >= 0 && nx < w && ny >= 0 && ny < h {
 			totalPossible++
 			if occupied[fmt.Sprintf("%d,%d", nx, ny)] {
@@ -380,28 +380,28 @@ func calculateDensityScore(p common.Point, occupied map[string]bool, gridSize []
 			}
 		}
 	}
-	
+
 	// Prefer cells with more occupied neighbors (fills gaps better)
 	// But be less aggressive to ensure we meet occupancy requirements
 	densityScore := float64(occupiedCount) / float64(totalPossible)
-	
+
 	// Smaller edge bonus to encourage boundary filling but not too strongly
-	edgeDist := math.Min(math.Min(float64(p.X), float64(w-1-p.X)), 
-						 math.Min(float64(p.Y), float64(h-1-p.Y)))
-	edgeBonus := math.Max(0, 1.0 - edgeDist/2.0)
-	
-	return densityScore * 2.0 + edgeBonus
+	edgeDist := math.Min(math.Min(float64(p.X), float64(w-1-p.X)),
+		math.Min(float64(p.Y), float64(h-1-p.Y)))
+	edgeBonus := math.Max(0, 1.0-edgeDist/2.0)
+
+	return densityScore*2.0 + edgeBonus
 }
 
 // availableNeighbors lists unoccupied Manhattan neighbors within grid.
-func availableNeighbors(p common.Point, w, h int, occ map[string]bool) []common.Point {
-	candidates := []common.Point{
+func availableNeighbors(p model.Point, w, h int, occ map[string]bool) []model.Point {
+	candidates := []model.Point{
 		{X: p.X + 1, Y: p.Y},
 		{X: p.X - 1, Y: p.Y},
 		{X: p.X, Y: p.Y + 1},
 		{X: p.X, Y: p.Y - 1},
 	}
-	out := make([]common.Point, 0, 4)
+	out := make([]model.Point, 0, 4)
 	for _, c := range candidates {
 		if c.X < 0 || c.X >= w || c.Y < 0 || c.Y >= h {
 			continue
@@ -418,14 +418,14 @@ func availableNeighbors(p common.Point, w, h int, occ map[string]bool) []common.
 func pickSeedWithRegionBias(
 	w, h int,
 	occ map[string]bool,
-	profile common.VarietyProfile,
+	profile VarietyProfile,
 	rng *rand.Rand,
-) *common.Point {
+) *model.Point {
 	// if no profile fields set, fall back to uniform
 	if profile.LengthMix == nil && profile.DirBalance == nil && profile.RegionBias == "" {
 		return randomEmptyCell(w, h, occ, rng)
 	}
-	empty := make([]common.Point, 0)
+	empty := make([]model.Point, 0)
 	weights := make([]float64, 0)
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
@@ -433,7 +433,7 @@ func pickSeedWithRegionBias(
 			if occ[k] {
 				continue
 			}
-			p := common.Point{X: x, Y: y}
+			p := model.Point{X: x, Y: y}
 			empty = append(empty, p)
 			// base weight
 			var wgt float64
@@ -475,7 +475,7 @@ func pickSeedWithRegionBias(
 }
 
 // chooseLengthBucket picks short/medium/long based on LengthMix weights.
-func chooseLengthBucket(profile common.VarietyProfile, rng *rand.Rand) string {
+func chooseLengthBucket(profile VarietyProfile, rng *rand.Rand) string {
 	if len(profile.LengthMix) == 0 {
 		return "medium"
 	}
@@ -512,13 +512,13 @@ func maxInt(a, b int) int {
 }
 
 // randomEmptyCell picks a random empty cell from the grid; returns nil if none.
-func randomEmptyCell(w, h int, occ map[string]bool, rng *rand.Rand) *common.Point {
-	empty := make([]common.Point, 0)
+func randomEmptyCell(w, h int, occ map[string]bool, rng *rand.Rand) *model.Point {
+	empty := make([]model.Point, 0)
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			key := fmt.Sprintf("%d,%d", x, y)
 			if !occ[key] {
-				empty = append(empty, common.Point{X: x, Y: y})
+				empty = append(empty, model.Point{X: x, Y: y})
 			}
 		}
 	}

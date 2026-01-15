@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 // SolverAwarePlacement creates vines with intelligent blocking patterns for higher difficulties.
@@ -13,11 +14,11 @@ import (
 // complexity while maintaining solvability.
 func SolverAwarePlacement(
 	gridSize []int,
-	constraints common.DifficultySpec,
-	profile common.VarietyProfile,
-	cfg common.GeneratorConfig,
+	constraints DifficultySpec,
+	profile VarietyProfile,
+	cfg GeneratorConfig,
 	rng *rand.Rand,
-) ([]common.Vine, *common.Mask, error) {
+) ([]model.Vine, *model.Mask, error) {
 	// Start with tiling algorithm to get base vines
 	vines, mask, err := TileGridIntoVines(gridSize, constraints, profile, cfg, rng)
 	if err != nil {
@@ -25,7 +26,7 @@ func SolverAwarePlacement(
 	}
 
 	// Build a temporary level to test solvability
-	tempLevel := &common.Level{
+	tempLevel := &model.Level{
 		ID:       0,
 		GridSize: gridSize,
 		Vines:    vines,
@@ -58,7 +59,7 @@ func SolverAwarePlacement(
 
 // shouldAddBlockingComplexity determines if we should try to add blocking patterns
 // based on difficulty constraints.
-func shouldAddBlockingComplexity(constraints common.DifficultySpec) bool {
+func shouldAddBlockingComplexity(constraints DifficultySpec) bool {
 	// Add complexity for difficulties with more vines (typically Nurturing+)
 	return constraints.VineCountRange[0] >= 8
 }
@@ -66,17 +67,17 @@ func shouldAddBlockingComplexity(constraints common.DifficultySpec) bool {
 // introduceBlockingComplexity attempts to create intentional blocking relationships
 // by strategically repositioning vine heads to create dependencies.
 func introduceBlockingComplexity(
-	vines []common.Vine,
+	vines []model.Vine,
 	gridSize []int,
-	mask *common.Mask,
+	mask *model.Mask,
 	rng *rand.Rand,
-) ([]common.Vine, error) {
+) ([]model.Vine, error) {
 	if len(vines) < 3 {
 		return vines, fmt.Errorf("need at least 3 vines for blocking complexity")
 	}
 
 	// Create a copy to work with
-	enhanced := make([]common.Vine, len(vines))
+	enhanced := make([]model.Vine, len(vines))
 	copy(enhanced, vines)
 
 	// Build occupancy map
@@ -130,7 +131,7 @@ func introduceBlockingComplexity(
 				occupied[key] = true
 
 				// Verify this creates a blocking relationship
-				tempLevel := &common.Level{
+				tempLevel := &model.Level{
 					ID:       0,
 					GridSize: gridSize,
 					Vines:    enhanced,
@@ -158,12 +159,12 @@ func introduceBlockingComplexity(
 }
 
 // predictExitPath simulates where a vine will move over the next N steps.
-func predictExitPath(vine common.Vine, gridSize []int, steps int) []common.Point {
+func predictExitPath(vine model.Vine, gridSize []int, steps int) []model.Point {
 	if len(vine.OrderedPath) == 0 {
 		return nil
 	}
 
-	path := []common.Point{}
+	path := []model.Point{}
 	head := vine.OrderedPath[0]
 
 	var dx, dy int
@@ -189,7 +190,7 @@ func predictExitPath(vine common.Vine, gridSize []int, steps int) []common.Point
 			break
 		}
 
-		path = append(path, common.Point{X: nextX, Y: nextY})
+		path = append(path, model.Point{X: nextX, Y: nextY})
 	}
 
 	return path
@@ -197,8 +198,8 @@ func predictExitPath(vine common.Vine, gridSize []int, steps int) []common.Point
 
 // canExtendVineTo checks if a vine can be extended to reach a target cell.
 func canExtendVineTo(
-	vine *common.Vine,
-	target common.Point,
+	vine *model.Vine,
+	target model.Point,
 	occupied map[string]bool,
 	gridSize []int,
 ) bool {

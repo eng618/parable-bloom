@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
-func getTestDifficultySpec() common.DifficultySpec {
-	return common.DifficultySpec{
+func getTestDifficultySpec() DifficultySpec {
+	return DifficultySpec{
 		VineCountRange:   [2]int{5, 10},
 		AvgLengthRange:   [2]int{3, 5},
 		MaxBlockingDepth: 3,
@@ -24,10 +25,10 @@ func getTestDifficultySpec() common.DifficultySpec {
 func TestClearableFirstPlacement_LargeGridReliability(t *testing.T) {
 	gridSize := []int{14, 22} // Level 45+ size that failed with old algorithm
 	constraints := getTestDifficultySpec()
-	profile := common.VarietyProfile{
+	profile := VarietyProfile{
 		TurnMix: 0.3,
 	}
-	cfg := common.GeneratorConfig{}
+	cfg := GeneratorConfig{}
 
 	const numAttempts = 20
 	successCount := 0
@@ -47,7 +48,7 @@ func TestClearableFirstPlacement_LargeGridReliability(t *testing.T) {
 		}
 
 		// Verify the generated level is actually solvable
-		level := &common.Level{
+		level := &model.Level{
 			GridSize: gridSize,
 			Vines:    vines,
 		}
@@ -102,10 +103,10 @@ func TestClearableFirstPlacement_GridSizeComparison(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			constraints := getTestDifficultySpec()
-			profile := common.VarietyProfile{
+			profile := VarietyProfile{
 				TurnMix: 0.3,
 			}
-			cfg := common.GeneratorConfig{}
+			cfg := GeneratorConfig{}
 
 			successCount := 0
 			var totalTime time.Duration
@@ -122,7 +123,7 @@ func TestClearableFirstPlacement_GridSizeComparison(t *testing.T) {
 					continue
 				}
 
-				level := &common.Level{
+				level := &model.Level{
 					GridSize: tc.gridSize,
 					Vines:    vines,
 				}
@@ -162,10 +163,10 @@ func TestClearableFirstPlacement_GridSizeComparison(t *testing.T) {
 func BenchmarkClearableFirstPlacement(b *testing.B) {
 	gridSize := []int{14, 22}
 	constraints := getTestDifficultySpec()
-	profile := common.VarietyProfile{
+	profile := VarietyProfile{
 		TurnMix: 0.3,
 	}
-	cfg := common.GeneratorConfig{}
+	cfg := GeneratorConfig{}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -193,7 +194,7 @@ func TestClearableFirstPlacement_FullCoverage(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Use 100% coverage instead of 93%
-			constraints := common.DifficultySpec{
+			constraints := DifficultySpec{
 				VineCountRange:   [2]int{5, 10},
 				AvgLengthRange:   [2]int{3, 5},
 				MaxBlockingDepth: 3,
@@ -201,10 +202,10 @@ func TestClearableFirstPlacement_FullCoverage(t *testing.T) {
 				MinGridOccupancy: 1.0, // 100% coverage!
 				DefaultGrace:     3,
 			}
-			profile := common.VarietyProfile{
+			profile := VarietyProfile{
 				TurnMix: 0.3,
 			}
-			cfg := common.GeneratorConfig{}
+			cfg := GeneratorConfig{}
 
 			successCount := 0
 			var totalTime time.Duration
@@ -231,7 +232,7 @@ func TestClearableFirstPlacement_FullCoverage(t *testing.T) {
 				}
 				coverage := float64(len(occupied)) / float64(tc.gridSize[0]*tc.gridSize[1]) * 100
 
-				level := &common.Level{
+				level := &model.Level{
 					GridSize: tc.gridSize,
 					Vines:    vines,
 				}
@@ -272,10 +273,10 @@ func TestClearableFirstPlacement_BeforeAfterComparison(t *testing.T) {
 
 	gridSize := []int{14, 22}
 	constraints := getTestDifficultySpec()
-	profile := common.VarietyProfile{
+	profile := VarietyProfile{
 		TurnMix: 0.3,
 	}
-	cfg := common.GeneratorConfig{}
+	cfg := GeneratorConfig{}
 
 	successCount := 0
 	var totalTime time.Duration
@@ -289,7 +290,7 @@ func TestClearableFirstPlacement_BeforeAfterComparison(t *testing.T) {
 		totalTime += elapsed
 
 		if err == nil {
-			level := &common.Level{GridSize: gridSize, Vines: vines}
+			level := &model.Level{GridSize: gridSize, Vines: vines}
 			solver := common.NewSolver(level)
 			if solver.IsSolvableGreedy() {
 				successCount++

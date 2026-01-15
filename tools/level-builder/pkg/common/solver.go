@@ -3,15 +3,17 @@ package common
 import (
 	"fmt"
 	"sort"
+
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 // Solver provides solvability checking for levels.
 type Solver struct {
-	level *Level
+	level *model.Level
 }
 
 // NewSolver creates a new solver for a level.
-func NewSolver(level *Level) *Solver {
+func NewSolver(level *model.Level) *Solver {
 	return &Solver{level: level}
 }
 
@@ -22,7 +24,7 @@ func (s *Solver) IsSolvableGreedy() bool {
 		return true
 	}
 
-	currentVines := make([]Vine, len(s.level.Vines))
+	currentVines := make([]model.Vine, len(s.level.Vines))
 	copy(currentVines, s.level.Vines)
 
 	occupied := make(map[string]bool)
@@ -115,7 +117,7 @@ func (s *Solver) IsSolvableBFS() bool {
 
 // canVineClear checks if a vine can move and eventually exit the grid.
 // This properly simulates snake-like movement where each segment follows the previous one.
-func (s *Solver) canVineClear(vine *Vine, occupiedCells map[string]bool) bool {
+func (s *Solver) canVineClear(vine *model.Vine, occupiedCells map[string]bool) bool {
 	if len(vine.OrderedPath) == 0 {
 		return false
 	}
@@ -132,7 +134,7 @@ func (s *Solver) canVineClear(vine *Vine, occupiedCells map[string]bool) bool {
 	}
 
 	// Start with current positions
-	positions := make([]Point, len(vine.OrderedPath))
+	positions := make([]model.Point, len(vine.OrderedPath))
 	copy(positions, vine.OrderedPath)
 
 	// Simulate movement for up to (width + height + path length) steps
@@ -177,16 +179,16 @@ func (s *Solver) canVineClear(vine *Vine, occupiedCells map[string]bool) bool {
 
 // simulateVineMovement simulates one step of snake-like movement.
 // The head moves in the given direction, and each segment moves to where the previous segment was.
-func simulateVineMovement(positions []Point, delta [2]int) []Point {
+func simulateVineMovement(positions []model.Point, delta [2]int) []model.Point {
 	if len(positions) == 0 {
 		return positions
 	}
 
-	newPositions := make([]Point, len(positions))
+	newPositions := make([]model.Point, len(positions))
 
 	// New head position
 	head := positions[0]
-	newPositions[0] = Point{X: head.X + delta[0], Y: head.Y + delta[1]}
+	newPositions[0] = model.Point{X: head.X + delta[0], Y: head.Y + delta[1]}
 
 	// Each other segment moves to where the previous segment was
 	for i := 1; i < len(positions); i++ {
@@ -197,7 +199,7 @@ func simulateVineMovement(positions []Point, delta [2]int) []Point {
 }
 
 // buildOccupiedMap creates a map of occupied cells from vines.
-func (s *Solver) buildOccupiedMap(vines []Vine) map[string]bool {
+func (s *Solver) buildOccupiedMap(vines []model.Vine) map[string]bool {
 	occupied := make(map[string]bool)
 	for _, vine := range vines {
 		for _, pt := range vine.OrderedPath {
@@ -208,8 +210,8 @@ func (s *Solver) buildOccupiedMap(vines []Vine) map[string]bool {
 }
 
 // getVinesForIDs returns vine objects for given IDs.
-func (s *Solver) getVinesForIDs(ids map[string]bool) []Vine {
-	var result []Vine
+func (s *Solver) getVinesForIDs(ids map[string]bool) []model.Vine {
+	var result []model.Vine
 	for _, vine := range s.level.Vines {
 		if ids[vine.ID] {
 			result = append(result, vine)
