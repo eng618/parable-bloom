@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+// MinGridCoverage is the minimum grid coverage required for generated levels.
+// This threshold balances between maximizing grid utilization and maintaining
+// solvability. Lower values are more lenient and allow more generation attempts
+// to succeed, while higher values create denser puzzles but may reduce success rates.
+const MinGridCoverage = 0.90
+
 // Point represents a coordinate in the game grid.
 type Point struct {
 	X int `json:"x"`

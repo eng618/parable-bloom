@@ -15,17 +15,17 @@ func GetPresetProfile(difficulty string) VarietyProfile {
 	if median >= 6 {
 		// Favor longer vines
 		lengthMix = map[string]float64{"short": 0.15, "medium": 0.35, "long": 0.5}
-		turnMix = 0.5
+		turnMix = 0.3 // Much lower to encourage straight growth for better occupancy
 		regionBias = "edge"
 	} else if median <= 4 {
 		// Favor shorter vines
 		lengthMix = map[string]float64{"short": 0.6, "medium": 0.3, "long": 0.1}
-		turnMix = 0.7
+		turnMix = 0.4 // Much lower to encourage straight growth for better occupancy
 		regionBias = "center"
 	} else {
 		// Medium lengths
 		lengthMix = map[string]float64{"short": 0.3, "medium": 0.5, "long": 0.2}
-		turnMix = 0.6
+		turnMix = 0.35 // Much lower to encourage straight growth for better occupancy
 		regionBias = "balanced"
 	}
 

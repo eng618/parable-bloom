@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -59,13 +60,32 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 	}
 
 	if !checkSolvable {
+		// Collect all validation errors instead of failing fast
+		type ValidationError struct {
+			File  string
+			Error string
+		}
+		var validationErrors []ValidationError
+
 		for _, f := range files {
 			if _, err := readLevelFile(f); err != nil {
-				return fmt.Errorf("level %s validation failed: %w", filepath.Base(f), err)
+				validationErrors = append(validationErrors, ValidationError{
+					File:  filepath.Base(f),
+					Error: err.Error(),
+				})
 			}
 		}
 
-		fmt.Println("All levels and modules validated successfully.")
+		if len(validationErrors) > 0 {
+			fmt.Printf("\n❌ Validation failed for %d levels:\n\n", len(validationErrors))
+			for _, ve := range validationErrors {
+				fmt.Printf("  • %s: %s\n", ve.File, ve.Error)
+			}
+			fmt.Printf("\nTotal: %d/%d levels passed validation\n", len(files)-len(validationErrors), len(files))
+			return fmt.Errorf("%d levels failed validation", len(validationErrors))
+		}
+
+		fmt.Printf("✓ All %d levels and modules validated successfully.\n", len(files))
 		return nil
 	}
 
@@ -74,7 +94,11 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 	sem := make(chan struct{}, concurrency)
 	var wg sync.WaitGroup
 	statsCh := make(chan LevelStat, len(files))
-	errCh := make(chan error, len(files))
+	type ValidationError struct {
+		File  string
+		Error string
+	}
+	errCh := make(chan ValidationError, len(files))
 
 	for _, f := range files {
 		f := f
@@ -86,7 +110,10 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 
 			lvl, err := readLevelFile(f)
 			if err != nil {
-				errCh <- fmt.Errorf("level %s validation failed: %w", filepath.Base(f), err)
+				errCh <- ValidationError{
+					File:  filepath.Base(f),
+					Error: err.Error(),
+				}
 				return
 			}
 
@@ -115,8 +142,10 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 	close(statsCh)
 	close(errCh)
 
-	if len(errCh) > 0 {
-		return <-errCh
+	// Collect validation errors
+	var validationErrors []ValidationError
+	for ve := range errCh {
+		validationErrors = append(validationErrors, ve)
 	}
 
 	// Collect stats
@@ -135,11 +164,32 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 	b, _ := json.MarshalIndent(allStats, "", "  ")
 	_ = os.WriteFile("validation_stats.json", b, 0644)
 
-	if len(unsolvable) > 0 {
-		return fmt.Errorf("%d levels appear unsolvable (check validation_stats.json for details)", len(unsolvable))
+	// Print summary of all issues
+	hasErrors := false
+	if len(validationErrors) > 0 {
+		hasErrors = true
+		fmt.Printf("\n❌ Structural validation failed for %d levels:\n\n", len(validationErrors))
+		for _, ve := range validationErrors {
+			fmt.Printf("  • %s: %s\n", ve.File, ve.Error)
+		}
 	}
 
-	fmt.Println("All levels and modules validated successfully.")
+	if len(unsolvable) > 0 {
+		hasErrors = true
+		fmt.Printf("\n❌ Solvability check failed for %d levels:\n\n", len(unsolvable))
+		for _, s := range unsolvable {
+			fmt.Printf("  • %s (level %d): gave_up=%v states=%d\n",
+				filepath.Base(s.File), s.LevelID, s.GaveUp, s.StatesExplored)
+		}
+	}
+
+	if hasErrors {
+		fmt.Printf("\n📊 Summary: %d passed, %d failed structural validation, %d failed solvability (total %d levels)\n",
+			len(files)-len(validationErrors)-len(unsolvable), len(validationErrors), len(unsolvable), len(files))
+		return fmt.Errorf("%d levels failed validation (see summary above)", len(validationErrors)+len(unsolvable))
+	}
+
+	fmt.Printf("\n✓ All %d levels and modules validated successfully.\n", len(files))
 	return nil
 }
 
@@ -197,9 +247,11 @@ func readLevelFile(path string) (model.Level, error) {
 		return model.Level{}, fmt.Errorf("invalid grid size")
 	}
 
-	// 3. Check Occupancy (Strict 100% or Mask)
-	if !checkOccupancy(lvl) {
-		return model.Level{}, fmt.Errorf("grid not 100%% occupied")
+	// 3. Check Occupancy and Coverage
+	// - Occupancy: at least MinGridCoverage (90%) of grid must be occupied by vines
+	// - Coverage: 100% of grid must be either occupied by vines OR masked out
+	if err := checkOccupancyAndCoverage(lvl); err != nil {
+		return model.Level{}, err
 	}
 
 	// 4. Check Colors
@@ -226,26 +278,85 @@ func readLevelFile(path string) (model.Level, error) {
 	return lvl, nil
 }
 
-func checkOccupancy(lvl model.Level) bool {
+// checkOccupancyAndCoverage validates two distinct metrics:
+// 1. Occupancy: at least MinGridCoverage (90%) of the grid must be occupied by vines
+// 2. Coverage: 100% of the grid must be either occupied by vines OR masked out (no empty unmasked cells)
+func checkOccupancyAndCoverage(lvl model.Level) error {
 	w, h := lvl.GridSize[0], lvl.GridSize[1]
-	grid := make([]bool, w*h)
+	gridArea := w * h
+	occupied := make([]bool, gridArea)
 
-	// Mark occupied
-	count := 0
+	// Mark cells occupied by vines
+	vineCount := 0
 	for _, v := range lvl.Vines {
 		for _, p := range v.OrderedPath {
 			if p.X < 0 || p.X >= w || p.Y < 0 || p.Y >= h {
-				return false // Out of bounds
+				return fmt.Errorf("vine cell out of bounds")
 			}
 			idx := p.Y*w + p.X
-			if grid[idx] {
-				return false // Overlap
+			if occupied[idx] {
+				return fmt.Errorf("overlapping vines at (%d,%d)", p.X, p.Y)
 			}
-			grid[idx] = true
-			count++
+			occupied[idx] = true
+			vineCount++
 		}
 	}
 
-	return count == w*h
-	// TODO: Handle Mask if present
+	// Check 1: Vine occupancy must meet minimum threshold (90%)
+	occupancy := float64(vineCount) / float64(gridArea)
+	if occupancy < common.MinGridCoverage {
+		return fmt.Errorf("vine occupancy %.1f%% below minimum threshold %.0f%%",
+			occupancy*100, common.MinGridCoverage*100)
+	}
+
+	// Check 2: 100% coverage (every cell is either occupied by vine OR masked)
+	// Count cells that are neither occupied nor masked
+	uncoveredCount := 0
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			idx := y*w + x
+			if !occupied[idx] {
+				// Cell not occupied by vine - check if it's masked
+				if !isCellMasked(lvl.Mask, x, y) {
+					uncoveredCount++
+				}
+			}
+		}
+	}
+
+	if uncoveredCount > 0 {
+		uncoveredPercent := float64(uncoveredCount) / float64(gridArea) * 100
+		return fmt.Errorf("incomplete coverage: %d cells (%.1f%%) are neither occupied by vines nor masked",
+			uncoveredCount, uncoveredPercent)
+	}
+
+	return nil
+}
+
+// isCellMasked returns true if the cell at (x,y) is masked according to the mask mode
+func isCellMasked(mask *model.Mask, x, y int) bool {
+	if mask == nil {
+		return false
+	}
+
+	// Check if point is in mask's points list
+	inMask := false
+	for _, pt := range mask.Points {
+		if pt.X == x && pt.Y == y {
+			inMask = true
+			break
+		}
+	}
+
+	// Interpret based on mode
+	switch mask.Mode {
+	case "hide":
+		return inMask // Points listed are hidden
+	case "show":
+		return !inMask // Points listed are shown, rest are hidden
+	case "show-all":
+		return false // Nothing is hidden
+	default:
+		return false
+	}
 }

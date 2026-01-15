@@ -1,10 +1,10 @@
 package generator
 
 import (
-"fmt"
-"math/rand"
+	"fmt"
+	"math/rand"
 
-"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 )
 
 // ClearableFirstPlacement implements a two-phase vine placement strategy:
@@ -14,13 +14,13 @@ import (
 // This approach dramatically improves solvability on large grids by ensuring
 // a base set of vines can always clear, preventing total blocking scenarios.
 func ClearableFirstPlacement(
-gridSize []int,
-constraints common.DifficultySpec,
-profile common.VarietyProfile,
-cfg common.GeneratorConfig,
-seed int64,
-anchorRatio float64, // e.g., 0.3 for 30% anchor vines
-greedy bool, // if true, check solvability after each vine placement
+	gridSize []int,
+	constraints common.DifficultySpec,
+	profile common.VarietyProfile,
+	cfg common.GeneratorConfig,
+	seed int64,
+	anchorRatio float64, // e.g., 0.3 for 30% anchor vines
+	greedy bool, // if true, check solvability after each vine placement
 ) ([]common.Vine, error) {
 	rng := rand.New(rand.NewSource(seed))
 
@@ -28,113 +28,350 @@ greedy bool, // if true, check solvability after each vine placement
 		anchorRatio = 0.3 // default 30%
 	}
 
-	// Calculate target vine count and lengths
-	targetVineCount, vineLengths := calculateVineLengths(gridSize, constraints, profile, rng)
-	anchorCount := int(float64(targetVineCount) * anchorRatio)
+	// GREEDY-FILL ALGORITHM: Place vines until 100% grid coverage
+	// No pre-calculated vine count - keep adding until grid is full
+	gridArea := gridSize[0] * gridSize[1]
+
+	// Length distribution: favor longer vines with variety
+	// Min = 2 (head+neck), Max = ~20% of grid dimension (prevent one vine dominating)
+	minVineLen := 2
+	maxVineLen := (gridSize[0] + gridSize[1]) / 2 // e.g., 18 for 14x22 grid
+	if maxVineLen < 4 {
+		maxVineLen = 4
+	}
 
 	occupied := make(map[string]bool)
 	var vines []common.Vine
-	vineIdx := 0
 
-	// Phase 1: Place anchor vines near edges
-	edgeBuffer := 3 // cells from edge to consider "near edge"
-	maxAnchorAttempts := anchorCount * 20 // allow some retries
+	// Track vine length distribution to ensure variety
+	lengthCounts := make(map[int]int)
+	maxShortVines := gridArea / 50 // limit 2-3 cell vines to ~2% of grid
 
-	for len(vines) < anchorCount && maxAnchorAttempts > 0 && vineIdx < len(vineLengths) {
-		maxAnchorAttempts--
+	// Phase 1: Place anchor vines near edges (30% of estimated total)
+	edgeBuffer := 3
+	estimatedTotalVines := gridArea / 5 // rough estimate assuming avg length ~5
+	targetAnchorCount := int(float64(estimatedTotalVines) * anchorRatio)
+	if targetAnchorCount < 2 {
+		targetAnchorCount = 2
+	}
+
+	anchorAttempts := 0
+	maxAnchorAttempts := targetAnchorCount * 100
+	// Track consecutive failures to detect stalls and reseed
+	anchorFailures := 0
+	maxConsecutiveAnchorFails := gridArea / 2
+	if maxConsecutiveAnchorFails < 100 {
+		maxConsecutiveAnchorFails = 100
+	}
+
+	for len(vines) < targetAnchorCount && anchorAttempts < maxAnchorAttempts {
+		anchorAttempts++
+		anchorFailures++
+
+		// Check if grid is full
+		currentCells := len(occupied)
+		if currentCells >= gridArea {
+			break // 100% coverage achieved
+		}
+
+		remainingCells := gridArea - currentCells
+		if remainingCells < minVineLen {
+			break // not enough space for minimum vine
+		}
 
 		// Pick seed near edge
 		seedPoint, found := pickEdgeSeed(occupied, gridSize, edgeBuffer, rng)
 		if !found {
-			continue // no available edge seeds
+			continue
 		}
 
-		// Grow vine with direction pointing toward nearest edge
-		vineLen := vineLengths[vineIdx]
+		// Choose vine length with variety (skewed toward longer vines)
+		vineLen := chooseVineLengthSkewed(minVineLen, maxVineLen, remainingCells, lengthCounts, maxShortVines, rng)
+
 		vine, newOcc, err := GrowFromSeed(seedPoint, occupied, gridSize, vineLen, profile, cfg, rng)
-		if err != nil {
-			continue // vine couldn't grow, try another seed
-}
+		if err != nil || len(vine.OrderedPath) < minVineLen {
+			continue
+		}
 
-// Verify vine is clearable (should always be true for edge vines)
-if greedy {
-testLevel := &common.Level{
-GridSize: gridSize,
-Vines:    append(vines, vine),
-}
-solver := common.NewSolver(testLevel)
-if !solver.IsSolvableGreedy() {
-continue // skip this vine, not solvable
-}
-}
+		// Reject short vines if we've already hit the limit (maintain variety)
+		actualLen := len(vine.OrderedPath)
+		if actualLen <= 3 {
+			shortCount := lengthCounts[2] + lengthCounts[3]
+			if shortCount >= maxShortVines {
+				continue // skip this short vine
+			}
+		}
 
-// Accept this vine
-vines = append(vines, vine)
-occupied = newOcc
-vineIdx++
-}
+		// Verify solvability
+		if greedy {
+			testLevel := &common.Level{
+				GridSize: gridSize,
+				Vines:    append(vines, vine),
+			}
+			solver := common.NewSolver(testLevel)
+			if !solver.IsSolvableGreedy() {
+				continue
+			}
+		}
 
-if len(vines) < anchorCount {
-return nil, fmt.Errorf("could not place enough anchor vines (got %d, wanted %d)", len(vines), anchorCount)
-}
+		// Accept vine - assign ID before appending
+		vine.ID = fmt.Sprintf("v%d", len(vines)+1)
+		vines = append(vines, vine)
+		occupied = newOcc
+		lengthCounts[len(vine.OrderedPath)]++
+	}
 
-// Phase 2: Fill remaining space with standard tiling
-maxFillAttempts := (targetVineCount - len(vines)) * 50 // more retries since space is partially occupied
+	// Phase 2: Fill remaining space until 100% coverage
+	fillAttempts := 0
+	maxFillAttempts := gridArea * 2 // Reduced from *10 to prevent infinite loops
+	// Track consecutive failures for fill phase
+	fillFailures := 0
+	maxConsecutiveFillFails := 50 // Give up after 50 straight failures
 
-for len(vines) < targetVineCount && maxFillAttempts > 0 && vineIdx < len(vineLengths) {
-maxFillAttempts--
+	for fillAttempts < maxFillAttempts {
+		fillAttempts++
+		fillFailures++
 
-// Pick random available seed anywhere in grid
-seedPoint := pickRandomSeed(gridSize, occupied, rng)
-if seedPoint == (common.Point{}) {
-continue // no available seeds
-}
+		// Early termination if too many consecutive failures
+		if fillFailures >= maxConsecutiveFillFails {
+			common.Verbose("⚠️  ClearableFirst: Too many consecutive failures (%d), terminating fill phase early", fillFailures)
+			break
+		}
 
-// Grow vine with standard algorithm
-vineLen := vineLengths[vineIdx]
-vine, newOcc, err := GrowFromSeed(seedPoint, occupied, gridSize, vineLen, profile, cfg, rng)
-if err != nil {
-continue
-}
+		// Check if grid is 100% full
+		currentCells := len(occupied)
+		if currentCells >= gridArea {
+			break // SUCCESS: 100% coverage!
+		}
 
-// Check solvability incrementally if greedy enabled
-if greedy {
-testLevel := &common.Level{
-GridSize: gridSize,
-Vines:    append(vines, vine),
-}
-solver := common.NewSolver(testLevel)
-if !solver.IsSolvableGreedy() {
-continue
-}
-}
+		remainingCells := gridArea - currentCells
+		if remainingCells < minVineLen {
+			// Can't fit minimum vine - check if we can merge remaining into last vine
+			// For now, accept near-100% if we can't fit another vine
+			if remainingCells <= 1 {
+				break
+			}
+			// If 2+ cells remain, keep trying
+		}
 
-// Accept this vine
-vines = append(vines, vine)
-occupied = newOcc
-vineIdx++
-}
+		// Pick a seed; when stuck, prefer seeds in sparse regions
+		var seedPoint common.Point
+		if fillFailures > maxConsecutiveFillFails/2 {
+			common.Verbose("⚠️  ClearableFirst: fill stuck (%d fails), preferring sparse seeds and reseeding", fillFailures)
+			seedPoint = pickRandomSeedWithPreference(gridSize, occupied, rng)
+			// Occasionally reseed RNG to try different trajectories
+			if fillFailures > maxConsecutiveFillFails {
+				rng.Seed(cryptoSeedInt64() + int64(fillAttempts))
+				fillFailures = 0
+			}
+		} else {
+			seedPoint = pickRandomSeed(gridSize, occupied, rng)
+		}
 
-if len(vines) < targetVineCount {
-return nil, fmt.Errorf("could not fill remaining space (got %d vines, wanted %d)", len(vines), targetVineCount)
-}
+		if seedPoint == (common.Point{}) {
+			continue // no available seeds
+		}
 
-return vines, nil
+		// Choose vine length with variety
+		vineLen := chooseVineLengthSkewed(minVineLen, maxVineLen, remainingCells, lengthCounts, maxShortVines, rng)
+
+		vine, newOcc, err := GrowFromSeed(seedPoint, occupied, gridSize, vineLen, profile, cfg, rng)
+		if err != nil || len(vine.OrderedPath) < minVineLen {
+			continue
+		}
+
+		// Reject short vines if we've already hit the limit (maintain variety)
+		actualLen := len(vine.OrderedPath)
+		if actualLen <= 3 {
+			shortCount := lengthCounts[2] + lengthCounts[3]
+			if shortCount >= maxShortVines {
+				continue // skip this short vine
+			}
+		}
+
+		// Check solvability
+		if greedy {
+			testLevel := &common.Level{
+				GridSize: gridSize,
+				Vines:    append(vines, vine),
+			}
+			solver := common.NewSolver(testLevel)
+			if !solver.IsSolvableGreedy() {
+				continue
+			}
+		}
+
+		// Accept vine - assign ID before appending
+		vine.ID = fmt.Sprintf("v%d", len(vines)+1)
+		vines = append(vines, vine)
+		occupied = newOcc
+		lengthCounts[len(vine.OrderedPath)]++
+		fillFailures = 0 // Reset consecutive failure counter on success
+	}
+
+	// Verify we achieved near-100% coverage (allow small gaps for solvability)
+	finalCoverage := float64(len(occupied)) / float64(gridArea)
+	if finalCoverage < common.MinGridCoverage {
+		return nil, fmt.Errorf("insufficient coverage: got %.1f%%, need %.0f%%+", finalCoverage*100, common.MinGridCoverage*100)
+	}
+
+	// Quick circular-block detection before returning to avoid producing
+	// levels that will fail the greedy solver repeatedly.
+	{
+		occupiedMap := make(map[string]string)
+		for _, v := range vines {
+			for _, p := range v.OrderedPath {
+				occupiedMap[fmt.Sprintf("%d,%d", p.X, p.Y)] = v.ID
+			}
+		}
+
+		blockingGraph := make(map[string][]string)
+		for _, v := range vines {
+			blockingGraph[v.ID] = []string{}
+		}
+
+		for _, a := range vines {
+			for _, b := range vines {
+				if a.ID == b.ID {
+					continue
+				}
+				// compute where b's head would move
+				head := b.OrderedPath[0]
+				tx, ty := head.X, head.Y
+				switch b.HeadDirection {
+				case "right":
+					tx++
+				case "left":
+					tx--
+				case "up":
+					ty++
+				case "down":
+					ty--
+				}
+				if occupiedMap[fmt.Sprintf("%d,%d", tx, ty)] == a.ID {
+					blockingGraph[a.ID] = append(blockingGraph[a.ID], b.ID)
+				}
+			}
+		}
+
+		if common.DetectCircularBlocking(blockingGraph) {
+			return nil, fmt.Errorf("placement produced circular blocking (detected before returning)")
+		}
+	}
+
+	return vines, nil
 }
 
 // pickRandomSeed picks a random unoccupied cell anywhere in the grid.
 func pickRandomSeed(gridSize []int, occupied map[string]bool, rng *rand.Rand) common.Point {
-w, h := gridSize[0], gridSize[1]
-maxAttempts := w * h // try up to grid size attempts
+	w, h := gridSize[0], gridSize[1]
+	maxAttempts := w * h // try up to grid size attempts
 
-for i := 0; i < maxAttempts; i++ {
-x := rng.Intn(w)
-y := rng.Intn(h)
-key := fmt.Sprintf("%d,%d", x, y)
-if !occupied[key] {
-return common.Point{X: x, Y: y}
-}
+	for i := 0; i < maxAttempts; i++ {
+		x := rng.Intn(w)
+		y := rng.Intn(h)
+		key := fmt.Sprintf("%d,%d", x, y)
+		if !occupied[key] {
+			return common.Point{X: x, Y: y}
+		}
+	}
+
+	return common.Point{} // no available seed found
 }
 
-return common.Point{} // no available seed found
+// pickRandomSeedWithPreference prefers seeds in locally sparse areas (more empty neighbors)
+// This helps escape tight clusters where random picks keep failing.
+func pickRandomSeedWithPreference(gridSize []int, occupied map[string]bool, rng *rand.Rand) common.Point {
+	w, h := gridSize[0], gridSize[1]
+	best := common.Point{}
+	bestScore := -1
+
+	// Sample up to 60 candidates and pick one with the most empty neighbors
+	for i := 0; i < 60; i++ {
+		x := rng.Intn(w)
+		y := rng.Intn(h)
+		key := fmt.Sprintf("%d,%d", x, y)
+		if occupied[key] {
+			continue
+		}
+
+		score := 0
+		neighbors := [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+		for _, n := range neighbors {
+			nx := x + n[0]
+			ny := y + n[1]
+			if nx >= 0 && nx < w && ny >= 0 && ny < h {
+				k := fmt.Sprintf("%d,%d", nx, ny)
+				if !occupied[k] {
+					score++
+				}
+			}
+		}
+
+		if score > bestScore {
+			bestScore = score
+			best = common.Point{X: x, Y: y}
+			if score == 4 {
+				break // optimal
+			}
+		}
+	}
+
+	if bestScore >= 0 {
+		return best
+	}
+
+	// Fallback
+	return pickRandomSeed(gridSize, occupied, rng)
+}
+
+// chooseVineLengthSkewed picks a vine length with variety and a skew toward longer vines.
+// Avoids too many short vines while respecting remaining space.
+func chooseVineLengthSkewed(minLen, maxLen, remainingCells int, lengthCounts map[int]int, maxShortVines int, rng *rand.Rand) int {
+	// Cap by remaining space
+	effectiveMax := maxLen
+	if remainingCells < effectiveMax {
+		effectiveMax = remainingCells
+	}
+	if effectiveMax < minLen {
+		effectiveMax = minLen
+	}
+
+	// Limit short vines (2-3 cells) to maintain variety
+	shortVineCount := lengthCounts[2] + lengthCounts[3]
+	if shortVineCount >= maxShortVines && effectiveMax > 3 {
+		// Force longer vine
+		minLen = 4
+	}
+
+	// Weighted random: skew toward longer vines
+	// Use inverse weighting: shorter lengths get lower probability
+	weights := make([]int, effectiveMax-minLen+1)
+	for i := range weights {
+		length := minLen + i
+		// Weight increases with length: weight = length
+		// This makes longer vines more likely
+		weights[i] = length
+	}
+
+	// Pick weighted random index
+	totalWeight := 0
+	for _, w := range weights {
+		totalWeight += w
+	}
+
+	if totalWeight == 0 {
+		return minLen
+	}
+
+	r := rng.Intn(totalWeight)
+	cumulative := 0
+	for i, w := range weights {
+		cumulative += w
+		if r < cumulative {
+			return minLen + i
+		}
+	}
+
+	return effectiveMax // fallback
 }

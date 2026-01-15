@@ -30,11 +30,9 @@ func chooseExitDirection(seed common.Point, gridSize []int, dirBalance map[strin
 	weights["up"] = 1.0 / float64(distToTop+1)
 
 	// Apply dirBalance preferences (if any)
-	if dirBalance != nil {
-		for dir, balance := range dirBalance {
-			if w, exists := weights[dir]; exists {
-				weights[dir] = w * balance
-			}
+	for dir, balance := range dirBalance {
+		if w, exists := weights[dir]; exists {
+			weights[dir] = w * balance
 		}
 	}
 
@@ -101,34 +99,6 @@ func oppositeDirection(dir string) string {
 	default:
 		return ""
 	}
-}
-
-// isValidDirection checks if a direction string is valid.
-func isValidDirection(dir string) bool {
-	return dir == "right" || dir == "left" || dir == "up" || dir == "down"
-}
-
-// directionsTowardEdge returns all directions that move toward grid edges.
-func directionsTowardEdge(pos common.Point, gridSize []int) []string {
-	width, height := gridSize[0], gridSize[1]
-	x, y := pos.X, pos.Y
-
-	var directions []string
-
-	// Check which directions move toward edges
-	if x > width/2 {
-		directions = append(directions, "right") // Move toward right edge
-	} else {
-		directions = append(directions, "left") // Move toward left edge
-	}
-
-	if y > height/2 {
-		directions = append(directions, "up") // Move toward top edge
-	} else {
-		directions = append(directions, "down") // Move toward bottom edge
-	}
-
-	return directions
 }
 
 // distanceToNearestEdge calculates the minimum distance from a point to any grid edge.
