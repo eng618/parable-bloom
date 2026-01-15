@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"sort"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 )
@@ -37,22 +38,23 @@ func calculateVineLengths(
 	}
 
 	// Distribute lengths to exactly fill the grid, but consider profile.LengthMix
+	// IMPORTANT: Minimum vine length is 2 (head + neck)
 	lengths := make([]int, vineCount)
 	for i := 0; i < vineCount; i++ {
 		bucket := chooseLengthBucket(profile, rng)
 		switch bucket {
 		case "short":
-			lengths[i] = maxInt(1, avgLen-2)
+			lengths[i] = maxInt(2, avgLen-2) // min 2 cells
 		case "medium":
-			lengths[i] = maxInt(1, avgLen)
+			lengths[i] = maxInt(2, avgLen) // min 2 cells
 		case "long":
-			lengths[i] = maxInt(1, avgLen+2)
+			lengths[i] = maxInt(2, avgLen+2) // min 2 cells
 		default:
-			lengths[i] = avgLen
+			lengths[i] = maxInt(2, avgLen) // min 2 cells
 		}
 	}
 
-	// Adjust to exactly fill total cells
+	// Adjust to exactly fill total cells (respecting minimum length of 2)
 	cur := 0
 	for _, l := range lengths {
 		cur += l
@@ -63,7 +65,7 @@ func calculateVineLengths(
 			idx := i % vineCount
 			if delta > 0 {
 				lengths[idx]++
-			} else if lengths[idx] > 1 {
+			} else if lengths[idx] > 2 { // don't shrink below 2
 				lengths[idx]--
 			}
 		}
@@ -196,8 +198,31 @@ func GrowFromSeed(
 		head := path[len(path)-1]
 		neighbors := availableNeighbors(head, w, h, occ)
 		if len(neighbors) == 0 {
-			// Stuck - return what we have so far
-			return common.Vine{HeadDirection: desiredHeadDir, OrderedPath: path}, occ, nil
+			// Stuck - validate minimum length before returning
+			if len(path) < 2 {
+				return common.Vine{}, nil, fmt.Errorf("cannot grow vine: stuck after %d cells (need at least 2)", len(path))
+			}
+			// Return what we have so far (at least 2 cells)
+			// CRITICAL: Calculate correct head direction based on actual head/neck positions
+			head := path[0]
+			neck := path[1]
+			dx := head.X - neck.X
+			dy := head.Y - neck.Y
+
+			actualHeadDir := ""
+			if dx == 1 && dy == 0 {
+				actualHeadDir = "right"
+			} else if dx == -1 && dy == 0 {
+				actualHeadDir = "left"
+			} else if dx == 0 && dy == 1 {
+				actualHeadDir = "up"
+			} else if dx == 0 && dy == -1 {
+				actualHeadDir = "down"
+			} else {
+				actualHeadDir = desiredHeadDir
+			}
+
+			return common.Vine{HeadDirection: actualHeadDir, OrderedPath: path}, occ, nil
 		}
 
 		var chosen common.Point
@@ -207,7 +232,7 @@ func GrowFromSeed(
 			// This creates the "neck" segment
 			neckDx, neckDy := deltaForDirection(oppositeDirection(desiredHeadDir))
 			neck := common.Point{X: head.X + neckDx, Y: head.Y + neckDy}
-			
+
 			// Check if neck position is available
 			neckAvailable := false
 			for _, n := range neighbors {
@@ -216,7 +241,7 @@ func GrowFromSeed(
 					break
 				}
 			}
-			
+
 			if neckAvailable {
 				chosen = neck
 			} else {
@@ -238,24 +263,57 @@ func GrowFromSeed(
 				}
 			}
 		} else if len(path) >= 2 {
-			// Continue growing: prefer straight vs turning based on TurnMix
-			prev := path[len(path)-2]
-			dx := head.X - prev.X
-			dy := head.Y - prev.Y
-			straight := common.Point{X: head.X + dx, Y: head.Y + dy}
-			
-			straightAvailable := false
-			for _, n := range neighbors {
-				if n.X == straight.X && n.Y == straight.Y {
-					straightAvailable = true
-					break
-				}
-			}
-			
-			if straightAvailable && rng.Float64() > profile.TurnMix {
-				chosen = straight
+			// Density-aware neighbor selection: prefer gap-filling and interwoven patterns
+			if len(neighbors) == 1 {
+				chosen = neighbors[0]
 			} else {
-				chosen = neighbors[rng.Intn(len(neighbors))]
+				// Score neighbors for density and gap-filling potential
+				type scoredNeighbor struct {
+					point common.Point
+					score float64
+				}
+				
+				scored := make([]scoredNeighbor, len(neighbors))
+				for i, n := range neighbors {
+					scored[i] = scoredNeighbor{
+						point: n,
+						score: calculateDensityScore(n, occ, gridSize),
+					}
+					
+					// Small bonus for continuing current direction (reduced from TurnMix logic)
+					prev := path[len(path)-2]
+					curr := path[len(path)-1]
+					dx := curr.X - prev.X
+					dy := curr.Y - prev.Y
+					
+					nextDx := n.X - curr.X
+					nextDy := n.Y - curr.Y
+					
+					if dx == nextDx && dy == nextDy {
+						scored[i].score += 0.5 // Small bonus for straight continuation
+					}
+					
+					// Add randomness to prevent deterministic patterns
+					scored[i].score += rng.Float64() * 0.3
+				}
+				
+				// Sort by score descending (highest first)
+				sort.Slice(scored, func(i, j int) bool {
+					return scored[i].score > scored[j].score
+				})
+				
+				// Weighted selection from top candidates
+				// 60% chance for best, 25% for second, 15% for third
+				randVal := rng.Float64()
+				if randVal < 0.6 {
+					chosen = scored[0].point
+				} else if randVal < 0.85 && len(scored) >= 2 {
+					chosen = scored[1].point
+				} else if len(scored) >= 3 {
+					chosen = scored[2].point
+				} else {
+					chosen = scored[0].point
+				}
 			}
 		} else {
 			// Fallback: random pick
@@ -268,8 +326,71 @@ func GrowFromSeed(
 		occ[k] = true
 	}
 
-	// Return vine with predetermined head direction
-	return common.Vine{HeadDirection: desiredHeadDir, OrderedPath: path}, occ, nil
+	// CRITICAL VALIDATION: Vines must be at least 2 cells (head + neck)
+	if len(path) < 2 {
+		return common.Vine{}, nil, fmt.Errorf("vine too short: got %d cells, need at least 2", len(path))
+	}
+
+	// CRITICAL FIX: Calculate the correct head direction based on actual head/neck positions
+	// The head is at path[0], the neck is at path[1]
+	// The direction is: vector from neck to head
+	head := path[0]
+	neck := path[1]
+	dx := head.X - neck.X
+	dy := head.Y - neck.Y
+
+	// Convert delta to direction string
+	actualHeadDir := ""
+	if dx == 1 && dy == 0 {
+		actualHeadDir = "right"
+	} else if dx == -1 && dy == 0 {
+		actualHeadDir = "left"
+	} else if dx == 0 && dy == 1 {
+		actualHeadDir = "up"
+	} else if dx == 0 && dy == -1 {
+		actualHeadDir = "down"
+	} else {
+		// Unexpected: head and neck not adjacent (shouldn't happen with proper growth)
+		actualHeadDir = desiredHeadDir
+	}
+
+	// Return vine with CORRECT head direction based on actual path geometry
+	return common.Vine{HeadDirection: actualHeadDir, OrderedPath: path}, occ, nil
+}
+
+// calculateDensityScore evaluates how well a neighbor fills gaps and creates density.
+// Higher scores indicate better gap-filling potential.
+func calculateDensityScore(p common.Point, occupied map[string]bool, gridSize []int) float64 {
+	w, h := gridSize[0], gridSize[1]
+	
+	// Count occupied neighbors (Manhattan distance 1)
+	occupiedCount := 0
+	totalPossible := 0
+	
+	deltas := []common.Point{
+		{X: 1, Y: 0}, {X: -1, Y: 0}, {X: 0, Y: 1}, {X: 0, Y: -1},
+	}
+	
+	for _, d := range deltas {
+		nx, ny := p.X + d.X, p.Y + d.Y
+		if nx >= 0 && nx < w && ny >= 0 && ny < h {
+			totalPossible++
+			if occupied[fmt.Sprintf("%d,%d", nx, ny)] {
+				occupiedCount++
+			}
+		}
+	}
+	
+	// Prefer cells with more occupied neighbors (fills gaps better)
+	// But be less aggressive to ensure we meet occupancy requirements
+	densityScore := float64(occupiedCount) / float64(totalPossible)
+	
+	// Smaller edge bonus to encourage boundary filling but not too strongly
+	edgeDist := math.Min(math.Min(float64(p.X), float64(w-1-p.X)), 
+						 math.Min(float64(p.Y), float64(h-1-p.Y)))
+	edgeBonus := math.Max(0, 1.0 - edgeDist/2.0)
+	
+	return densityScore * 2.0 + edgeBonus
 }
 
 // availableNeighbors lists unoccupied Manhattan neighbors within grid.
@@ -291,49 +412,6 @@ func availableNeighbors(p common.Point, w, h int, occ map[string]bool) []common.
 		out = append(out, c)
 	}
 	return out
-}
-
-// chooseNeighborByDirBias picks a neighbor closest to a desired direction distribution.
-func chooseNeighborByDirBias(
-	origin common.Point,
-	neighbors []common.Point,
-	dirBalance map[string]float64,
-	rng *rand.Rand,
-) common.Point {
-	if len(neighbors) == 0 || len(dirBalance) == 0 {
-		return common.Point{}
-	}
-	// Score neighbors by their direction
-	scores := make([]float64, len(neighbors))
-	sum := 0.0
-	for i, n := range neighbors {
-		dx := n.X - origin.X
-		dy := n.Y - origin.Y
-		var dir string
-		for k, v := range common.HeadDirections {
-			if v[0] == dx && v[1] == dy {
-				dir = k
-				break
-			}
-		}
-		s := dirBalance[dir]
-		scores[i] = s
-		sum += s
-	}
-	if sum == 0 {
-		// fallback random
-		return neighbors[rng.Intn(len(neighbors))]
-	}
-	// pick weighted
-	r := rng.Float64() * sum
-	acc := 0.0
-	for i, s := range scores {
-		acc += s
-		if r <= acc {
-			return neighbors[i]
-		}
-	}
-	return neighbors[len(neighbors)-1]
 }
 
 // pickSeedWithRegionBias picks a seed based on profile.RegionBias and emptiness.

@@ -1,6 +1,8 @@
 package generator
 
 import (
+	crand "crypto/rand"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -9,6 +11,8 @@ import (
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
 
 const (
@@ -18,6 +22,15 @@ const (
 	ModulesFile = DataDir + "/modules.json"
 )
 
+// cryptoSeedInt64 returns a crypto-random int64 seed, falling back to time on error
+func cryptoSeedInt64() int64 {
+	var b [8]byte
+	if _, err := crand.Read(b[:]); err != nil {
+		return time.Now().UnixNano()
+	}
+	return int64(binary.LittleEndian.Uint64(b[:]))
+}
+
 // GenerationConfig holds configuration for level generation
 type GenerationConfig struct {
 	Count         int
@@ -26,6 +39,7 @@ type GenerationConfig struct {
 	ModuleID      int
 	Difficulty    string
 	WorkingDir    string
+	Overwrite     bool
 }
 
 // Clean removes generated level and module files used by the level builder.
@@ -47,7 +61,7 @@ func Clean() error {
 
 // Generate creates count levels with the given configuration.
 // This is the main entry point called from the generate command.
-func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, difficulty string) error {
+func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, difficulty string, overwrite bool) error {
 	cwd, _ := os.Getwd()
 	common.Verbose("Generating %d levels (CWD: %s)...", count, cwd)
 
@@ -66,6 +80,7 @@ func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, diffi
 		ModuleID:      moduleID,
 		Difficulty:    difficulty,
 		WorkingDir:    cwd,
+		Overwrite:     overwrite,
 	}
 
 	// If module ID is specified, generate entire module
@@ -100,7 +115,7 @@ func generateLevels(cfg GenerationConfig) error {
 		// Determine seed for this level
 		var levelSeed int64
 		if cfg.UseRandomSeed {
-			levelSeed = time.Now().UnixNano() + int64(i)
+			levelSeed = cryptoSeedInt64() + int64(i)
 		} else if cfg.BaseSeed != 0 {
 			levelSeed = cfg.BaseSeed + int64(i)
 		} else {
@@ -125,7 +140,7 @@ func generateLevels(cfg GenerationConfig) error {
 
 		// Write level to disk
 		filePath := filepath.Join(LevelsDir, fmt.Sprintf("level_%d.json", levelID))
-		if err := common.WriteLevel(filePath, &level, false); err != nil {
+		if err := common.WriteLevel(filePath, &level, cfg.Overwrite); err != nil {
 			return fmt.Errorf("failed to write level %d: %w", levelID, err)
 		}
 
@@ -138,20 +153,38 @@ func generateLevels(cfg GenerationConfig) error {
 	return nil
 }
 
-// generateModule generates a complete module (9 regular + 1 challenge level).
+// generateModule generates a complete module with balanced difficulty progression.
+// Each module has 21 levels: 20 regular levels (5 each of Seedling, Sprout, Nurturing, Flourishing)
+// plus 1 Transcendent boss level at the end.
 func generateModule(cfg GenerationConfig) error {
-	const levelsPerModule = 10
-	const regularLevels = 9
+	const levelsPerModule = 21
+	const regularLevels = 20
+
+	// Difficulty progression for regular levels (20 levels)
+	// 5 Seedling, 5 Sprout, 5 Nurturing, 5 Flourishing, then 1 Transcendent
+	difficultyProgression := []string{
+		// Levels 1-5: Seedling
+		"Seedling", "Seedling", "Seedling", "Seedling", "Seedling",
+		// Levels 6-10: Sprout
+		"Sprout", "Sprout", "Sprout", "Sprout", "Sprout",
+		// Levels 11-15: Nurturing
+		"Nurturing", "Nurturing", "Nurturing", "Nurturing", "Nurturing",
+		// Levels 16-20: Flourishing
+		"Flourishing", "Flourishing", "Flourishing", "Flourishing", "Flourishing",
+		// Level 21: Transcendent (boss)
+		"Transcendent",
+	}
 
 	// Calculate starting level ID for this module
 	startID := (cfg.ModuleID-1)*levelsPerModule + 1
 
 	common.Info("Generating module %d (levels %d-%d)...", cfg.ModuleID, startID, startID+levelsPerModule-1)
+	common.Info("  Progression: Seedling → Sprout → Nurturing → Flourishing → Transcendent")
 
-	// Generate 9 regular levels + 1 challenge level
+	// Generate all 21 levels
 	for i := 0; i < levelsPerModule; i++ {
 		levelID := startID + i
-		isChallenge := i == regularLevels
+		isBoss := i == regularLevels
 
 		// Determine seed
 		var levelSeed int64
@@ -160,17 +193,18 @@ func generateModule(cfg GenerationConfig) error {
 		} else if cfg.BaseSeed != 0 {
 			levelSeed = cfg.BaseSeed + int64(i)
 		} else {
-			levelSeed = int64(levelID) * 31337
+			// Use crypto-grade seed for truly-random runs
+			levelSeed = cryptoSeedInt64() + int64(i)
 		}
 
 		rng := rand.New(rand.NewSource(levelSeed))
 
-		// Determine difficulty tier
+		// Determine difficulty tier from progression
 		var difficultyTier string
 		if cfg.Difficulty != "" {
 			difficultyTier = cfg.Difficulty
 		} else {
-			difficultyTier = common.DifficultyForLevel(levelID)
+			difficultyTier = difficultyProgression[i]
 		}
 
 		// Generate level
@@ -179,22 +213,27 @@ func generateModule(cfg GenerationConfig) error {
 			return fmt.Errorf("failed to generate level %d: %w", levelID, err)
 		}
 
-		// Mark as challenge if applicable
-		if isChallenge {
-			level.Name = fmt.Sprintf("Challenge %d", cfg.ModuleID)
-			level.Grace++ // Extra grace for challenge levels
+		// Mark as boss if applicable
+		if isBoss {
+			level.Name = fmt.Sprintf("Module %d - Transcendent", cfg.ModuleID)
+			level.Complexity = "transcendent"
+			level.Grace++ // Extra grace for boss levels
 		}
 
 		// Write level to disk
 		filePath := filepath.Join(LevelsDir, fmt.Sprintf("level_%d.json", levelID))
-		if err := common.WriteLevel(filePath, &level, false); err != nil {
+		if err := common.WriteLevel(filePath, &level, cfg.Overwrite); err != nil {
 			return fmt.Errorf("failed to write level %d: %w", levelID, err)
 		}
 
-		common.Verbose("Generated level %d (%s)", levelID, level.Name)
+		if isBoss {
+			common.Verbose("Generated level %d (%s) - BOSS LEVEL", levelID, level.Name)
+		} else {
+			common.Verbose("Generated level %d (%s - %s)", levelID, level.Name, difficultyTier)
+		}
 	}
 
-	common.Info("✓ Module %d complete", cfg.ModuleID)
+	common.Info("✓ Module %d complete (21 levels)", cfg.ModuleID)
 
 	// Update modules.json registry
 	return updateModuleRegistry(cfg.ModuleID, startID)
@@ -226,11 +265,11 @@ func updateModuleRegistry(moduleID int, startID int) error {
 		Name:           fmt.Sprintf("Module %d", moduleID),
 		ThemeSeed:      getThemeSeed(moduleID),
 		Levels:         []int{},
-		ChallengeLevel: startID + 9, // 10th level is challenge
+		ChallengeLevel: startID + 20, // 21st level is Transcendent boss
 	}
 
-	// Add the 9 regular levels
-	for i := 0; i < 9; i++ {
+	// Add the 20 regular levels
+	for i := 0; i < 20; i++ {
 		moduleEntry.Levels = append(moduleEntry.Levels, startID+i)
 	}
 
@@ -302,6 +341,7 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 	tilingFailures := 0
 	greedyFailures := 0
 	bfsFailures := 0
+	constraintFailures := 0
 
 	for attempts = 0; attempts < maxAttempts; attempts++ {
 		// Time-based circuit breaker
@@ -312,15 +352,16 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 		}
 
 		// Progressive occupancy relaxation after many failures
-		if attempts == 500 {
+		switch attempts {
+		case 500:
 			spec.MinGridOccupancy -= occupancyRelaxation
 			common.Verbose("⚠️  Relaxing occupancy to %.1f%% after %d attempts (from %.1f%%)",
 				spec.MinGridOccupancy*100, attempts, originalOccupancy*100)
-		} else if attempts == 1500 {
+		case 1500:
 			spec.MinGridOccupancy -= occupancyRelaxation
 			common.Verbose("⚠️  Further relaxing occupancy to %.1f%% after %d attempts",
 				spec.MinGridOccupancy*100, attempts)
-		} else if attempts == 3000 {
+		case 3000:
 			spec.MinGridOccupancy -= occupancyRelaxation
 			common.Verbose("⚠️  Final occupancy relaxation to %.1f%% after %d attempts",
 				spec.MinGridOccupancy*100, attempts)
@@ -328,22 +369,38 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 
 		// Log progress periodically
 		if attempts > 0 && attempts%progressLogInterval == 0 {
-			common.Verbose("⏱️  Progress: %d/%d attempts (%.1fs, tiling_fails=%d, greedy_fails=%d, bfs_fails=%d, success_rate=%.1f%%)",
+			successful := float64(attempts - tilingFailures - greedyFailures - bfsFailures - constraintFailures)
+			successRate := successful / float64(attempts) * 100
+			common.Verbose("⏱️  Progress: %d/%d attempts (%.1fs, tiling_fails=%d, greedy_fails=%d, bfs_fails=%d, constraint_fails=%d, success_rate=%.1f%%)",
 				attempts, maxAttempts, elapsed.Seconds(),
-				tilingFailures, greedyFailures, bfsFailures,
-				float64(attempts-tilingFailures-greedyFailures-bfsFailures)/float64(attempts)*100)
+				tilingFailures, greedyFailures, bfsFailures, constraintFailures,
+				successRate)
 		}
 		var vines []common.Vine
 		var mask *common.Mask
 		var err error
 
+		// Create an attempt-local RNG to diversify retries (prevents repeating same trajectories)
+		attemptRng := rand.New(rand.NewSource(seed + int64(attempts)*7919))
+
 		// Determine which algorithm to use based on grid size and difficulty
-		gridArea := gridSize[0] * gridSize[1]
-		useClearableFirst := gridArea > 120 // Use clearable-first for grids larger than ~10x12
+		// ALWAYS use clearable-first to prevent circular blocking
+		useClearableFirst := true
 
 		if useClearableFirst {
-			// For large grids, use clearable-first placement with incremental greedy checks
-			vines, err = ClearableFirstPlacement(gridSize, spec, profile, generatorCfg, rng.Int63(), 0.3, true)
+			// Choose anchor ratio adaptively based on tiling failure history to avoid stalls
+			anchorRatio := 0.3
+			if tilingFailures > 30 {
+				anchorRatio = 0.15 // use fewer anchors when we're struggling
+			}
+			if tilingFailures > 100 {
+				// Last-resort: try standard tiling as a fallback to escape pathological cases
+				common.Verbose("⚠️  Falling back to TileGridIntoVines after %d tiling failures", tilingFailures)
+				vines, mask, err = TileGridIntoVines(gridSize, spec, profile, generatorCfg, attemptRng)
+			} else {
+				// Try clearable-first with adaptive anchor ratio
+				vines, err = ClearableFirstPlacement(gridSize, spec, profile, generatorCfg, attemptRng.Int63(), anchorRatio, false)
+			}
 			if err == nil {
 				// Generate mask for empty cells (inline mask generation)
 				occupied := make(map[string]bool)
@@ -367,10 +424,10 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 			}
 		} else if difficulty == "Nurturing" || difficulty == "Flourishing" || difficulty == "Transcendent" {
 			// For higher difficulties on normal grids, use solver-aware placement
-			vines, mask, err = SolverAwarePlacement(gridSize, spec, profile, generatorCfg, rng)
+			vines, mask, err = SolverAwarePlacement(gridSize, spec, profile, generatorCfg, attemptRng)
 		} else {
 			// Use standard tiling for easier difficulties on normal grids
-			vines, mask, err = TileGridIntoVines(gridSize, spec, profile, generatorCfg, rng)
+			vines, mask, err = TileGridIntoVines(gridSize, spec, profile, generatorCfg, attemptRng)
 		}
 
 		if err != nil {
@@ -401,6 +458,16 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 			// Generation metadata
 			GenerationSeed:     seed,
 			GenerationAttempts: attempts + 1,
+		}
+
+		modelLevel := convertToModelLevel(level)
+		if constraintErrs := validator.ValidateDesignConstraints(modelLevel); len(constraintErrs) > 0 {
+			constraintFailures++
+			if attempts < 10 || (attempts > 0 && attempts%progressLogInterval == 0) {
+				common.Verbose("Attempt %d: Design constraints failed (%d issues) - %s",
+					attempts+1, len(constraintErrs), constraintErrs[0].Error())
+			}
+			continue
 		}
 
 		// Validate solvability using the solver
@@ -498,4 +565,52 @@ func assignColorIndices(vines []common.Vine, paletteSize int, rng *rand.Rand) {
 	for i := range vines {
 		vines[i].ColorIndex = rng.Intn(paletteSize)
 	}
+}
+
+func convertToModelLevel(level common.Level) model.Level {
+	return model.Level{
+		ID:          level.ID,
+		Name:        level.Name,
+		Difficulty:  level.Difficulty,
+		Complexity:  level.Complexity,
+		GridSize:    append([]int(nil), level.GridSize...),
+		Mask:        convertMask(level.Mask),
+		Vines:       convertVines(level.Vines),
+		MaxMoves:    level.MaxMoves,
+		MinMoves:    level.MinMoves,
+		Grace:       level.Grace,
+		ColorScheme: append([]string(nil), level.ColorScheme...),
+	}
+}
+
+func convertMask(mask *common.Mask) *model.Mask {
+	if mask == nil {
+		return nil
+	}
+	points := make([]model.Point, len(mask.Points))
+	for i, p := range mask.Points {
+		points[i] = model.Point{X: p.X, Y: p.Y}
+	}
+	return &model.Mask{Mode: mask.Mode, Points: points}
+}
+
+func convertVines(vines []common.Vine) []model.Vine {
+	out := make([]model.Vine, len(vines))
+	for i, v := range vines {
+		out[i] = model.Vine{
+			ID:            v.ID,
+			HeadDirection: v.HeadDirection,
+			OrderedPath:   convertPoints(v.OrderedPath),
+			ColorIndex:    v.ColorIndex,
+		}
+	}
+	return out
+}
+
+func convertPoints(points []common.Point) []model.Point {
+	out := make([]model.Point, len(points))
+	for i, p := range points {
+		out[i] = model.Point{X: p.X, Y: p.Y}
+	}
+	return out
 }

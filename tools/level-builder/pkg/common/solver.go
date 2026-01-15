@@ -183,16 +183,16 @@ func simulateVineMovement(positions []Point, delta [2]int) []Point {
 	}
 
 	newPositions := make([]Point, len(positions))
-	
+
 	// New head position
 	head := positions[0]
 	newPositions[0] = Point{X: head.X + delta[0], Y: head.Y + delta[1]}
-	
+
 	// Each other segment moves to where the previous segment was
 	for i := 1; i < len(positions); i++ {
 		newPositions[i] = positions[i-1]
 	}
-	
+
 	return newPositions
 }
 

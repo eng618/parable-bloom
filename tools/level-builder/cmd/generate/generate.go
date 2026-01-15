@@ -15,6 +15,7 @@ var (
 	randomize  bool
 	moduleID   int
 	difficulty string
+	overwrite  bool
 )
 
 // generateCmd represents the generate command
@@ -67,7 +68,7 @@ Examples:
 			common.Verbose("Fixed difficulty: %s", difficulty)
 		}
 
-		if err := generator.Generate(count, seed, randomize, moduleID, difficulty); err != nil {
+		if err := generator.Generate(count, seed, randomize, moduleID, difficulty, overwrite); err != nil {
 			return fmt.Errorf("generation failed: %w", err)
 		}
 
@@ -82,6 +83,7 @@ func init() {
 	generateCmd.Flags().BoolVarP(&randomize, "randomize", "r", false, "use time-based random seeds (recorded in level metadata)")
 	generateCmd.Flags().IntVarP(&moduleID, "module", "m", 0, "generate all levels for a specific module (1-8)")
 	generateCmd.Flags().StringVarP(&difficulty, "difficulty", "d", "", "fixed difficulty tier (Tutorial, Seedling, Sprout, Nurturing, Flourishing, Transcendent)")
+	generateCmd.Flags().BoolVar(&overwrite, "overwrite", false, "overwrite existing level files")
 }
 
 // GetCommand returns the generate command for registration with root
