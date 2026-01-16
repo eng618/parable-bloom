@@ -1,7 +1,7 @@
 ---
 title: "Parable Bloom - Level System Reference"
-version: "2.0"
-last_updated: "2026-01-09"
+version: "3.0"
+last_updated: "2026-01-11"
 status: "Active"
 type: "Technical Reference"
 ---
@@ -200,16 +200,95 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
 
 All levels must pass the strict validator in `tools/level-builder`.
 
-1. **Occupancy**: 100% of visible grid cells must be occupied by vines in their initial state. No empty spaces.
+1. **Coverage**: Difficulty-based coverage targets (see Section 5.1) - not 100% occupancy.
 2. **Solvability**: The level must be solvable within `max_moves`.
-3. **Connectivity**: All vines must be contiguous. `head_direction` must be valid.
+3. **Connectivity**: All vine segments must be 4-connected (Manhattan distance = 1). `head_direction` must match head-to-neck vector.
 4. **No Overlaps**: No two vine segments may share a coordinate.
-5. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
+5. **Minimum Length**: All vines must have at least 2 cells.
+6. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
 
-## 5. Tooling
+## 5. Level Generation (gen2)
+
+The `gen2` command in `tools/level-builder` is the primary level generation system. It uses a **direction-first placement algorithm** with **incremental solvability checking** and **backtracking**.
+
+### 5.1 Difficulty Specifications
+
+| Difficulty | Grid Size Range | Vine Count | Avg Length | Coverage Target | Grace | Complexity |
+|------------|-----------------|------------|------------|-----------------|-------|------------|
+| Seedling | 6×8 to 9×12 | 3-6 | 3-5 | 85% | 5 | low |
+| Sprout | 9×12 to 12×16 | 5-10 | 4-6 | 80% | 4 | medium |
+| Nurturing | 9×16 to 12×20 | 8-15 | 5-8 | 75% | 3 | medium |
+| Flourishing | 12×20 to 16×24 | 12-20 | 6-10 | 70% | 2 | high |
+| Transcendent | 16×28 to 24×40 | 15-25 | 8-12 | 60% | 1 | very_high |
+
+### 5.2 Direction-First Placement Algorithm
+
+The algorithm prioritizes **exit path guarantee** by selecting head direction first:
+
+1. **Choose Head Cell**: Select an empty cell, preferably near grid edges.
+2. **Choose Exit Direction**: Pick direction toward the nearest grid edge (guarantees clear path to exit).
+3. **Grow Backward**: Extend the vine body in the opposite direction using random orthogonal turns.
+4. **Extension Pass**: After initial placement, extend existing vines into remaining empty cells to increase coverage.
+5. **Filler Vines**: Create small (2-cell) vines in isolated empty regions that cannot be reached by extension.
+
+### 5.3 Incremental Solvability with Backtracking
+
+Instead of restarting on unsolvable placements, gen2 uses intelligent backtracking:
+
+1. **Check After Placement**: After each vine is placed, verify solvability using the exact A* solver.
+2. **Backtrack on Failure**: If unsolvable, remove the last 3 vines (configurable) and retry with different random choices.
+3. **Attempt Limit**: Maximum 10 generation attempts before reporting failure.
+
+This approach significantly improves generation success rate compared to full restarts.
+
+### 5.4 Color Assignment
+
+- **Color Palette**: 6 colors shared across all difficulties (gray, green, orange, yellow, purple, blue).
+- **Round-Robin Assignment**: Each vine receives `color_index` based on its position: `(vine_index % 6) + 1`.
+- **Vine IDs**: Format `vine_N` where N is 1-indexed (e.g., `vine_1`, `vine_2`).
+
+### 5.5 Example Levels
+
+Reference examples for each difficulty tier are available in `documentation/example-levels/`:
+
+- [seedling_example.json](example-levels/seedling_example.json) - Simple 6×8 grid, 4 vines
+- [sprout_example.json](example-levels/sprout_example.json) - Medium 8×10 grid, 8 vines
+- [nurturing_example.json](example-levels/nurturing_example.json) - 10×18 grid, 10 vines
+- [flourishing_example.json](example-levels/flourishing_example.json) - 14×22 grid, 12 vines
+- [transcendent_example.json](example-levels/transcendent_example.json) - Large 18×30 grid, 15 vines
+
+## 6. Tooling
 
 The Go-based toolchain located in `tools/level-builder` handles all operations.
 
-- **Clean**: `go run . clean` (Removes generated levels)
-- **Generate**: `go run . generate --count 50` (Generates levels and modules.json)
-- **Validate**: `go run . validate` (Checks all assets against schema and logic). To run solvability checks use `--check-solvable --max-states <N> --use-astar=true --astar-weight=<W>`; CI runs A* by default.
+### 6.1 Commands
+
+- **gen2**: Primary level generation with direction-first algorithm
+
+  ```bash
+  go run . gen2 --level-id 101 --difficulty Seedling
+  go run . gen2 --level-id 201 --difficulty Sprout --seed 12345
+  go run . gen2 --level-id 301 --difficulty Nurturing --randomize
+  ```
+
+- **validate**: Check all assets against schema and logic
+
+  ```bash
+  go run . validate --check-solvable
+  ```
+
+- **render**: Visualize levels in terminal
+
+  ```bash
+  go run . render --id 1 --style unicode
+  ```
+
+- **tutorials validate**: Validate lesson files
+
+  ```bash
+  go run . tutorials validate
+  ```
+
+### 6.2 Deprecated Commands
+
+- **generate**: Original generation command (deprecated due to infinite loop issues with 100% coverage + solvability tension). Use `gen2` instead.
