@@ -41,7 +41,7 @@ func (a *LevelAssembler) AssembleLevel(config GenerationConfig, vines []model.Vi
 			ID:            v.ID,
 			HeadDirection: v.HeadDirection,
 			OrderedPath:   convertCommonPointsToModel(v.OrderedPath),
-			ColorIndex:    (i % colorCount) + 1, // 1-based, round-robin assignment
+			ColorIndex:    i % colorCount, // 0-based, round-robin assignment
 		}
 	}
 
