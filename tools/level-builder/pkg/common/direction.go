@@ -1,6 +1,8 @@
 package common
 
 import (
+	"fmt"
+
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -108,4 +110,25 @@ func PerpendicularDirections(dir string) []string {
 	default:
 		return AllDirections
 	}
+}
+
+// IsExitPathClear checks if there's a clear straight-line path from the given position
+// to the grid edge in the specified direction. Used for LIFO solvability guarantee.
+func IsExitPathClear(pos model.Point, dir string, gridWidth, gridHeight int, occupied map[string]string) bool {
+	dx, dy := DeltaForDirection(dir)
+	x, y := pos.X+dx, pos.Y+dy // Start one cell ahead of current position
+
+	for x >= 0 && x < gridWidth && y >= 0 && y < gridHeight {
+		key := coordKey(x, y)
+		if _, blocked := occupied[key]; blocked {
+			return false
+		}
+		x, y = x+dx, y+dy
+	}
+	return true // Reached edge without collision
+}
+
+// coordKey returns a map key for coordinates (internal helper)
+func coordKey(x, y int) string {
+	return fmt.Sprintf("%d,%d", x, y)
 }

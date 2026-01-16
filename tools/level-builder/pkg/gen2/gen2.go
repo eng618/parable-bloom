@@ -189,6 +189,110 @@ func runGenerationAttempts(
 	return nil
 }
 
+// attemptLIFOGeneration performs generation using center-out placer with LIFO guarantee
+// No expensive solvability checks needed since LIFO ordering is guaranteed by construction
+func attemptLIFOGeneration(
+	config GenerationConfig,
+	placer *CenterOutPlacer,
+	analyzer *DFSBlockingAnalyzer,
+	rng *rand.Rand,
+) *generationState {
+	vines, occupied, err := placer.PlaceVines(config, rng)
+	if err != nil {
+		common.Verbose("LIFO placement failed: %v", err)
+		return nil
+	}
+
+	analysis, err := analyzer.AnalyzeBlocking(vines, occupied)
+	if err != nil {
+		common.Verbose("Blocking analysis failed: %v", err)
+		return nil
+	}
+
+	// Check coverage - if we added non-LIFO fillers, we need to verify solvability
+	coverage := float64(len(occupied)) / float64(config.GridWidth*config.GridHeight)
+	if coverage >= 0.90 {
+		// High coverage likely includes non-LIFO fillers, verify solvability
+		solvable, stats := checkSolvability(config, vines)
+		if !solvable {
+			common.Verbose("High-coverage LIFO level not solvable, rejecting")
+			return nil
+		}
+		return &generationState{
+			vines:    vines,
+			occupied: occupied,
+			analysis: analysis,
+			solvable: true,
+			stats:    stats,
+		}
+	}
+
+	// Lower coverage - pure LIFO vines, guaranteed solvable
+	return &generationState{
+		vines:    vines,
+		occupied: occupied,
+		analysis: analysis,
+		solvable: true, // Guaranteed by LIFO construction
+	}
+}
+
+// runLIFOAttempts runs multiple LIFO generation attempts until success
+func runLIFOAttempts(
+	config GenerationConfig,
+	placer *CenterOutPlacer,
+	analyzer *DFSBlockingAnalyzer,
+	rng *rand.Rand,
+	seed int64,
+	maxAttempts int,
+) *generationState {
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		common.Verbose("LIFO generation attempt %d/%d", attempt, maxAttempts)
+
+		attemptRng := rng
+		if attempt > 1 {
+			attemptRng = rand.New(rand.NewSource(seed + int64(attempt*10000)))
+		}
+
+		state := attemptLIFOGeneration(config, placer, analyzer, attemptRng)
+		if state != nil && len(state.vines) >= 2 {
+			common.Verbose("LIFO placement succeeded on attempt %d with %d vines", attempt, len(state.vines))
+			return state
+		}
+	}
+	return nil
+}
+
+// GenerateLevelLIFO generates a level using center-out placement with LIFO solvability guarantee.
+// This is faster than GenerateLevel because it doesn't need expensive A* solver checks.
+func GenerateLevelLIFO(config GenerationConfig) (model.Level, GenerationStats, error) {
+	startTime := time.Now()
+	rng, seed := initializeRNG(config)
+
+	placer := &CenterOutPlacer{}
+	analyzer := &DFSBlockingAnalyzer{}
+	assembler := &LevelAssembler{}
+	stats := GenerationStats{}
+
+	const maxAttempts = 10
+	state := runLIFOAttempts(config, placer, analyzer, rng, seed, maxAttempts)
+
+	stats.PlacementAttempts = maxAttempts
+	if state != nil {
+		stats.MaxBlockingDepth = state.analysis.MaxDepth
+	}
+
+	if state == nil || len(state.vines) < 2 {
+		return model.Level{}, stats, fmt.Errorf("LIFO generation failed after %d attempts", maxAttempts)
+	}
+
+	level, err := finalizeLevelGeneration(config, state, assembler, seed, &stats, startTime)
+	if err != nil {
+		return model.Level{}, stats, err
+	}
+
+	return level, stats, nil
+}
+
 // validateGenerationState checks if the generation state is valid for level creation
 func validateGenerationState(state *generationState, maxAttempts int) error {
 	if state == nil {
