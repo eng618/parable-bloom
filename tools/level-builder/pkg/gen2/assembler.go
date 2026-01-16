@@ -3,13 +3,15 @@ package gen2
 import (
 	"fmt"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
-// TranscendentAssembler implements LevelAssembler for transcendent levels
-type TranscendentAssembler struct{}
+// LevelAssembler implements LevelAssembler for all difficulty tiers
+type LevelAssembler struct{}
 
-// convertCommonPointsToModel converts []common.Point to []model.Point
+// TODO: does this need to be removed now? There is no actual conversion needed now?
+// convertCommonPointsToModel converts []model.Point to []model.Point
 func convertCommonPointsToModel(commonPoints []model.Point) []model.Point {
 	modelPoints := make([]model.Point, len(commonPoints))
 	for i, p := range commonPoints {
@@ -19,19 +21,32 @@ func convertCommonPointsToModel(commonPoints []model.Point) []model.Point {
 }
 
 // AssembleLevel creates the final level data structure
-func (a *TranscendentAssembler) AssembleLevel(config GenerationConfig, vines []model.Vine, mask *model.Mask, seed int64) model.Level {
-	// Convert vines to model format
+func (a *LevelAssembler) AssembleLevel(config GenerationConfig, vines []model.Vine, mask *model.Mask, seed int64) model.Level {
+	// Get difficulty spec for this tier
+	spec, ok := generator.DifficultySpecs[config.Difficulty]
+	if !ok {
+		// Fallback to Seedling if unknown difficulty
+		spec = generator.DifficultySpecs["Seedling"]
+	}
+
+	// Convert vines to model format with color_index assignment
 	modelVines := make([]model.Vine, len(vines))
+	colorCount := spec.ColorCountRange[1] // Use max colors from spec
+	if colorCount < 1 {
+		colorCount = 5
+	}
+
 	for i, v := range vines {
 		modelVines[i] = model.Vine{
 			ID:            v.ID,
 			HeadDirection: v.HeadDirection,
 			OrderedPath:   convertCommonPointsToModel(v.OrderedPath),
+			ColorIndex:    (i % colorCount) + 1, // 1-based, round-robin assignment
 		}
 	}
 
-	// Generate color scheme (simplified for now)
-	colorScheme := a.generateColorScheme(len(vines))
+	// Generate color scheme using shared palette
+	colorScheme := a.generateColorScheme(colorCount)
 
 	// Create mask in model format
 	var modelMask *model.Mask
@@ -43,46 +58,65 @@ func (a *TranscendentAssembler) AssembleLevel(config GenerationConfig, vines []m
 	}
 
 	// Estimate min moves (conservative)
-	minMoves := len(vines) / 2
+	minMoves := len(vines)
 	if minMoves < 1 {
 		minMoves = 1
 	}
 
+	// Determine complexity based on difficulty tier
+	complexity := a.complexityForDifficulty(config.Difficulty)
+
 	level := model.Level{
 		ID:          config.LevelID,
-		Name:        fmt.Sprintf("Transcendent Level %d", config.LevelID),
-		Difficulty:  "Transcendent",
+		Name:        fmt.Sprintf("Level %d", config.LevelID),
+		Difficulty:  config.Difficulty,
 		GridSize:    []int{config.GridWidth, config.GridHeight},
 		Vines:       modelVines,
 		MaxMoves:    config.MaxMoves,
 		MinMoves:    minMoves,
-		Complexity:  "extreme",
-		Grace:       4, // Transcendent gets 4 grace
+		Complexity:  complexity,
+		Grace:       spec.DefaultGrace,
 		ColorScheme: colorScheme,
 		Mask:        modelMask,
-		Seed:        seed, // Add seed to level metadata
+		Seed:        seed,
 	}
 
 	return level
 }
 
-// generateColorScheme creates a color palette for the level
-func (a *TranscendentAssembler) generateColorScheme(vineCount int) []string {
-	// Transcendent color scheme - rich, complex colors
-	baseColors := []string{
-		"#8B4513", // Saddle Brown (foundation)
-		"#FF6347", // Tomato (intermediate)
-		"#FFD700", // Gold (quick-clear)
-		"#8A2BE2", // Blue Violet (complex)
-		"#00CED1", // Dark Turquoise (alternative)
-		"#DC143C", // Crimson (deep blocking)
-		"#32CD32", // Lime Green (strategic)
-		"#FF1493", // Deep Pink (boss vines)
+// complexityForDifficulty maps difficulty tier to complexity string
+func (a *LevelAssembler) complexityForDifficulty(difficulty string) string {
+	switch difficulty {
+	case "Tutorial":
+		return "simple"
+	case "Seedling":
+		return "low"
+	case "Sprout":
+		return "medium"
+	case "Nurturing":
+		return "medium"
+	case "Flourishing":
+		return "high"
+	case "Transcendent":
+		return "extreme"
+	default:
+		return "medium"
+	}
+}
+
+// generateColorScheme creates a color palette using the shared ColorPalette
+func (a *LevelAssembler) generateColorScheme(colorCount int) []string {
+	palette := generator.ColorPalette
+	if colorCount > len(palette) {
+		colorCount = len(palette)
+	}
+	if colorCount < 1 {
+		colorCount = 5
 	}
 
-	colors := make([]string, vineCount)
-	for i := range colors {
-		colors[i] = baseColors[i%len(baseColors)]
+	colors := make([]string, colorCount)
+	for i := 0; i < colorCount; i++ {
+		colors[i] = palette[i%len(palette)]
 	}
 
 	return colors

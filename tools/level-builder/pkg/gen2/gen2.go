@@ -15,7 +15,7 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
 
-// GenerationConfig holds configuration for transcendent level generation
+// GenerationConfig holds configuration for level generation
 type GenerationConfig struct {
 	LevelID     int
 	GridWidth   int
@@ -27,6 +27,7 @@ type GenerationConfig struct {
 	Seed        int64
 	Overwrite   bool
 	MinCoverage float64 // Minimum grid coverage required (0.0-1.0)
+	Difficulty  string  // Difficulty tier (Seedling, Sprout, etc.)
 }
 
 // GenerationStats tracks performance and quality metrics
@@ -55,101 +56,209 @@ type BlockingAnalysis struct {
 	CircularChains [][]string
 }
 
-// LevelAssembler defines the interface for assembling final level data
-type LevelAssembler interface {
+// Assembler defines the interface for assembling final level data
+type Assembler interface {
 	AssembleLevel(config GenerationConfig, vines []model.Vine, mask *model.Mask, seed int64) model.Level
 }
 
-// GenerateTranscendentLevel generates a single transcendent difficulty level
-func GenerateTranscendentLevel(config GenerationConfig) (model.Level, GenerationStats, error) {
-	startTime := time.Now()
+// generationState holds the mutable state during level generation
+type generationState struct {
+	vines    []model.Vine
+	occupied map[string]string
+	analysis BlockingAnalysis
+	solvable bool
+	stats    validator.SolvabilityStats
+}
 
-	// Initialize RNG
-	var rng *rand.Rand
+// initializeRNG creates the random number generator from config
+func initializeRNG(config GenerationConfig) (*rand.Rand, int64) {
 	var seed int64
 	if config.Randomize {
 		seed = cryptoSeedInt64()
 	} else if config.Seed != 0 {
 		seed = config.Seed
 	} else {
-		seed = int64(config.LevelID * 31337) // Deterministic fallback
+		seed = int64(config.LevelID * 31337)
 	}
-	rng = rand.New(rand.NewSource(seed))
-
 	common.Verbose("Using seed: %d", seed)
+	return rand.New(rand.NewSource(seed)), seed
+}
 
-	// Initialize components
-	placer := &CircuitBoardPlacer{}
-	analyzer := &DFSBlockingAnalyzer{}
-	assembler := &TranscendentAssembler{}
-
-	stats := GenerationStats{}
-
-	// Generate vines with circuit-board aesthetics
-	common.Info("Placing vines with circuit-board aesthetics...")
+// attemptGeneration performs a single generation attempt with optional backtracking
+func attemptGeneration(
+	config GenerationConfig,
+	placer *DirectionFirstPlacer,
+	analyzer *DFSBlockingAnalyzer,
+	rng *rand.Rand,
+	maxBacktrack int,
+) *generationState {
 	vines, occupied, err := placer.PlaceVines(config, rng)
 	if err != nil {
-		return model.Level{}, stats, fmt.Errorf("vine placement failed: %w", err)
+		common.Verbose("Placement failed: %v", err)
+		return nil
 	}
 
-	stats.PlacementAttempts = 1 // Will be updated when we implement retry logic
-
-	// Analyze blocking relationships
-	common.Info("Analyzing blocking relationships...")
 	analysis, err := analyzer.AnalyzeBlocking(vines, occupied)
 	if err != nil {
-		return model.Level{}, stats, fmt.Errorf("blocking analysis failed: %w", err)
+		common.Verbose("Blocking analysis failed: %v", err)
+		return nil
 	}
+
+	state := &generationState{vines: vines, occupied: occupied, analysis: analysis}
 
 	if analysis.HasCircular {
-		common.Info("Warning: generated level has circular blocking - checking if still solvable")
-		// Don't reject yet - check if validator can find a solution
+		common.Verbose("Circular blocking detected, backtracking...")
+		state.vines, state.occupied = backtrackVines(vines, occupied, maxBacktrack)
+		state.analysis, _ = analyzer.AnalyzeBlocking(state.vines, state.occupied)
+		if state.analysis.HasCircular {
+			return nil
+		}
 	}
 
-	stats.MaxBlockingDepth = analysis.MaxDepth
-
-	// Check solvability
-	common.Info("Checking solvability...")
-	solvable, checkStats := checkSolvability(config, vines)
-	stats.SolvabilityChecks = checkStats
-
-	if !solvable {
-		common.Info("Warning: generated level is not solvable - proceeding for development")
-		// return model.Level{}, stats, fmt.Errorf("generated level is not solvable")
+	state.solvable, state.stats = checkSolvability(config, state.vines)
+	if state.solvable {
+		return state
 	}
 
-	// Calculate grid coverage
-	coverage := calculateGridCoverage(config, occupied)
+	// Backtrack and retry
+	state.vines, state.occupied = backtrackVines(state.vines, state.occupied, maxBacktrack)
+	state.solvable, state.stats = checkSolvability(config, state.vines)
+	if state.solvable && len(state.vines) >= 2 {
+		return state
+	}
+	return nil
+}
+
+// finalizeLevelGeneration assembles the level and writes it to file
+func finalizeLevelGeneration(
+	config GenerationConfig,
+	state *generationState,
+	assembler *LevelAssembler,
+	seed int64,
+	stats *GenerationStats,
+	startTime time.Time,
+) (model.Level, error) {
+	coverage := calculateGridCoverage(config, state.occupied)
 	stats.GridCoverage = coverage
 
-	if coverage < config.MinCoverage {
-		return model.Level{}, stats, fmt.Errorf("insufficient grid coverage: %.1f%% (need ≥%.0f%%)", coverage*100, config.MinCoverage*100)
-	}
-
-	// Create mask for any unfilled cells
 	var mask *model.Mask
 	if coverage < 1.0 {
-		emptyCells := findEmptyCells(config, occupied)
+		emptyCells := findEmptyCells(config, state.occupied)
 		if len(emptyCells) > 0 {
 			mode := "hide"
-			if len(emptyCells) <= config.GridWidth*config.GridHeight/100 { // <1% empty
-				mode = "show-all" // Keep them visible for visual interest
+			if len(emptyCells) <= config.GridWidth*config.GridHeight/100 {
+				mode = "show-all"
 			}
 			mask = &model.Mask{Mode: mode, Points: emptyCells}
 		}
 	}
 
-	// Assemble final level
-	level := assembler.AssembleLevel(config, vines, mask, seed)
+	level := assembler.AssembleLevel(config, state.vines, mask, seed)
 
-	// Write to file
 	if err := writeLevelToFile(level, config); err != nil {
-		return model.Level{}, stats, fmt.Errorf("failed to write level file: %w", err)
+		return model.Level{}, fmt.Errorf("failed to write level file: %w", err)
 	}
 
 	stats.GenerationTime = time.Since(startTime)
+	return level, nil
+}
+
+// runGenerationAttempts runs the generation loop until a solvable level is found
+func runGenerationAttempts(
+	config GenerationConfig,
+	placer *DirectionFirstPlacer,
+	analyzer *DFSBlockingAnalyzer,
+	rng *rand.Rand,
+	seed int64,
+	maxAttempts, maxBacktrack int,
+) *generationState {
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		common.Verbose("Generation attempt %d/%d", attempt, maxAttempts)
+
+		attemptRng := rng
+		if attempt > 1 {
+			attemptRng = rand.New(rand.NewSource(seed + int64(attempt*10000)))
+		}
+
+		state := attemptGeneration(config, placer, analyzer, attemptRng, maxBacktrack)
+		if state != nil && state.solvable {
+			common.Verbose("Found solvable level on attempt %d with %d vines", attempt, len(state.vines))
+			return state
+		}
+	}
+	return nil
+}
+
+// validateGenerationState checks if the generation state is valid for level creation
+func validateGenerationState(state *generationState, maxAttempts int) error {
+	if state == nil {
+		return fmt.Errorf("failed to generate level after %d attempts", maxAttempts)
+	}
+	if state.analysis.HasCircular {
+		return fmt.Errorf("failed to generate level without circular blocking after %d attempts", maxAttempts)
+	}
+	if !state.solvable {
+		return fmt.Errorf("failed to generate solvable level after %d attempts", maxAttempts)
+	}
+	return nil
+}
+
+// GenerateLevel generates a single level using advanced algorithms with
+// incremental solvability checking and backtracking
+func GenerateLevel(config GenerationConfig) (model.Level, GenerationStats, error) {
+	startTime := time.Now()
+	rng, seed := initializeRNG(config)
+
+	placer := &DirectionFirstPlacer{}
+	analyzer := &DFSBlockingAnalyzer{}
+	assembler := &LevelAssembler{}
+	stats := GenerationStats{}
+
+	const maxAttempts = 10
+	const maxBacktrack = 3
+
+	state := runGenerationAttempts(config, placer, analyzer, rng, seed, maxAttempts, maxBacktrack)
+
+	stats.PlacementAttempts = maxAttempts
+	if state != nil {
+		stats.MaxBlockingDepth = state.analysis.MaxDepth
+		stats.SolvabilityChecks = state.stats
+	}
+
+	if err := validateGenerationState(state, maxAttempts); err != nil {
+		return model.Level{}, stats, err
+	}
+
+	level, err := finalizeLevelGeneration(config, state, assembler, seed, &stats, startTime)
+	if err != nil {
+		return model.Level{}, stats, err
+	}
 
 	return level, stats, nil
+}
+
+// backtrackVines removes the last N vines and returns updated collections
+func backtrackVines(vines []model.Vine, occupied map[string]string, count int) ([]model.Vine, map[string]string) {
+	if count >= len(vines) {
+		count = len(vines) - 1 // Keep at least one vine
+	}
+	if count < 1 || len(vines) < 2 {
+		return vines, occupied
+	}
+
+	// Remove last 'count' vines
+	toRemove := vines[len(vines)-count:]
+	vines = vines[:len(vines)-count]
+
+	// Remove their cells from occupied
+	for _, vine := range toRemove {
+		for _, pt := range vine.OrderedPath {
+			key := fmt.Sprintf("%d,%d", pt.X, pt.Y)
+			delete(occupied, key)
+		}
+	}
+
+	return vines, occupied
 }
 
 // cryptoSeedInt64 returns a crypto-random int64 seed
@@ -173,7 +282,7 @@ func checkSolvability(config GenerationConfig, vines []model.Vine) (bool, valida
 		Difficulty: "Transcendent",
 	}
 
-	solvable, stats, err := validator.IsSolvable(level, 100000) // 100k max states
+	solvable, stats, err := validator.IsSolvable(level, 500000) // 500k max states for transcendent
 	if err != nil {
 		common.Verbose("Solvability check error: %v", err)
 		return false, validator.SolvabilityStats{}
