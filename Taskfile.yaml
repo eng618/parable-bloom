@@ -571,6 +571,20 @@ tasks:
   # -----------------------------------------------------------------------------
   # Dependencies
 
+  setup:
+    desc: Set up the project for development (flutter pub get, go mod tidy, pod install for iOS/macOS on Mac)
+    cmds:
+      - task: get
+      - task: level-builder:get
+      - |
+        if [ "$(uname)" = "Darwin" ]; then
+          echo "macOS detected - installing CocoaPods dependencies..."
+          cd ios && pod install
+          cd ../macos && pod install
+        else
+          echo "Skipping CocoaPods installation (not on macOS)"
+        fi
+
   get:
     desc: Get Flutter dependencies
     cmds:
