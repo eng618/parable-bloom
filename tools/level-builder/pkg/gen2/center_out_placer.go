@@ -38,7 +38,37 @@ func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([
 		)
 		if err != nil {
 			common.Verbose("Could not place vine %s: %v", vineID, err)
-			continue
+
+			// Attempt local backtracking (configurable)
+			backtrackWindow := config.BacktrackWindow
+			if backtrackWindow == 0 {
+				backtrackWindow = 3
+			}
+			maxBack := config.MaxBacktrackAttempts
+			if maxBack == 0 {
+				maxBack = 2
+			}
+
+			placed := false
+			for ba := 0; ba < maxBack; ba++ {
+				if len(vines) < 2 {
+					break
+				}
+				common.Verbose("Backtracking %d vines (attempt %d/%d) to recover placement for %s", backtrackWindow, ba+1, maxBack, vineID)
+				vines, occupied = backtrackVines(vines, occupied, backtrackWindow)
+				var err2 error
+				vine, newOccupied, err2 = p.placeVineWithExitGuarantee(vineID, targetLen, w, h, occupied, rng)
+				if err2 == nil {
+					placed = true
+					common.Verbose("Recovered placement for %s after backtracking", vineID)
+					break
+				}
+			}
+
+			if !placed {
+				_ = writeFailureDump(config, config.Seed, 0, fmt.Sprintf("Could not place vine %s after backtracking: %v", vineID, err), vines, occupied)
+				continue
+			}
 		}
 
 		vines = append(vines, vine)

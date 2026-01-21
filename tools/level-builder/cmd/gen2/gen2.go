@@ -45,6 +45,11 @@ var (
 	overwrite  bool
 	difficulty string
 	useLIFO    bool
+
+	// Backtracking flags (optional)
+	backtrackWindow      int
+	maxBacktrackAttempts int
+	dumpDir              string
 )
 
 // gen2Cmd represents the gen2 command
@@ -141,17 +146,20 @@ Examples:
 
 		// Create generation config
 		config := gen2.GenerationConfig{
-			LevelID:     levelID,
-			GridWidth:   gridWidth,
-			GridHeight:  gridHeight,
-			VineCount:   vineCount,
-			MaxMoves:    maxMoves,
-			OutputFile:  outputFile,
-			Randomize:   randomize,
-			Seed:        seed,
-			Overwrite:   overwrite,
-			MinCoverage: targetCoverage,
-			Difficulty:  difficulty,
+			LevelID:              levelID,
+			GridWidth:            gridWidth,
+			GridHeight:           gridHeight,
+			VineCount:            vineCount,
+			MaxMoves:             maxMoves,
+			OutputFile:           outputFile,
+			Randomize:            randomize,
+			Seed:                 seed,
+			Overwrite:            overwrite,
+			MinCoverage:          targetCoverage,
+			Difficulty:           difficulty,
+			BacktrackWindow:      backtrackWindow,
+			MaxBacktrackAttempts: maxBacktrackAttempts,
+			DumpDir:              dumpDir,
 		}
 
 		// Start performance monitoring
@@ -216,6 +224,11 @@ func init() {
 	gen2Cmd.Flags().Int64Var(&seed, "seed", 0, "specific seed for reproducible generation")
 	gen2Cmd.Flags().BoolVar(&overwrite, "overwrite", false, "overwrite existing files")
 	gen2Cmd.Flags().BoolVar(&useLIFO, "lifo", false, "use LIFO mode (center-out placement, 100%% coverage, no solver)")
+
+	// Backtracking CLI flags
+	gen2Cmd.Flags().IntVar(&backtrackWindow, "backtrack-window", 0, "local backtrack window (how many prior vines to remove on failure). Default: 3")
+	gen2Cmd.Flags().IntVar(&maxBacktrackAttempts, "max-backtrack-attempts", 0, "max local backtrack retries to try before giving up. Default: 2")
+	gen2Cmd.Flags().StringVar(&dumpDir, "dump-dir", "", "directory to write failing generation dumps (default: tools/level-builder/failing_dumps)")
 
 	// Mark required flags
 	gen2Cmd.MarkFlagRequired("level-id")

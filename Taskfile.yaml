@@ -495,8 +495,7 @@ tasks:
       - task: lint
       - task: test
       - task: build:web
-      - task: level-builder:lint
-      - task: level-builder:test
+      - task: level-builder:validate
       - task: level-builder:build
 
   validate:fix:
@@ -506,8 +505,7 @@ tasks:
       - task: lint:fix
       - task: analyze
       - task: test
-      - task: level-builder:lint:fix
-      - task: level-builder:test
+      - task: level-builder:validate:fix
       - task: level-builder:build
 
   clean:

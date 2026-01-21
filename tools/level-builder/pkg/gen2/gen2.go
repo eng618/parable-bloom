@@ -28,6 +28,11 @@ type GenerationConfig struct {
 	Overwrite   bool
 	MinCoverage float64 // Minimum grid coverage required (0.0-1.0)
 	Difficulty  string  // Difficulty tier (Seedling, Sprout, etc.)
+
+	// Local backtracking configuration
+	BacktrackWindow      int    // How many previous vines to remove when attempting local recovery (default 3)
+	MaxBacktrackAttempts int    // How many local backtrack retries to attempt per failure (default 2)
+	DumpDir              string // Directory to write deterministic failure dumps (if empty, defaults to tools/level-builder/failing_dumps)
 }
 
 // GenerationStats tracks performance and quality metrics
@@ -200,6 +205,8 @@ func attemptLIFOGeneration(
 	vines, occupied, err := placer.PlaceVines(config, rng)
 	if err != nil {
 		common.Verbose("LIFO placement failed: %v", err)
+		// Dump failing state for deterministic reproduction
+		_ = writeFailureDump(config, config.Seed, 0, fmt.Sprintf("LIFO placement failed: %v", err), vines, occupied)
 		return nil
 	}
 
@@ -216,6 +223,8 @@ func attemptLIFOGeneration(
 		solvable, stats := checkSolvability(config, vines)
 		if !solvable {
 			common.Verbose("High-coverage LIFO level not solvable, rejecting")
+			// Dump failing state for diagnosis
+			_ = writeFailureDump(config, config.Seed, 0, "high-coverage LIFO not solvable", vines, occupied)
 			return nil
 		}
 		return &generationState{
@@ -248,12 +257,16 @@ func runLIFOAttempts(
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		common.Verbose("LIFO generation attempt %d/%d", attempt, maxAttempts)
 
-		attemptRng := rng
+		// Derive a per-attempt seed so failing states are reproducible
+		attemptSeed := seed
 		if attempt > 1 {
-			attemptRng = rand.New(rand.NewSource(seed + int64(attempt*10000)))
+			attemptSeed = seed + int64(attempt*10000)
 		}
+		cfg := config
+		cfg.Seed = attemptSeed
+		attemptRng := rand.New(rand.NewSource(attemptSeed))
 
-		state := attemptLIFOGeneration(config, placer, analyzer, attemptRng)
+		state := attemptLIFOGeneration(cfg, placer, analyzer, attemptRng)
 		if state != nil && len(state.vines) >= 2 {
 			common.Verbose("LIFO placement succeeded on attempt %d with %d vines", attempt, len(state.vines))
 			return state
@@ -399,8 +412,12 @@ func GenerateLevel(config GenerationConfig) (model.Level, GenerationStats, error
 			attemptRng = rand.New(rand.NewSource(seed + int64(attempt*10000)))
 		}
 
-		// We use maxBacktrack=3 by default
-		state := attemptGeneration(config, placer, analyzer, attemptRng, 3)
+		// Determine backtrack window (default 3)
+		backtrackWindow := config.BacktrackWindow
+		if backtrackWindow == 0 {
+			backtrackWindow = 3
+		}
+		state := attemptGeneration(config, placer, analyzer, attemptRng, backtrackWindow)
 
 		stats.PlacementAttempts++
 
@@ -458,6 +475,77 @@ func backtrackVines(vines []model.Vine, occupied map[string]string, count int) (
 	}
 
 	return vines, occupied
+}
+
+// writeFailureDump writes a deterministic dump (JSON + ASCII render) for failing generation states.
+func writeFailureDump(config GenerationConfig, seed int64, attempt int, message string, vines []model.Vine, occupied map[string]string) error {
+	// Default dump dir
+	dumpDir := config.DumpDir
+	if dumpDir == "" {
+		dumpDir = "tools/level-builder/failing_dumps"
+	}
+	if err := os.MkdirAll(dumpDir, 0755); err != nil {
+		return err
+	}
+
+	// File names
+	timestamp := time.Now().UTC().Format("20060102_150405")
+	base := fmt.Sprintf("failure_level_%d_seed_%d_attempt_%d_%s", config.LevelID, seed, attempt, timestamp)
+	jsonPath := filepath.Join(dumpDir, base+".json")
+	txtPath := filepath.Join(dumpDir, base+".txt")
+
+	// Prepare dump object
+	dump := map[string]interface{}{
+		"level_id": config.LevelID,
+		"grid":     []int{config.GridWidth, config.GridHeight},
+		"seed":     seed,
+		"attempt":  attempt,
+		"message":  message,
+		"coverage": calculateGridCoverage(config, occupied),
+	}
+
+	// Vines
+	var simpleVines []map[string]interface{}
+	for _, v := range vines {
+		simple := map[string]interface{}{
+			"id":            v.ID,
+			"head_direction": v.HeadDirection,
+			"ordered_path":   v.OrderedPath,
+		}
+		simpleVines = append(simpleVines, simple)
+	}
+	dump["vines"] = simpleVines
+	dump["occupied"] = occupied
+
+	// Write JSON
+	f, err := os.Create(jsonPath)
+	if err == nil {
+		enc := json.NewEncoder(f)
+		enc.SetIndent("", "  ")
+		_ = enc.Encode(dump)
+		f.Close()
+		common.Info("Wrote failure dump: %s", jsonPath)
+	} else {
+		common.Verbose("Failed to write dump JSON: %v", err)
+	}
+
+	// Write ASCII render
+	level := model.Level{
+		ID:       config.LevelID,
+		Name:     "failure_dump",
+		GridSize: []int{config.GridWidth, config.GridHeight},
+		Vines:    convertVinesToModel(vines),
+	}
+	f2, err := os.Create(txtPath)
+	if err == nil {
+		common.RenderLevelToWriter(f2, &level, "ascii", true)
+		f2.Close()
+		common.Info("Wrote failure render: %s", txtPath)
+	} else {
+		common.Verbose("Failed to write dump render: %v", err)
+	}
+
+	return nil
 }
 
 // cryptoSeedInt64 returns a crypto-random int64 seed
