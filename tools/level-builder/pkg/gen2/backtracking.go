@@ -89,6 +89,66 @@ func AttemptLocalBacktrack(
 		}
 	}
 
-	_ = writeFailureDump(config, config.Seed, 0, fmt.Sprintf("Could not place vine %s after local backtracking", vineID), vines, occupied)
+	// Cycle-breaker repair: analyze blocking graph for cycles and attempt targeted removals
+	analyzer := &DFSBlockingAnalyzer{}
+	analysis, aerr := analyzer.AnalyzeBlocking(vines, occupied)
+	if aerr == nil && analysis.HasCircular {
+		common.Verbose("AttemptLocalBacktrack: detected circular blocking chains: %+v", analysis.CircularChains)
+		// For each circular chain, try removing one vine (prefer shortest) and re-attempt placement
+		for _, chain := range analysis.CircularChains {
+			// select candidate: shortest vine in chain
+			var candidate string
+			minLen := 1<<31 - 1
+			for _, cid := range chain {
+				for _, v := range vines {
+					if v.ID == cid {
+						if len(v.OrderedPath) < minLen {
+							minLen = len(v.OrderedPath)
+							candidate = cid
+						}
+					}
+				}
+			}
+
+			if candidate == "" {
+				continue
+			}
+
+			common.Verbose("AttemptLocalBacktrack: trying cycle-breaker removal candidate %s from cycle %v", candidate, chain)
+			// remove candidate cells
+			vCopy := make([]model.Vine, 0, len(vines))
+			for _, v := range vines {
+				if v.ID == candidate {
+					continue
+				}
+				vCopy = append(vCopy, v)
+			}
+			occCopy := make(map[string]string)
+			for k, v := range occupied {
+				occCopy[k] = v
+			}
+			for _, v := range vines {
+				if v.ID != candidate {
+					continue
+				}
+				for _, pt := range v.OrderedPath {
+					key := fmt.Sprintf("%d,%d", pt.X, pt.Y)
+					delete(occCopy, key)
+				}
+			}
+
+			vineAttempt, newOcc, err := p.placeVineWithExitGuarantee(vineID, targetLen, w, h, occCopy, rng)
+			if err == nil {
+				// successful placement after cycle-breaker removal
+				for k, v := range newOcc {
+					occCopy[k] = v
+				}
+				vCopy = append(vCopy, vineAttempt)
+				return vineAttempt, newOcc, vCopy, occCopy, nil
+			}
+		}
+	}
+
+	_ = writeFailureDump(config, config.Seed, 0, fmt.Sprintf("Could not place vine %s after local backtracking and cycle-breaker repair", vineID), vines, occupied)
 	return model.Vine{}, nil, vines, occupied, fmt.Errorf("local backtracking failed for vine %s", vineID)
 }

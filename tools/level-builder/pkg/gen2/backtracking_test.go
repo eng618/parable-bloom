@@ -72,3 +72,33 @@ func TestAttemptLocalBacktrackRecovers(t *testing.T) {
 		t.Fatalf("expected at least 2 vines, got %d", len(vines))
 	}
 }
+
+func TestCycleBreakerRepairRecovers(t *testing.T) {
+	// Replay a known failing seed which previously produced a high-coverage unsolvable state
+	config := GenerationConfig{
+		LevelID:              28,
+		GridWidth:            7,
+		GridHeight:           10,
+		VineCount:            10,
+		MaxMoves:             20,
+		Randomize:            false,
+		Seed:                 877436,
+		Overwrite:            true,
+		MinCoverage:          1.0,
+		Difficulty:           "Seedling",
+		BacktrackWindow:      3, // conservative window to force fallback path
+		MaxBacktrackAttempts: 2,
+		DumpDir:              t.TempDir(),
+	}
+
+	level, stats, err := GenerateLevelLIFO(config)
+	if err != nil {
+		t.Fatalf("expected cycle-breaker to recover and succeed for seed %d, got: %v", config.Seed, err)
+	}
+	if level.ID != 28 {
+		t.Fatalf("unexpected level id: %d", level.ID)
+	}
+	if stats.PlacementAttempts == 0 {
+		t.Fatalf("expected some placement attempts, got 0")
+	}
+}
