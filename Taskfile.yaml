@@ -197,6 +197,13 @@ tasks:
     cmds:
       - go test ./...
 
+  test-resilience:
+    desc: Run focused resilience tests for level-builder
+    dir: tools/level-builder
+    cmds:
+      - go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
+      - go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
+
   level-builder:lint:
     desc: Run level-builder Go module linting using golangci-lint
     dir: tools/level-builder

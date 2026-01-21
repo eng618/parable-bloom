@@ -49,7 +49,8 @@ var (
 	// Backtracking flags (optional)
 	backtrackWindow      int
 	maxBacktrackAttempts int
-	dumpDir              string
+	dumpDir              string // Aggressive mode for batch runs (larger window and attempts)
+	aggressive           bool
 )
 
 // gen2Cmd represents the gen2 command
@@ -145,6 +146,22 @@ Examples:
 		}
 
 		// Create generation config
+		// Apply conservative defaults unless aggressive mode requested
+		if backtrackWindow == 0 {
+			if aggressive {
+				backtrackWindow = 6
+			} else {
+				backtrackWindow = 3
+			}
+		}
+		if maxBacktrackAttempts == 0 {
+			if aggressive {
+				maxBacktrackAttempts = 6
+			} else {
+				maxBacktrackAttempts = 2
+			}
+		}
+
 		config := gen2.GenerationConfig{
 			LevelID:              levelID,
 			GridWidth:            gridWidth,
@@ -190,7 +207,7 @@ Examples:
 		common.Info("  Generation time: %v", generationTime)
 		common.Info("  Placement attempts: %d", stats.PlacementAttempts)
 		if !useLIFO {
-			common.Info("  Solvability checks: %d", stats.SolvabilityChecks)
+			common.Info("  Solvability checks: solver=%s states=%d gave_up=%v", stats.SolvabilityChecks.Solver, stats.SolvabilityChecks.StatesExplored, stats.SolvabilityChecks.GaveUp)
 		}
 		common.Info("  Max blocking depth: %d", stats.MaxBlockingDepth)
 		common.Info("  Grid coverage: %.1f%%", stats.GridCoverage*100)
@@ -229,6 +246,7 @@ func init() {
 	gen2Cmd.Flags().IntVar(&backtrackWindow, "backtrack-window", 0, "local backtrack window (how many prior vines to remove on failure). Default: 3")
 	gen2Cmd.Flags().IntVar(&maxBacktrackAttempts, "max-backtrack-attempts", 0, "max local backtrack retries to try before giving up. Default: 2")
 	gen2Cmd.Flags().StringVar(&dumpDir, "dump-dir", "", "directory to write failing generation dumps (default: tools/level-builder/failing_dumps)")
+	gen2Cmd.Flags().BoolVar(&aggressive, "aggressive", false, "enable aggressive backtracking defaults for batch runs (window=6 attempts=6)")
 
 	// Mark required flags
 	gen2Cmd.MarkFlagRequired("level-id")

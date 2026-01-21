@@ -1,6 +1,7 @@
 package gen2
 
 import (
+	"math/rand"
 	"os"
 	"testing"
 )
@@ -41,5 +42,33 @@ func TestLIFOBacktrackingProducesDumpsAndSucceeds(t *testing.T) {
 	}
 	if len(entries) == 0 {
 		t.Fatalf("expected dump files in %s, found none", tmpDir)
+	}
+}
+
+func TestAttemptLocalBacktrackRecovers(t *testing.T) {
+	// Use a seed known to cause a per-vine failure under small windows but succeed under aggressive
+	config := GenerationConfig{
+		LevelID:              1,
+		GridWidth:            7,
+		GridHeight:           10,
+		VineCount:            10,
+		MaxMoves:             20,
+		Randomize:            false,
+		Seed:                 31337,
+		Overwrite:            true,
+		MinCoverage:          1.0,
+		Difficulty:           "Seedling",
+		BacktrackWindow:      6,
+		MaxBacktrackAttempts: 6,
+	}
+
+	rng := rand.New(rand.NewSource(config.Seed))
+	placer := &CenterOutPlacer{}
+	vines, _, err := placer.PlaceVines(config, rng)
+	if err != nil {
+		t.Fatalf("expected PlaceVines to succeed with aggressive backtracking, got: %v", err)
+	}
+	if len(vines) < 2 {
+		t.Fatalf("expected at least 2 vines, got %d", len(vines))
 	}
 }

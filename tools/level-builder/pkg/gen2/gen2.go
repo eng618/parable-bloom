@@ -222,8 +222,12 @@ func attemptLIFOGeneration(
 		// High coverage likely includes non-LIFO fillers, verify solvability
 		solvable, stats := checkSolvability(config, vines)
 		if !solvable {
-			common.Verbose("High-coverage LIFO level not solvable, rejecting")
-			// Dump failing state for diagnosis
+			common.Verbose("High-coverage LIFO level not solvable, attempting LIFO recovery")
+			// Try a bounded recovery (local backtracking + refill) before rejecting
+			if recState, err := attemptLifoRecovery(config, placer, analyzer, vines, occupied, rng); err == nil {
+				return recState
+			}
+			common.Verbose("LIFO recovery failed, dumping failing state and rejecting")
 			_ = writeFailureDump(config, config.Seed, 0, "high-coverage LIFO not solvable", vines, occupied)
 			return nil
 		}
@@ -576,6 +580,61 @@ func checkSolvability(config GenerationConfig, vines []model.Vine) (bool, valida
 	}
 
 	return solvable, stats
+}
+
+// attemptLifoRecovery tries bounded local backtracking + refill when a high-coverage LIFO build
+// fails the solver. It returns a generationState on success, or error on failure.
+func attemptLifoRecovery(
+	config GenerationConfig,
+	p *CenterOutPlacer,
+	analyzer *DFSBlockingAnalyzer,
+	vines []model.Vine,
+	occupied map[string]string,
+	rng *rand.Rand,
+) (*generationState, error) {
+	backtrackWindow := config.BacktrackWindow
+	if backtrackWindow == 0 {
+		backtrackWindow = 3
+	}
+	maxBack := config.MaxBacktrackAttempts
+	if maxBack == 0 {
+		maxBack = 2
+	}
+
+	for ba := 0; ba < maxBack; ba++ {
+		common.Verbose("attemptLifoRecovery: backtrack depth %d/%d", ba+1, maxBack)
+		vines, occupied = backtrackVines(vines, occupied, backtrackWindow)
+
+		// Try to re-fill to meet coverage
+		fillerVines, fillerOccupied := p.createFillerVines(vines, occupied, config.GridWidth, config.GridHeight, config.MinCoverage, rng)
+		vines = append(vines, fillerVines...)
+		for k, v := range fillerOccupied {
+			occupied[k] = v
+		}
+
+		analysis, err := analyzer.AnalyzeBlocking(vines, occupied)
+		if err != nil {
+			common.Verbose("Blocking analysis error during recovery: %v", err)
+			continue
+		}
+		if analysis.HasCircular {
+			common.Verbose("Circular blocking after backtracking; continuing recovery")
+			continue
+		}
+
+		// Run cheap incremental solvability check to avoid expensive full solver when hopeless
+		if !IsLikelySolvablePartial(vines, occupied, config.GridWidth, config.GridHeight, 50) {
+			common.Verbose("Incremental solver indicates hopeless state; continuing recovery")
+			continue
+		}
+
+		solvable, stats := checkSolvability(config, vines)
+		if solvable {
+			return &generationState{vines: vines, occupied: occupied, analysis: analysis, solvable: true, stats: stats}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("lifo recovery failed after %d attempts", maxBack)
 }
 
 // calculateGridCoverage calculates what percentage of the grid is occupied

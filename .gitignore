@@ -103,3 +103,7 @@ tools/level-builder/validation.log
 
 # Hugo generated site
 docs/
+
+# Level dumps from failing level generations
+tools/level-builder/failing_dumps_batch/
+tools/level-builder/failing_dumps_batch_aggressive/
