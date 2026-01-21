@@ -3,6 +3,7 @@ package validator
 import (
 	"fmt"
 	"math"
+	"sort"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
@@ -205,13 +206,25 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 	// Precompute occupied cell sets
 	vineCells := buildVineCells(lvl)
 
-	fullMask := (1 << uint(vineCount)) - 1
-	// Use slice-backed visited queue for performance
-	size := 1 << uint(vineCount)
-	if size <= 0 {
-		size = 1
+	// Precompute blocking relationships
+	blocking := make([][]bool, vineCount)
+	for i := range blocking {
+		blocking[i] = make([]bool, vineCount)
 	}
-	visited := make([]bool, size)
+	for i := 0; i < vineCount; i++ {
+		for j := 0; j < vineCount; j++ {
+			if i == j {
+				continue
+			}
+			if doesVineBlockVine(vines[i], vines[j], lvl.GridSize) {
+				blocking[i][j] = true
+			}
+		}
+	}
+
+	fullMask := (1 << uint(vineCount)) - 1
+	// Use map for visited to avoid exponential allocation
+	visited := make(map[int]bool)
 	queue := make([]int, 0, 1024)
 	queue = append(queue, fullMask)
 	visited[fullMask] = true
@@ -234,11 +247,26 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 			continue
 		}
 
-		// expansion order: prefer vines that unblock most others (simple heuristic)
-		// For now, append in current order
+		// Sort movable by number of vines they unblock (descending)
+		sort.Slice(movable, func(a, b int) bool {
+			aCount := 0
+			bCount := 0
+			for k := 0; k < vineCount; k++ {
+				if (mask & (1 << uint(k))) != 0 {
+					if blocking[movable[a]][k] {
+						aCount++
+					}
+					if blocking[movable[b]][k] {
+						bCount++
+					}
+				}
+			}
+			return aCount > bCount
+		})
+
 		for _, i := range movable {
 			next := mask & ^(1 << uint(i))
-			if !visited[next] {
+			if !visited[next] && len(queue) < maxStates {
 				visited[next] = true
 				queue = append(queue, next)
 			}
@@ -297,6 +325,25 @@ func determineMovableVines(lvl model.Level, mask int, occupied map[string]bool) 
 		}
 	}
 	return movable
+}
+
+func doesVineBlockVine(blocker, blocked model.Vine, gridSize []int) bool {
+	if len(blocked.OrderedPath) == 0 {
+		return false
+	}
+	head := blocked.OrderedPath[0]
+	dx, dy := directionDelta(blocked.HeadDirection)
+	nx, ny := head.X+dx, head.Y+dy
+	if nx < 0 || nx >= gridSize[0] || ny < 0 || ny >= gridSize[1] {
+		return false // can exit, not blocked
+	}
+	nxt := fmt.Sprintf("%d,%d", nx, ny)
+	for _, p := range blocker.OrderedPath {
+		if fmt.Sprintf("%d,%d", p.X, p.Y) == nxt {
+			return true
+		}
+	}
+	return false
 }
 
 func directionDelta(dir string) (int, int) {

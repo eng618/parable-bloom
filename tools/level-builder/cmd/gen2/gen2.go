@@ -47,37 +47,6 @@ var (
 	useLIFO    bool
 )
 
-/*
-TODO: impliment the following
-
-Psudo Code Explanation to acheve 100% coverage
-1. Define the grid size on difficulty tier. (no restriction on number of vines only grid size)
-2. Initialize an empty grid with proper dimentions for difificulty tier.
-	- Create a map or 2D array to represent the grid cells.
-	- This will be used to inform better decision making when placing vines, and needing to solve for unfill cells after the auto fill steps later in the process..
-3. Generate vine heads starting from the center of the grid and working outwards
-	- To improve randomness, we can also use a top down, bottom up, left right, right left approach in a round robin fashion.
-	- Calculate the center point of the grid.
-	- Use a queue or stack to manage the order of vine head placements, starting from the center.
-	- We can start anywhere in a general area around the center to add some randomness.
-	- Use a helper function to establish head and neck are a valid configuration.
-4. For each vine head, attempt to grow the vine in available directions
-	- Use a loop to attempt to grow the vine from its head position.
-	- Check available directions (up, down, left, right) for valid growth.
-	- Prioritize directions that lead to unoccupied cells to maximize coverage.
-	- Use backtracking if a vine cannot grow further, reverting to the last valid state.
-5. Continue placing and growing vines until the grid is fully occupied
-	- Monitor the grid state to determine when all cells are occupied.
-	- If a vine cannot be placed or grown, backtrack and try alternative placements.
-	- If the grid is not fully occupied after all vines are placed, consider empty cells based on the 2D array created and updated along the way.
-	- If the empty cell has a tail next to it, that vine can be expanded into the empty cell increasing the coverage.
-	- If the epmty cell has an ajacent head, and it is in the clear path (i.e. the head moves towards empty cell) then we can grow that vine into the empty cell.
-6. Finalize the level configuration and output the result
-	- Once the grid is fully occupied, finalize the vine configurations.
-	- Prepare the level data structure for output.
-	- Write the level data to a JSON file or other required format.
-*/
-
 // gen2Cmd represents the gen2 command
 var gen2Cmd = &cobra.Command{
 	Use:   "gen2",
