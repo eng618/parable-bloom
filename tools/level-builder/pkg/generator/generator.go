@@ -111,39 +111,42 @@ func generateLevels(cfg GenerationConfig) error {
 	// Generate levels
 	for i := 0; i < cfg.Count; i++ {
 		levelID := startID + i
-
-		// Determine seed for this level
 		var levelSeed int64
 		if cfg.UseRandomSeed {
 			levelSeed = cryptoSeedInt64() + int64(i)
 		} else if cfg.BaseSeed != 0 {
 			levelSeed = cfg.BaseSeed + int64(i)
 		} else {
-			levelSeed = int64(levelID) * 31337 // Deterministic default
+			levelSeed = int64(levelID) * 31337
 		}
-
 		rng := rand.New(rand.NewSource(levelSeed))
-
-		// Determine difficulty tier
 		var difficultyTier string
 		if cfg.Difficulty != "" {
 			difficultyTier = cfg.Difficulty
 		} else {
 			difficultyTier = common.DifficultyForLevel(levelID)
 		}
-
-		// Generate level with retries
-		level, err := generateSingleLevel(levelID, difficultyTier, levelSeed, rng)
-		if err != nil {
-			return fmt.Errorf("failed to generate level %d: %w", levelID, err)
+		// Per-level retry logic
+		var level model.Level
+		var lastErr error
+		maxRetries := 5
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			level, lastErr = generateSingleLevel(levelID, difficultyTier, levelSeed+int64(attempt)*7919, rng)
+			if lastErr == nil {
+				break
+			}
+			// Log error for this attempt
+			common.Verbose("[Level %d Attempt %d/%d] Generation failed: %v", levelID, attempt, maxRetries, lastErr)
 		}
-
-		// Write level to disk
+		if lastErr != nil {
+			common.Error("Level %d failed after %d attempts: %v", levelID, maxRetries, lastErr)
+			continue // Skip this level, continue batch
+		}
 		filePath := filepath.Join(LevelsDir, fmt.Sprintf("level_%d.json", levelID))
 		if err := common.WriteLevel(filePath, &level, cfg.Overwrite); err != nil {
-			return fmt.Errorf("failed to write level %d: %w", levelID, err)
+			common.Error("Failed to write level %d: %v", levelID, err)
+			continue
 		}
-
 		if (i+1)%10 == 0 || (i+1) == cfg.Count {
 			common.Info("Generated %d/%d levels...", i+1, cfg.Count)
 		}
@@ -185,47 +188,46 @@ func generateModule(cfg GenerationConfig) error {
 	for i := 0; i < levelsPerModule; i++ {
 		levelID := startID + i
 		isBoss := i == regularLevels
-
-		// Determine seed
 		var levelSeed int64
 		if cfg.UseRandomSeed {
 			levelSeed = time.Now().UnixNano() + int64(i)
 		} else if cfg.BaseSeed != 0 {
 			levelSeed = cfg.BaseSeed + int64(i)
 		} else {
-			// Use crypto-grade seed for truly-random runs
 			levelSeed = cryptoSeedInt64() + int64(i)
 		}
-
 		rng := rand.New(rand.NewSource(levelSeed))
-
-		// Determine difficulty tier from progression
 		var difficultyTier string
 		if cfg.Difficulty != "" {
 			difficultyTier = cfg.Difficulty
 		} else {
 			difficultyTier = difficultyProgression[i]
 		}
-
-		// Generate level
-		level, err := generateSingleLevel(levelID, difficultyTier, levelSeed, rng)
-		if err != nil {
-			return fmt.Errorf("failed to generate level %d: %w", levelID, err)
+		// Per-level retry logic
+		var level model.Level
+		var lastErr error
+		maxRetries := 5
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			level, lastErr = generateSingleLevel(levelID, difficultyTier, levelSeed+int64(attempt)*7919, rng)
+			if lastErr == nil {
+				break
+			}
+			common.Verbose("[Module %d Level %d Attempt %d/%d] Generation failed: %v", cfg.ModuleID, levelID, attempt, maxRetries, lastErr)
 		}
-
-		// Mark as boss if applicable
+		if lastErr != nil {
+			common.Error("Module %d Level %d failed after %d attempts: %v", cfg.ModuleID, levelID, maxRetries, lastErr)
+			continue // Skip this level, continue batch
+		}
 		if isBoss {
 			level.Name = fmt.Sprintf("Module %d - Transcendent", cfg.ModuleID)
 			level.Complexity = "transcendent"
-			level.Grace++ // Extra grace for boss levels
+			level.Grace++
 		}
-
-		// Write level to disk
 		filePath := filepath.Join(LevelsDir, fmt.Sprintf("level_%d.json", levelID))
 		if err := common.WriteLevel(filePath, &level, cfg.Overwrite); err != nil {
-			return fmt.Errorf("failed to write level %d: %w", levelID, err)
+			common.Error("Failed to write level %d: %v", levelID, err)
+			continue
 		}
-
 		if isBoss {
 			common.Verbose("Generated level %d (%s) - BOSS LEVEL", levelID, level.Name)
 		} else {

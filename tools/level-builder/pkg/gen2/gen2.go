@@ -308,37 +308,132 @@ func validateGenerationState(state *generationState, maxAttempts int) error {
 }
 
 // GenerateLevel generates a single level using advanced algorithms with
-// incremental solvability checking and backtracking
+// incremental solvability checking, backtracking, and smart circuit breaking.
 func GenerateLevel(config GenerationConfig) (model.Level, GenerationStats, error) {
 	startTime := time.Now()
 	rng, seed := initializeRNG(config)
 
+	// Create helper components
 	placer := &DirectionFirstPlacer{}
 	analyzer := &DFSBlockingAnalyzer{}
 	assembler := &LevelAssembler{}
+
 	stats := GenerationStats{}
 
-	const maxAttempts = 10
-	const maxBacktrack = 3
+	// Circuit breaker configuration
+	const (
+		maxAttempts         = 20000 // High retry count for difficult seeds
+		baseTimeout         = 60 * time.Second
+		extendedTimeout     = 120 * time.Second
+		hardTimeout         = 180 * time.Second
+		progressLogInterval = 500
+	)
 
-	state := runGenerationAttempts(config, placer, analyzer, rng, seed, maxAttempts, maxBacktrack)
+	// Adaptive strategy state
+	originalMinCoverage := config.MinCoverage
+	originalVineCount := config.VineCount
+
+	// Counters for circuit breaker
+	structuralSuccessCount := 0
+	totalFailures := 0
+
+	// State for smart timeout extension
+	timeoutExtended := false
+
+	common.Verbose("Generating Level %d (%s) | Grid: %dx%d | Vines: %d | Target Coverage: %.1f%%",
+		config.LevelID, config.Difficulty, config.GridWidth, config.GridHeight, config.VineCount, config.MinCoverage*100)
+
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		elapsed := time.Since(startTime)
+
+		// 1. SMART CIRCUIT BREAKER CHECK
+		timeoutLimit := baseTimeout
+		if timeoutExtended {
+			timeoutLimit = extendedTimeout
+		}
+
+		if elapsed > hardTimeout {
+			return model.Level{}, stats, fmt.Errorf("hard timeout reached after %.1fs (%d attempts)", elapsed.Seconds(), attempt)
+		}
+
+		if elapsed > timeoutLimit {
+			// Check if we should extend timeout based on structural success rate
+			// If >5% of attempts produce valid geometry (but fail solvability), the generator is healthy but unlucky.
+			structuralRate := float64(structuralSuccessCount) / float64(attempt)
+			if !timeoutExtended && structuralRate > 0.05 {
+				common.Info("⏱️  Extending timeout: Structural success rate %.1f%% is healthy. Continuing...", structuralRate*100)
+				timeoutExtended = true
+			} else {
+				return model.Level{}, stats, fmt.Errorf("timeout reached after %.1fs (%d attempts, structural_rate=%.1f%%)",
+					elapsed.Seconds(), attempt, structuralRate*100)
+			}
+		}
+
+		// 2. ADAPTIVE STRATEGY
+		// Prioritize other tweaks before reducing coverage (Occupancy)
+		switch attempt {
+		case 500:
+			// First relaxation: Try slightly fewer vines (easier to pack)
+			newCount := int(float64(originalVineCount) * 0.9)
+			if newCount < 3 {
+				newCount = 3
+			}
+			if newCount != config.VineCount {
+				config.VineCount = newCount
+				common.Verbose("⚠️  Relaxation 1: Reduced vine count to %d (keep coverage high)", config.VineCount)
+			}
+		case 1500:
+			// Second relaxation: Slight coverage reduction if really stuck
+			config.MinCoverage = originalMinCoverage - 0.02
+			common.Verbose("⚠️  Relaxation 2: Slightly reduced coverage target to %.1f%%", config.MinCoverage*100)
+		case 3000:
+			// Third relaxation: Further coverage reduction
+			config.MinCoverage = originalMinCoverage - 0.05
+			common.Verbose("⚠️  Relaxation 3: Reduced coverage target to %.1f%%", config.MinCoverage*100)
+		}
+
+		// 3. GENERATION ATTEMPT
+		attemptRng := rng
+		if attempt > 1 {
+			// Diversify RNG for retries
+			attemptRng = rand.New(rand.NewSource(seed + int64(attempt*10000)))
+		}
+
+		// We use maxBacktrack=3 by default
+		state := attemptGeneration(config, placer, analyzer, attemptRng, 3)
+
+		stats.PlacementAttempts++
+
+		// 4. ANALYZE RESULT
+		if state != nil {
+			// We have valid geometry (vines placed, no circular blocking)
+			// Solvability check was done inside attemptGeneration and passed if state != nil
+			structuralSuccessCount++
+
+			// Final assembly check
+			if err := validateGenerationState(state, attempt); err == nil {
+				// We have a winner!
+				level, err := finalizeLevelGeneration(config, state, assembler, seed, &stats, startTime)
+				if err == nil {
+					common.Info("✓ Success on attempt %d (%.2fs)", attempt, time.Since(startTime).Seconds())
+					return level, stats, nil
+				}
+			}
+		} else {
+			// Failed somewhere
+			totalFailures++
+		}
+
+		// Periodic progress log
+		if attempt > 0 && attempt%progressLogInterval == 0 {
+			structuralRate := float64(structuralSuccessCount) / float64(attempt) * 100
+			common.Verbose("   Progress: %d/%d (%.1fs) | Struct Rate: %.1f%% | Current Coverage Target: %.1f%%",
+				attempt, maxAttempts, time.Since(startTime).Seconds(), structuralRate, config.MinCoverage*100)
+		}
+	}
 
 	stats.PlacementAttempts = maxAttempts
-	if state != nil {
-		stats.MaxBlockingDepth = state.analysis.MaxDepth
-		stats.SolvabilityChecks = state.stats
-	}
-
-	if err := validateGenerationState(state, maxAttempts); err != nil {
-		return model.Level{}, stats, err
-	}
-
-	level, err := finalizeLevelGeneration(config, state, assembler, seed, &stats, startTime)
-	if err != nil {
-		return model.Level{}, stats, err
-	}
-
-	return level, stats, nil
+	return model.Level{}, stats, fmt.Errorf("failed to generate solvable level after %d attempts", maxAttempts)
 }
 
 // backtrackVines removes the last N vines and returns updated collections
@@ -386,7 +481,7 @@ func checkSolvability(config GenerationConfig, vines []model.Vine) (bool, valida
 		Difficulty: "Transcendent",
 	}
 
-	solvable, stats, err := validator.IsSolvable(level, 500000) // 500k max states for transcendent
+	solvable, stats, err := validator.IsSolvable(level, 100000) // 100k max states for transcendent
 	if err != nil {
 		common.Verbose("Solvability check error: %v", err)
 		return false, validator.SolvabilityStats{}

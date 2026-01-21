@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/cmd/batch"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/clean"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/generate"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/gen2"
@@ -24,6 +25,7 @@ var (
 	verbose    bool
 	workers    string
 	workingDir string
+	logFile    string
 
 	// Parsed workers value
 	WorkersCount int
@@ -45,6 +47,9 @@ It provides commands for:
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Set verbose flag in common package
 		common.VerboseEnabled = verbose
+
+		// Set log file in common package
+		common.LogFile = logFile
 
 		// Parse workers flag
 		count, err := parseWorkers(workers)
@@ -79,10 +84,12 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output for debugging")
 	rootCmd.PersistentFlags().StringVarP(&workers, "workers", "j", "half", "number of concurrent workers (integer, 'half', or 'full')")
 	rootCmd.PersistentFlags().StringVarP(&workingDir, "working-dir", "w", "", "working directory for asset paths (default: current directory)")
+	rootCmd.PersistentFlags().StringVarP(&logFile, "log-file", "l", "", "path to log file (default: stdout)")
 
 	// Register subcommands
 	rootCmd.AddCommand(generate.GetCommand())
 	rootCmd.AddCommand(gen2.GetCommand())
+	rootCmd.AddCommand(batch.GetCommand())
 	rootCmd.AddCommand(validate.GetCommand())
 	rootCmd.AddCommand(render.RenderCmd)
 	rootCmd.AddCommand(repair.RepairCmd)

@@ -691,6 +691,12 @@ func (p *CenterOutPlacer) tryPlaceFillerVine(
 	// Find all empty cells
 	var emptyCells []model.Point
 	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			key := fmt.Sprintf("%d,%d", x, y)
+			if _, occ := occupied[key]; !occ {
+				emptyCells = append(emptyCells, model.Point{X: x, Y: y})
+			}
+		}
 	}
 
 	if len(emptyCells) < 2 {
