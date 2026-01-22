@@ -37,16 +37,20 @@ type GenerationConfig struct {
 
 // GenerationStats tracks performance and quality metrics
 type GenerationStats struct {
-	PlacementAttempts int
-	SolvabilityChecks validator.SolvabilityStats
-	MaxBlockingDepth  int
-	GridCoverage      float64
-	GenerationTime    time.Duration
+	PlacementAttempts    int
+	BacktracksAttempted  int // total local backtrack attempts
+	DumpsProduced        int // deterministic failure dumps written
+	SolvabilityChecks    validator.SolvabilityStats
+	MaxBlockingDepth     int
+	TotalBlockingDepth   int // accumulated for averaging
+	BlockingDepthSamples int // samples counted for averaging
+	GridCoverage         float64
+	GenerationTime       time.Duration
 }
 
 // VinePlacementStrategy defines the interface for vine placement algorithms
 type VinePlacementStrategy interface {
-	PlaceVines(config GenerationConfig, rng *rand.Rand) ([]model.Vine, map[string]string, error)
+	PlaceVines(config GenerationConfig, rng *rand.Rand, stats *GenerationStats) ([]model.Vine, map[string]string, error)
 }
 
 // BlockingAnalyzer defines the interface for blocking relationship analysis
@@ -96,10 +100,12 @@ func attemptGeneration(
 	analyzer *DFSBlockingAnalyzer,
 	rng *rand.Rand,
 	maxBacktrack int,
+	stats *GenerationStats,
 ) *generationState {
-	vines, occupied, err := placer.PlaceVines(config, rng)
+	vines, occupied, err := placer.PlaceVines(config, rng, stats)
 	if err != nil {
 		common.Verbose("Placement failed: %v", err)
+		_ = writeFailureDump(config, config.Seed, 0, fmt.Sprintf("Placement failed: %v", err), vines, occupied, stats)
 		return nil
 	}
 
@@ -107,6 +113,12 @@ func attemptGeneration(
 	if err != nil {
 		common.Verbose("Blocking analysis failed: %v", err)
 		return nil
+	}
+
+	// Record blocking depth sample
+	if stats != nil {
+		stats.TotalBlockingDepth += analysis.MaxDepth
+		stats.BlockingDepthSamples++
 	}
 
 	state := &generationState{vines: vines, occupied: occupied, analysis: analysis}
@@ -176,6 +188,7 @@ func runGenerationAttempts(
 	rng *rand.Rand,
 	seed int64,
 	maxAttempts, maxBacktrack int,
+	stats *GenerationStats,
 ) *generationState {
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		common.Verbose("Generation attempt %d/%d", attempt, maxAttempts)
@@ -185,7 +198,7 @@ func runGenerationAttempts(
 			attemptRng = rand.New(rand.NewSource(seed + int64(attempt*10000)))
 		}
 
-		state := attemptGeneration(config, placer, analyzer, attemptRng, maxBacktrack)
+		state := attemptGeneration(config, placer, analyzer, attemptRng, maxBacktrack, stats)
 		if state != nil && state.solvable {
 			common.Verbose("Found solvable level on attempt %d with %d vines", attempt, len(state.vines))
 			return state
@@ -201,12 +214,13 @@ func attemptLIFOGeneration(
 	placer *CenterOutPlacer,
 	analyzer *DFSBlockingAnalyzer,
 	rng *rand.Rand,
+	stats *GenerationStats,
 ) *generationState {
-	vines, occupied, err := placer.PlaceVines(config, rng)
+	vines, occupied, err := placer.PlaceVines(config, rng, stats)
 	if err != nil {
 		common.Verbose("LIFO placement failed: %v", err)
 		// Dump failing state for deterministic reproduction
-		_ = writeFailureDump(config, config.Seed, 0, fmt.Sprintf("LIFO placement failed: %v", err), vines, occupied)
+		_ = writeFailureDump(config, config.Seed, 0, fmt.Sprintf("LIFO placement failed: %v", err), vines, occupied, stats)
 		return nil
 	}
 
@@ -220,15 +234,15 @@ func attemptLIFOGeneration(
 	coverage := float64(len(occupied)) / float64(config.GridWidth*config.GridHeight)
 	if coverage >= 0.90 {
 		// High coverage likely includes non-LIFO fillers, verify solvability
-		solvable, stats := checkSolvability(config, vines)
+		solvable, solvStats := checkSolvability(config, vines)
 		if !solvable {
 			common.Verbose("High-coverage LIFO level not solvable, attempting LIFO recovery")
 			// Try a bounded recovery (local backtracking + refill) before rejecting
-			if recState, err := attemptLifoRecovery(config, placer, analyzer, vines, occupied, rng); err == nil {
+			if recState, err := attemptLifoRecovery(config, placer, analyzer, vines, occupied, rng, stats); err == nil {
 				return recState
 			}
 			common.Verbose("LIFO recovery failed, dumping failing state and rejecting")
-			_ = writeFailureDump(config, config.Seed, 0, "high-coverage LIFO not solvable", vines, occupied)
+			_ = writeFailureDump(config, config.Seed, 0, "high-coverage LIFO not solvable", vines, occupied, stats)
 			return nil
 		}
 		return &generationState{
@@ -236,7 +250,7 @@ func attemptLIFOGeneration(
 			occupied: occupied,
 			analysis: analysis,
 			solvable: true,
-			stats:    stats,
+			stats:    solvStats,
 		}
 	}
 
@@ -257,6 +271,7 @@ func runLIFOAttempts(
 	rng *rand.Rand,
 	seed int64,
 	maxAttempts int,
+	stats *GenerationStats,
 ) *generationState {
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		common.Verbose("LIFO generation attempt %d/%d", attempt, maxAttempts)
@@ -270,7 +285,7 @@ func runLIFOAttempts(
 		cfg.Seed = attemptSeed
 		attemptRng := rand.New(rand.NewSource(attemptSeed))
 
-		state := attemptLIFOGeneration(cfg, placer, analyzer, attemptRng)
+		state := attemptLIFOGeneration(cfg, placer, analyzer, attemptRng, stats)
 		if state != nil && len(state.vines) >= 2 {
 			common.Verbose("LIFO placement succeeded on attempt %d with %d vines", attempt, len(state.vines))
 			return state
@@ -291,11 +306,13 @@ func GenerateLevelLIFO(config GenerationConfig) (model.Level, GenerationStats, e
 	stats := GenerationStats{}
 
 	const maxAttempts = 10
-	state := runLIFOAttempts(config, placer, analyzer, rng, seed, maxAttempts)
+	state := runLIFOAttempts(config, placer, analyzer, rng, seed, maxAttempts, &stats)
 
 	stats.PlacementAttempts = maxAttempts
 	if state != nil {
 		stats.MaxBlockingDepth = state.analysis.MaxDepth
+		stats.TotalBlockingDepth += state.analysis.MaxDepth
+		stats.BlockingDepthSamples++
 	}
 
 	if state == nil || len(state.vines) < 2 {
@@ -421,7 +438,7 @@ func GenerateLevel(config GenerationConfig) (model.Level, GenerationStats, error
 		if backtrackWindow == 0 {
 			backtrackWindow = 3
 		}
-		state := attemptGeneration(config, placer, analyzer, attemptRng, backtrackWindow)
+		state := attemptGeneration(config, placer, analyzer, attemptRng, backtrackWindow, &stats)
 
 		stats.PlacementAttempts++
 
@@ -482,7 +499,7 @@ func backtrackVines(vines []model.Vine, occupied map[string]string, count int) (
 }
 
 // writeFailureDump writes a deterministic dump (JSON + ASCII render) for failing generation states.
-func writeFailureDump(config GenerationConfig, seed int64, attempt int, message string, vines []model.Vine, occupied map[string]string) error {
+func writeFailureDump(config GenerationConfig, seed int64, attempt int, message string, vines []model.Vine, occupied map[string]string, stats *GenerationStats) error {
 	// Default dump dir
 	dumpDir := config.DumpDir
 	if dumpDir == "" {
@@ -490,6 +507,9 @@ func writeFailureDump(config GenerationConfig, seed int64, attempt int, message 
 	}
 	if err := os.MkdirAll(dumpDir, 0755); err != nil {
 		return err
+	}
+	if stats != nil {
+		stats.DumpsProduced++
 	}
 
 	// File names
@@ -512,7 +532,7 @@ func writeFailureDump(config GenerationConfig, seed int64, attempt int, message 
 	var simpleVines []map[string]interface{}
 	for _, v := range vines {
 		simple := map[string]interface{}{
-			"id":            v.ID,
+			"id":             v.ID,
 			"head_direction": v.HeadDirection,
 			"ordered_path":   v.OrderedPath,
 		}
@@ -591,6 +611,7 @@ func attemptLifoRecovery(
 	vines []model.Vine,
 	occupied map[string]string,
 	rng *rand.Rand,
+	stats *GenerationStats,
 ) (*generationState, error) {
 	backtrackWindow := config.BacktrackWindow
 	if backtrackWindow == 0 {
@@ -605,11 +626,42 @@ func attemptLifoRecovery(
 		common.Verbose("attemptLifoRecovery: backtrack depth %d/%d", ba+1, maxBack)
 		vines, occupied = backtrackVines(vines, occupied, backtrackWindow)
 
-		// Try to re-fill to meet coverage
-		fillerVines, fillerOccupied := p.createFillerVines(vines, occupied, config.GridWidth, config.GridHeight, config.MinCoverage, rng)
-		vines = append(vines, fillerVines...)
-		for k, v := range fillerOccupied {
-			occupied[k] = v
+		// Try to re-fill to meet coverage, but add filler vines incrementally and avoid ones that make the state hopeless
+		fillerVines, _ := p.createFillerVines(vines, occupied, config.GridWidth, config.GridHeight, config.MinCoverage, rng)
+		addedAny := false
+		for _, fv := range fillerVines {
+			// Build occupied map for this filler vine
+			vineOcc := make(map[string]string)
+			for _, pt := range fv.OrderedPath {
+				vineOcc[fmt.Sprintf("%d,%d", pt.X, pt.Y)] = fv.ID
+			}
+
+			// Candidate occupied with this filler
+			candidateOcc := make(map[string]string)
+			for k, v := range occupied {
+				candidateOcc[k] = v
+			}
+			for k, v := range vineOcc {
+				candidateOcc[k] = v
+			}
+
+			// Run quick incremental check; if it fails, skip this filler vine
+			if !IsLikelySolvablePartial(append(vines, fv), candidateOcc, config.GridWidth, config.GridHeight, 50) {
+				common.Verbose("Skipping filler vine %s because incremental check failed", fv.ID)
+				continue
+			}
+
+			// Accept this filler vine
+			vines = append(vines, fv)
+			for k, v := range vineOcc {
+				occupied[k] = v
+			}
+			addedAny = true
+		}
+
+		if !addedAny {
+			common.Verbose("No viable filler vines could be added after backtracking; continuing recovery")
+			continue
 		}
 
 		analysis, err := analyzer.AnalyzeBlocking(vines, occupied)
@@ -617,14 +669,19 @@ func attemptLifoRecovery(
 			common.Verbose("Blocking analysis error during recovery: %v", err)
 			continue
 		}
+		// Record blocking depth sample
+		if stats != nil {
+			stats.TotalBlockingDepth += analysis.MaxDepth
+			stats.BlockingDepthSamples++
+		}
 		if analysis.HasCircular {
-			common.Verbose("Circular blocking after backtracking; continuing recovery")
+			common.Verbose("Circular blocking after backtracking and filler additions; continuing recovery")
 			continue
 		}
 
 		// Run cheap incremental solvability check to avoid expensive full solver when hopeless
 		if !IsLikelySolvablePartial(vines, occupied, config.GridWidth, config.GridHeight, 50) {
-			common.Verbose("Incremental solver indicates hopeless state; continuing recovery")
+			common.Verbose("Incremental solver indicates hopeless state after fillers; continuing recovery")
 			continue
 		}
 

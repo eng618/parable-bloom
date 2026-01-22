@@ -16,7 +16,17 @@ Strategy
 3. Use conservative fallback order: last N vines first. Later versions may add blocking-graph heuristics.
 4. On unrecoverable failure, write a deterministic dump for replay and debugging.
 
+Cycle-breaker repair
+
+- When local backtracking exhausts, the analyzer runs a blocking-graph cycle detection step.
+- For each detected cycle the repair attempts targeted removals:
+  - Single-vine removals (prefer shorter/low-impact vines);
+  - Bounded multi-vine removals (pairs, triplets) where needed to break cycles;
+  - Each removal is followed by an attempt to place the failing vine with the updated occupied map.
+- This approach is conservative and bounded (limits pair/triplet combinatorics) so it remains deterministic and fast.
+
 Testing
 
 - Unit tests that simulate failing placement and assert successful recovery when allowed.
 - Integration tests that replay failing seeds collected in `tools/level-builder/test/fixtures/failing_dumps/`.
+- New tests added: `TestCycleBreakerRepairRecovers` and `TestCycleBreakerMultiRemovalRecovers` exercise single- and multi-vine removal repair cases.

@@ -18,7 +18,7 @@ type CenterOutPlacer struct{}
 
 // PlaceVines places vines from center outward, guaranteeing each has a clear exit at placement time.
 // Returns vines that can be solved in LIFO order (last placed = first cleared).
-func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([]model.Vine, map[string]string, error) {
+func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, stats *GenerationStats) ([]model.Vine, map[string]string, error) {
 	w, h := config.GridWidth, config.GridHeight
 	totalCells := w * h
 	occupied := make(map[string]string)
@@ -40,7 +40,7 @@ func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([
 			common.Verbose("Could not place vine %s: %v", vineID, err)
 
 			// Delegate to AttemptLocalBacktrack (modularized)
-			vineRecovered, _, updatedVines, updatedOccupied, btErr := AttemptLocalBacktrack(vines, occupied, vineID, targetLen, p, w, h, rng, config)
+			vineRecovered, _, updatedVines, updatedOccupied, btErr := AttemptLocalBacktrack(vines, occupied, vineID, targetLen, p, w, h, rng, config, stats)
 			if btErr != nil {
 				common.Verbose("Local backtracking failed for %s: %v", vineID, btErr)
 				continue

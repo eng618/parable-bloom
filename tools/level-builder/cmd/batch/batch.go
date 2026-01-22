@@ -46,6 +46,10 @@ var (
 	useLIFO   bool
 	dryRun    bool
 	backup    bool
+	// Batch-level options
+	aggressive bool
+	dumpDir    string
+	statsOut   string
 )
 
 // batchCmd represents the batch command
@@ -79,6 +83,11 @@ func init() {
 	batchCmd.Flags().BoolVar(&useLIFO, "lifo", false, "use LIFO mode for guaranteed solvability and 100% coverage")
 	batchCmd.Flags().BoolVar(&dryRun, "dry-run", false, "preview what would be generated without writing files")
 	batchCmd.Flags().BoolVar(&backup, "backup", true, "backup existing levels before overwriting")
+
+	// New flags to support aggressive LIFO runs and dump directory
+	batchCmd.Flags().BoolVar(&aggressive, "aggressive", false, "enable aggressive backtracking defaults for batch runs (window=6 attempts=6)")
+	batchCmd.Flags().StringVar(&dumpDir, "dump-dir", "", "directory to write failing generation dumps (optional)")
+	batchCmd.Flags().StringVar(&statsOut, "stats-out", "", "optional directory to write per-level generation stats JSON files")
 
 	batchCmd.MarkFlagRequired("module")
 }
@@ -130,11 +139,14 @@ func validateModuleID(id int) error {
 
 func buildConfig() batchsvc.Config {
 	return batchsvc.Config{
-		ModuleID:  moduleID,
-		UseLIFO:   useLIFO,
-		Overwrite: overwrite,
-		DryRun:    dryRun,
-		OutputDir: "assets/levels",
+		ModuleID:   moduleID,
+		UseLIFO:    useLIFO,
+		Overwrite:  overwrite,
+		DryRun:     dryRun,
+		OutputDir:  "assets/levels",
+		Aggressive: aggressive,
+		DumpDir:    dumpDir,
+		StatsOut:   statsOut,
 	}
 }
 

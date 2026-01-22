@@ -30,7 +30,7 @@ type VinePlacementStats struct {
 }
 
 // PlaceVines places vines using direction-first strategy with extension passes
-func (p *DirectionFirstPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([]model.Vine, map[string]string, error) {
+func (p *DirectionFirstPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, stats *GenerationStats) ([]model.Vine, map[string]string, error) {
 	w, h := config.GridWidth, config.GridHeight
 	totalCells := w * h
 

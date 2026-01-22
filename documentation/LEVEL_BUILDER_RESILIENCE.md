@@ -15,8 +15,9 @@ High-level workflow
 
 1. Try LIFO (center-out) for fast guaranteed-partial solvability
 2. If high-coverage + non-LIFO fillers cause unsolvability: attempt local backtracking
-3. If local backtracking fails, run incremental solvability checks and selective re-fill
-4. If still failing, escalate to longer backtrack windows or solver-driven fallback behind circuit-breaker thresholds
+3. If local backtracking fails, run incremental solvability checks and selective re-fill (per-filler incremental checks will skip harmful fillers)
+4. If the above fails, run cycle-breaker repair: detect cycle(s) in the blocking graph and attempt targeted single- and bounded multi-vine removals (pairs/triplets) to break cycles
+5. If still failing, escalate to longer backtrack windows or solver-driven fallback behind circuit-breaker thresholds
 
 Recovery heuristics should be parameterized and exposed via CLI flags for tuning.
 

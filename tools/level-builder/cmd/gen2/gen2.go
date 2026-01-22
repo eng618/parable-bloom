@@ -26,7 +26,10 @@ executes the generation algorithm, reports results, and optionally visualizes th
 package gen2
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -51,6 +54,7 @@ var (
 	maxBacktrackAttempts int
 	dumpDir              string // Aggressive mode for batch runs (larger window and attempts)
 	aggressive           bool
+	statsOut             string // Optional JSON/CSV output path for generation stats
 )
 
 // gen2Cmd represents the gen2 command
@@ -229,6 +233,31 @@ Examples:
 		// Render the level directly
 		common.RenderLevelToWriter(cmd.OutOrStdout(), &commonLevel, "unicode", false)
 
+		// Optionally dump stats to file
+		if statsOut != "" {
+			outDir := filepath.Dir(statsOut)
+			if outDir != "" {
+				_ = os.MkdirAll(outDir, 0755)
+			}
+			statsObj := map[string]interface{}{
+				"level_id":             levelID,
+				"generation_time_sec":  generationTime.Seconds(),
+				"placement_attempts":   stats.PlacementAttempts,
+				"backtracks_attempted": stats.BacktracksAttempted,
+				"dumps_produced":       stats.DumpsProduced,
+				"max_blocking_depth":   stats.MaxBlockingDepth,
+				"grid_coverage":        stats.GridCoverage,
+				"solvability_solver":   stats.SolvabilityChecks.Solver,
+				"solvability_states":   stats.SolvabilityChecks.StatesExplored,
+			}
+			if stats.BlockingDepthSamples > 0 {
+				statsObj["avg_blocking_depth"] = float64(stats.TotalBlockingDepth) / float64(stats.BlockingDepthSamples)
+			}
+			b, _ := json.MarshalIndent(statsObj, "", "  ")
+			_ = os.WriteFile(statsOut, b, 0644)
+			common.Info("Wrote generation stats: %s", statsOut)
+		}
+
 		return nil
 	},
 }
@@ -247,6 +276,7 @@ func init() {
 	gen2Cmd.Flags().IntVar(&maxBacktrackAttempts, "max-backtrack-attempts", 0, "max local backtrack retries to try before giving up. Default: 2")
 	gen2Cmd.Flags().StringVar(&dumpDir, "dump-dir", "", "directory to write failing generation dumps (default: tools/level-builder/failing_dumps)")
 	gen2Cmd.Flags().BoolVar(&aggressive, "aggressive", false, "enable aggressive backtracking defaults for batch runs (window=6 attempts=6)")
+	gen2Cmd.Flags().StringVar(&statsOut, "stats-out", "", "optional path to write generation stats as JSON")
 
 	// Mark required flags
 	gen2Cmd.MarkFlagRequired("level-id")

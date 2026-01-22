@@ -14,7 +14,7 @@ import (
 type CircuitBoardPlacer struct{}
 
 // PlaceVines places vines with circuit-board-like winding patterns
-func (p *CircuitBoardPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([]model.Vine, map[string]string, error) {
+func (p *CircuitBoardPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, stats *GenerationStats) ([]model.Vine, map[string]string, error) {
 	w, h := config.GridWidth, config.GridHeight
 	totalCells := w * h
 	targetCells := int(float64(totalCells) * config.MinCoverage) // Use configurable coverage target
