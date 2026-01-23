@@ -43,8 +43,9 @@ func (p *DirectionFirstPlacer) PlaceVines(config GenerationConfig, rng *rand.Ran
 	common.Verbose("Placing %d vines with direction-first strategy", config.VineCount)
 
 	// Phase 1: Place initial vines using direction-first growth
-	for i, targetLen := range lengths {
-		vineID := fmt.Sprintf("vine_%d", i+1)
+	for _, targetLen := range lengths {
+		// Use dynamic ID based on current placed vines to avoid duplicates
+		vineID := fmt.Sprintf("vine_%d", len(vines)+1)
 
 		vine, newOccupied, err := p.growDirectionFirstVine(
 			vineID, targetLen, w, h, occupied, rng,
@@ -442,7 +443,16 @@ func (p *DirectionFirstPlacer) createFillerVines(
 	targetCells := int(float64(w*h) * targetCoverage)
 	fillerVines := []model.Vine{}
 	fillerOccupied := make(map[string]string)
-	fillerID := len(existingVines) + 1
+	// Compute next filler ID by scanning existing vine IDs to avoid collisions
+	fillerID := 1
+	for _, ev := range existingVines {
+		var idx int
+		if n, err := fmt.Sscanf(ev.ID, "vine_%d", &idx); n == 1 && err == nil {
+			if idx >= fillerID {
+				fillerID = idx + 1
+			}
+		}
+	}
 
 	for len(occupied)+len(fillerOccupied) < targetCells {
 		seed := p.findFillerSeed(w, h, occupied, fillerOccupied, rng)

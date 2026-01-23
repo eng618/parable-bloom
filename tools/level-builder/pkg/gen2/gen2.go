@@ -170,6 +170,11 @@ func finalizeLevelGeneration(
 		}
 	}
 
+	// Ensure vine IDs are unique (sanity check to prevent accidental duplicates
+	// introduced during backtracking/filler phases). This renames later duplicates
+	// using sequential vine_N indices to keep stability.
+	state.vines = ensureUniqueVineIDs(state.vines)
+
 	level := assembler.AssembleLevel(config, state.vines, mask, seed)
 
 	if err := writeLevelToFile(level, config); err != nil {
@@ -178,6 +183,34 @@ func finalizeLevelGeneration(
 
 	stats.GenerationTime = time.Since(startTime)
 	return level, nil
+}
+
+// ensureUniqueVineIDs renames duplicate vine IDs by appending sequential indices
+// for later duplicates. For example, if two vines share "vine_10", the second
+// will be renamed to "vine_N" where N > max(existing indices).
+func ensureUniqueVineIDs(vines []model.Vine) []model.Vine {
+	maxIdx := 0
+	for _, v := range vines {
+		var idx int
+		if n, err := fmt.Sscanf(v.ID, "vine_%d", &idx); n == 1 && err == nil {
+			if idx > maxIdx {
+				maxIdx = idx
+			}
+		}
+	}
+
+	seen := map[string]bool{}
+	nextIdx := maxIdx + 1
+	for i := range vines {
+		id := vines[i].ID
+		if !seen[id] {
+			seen[id] = true
+			continue
+		}
+		vines[i].ID = fmt.Sprintf("vine_%d", nextIdx)
+		nextIdx++
+	}
+	return vines
 }
 
 // runGenerationAttempts runs the generation loop until a solvable level is found

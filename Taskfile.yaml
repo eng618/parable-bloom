@@ -197,6 +197,24 @@ tasks:
     cmds:
       - go test ./...
 
+  # Quick test tier: run fast tests (short) + the uniqueness test that must gate validate/CI
+  level-builder:test:quick:
+    desc: Run fast level-builder tests (used in validate and CI)
+    dir: tools/level-builder
+    cmds:
+      - go test ./... -short
+      - go test ./... -run TestGeneratedLevelsHaveUniqueVineIDs -v
+
+  # Extended test tier: heavier/resilience tests (dispatch-only)
+  level-builder:test:extended:
+    desc: Run extended level-builder tests (heavy/resilience); intended for workflow_dispatch
+    dir: tools/level-builder
+    cmds:
+      - task: test-resilience
+      - go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
+      - go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
+      - go test ./... # full test run for thoroughness (may be slow)
+
   test-resilience:
     desc: Run focused resilience tests for level-builder
     dir: tools/level-builder
@@ -502,6 +520,7 @@ tasks:
       - task: lint
       - task: test
       - task: build:web
+      - task: level-builder:test:quick
       - task: level-builder:validate
       - task: level-builder:build
 
