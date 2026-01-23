@@ -105,5 +105,4 @@ tools/level-builder/validation.log
 docs/
 
 # Level dumps from failing level generations
-tools/level-builder/failing_dumps_batch/
-tools/level-builder/failing_dumps_batch_aggressive/
+logs/

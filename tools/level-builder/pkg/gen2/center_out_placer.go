@@ -52,13 +52,17 @@ func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, st
 			vine = vineRecovered
 		}
 
-		vines = append(vines, vine)
-		for k, v := range newOccupied {
-			occupied[k] = v
+		// Avoid double-appending if recovered state already includes the vine
+		exists := false
+		for _, v := range vines {
+			if v.ID == vine.ID {
+				exists = true
+				break
+			}
 		}
-
-		coverage := float64(len(occupied)) / float64(totalCells)
-		common.Verbose("Placed vine %s with %d segments, coverage: %.1f%%", vineID, len(vine.OrderedPath), coverage*100)
+		if !exists {
+			vines = append(vines, vine)
+		}
 
 		// Early exit if we've achieved target coverage
 		if coverage >= config.MinCoverage {
