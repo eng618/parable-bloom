@@ -32,7 +32,9 @@ package batch
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -47,9 +49,10 @@ var (
 	dryRun    bool
 	backup    bool
 	// Batch-level options
-	aggressive bool
-	dumpDir    string
-	statsOut   string
+	aggressive  bool
+	dumpDir     string
+	statsOut    string
+	minCoverage float64
 )
 
 // batchCmd represents the batch command
@@ -88,6 +91,7 @@ func init() {
 	batchCmd.Flags().BoolVar(&aggressive, "aggressive", false, "enable aggressive backtracking defaults for batch runs (window=6 attempts=6)")
 	batchCmd.Flags().StringVar(&dumpDir, "dump-dir", "", "directory to write failing generation dumps (optional)")
 	batchCmd.Flags().StringVar(&statsOut, "stats-out", "", "optional directory to write per-level generation stats JSON files")
+	batchCmd.Flags().Float64Var(&minCoverage, "min-coverage", 0.0, "optional override for minimum coverage (0.0-1.0). 0 means no override")
 
 	batchCmd.MarkFlagRequired("module")
 }
@@ -103,7 +107,32 @@ func runBatch(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// If user did not provide a dump dir or stats-out, emit into a timestamped
+	// `logs/<timestamp>/tools/level-builder/...` directory so artifacts are
+	// automatically covered by .gitignore and easy to find.
+	if dumpDir == "" {
+		ts := time.Now().Format("20060102_150405")
+		dumpDir = filepath.Join("logs", ts, "tools", "level-builder", "failing_dumps")
+		common.Info("No --dump-dir provided, defaulting to %s", dumpDir)
+	}
+	if statsOut == "" {
+		ts := time.Now().Format("20060102_150405")
+		statsOut = filepath.Join("logs", ts, "tools", "level-builder", "full_run", "stats")
+		common.Info("No --stats-out provided, defaulting to %s", statsOut)
+	}
+
 	config := buildConfig()
+	config.DumpDir = dumpDir
+	config.StatsOut = statsOut
+
+	// Ensure dump and stats directories exist
+	if err := os.MkdirAll(config.DumpDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create dump dir %s: %w", config.DumpDir, err)
+	}
+	if err := os.MkdirAll(config.StatsOut, 0o755); err != nil {
+		return fmt.Errorf("failed to create stats dir %s: %w", config.StatsOut, err)
+	}
+
 	levelIDs := buildModuleLevelIDs(moduleID)
 	performBackupGuarded(levelIDs, config, backup, dryRun)
 

@@ -91,6 +91,16 @@ tasks:
     cmds:
       - go run . generate --count {{.COUNT | default 50}}
 
+  # Fallback generation: overwrite existing levels using conservative LIFO placement
+  # and a MinCoverage fallback (Option A default = 0.75). Use --overwrite to persist.
+  levels:generate:fallback:
+    desc: Generate fallback levels for all modules (overwrite existing files)
+    cmds:
+      - for i in 1 2 3 4 5; do \
+          echo "Generating module $i (fallback)..."; \
+          (cd tools/level-builder && go run . batch --module $i --lifo --overwrite --min-coverage {{.MIN_COVERAGE | default 0.75}} --verbose) || true; \
+        done
+
   levels:validate:
     desc: Validate existing levels and modules using the Go tool
     dir: tools/level-builder
