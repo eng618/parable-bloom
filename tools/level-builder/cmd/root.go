@@ -11,8 +11,8 @@ import (
 
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/batch"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/clean"
-	"github.com/eng618/parable-bloom/tools/level-builder/cmd/generate"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/gen2"
+	"github.com/eng618/parable-bloom/tools/level-builder/cmd/generate"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/render"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/repair"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/tutorials"

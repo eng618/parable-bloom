@@ -42,9 +42,10 @@ type Config struct {
 	OutputDir string // Where to write levels (default: assets/levels)
 	BaseSeed  int64  // Base seed for deterministic generation (default: levelID * 31337)
 	// Batch-level options
-	Aggressive bool
-	DumpDir    string
-	StatsOut   string // Optional directory to write per-level stats JSON files
+	Aggressive  bool
+	DumpDir     string
+	StatsOut    string  // Optional directory to write per-level stats JSON files
+	MinCoverage float64 // Optional override for minimum coverage (0.0-1.0). 0 = no override
 }
 
 // Result contains results for a single level in a batch.
@@ -171,7 +172,7 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 		// If standard generation failed, try LIFO fallback
 		if !config.UseLIFO {
 			common.Warning("  Level %d failed standard generation: %v. Attempting LIFO fallback...", levelID, err)
-			
+
 			// Retry with LIFO
 			level, stats, err = generateLevel(genConfig, true)
 			if err == nil {
@@ -290,6 +291,14 @@ func buildGenerationConfig(levelID int, difficulty string, config Config) (gen2.
 		Difficulty:           difficulty,
 		BacktrackWindow:      backtrackWindow,
 		MaxBacktrackAttempts: maxBackAttempts,
+	}
+
+	// Apply global MinCoverage override if provided (0 = no override)
+	if config.MinCoverage > 0 {
+		if config.MinCoverage < 0.0 || config.MinCoverage > 1.0 {
+			return gen2.GenerationConfig{}, fmt.Errorf("invalid MinCoverage override: %v", config.MinCoverage)
+		}
+		genCfg.MinCoverage = config.MinCoverage
 	}
 
 	if config.DumpDir != "" {
