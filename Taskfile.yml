@@ -1,0 +1,113 @@
+version: '3'
+
+includes:
+  flutter: .taskfiles/Flutter.yml
+  firebase: .taskfiles/Firebase.yml
+  lb: .taskfiles/LevelBuilder.yml
+  fastlane: .taskfiles/Fastlane.yml
+  hugo: .taskfiles/Hugo.yml
+  levels: Taskfile.Levels.yml
+  release: Taskfile.Release.yml
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task --list
+
+  # -----------------------------------------------------------------------------
+  # High-level Orchestration
+
+  setup:
+    desc: Set up the project for development (Flutter, Go, and CocoaPods)
+    cmds:
+      - task: flutter:get
+      - task: lb:get
+      - cmd: cd ios && pod install
+        platforms: [darwin]
+      - cmd: cd macos && pod install
+        platforms: [darwin]
+
+  validate:
+    desc: Validate code quality across all modules (analysis, format, tests, and builds)
+    cmds:
+      - task: analyze:all
+      - task: format:check:all
+      - task: test:all
+      - task: build:all
+
+  validate:fix:
+    desc: Fix code quality and linting issues across all modules
+    cmds:
+      - task: format:all
+      - task: flutter:lint:fix
+      - task: analyze:all
+      - task: test:all
+      - task: build:all
+
+  clean:
+    desc: Clean the Flutter build cache
+    cmds:
+      - task: flutter:clean
+
+  # -----------------------------------------------------------------------------
+  # Common Shortcuts (Backwards Compatibility)
+
+  get:
+    desc: Shortcut for flutter:get
+    cmds:
+      - task: flutter:get
+
+  upgrade:
+    desc: Shortcut for flutter:upgrade
+    cmds:
+      - task: flutter:upgrade
+
+  build:all:
+    desc: Build all project components (Flutter web, Level Builder, and Hugo site)
+    cmds:
+      - task: flutter:build:web
+      - task: lb:build
+      - task: hugo:build
+
+  test:all:
+    desc: Run tests for all modules (Flutter and Level Builder)
+    cmds:
+      - task: flutter:test
+      - task: lb:test
+
+  analyze:all:
+    desc: Run static analysis for all modules (Flutter analyze and Level Builder lint)
+    cmds:
+      - task: flutter:analyze
+      - task: lb:lint
+
+  format:all:
+    desc: Format code across all modules
+    cmds:
+      - task: flutter:format
+      - task: lb:lint:fix
+
+  format:check:all:
+    desc: Check if code is formatted across all modules
+    cmds:
+      - task: flutter:format:check
+      - task: lb:lint
+
+  lint:all:
+    desc: Run linting for all modules
+    cmds:
+      - task: flutter:lint
+      - task: lb:lint
+
+  dev:
+    desc: Shortcut for flutter:dev
+    cmds:
+      - task: flutter:dev
+
+  deploy:
+    desc: Deploy the application to Firebase Hosting
+    deps:
+      - task: flutter:build:web
+    cmds:
+      - task: firebase:hosting:deploy

@@ -1,0 +1,78 @@
+version: '3'
+
+tasks:
+  validate:
+    desc: Validate level-builder Go module
+    dir: tools/level-builder
+    cmds:
+      - task: lint
+      - task: test
+      - task: build
+
+  validate:fix:
+    desc: Fix level-builder Go module linting issues
+    dir: tools/level-builder
+    cmds:
+      - task: lint:fix
+      - task: test
+      - task: build
+
+  get:
+    desc: Get level-builder Go module dependencies
+    dir: tools/level-builder
+    cmds:
+      - go mod tidy
+
+  upgrade:
+    desc: Upgrade level-builder Go module dependencies
+    dir: tools/level-builder
+    cmds:
+      - go get -u ./...
+      - go mod tidy
+
+  test:
+    desc: Run level-builder Go module tests
+    dir: tools/level-builder
+    cmds:
+      - go test ./...
+
+  test:quick:
+    desc: Run fast level-builder tests (used in validate and CI)
+    dir: tools/level-builder
+    cmds:
+      - go test ./... -short
+      - go test ./... -run TestGeneratedLevelsHaveUniqueVineIDs -v
+
+  test:extended:
+    desc: Run extended level-builder tests (heavy/resilience)
+    dir: tools/level-builder
+    cmds:
+      - task: test-resilience
+      - go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
+      - go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
+      - go test ./...
+
+  test-resilience:
+    desc: Run focused resilience tests for level-builder
+    dir: tools/level-builder
+    cmds:
+      - go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
+      - go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
+
+  lint:
+    desc: Run level-builder Go module linting using golangci-lint
+    dir: tools/level-builder
+    cmds:
+      - golangci-lint run
+
+  lint:fix:
+    desc: Fix level-builder Go module linting issues (where possible)
+    dir: tools/level-builder
+    cmds:
+      - golangci-lint run --fix
+
+  build:
+    desc: Build the level-builder Go module
+    dir: tools/level-builder
+    cmds:
+      - go build -o level-builder .

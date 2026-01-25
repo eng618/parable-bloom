@@ -1,0 +1,25 @@
+version: '3'
+
+tasks:
+  install:
+    desc: Install Hugo extended edition via Go
+    cmds:
+      - go install -tags extended github.com/gohugoio/hugo@latest
+
+  serve:
+    desc: Start Hugo development server
+    dir: tools/hugo-site
+    cmds:
+      - hugo server -D
+
+  build:
+    desc: Build Hugo site to docs/
+    dir: tools/hugo-site
+    cmds:
+      - hugo --minify
+
+  new:
+    desc: Create new content page (usage - task hugo:new PAGE=privacy)
+    dir: tools/hugo-site
+    cmds:
+      - hugo new content "{{.PAGE}}.md"

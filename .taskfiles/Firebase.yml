@@ -1,0 +1,94 @@
+version: '3'
+
+tasks:
+  login:
+    desc: Log in to Firebase
+    cmds:
+      - firebase login
+
+  init:
+    desc: Initialize Firebase in the project
+    cmds:
+      - firebase init
+
+  emulators:start:
+    desc: Start Firebase emulators
+    cmds:
+      - firebase emulators:start
+
+  emulators:exec:
+    desc: Execute a command with Firebase emulators running
+    cmds:
+      - firebase emulators:exec "{{.CLI_ARGS}}"
+
+  functions:deploy:
+    desc: Deploy Firebase functions
+    cmds:
+      - firebase deploy --only functions
+
+  firestore:rules:deploy:
+    desc: Deploy Firestore security rules
+    cmds:
+      - firebase deploy --only firestore:rules
+
+  storage:rules:deploy:
+    desc: Deploy Cloud Storage security rules
+    cmds:
+      - firebase deploy --only storage:rules
+
+  hosting:deploy:
+    desc: Deploy Firebase Hosting
+    cmds:
+      - firebase deploy --only hosting
+
+  deploy:all:
+    desc: Deploy all Firebase services
+    cmds:
+      - firebase deploy
+
+  # Hosting Specific (using secrets or preview channels)
+  h:deploy:
+    desc: Deploy to Firebase Hosting (uses Bitwarden Secrets Manager token)
+    cmds:
+      - firebase deploy --only hosting --token "$(bws secret get FIREBASE_CI_TOKEN)"
+
+  h:preview:
+    desc: Deploy preview channel
+    cmds:
+      - firebase hosting:channel:deploy pr-{{.PR_NUMBER}}
+
+  # FlutterFire Configuration
+  configure:
+    desc: Configure Firebase using FlutterFire CLI for local development
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=android,ios,web,linux,macos,windows --yes
+
+  configure:android:
+    desc: Configure Firebase for Android only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=android --yes
+
+  configure:ios:
+    desc: Configure Firebase for iOS only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=ios --yes
+
+  configure:web:
+    desc: Configure Firebase for Web only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=web --yes
+
+  configure:linux:
+    desc: Configure Firebase for Linux only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=linux --yes
+
+  configure:macos:
+    desc: Configure Firebase for macOS only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=macos --yes
+
+  configure:windows:
+    desc: Configure Firebase for Windows only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=windows --yes
