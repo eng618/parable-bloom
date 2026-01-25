@@ -435,8 +435,8 @@
       ]
     }
   ],
-  "max_moves": 16,
-  "min_moves": 21,
+  "max_moves": 21,
+  "min_moves": 16,
   "complexity": "low",
   "grace": 3,
   "color_scheme": [
