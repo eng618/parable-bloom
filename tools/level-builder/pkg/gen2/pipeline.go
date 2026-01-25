@@ -1,8 +1,10 @@
 package gen2
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"fmt"
-	"math/rand"
+	math_rand "math/rand"
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
@@ -21,9 +23,9 @@ func GenerateRobust(config GenerationConfig) (model.Level, GenerationStats, erro
 	// 1. Setup
 	seed := config.Seed
 	if config.Randomize {
-		seed = time.Now().UnixNano()
+		seed = cryptoSeedInt64()
 	}
-	rng := rand.New(rand.NewSource(seed))
+	rng := math_rand.New(math_rand.NewSource(seed))
 	common.Verbose("Starting Robust Generation for Level %d (Size: %dx%d, Seed: %d)",
 		config.LevelID, config.GridWidth, config.GridHeight, seed)
 
@@ -132,4 +134,13 @@ func ensureUniqueVineIDs(vines []model.Vine) []model.Vine {
 		cleanVines[i].ID = fmt.Sprintf("vine_%d", i+1)
 	}
 	return cleanVines
+}
+
+// cryptoSeedInt64 returns a crypto-random int64 seed
+func cryptoSeedInt64() int64 {
+	var b [8]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		return time.Now().UnixNano()
+	}
+	return int64(binary.LittleEndian.Uint64(b[:]))
 }

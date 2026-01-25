@@ -1,8 +1,6 @@
 package gen2
 
 import (
-	"crypto/rand"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	math_rand "math/rand"
@@ -71,14 +69,20 @@ type Assembler interface {
 }
 
 // GenerateLevel is now a wrapper for GenerateRobust.
-// The original A* based generation is deprecated in favor of the robust pipeline.
 func GenerateLevel(config GenerationConfig) (model.Level, GenerationStats, error) {
-	return GenerateRobust(config)
+	level, stats, err := GenerateRobust(config)
+	if err != nil {
+		return level, stats, err
+	}
+	if err := writeLevelToFile(level, config); err != nil {
+		return level, stats, err
+	}
+	return level, stats, nil
 }
 
 // GenerateLevelLIFO is now a wrapper for GenerateRobust.
 func GenerateLevelLIFO(config GenerationConfig) (model.Level, GenerationStats, error) {
-	return GenerateRobust(config)
+	return GenerateLevel(config) // Both use the robust pipeline now
 }
 
 // writeLevelToFile writes the level to JSON file
@@ -120,13 +124,4 @@ func writeLevelToFile(level model.Level, config GenerationConfig) error {
 
 	common.Info("Wrote level file: %s", outputPath)
 	return nil
-}
-
-// cryptoSeedInt64 returns a crypto-random int64 seed
-func cryptoSeedInt64() int64 {
-	var b [8]byte
-	if _, err := rand.Read(b[:]); err != nil {
-		return time.Now().UnixNano()
-	}
-	return int64(binary.LittleEndian.Uint64(b[:]))
 }
