@@ -104,7 +104,7 @@ func GenerateRobust(config GenerationConfig) (model.Level, GenerationStats, erro
 	level := assembler.AssembleLevel(config, vines, mask, seed)
 
 	stats.GenerationTime = time.Since(startTime)
-	stats.DumpsProduced = 0 // Success path
+	stats.GenerationTime = time.Since(startTime)
 
 	return level, stats, nil
 }

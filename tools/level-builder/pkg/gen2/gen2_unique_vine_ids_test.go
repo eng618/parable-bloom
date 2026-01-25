@@ -1,6 +1,8 @@
 package gen2
 
 import (
+	"fmt"
+	"path/filepath"
 	"testing"
 )
 
@@ -12,6 +14,8 @@ func TestGeneratedLevelsHaveUniqueVineIDs(t *testing.T) {
 	}
 
 	for _, cfg := range tests {
+		tmpDir := t.TempDir()
+		cfg.OutputFile = filepath.Join(tmpDir, fmt.Sprintf("level_%d.json", cfg.LevelID))
 		level, _, err := GenerateLevelLIFO(cfg)
 		if err != nil {
 			t.Fatalf("generation failed for seed %d: %v", cfg.Seed, err)

@@ -36,7 +36,7 @@ func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, st
 		vineID := fmt.Sprintf("vine_%d", len(vines)+1)
 
 		vine, newOccupied, err := p.placeVineWithExitGuarantee(
-			vineID, targetLen, w, h, occupied, rng,
+			vineID, targetLen, w, h, occupied, rng, stats,
 		)
 		if err != nil {
 			common.Verbose("Could not place vine %s: %v", vineID, err)
@@ -108,10 +108,14 @@ func (p *CenterOutPlacer) placeVineWithExitGuarantee(
 	w, h int,
 	occupied map[string]string,
 	rng *rand.Rand,
+	stats *GenerationStats,
 ) (model.Vine, map[string]string, error) {
 	const maxAttempts = 100
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
+		if stats != nil {
+			stats.PlacementAttempts++
+		}
 		// Choose seed cell (center-biased)
 		seed := p.chooseCenterSeed(w, h, occupied, rng)
 		if seed == nil {
@@ -644,7 +648,7 @@ func (p *CenterOutPlacer) collectEdgeCells(w, h int, occupied map[string]string)
 		if _, occ := occupied[leftKey]; !occ {
 			edgeCells = append(edgeCells, edgeCandidate{model.Point{X: 0, Y: y}, "left"})
 		}
-		rightKey := fmt.Sprintf("%d,%d", w - 1, y)
+		rightKey := fmt.Sprintf("%d,%d", w-1, y)
 		if _, occ := occupied[rightKey]; !occ {
 			edgeCells = append(edgeCells, edgeCandidate{model.Point{X: w - 1, Y: y}, "right"})
 		}

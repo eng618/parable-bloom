@@ -64,7 +64,7 @@ func AttemptLocalBacktrack(
 			}
 		}
 
-		vineAttempt, newOcc, err := p.placeVineWithExitGuarantee(vineID, targetLen, w, h, occCopy, rng)
+		vineAttempt, newOcc, err := p.placeVineWithExitGuarantee(vineID, targetLen, w, h, occCopy, rng, stats)
 		if err == nil {
 			// successful placement after removing candidate
 			for k, v := range newOcc {
@@ -86,7 +86,7 @@ func AttemptLocalBacktrack(
 		common.Verbose("AttemptLocalBacktrack: removing %d vines (attempt %d/%d) to recover %s", backtrackWindow, ba+1, maxBack, vineID)
 		vines, occupied = backtrackVines(vines, occupied, backtrackWindow)
 
-		vine, newOcc, err := p.placeVineWithExitGuarantee(vineID, targetLen, w, h, occupied, rng)
+		vine, newOcc, err := p.placeVineWithExitGuarantee(vineID, targetLen, w, h, occupied, rng, stats)
 		if err == nil {
 			// Successful recovery
 			for k, v := range newOcc {
@@ -220,7 +220,8 @@ func tryRemoveCandidatesAndPlace(
 	vineOcc map[string]string
 	vines   []model.Vine
 	occ     map[string]string
-}, error) {
+}, error,
+) {
 	if stats != nil {
 		stats.BacktracksAttempted++
 	}
@@ -254,7 +255,7 @@ func tryRemoveCandidatesAndPlace(
 		}
 	}
 
-	vineAttempt, newOcc, err := p.placeVineWithExitGuarantee(vineID, targetLen, w, h, oCopy, rng)
+	vineAttempt, newOcc, err := p.placeVineWithExitGuarantee(vineID, targetLen, w, h, oCopy, rng, stats)
 	if err != nil {
 		return struct {
 			vine    model.Vine

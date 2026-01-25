@@ -55,6 +55,7 @@ func TestReplayRegressionSeeds(t *testing.T) {
 				BacktrackWindow:      6,
 				MaxBacktrackAttempts: 6,
 				DumpDir:              tmpDir,
+				OutputFile:           filepath.Join(tmpDir, "level.json"),
 			}
 
 			level, _, err := GenerateLevelLIFO(config)

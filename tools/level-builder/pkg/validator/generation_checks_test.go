@@ -44,8 +44,8 @@ func TestValidateDesignConstraints_Success(t *testing.T) {
 
 func TestValidateDesignConstraints_OccupancyFailure(t *testing.T) {
 	lvl := baseFullGridLevel()
-	// Remove one vine to drop occupancy below 90%
-	lvl.Vines = lvl.Vines[:3]
+	// Remove three vines to drop occupancy below 25% (tolerance is 40%)
+	lvl.Vines = lvl.Vines[:1]
 
 	errs := ValidateDesignConstraints(lvl)
 	if len(errs) == 0 {
