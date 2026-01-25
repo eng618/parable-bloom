@@ -174,14 +174,15 @@ func buildConfig() batchsvc.Config {
 		out = "assets/levels"
 	}
 	return batchsvc.Config{
-		ModuleID:   moduleID,
-		UseLIFO:    useLIFO,
-		Overwrite:  overwrite,
-		DryRun:     dryRun,
-		OutputDir:  out,
-		Aggressive: aggressive,
-		DumpDir:    dumpDir,
-		StatsOut:   statsOut,
+		ModuleID:    moduleID,
+		UseLIFO:     useLIFO,
+		Overwrite:   overwrite,
+		DryRun:      dryRun,
+		OutputDir:   out,
+		Aggressive:  aggressive,
+		DumpDir:     dumpDir,
+		StatsOut:    statsOut,
+		MinCoverage: minCoverage,
 	}
 }
 
@@ -208,10 +209,36 @@ func performBackupGuarded(levelIDs []int, cfg batchsvc.Config, doBackup bool, is
 }
 
 func updateModulesRegistry(moduleID int, levelIDs []int) error {
-	modulesPath := filepath.Join("assets/data", "modules.json")
-	if err := common.UpdateModuleRegistry(modulesPath, moduleID, levelIDs); err != nil {
+	modulesPath, err := common.ModulesFile()
+	if err != nil {
+		return fmt.Errorf("failed to resolve modules.json path: %w", err)
+	}
+
+	registry, err := common.LoadModuleRegistry(modulesPath)
+	if err != nil {
+		return fmt.Errorf("failed to load modules.json: %w", err)
+	}
+
+	found := false
+	for i, mod := range registry.Modules {
+		if mod.ID == moduleID {
+			// First 20 levels are regular progression
+			registry.Modules[i].Levels = levelIDs[:len(levelIDs)-1]
+			// 21st level is the Transcendent challenge
+			registry.Modules[i].ChallengeLevel = levelIDs[len(levelIDs)-1]
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("module %d not found in registry", moduleID)
+	}
+
+	if err := common.SaveModuleRegistry(modulesPath, registry); err != nil {
 		return fmt.Errorf("failed to update modules.json: %w", err)
 	}
+
 	common.Info("Updated modules.json for module %d", moduleID)
 	return nil
 }

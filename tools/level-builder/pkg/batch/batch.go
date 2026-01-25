@@ -180,7 +180,7 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 				result.Error = "" // Clear error
 				// write stats for fallback if requested
 				if config.StatsOut != "" {
-					_ = os.MkdirAll(config.StatsOut, 0755)
+					_ = os.MkdirAll(config.StatsOut, 0o755)
 					fname := fmt.Sprintf("%s/level_%d_stats.json", config.StatsOut, levelID)
 					statsObj := map[string]interface{}{
 						"level_id":             levelID,
@@ -190,7 +190,7 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 						"max_blocking_depth":   stats.MaxBlockingDepth,
 					}
 					b, _ := json.MarshalIndent(statsObj, "", "  ")
-					_ = os.WriteFile(fname, b, 0644)
+					_ = os.WriteFile(fname, b, 0o644)
 					common.Info("Wrote per-level stats: %s", fname)
 				}
 				// Continue to validation below
@@ -222,7 +222,7 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 
 	// Optionally write per-level stats JSON to StatsOut directory
 	if config.StatsOut != "" {
-		_ = os.MkdirAll(config.StatsOut, 0755)
+		_ = os.MkdirAll(config.StatsOut, 0o755)
 		statsObj := map[string]interface{}{
 			"level_id":             levelID,
 			"coverage":             result.Coverage,
@@ -237,7 +237,7 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 		}
 		fname := fmt.Sprintf("%s/level_%d_stats.json", config.StatsOut, levelID)
 		b, _ := json.MarshalIndent(statsObj, "", "  ")
-		_ = os.WriteFile(fname, b, 0644)
+		_ = os.WriteFile(fname, b, 0o644)
 		common.Info("Wrote per-level stats: %s", fname)
 	}
 
@@ -346,6 +346,9 @@ func generateLevel(genConfig gen2.GenerationConfig, useLIFO bool) (model.Level, 
 func validateGeneratedLevel(level model.Level) (float64, error) {
 	structErrors := validator.ValidateStructural(level)
 	if len(structErrors) > 0 {
+		for _, e := range structErrors {
+			common.Warning("  [STRUCTURAL ERROR] Level %d: %v", level.ID, e)
+		}
 		return 0, fmt.Errorf("structural validation failed: %d errors", len(structErrors))
 	}
 

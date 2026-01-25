@@ -348,11 +348,22 @@ func checkOccupancyAndCoverage(lvl model.Level, ignoreOccupancy bool) error {
 		}
 	}
 
+	var uncoveredPoints []string
 	if uncoveredCount > 0 {
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				idx := y*w + x
+				if !occupied[idx] && !isCellMasked(lvl.Mask, x, y) {
+					uncoveredPoints = append(uncoveredPoints, fmt.Sprintf("(%d,%d)", x, y))
+				}
+			}
+		}
 		uncoveredPercent := float64(uncoveredCount) / float64(gridArea) * 100
-		fmt.Printf("⚠️ Warning: incomplete coverage in %s: %d cells (%.1f%%) are neither occupied by vines nor masked\n",
-			lvl.Name, uncoveredCount, uncoveredPercent)
-		// We no longer return error here to allow levels with minor coverage gaps to pass validation
+		fmt.Printf("⚠️ Warning: incomplete coverage in Level %d: %d cells (%.1f%%) are neither occupied by vines nor masked\n",
+			lvl.ID, uncoveredCount, uncoveredPercent)
+		if common.VerboseEnabled {
+			fmt.Printf("   Uncovered cells: %v\n", uncoveredPoints)
+		}
 	}
 
 	return nil
