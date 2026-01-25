@@ -163,9 +163,16 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int,
 		}
 	}
 
-	// Write stats to JSON artifact
+	// Write stats to JSON artifact in logs directory
 	b, _ := json.MarshalIndent(allStats, "", "  ")
-	_ = os.WriteFile("validation_stats.json", b, 0644)
+	logsDir, err := common.LogsDir()
+	if err == nil {
+		if err := os.MkdirAll(logsDir, 0o755); err == nil {
+			statsPath := filepath.Join(logsDir, "validation_stats.json")
+			_ = os.WriteFile(statsPath, b, 0o644)
+			fmt.Printf("\n✓ Detailed results written to %s\n", statsPath)
+		}
+	}
 
 	// Print summary of all issues
 	hasErrors := false

@@ -111,16 +111,15 @@ func runBatch(cmd *cobra.Command, args []string) error {
 	}
 
 	// If user did not provide a dump dir or stats-out, emit into a timestamped
-	// `logs/<timestamp>/tools/level-builder/...` directory so artifacts are
-	// automatically covered by .gitignore and easy to find.
+	// directory under the root logs/ directory.
 	if dumpDir == "" {
 		ts := time.Now().Format("20060102_150405")
-		dumpDir = filepath.Join("logs", ts, "tools", "level-builder", "failing_dumps")
+		dumpDir = filepath.Join(common.MustLogsDir(), ts, "failing_dumps")
 		common.Info("No --dump-dir provided, defaulting to %s", dumpDir)
 	}
 	if statsOut == "" {
 		ts := time.Now().Format("20060102_150405")
-		statsOut = filepath.Join("logs", ts, "tools", "level-builder", "full_run", "stats")
+		statsOut = filepath.Join(common.MustLogsDir(), ts, "runs", "stats")
 		common.Info("No --stats-out provided, defaulting to %s", statsOut)
 	}
 

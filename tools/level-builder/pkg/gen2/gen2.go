@@ -533,9 +533,9 @@ func writeFailureDump(config GenerationConfig, seed int64, attempt int, message 
 	// Default dump dir
 	dumpDir := config.DumpDir
 	if dumpDir == "" {
-		dumpDir = "failing_dumps"
+		dumpDir = filepath.Join(common.MustLogsDir(), "failing_dumps")
 	}
-	if err := os.MkdirAll(dumpDir, 0755); err != nil {
+	if err := os.MkdirAll(dumpDir, 0o755); err != nil {
 		return err
 	}
 	if stats != nil {
@@ -778,7 +778,7 @@ func writeLevelToFile(level model.Level, config GenerationConfig) error {
 
 	// Ensure directory exists
 	dir := filepath.Dir(outputPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 

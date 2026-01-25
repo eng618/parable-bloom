@@ -14,6 +14,7 @@ var (
 	resolvedDataDir     string
 	resolvedModulesFile string
 	resolvedLessonsDir  string
+	resolvedLogsDir     string
 	pathsOnce           sync.Once
 	pathsError          error
 )
@@ -41,6 +42,7 @@ func initPaths() {
 		resolvedDataDir = filepath.Join(resolvedAssetsDir, "data")
 		resolvedModulesFile = filepath.Join(resolvedDataDir, "modules.json")
 		resolvedLessonsDir = filepath.Join(resolvedAssetsDir, "lessons")
+		resolvedLogsDir = filepath.Join(repoRoot, "logs")
 
 		Verbose("Resolved repo root: %s", repoRoot)
 		Verbose("Assets directory: %s", resolvedAssetsDir)
@@ -133,6 +135,15 @@ func LessonsDir() (string, error) {
 	return resolvedLessonsDir, nil
 }
 
+// LogsDir returns the absolute path to the root logs directory.
+func LogsDir() (string, error) {
+	initPaths()
+	if pathsError != nil {
+		return "", pathsError
+	}
+	return resolvedLogsDir, nil
+}
+
 // LevelFilePath returns the absolute path to a specific level file.
 func LevelFilePath(levelID int) (string, error) {
 	levelsDir, err := LevelsDir()
@@ -162,6 +173,15 @@ func MustModulesFile() string {
 	return path
 }
 
+// MustLogsDir returns the logs directory path or panics if not found.
+func MustLogsDir() string {
+	path, err := LogsDir()
+	if err != nil {
+		panic(fmt.Sprintf("failed to resolve logs directory: %v", err))
+	}
+	return path
+}
+
 // ResetPaths resets the cached paths (useful for testing)
 func ResetPaths() {
 	resolvedAssetsDir = ""
@@ -169,6 +189,7 @@ func ResetPaths() {
 	resolvedDataDir = ""
 	resolvedModulesFile = ""
 	resolvedLessonsDir = ""
+	resolvedLogsDir = ""
 	pathsOnce = sync.Once{}
 	pathsError = nil
 }
