@@ -89,7 +89,7 @@ tasks:
     desc: Generate new levels using the Go tool (usage - task levels:generate COUNT=50)
     dir: tools/level-builder
     cmds:
-      - go run . generate --count {{.COUNT | default 50}}
+      - go run . generate --count "{{.COUNT | default 50}}"
 
   # Fallback generation: overwrite existing levels using conservative LIFO placement
   # and a MinCoverage fallback (Option A default = 0.75). Use --overwrite to persist.
@@ -112,7 +112,7 @@ tasks:
     desc: Validate existing levels and run solvability checks (may be slow)
     dir: tools/level-builder
     cmds:
-      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 100000}}
+      - go run . validate --check-solvable --max-states "{{.MAX_STATES | default 100000}}"
 
   tutorials:validate:
     desc: Validate tutorial lessons using the Go tool
@@ -134,17 +134,6 @@ tasks:
       - mv validation_stats.json validation_stats_bfs.json || true
       - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT | default 10}}
       - mv validation_stats.json validation_stats_astar.json || true
-      - echo "Created validation_stats_bfs.json and validation_stats_astar.json"
-
-  levels:validate-astar-experiments:
-    desc: Run solvability experiments using A* vs BFS
-    dir: tools/level-builder
-    cmds:
-      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=false
-      - mv validation_stats.json validation_stats_bfs.json || true
-      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT | default 10}}
-      - mv validation_stats.json validation_stats_astar.json || true
-      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT | default 10}}
       - echo "Created validation_stats_bfs.json and validation_stats_astar.json"
 
   levels:astar-weight-sweep:
@@ -740,4 +729,4 @@ tasks:
     desc: Create new content page (usage - task hugo:new PAGE=privacy)
     dir: tools/hugo-site
     cmds:
-      - hugo new content {{.PAGE}}.md
+      - hugo new content "{{.PAGE}}.md"
