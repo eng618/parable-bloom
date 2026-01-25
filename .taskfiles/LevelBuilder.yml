@@ -19,9 +19,13 @@ tasks:
 
   get:
     desc: Get level-builder Go module dependencies
+    run: once
     dir: tools/level-builder
     cmds:
       - go mod tidy
+    preconditions:
+      - sh: command -v go >/dev/null 2>&1
+        msg: "Go is not installed. Please install Go to use the level-builder."
 
   upgrade:
     desc: Upgrade level-builder Go module dependencies
@@ -64,6 +68,9 @@ tasks:
     dir: tools/level-builder
     cmds:
       - golangci-lint run
+    preconditions:
+      - sh: command -v golangci-lint >/dev/null 2>&1
+        msg: "golangci-lint is not installed. Please install it to run Go linting."
 
   lint:fix:
     desc: Fix level-builder Go module linting issues (where possible)
@@ -74,5 +81,14 @@ tasks:
   build:
     desc: Build the level-builder Go module
     dir: tools/level-builder
+    sources:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    generates:
+      - level-builder
     cmds:
       - go build -o level-builder .
+    preconditions:
+      - sh: command -v go >/dev/null 2>&1
+        msg: "Go is not installed."

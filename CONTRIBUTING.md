@@ -20,23 +20,28 @@ See the [README.md](README.md) for detailed setup instructions.
 
 This project follows the [Flutter Style Guide](https://flutter.dev/docs/development/tools/formatting).
 
-### Formatting
+### Formatting and Analysis
+
+We use Task to handle project-wide formatting and analysis.
 
 ```bash
-# Format all code
-flutter format lib/
+# Format and fix code across all modules
+task format:all
 
-# Analyze for issues
-flutter analyze
+# Analyze for issues without fixing
+task analyze:all
+
+# Check for formatting without applying changes
+task format:check:all
 ```
 
 ### Testing
 
 ```bash
-# Run all tests
-flutter test
+# Run all project tests (Flutter + Tools)
+task test:all
 
-# Run with coverage
+# Run Flutter tests with coverage
 flutter test --coverage
 ```
 

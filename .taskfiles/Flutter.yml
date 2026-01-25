@@ -3,8 +3,18 @@ version: '3'
 tasks:
   build:web:
     desc: Build the Flutter application for Web
+    sources:
+      - lib/**/*
+      - assets/**/*
+      - pubspec.yaml
+      - web/**/*
+    generates:
+      - build/web/**/*
     cmds:
       - flutter build web --release
+    preconditions:
+      - sh: command -v flutter >/dev/null 2>&1
+        msg: "Flutter is not installed."
 
   build:android:
     desc: Build the Android application
@@ -239,8 +249,12 @@ tasks:
 
   get:
     desc: Get Flutter dependencies
+    run: once
     cmds:
       - flutter pub get
+    preconditions:
+      - sh: command -v flutter >/dev/null 2>&1
+        msg: "Flutter is not installed. Please install Flutter to proceed."
 
   upgrade:
     desc: Upgrade Flutter dependencies

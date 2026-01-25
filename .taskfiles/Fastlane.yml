@@ -6,24 +6,36 @@ tasks:
     dir: android
     cmds:
       - fastlane deploy
+    preconditions:
+      - sh: command -v fastlane >/dev/null 2>&1
+        msg: "Fastlane is not installed."
 
   android:beta:
     desc: Deploy Android to Google Play Beta Track via Fastlane
     dir: android
     cmds:
       - fastlane beta
+    preconditions:
+      - sh: command -v fastlane >/dev/null 2>&1
+        msg: "Fastlane is not installed."
 
   android:build:
     desc: Build Android release bundle via Fastlane (no upload)
     dir: android
     cmds:
       - fastlane build_release
+    preconditions:
+      - sh: command -v fastlane >/dev/null 2>&1
+        msg: "Fastlane is not installed."
 
   android:validate:
     desc: Validate Android bundle and credentials
     dir: android
     cmds:
       - fastlane validate
+    preconditions:
+      - sh: command -v fastlane >/dev/null 2>&1
+        msg: "Fastlane is not installed."
 
   ios:beta:
     desc: Deploy iOS to TestFlight via Fastlane
@@ -31,6 +43,9 @@ tasks:
     dir: ios
     cmds:
       - fastlane beta
+    preconditions:
+      - sh: command -v fastlane >/dev/null 2>&1
+        msg: "Fastlane is not installed."
 
   ios:release:
     desc: Deploy iOS to App Store via Fastlane
@@ -38,6 +53,9 @@ tasks:
     dir: ios
     cmds:
       - fastlane release
+    preconditions:
+      - sh: command -v fastlane >/dev/null 2>&1
+        msg: "Fastlane is not installed."
 
   ios:build:
     desc: Build iOS IPA via Fastlane (no upload)
@@ -45,6 +63,9 @@ tasks:
     dir: ios
     cmds:
       - fastlane build_release
+    preconditions:
+      - sh: command -v fastlane >/dev/null 2>&1
+        msg: "Fastlane is not installed."
 
   ios:validate:
     desc: Validate iOS credentials and configuration
@@ -52,6 +73,9 @@ tasks:
     dir: ios
     cmds:
       - fastlane validate
+    preconditions:
+      - sh: command -v fastlane >/dev/null 2>&1
+        msg: "Fastlane is not installed."
 
   ios:setup:
     desc: Setup iOS keychain for CI
@@ -59,6 +83,9 @@ tasks:
     dir: ios
     cmds:
       - fastlane setup_keychain
+    preconditions:
+      - sh: command -v fastlane >/dev/null 2>&1
+        msg: "Fastlane is not installed."
 
   ios:cleanup:
     desc: Clean up iOS CI artifacts
@@ -66,3 +93,6 @@ tasks:
     dir: ios
     cmds:
       - fastlane cleanup
+    preconditions:
+      - sh: command -v fastlane >/dev/null 2>&1
+        msg: "Fastlane is not installed."

@@ -20,6 +20,7 @@ tasks:
 
   setup:
     desc: Set up the project for development (Flutter, Go, and CocoaPods)
+    run: once
     cmds:
       - task: flutter:get
       - task: lb:get
@@ -101,9 +102,19 @@ tasks:
       - task: lb:lint
 
   dev:
-    desc: Shortcut for flutter:dev
+    desc: Run the application in dev mode
     cmds:
       - task: flutter:dev
+
+  run:
+    desc: Run the application (shorthand for flutter:serve:web)
+    cmds:
+      - task: flutter:serve:web
+
+  serve:
+    desc: Serve the application (shorthand for flutter:serve:web)
+    cmds:
+      - task: flutter:serve:web
 
   deploy:
     desc: Deploy the application to Firebase Hosting
