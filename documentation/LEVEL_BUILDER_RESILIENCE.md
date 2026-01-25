@@ -6,7 +6,8 @@ See the `documentation/level-builder/` directory for per-module specifications a
 
 Goals
 
-- Reproducible failure capture (dumps + replayability)
+- Reproducible failure capture (centralized dumps in root `logs/` directory)
+- Centralized validation results in root `logs/validation_stats.json`
 - Modular, testable fixes that are easy to tune
 - Conservative defaults with an `--aggressive` flag for batch runs
 - CI regression tests for real-world failing seeds

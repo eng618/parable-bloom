@@ -54,7 +54,7 @@ Examples:
 
 func init() {
 	validateCmd.Flags().BoolVarP(&checkSolvable, "check-solvable", "s", false, "run solvability checks (may be slow)")
-	validateCmd.Flags().IntVar(&maxStates, "max-states", 100000, "max states budget for solver heuristic")
+	validateCmd.Flags().IntVar(&maxStates, "max-states", 500000, "max states budget for solver heuristic")
 	validateCmd.Flags().BoolVar(&useAstar, "use-astar", true, "use A* guided search for exact solver")
 	validateCmd.Flags().IntVar(&astarWeight, "astar-weight", validator.DefaultAStarWeight, "weight multiplier for A* heuristic")
 	validateCmd.Flags().BoolVar(&ignoreOccupancy, "ignore-occupancy", false, "ignore minimum grid occupancy threshold (useful when running quick repairs)")
