@@ -28,9 +28,7 @@ func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, st
 	common.Verbose("Target vine lengths: %v", targetLengths)
 
 	var vines []model.Vine
-
-	// Track coverage as we place vines so we can early-exit when target achieved
-	coverage := float64(len(occupied)) / float64(totalCells)
+	var coverage float64
 
 	// Phase 1: Place vines from center outward with LIFO guarantee
 	for _, targetLen := range targetLengths {
@@ -646,7 +644,7 @@ func (p *CenterOutPlacer) collectEdgeCells(w, h int, occupied map[string]string)
 		if _, occ := occupied[leftKey]; !occ {
 			edgeCells = append(edgeCells, edgeCandidate{model.Point{X: 0, Y: y}, "left"})
 		}
-		rightKey := fmt.Sprintf("%d,%d", w-1, y)
+		rightKey := fmt.Sprintf("%d,%d", w - 1, y)
 		if _, occ := occupied[rightKey]; !occ {
 			edgeCells = append(edgeCells, edgeCandidate{model.Point{X: w - 1, Y: y}, "right"})
 		}

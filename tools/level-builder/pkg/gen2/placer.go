@@ -239,36 +239,6 @@ func (p *CircuitBoardPlacer) chooseCircuitSeed(w, h int, occupied map[string]str
 	panic("no empty cells with neighbors available") // Should not happen
 }
 
-// chooseInitialDirection chooses initial direction toward grid center
-func (p *CircuitBoardPlacer) chooseInitialDirection(seed model.Point, w, h int, rng *rand.Rand) string {
-	centerX, centerY := w/2, h/2
-
-	// Prefer direction toward center
-	dx := centerX - seed.X
-	dy := centerY - seed.Y
-
-	var preferredDirs []string
-
-	if dx > 0 {
-		preferredDirs = append(preferredDirs, "right")
-	} else if dx < 0 {
-		preferredDirs = append(preferredDirs, "left")
-	}
-
-	if dy > 0 {
-		preferredDirs = append(preferredDirs, "up")
-	} else if dy < 0 {
-		preferredDirs = append(preferredDirs, "down")
-	}
-
-	if len(preferredDirs) > 0 {
-		return preferredDirs[rng.Intn(len(preferredDirs))]
-	}
-
-	// Fallback to any direction
-	dirs := []string{"up", "down", "left", "right"}
-	return dirs[rng.Intn(len(dirs))]
-}
 
 // getAvailableNeighbors returns unoccupied neighboring cells
 func (p *CircuitBoardPlacer) getAvailableNeighbors(pos model.Point, w, h int, globalOccupied, localOccupied map[string]string) []model.Point {

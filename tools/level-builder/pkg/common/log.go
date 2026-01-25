@@ -17,8 +17,8 @@ func writeToLogFile(message string) {
 	if LogFile != "" {
 		file, err := os.OpenFile(LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err == nil {
-			defer file.Close()
-			fmt.Fprintln(file, message)
+			defer func() { _ = file.Close() }()
+			_, _ = fmt.Fprintln(file, message)
 		}
 	}
 }

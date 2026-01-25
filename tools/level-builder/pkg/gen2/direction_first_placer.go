@@ -175,8 +175,23 @@ func (p *DirectionFirstPlacer) growDirectionFirstVine(
 		for len(path) < targetLen {
 			current := path[len(path)-1]
 
-			// Get available neighbors, preferring the grow direction
-			next := p.chooseNextCell(current, growDir, path, w, h, occupied, localOccupied, rng)
+			var next *model.Point
+			if len(path) == 1 {
+				// CRITICAL: The first growth step (neck) MUST be in the grow direction
+				// to match the chosen headDirection.
+				dx, dy := common.DeltaForDirection(growDir)
+				cand := model.Point{X: current.X + dx, Y: current.Y + dy}
+				if cand.X >= 0 && cand.X < w && cand.Y >= 0 && cand.Y < h {
+					key := fmt.Sprintf("%d,%d", cand.X, cand.Y)
+					if _, globallyOcc := occupied[key]; !globallyOcc {
+						next = &cand
+					}
+				}
+			} else {
+				// Subsequent segments can turn
+				next = p.chooseNextCell(current, growDir, path, w, h, occupied, localOccupied, rng)
+			}
+
 			if next == nil {
 				break // Can't grow further
 			}

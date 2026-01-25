@@ -279,8 +279,8 @@ func init() {
 	gen2Cmd.Flags().StringVar(&statsOut, "stats-out", "", "optional path to write generation stats as JSON")
 
 	// Mark required flags
-	gen2Cmd.MarkFlagRequired("level-id")
-	gen2Cmd.MarkFlagRequired("difficulty")
+	_ = gen2Cmd.MarkFlagRequired("level-id")
+	_ = gen2Cmd.MarkFlagRequired("difficulty")
 }
 
 // GetCommand returns the gen2 command for registration with root

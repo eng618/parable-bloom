@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
@@ -18,94 +17,132 @@ func NewSolver(level *model.Level) *Solver {
 }
 
 // IsSolvableGreedy checks solvability using a fast greedy algorithm.
-// This is used during level generation for speed.
 func (s *Solver) IsSolvableGreedy() bool {
-	if len(s.level.Vines) == 0 {
+	vines := s.level.Vines
+	vineCount := len(vines)
+	if vineCount == 0 {
 		return true
 	}
 
-	currentVines := make([]model.Vine, len(s.level.Vines))
-	copy(currentVines, s.level.Vines)
+	w := s.level.GetGridWidth()
+	gridArea := w * s.level.GetGridHeight()
 
-	occupied := make(map[string]bool)
-	for _, vine := range currentVines {
-		for _, pt := range vine.OrderedPath {
-			occupied[fmt.Sprintf("%d,%d", pt.X, pt.Y)] = true
+	// Pre-build vine data
+	vineIndices := make([][]int, vineCount)
+	for i, v := range vines {
+		indices := make([]int, len(v.OrderedPath))
+		for j, p := range v.OrderedPath {
+			indices[j] = p.Y*w + p.X
 		}
+		vineIndices[i] = indices
 	}
 
-	// Greedy removal: repeatedly find and remove clearable vines
-	maxIterations := len(currentVines) * 2
-	iterations := 0
+	// Active vines mask
+	remainingMask := (1 << uint64(vineCount)) - 1
+	if vineCount == 64 {
+		remainingMask = -1
+	}
 
-	for len(currentVines) > 0 && iterations < maxIterations {
-		iterations++
+	// Occupied buffer
+	occupied := make([]bool, gridArea)
+
+	for remainingMask != 0 {
 		foundClearable := false
 
-		for i, vine := range currentVines {
-			if s.canVineClear(&vine, occupied) {
-				// Remove this vine from occupied
-				for _, pt := range vine.OrderedPath {
-					delete(occupied, fmt.Sprintf("%d,%d", pt.X, pt.Y))
+		// Build occupied set
+		for i := 0; i < gridArea; i++ {
+			occupied[i] = false
+		}
+		for i := 0; i < vineCount; i++ {
+			if (remainingMask & (1 << uint64(i))) != 0 {
+				for _, idx := range vineIndices[i] {
+					occupied[idx] = true
 				}
-				// Remove vine from list
-				currentVines = append(currentVines[:i], currentVines[i+1:]...)
+			}
+		}
+
+		for i := 0; i < vineCount; i++ {
+			if (remainingMask & (1 << uint64(i))) == 0 {
+				continue
+			}
+
+			if s.canVineClearFast(&vines[i], occupied, vineIndices[i], w) {
+				remainingMask &= ^(1 << uint64(i))
 				foundClearable = true
 				break
 			}
 		}
 
 		if !foundClearable {
-			// Deadlock: no clearable vines
 			return false
 		}
 	}
 
-	return len(currentVines) == 0
+	return true
 }
 
 // IsSolvableBFS checks solvability using a thorough BFS algorithm.
-// This is the gold standard for validation but slower.
 func (s *Solver) IsSolvableBFS() bool {
-	if len(s.level.Vines) == 0 {
+	vines := s.level.Vines
+	vineCount := len(vines)
+	if vineCount == 0 {
 		return true
 	}
 
-	// BFS state: set of remaining vine IDs
-	initialState := make(map[string]bool)
-	for _, vine := range s.level.Vines {
-		initialState[vine.ID] = true
+	w := s.level.GetGridWidth()
+	gridArea := w * s.level.GetGridHeight()
+
+	// Pre-build vine data
+	vineIndices := make([][]int, vineCount)
+	for i, v := range vines {
+		indices := make([]int, len(v.OrderedPath))
+		for j, p := range v.OrderedPath {
+			indices[j] = p.Y*w + p.X
+		}
+		vineIndices[i] = indices
 	}
 
-	queue := []map[string]bool{initialState}
-	visited := make(map[string]bool)
-	visited[stateKey(initialState)] = true
+	initialMask := int64((1 << uint(vineCount)) - 1)
+	if vineCount == 64 {
+		initialMask = -1
+	}
+
+	queue := []int64{initialMask}
+	visited := make(map[int64]bool)
+	visited[initialMask] = true
+
+	occupied := make([]bool, gridArea)
 
 	for len(queue) > 0 {
-		current := queue[0]
+		mask := queue[0]
 		queue = queue[1:]
 
-		if len(current) == 0 {
-			return true // All vines cleared
+		if mask == 0 {
+			return true
+		}
+
+		// Build occupied set
+		for i := 0; i < gridArea; i++ {
+			occupied[i] = false
+		}
+		for i := 0; i < vineCount; i++ {
+			if (mask & (1 << uint64(i))) != 0 {
+				for _, idx := range vineIndices[i] {
+					occupied[idx] = true
+				}
+			}
 		}
 
 		// Try removing each clearable vine
-		vines := s.getVinesForIDs(current)
-		occupied := s.buildOccupiedMap(vines)
+		for i := 0; i < vineCount; i++ {
+			if (mask & (1 << uint64(i))) == 0 {
+				continue
+			}
 
-		for _, vine := range vines {
-			if s.canVineClear(&vine, occupied) {
-				// Create new state without this vine
-				next := make(map[string]bool)
-				for id := range current {
-					if id != vine.ID {
-						next[id] = true
-					}
-				}
-
-				key := stateKey(next)
-				if !visited[key] {
-					visited[key] = true
+			if s.canVineClearFast(&vines[i], occupied, vineIndices[i], w) {
+				next := mask & ^(1 << uint64(i))
+				if !visited[next] {
+					visited[next] = true
 					queue = append(queue, next)
 				}
 			}
@@ -115,121 +152,73 @@ func (s *Solver) IsSolvableBFS() bool {
 	return false
 }
 
-// canVineClear checks if a vine can move and eventually exit the grid.
-// This properly simulates snake-like movement where each segment follows the previous one.
-func (s *Solver) canVineClear(vine *model.Vine, occupiedCells map[string]bool) bool {
+func (s *Solver) canVineClearFast(vine *model.Vine, occupied []bool, selfIndices []int, w int) bool {
 	if len(vine.OrderedPath) == 0 {
 		return false
 	}
 
 	delta := HeadDirections[vine.HeadDirection]
-	if delta[0] == 0 && delta[1] == 0 {
+	dx, dy := delta[0], delta[1]
+	if dx == 0 && dy == 0 {
 		return false
 	}
 
-	// Build a map of this vine's own cells so we can exclude them from collision checks
-	selfCells := make(map[string]bool)
-	for _, pt := range vine.OrderedPath {
-		selfCells[fmt.Sprintf("%d,%d", pt.X, pt.Y)] = true
-	}
+	h := s.level.GetGridHeight()
 
-	// Start with current positions
-	positions := make([]model.Point, len(vine.OrderedPath))
-	copy(positions, vine.OrderedPath)
+	// Current positions (as indices)
+	positions := make([]int, len(selfIndices))
+	copy(positions, selfIndices)
 
-	// Simulate movement for up to (width + height + path length) steps
-	maxSteps := s.level.GetGridWidth() + s.level.GetGridHeight() + len(vine.OrderedPath) + 10
-
+	maxSteps := w + h + len(positions)
 	for step := 0; step < maxSteps; step++ {
-		// Simulate one step of snake-like movement
-		newPositions := simulateVineMovement(positions, delta)
+		headIdx := positions[0]
+		hx, hy := headIdx%w, headIdx/w
+		nx, ny := hx+dx, hy+dy
 
-		// Check for self-overlap in the new positions
-		seen := make(map[string]bool)
-		for _, pos := range newPositions {
-			key := fmt.Sprintf("%d,%d", pos.X, pos.Y)
-			if seen[key] {
-				// Self-overlap after movement - impossible configuration
-				return false
-			}
-			seen[key] = true
-
-			// Check if this position collides with another vine
-			// (exclude cells that were originally occupied by this vine)
-			if occupiedCells[key] && !selfCells[key] {
-				// Blocked by another vine
-				return false
-			}
-		}
-
-		// Check if head has exited the grid (vine successfully clears)
-		head := newPositions[0]
-		if head.X < 0 || head.X >= s.level.GetGridWidth() ||
-			head.Y < 0 || head.Y >= s.level.GetGridHeight() {
+		if nx < 0 || nx >= w || ny < 0 || ny >= h {
 			return true
 		}
 
-		// Update positions for next iteration
-		positions = newPositions
+		nextIdx := ny*w + nx
+		if occupied[nextIdx] {
+			collidesWithSelf := false
+			for _, si := range positions {
+				if si == nextIdx {
+					collidesWithSelf = true
+					break
+				}
+			}
+			if !collidesWithSelf {
+				return false
+			}
+		}
+
+		for i := len(positions) - 1; i > 0; i-- {
+			positions[i] = positions[i-1]
+		}
+		positions[0] = nextIdx
 	}
 
-	// Timed out without clearing - assume blocked
 	return false
 }
 
-// simulateVineMovement simulates one step of snake-like movement.
-// The head moves in the given direction, and each segment moves to where the previous segment was.
-func simulateVineMovement(positions []model.Point, delta [2]int) []model.Point {
-	if len(positions) == 0 {
-		return positions
-	}
-
-	newPositions := make([]model.Point, len(positions))
-
-	// New head position
-	head := positions[0]
-	newPositions[0] = model.Point{X: head.X + delta[0], Y: head.Y + delta[1]}
-
-	// Each other segment moves to where the previous segment was
-	for i := 1; i < len(positions); i++ {
-		newPositions[i] = positions[i-1]
-	}
-
-	return newPositions
-}
-
-// buildOccupiedMap creates a map of occupied cells from vines.
-func (s *Solver) buildOccupiedMap(vines []model.Vine) map[string]bool {
-	occupied := make(map[string]bool)
-	for _, vine := range vines {
-		for _, pt := range vine.OrderedPath {
-			occupied[fmt.Sprintf("%d,%d", pt.X, pt.Y)] = true
+// canVineClear is a compatibility wrapper for tests
+func (s *Solver) canVineClear(vine *model.Vine, occupiedCells map[string]bool) bool {
+	w := s.level.GetGridWidth()
+	h := s.level.GetGridHeight()
+	occupied := make([]bool, w*h)
+	for k := range occupiedCells {
+		var x, y int
+		_, _ = fmt.Sscanf(k, "%d,%d", &x, &y)
+		if x >= 0 && x < w && y >= 0 && y < h {
+			occupied[y*w+x] = true
 		}
 	}
-	return occupied
-}
 
-// getVinesForIDs returns vine objects for given IDs.
-func (s *Solver) getVinesForIDs(ids map[string]bool) []model.Vine {
-	var result []model.Vine
-	for _, vine := range s.level.Vines {
-		if ids[vine.ID] {
-			result = append(result, vine)
-		}
+	indices := make([]int, len(vine.OrderedPath))
+	for i, p := range vine.OrderedPath {
+		indices[i] = p.Y*w + p.X
 	}
-	return result
-}
 
-// stateKey creates a unique, deterministic key for a state (set of vine IDs).
-func stateKey(state map[string]bool) string {
-	ids := make([]string, 0, len(state))
-	for id := range state {
-		ids = append(ids, id)
-	}
-	sort.Strings(ids)
-	key := ""
-	for _, id := range ids {
-		key += id + ","
-	}
-	return key
+	return s.canVineClearFast(vine, occupied, indices, w)
 }

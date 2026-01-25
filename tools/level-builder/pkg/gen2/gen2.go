@@ -236,31 +236,6 @@ func removeDuplicateVineEntries(vines []model.Vine) []model.Vine {
 }
 
 // runGenerationAttempts runs the generation loop until a solvable level is found
-func runGenerationAttempts(
-	config GenerationConfig,
-	placer *DirectionFirstPlacer,
-	analyzer *DFSBlockingAnalyzer,
-	rng *rand.Rand,
-	seed int64,
-	maxAttempts, maxBacktrack int,
-	stats *GenerationStats,
-) *generationState {
-	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		common.Verbose("Generation attempt %d/%d", attempt, maxAttempts)
-
-		attemptRng := rng
-		if attempt > 1 {
-			attemptRng = rand.New(rand.NewSource(seed + int64(attempt*10000)))
-		}
-
-		state := attemptGeneration(config, placer, analyzer, attemptRng, maxBacktrack, stats)
-		if state != nil && state.solvable {
-			common.Verbose("Found solvable level on attempt %d with %d vines", attempt, len(state.vines))
-			return state
-		}
-	}
-	return nil
-}
 
 // attemptLIFOGeneration performs generation using center-out placer with LIFO guarantee
 // No expensive solvability checks needed since LIFO ordering is guaranteed by construction
@@ -602,7 +577,7 @@ func writeFailureDump(config GenerationConfig, seed int64, attempt int, message 
 		enc := json.NewEncoder(f)
 		enc.SetIndent("", "  ")
 		_ = enc.Encode(dump)
-		f.Close()
+		_ = f.Close()
 		common.Info("Wrote failure dump: %s", jsonPath)
 	} else {
 		common.Verbose("Failed to write dump JSON: %v", err)
@@ -618,7 +593,7 @@ func writeFailureDump(config GenerationConfig, seed int64, attempt int, message 
 	f2, err := os.Create(txtPath)
 	if err == nil {
 		common.RenderLevelToWriter(f2, &level, "ascii", true)
-		f2.Close()
+		_ = f2.Close()
 		common.Info("Wrote failure render: %s", txtPath)
 	} else {
 		common.Verbose("Failed to write dump render: %v", err)
@@ -808,7 +783,7 @@ func writeLevelToFile(level model.Level, config GenerationConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")

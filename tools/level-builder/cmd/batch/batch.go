@@ -96,7 +96,7 @@ func init() {
 	// Optional explicit output directory for generated level files (absolute or relative)
 	batchCmd.Flags().StringVar(&outputDir, "output-dir", "", "directory to write generated level files (default: assets/levels)")
 
-	batchCmd.MarkFlagRequired("module")
+	_ = batchCmd.MarkFlagRequired("module")
 }
 
 // GetCommand returns the batch command

@@ -109,3 +109,6 @@ logs/
 
 # Taskfile checksums
 .task/
+
+# Level dumps from failing level generations
+tools/level-builder/assets/

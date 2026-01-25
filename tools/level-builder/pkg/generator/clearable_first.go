@@ -60,10 +60,6 @@ func ClearableFirstPlacement(
 	maxAnchorAttempts := targetAnchorCount * 100
 	// Track consecutive failures to detect stalls and reseed
 	anchorFailures := 0
-	maxConsecutiveAnchorFails := gridArea / 2
-	if maxConsecutiveAnchorFails < 100 {
-		maxConsecutiveAnchorFails = 100
-	}
 
 	for len(vines) < targetAnchorCount && anchorAttempts < maxAnchorAttempts {
 		anchorAttempts++
