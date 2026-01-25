@@ -95,10 +95,11 @@ tasks:
   # and a MinCoverage fallback (Option A default = 0.75). Use --overwrite to persist.
   levels:generate:fallback:
     desc: Generate fallback levels for all modules (overwrite existing files)
+    dir: tools/level-builder
     cmds:
       - for i in 1 2 3 4 5; do \
           echo "Generating module $i (fallback)..."; \
-          (cd tools/level-builder && go run . batch --module $i --lifo --overwrite --min-coverage {{.MIN_COVERAGE | default 0.75}} --verbose) || true; \
+          (go run . batch --module $i --lifo --overwrite --min-coverage {{.MIN_COVERAGE | default 0.75}} --verbose) || true; \
         done
 
   levels:validate:

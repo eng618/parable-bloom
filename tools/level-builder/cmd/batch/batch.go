@@ -53,6 +53,7 @@ var (
 	dumpDir     string
 	statsOut    string
 	minCoverage float64
+	outputDir   string
 )
 
 // batchCmd represents the batch command
@@ -92,6 +93,8 @@ func init() {
 	batchCmd.Flags().StringVar(&dumpDir, "dump-dir", "", "directory to write failing generation dumps (optional)")
 	batchCmd.Flags().StringVar(&statsOut, "stats-out", "", "optional directory to write per-level generation stats JSON files")
 	batchCmd.Flags().Float64Var(&minCoverage, "min-coverage", 0.0, "optional override for minimum coverage (0.0-1.0). 0 means no override")
+	// Optional explicit output directory for generated level files (absolute or relative)
+	batchCmd.Flags().StringVar(&outputDir, "output-dir", "", "directory to write generated level files (default: assets/levels)")
 
 	batchCmd.MarkFlagRequired("module")
 }
@@ -167,12 +170,16 @@ func validateModuleID(id int) error {
 }
 
 func buildConfig() batchsvc.Config {
+	out := outputDir
+	if out == "" {
+		out = "assets/levels"
+	}
 	return batchsvc.Config{
 		ModuleID:   moduleID,
 		UseLIFO:    useLIFO,
 		Overwrite:  overwrite,
 		DryRun:     dryRun,
-		OutputDir:  "assets/levels",
+		OutputDir:  out,
 		Aggressive: aggressive,
 		DumpDir:    dumpDir,
 		StatsOut:   statsOut,

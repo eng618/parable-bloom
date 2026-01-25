@@ -47,7 +47,7 @@ type LevelStat struct {
 //
 // Note: this function has side effects (printing to stdout and writing validation_stats.json) and performs
 // concurrent work that blocks until all checks complete.
-func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int) error {
+func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int, ignoreOccupancy bool) error {
 	// 1. Validate Modules
 	if err := validateModules(); err != nil {
 		return fmt.Errorf("module validation failed: %w", err)
@@ -68,7 +68,7 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 		var validationErrors []ValidationError
 
 		for _, f := range files {
-			if _, err := readLevelFile(f); err != nil {
+			if _, err := readLevelFile(f, ignoreOccupancy); err != nil {
 				validationErrors = append(validationErrors, ValidationError{
 					File:  filepath.Base(f),
 					Error: err.Error(),
@@ -108,7 +108,7 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			lvl, err := readLevelFile(f)
+			lvl, err := readLevelFile(f, ignoreOccupancy)
 			if err != nil {
 				errCh <- ValidationError{
 					File:  filepath.Base(f),
@@ -225,7 +225,7 @@ func validateModules() error {
 	return nil
 }
 
-func readLevelFile(path string) (model.Level, error) {
+func readLevelFile(path string, ignoreOccupancy bool) (model.Level, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return model.Level{}, err
@@ -250,7 +250,7 @@ func readLevelFile(path string) (model.Level, error) {
 	// 3. Check Occupancy and Coverage
 	// - Occupancy: at least MinGridCoverage (90%) of grid must be occupied by vines
 	// - Coverage: 100% of grid must be either occupied by vines OR masked out
-	if err := checkOccupancyAndCoverage(lvl); err != nil {
+	if err := checkOccupancyAndCoverage(lvl, ignoreOccupancy); err != nil {
 		return model.Level{}, err
 	}
 
@@ -281,7 +281,7 @@ func readLevelFile(path string) (model.Level, error) {
 // checkOccupancyAndCoverage validates two distinct metrics:
 // 1. Occupancy: at least MinGridCoverage (90%) of the grid must be occupied by vines
 // 2. Coverage: 100% of the grid must be either occupied by vines OR masked out (no empty unmasked cells)
-func checkOccupancyAndCoverage(lvl model.Level) error {
+func checkOccupancyAndCoverage(lvl model.Level, ignoreOccupancy bool) error {
 	w, h := lvl.GridSize[0], lvl.GridSize[1]
 	gridArea := w * h
 	occupied := make([]bool, gridArea)
@@ -305,7 +305,12 @@ func checkOccupancyAndCoverage(lvl model.Level) error {
 	// Check 1: Vine occupancy must meet minimum threshold (90%)
 	occupancy := float64(vineCount) / float64(gridArea)
 	if occupancy < common.MinGridCoverage {
-		return fmt.Errorf("vine occupancy %.1f%% below minimum threshold %.0f%%",
+		if !ignoreOccupancy {
+			return fmt.Errorf("vine occupancy %.1f%% below minimum threshold %.0f%%",
+				occupancy*100, common.MinGridCoverage*100)
+		}
+		// If ignoring occupancy, just warn and continue
+		fmt.Printf("⚠️ Warning: vine occupancy %.1f%% below minimum threshold %.0f%% (ignored)\n",
 			occupancy*100, common.MinGridCoverage*100)
 	}
 

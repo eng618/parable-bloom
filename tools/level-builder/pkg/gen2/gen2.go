@@ -175,6 +175,11 @@ func finalizeLevelGeneration(
 	// using sequential vine_N indices to keep stability.
 	state.vines = ensureUniqueVineIDs(state.vines)
 
+	// Final sanitizer: remove duplicate vine entries (can happen when a vine
+	// was accidentally appended twice during placement/backtracking). Keep the
+	// first occurrence to preserve deterministic order and log a warning.
+	state.vines = removeDuplicateVineEntries(state.vines)
+
 	level := assembler.AssembleLevel(config, state.vines, mask, seed)
 
 	if err := writeLevelToFile(level, config); err != nil {
@@ -211,6 +216,23 @@ func ensureUniqueVineIDs(vines []model.Vine) []model.Vine {
 		nextIdx++
 	}
 	return vines
+}
+
+// removeDuplicateVineEntries drops duplicate vine entries (same ID) keeping the first occurrence.
+// This guards against double-appends during placement/backtracking and prevents obvious
+// overlapping errors in validator. It emits a warning when duplicates are removed.
+func removeDuplicateVineEntries(vines []model.Vine) []model.Vine {
+	seen := map[string]bool{}
+	out := make([]model.Vine, 0, len(vines))
+	for _, v := range vines {
+		if seen[v.ID] {
+			common.Warning("Duplicate vine ID detected and removed: %s", v.ID)
+			continue
+		}
+		seen[v.ID] = true
+		out = append(out, v)
+	}
+	return out
 }
 
 // runGenerationAttempts runs the generation loop until a solvable level is found
@@ -536,7 +558,7 @@ func writeFailureDump(config GenerationConfig, seed int64, attempt int, message 
 	// Default dump dir
 	dumpDir := config.DumpDir
 	if dumpDir == "" {
-		dumpDir = "tools/level-builder/failing_dumps"
+		dumpDir = "failing_dumps"
 	}
 	if err := os.MkdirAll(dumpDir, 0755); err != nil {
 		return err

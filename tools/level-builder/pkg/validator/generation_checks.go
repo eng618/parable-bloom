@@ -8,7 +8,7 @@ import "github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 func ValidateDesignConstraints(lvl model.Level) []error {
 	var errors []error
 
-	if err := checkOccupancyAndCoverage(lvl); err != nil {
+	if err := checkOccupancyAndCoverage(lvl, false); err != nil {
 		errors = append(errors, err)
 	}
 
