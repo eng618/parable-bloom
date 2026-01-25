@@ -762,7 +762,11 @@ func convertVinesToModel(vines []model.Vine) []model.Vine {
 func writeLevelToFile(level model.Level, config GenerationConfig) error {
 	outputPath := config.OutputFile
 	if outputPath == "" {
-		outputPath = fmt.Sprintf("../../assets/levels/level_%d.json", config.LevelID)
+		var err error
+		outputPath, err = common.LevelFilePath(config.LevelID)
+		if err != nil {
+			return fmt.Errorf("failed to resolve level file path: %w", err)
+		}
 	}
 
 	// Check if file exists and overwrite is not enabled

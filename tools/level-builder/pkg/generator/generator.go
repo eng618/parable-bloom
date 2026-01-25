@@ -15,12 +15,7 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
 
-const (
-	AssetsDir   = "../../assets"
-	LevelsDir   = AssetsDir + "/levels"
-	DataDir     = AssetsDir + "/data"
-	ModulesFile = DataDir + "/modules.json"
-)
+// Path resolution: Use common.LevelsDir(), common.DataDir(), common.ModulesFile() instead of hardcoded paths
 
 // cryptoSeedInt64 returns a crypto-random int64 seed, falling back to time on error
 func cryptoSeedInt64() int64 {
@@ -44,7 +39,12 @@ type GenerationConfig struct {
 
 // Clean removes generated level and module files used by the level builder.
 func Clean() error {
-	files, err := filepath.Glob(filepath.Join(LevelsDir, "level_*.json"))
+	levelsDir, err := common.LevelsDir()
+	if err != nil {
+		return fmt.Errorf("failed to resolve levels directory: %w", err)
+	}
+
+	files, err := filepath.Glob(filepath.Join(levelsDir, "level_*.json"))
 	if err != nil {
 		return err
 	}
@@ -53,8 +53,14 @@ func Clean() error {
 			return fmt.Errorf("failed to remove %s: %w", f, err)
 		}
 	}
-	if err := os.Remove(ModulesFile); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to remove %s: %w", ModulesFile, err)
+
+	modulesFile, err := common.ModulesFile()
+	if err != nil {
+		return fmt.Errorf("failed to resolve modules.json path: %w", err)
+	}
+
+	if err := os.Remove(modulesFile); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to remove %s: %w", modulesFile, err)
 	}
 	return nil
 }
@@ -65,11 +71,21 @@ func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, diffi
 	cwd, _ := os.Getwd()
 	common.Verbose("Generating %d levels (CWD: %s)...", count, cwd)
 
+	levelsDir, err := common.LevelsDir()
+	if err != nil {
+		return fmt.Errorf("failed to resolve levels directory: %w", err)
+	}
+
+	dataDir, err := common.DataDir()
+	if err != nil {
+		return fmt.Errorf("failed to resolve data directory: %w", err)
+	}
+
 	// Ensure output directories exist
-	if err := os.MkdirAll(LevelsDir, 0755); err != nil {
+	if err := os.MkdirAll(levelsDir, 0755); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(DataDir, 0755); err != nil {
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return err
 	}
 
@@ -94,9 +110,14 @@ func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, diffi
 
 // generateLevels generates a series of individual levels.
 func generateLevels(cfg GenerationConfig) error {
+	levelsDir, err := common.LevelsDir()
+	if err != nil {
+		return fmt.Errorf("failed to resolve levels directory: %w", err)
+	}
+
 	// Determine the starting level ID
 	startID := 1
-	existingLevels, err := common.ReadLevelsFromDir(LevelsDir)
+	existingLevels, err := common.ReadLevelsFromDir(levelsDir)
 	if err == nil && len(existingLevels) > 0 {
 		maxID := 0
 		for _, lvl := range existingLevels {
@@ -142,7 +163,14 @@ func generateLevels(cfg GenerationConfig) error {
 			common.Error("Level %d failed after %d attempts: %v", levelID, maxRetries, lastErr)
 			continue // Skip this level, continue batch
 		}
-		filePath := filepath.Join(LevelsDir, fmt.Sprintf("level_%d.json", levelID))
+
+		levelsDir, err := common.LevelsDir()
+		if err != nil {
+			common.Error("Failed to resolve levels directory for level %d: %v", levelID, err)
+			continue
+		}
+
+		filePath := filepath.Join(levelsDir, fmt.Sprintf("level_%d.json", levelID))
 		if err := common.WriteLevel(filePath, &level, cfg.Overwrite); err != nil {
 			common.Error("Failed to write level %d: %v", levelID, err)
 			continue
@@ -223,7 +251,14 @@ func generateModule(cfg GenerationConfig) error {
 			level.Complexity = "transcendent"
 			level.Grace++
 		}
-		filePath := filepath.Join(LevelsDir, fmt.Sprintf("level_%d.json", levelID))
+
+		levelsDir, err := common.LevelsDir()
+		if err != nil {
+			common.Error("Failed to resolve levels directory for level %d in module %d: %v", levelID, cfg.ModuleID, err)
+			continue
+		}
+
+		filePath := filepath.Join(levelsDir, fmt.Sprintf("level_%d.json", levelID))
 		if err := common.WriteLevel(filePath, &level, cfg.Overwrite); err != nil {
 			common.Error("Failed to write level %d: %v", levelID, err)
 			continue
@@ -243,7 +278,10 @@ func generateModule(cfg GenerationConfig) error {
 
 // updateModuleRegistry updates or creates the modules.json file with the new module.
 func updateModuleRegistry(moduleID int, startID int) error {
-	registryPath := ModulesFile
+	registryPath, err := common.ModulesFile()
+	if err != nil {
+		return fmt.Errorf("failed to resolve modules.json path: %w", err)
+	}
 
 	// Read existing registry or create new one
 	var registry model.ModuleRegistry

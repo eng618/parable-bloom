@@ -13,10 +13,7 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
-const (
-	LevelsDir   = "../../assets/levels"
-	ModulesFile = "../../assets/data/modules.json"
-)
+// Path resolution functions - use common.LevelsDir() and common.ModulesFile() instead of hardcoded paths
 
 type LevelStat struct {
 	File           string `json:"file"`
@@ -53,8 +50,14 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int,
 		return fmt.Errorf("module validation failed: %w", err)
 	}
 
-	// 2. Validate Levels
-	files, err := filepath.Glob(filepath.Join(LevelsDir, "level_*.json"))
+	// 2. Resolve levels directory
+	levelsDir, err := common.LevelsDir()
+	if err != nil {
+		return fmt.Errorf("failed to resolve levels directory: %w", err)
+	}
+
+	// 3. Validate Levels
+	files, err := filepath.Glob(filepath.Join(levelsDir, "level_*.json"))
 	if err != nil {
 		return err
 	}
@@ -194,7 +197,11 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int,
 }
 
 func validateModules() error {
-	bytes, err := os.ReadFile(ModulesFile)
+	modulesFile, err := common.ModulesFile()
+	if err != nil {
+		return fmt.Errorf("failed to resolve modules.json path: %w", err)
+	}
+	bytes, err := os.ReadFile(modulesFile)
 	if err != nil {
 		return err
 	}
@@ -302,16 +309,17 @@ func checkOccupancyAndCoverage(lvl model.Level, ignoreOccupancy bool) error {
 		}
 	}
 
-	// Check 1: Vine occupancy must meet minimum threshold (90%)
+	// Check 1: Vine occupancy must meet minimum threshold for its difficulty
+	targetOccupancy := common.MinCoverageForDifficulty(lvl.Difficulty)
 	occupancy := float64(vineCount) / float64(gridArea)
-	if occupancy < common.MinGridCoverage {
+	if occupancy < targetOccupancy {
 		if !ignoreOccupancy {
-			return fmt.Errorf("vine occupancy %.1f%% below minimum threshold %.0f%%",
-				occupancy*100, common.MinGridCoverage*100)
+			return fmt.Errorf("vine occupancy %.1f%% below minimum threshold %.0f%% for %s difficulty",
+				occupancy*100, targetOccupancy*100, lvl.Difficulty)
 		}
 		// If ignoring occupancy, just warn and continue
 		fmt.Printf("⚠️ Warning: vine occupancy %.1f%% below minimum threshold %.0f%% (ignored)\n",
-			occupancy*100, common.MinGridCoverage*100)
+			occupancy*100, targetOccupancy*100)
 	}
 
 	// Check 2: 100% coverage (every cell is either occupied by vine OR masked)

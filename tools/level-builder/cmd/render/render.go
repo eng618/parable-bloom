@@ -2,7 +2,6 @@ package render
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -40,7 +39,10 @@ Examples:
 				return fmt.Errorf("failed to read level file: %w", err)
 			}
 		} else if idFlag != 0 {
-			path := filepath.Join("../../assets/levels", fmt.Sprintf("level_%d.json", idFlag))
+			path, err := common.LevelFilePath(idFlag)
+			if err != nil {
+				return fmt.Errorf("failed to resolve level file path: %w", err)
+			}
 			level, err = common.ReadLevel(path)
 			if err != nil {
 				return fmt.Errorf("failed to read level %d: %w", idFlag, err)

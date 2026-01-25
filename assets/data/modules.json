@@ -1,25 +1,15 @@
 {
   "version": "2.0",
-  "tutorials": [
-    1,
-    2,
-    3,
-    4,
-    5
-  ],
+  "tutorials": [1, 2, 3, 4, 5],
   "modules": [
     {
       "id": 1,
       "name": "Seedling",
       "theme_seed": "forest",
       "levels": [
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-        11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-        21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-        31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-        41, 42, 43, 44
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
       ],
-      "challenge_level": 0,
+      "challenge_level": 21,
       "parable": {
         "title": "The Sower and the Seed",
         "scripture": "Matthew 13:1-23",
@@ -28,6 +18,78 @@
         "background_image": ""
       },
       "unlock_message": "Your journey begins..."
+    },
+    {
+      "id": 2,
+      "name": "Sprout",
+      "theme_seed": "meadow",
+      "levels": [
+        22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+        40, 41
+      ],
+      "challenge_level": 42,
+      "parable": {
+        "title": "The Mustard Seed",
+        "scripture": "Matthew 13:31-32",
+        "content": "The kingdom of heaven is like a mustard seed, which a man took and planted in his field. Though it is the smallest of all seeds, yet when it grows, it is the largest of garden plants and becomes a tree.",
+        "reflection": "How has small faith grown into something greater in your life?",
+        "background_image": ""
+      },
+      "unlock_message": "Growth takes patience..."
+    },
+    {
+      "id": 3,
+      "name": "Blossom",
+      "theme_seed": "garden",
+      "levels": [
+        43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+        61, 62
+      ],
+      "challenge_level": 63,
+      "parable": {
+        "title": "The Growing Seed",
+        "scripture": "Mark 4:26-29",
+        "content": "This is what the kingdom of God is like. A man scatters seed on the ground. Night and day, whether he sleeps or gets up, the seed sprouts and grows, though he does not know how.",
+        "reflection": "What seeds have you planted that are growing beyond your understanding?",
+        "background_image": ""
+      },
+      "unlock_message": "Beauty unfolds in time..."
+    },
+    {
+      "id": 4,
+      "name": "Flourish",
+      "theme_seed": "orchard",
+      "levels": [
+        64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81,
+        82, 83
+      ],
+      "challenge_level": 84,
+      "parable": {
+        "title": "The Vine and Branches",
+        "scripture": "John 15:1-8",
+        "content": "I am the vine; you are the branches. If you remain in me and I in you, you will bear much fruit; apart from me you can do nothing.",
+        "reflection": "How do you stay connected to the source of your growth?",
+        "background_image": ""
+      },
+      "unlock_message": "Bear fruit in abundance..."
+    },
+    {
+      "id": 5,
+      "name": "Harvest",
+      "theme_seed": "abundance",
+      "levels": [
+        85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101,
+        102, 103, 104
+      ],
+      "challenge_level": 105,
+      "parable": {
+        "title": "The Harvest",
+        "scripture": "Matthew 9:37-38",
+        "content": "The harvest is plentiful but the workers are few. Ask the Lord of the harvest, therefore, to send out workers into his harvest field.",
+        "reflection": "What harvest awaits your faithful work?",
+        "background_image": ""
+      },
+      "unlock_message": "Reap what you have sown..."
     }
   ]
 }

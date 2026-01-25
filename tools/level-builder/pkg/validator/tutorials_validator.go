@@ -10,14 +10,17 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
-const (
-	LessonsDir = "../../assets/lessons"
-)
+// Path resolution uses common.LessonsDir() - no hardcoded paths
 
 // ValidateTutorials validates lesson files (tutorials) with relaxed rules compared to main levels.
 // If checkSolvable is true, also run solvability checks with the provided maxStates.
 func ValidateTutorials(checkSolvable bool, maxStates int) error {
-	files, err := filepath.Glob(filepath.Join(LessonsDir, "lesson_*.json"))
+	lessonsDir, err := common.LessonsDir()
+	if err != nil {
+		return fmt.Errorf("failed to resolve lessons directory: %w", err)
+	}
+
+	files, err := filepath.Glob(filepath.Join(lessonsDir, "lesson_*.json"))
 	if err != nil {
 		return err
 	}

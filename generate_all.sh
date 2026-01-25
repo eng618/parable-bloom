@@ -2,7 +2,7 @@
 set -e
 
 # Build the latest version of the level-builder tool.
-task level-builder:build 
+task lb:build 
 
 echo "Starting sequential generation of Modules 1-5..."
 

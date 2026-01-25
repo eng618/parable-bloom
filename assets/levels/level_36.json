@@ -761,7 +761,7 @@
       "color_index": 5
     },
     {
-      "id": "vine_27",
+      "id": "vine_26",
       "head_direction": "right",
       "ordered_path": [
         {
@@ -784,29 +784,6 @@
     },
     {
       "id": "vine_27",
-      "head_direction": "right",
-      "ordered_path": [
-        {
-          "x": 7,
-          "y": 6
-        },
-        {
-          "x": 6,
-          "y": 6
-        },
-        {
-          "x": 6,
-          "y": 5
-        },
-        {
-          "x": 7,
-          "y": 5
-        }
-      ],
-      "color_index": 1
-    },
-    {
-      "id": "vine_27",
       "head_direction": "up",
       "ordered_path": [
         {
@@ -818,7 +795,7 @@
           "y": 15
         }
       ],
-      "color_index": 2
+      "color_index": 1
     },
     {
       "id": "vine_28",
@@ -833,7 +810,7 @@
           "y": 16
         }
       ],
-      "color_index": 3
+      "color_index": 2
     },
     {
       "id": "vine_29",
@@ -848,7 +825,7 @@
           "y": 1
         }
       ],
-      "color_index": 4
+      "color_index": 3
     },
     {
       "id": "vine_30",
@@ -863,7 +840,7 @@
           "y": 2
         }
       ],
-      "color_index": 5
+      "color_index": 4
     },
     {
       "id": "vine_31",
@@ -877,7 +854,8 @@
           "x": 0,
           "y": 1
         }
-      ]
+      ],
+      "color_index": 5
     },
     {
       "id": "vine_32",
@@ -891,8 +869,7 @@
           "x": 0,
           "y": 14
         }
-      ],
-      "color_index": 1
+      ]
     },
     {
       "id": "vine_33",
@@ -907,7 +884,7 @@
           "y": 1
         }
       ],
-      "color_index": 2
+      "color_index": 1
     },
     {
       "id": "vine_34",
@@ -922,7 +899,7 @@
           "y": 12
         }
       ],
-      "color_index": 3
+      "color_index": 2
     },
     {
       "id": "vine_35",
@@ -937,7 +914,7 @@
           "y": 16
         }
       ],
-      "color_index": 4
+      "color_index": 3
     },
     {
       "id": "vine_36",
@@ -952,7 +929,7 @@
           "y": 1
         }
       ],
-      "color_index": 5
+      "color_index": 4
     },
     {
       "id": "vine_37",
@@ -966,7 +943,8 @@
           "x": 4,
           "y": 1
         }
-      ]
+      ],
+      "color_index": 5
     },
     {
       "id": "vine_38",
@@ -980,8 +958,7 @@
           "x": 8,
           "y": 2
         }
-      ],
-      "color_index": 1
+      ]
     },
     {
       "id": "vine_39",
@@ -996,7 +973,7 @@
           "y": 14
         }
       ],
-      "color_index": 2
+      "color_index": 1
     },
     {
       "id": "vine_40",
@@ -1011,7 +988,7 @@
           "y": 2
         }
       ],
-      "color_index": 3
+      "color_index": 2
     },
     {
       "id": "vine_41",
@@ -1026,11 +1003,11 @@
           "y": 16
         }
       ],
-      "color_index": 4
+      "color_index": 3
     }
   ],
   "max_moves": 54,
-  "min_moves": 41,
+  "min_moves": 40,
   "complexity": "medium",
   "grace": 3,
   "color_scheme": [

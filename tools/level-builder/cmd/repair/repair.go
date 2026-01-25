@@ -40,7 +40,11 @@ Examples:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if directoryFlag == "" {
-			directoryFlag = "../../assets/levels"
+			var err error
+			directoryFlag, err = common.LevelsDir()
+			if err != nil {
+				return fmt.Errorf("failed to resolve levels directory: %w", err)
+			}
 		}
 
 		return repairDirectory(directoryFlag, overwriteFlag, dryRunFlag)
