@@ -29,6 +29,9 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Set up Task
+        uses: arduino/setup-task@v2
+
       - name: Cache pub
         uses: actions/cache@v4
         with:
@@ -59,7 +62,7 @@ jobs:
           fi
 
       - name: Build Web
-        run: flutter build web --release --dart-define=APP_ENV=${{ env.APP_ENV }}
+        run: task flutter:build:web:${{ env.APP_ENV }}
 
       - name: Deploy to Hosting
         run: firebase deploy --only hosting --token ${{ secrets.FIREBASE_CI_TOKEN }}

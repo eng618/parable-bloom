@@ -77,4 +77,4 @@ jobs:
       - name: Validate levels (Task)
         run: |
           task levels:validate
-          task tutorials:validate
+          task levels:tutorials:validate

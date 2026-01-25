@@ -170,17 +170,17 @@ tasks:
   build:web:dev:
     desc: Build the web application for development environment
     cmds:
-      - flutter build web --dart-define=APP_ENV=dev
+      - flutter build web --release --dart-define=APP_ENV=dev
 
   build:web:preview:
     desc: Build the web application for preview environment
     cmds:
-      - flutter build web --dart-define=APP_ENV=preview
+      - flutter build web --release --dart-define=APP_ENV=preview
 
   build:web:prod:
     desc: Build the web application for production environment
     cmds:
-      - flutter build web --dart-define=APP_ENV=prod
+      - flutter build web --release --dart-define=APP_ENV=prod
 
   test:dev:
     desc: Run tests in development environment

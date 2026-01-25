@@ -28,7 +28,7 @@ tasks:
     desc: Validate existing levels and run solvability checks (may be slow)
     dir: tools/level-builder
     cmds:
-      - go run . validate --check-solvable --max-states "{{.MAX_STATES | default 100000}}"
+      - go run . validate --check-solvable --max-states "{{.MAX_STATES | default 100000}}" --use-astar={{.USE_ASTAR | default true}} --astar-weight={{.ASTAR_WEIGHT | default 10}}
 
   tutorials:validate:
     desc: Validate tutorial lessons using the Go tool
@@ -40,7 +40,7 @@ tasks:
     desc: Validate tutorial lessons and run solvability checks (may be slow)
     dir: tools/level-builder
     cmds:
-      - go run . validate-tutorials --check-solvable --max-states {{.MAX_STATES | default 100000}}
+      - go run . validate-tutorials --check-solvable --max-states {{.MAX_STATES | default 100000}} --use-astar={{.USE_ASTAR | default true}} --astar-weight={{.ASTAR_WEIGHT | default 10}}
 
   validate-experiments:
     desc: Run solvability experiments comparing BFS and A* (outputs bfs/astar stats)

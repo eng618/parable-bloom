@@ -50,6 +50,9 @@ tasks:
       - task: clean
       - task: flutter:get
       - task: flutter:build:android
+        vars:
+          BUILD_NAME: "{{.BUILD_NAME}}"
+          BUILD_NUMBER: "{{.BUILD_NUMBER}}"
 
   ios:
     desc: Build the iOS application
