@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -40,7 +41,11 @@ func loadLevel(t *testing.T, path string) model.Level {
 }
 
 func TestAstarReducesWork_Level33(t *testing.T) {
-	lvl := loadLevel(t, "../../assets/levels/level_33.json")
+	levelPath, err := common.LevelFilePath(33)
+	if err != nil {
+		t.Fatalf("Failed to resolve level path: %v", err)
+	}
+	lvl := loadLevel(t, levelPath)
 	// Run without A*
 	_, statsNo, err := IsSolvableWithOptions(lvl, 300000, false, 10)
 	if err != nil {

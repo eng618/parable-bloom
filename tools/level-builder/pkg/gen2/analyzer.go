@@ -56,12 +56,15 @@ func (a *DFSBlockingAnalyzer) buildBlockingGraph(vines []model.Vine, occupied ma
 }
 
 // calculateMaxBlockingDepth finds the longest chain of blocking relationships
+// Uses memoization to avoid repeated DFS work and to keep runtime bounded.
 func (a *DFSBlockingAnalyzer) calculateMaxBlockingDepth(graph map[string][]string, vines []model.Vine) int {
 	maxDepth := 0
+	// cache stores computed depths for nodes
+	cache := make(map[string]int)
 
 	// For each vine, find the longest path starting from it
 	for _, vine := range vines {
-		depth := a.findMaxDepthFromVine(vine.ID, graph, make(map[string]bool))
+		depth := a.findMaxDepthFromVine(vine.ID, graph, make(map[string]bool), cache)
 		if depth > maxDepth {
 			maxDepth = depth
 		}
@@ -71,9 +74,17 @@ func (a *DFSBlockingAnalyzer) calculateMaxBlockingDepth(graph map[string][]strin
 }
 
 // findMaxDepthFromVine finds the maximum blocking depth starting from a vine
-func (a *DFSBlockingAnalyzer) findMaxDepthFromVine(vineID string, graph map[string][]string, visited map[string]bool) int {
+// Adds a cache parameter to memoize results and avoid exponential behavior.
+func (a *DFSBlockingAnalyzer) findMaxDepthFromVine(vineID string, graph map[string][]string, visited map[string]bool, cache map[string]int) int {
+	// Return cached value if available
+	if v, ok := cache[vineID]; ok {
+		return v
+	}
+
 	if visited[vineID] {
-		return 0 // Prevent infinite recursion in cycles (though we check for cycles separately)
+		// Found a cycle on this path; treat as depth 0 to avoid infinite recursion.
+		// Cycles are reported separately by detectCircularBlocking.
+		return 0
 	}
 
 	visited[vineID] = true
@@ -81,18 +92,20 @@ func (a *DFSBlockingAnalyzer) findMaxDepthFromVine(vineID string, graph map[stri
 
 	blockedVines := graph[vineID]
 	if len(blockedVines) == 0 {
+		cache[vineID] = 0
 		return 0
 	}
 
 	maxChildDepth := 0
 	for _, blockedID := range blockedVines {
-		childDepth := a.findMaxDepthFromVine(blockedID, graph, visited)
+		childDepth := a.findMaxDepthFromVine(blockedID, graph, visited, cache)
 		if childDepth > maxChildDepth {
 			maxChildDepth = childDepth
 		}
 	}
 
-	return 1 + maxChildDepth
+	cache[vineID] = 1 + maxChildDepth
+	return cache[vineID]
 }
 
 // detectCircularBlocking uses DFS to detect cycles in the blocking graph
@@ -107,16 +120,8 @@ func (a *DFSBlockingAnalyzer) detectCircularBlocking(graph map[string][]string) 
 		currentPath := append(path, nodeID)
 
 		if recStack[nodeID] {
-			// Found a cycle - extract the cycle from current path
-			cycleStart := -1
-			for i, id := range currentPath {
-				if id == nodeID && i < len(currentPath)-1 {
-					cycleStart = i
-					break
-				}
-			}
-			if cycleStart >= 0 {
-				cycle := append(currentPath[cycleStart:], nodeID) // Close the cycle
+			// Found a cycle - extract and record it
+			if cycle := extractCycleFromPath(currentPath, nodeID); len(cycle) > 0 {
 				circularChains = append(circularChains, cycle)
 			}
 			return true
@@ -149,6 +154,16 @@ func (a *DFSBlockingAnalyzer) detectCircularBlocking(graph map[string][]string) 
 	}
 
 	return false, nil
+}
+
+// extractCycleFromPath extracts the cycle ending at nodeID from the current path.
+func extractCycleFromPath(path []string, nodeID string) []string {
+	for i, id := range path {
+		if id == nodeID && i < len(path)-1 {
+			return append(path[i:], nodeID)
+		}
+	}
+	return nil
 }
 
 // vineBlocksVine checks if blocker prevents blocked from moving

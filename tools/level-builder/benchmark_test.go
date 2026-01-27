@@ -6,13 +6,17 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
 
 // BenchmarkStructuralValidation measures structural validation performance
 func BenchmarkStructuralValidation(b *testing.B) {
-	levelsDir := "../../assets/levels"
+	levelsDir, err := common.LevelsDir()
+	if err != nil {
+		b.Fatalf("Failed to resolve levels directory: %v", err)
+	}
 	levels, err := loadAllLevels(levelsDir)
 	if err != nil {
 		b.Fatalf("Failed to load levels: %v", err)
@@ -32,7 +36,11 @@ func BenchmarkStructuralValidation(b *testing.B) {
 
 // BenchmarkSingleLevelSolvability measures solvability check for level 20 (slowest)
 func BenchmarkSingleLevelSolvability(b *testing.B) {
-	level, err := loadLevel("../../assets/levels/level_20.json")
+	levelPath, err := common.LevelFilePath(20)
+	if err != nil {
+		b.Fatalf("Failed to resolve level path: %v", err)
+	}
+	level, err := loadLevel(levelPath)
 	if err != nil {
 		b.Fatalf("Failed to load level: %v", err)
 	}

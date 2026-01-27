@@ -18,7 +18,7 @@ type CenterOutPlacer struct{}
 
 // PlaceVines places vines from center outward, guaranteeing each has a clear exit at placement time.
 // Returns vines that can be solved in LIFO order (last placed = first cleared).
-func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([]model.Vine, map[string]string, error) {
+func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, stats *GenerationStats) ([]model.Vine, map[string]string, error) {
 	w, h := config.GridWidth, config.GridHeight
 	totalCells := w * h
 	occupied := make(map[string]string)
@@ -28,28 +28,51 @@ func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([
 	common.Verbose("Target vine lengths: %v", targetLengths)
 
 	var vines []model.Vine
+	var coverage float64
 
 	// Phase 1: Place vines from center outward with LIFO guarantee
-	for i, targetLen := range targetLengths {
-		vineID := fmt.Sprintf("vine_%d", i+1)
+	for _, targetLen := range targetLengths {
+		// Use dynamic ID based on current placed vines to avoid duplicates
+		vineID := fmt.Sprintf("vine_%d", len(vines)+1)
 
 		vine, newOccupied, err := p.placeVineWithExitGuarantee(
-			vineID, targetLen, w, h, occupied, rng,
+			vineID, targetLen, w, h, occupied, rng, stats,
 		)
 		if err != nil {
 			common.Verbose("Could not place vine %s: %v", vineID, err)
-			continue
+
+			// Delegate to AttemptLocalBacktrack (modularized)
+			vineRecovered, _, updatedVines, updatedOccupied, btErr := AttemptLocalBacktrack(vines, occupied, vineID, targetLen, p, w, h, rng, config, stats)
+			if btErr != nil {
+				common.Verbose("Local backtracking failed for %s: %v", vineID, btErr)
+				continue
+			}
+
+			// Use recovered vine and updated state
+			vines = updatedVines
+			occupied = updatedOccupied
+			vine = vineRecovered
 		}
 
-		vines = append(vines, vine)
+		// Merge newly-occupied cells from a successful placement into the global occupied map
 		for k, v := range newOccupied {
 			occupied[k] = v
 		}
 
-		coverage := float64(len(occupied)) / float64(totalCells)
-		common.Verbose("Placed vine %s with %d segments, coverage: %.1f%%", vineID, len(vine.OrderedPath), coverage*100)
+		// Avoid double-appending if recovered state already includes the vine
+		exists := false
+		for _, v := range vines {
+			if v.ID == vine.ID {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			vines = append(vines, vine)
+		}
 
-		// Early exit if we've achieved target coverage
+		// Update coverage and early exit if we've achieved target coverage
+		coverage = float64(len(occupied)) / float64(totalCells)
 		if coverage >= config.MinCoverage {
 			common.Verbose("Achieved target coverage %.1f%%, stopping placement", coverage*100)
 			break
@@ -57,7 +80,7 @@ func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([
 	}
 
 	// Phase 2: Fill remaining gaps with 2-cell filler vines (LIFO guaranteed)
-	coverage := float64(len(occupied)) / float64(totalCells)
+	coverage = float64(len(occupied)) / float64(totalCells)
 	if coverage < config.MinCoverage {
 		common.Verbose("Coverage %.1f%% below target %.1f%%, adding filler vines...", coverage*100, config.MinCoverage*100)
 		fillerVines, fillerOccupied := p.createFillerVines(vines, occupied, w, h, config.MinCoverage, rng)
@@ -85,10 +108,14 @@ func (p *CenterOutPlacer) placeVineWithExitGuarantee(
 	w, h int,
 	occupied map[string]string,
 	rng *rand.Rand,
+	stats *GenerationStats,
 ) (model.Vine, map[string]string, error) {
 	const maxAttempts = 100
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
+		if stats != nil {
+			stats.PlacementAttempts++
+		}
 		// Choose seed cell (center-biased)
 		seed := p.chooseCenterSeed(w, h, occupied, rng)
 		if seed == nil {
@@ -415,7 +442,16 @@ func (p *CenterOutPlacer) createFillerVines(
 	targetCells := int(float64(w*h) * targetCoverage)
 	fillerVines := []model.Vine{}
 	fillerOccupied := make(map[string]string)
-	fillerID := len(existingVines) + 1
+	// Compute next filler ID by scanning existing vine IDs to avoid collisions
+	fillerID := 1
+	for _, ev := range existingVines {
+		var idx int
+		if n, err := fmt.Sscanf(ev.ID, "vine_%d", &idx); n == 1 && err == nil {
+			if idx >= fillerID {
+				fillerID = idx + 1
+			}
+		}
+	}
 
 	// Phase 1: LIFO-guaranteed fillers (heads with clear exit)
 	vines1, occ1, nextID := p.fillWithLIFOGuarantee(fillerID, occupied, w, h, targetCells, rng)

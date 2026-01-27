@@ -27,14 +27,12 @@ jobs:
       - name: Validate levels & tutorials (Task)
         run: |
           task levels:validate
-          task tutorials:validate
+          task levels:tutorials:validate
 
       - name: Validate solvability (Go)
         working-directory: tools/level-builder
         run: |
-          # This assumes the validator supports a solvability flag such as --check-solvable
-          # and returns non-zero on failures. Adjust the flag if your Go tool uses a different flag.
-          go run . validate --check-solvable --max-states=100000 --use-astar=true --astar-weight=10
+          task levels:validate-solvable
 
       - name: Upload validation logs (if any)
         if: failure()

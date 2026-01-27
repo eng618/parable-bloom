@@ -25,12 +25,12 @@ void main() {
 
     expect(firstModule.name, 'Seedling');
     expect(firstModule.startLevel, 1, reason: 'Start level should be 1');
-    expect(firstModule.endLevel, 44,
-        reason: 'End level should be 44 (max from levels array)');
-    expect(firstModule.levelCount, 44, reason: 'Should have 44 levels (1-44)');
+    expect(firstModule.endLevel, 21,
+        reason: 'End level should be 21 (max from levels array)');
+    expect(firstModule.levelCount, 21, reason: 'Should have 21 levels (1-21)');
     expect(firstModule.containsLevel(1), true);
-    expect(firstModule.containsLevel(44), true);
+    expect(firstModule.containsLevel(21), true);
     expect(firstModule.containsLevel(0), false);
-    expect(firstModule.containsLevel(45), false);
+    expect(firstModule.containsLevel(22), false);
   });
 }

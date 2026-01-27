@@ -6,6 +6,27 @@ package common
 // to succeed, while higher values create denser puzzles but may reduce success rates.
 const MinGridCoverage = 0.90
 
+// MinCoverageForDifficulty returns the minimum target grid coverage for each difficulty tier.
+// These values are used by regulators during generation and in the final structural validation.
+func MinCoverageForDifficulty(difficulty string) float64 {
+	switch difficulty {
+	case "Tutorial":
+		return 0.70
+	case "Seedling":
+		return 0.85
+	case "Sprout":
+		return 0.80
+	case "Nurturing":
+		return 0.75
+	case "Flourishing":
+		return 0.70
+	case "Transcendent":
+		return 0.60
+	default:
+		return 0.75
+	}
+}
+
 // HeadDirections defines valid head directions and their deltas.
 var HeadDirections = map[string][2]int{
 	"right": {1, 0},

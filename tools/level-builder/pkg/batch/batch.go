@@ -1,7 +1,9 @@
 package batch
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
@@ -39,6 +41,11 @@ type Config struct {
 	DryRun    bool
 	OutputDir string // Where to write levels (default: assets/levels)
 	BaseSeed  int64  // Base seed for deterministic generation (default: levelID * 31337)
+	// Batch-level options
+	Aggressive  bool
+	DumpDir     string
+	StatsOut    string  // Optional directory to write per-level stats JSON files
+	MinCoverage float64 // Optional override for minimum coverage (0.0-1.0). 0 = no override
 }
 
 // Result contains results for a single level in a batch.
@@ -160,17 +167,32 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 		return result
 	}
 
-	level, err := generateLevel(genConfig, config.UseLIFO)
+	level, stats, err := generateLevel(genConfig, config.UseLIFO)
 	if err != nil {
 		// If standard generation failed, try LIFO fallback
 		if !config.UseLIFO {
 			common.Warning("  Level %d failed standard generation: %v. Attempting LIFO fallback...", levelID, err)
-			
+
 			// Retry with LIFO
-			level, err = generateLevel(genConfig, true)
+			level, stats, err = generateLevel(genConfig, true)
 			if err == nil {
 				common.Info("  ✓ Level %d generated using LIFO fallback (Guaranteed Solvable)", levelID)
 				result.Error = "" // Clear error
+				// write stats for fallback if requested
+				if config.StatsOut != "" {
+					_ = os.MkdirAll(config.StatsOut, 0o755)
+					fname := fmt.Sprintf("%s/level_%d_stats.json", config.StatsOut, levelID)
+					statsObj := map[string]interface{}{
+						"level_id":             levelID,
+						"placement_attempts":   stats.PlacementAttempts,
+						"backtracks_attempted": stats.BacktracksAttempted,
+						"dumps_produced":       stats.DumpsProduced,
+						"max_blocking_depth":   stats.MaxBlockingDepth,
+					}
+					b, _ := json.MarshalIndent(statsObj, "", "  ")
+					_ = os.WriteFile(fname, b, 0o644)
+					common.Info("Wrote per-level stats: %s", fname)
+				}
 				// Continue to validation below
 			} else {
 				// LIFO also failed (unlikely but possible)
@@ -197,6 +219,27 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 	result.Coverage = coverage
 	result.BlockingDepth = 2 // TODO: Extract from analysis
 	result.GenerationMS = time.Since(startTime).Milliseconds()
+
+	// Optionally write per-level stats JSON to StatsOut directory
+	if config.StatsOut != "" {
+		_ = os.MkdirAll(config.StatsOut, 0o755)
+		statsObj := map[string]interface{}{
+			"level_id":             levelID,
+			"coverage":             result.Coverage,
+			"generation_ms":        result.GenerationMS,
+			"placement_attempts":   stats.PlacementAttempts,
+			"backtracks_attempted": stats.BacktracksAttempted,
+			"dumps_produced":       stats.DumpsProduced,
+			"max_blocking_depth":   stats.MaxBlockingDepth,
+		}
+		if stats.BlockingDepthSamples > 0 {
+			statsObj["avg_blocking_depth"] = float64(stats.TotalBlockingDepth) / float64(stats.BlockingDepthSamples)
+		}
+		fname := fmt.Sprintf("%s/level_%d_stats.json", config.StatsOut, levelID)
+		b, _ := json.MarshalIndent(statsObj, "", "  ")
+		_ = os.WriteFile(fname, b, 0o644)
+		common.Info("Wrote per-level stats: %s", fname)
+	}
 
 	common.Info("Generated level %d (%s) - Coverage: %.1f%%, Time: %dms",
 		levelID, difficulty, result.Coverage, result.GenerationMS)
@@ -226,19 +269,43 @@ func buildGenerationConfig(levelID int, difficulty string, config Config) (gen2.
 	vineCount := computeVineCount(spec, totalCells, targetCoverage)
 	maxMoves := vineCount * 2
 
-	return gen2.GenerationConfig{
-		LevelID:     levelID,
-		GridWidth:   gridWidth,
-		GridHeight:  gridHeight,
-		VineCount:   vineCount,
-		MaxMoves:    maxMoves,
-		OutputFile:  fmt.Sprintf("%s/level_%d.json", config.OutputDir, levelID),
-		Randomize:   false,
-		Seed:        int64(levelID) * 31337,
-		Overwrite:   config.Overwrite,
-		MinCoverage: targetCoverage,
-		Difficulty:  difficulty,
-	}, nil
+	// Default backtracking settings
+	backtrackWindow := 3
+	maxBackAttempts := 2
+	if config.Aggressive {
+		backtrackWindow = 6
+		maxBackAttempts = 6
+	}
+
+	genCfg := gen2.GenerationConfig{
+		LevelID:              levelID,
+		GridWidth:            gridWidth,
+		GridHeight:           gridHeight,
+		VineCount:            vineCount,
+		MaxMoves:             maxMoves,
+		OutputFile:           fmt.Sprintf("%s/level_%d.json", config.OutputDir, levelID),
+		Randomize:            false,
+		Seed:                 int64(levelID) * 31337,
+		Overwrite:            config.Overwrite,
+		MinCoverage:          targetCoverage,
+		Difficulty:           difficulty,
+		BacktrackWindow:      backtrackWindow,
+		MaxBacktrackAttempts: maxBackAttempts,
+	}
+
+	// Apply global MinCoverage override if provided (0 = no override)
+	if config.MinCoverage > 0 {
+		if config.MinCoverage < 0.0 || config.MinCoverage > 1.0 {
+			return gen2.GenerationConfig{}, fmt.Errorf("invalid MinCoverage override: %v", config.MinCoverage)
+		}
+		genCfg.MinCoverage = config.MinCoverage
+	}
+
+	if config.DumpDir != "" {
+		genCfg.DumpDir = config.DumpDir
+	}
+
+	return genCfg, nil
 }
 
 func computeVineCount(spec generator.DifficultySpec, totalCells int, targetCoverage float64) int {
@@ -267,18 +334,21 @@ func computeVineCount(spec generator.DifficultySpec, totalCells int, targetCover
 	return vineCount
 }
 
-func generateLevel(genConfig gen2.GenerationConfig, useLIFO bool) (model.Level, error) {
+func generateLevel(genConfig gen2.GenerationConfig, useLIFO bool) (model.Level, gen2.GenerationStats, error) {
 	if useLIFO {
-		lvl, _, err := gen2.GenerateLevelLIFO(genConfig)
-		return lvl, err
+		lvl, stats, err := gen2.GenerateLevelLIFO(genConfig)
+		return lvl, stats, err
 	}
-	lvl, _, err := gen2.GenerateLevel(genConfig)
-	return lvl, err
+	lvl, stats, err := gen2.GenerateLevel(genConfig)
+	return lvl, stats, err
 }
 
 func validateGeneratedLevel(level model.Level) (float64, error) {
 	structErrors := validator.ValidateStructural(level)
 	if len(structErrors) > 0 {
+		for _, e := range structErrors {
+			common.Warning("  [STRUCTURAL ERROR] Level %d: %v", level.ID, e)
+		}
 		return 0, fmt.Errorf("structural validation failed: %d errors", len(structErrors))
 	}
 

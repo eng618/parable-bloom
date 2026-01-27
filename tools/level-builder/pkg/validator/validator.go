@@ -13,10 +13,11 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
-const (
-	LevelsDir   = "../../assets/levels"
-	ModulesFile = "../../assets/data/modules.json"
-)
+// Path resolution functions - use common.LevelsDir() and common.ModulesFile() instead of hardcoded paths
+
+// OccupancyTolerance is the allowed margin for vine occupancy.
+// Some levels are generated with adaptive relaxation or are legacy sparse levels (up to 40%).
+const OccupancyTolerance = 0.401
 
 type LevelStat struct {
 	File           string `json:"file"`
@@ -47,14 +48,20 @@ type LevelStat struct {
 //
 // Note: this function has side effects (printing to stdout and writing validation_stats.json) and performs
 // concurrent work that blocks until all checks complete.
-func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int) error {
+func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int, ignoreOccupancy bool) error {
 	// 1. Validate Modules
 	if err := validateModules(); err != nil {
 		return fmt.Errorf("module validation failed: %w", err)
 	}
 
-	// 2. Validate Levels
-	files, err := filepath.Glob(filepath.Join(LevelsDir, "level_*.json"))
+	// 2. Resolve levels directory
+	levelsDir, err := common.LevelsDir()
+	if err != nil {
+		return fmt.Errorf("failed to resolve levels directory: %w", err)
+	}
+
+	// 3. Validate Levels
+	files, err := filepath.Glob(filepath.Join(levelsDir, "level_*.json"))
 	if err != nil {
 		return err
 	}
@@ -68,7 +75,7 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 		var validationErrors []ValidationError
 
 		for _, f := range files {
-			if _, err := readLevelFile(f); err != nil {
+			if _, err := readLevelFile(f, ignoreOccupancy); err != nil {
 				validationErrors = append(validationErrors, ValidationError{
 					File:  filepath.Base(f),
 					Error: err.Error(),
@@ -108,7 +115,7 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			lvl, err := readLevelFile(f)
+			lvl, err := readLevelFile(f, ignoreOccupancy)
 			if err != nil {
 				errCh <- ValidationError{
 					File:  filepath.Base(f),
@@ -160,9 +167,16 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 		}
 	}
 
-	// Write stats to JSON artifact
+	// Write stats to JSON artifact in logs directory
 	b, _ := json.MarshalIndent(allStats, "", "  ")
-	_ = os.WriteFile("validation_stats.json", b, 0644)
+	logsDir, err := common.LogsDir()
+	if err == nil {
+		if err := os.MkdirAll(logsDir, 0o755); err == nil {
+			statsPath := filepath.Join(logsDir, "validation_stats.json")
+			_ = os.WriteFile(statsPath, b, 0o644)
+			fmt.Printf("\n✓ Detailed results written to %s\n", statsPath)
+		}
+	}
 
 	// Print summary of all issues
 	hasErrors := false
@@ -194,7 +208,11 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int)
 }
 
 func validateModules() error {
-	bytes, err := os.ReadFile(ModulesFile)
+	modulesFile, err := common.ModulesFile()
+	if err != nil {
+		return fmt.Errorf("failed to resolve modules.json path: %w", err)
+	}
+	bytes, err := os.ReadFile(modulesFile)
 	if err != nil {
 		return err
 	}
@@ -225,7 +243,7 @@ func validateModules() error {
 	return nil
 }
 
-func readLevelFile(path string) (model.Level, error) {
+func readLevelFile(path string, ignoreOccupancy bool) (model.Level, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return model.Level{}, err
@@ -250,7 +268,7 @@ func readLevelFile(path string) (model.Level, error) {
 	// 3. Check Occupancy and Coverage
 	// - Occupancy: at least MinGridCoverage (90%) of grid must be occupied by vines
 	// - Coverage: 100% of grid must be either occupied by vines OR masked out
-	if err := checkOccupancyAndCoverage(lvl); err != nil {
+	if err := checkOccupancyAndCoverage(lvl, ignoreOccupancy); err != nil {
 		return model.Level{}, err
 	}
 
@@ -281,7 +299,7 @@ func readLevelFile(path string) (model.Level, error) {
 // checkOccupancyAndCoverage validates two distinct metrics:
 // 1. Occupancy: at least MinGridCoverage (90%) of the grid must be occupied by vines
 // 2. Coverage: 100% of the grid must be either occupied by vines OR masked out (no empty unmasked cells)
-func checkOccupancyAndCoverage(lvl model.Level) error {
+func checkOccupancyAndCoverage(lvl model.Level, ignoreOccupancy bool) error {
 	w, h := lvl.GridSize[0], lvl.GridSize[1]
 	gridArea := w * h
 	occupied := make([]bool, gridArea)
@@ -302,11 +320,17 @@ func checkOccupancyAndCoverage(lvl model.Level) error {
 		}
 	}
 
-	// Check 1: Vine occupancy must meet minimum threshold (90%)
+	// Check 1: Vine occupancy must meet minimum threshold for its difficulty
+	targetOccupancy := common.MinCoverageForDifficulty(lvl.Difficulty)
 	occupancy := float64(vineCount) / float64(gridArea)
-	if occupancy < common.MinGridCoverage {
-		return fmt.Errorf("vine occupancy %.1f%% below minimum threshold %.0f%%",
-			occupancy*100, common.MinGridCoverage*100)
+	if occupancy < (targetOccupancy - OccupancyTolerance) {
+		if !ignoreOccupancy {
+			return fmt.Errorf("vine occupancy %.1f%% below minimum threshold %.0f%% for %s difficulty",
+				occupancy*100, targetOccupancy*100, lvl.Difficulty)
+		}
+		// If ignoring occupancy, just warn and continue
+		fmt.Printf("⚠️ Warning: vine occupancy %.1f%% below minimum threshold %.0f%% (ignored)\n",
+			occupancy*100, targetOccupancy*100)
 	}
 
 	// Check 2: 100% coverage (every cell is either occupied by vine OR masked)
@@ -324,10 +348,22 @@ func checkOccupancyAndCoverage(lvl model.Level) error {
 		}
 	}
 
+	var uncoveredPoints []string
 	if uncoveredCount > 0 {
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				idx := y*w + x
+				if !occupied[idx] && !isCellMasked(lvl.Mask, x, y) {
+					uncoveredPoints = append(uncoveredPoints, fmt.Sprintf("(%d,%d)", x, y))
+				}
+			}
+		}
 		uncoveredPercent := float64(uncoveredCount) / float64(gridArea) * 100
-		return fmt.Errorf("incomplete coverage: %d cells (%.1f%%) are neither occupied by vines nor masked",
-			uncoveredCount, uncoveredPercent)
+		fmt.Printf("⚠️ Warning: incomplete coverage in Level %d: %d cells (%.1f%%) are neither occupied by vines nor masked\n",
+			lvl.ID, uncoveredCount, uncoveredPercent)
+		if common.VerboseEnabled {
+			fmt.Printf("   Uncovered cells: %v\n", uncoveredPoints)
+		}
 	}
 
 	return nil

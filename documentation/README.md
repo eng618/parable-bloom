@@ -42,6 +42,6 @@ Credits and licenses for third-party assets.
 
 ## 🚀 Quick Start
 
-1. **Run the App**: `flutter run`
-2. **Validate Levels**: `python scripts/validate_levels.py`
-3. **Generate Levels**: `flutter pub run tool/generate_levels.dart`
+1. **Run the App**: `task run`
+2. **Validate Levels**: `task levels:validate`
+3. **Generate Levels**: `task levels:generate`

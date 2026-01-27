@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	checkSolvable bool
-	maxStates     int
-	useAstar      bool
-	astarWeight   int
+	checkSolvable   bool
+	maxStates       int
+	useAstar        bool
+	astarWeight     int
+	ignoreOccupancy bool
 )
 
 // validateCmd represents the validate command
@@ -43,7 +44,7 @@ Examples:
 		common.Verbose("Check solvable: %v, Max states: %d, Use A*: %v, A* weight: %d",
 			checkSolvable, maxStates, useAstar, astarWeight)
 
-		if err := validator.Validate(checkSolvable, maxStates, useAstar, astarWeight); err != nil {
+		if err := validator.Validate(checkSolvable, maxStates, useAstar, astarWeight, ignoreOccupancy); err != nil {
 			return fmt.Errorf("validation failed: %w", err)
 		}
 
@@ -53,9 +54,10 @@ Examples:
 
 func init() {
 	validateCmd.Flags().BoolVarP(&checkSolvable, "check-solvable", "s", false, "run solvability checks (may be slow)")
-	validateCmd.Flags().IntVar(&maxStates, "max-states", 100000, "max states budget for solver heuristic")
+	validateCmd.Flags().IntVar(&maxStates, "max-states", 500000, "max states budget for solver heuristic")
 	validateCmd.Flags().BoolVar(&useAstar, "use-astar", true, "use A* guided search for exact solver")
 	validateCmd.Flags().IntVar(&astarWeight, "astar-weight", validator.DefaultAStarWeight, "weight multiplier for A* heuristic")
+	validateCmd.Flags().BoolVar(&ignoreOccupancy, "ignore-occupancy", false, "ignore minimum grid occupancy threshold (useful when running quick repairs)")
 }
 
 // GetCommand returns the validate command for registration with root

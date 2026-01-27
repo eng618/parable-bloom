@@ -103,3 +103,12 @@ tools/level-builder/validation.log
 
 # Hugo generated site
 docs/
+
+# Level dumps from failing level generations
+logs/
+
+# Taskfile checksums
+.task/
+
+# Level dumps from failing level generations
+tools/level-builder/assets/
