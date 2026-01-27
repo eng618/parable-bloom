@@ -60,17 +60,27 @@ tasks:
       - task: get
       - task: serve:web
 
-  dev:
+  dev:linux:
     desc: Run the application in dev mode with Chromium
     platforms: [linux]
     cmds:
       - CHROME_EXECUTABLE=/snap/bin/chromium flutter run -d chrome
 
-  dev:
+  dev:darwin:
     desc: Run the application in dev mode with Chrome
     platforms: [darwin]
     cmds:
       - flutter run -d chrome
+
+  flutter:dev:
+    desc: Run the application in dev mode for the current platform (delegates to platform-specific dev tasks)
+    cmds:
+      - |
+        case "$(uname -s)" in
+          Linux*) task flutter:dev:linux ;;
+          Darwin*) task flutter:dev:darwin ;;
+          *) echo "Unsupported platform $(uname -s)"; exit 1 ;;
+        esac
 
   serve:linux:
     desc: Serve the application on Linux
@@ -100,19 +110,8 @@ tasks:
     platforms: [darwin]
     cmds:
       - task: get
-      - cd ios && pod install
-      - |
-        # Auto-select iOS simulator - find booted simulator or boot the first available one
-        BOOTED_SIM=$(xcrun simctl list devices booted | grep -E "iPhone|iPad" | head -1 | awk -F'[()]' '{print $2}')
-        if [ -z "$BOOTED_SIM" ]; then
-          # No booted simulator, find and boot the first available iPhone simulator
-          SIM_ID=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | awk -F'[()]' '{print $2}')
-          if [ -n "$SIM_ID" ]; then
-            echo "Booting iOS simulator: $SIM_ID"
-            xcrun simctl boot "$SIM_ID" 2>/dev/null || true
-            sleep 2
-          fi
-        fi
+      - task: ios:pod-install
+      - ./scripts/ios/boot_simulator.sh
       - flutter run
 
   serve:ios:clean:
@@ -121,20 +120,25 @@ tasks:
     cmds:
       - task: clean
       - task: get
-      - cd ios && pod install
-      - |
-        # Auto-select iOS simulator - find booted simulator or boot the first available one
-        BOOTED_SIM=$(xcrun simctl list devices booted | grep -E "iPhone|iPad" | head -1 | awk -F'[()]' '{print $2}')
-        if [ -z "$BOOTED_SIM" ]; then
-          # No booted simulator, find and boot the first available iPhone simulator
-          SIM_ID=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | awk -F'[()]' '{print $2}')
-          if [ -n "$SIM_ID" ]; then
-            echo "Booting iOS simulator: $SIM_ID"
-            xcrun simctl boot "$SIM_ID" 2>/dev/null || true
-            sleep 2
-          fi
-        fi
+      - task: ios:pod-install
+      - ./scripts/ios/boot_simulator.sh
       - flutter run
+
+  ios:pod-install:
+    desc: Run CocoaPods install in ios directory
+    platforms: [darwin]
+    dir: ios
+    cmds:
+      - pod install
+    run: once
+
+  macos:pod-install:
+    desc: Run CocoaPods install in macos directory
+    platforms: [darwin]
+    dir: macos
+    cmds:
+      - pod install
+    run: once
 
   # Environment-Specific Tasks
   serve:dev:

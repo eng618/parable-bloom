@@ -4,19 +4,20 @@ tasks:
   generate:
     desc: Generate new levels using the Go tool (usage - task levels:generate COUNT=50)
     dir: tools/level-builder
+    vars:
+      COUNT: "50"
     cmds:
-      - go run . generate --count "{{.COUNT | default 50}}"
+      - go run . generate --count "{{.COUNT}}"
 
   # Fallback generation: overwrite existing levels using conservative LIFO placement
   # and a MinCoverage fallback (Option A default = 0.75). Use --overwrite to persist.
   generate:fallback:
     desc: Generate fallback levels for all modules (overwrite existing files)
     dir: tools/level-builder
+    vars:
+      MIN_COVERAGE: "0.75"
     cmds:
-      - for i in 1 2 3 4 5; do \
-          echo "Generating module $i (fallback)..."; \
-          (go run . batch --module $i --lifo --overwrite --min-coverage {{.MIN_COVERAGE | default 0.75}} --verbose) || true; \
-        done
+      - ./scripts/levels/generate_fallback.sh "{{.MIN_COVERAGE}}"
 
   validate:
     desc: Validate existing levels and modules using the Go tool
@@ -27,8 +28,12 @@ tasks:
   validate-solvable:
     desc: Validate existing levels and run solvability checks (may be slow)
     dir: tools/level-builder
+    vars:
+      MAX_STATES: "2000000"
+      USE_ASTAR: "true"
+      ASTAR_WEIGHT: "10"
     cmds:
-      - go run . validate --check-solvable --max-states "{{.MAX_STATES | default 2000000}}" --use-astar={{.USE_ASTAR | default true}} --astar-weight={{.ASTAR_WEIGHT | default 10}}
+      - go run . validate --check-solvable --max-states "{{.MAX_STATES}}" --use-astar={{.USE_ASTAR}} --astar-weight={{.ASTAR_WEIGHT}}
 
   tutorials:validate:
     desc: Validate tutorial lessons using the Go tool
@@ -39,38 +44,31 @@ tasks:
   tutorials:validate-solvable:
     desc: Validate tutorial lessons and run solvability checks (may be slow)
     dir: tools/level-builder
+    vars:
+      MAX_STATES: "2000000"
+      USE_ASTAR: "true"
+      ASTAR_WEIGHT: "10"
     cmds:
-      - go run . validate-tutorials --check-solvable --max-states {{.MAX_STATES | default 2000000}} --use-astar={{.USE_ASTAR | default true}} --astar-weight={{.ASTAR_WEIGHT | default 10}}
+      - go run . validate-tutorials --check-solvable --max-states {{.MAX_STATES}} --use-astar={{.USE_ASTAR}} --astar-weight={{.ASTAR_WEIGHT}}
 
   validate-experiments:
     desc: Run solvability experiments comparing BFS and A* (outputs bfs/astar stats)
     dir: tools/level-builder
+    vars:
+      MAX_STATES: "200000"
+      ASTAR_WEIGHT: "10"
     cmds:
-      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=false
+      - go run . validate --check-solvable --max-states {{.MAX_STATES}} --use-astar=false
       - mv validation_stats.json validation_stats_bfs.json || true
-      - go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT | default 10}}
+      - go run . validate --check-solvable --max-states {{.MAX_STATES}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT}}
       - mv validation_stats.json validation_stats_astar.json || true
       - echo "Created validation_stats_bfs.json and validation_stats_astar.json"
 
   astar-weight-sweep:
     desc: Sweep A* weight parameter and collect stats (weights comma-separated, default 5,10,20)
     dir: tools/level-builder
+    vars:
+      MAX_STATES: "200000"
     cmds:
-      - |
-        WEIGHTS="${WEIGHTS:-5,10,20}"
-        OLD_IFS="$IFS"
-        IFS=','
-        for w in $WEIGHTS; do
-          # Validate that 'w' is a positive integer to avoid command injection
-          case "$w" in
-            ''|*[!0-9]*)
-              echo "Invalid weight: $w" >&2
-              exit 1
-              ;;
-          esac
-          echo "Running A* with weight=$w"
-          go run . validate --check-solvable --max-states {{.MAX_STATES | default 200000}} --use-astar=true --astar-weight "$w"
-          mv validation_stats.json validation_stats_astar_w${w}.json || true
-        done
-        IFS="$OLD_IFS"
+      - ./scripts/levels/astar_weight_sweep.sh "${WEIGHTS:-5,10,20}" "{{.MAX_STATES}}"
       - echo "Created validation_stats_astar_w*.json"

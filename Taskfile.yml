@@ -24,9 +24,9 @@ tasks:
     cmds:
       - task: flutter:get
       - task: lb:get
-      - cmd: cd ios && pod install
+      - task: flutter:ios:pod-install
         platforms: [darwin]
-      - cmd: cd macos && pod install
+      - task: flutter:macos:pod-install
         platforms: [darwin]
 
   validate:

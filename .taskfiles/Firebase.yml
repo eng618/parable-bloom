@@ -26,9 +26,11 @@ tasks:
         msg: "Firebase CLI is not installed."
 
   emulators:exec:
-    desc: Execute a command with Firebase emulators running
+    desc: Execute a command with Firebase emulators running (arguments validated via wrapper)
+    vars:
+      CLI_ARGS: ""
     cmds:
-      - firebase emulators:exec "{{.CLI_ARGS}}"
+      - ./scripts/firebase/emulators_exec.sh "{{.CLI_ARGS}}"
     preconditions:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
@@ -75,12 +77,16 @@ tasks:
 
   # Hosting Specific (using secrets or preview channels)
   h:deploy:
-    desc: Deploy to Firebase Hosting (uses Bitwarden Secrets Manager token)
-    cmds:
-      - firebase deploy --only hosting --token "$(bws secret get FIREBASE_CI_TOKEN)"
+    desc: Deploy to Firebase Hosting (uses FIREBASE_CI_TOKEN env var)
+    vars:
+      FIREBASE_CI_TOKEN: ""
     preconditions:
+      - sh: '[ -n "{{.FIREBASE_CI_TOKEN}}" ]'
+        msg: "FIREBASE_CI_TOKEN is not set. Set via environment or CI secrets."
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
+    cmds:
+      - firebase deploy --only hosting --token "{{.FIREBASE_CI_TOKEN}}"
 
   h:preview:
     desc: Deploy preview channel
