@@ -54,6 +54,7 @@ var (
 	statsOut    string
 	minCoverage float64
 	outputDir   string
+	strategy    string
 )
 
 // batchCmd represents the batch command
@@ -95,6 +96,7 @@ func init() {
 	batchCmd.Flags().Float64Var(&minCoverage, "min-coverage", 0.0, "optional override for minimum coverage (0.0-1.0). 0 means no override")
 	// Optional explicit output directory for generated level files (absolute or relative)
 	batchCmd.Flags().StringVar(&outputDir, "output-dir", "", "directory to write generated level files (default: assets/levels)")
+	batchCmd.Flags().StringVar(&strategy, "strategy", "", "force a specific placement strategy for all levels (direction-first, center-out)")
 
 	_ = batchCmd.MarkFlagRequired("module")
 }
@@ -183,6 +185,7 @@ func buildConfig() batchsvc.Config {
 		DumpDir:     dumpDir,
 		StatsOut:    statsOut,
 		MinCoverage: minCoverage,
+		Strategy:    strategy,
 	}
 }
 

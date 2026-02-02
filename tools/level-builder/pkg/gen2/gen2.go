@@ -25,6 +25,11 @@ type BlockingAnalyzer interface {
 	AnalyzeBlocking(vines []model.Vine, occupied map[string]string) (BlockingAnalysis, error)
 }
 
+const (
+	StrategyDirectionFirst = "direction-first"
+	StrategyCenterOut      = "center-out" // LIFO
+)
+
 // GenerationConfig holds configuration for level generation
 type GenerationConfig struct {
 	LevelID     int
@@ -38,6 +43,7 @@ type GenerationConfig struct {
 	Overwrite   bool
 	MinCoverage float64 // Minimum grid coverage required (0.0-1.0)
 	Difficulty  string  // Difficulty tier (Seedling, Sprout, etc.)
+	Strategy    string  // Placement strategy (direction-first or center-out)
 
 	// Local backtracking configuration
 	BacktrackWindow      int    // How many previous vines to remove when attempting local recovery (default 3)

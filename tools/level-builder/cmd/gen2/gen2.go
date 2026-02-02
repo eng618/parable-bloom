@@ -17,7 +17,7 @@ Usage examples:
 
 	level-builder gen2 --level-id 1000 --difficulty Transcendent
 	level-builder gen2 --level-id 1001 --difficulty Flourishing --randomize
-	level-builder gen2 --level-id 1002 --difficulty Seedling --lifo
+	level-builder gen2 --level-id 1002 --difficulty Seedling --strategy center-out
 	level-builder gen2 --level-id 1003 --difficulty Nurturing --seed 12345
 
 The command validates input parameters, configures generation based on difficulty specs,
@@ -47,7 +47,8 @@ var (
 	seed       int64
 	overwrite  bool
 	difficulty string
-	useLIFO    bool
+	strategy   string
+	useLIFO    bool // Deprecated: use --strategy center-out
 
 	// Backtracking flags (optional)
 	backtrackWindow      int
@@ -73,12 +74,12 @@ Available difficulties:
 
 Generation Modes:
   - Default: Direction-first placement with A* solvability checks
-  - LIFO (--lifo): Center-out placement with LIFO guarantee (no solver needed, 100% coverage)
+  - Center-Out (--strategy center-out): Center-out placement with LIFO guarantee (100% coverage)
 
 Examples:
   level-builder gen2 --level-id 1000 --difficulty Transcendent
   level-builder gen2 --level-id 1001 --difficulty Flourishing --randomize
-  level-builder gen2 --level-id 1002 --difficulty Seedling --lifo  # 100% coverage mode
+  level-builder gen2 --level-id 1002 --difficulty Seedling --strategy center-out
   level-builder gen2 --level-id 1003 --difficulty Nurturing --seed 12345`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		common.Info("Starting gen2 level generation...")
@@ -109,7 +110,7 @@ Examples:
 
 		// Target coverage from difficulty spec, or 100% for LIFO mode
 		var targetCoverage float64
-		if useLIFO {
+		if strategy == gen2.StrategyCenterOut || useLIFO {
 			targetCoverage = 1.0 // LIFO mode targets 100% coverage
 			common.Verbose("LIFO mode: targeting 100%% coverage with center-out placement")
 		} else {
@@ -178,9 +179,14 @@ Examples:
 			Overwrite:            overwrite,
 			MinCoverage:          targetCoverage,
 			Difficulty:           difficulty,
+			Strategy:             strategy,
 			BacktrackWindow:      backtrackWindow,
 			MaxBacktrackAttempts: maxBacktrackAttempts,
 			DumpDir:              dumpDir,
+		}
+
+		if strategy == "" && useLIFO {
+			config.Strategy = gen2.StrategyCenterOut
 		}
 
 		// Start performance monitoring
@@ -191,7 +197,7 @@ Examples:
 		var stats gen2.GenerationStats
 		var err error
 
-		if useLIFO {
+		if config.Strategy == gen2.StrategyCenterOut {
 			common.Info("Using LIFO generation (center-out placement with guaranteed solvability)")
 			level, stats, err = gen2.GenerateLevelLIFO(config)
 		} else {
@@ -269,7 +275,8 @@ func init() {
 	gen2Cmd.Flags().BoolVar(&randomize, "randomize", false, "use time-based random seed")
 	gen2Cmd.Flags().Int64Var(&seed, "seed", 0, "specific seed for reproducible generation")
 	gen2Cmd.Flags().BoolVar(&overwrite, "overwrite", false, "overwrite existing files")
-	gen2Cmd.Flags().BoolVar(&useLIFO, "lifo", false, "use LIFO mode (center-out placement, 100%% coverage, no solver)")
+	gen2Cmd.Flags().StringVar(&strategy, "strategy", "", "placement strategy (direction-first, center-out)")
+	gen2Cmd.Flags().BoolVar(&useLIFO, "lifo", false, "DEPRECATED: use --strategy center-out")
 
 	// Backtracking CLI flags
 	gen2Cmd.Flags().IntVar(&backtrackWindow, "backtrack-window", 0, "local backtrack window (how many prior vines to remove on failure). Default: 3")

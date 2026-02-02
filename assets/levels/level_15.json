@@ -10,31 +10,7 @@
     "mode": "hide",
     "points": [
       {
-        "x": 0,
-        "y": 0
-      },
-      {
-        "x": 1,
-        "y": 0
-      },
-      {
-        "x": 2,
-        "y": 0
-      },
-      {
-        "x": 3,
-        "y": 0
-      },
-      {
         "x": 4,
-        "y": 0
-      },
-      {
-        "x": 5,
-        "y": 0
-      },
-      {
-        "x": 6,
         "y": 0
       },
       {
@@ -46,67 +22,35 @@
         "y": 0
       },
       {
-        "x": 2,
-        "y": 1
-      },
-      {
-        "x": 3,
-        "y": 1
-      },
-      {
-        "x": 4,
-        "y": 1
-      },
-      {
-        "x": 6,
-        "y": 1
+        "x": 7,
+        "y": 2
       },
       {
         "x": 7,
-        "y": 1
-      },
-      {
-        "x": 2,
-        "y": 2
-      },
-      {
-        "x": 6,
-        "y": 2
-      },
-      {
-        "x": 9,
-        "y": 2
+        "y": 3
       },
       {
         "x": 0,
-        "y": 3
+        "y": 5
       },
       {
-        "x": 1,
-        "y": 3
-      },
-      {
-        "x": 8,
-        "y": 3
+        "x": 4,
+        "y": 5
       },
       {
         "x": 9,
-        "y": 3
+        "y": 5
       },
       {
-        "x": 2,
-        "y": 4
-      },
-      {
-        "x": 8,
-        "y": 4
+        "x": 0,
+        "y": 6
       },
       {
         "x": 9,
         "y": 6
       },
       {
-        "x": 0,
+        "x": 9,
         "y": 7
       },
       {
@@ -114,59 +58,35 @@
         "y": 8
       },
       {
-        "x": 9,
-        "y": 8
+        "x": 0,
+        "y": 9
       },
       {
-        "x": 2,
-        "y": 10
+        "x": 4,
+        "y": 9
       },
       {
         "x": 0,
         "y": 11
       },
       {
+        "x": 1,
+        "y": 14
+      },
+      {
+        "x": 9,
+        "y": 14
+      },
+      {
+        "x": 1,
+        "y": 15
+      },
+      {
         "x": 0,
-        "y": 12
+        "y": 17
       },
       {
         "x": 3,
-        "y": 12
-      },
-      {
-        "x": 0,
-        "y": 13
-      },
-      {
-        "x": 2,
-        "y": 14
-      },
-      {
-        "x": 9,
-        "y": 14
-      },
-      {
-        "x": 1,
-        "y": 15
-      },
-      {
-        "x": 8,
-        "y": 15
-      },
-      {
-        "x": 9,
-        "y": 15
-      },
-      {
-        "x": 1,
-        "y": 16
-      },
-      {
-        "x": 2,
-        "y": 16
-      },
-      {
-        "x": 2,
         "y": 17
       },
       {
@@ -174,15 +94,7 @@
         "y": 17
       },
       {
-        "x": 5,
-        "y": 17
-      },
-      {
-        "x": 6,
-        "y": 17
-      },
-      {
-        "x": 7,
+        "x": 9,
         "y": 17
       }
     ]
@@ -190,84 +102,88 @@
   "vines": [
     {
       "id": "vine_1",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 4,
-          "y": 9
-        },
-        {
           "x": 5,
+          "y": 8
+        },
+        {
+          "x": 4,
+          "y": 8
+        },
+        {
+          "x": 3,
+          "y": 8
+        },
+        {
+          "x": 3,
           "y": 9
         },
         {
-          "x": 6,
+          "x": 2,
           "y": 9
         },
         {
-          "x": 7,
-          "y": 9
-        },
-        {
-          "x": 8,
-          "y": 9
-        },
-        {
-          "x": 9,
+          "x": 1,
           "y": 9
         }
       ]
     },
     {
       "id": "vine_2",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 4,
-          "y": 6
-        },
-        {
-          "x": 5,
-          "y": 6
-        },
-        {
-          "x": 5,
-          "y": 7
-        },
-        {
           "x": 6,
-          "y": 7
+          "y": 12
         },
         {
-          "x": 7,
-          "y": 7
+          "x": 5,
+          "y": 12
+        },
+        {
+          "x": 4,
+          "y": 12
+        },
+        {
+          "x": 3,
+          "y": 12
+        },
+        {
+          "x": 2,
+          "y": 12
         }
       ],
       "color_index": 1
     },
     {
       "id": "vine_3",
-      "head_direction": "right",
+      "head_direction": "left",
       "ordered_path": [
         {
-          "x": 5,
-          "y": 13
-        },
-        {
-          "x": 4,
-          "y": 13
-        },
-        {
-          "x": 3,
-          "y": 13
+          "x": 1,
+          "y": 8
         },
         {
           "x": 2,
-          "y": 13
+          "y": 8
         },
         {
-          "x": 1,
-          "y": 13
+          "x": 2,
+          "y": 7
+        },
+        {
+          "x": 3,
+          "y": 7
+        },
+        {
+          "x": 4,
+          "y": 7
+        },
+        {
+          "x": 5,
+          "y": 7
         }
       ],
       "color_index": 2
@@ -277,89 +193,123 @@
       "head_direction": "right",
       "ordered_path": [
         {
+          "x": 9,
+          "y": 9
+        },
+        {
+          "x": 8,
+          "y": 9
+        },
+        {
+          "x": 7,
+          "y": 9
+        },
+        {
+          "x": 6,
+          "y": 9
+        },
+        {
           "x": 5,
-          "y": 5
-        },
-        {
-          "x": 4,
-          "y": 5
-        },
-        {
-          "x": 3,
-          "y": 5
-        },
-        {
-          "x": 2,
-          "y": 5
-        },
-        {
-          "x": 1,
-          "y": 5
-        },
-        {
-          "x": 0,
-          "y": 5
+          "y": 9
         }
       ],
       "color_index": 3
     },
     {
       "id": "vine_5",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 4,
-          "y": 10
+          "x": 6,
+          "y": 11
         },
         {
           "x": 5,
-          "y": 10
+          "y": 11
         },
         {
-          "x": 6,
-          "y": 10
+          "x": 4,
+          "y": 11
         },
         {
-          "x": 7,
-          "y": 10
+          "x": 3,
+          "y": 11
+        },
+        {
+          "x": 2,
+          "y": 11
+        },
+        {
+          "x": 1,
+          "y": 11
         }
       ],
       "color_index": 4
     },
     {
       "id": "vine_6",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 4,
-          "y": 12
-        },
-        {
           "x": 5,
-          "y": 12
+          "y": 10
         },
         {
-          "x": 6,
-          "y": 12
+          "x": 4,
+          "y": 10
         },
         {
-          "x": 7,
-          "y": 12
+          "x": 3,
+          "y": 10
+        },
+        {
+          "x": 2,
+          "y": 10
+        },
+        {
+          "x": 1,
+          "y": 10
+        },
+        {
+          "x": 0,
+          "y": 10
         }
       ],
       "color_index": 5
     },
     {
       "id": "vine_7",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 4,
-          "y": 8
+          "x": 9,
+          "y": 10
         },
         {
-          "x": 5,
-          "y": 8
+          "x": 8,
+          "y": 10
+        },
+        {
+          "x": 7,
+          "y": 10
+        },
+        {
+          "x": 6,
+          "y": 10
+        }
+      ]
+    },
+    {
+      "id": "vine_8",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 7,
+          "y": 7
+        },
+        {
+          "x": 6,
+          "y": 7
         },
         {
           "x": 6,
@@ -368,59 +318,29 @@
         {
           "x": 7,
           "y": 8
-        },
-        {
-          "x": 8,
-          "y": 8
-        }
-      ]
-    },
-    {
-      "id": "vine_8",
-      "head_direction": "left",
-      "ordered_path": [
-        {
-          "x": 1,
-          "y": 8
-        },
-        {
-          "x": 2,
-          "y": 8
-        },
-        {
-          "x": 3,
-          "y": 8
-        },
-        {
-          "x": 3,
-          "y": 7
-        },
-        {
-          "x": 4,
-          "y": 7
         }
       ],
       "color_index": 1
     },
     {
       "id": "vine_9",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 1,
-          "y": 11
+          "x": 6,
+          "y": 5
         },
         {
-          "x": 2,
-          "y": 11
+          "x": 5,
+          "y": 5
         },
         {
-          "x": 2,
-          "y": 12
+          "x": 5,
+          "y": 4
         },
         {
-          "x": 1,
-          "y": 12
+          "x": 4,
+          "y": 4
         }
       ],
       "color_index": 2
@@ -430,101 +350,113 @@
       "head_direction": "right",
       "ordered_path": [
         {
+          "x": 6,
+          "y": 13
+        },
+        {
           "x": 5,
-          "y": 4
+          "y": 13
         },
         {
           "x": 4,
-          "y": 4
+          "y": 13
         },
         {
           "x": 3,
-          "y": 4
-        },
-        {
-          "x": 3,
-          "y": 3
+          "y": 13
         },
         {
           "x": 2,
-          "y": 3
+          "y": 13
+        },
+        {
+          "x": 1,
+          "y": 13
         }
       ],
       "color_index": 3
     },
     {
       "id": "vine_11",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 2,
-          "y": 9
+          "x": 9,
+          "y": 8
         },
         {
-          "x": 3,
-          "y": 9
+          "x": 8,
+          "y": 8
         },
         {
-          "x": 3,
-          "y": 10
+          "x": 8,
+          "y": 7
         },
         {
-          "x": 3,
-          "y": 11
+          "x": 8,
+          "y": 6
         },
         {
-          "x": 4,
-          "y": 11
-        },
-        {
-          "x": 5,
-          "y": 11
+          "x": 8,
+          "y": 5
         }
       ],
       "color_index": 4
     },
     {
       "id": "vine_12",
-      "head_direction": "right",
+      "head_direction": "up",
       "ordered_path": [
         {
-          "x": 8,
-          "y": 6
+          "x": 5,
+          "y": 15
+        },
+        {
+          "x": 5,
+          "y": 14
+        },
+        {
+          "x": 6,
+          "y": 14
         },
         {
           "x": 7,
-          "y": 6
+          "y": 14
         },
         {
-          "x": 6,
-          "y": 6
-        },
-        {
-          "x": 6,
-          "y": 5
+          "x": 7,
+          "y": 13
         }
       ],
       "color_index": 5
     },
     {
       "id": "vine_13",
-      "head_direction": "left",
+      "head_direction": "down",
       "ordered_path": [
         {
-          "x": 0,
-          "y": 10
+          "x": 5,
+          "y": 2
         },
         {
-          "x": 1,
-          "y": 10
+          "x": 5,
+          "y": 3
         },
         {
-          "x": 1,
-          "y": 9
+          "x": 4,
+          "y": 3
         },
         {
-          "x": 0,
-          "y": 9
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 4
+        },
+        {
+          "x": 3,
+          "y": 5
         }
       ]
     },
@@ -533,12 +465,39 @@
       "head_direction": "left",
       "ordered_path": [
         {
+          "x": 5,
+          "y": 6
+        },
+        {
+          "x": 6,
+          "y": 6
+        },
+        {
+          "x": 7,
+          "y": 6
+        },
+        {
+          "x": 7,
+          "y": 5
+        }
+      ],
+      "color_index": 1
+    },
+    {
+      "id": "vine_15",
+      "head_direction": "left",
+      "ordered_path": [
+        {
+          "x": 0,
+          "y": 7
+        },
+        {
           "x": 1,
           "y": 7
         },
         {
-          "x": 2,
-          "y": 7
+          "x": 1,
+          "y": 6
         },
         {
           "x": 2,
@@ -547,44 +506,33 @@
         {
           "x": 3,
           "y": 6
-        }
-      ],
-      "color_index": 1
-    },
-    {
-      "id": "vine_15",
-      "head_direction": "up",
-      "ordered_path": [
-        {
-          "x": 6,
-          "y": 15
         },
         {
-          "x": 6,
-          "y": 14
-        },
-        {
-          "x": 6,
-          "y": 13
-        },
-        {
-          "x": 7,
-          "y": 13
+          "x": 4,
+          "y": 6
         }
       ],
       "color_index": 2
     },
     {
       "id": "vine_16",
-      "head_direction": "right",
+      "head_direction": "left",
       "ordered_path": [
         {
-          "x": 7,
-          "y": 11
+          "x": 3,
+          "y": 14
         },
         {
-          "x": 6,
-          "y": 11
+          "x": 4,
+          "y": 14
+        },
+        {
+          "x": 4,
+          "y": 15
+        },
+        {
+          "x": 3,
+          "y": 15
         }
       ],
       "color_index": 3
@@ -594,43 +542,59 @@
       "head_direction": "right",
       "ordered_path": [
         {
-          "x": 9,
-          "y": 12
+          "x": 7,
+          "y": 4
         },
         {
-          "x": 8,
-          "y": 12
+          "x": 6,
+          "y": 4
         },
         {
-          "x": 8,
-          "y": 11
+          "x": 6,
+          "y": 3
         },
         {
-          "x": 9,
-          "y": 11
+          "x": 6,
+          "y": 2
+        },
+        {
+          "x": 6,
+          "y": 1
+        },
+        {
+          "x": 5,
+          "y": 1
         }
       ],
       "color_index": 4
     },
     {
       "id": "vine_18",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 3,
-          "y": 14
+          "x": 7,
+          "y": 15
+        },
+        {
+          "x": 6,
+          "y": 15
+        },
+        {
+          "x": 6,
+          "y": 16
+        },
+        {
+          "x": 5,
+          "y": 16
         },
         {
           "x": 4,
-          "y": 14
+          "y": 16
         },
         {
-          "x": 5,
-          "y": 14
-        },
-        {
-          "x": 5,
-          "y": 15
+          "x": 3,
+          "y": 16
         }
       ],
       "color_index": 5
@@ -641,56 +605,80 @@
       "ordered_path": [
         {
           "x": 9,
-          "y": 10
+          "y": 13
         },
         {
           "x": 8,
-          "y": 10
+          "y": 13
+        },
+        {
+          "x": 8,
+          "y": 14
+        },
+        {
+          "x": 8,
+          "y": 15
+        },
+        {
+          "x": 8,
+          "y": 16
+        },
+        {
+          "x": 7,
+          "y": 16
         }
       ]
     },
     {
       "id": "vine_20",
-      "head_direction": "right",
+      "head_direction": "left",
       "ordered_path": [
         {
-          "x": 8,
-          "y": 14
+          "x": 1,
+          "y": 5
         },
         {
-          "x": 7,
-          "y": 14
+          "x": 2,
+          "y": 5
         },
         {
-          "x": 7,
-          "y": 15
+          "x": 2,
+          "y": 4
         },
         {
-          "x": 7,
-          "y": 16
+          "x": 1,
+          "y": 4
         },
         {
-          "x": 6,
-          "y": 16
-        },
-        {
-          "x": 5,
-          "y": 16
+          "x": 1,
+          "y": 3
         }
       ],
       "color_index": 1
     },
     {
       "id": "vine_21",
-      "head_direction": "right",
+      "head_direction": "down",
       "ordered_path": [
         {
-          "x": 9,
-          "y": 13
+          "x": 4,
+          "y": 1
         },
         {
-          "x": 8,
-          "y": 13
+          "x": 4,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
         }
       ],
       "color_index": 2
@@ -700,47 +688,27 @@
       "head_direction": "right",
       "ordered_path": [
         {
-          "x": 7,
-          "y": 4
+          "x": 9,
+          "y": 12
         },
         {
-          "x": 6,
-          "y": 4
-        },
-        {
-          "x": 6,
-          "y": 3
-        },
-        {
-          "x": 5,
-          "y": 3
-        },
-        {
-          "x": 4,
-          "y": 3
+          "x": 8,
+          "y": 12
         }
       ],
       "color_index": 3
     },
     {
       "id": "vine_23",
-      "head_direction": "down",
+      "head_direction": "left",
       "ordered_path": [
         {
-          "x": 5,
-          "y": 1
+          "x": 0,
+          "y": 12
         },
         {
-          "x": 5,
-          "y": 2
-        },
-        {
-          "x": 4,
-          "y": 2
-        },
-        {
-          "x": 3,
-          "y": 2
+          "x": 1,
+          "y": 12
         }
       ],
       "color_index": 4
@@ -750,115 +718,100 @@
       "head_direction": "right",
       "ordered_path": [
         {
+          "x": 9,
+          "y": 11
+        },
+        {
           "x": 8,
-          "y": 5
+          "y": 11
         },
         {
           "x": 7,
-          "y": 5
+          "y": 11
+        },
+        {
+          "x": 7,
+          "y": 12
         }
       ],
       "color_index": 5
     },
     {
       "id": "vine_25",
-      "head_direction": "right",
+      "head_direction": "down",
       "ordered_path": [
         {
-          "x": 9,
-          "y": 7
+          "x": 8,
+          "y": 2
         },
         {
           "x": 8,
-          "y": 7
+          "y": 3
         }
       ]
     },
     {
       "id": "vine_26",
-      "head_direction": "left",
+      "head_direction": "down",
       "ordered_path": [
         {
           "x": 0,
-          "y": 6
+          "y": 3
         },
         {
-          "x": 1,
-          "y": 6
+          "x": 0,
+          "y": 4
         }
       ],
       "color_index": 1
     },
     {
       "id": "vine_27",
-      "head_direction": "up",
+      "head_direction": "left",
       "ordered_path": [
         {
-          "x": 4,
-          "y": 16
-        },
-        {
-          "x": 4,
-          "y": 15
+          "x": 2,
+          "y": 1
         },
         {
           "x": 3,
-          "y": 15
-        },
-        {
-          "x": 2,
-          "y": 15
+          "y": 1
         }
       ],
       "color_index": 2
     },
     {
       "id": "vine_28",
-      "head_direction": "up",
+      "head_direction": "down",
       "ordered_path": [
         {
-          "x": 0,
-          "y": 16
+          "x": 1,
+          "y": 1
         },
         {
-          "x": 0,
-          "y": 15
+          "x": 1,
+          "y": 2
         }
       ],
       "color_index": 3
     },
     {
       "id": "vine_29",
-      "head_direction": "down",
+      "head_direction": "up",
       "ordered_path": [
         {
-          "x": 1,
-          "y": 1
+          "x": 2,
+          "y": 15
         },
         {
-          "x": 1,
-          "y": 2
+          "x": 2,
+          "y": 14
         }
       ],
       "color_index": 4
     },
     {
       "id": "vine_30",
-      "head_direction": "up",
-      "ordered_path": [
-        {
-          "x": 8,
-          "y": 17
-        },
-        {
-          "x": 8,
-          "y": 16
-        }
-      ],
-      "color_index": 5
-    },
-    {
-      "id": "vine_31",
       "head_direction": "down",
       "ordered_path": [
         {
@@ -868,6 +821,21 @@
         {
           "x": 0,
           "y": 2
+        }
+      ],
+      "color_index": 5
+    },
+    {
+      "id": "vine_31",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 1,
+          "y": 17
+        },
+        {
+          "x": 1,
+          "y": 16
         }
       ]
     },
@@ -876,27 +844,27 @@
       "head_direction": "up",
       "ordered_path": [
         {
-          "x": 3,
-          "y": 17
+          "x": 0,
+          "y": 14
         },
         {
-          "x": 3,
-          "y": 16
+          "x": 0,
+          "y": 13
         }
       ],
       "color_index": 1
     },
     {
       "id": "vine_33",
-      "head_direction": "down",
+      "head_direction": "left",
       "ordered_path": [
         {
-          "x": 9,
-          "y": 4
+          "x": 5,
+          "y": 0
         },
         {
-          "x": 9,
-          "y": 5
+          "x": 6,
+          "y": 0
         }
       ],
       "color_index": 2
@@ -906,12 +874,12 @@
       "head_direction": "left",
       "ordered_path": [
         {
-          "x": 0,
-          "y": 17
+          "x": 2,
+          "y": 0
         },
         {
-          "x": 1,
-          "y": 17
+          "x": 3,
+          "y": 0
         }
       ],
       "color_index": 3
@@ -922,41 +890,41 @@
       "ordered_path": [
         {
           "x": 0,
-          "y": 14
+          "y": 0
         },
         {
           "x": 1,
-          "y": 14
+          "y": 0
         }
       ],
       "color_index": 4
     },
     {
       "id": "vine_36",
-      "head_direction": "down",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 7,
-          "y": 2
+          "x": 6,
+          "y": 17
         },
         {
-          "x": 7,
-          "y": 3
+          "x": 5,
+          "y": 17
         }
       ],
       "color_index": 5
     },
     {
       "id": "vine_37",
-      "head_direction": "left",
+      "head_direction": "right",
       "ordered_path": [
         {
-          "x": 0,
-          "y": 4
+          "x": 8,
+          "y": 1
         },
         {
-          "x": 1,
-          "y": 4
+          "x": 7,
+          "y": 1
         }
       ]
     },
@@ -966,11 +934,11 @@
       "ordered_path": [
         {
           "x": 9,
-          "y": 17
+          "y": 16
         },
         {
           "x": 9,
-          "y": 16
+          "y": 15
         }
       ],
       "color_index": 1
@@ -981,33 +949,92 @@
       "ordered_path": [
         {
           "x": 9,
-          "y": 0
+          "y": 2
         },
         {
           "x": 9,
-          "y": 1
+          "y": 3
         }
       ],
       "color_index": 2
     },
     {
       "id": "vine_40",
-      "head_direction": "down",
+      "head_direction": "up",
       "ordered_path": [
         {
-          "x": 8,
-          "y": 1
+          "x": 0,
+          "y": 16
         },
         {
-          "x": 8,
-          "y": 2
+          "x": 0,
+          "y": 15
         }
       ],
       "color_index": 3
+    },
+    {
+      "id": "vine_41",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 8,
+          "y": 17
+        },
+        {
+          "x": 7,
+          "y": 17
+        }
+      ],
+      "color_index": 4
+    },
+    {
+      "id": "vine_42",
+      "head_direction": "up",
+      "ordered_path": [
+        {
+          "x": 2,
+          "y": 17
+        },
+        {
+          "x": 2,
+          "y": 16
+        }
+      ],
+      "color_index": 5
+    },
+    {
+      "id": "vine_43",
+      "head_direction": "down",
+      "ordered_path": [
+        {
+          "x": 9,
+          "y": 0
+        },
+        {
+          "x": 9,
+          "y": 1
+        }
+      ]
+    },
+    {
+      "id": "vine_44",
+      "head_direction": "right",
+      "ordered_path": [
+        {
+          "x": 9,
+          "y": 4
+        },
+        {
+          "x": 8,
+          "y": 4
+        }
+      ],
+      "color_index": 1
     }
   ],
   "max_moves": 54,
-  "min_moves": 40,
+  "min_moves": 44,
   "complexity": "medium",
   "grace": 3,
   "color_scheme": [
@@ -1018,5 +1045,5 @@
     "#7C4DFF",
     "#29B6F6"
   ],
-  "seed": 470055
+  "seed": 482400
 }

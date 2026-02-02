@@ -29,7 +29,21 @@ func GenerateRobust(config GenerationConfig) (model.Level, GenerationStats, erro
 	common.Verbose("Starting Robust Generation for Level %d (Size: %dx%d, Seed: %d)",
 		config.LevelID, config.GridWidth, config.GridHeight, seed)
 
-	placer := &CenterOutPlacer{} // Use existing logic for primary placement
+	var placer VinePlacementStrategy
+	switch config.Strategy {
+	case StrategyCenterOut:
+		placer = &CenterOutPlacer{}
+	case StrategyDirectionFirst:
+		placer = &DirectionFirstPlacer{}
+	default:
+		// Default to DirectionFirst for standard runs, or CenterOut if difficulty is Transcendent
+		if config.Difficulty == "Transcendent" {
+			placer = &CenterOutPlacer{}
+		} else {
+			placer = &DirectionFirstPlacer{}
+		}
+	}
+
 	gapFiller := NewGapFiller(config.GridWidth, config.GridHeight, rng)
 	assembler := &LevelAssembler{}
 

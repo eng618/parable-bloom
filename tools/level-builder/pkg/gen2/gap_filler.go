@@ -109,7 +109,7 @@ func (f *GapFiller) tryCreateFiller(head model.Point, occupied map[string]string
 		neckDir := common.DirectionFromPoints(head, neck)
 		headDir := common.OppositeDirection(neckDir)
 
-		// Preference 1: Has clear exit path (LIFO safe)
+		// Preference: Has clear exit path (LIFO safe)
 		if common.IsExitPathClear(head, headDir, f.w, f.h, occupied) {
 			return model.Vine{
 				ID:            vineID,
@@ -117,22 +117,6 @@ func (f *GapFiller) tryCreateFiller(head model.Point, occupied map[string]string
 				OrderedPath:   []model.Point{head, neck},
 			}, true
 		}
-	}
-
-	// Preference 2: Any valid placement (Non-LIFO filler)
-	// Only acceptable if we really need to fill space and it doesn't block critical paths
-	// For simple 2-cell fillers at the end of generation, this is usually safe enough
-	// or acceptable to have a few locked vines that are cleared by mask logic later.
-	if len(neighbors) > 0 {
-		neck := neighbors[0]
-		neckDir := common.DirectionFromPoints(head, neck)
-		headDir := common.OppositeDirection(neckDir)
-
-		return model.Vine{
-			ID:            vineID,
-			HeadDirection: headDir,
-			OrderedPath:   []model.Point{head, neck},
-		}, true
 	}
 
 	return model.Vine{}, false

@@ -1,23 +1,17 @@
-version: '3'
+version: "3"
 
 tasks:
-  generate:
-    desc: Generate new levels using the Go tool (usage - task levels:generate COUNT=50)
-    dir: tools/level-builder
-    vars:
-      COUNT: "50"
+  generate:all:
+    desc: Generate all 5 modules using the robust v2 batch generator (overwrites existing)
+    dir: .
     cmds:
-      - go run . generate --count "{{.COUNT}}"
+      - ./generate_all.sh
 
-  # Fallback generation: overwrite existing levels using conservative LIFO placement
-  # and a MinCoverage fallback (Option A default = 0.75). Use --overwrite to persist.
-  generate:fallback:
-    desc: Generate fallback levels for all modules (overwrite existing files)
+  stats:
+    desc: Show stats for generated levels
     dir: tools/level-builder
-    vars:
-      MIN_COVERAGE: "0.75"
     cmds:
-      - ./scripts/levels/generate_fallback.sh "{{.MIN_COVERAGE}}"
+      - go run . validate --check-solvable=false
 
   validate:
     desc: Validate existing levels and modules using the Go tool

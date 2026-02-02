@@ -34,7 +34,7 @@ do
     echo "----------------------------------------"
     echo "Generating Module $i (aggressive LIFO)..."
     echo "----------------------------------------"
-    ./tools/level-builder/level-builder batch --module $i --lifo --overwrite --verbose --aggressive --dump-dir "$FAILED_DUMP_DIR" --stats-out "$STATS_DIR" --log-file "$LOG_DIR/module_$i.log" --output-dir "$OUTPUT_DIR"
+    ./tools/level-builder/level-builder batch --module $i --overwrite --verbose --dump-dir "$FAILED_DUMP_DIR" --stats-out "$STATS_DIR" --log-file "$LOG_DIR/module_$i.log" --output-dir "$OUTPUT_DIR"
 
     if [ $? -ne 0 ]; then
         echo "❌ Module $i generation failed!"
