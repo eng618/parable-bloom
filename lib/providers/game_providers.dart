@@ -1112,13 +1112,13 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   }
 
   void _checkLevelComplete() {
-    final allFinished = state.values.every((vineState) =>
-        vineState.isCleared ||
-        vineState.animationState == VineAnimationState.animatingClear);
+    // Only complete when all vines have finished their exit animation
+    final allAnimationsDone = state.values.every(
+        (vineState) => vineState.animationState == VineAnimationState.cleared);
     debugPrint(
-      'VineStatesNotifier: Checking completion - all finished: $allFinished, total vines: ${state.length}',
+      'VineStatesNotifier: Checking completion - allAnimationsDone: $allAnimationsDone, total vines: ${state.length}',
     );
-    if (allFinished) {
+    if (allAnimationsDone) {
       debugPrint(
         'VineStatesNotifier: LEVEL COMPLETE detected! Setting levelCompleteProvider to true',
       );
