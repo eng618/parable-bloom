@@ -328,11 +328,11 @@ func (p *CenterOutPlacer) chooseNextGrowthCell(
 		score := 0.0
 
 		if dir == preferredDir {
-			score += 2.0 // Prefer growth direction
+			score += 1.5 // Balanced preference for forward growth
 		}
 		for _, perpDir := range common.PerpendicularDirections(preferredDir) {
 			if dir == perpDir {
-				score += 1.0 // Allow turns
+				score += 1.5 // Balanced preference for turns (creates winding without trapping)
 				break
 			}
 		}

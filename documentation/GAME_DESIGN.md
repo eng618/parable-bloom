@@ -31,7 +31,7 @@ type: "Game Design Document"
 - **Mechanic**:
   - Players start each level with **3 Grace** (4 in Transcendent difficulty).
   - Tapping a blocked vine consumes 1 Grace.
-  - **Fail State**: If Grace reaches 0, the level ends with a gentle message: *"God's grace is endless—try again!"*
+  - **Fail State**: If Grace reaches 0, the level ends with a gentle message: _"God's grace is endless—try again!"_
   - **Tutorials**: Levels 1-5 have infinite Grace (999) to allow risk-free learning.
 
 ## 3. Progression System
@@ -40,13 +40,13 @@ type: "Game Design Document"
 
 The game scales difficulty through grid size, vine count, and blocking complexity.
 
-| Tier | Grid Size | Vine Count | Avg Length | Complexity | Blocking Depth |
-|------|-----------|------------|------------|------------|----------------|
-| **Seedling** | 6×8 to 8×10 | 6-8 | 6-8 | Linear, no loops | 0-1 |
-| **Sprout** | 8×10 to 10×12 | 10-14 | 5-7 | Simple chains | 1-2 |
-| **Nurturing** | 10×14 to 12×16 | 18-28 | 4-6 | Multi-chains | 2-3 |
-| **Flourishing** | 12×16 to 16×20 | 36-50 | 3-5 | Deep blocking | 3-4 |
-| **Transcendent** | 16×24+ | 60+ | 2-4 | Cascading locks | 4+ |
+| Tier             | Grid Size      | Vine Count | Avg Length | Complexity       | Blocking Depth |
+| ---------------- | -------------- | ---------- | ---------- | ---------------- | -------------- |
+| **Seedling**     | 6×8 to 8×10    | 6-8        | 6-8        | Linear, no loops | 0-1            |
+| **Sprout**       | 8×10 to 10×12  | 10-14      | 5-7        | Simple chains    | 1-2            |
+| **Nurturing**    | 10×14 to 12×16 | 18-28      | 4-6        | Multi-chains     | 2-3            |
+| **Flourishing**  | 12×16 to 16×20 | 36-50      | 3-5        | Deep blocking    | 3-4            |
+| **Transcendent** | 16×24+         | 60+        | 2-4        | Cascading locks  | 4+             |
 
 ### Tutorial Strategy (Pre-Level)
 
@@ -78,13 +78,13 @@ Tutorials include animated arrows and text hints guiding the player through corr
 
 Colors are used functionally to indicate vine roles and difficulty.
 
-| Color | Role | Visual Meaning |
-|-------|------|----------------|
-| **Moss Green** | Foundation | The "standard" vine. Calming, usually the first to move or the base blocker. |
-| **Sunset Orange** | Intermediate | Indicates progress or a secondary layer of blocking. |
-| **Golden Yellow** | Quick-Clear | "Free" vines that can often be cleared immediately to open space. |
-| **Royal Purple** | Complex | Used for deep blocking chains or "boss" vines in harder levels. |
-| **Sky Blue** | Alternative | Suggests alternative paths or strategic options. |
+| Color             | Role         | Visual Meaning                                                               |
+| ----------------- | ------------ | ---------------------------------------------------------------------------- |
+| **Moss Green**    | Foundation   | The "standard" vine. Calming, usually the first to move or the base blocker. |
+| **Sunset Orange** | Intermediate | Indicates progress or a secondary layer of blocking.                         |
+| **Golden Yellow** | Quick-Clear  | "Free" vines that can often be cleared immediately to open space.            |
+| **Royal Purple**  | Complex      | Used for deep blocking chains or "boss" vines in harder levels.              |
+| **Sky Blue**      | Alternative  | Suggests alternative paths or strategic options.                             |
 
 ### Audio
 
@@ -105,26 +105,21 @@ Colors are used functionally to indicate vine roles and difficulty.
 ### Flow & Blocking
 
 - **Blocking Depth**: The number of vines that must move before a specific vine is free.
-  - *Seedling*: Depth 0-1 (Immediate or 1 step).
-  - *Transcendent*: Depth 4+ (Requires unraveling a knot).
+  - _Seedling_: Depth 0-1 (Immediate or 1 step).
+  - _Transcendent_: Depth 4+ (Requires unraveling a knot).
 - **Circular Dependencies**: **Strictly Forbidden**. A vine cannot block another vine that eventually blocks the first vine (A blocks B, B blocks A). This creates unsolvable deadlocks.
 - **Directional Balance**: Grids should utilize all four directions (Up, Down, Left, Right) to prevent visual monotony and repetitive gameplay.
 
-### Circuit Board Aesthetics (Transcendent Levels)
+### Organic & Fluid Aesthetics
 
-Transcendent difficulty levels should evoke the complexity and interconnectedness of circuit boards:
+The visual style should evoke the game's "Zen Garden" theme with long, flowing paths:
 
-- **Vine Morphology**: Vines should be highly winding with frequent direction changes, resembling circuit traces rather than straight paths.
-  - Maximum 2-3 consecutive segments in the same direction before a turn.
-  - Prefer orthogonal turns (90-degree changes) over continuing straight.
-  - Avoid long straight segments that create visual monotony.
+- **Vine Morphology**: Vines should be "windy, fluid, and long", resembling natural growth or flowing water currents.
+  - **Maximize Length**: Vines should be as long as possible, snaking through the grid.
+  - **Minimize Fragmentation**: Avoid small, disconnected vines. Gaps should be filled by extending existing vines whenever possible.
+  - **Winding Paths**: Prioritize turning and meandering over straight lines.
+  - **Fluidity**: Turns should feel organic, avoiding jagged single-step zig-zags where possible, but favoring frequent direction changes over long straightaways.
 
-- **Visual Complexity**: The arrangement should create layered, interwoven patterns that suggest electronic pathways.
-  - Deep blocking chains (4+ depths) create "circuit layers" of dependency.
-  - Vines should cross and weave around each other without creating deadlocks.
-  - Empty spaces should be minimized to maintain the dense, interconnected feel.
-
-- **Strategic Depth**: The circuit-board layout should reward careful observation and planning.
-  - Multiple solution paths exist but require different sequences.
-  - Blocking relationships form complex dependency webs.
-  - Visual patterns help players identify blocking chains and solution order.
+- **Visual Density**: The grid should feel packed and interconnected.
+  - High density of long, interwoven vines.
+  - Fewer, but longer, vines are preferred over many short ones.

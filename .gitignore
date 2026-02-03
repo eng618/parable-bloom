@@ -96,10 +96,14 @@ documentation/example-levels/*
 assets/levels_backup/*
 
 # Build artifacts for level-builder tool
+level-builder
 tools/level-builder/level-builder
 tools/level-builder/validation_stats.json
 tools/level-builder/validation_stats*
 tools/level-builder/validation.log
+
+# Level dumps from failing level generations
+tools/level-builder/assets/
 
 # Hugo generated site
 docs/
@@ -109,6 +113,3 @@ logs/
 
 # Taskfile checksums
 .task/
-
-# Level dumps from failing level generations
-tools/level-builder/assets/

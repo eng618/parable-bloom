@@ -298,13 +298,13 @@ func (p *DirectionFirstPlacer) scoreNeighbor(
 
 	// Prefer the growth direction (opposite to head)
 	if dir == preferredDir {
-		score += 2.0
+		score += 1.5 // Balanced preference for forward growth
 	}
 
-	// Allow turns with moderate preference (for winding paths)
+	// Balanced turn preference for winding paths
 	for _, perpDir := range common.PerpendicularDirections(preferredDir) {
 		if dir == perpDir {
-			score += 1.0
+			score += 1.5 // Balanced (creates winding without trapping)
 			break
 		}
 	}

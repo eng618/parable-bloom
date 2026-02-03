@@ -36,7 +36,7 @@ type DifficultySpec struct {
 var DifficultySpecs = map[string]DifficultySpec{
 	"Tutorial": {
 		VineCountRange:   [2]int{3, 8},
-		AvgLengthRange:   [2]int{6, 8},
+		AvgLengthRange:   [2]int{6, 10}, // Moderate increase for longer, windier vines
 		MaxBlockingDepth: 0,
 		ColorCountRange:  [2]int{1, 5},
 		MinGridOccupancy: 0.30,
@@ -44,7 +44,7 @@ var DifficultySpecs = map[string]DifficultySpec{
 	},
 	"Seedling": {
 		VineCountRange:   [2]int{4, 60},
-		AvgLengthRange:   [2]int{6, 8},
+		AvgLengthRange:   [2]int{8, 12}, // Moderate increase
 		MaxBlockingDepth: 1,
 		ColorCountRange:  [2]int{1, 5},
 		MinGridOccupancy: 0.93,
@@ -52,7 +52,7 @@ var DifficultySpecs = map[string]DifficultySpec{
 	},
 	"Sprout": {
 		VineCountRange:   [2]int{8, 80},
-		AvgLengthRange:   [2]int{3, 8},
+		AvgLengthRange:   [2]int{8, 14}, // Moderate increase
 		MaxBlockingDepth: 2,
 		ColorCountRange:  [2]int{1, 5},
 		MinGridOccupancy: 0.93,
@@ -60,7 +60,7 @@ var DifficultySpecs = map[string]DifficultySpec{
 	},
 	"Nurturing": {
 		VineCountRange:   [2]int{12, 100},
-		AvgLengthRange:   [2]int{3, 8},
+		AvgLengthRange:   [2]int{8, 14}, // Moderate increase
 		MaxBlockingDepth: 3,
 		ColorCountRange:  [2]int{1, 6},
 		MinGridOccupancy: 0.93,
@@ -68,7 +68,7 @@ var DifficultySpecs = map[string]DifficultySpec{
 	},
 	"Flourishing": {
 		VineCountRange:   [2]int{15, 150},
-		AvgLengthRange:   [2]int{2, 6},
+		AvgLengthRange:   [2]int{10, 16}, // Moderate increase
 		MaxBlockingDepth: 4,
 		ColorCountRange:  [2]int{1, 6},
 		MinGridOccupancy: 0.93,
@@ -76,7 +76,7 @@ var DifficultySpecs = map[string]DifficultySpec{
 	},
 	"Transcendent": {
 		VineCountRange:   [2]int{15, 200},
-		AvgLengthRange:   [2]int{2, 6},
+		AvgLengthRange:   [2]int{12, 18}, // Moderate increase (still long but achievable)
 		MaxBlockingDepth: 4,
 		ColorCountRange:  [2]int{1, 6},
 		MinGridOccupancy: 0.93,

@@ -156,7 +156,7 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 	var stats gen2.GenerationStats
 	var genCfg gen2.GenerationConfig
 
-	const maxRetries = 5
+	const maxRetries = 10
 	for retry := 0; retry < maxRetries; retry++ {
 		var err error
 		currentSeed := (int64(levelID) * 31337) + int64(retry*12345)
