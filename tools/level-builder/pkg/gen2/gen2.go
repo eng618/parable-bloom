@@ -88,6 +88,9 @@ func GenerateLevel(config GenerationConfig) (model.Level, GenerationStats, error
 
 // GenerateLevelLIFO is now a wrapper for GenerateRobust.
 func GenerateLevelLIFO(config GenerationConfig) (model.Level, GenerationStats, error) {
+	if config.Strategy == "" {
+		config.Strategy = StrategyCenterOut
+	}
 	return GenerateLevel(config) // Both use the robust pipeline now
 }
 

@@ -50,13 +50,18 @@ func GenerateRobust(config GenerationConfig) (model.Level, GenerationStats, erro
 	// 2. Initial Placement Phase
 	// Using "CenterOutPlacer" because it guarantees LIFO solvability by construction
 	vines, occupied, err := placer.PlaceVines(config, rng, &stats)
-
 	// Note: PlaceVines internally handles backtracking for primary vines.
 	// If it returns error, it failed even after retries.
-	// In aggressive mode, we might want to accept partial results and fill gaps,
-	// but standard PlaceVines enforces critical path exists.
-	if err != nil && len(vines) < 2 {
-		return model.Level{}, stats, fmt.Errorf("primary placement failed: %w", err)
+	if err != nil {
+		// If no failure dump was written by the placer (e.g. DirectionFirst doesn't use backtracking helper),
+		// write one now to ensure we have a deterministic record of the failure.
+		if stats.DumpsProduced == 0 {
+			_ = writeFailureDump(config, seed, 0, err.Error(), vines, occupied, &stats)
+		}
+
+		if len(vines) < 2 {
+			return model.Level{}, stats, fmt.Errorf("primary placement failed: %w", err)
+		}
 	}
 
 	// Recover partial success if needed
