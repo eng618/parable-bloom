@@ -35,7 +35,10 @@ platform :android do
       skip_upload_metadata: true,
       skip_upload_images: true,
       skip_upload_screenshots: true,
-      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft'
+      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft',
+      ack_bundle_installation_warning: true,
+      changes_not_sent_for_review: true,
+      timeout: 600
     )
 
     UI.success("✅ Successfully deployed to Google Play Console (Internal Testing)")
