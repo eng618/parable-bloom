@@ -40,16 +40,16 @@ tasks:
   web:
     desc: Build the web application for release
     cmds:
-      - task: clean
-      - task: flutter:get
-      - task: flutter:build:web
+      - task: :clean
+      - task: :flutter:get
+      - task: :flutter:build:web
 
   android:
     desc: Build the Android application
     cmds:
-      - task: clean
-      - task: flutter:get
-      - task: flutter:build:android
+      - task: :clean
+      - task: :flutter:get
+      - task: :flutter:build:android
         vars:
           BUILD_NAME: "{{.BUILD_NAME}}"
           BUILD_NUMBER: "{{.BUILD_NUMBER}}"
@@ -57,27 +57,27 @@ tasks:
   ios:
     desc: Build the iOS application
     cmds:
-      - task: clean
-      - task: flutter:get
-      - task: flutter:build:ios
+      - task: :clean
+      - task: :flutter:get
+      - task: :flutter:build:ios
 
   linux:
     desc: Build the Linux application
     cmds:
-      - task: clean
-      - task: flutter:get
-      - task: flutter:build:linux
+      - task: :clean
+      - task: :flutter:get
+      - task: :flutter:build:linux
 
   windows:
     desc: Build the Windows application
     cmds:
-      - task: clean
-      - task: flutter:get
-      - task: flutter:build:windows
+      - task: :clean
+      - task: :flutter:get
+      - task: :flutter:build:windows
 
   macos:
     desc: Build the macOS application
     cmds:
-      - task: clean
-      - task: flutter:get
-      - task: flutter:build:macos
+      - task: :clean
+      - task: :flutter:get
+      - task: :flutter:build:macos

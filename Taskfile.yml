@@ -48,12 +48,11 @@ tasks:
       - task: test:all
       - task: build:all
 
-  validate:fix:
+  fix:
     desc: Fix code quality and linting issues across all modules
     cmds:
       - task: format:all
       - task: lint:fix:all
-      - task: validate
 
   clean:
     desc: Clean the Flutter build cache
@@ -102,13 +101,13 @@ tasks:
     desc: Format code across all modules
     cmds:
       - task: flutter:format
-      - task: lb:lint:fix
+      - task: lb:format
 
   format:check:all:
     desc: Check if code is formatted across all modules
     cmds:
       - task: flutter:format:check
-      - task: lb:lint
+      - task: lb:format:check
 
   lint:fix:all:
     desc: Fix linting issues across all modules

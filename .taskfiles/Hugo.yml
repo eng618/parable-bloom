@@ -51,27 +51,3 @@ tasks:
     preconditions:
       - sh: command -v hugo >/dev/null 2>&1
         msg: "Hugo is not installed."
-
-  lint:
-    desc: Run Hugo site linting
-    dir: tools/hugo-site
-    cmds:
-      - golangci-lint run
-
-  lint:fix:
-    desc: Fix Hugo site linting issues (where possible)
-    dir: tools/hugo-site
-    cmds:
-      - golangci-lint run --fix
-
-  format:
-    desc: Show diff of Hugo site code formatting
-    dir: tools/hugo-site
-    cmds:
-      - golangci-lint fmt --diff-colored
-
-  format:fix:
-    desc: Format Hugo site code
-    dir: tools/hugo-site
-    cmds:
-      - golangci-lint fmt

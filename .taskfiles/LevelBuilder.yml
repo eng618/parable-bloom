@@ -9,13 +9,12 @@ tasks:
       - task: test
       - task: build
 
-  validate:fix:
-    desc: Fix level-builder Go module linting issues
+  fix:
+    desc: Fix level-builder Go module code (lints and formatting)
     dir: tools/level-builder
     cmds:
+      - task: format
       - task: lint:fix
-      - task: test
-      - task: build
 
   get:
     desc: Get level-builder Go module dependencies
@@ -84,13 +83,13 @@ tasks:
     cmds:
       - golangci-lint run --fix
 
-  format:
-    desc: Show diff of level-builder Go module code formatting
+  format:check:
+    desc: Check level-builder Go module code formatting
     dir: tools/level-builder
     cmds:
       - golangci-lint fmt --diff-colored
 
-  format:fix:
+  format:
     desc: Format level-builder Go module code
     dir: tools/level-builder
     cmds:

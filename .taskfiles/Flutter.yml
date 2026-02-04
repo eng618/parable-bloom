@@ -250,6 +250,12 @@ tasks:
     cmds:
       - dart fix --apply
 
+  fix:
+    desc: Fix Flutter code (lints and formatting)
+    cmds:
+      - task: format
+      - task: lint:fix
+
   generate_icons:
     desc: Generate app icons and favicon for all platforms using flutter_launcher_icons
     cmds:
