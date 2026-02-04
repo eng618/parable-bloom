@@ -24,10 +24,20 @@ tasks:
     cmds:
       - task: flutter:get
       - task: lb:get
+      - task: _setup:ios:pod-install
+      - task: _setup:macos:pod-install
+
+  _setup:ios:pod-install:
+    internal: true
+    platforms: [darwin]
+    cmds:
       - task: flutter:ios:pod-install
-        platforms: [darwin]
+
+  _setup:macos:pod-install:
+    internal: true
+    platforms: [darwin]
+    cmds:
       - task: flutter:macos:pod-install
-        platforms: [darwin]
 
   validate:
     desc: Validate code quality across all modules (analysis, format, tests, and builds)
@@ -41,10 +51,8 @@ tasks:
     desc: Fix code quality and linting issues across all modules
     cmds:
       - task: format:all
-      - task: flutter:lint:fix
-      - task: analyze:all
-      - task: test:all
-      - task: build:all
+      - task: lint:fix:all
+      - task: validate
 
   clean:
     desc: Clean the Flutter build cache
@@ -100,6 +108,12 @@ tasks:
     cmds:
       - task: flutter:format:check
       - task: lb:lint
+
+  lint:fix:all:
+    desc: Fix linting issues across all modules
+    cmds:
+      - task: flutter:lint:fix
+      - task: lb:lint:fix
 
   lint:all:
     desc: Run linting for all modules

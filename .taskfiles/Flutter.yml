@@ -109,9 +109,7 @@ tasks:
     desc: Serve the application on iOS simulator (auto-selects available simulator)
     platforms: [darwin]
     cmds:
-      - task: get
-      - task: ios:pod-install
-      - ./scripts/ios/boot_simulator.sh
+      - task: _ensure_ios_sim
       - flutter run
 
   serve:ios:clean:
@@ -119,10 +117,16 @@ tasks:
     platforms: [darwin]
     cmds:
       - task: clean
+      - task: _ensure_ios_sim
+      - flutter run
+
+  _ensure_ios_sim:
+    internal: true
+    platforms: [darwin]
+    cmds:
       - task: get
       - task: ios:pod-install
       - ./scripts/ios/boot_simulator.sh
-      - flutter run
 
   ios:pod-install:
     desc: Run CocoaPods install in ios directory

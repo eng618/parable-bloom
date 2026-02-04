@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   bump:patch:
@@ -24,7 +24,7 @@ tasks:
   set:
     desc: Set specific version (usage - task release:set VERSION=2.0.0+5)
     cmds:
-      - dart run scripts/bump_version.dart --set {{.VERSION}}
+      - dart run scripts/bump_version.dart --set "{{.VERSION}}"
 
   changelog:update:
     desc: Update CHANGELOG.md from git commits
@@ -36,7 +36,7 @@ tasks:
     cmds:
       - dart run scripts/update_changelog.dart --dry-run
 
-  # High-level Release Builds 
+  # High-level Release Builds
   web:
     desc: Build the web application for release
     cmds:

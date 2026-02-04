@@ -27,7 +27,7 @@ tasks:
       USE_ASTAR: "true"
       ASTAR_WEIGHT: "10"
     cmds:
-      - go run . validate --check-solvable --max-states "{{.MAX_STATES}}" --use-astar={{.USE_ASTAR}} --astar-weight={{.ASTAR_WEIGHT}}
+      - go run . validate --check-solvable --max-states "{{.MAX_STATES}}" --use-astar="{{.USE_ASTAR}}" --astar-weight="{{.ASTAR_WEIGHT}}"
 
   tutorials:validate:
     desc: Validate tutorial lessons using the Go tool
@@ -43,7 +43,7 @@ tasks:
       USE_ASTAR: "true"
       ASTAR_WEIGHT: "10"
     cmds:
-      - go run . validate-tutorials --check-solvable --max-states {{.MAX_STATES}} --use-astar={{.USE_ASTAR}} --astar-weight={{.ASTAR_WEIGHT}}
+      - go run . validate-tutorials --check-solvable --max-states "{{.MAX_STATES}}" --use-astar="{{.USE_ASTAR}}" --astar-weight="{{.ASTAR_WEIGHT}}"
 
   validate-experiments:
     desc: Run solvability experiments comparing BFS and A* (outputs bfs/astar stats)
@@ -52,9 +52,9 @@ tasks:
       MAX_STATES: "200000"
       ASTAR_WEIGHT: "10"
     cmds:
-      - go run . validate --check-solvable --max-states {{.MAX_STATES}} --use-astar=false
+      - go run . validate --check-solvable --max-states "{{.MAX_STATES}}" --use-astar=false
       - mv validation_stats.json validation_stats_bfs.json || true
-      - go run . validate --check-solvable --max-states {{.MAX_STATES}} --use-astar=true --astar-weight {{.ASTAR_WEIGHT}}
+      - go run . validate --check-solvable --max-states "{{.MAX_STATES}}" --use-astar=true --astar-weight "{{.ASTAR_WEIGHT}}"
       - mv validation_stats.json validation_stats_astar.json || true
       - echo "Created validation_stats_bfs.json and validation_stats_astar.json"
 

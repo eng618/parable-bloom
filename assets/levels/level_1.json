@@ -2,10 +2,7 @@
   "id": 1,
   "name": "Level 1",
   "difficulty": "Seedling",
-  "grid_size": [
-    7,
-    10
-  ],
+  "grid_size": [7, 10],
   "mask": {
     "mode": "hide",
     "points": [
@@ -422,16 +419,10 @@
       "color_index": 3
     }
   ],
-  "max_moves": 10,
-  "min_moves": 19,
+  "max_moves": 21,
+  "min_moves": 16,
   "complexity": "low",
   "grace": 3,
-  "color_scheme": [
-    "#888888",
-    "#7CB342",
-    "#FF9800",
-    "#FFC107",
-    "#7C4DFF"
-  ],
+  "color_scheme": ["#888888", "#7CB342", "#FF9800", "#FFC107", "#7C4DFF"],
   "seed": 31337
 }

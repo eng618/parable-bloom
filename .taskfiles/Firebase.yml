@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   login:
@@ -91,7 +91,7 @@ tasks:
   h:preview:
     desc: Deploy preview channel
     cmds:
-      - firebase hosting:channel:deploy pr-{{.PR_NUMBER}}
+      - firebase hosting:channel:deploy "pr-{{.PR_NUMBER}}"
     preconditions:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."

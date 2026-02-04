@@ -11,10 +11,11 @@ if [[ -z "$CLI_ARGS" ]]; then
 fi
 
 # Basic safety check: disallow shell metacharacters that could allow command injection
-if [[ "$CLI_ARGS" =~ [;&|><] || "$CLI_ARGS" =~ "`" ]]; then
+# Note: we are also wary of double quotes as they could be used to break out of string injections
+if [[ "$CLI_ARGS" =~ [;&|><\"`] ]]; then
   echo "Refusing to run due to potentially unsafe characters in CLI_ARGS" >&2
   exit 3
 fi
 
-# Execute under sh -c to allow complex quoted commands while preserving safety checks
-sh -c "firebase emulators:exec $CLI_ARGS"
+# Execute directly; firebase emulators:exec will handle the command string
+firebase emulators:exec "$CLI_ARGS"
