@@ -7,18 +7,21 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
 
 var (
 	directoryFlag string
 	overwriteFlag bool
 	dryRunFlag    bool
+	fixDuplicates bool
 )
 
 var levelFileRE = regexp.MustCompile(`^level_(\d+)\.json$`)
@@ -37,7 +40,11 @@ Examples:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if directoryFlag == "" {
-			directoryFlag = "../../assets/levels"
+			var err error
+			directoryFlag, err = common.LevelsDir()
+			if err != nil {
+				return fmt.Errorf("failed to resolve levels directory: %w", err)
+			}
 		}
 
 		return repairDirectory(directoryFlag, overwriteFlag, dryRunFlag)
@@ -48,6 +55,7 @@ func init() {
 	RepairCmd.Flags().StringVarP(&directoryFlag, "directory", "d", "", "Directory containing level files to repair (default: ../../assets/levels)")
 	RepairCmd.Flags().BoolVarP(&overwriteFlag, "overwrite", "o", true, "Overwrite repaired files")
 	RepairCmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "n", false, "Scan and report without writing files")
+	RepairCmd.Flags().BoolVar(&fixDuplicates, "fix-duplicates", false, "Automatically fix duplicate vine IDs and duplicate entries (keeps first occurrence)")
 }
 
 func repairDirectory(dir string, overwrite, dryRun bool) error {
@@ -79,6 +87,36 @@ func repairDirectory(dir string, overwrite, dryRun bool) error {
 				failed++
 			} else {
 				fixed++
+			}
+		}
+
+		// If structural issues and user requested fixDuplicates, attempt a sanitize
+		if fixDuplicates {
+			lvl, err := common.ReadLevel(path)
+			if err == nil {
+				if sErrs := validator.ValidateStructural(*lvl); len(sErrs) > 0 {
+					// If structural errors include overlaps, attempt to sanitize duplicate IDs
+					hasOverlap := false
+					for _, se := range sErrs {
+						if strings.Contains(se.Error(), "overlaps") || strings.Contains(se.Error(), "overlap") {
+							hasOverlap = true
+							break
+						}
+					}
+					if hasOverlap {
+						common.Info("Attempting to fix duplicates in %s", path)
+						if dryRun {
+							fixed++
+						} else {
+							if err := sanitizeLevelDuplicateIDs(path); err != nil {
+								common.Warning("Failed to sanitize %s: %v", path, err)
+								failed++
+							} else {
+								fixed++
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -178,5 +216,74 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun bool) (bool, error
 	}
 
 	common.Info("Repaired level %d", id)
+
 	return true, nil
+}
+
+// sanitizeLevelDuplicateIDs removes duplicate vine entries (same ID) keeping the
+// first occurrence, and renames duplicates with differing ordered_path to a
+// new unique vine_N id to avoid overlap collisions.
+func sanitizeLevelDuplicateIDs(path string) error {
+	lvl, err := common.ReadLevel(path)
+	if err != nil {
+		return err
+	}
+
+	// Determine next available vine index
+	maxIdx := 0
+	for _, v := range lvl.Vines {
+		var idx int
+		if n, _ := fmt.Sscanf(v.ID, "vine_%d", &idx); n == 1 {
+			if idx > maxIdx {
+				maxIdx = idx
+			}
+		}
+	}
+	nextIdx := maxIdx + 1
+
+	seen := map[string]model.Vine{}
+	out := make([]model.Vine, 0, len(lvl.Vines))
+	for _, v := range lvl.Vines {
+		if existing, ok := seen[v.ID]; ok {
+			// If paths are identical, skip duplicate entry
+			if len(existing.OrderedPath) == len(v.OrderedPath) {
+				same := true
+				for i := range v.OrderedPath {
+					if existing.OrderedPath[i] != v.OrderedPath[i] {
+						same = false
+						break
+					}
+				}
+				if same {
+					common.Warning("Removing duplicate vine entry %s in %s", v.ID, path)
+					continue
+				}
+			}
+
+			// Otherwise rename duplicate to new unique id
+			newID := fmt.Sprintf("vine_%d", nextIdx)
+			nextIdx++
+			common.Warning("Renaming duplicate vine id %s -> %s in %s", v.ID, newID, path)
+			v.ID = newID
+			seen[v.ID] = v
+			out = append(out, v)
+			continue
+		}
+		seen[v.ID] = v
+		out = append(out, v)
+	}
+
+	// Replace vines and write back
+	lvl.Vines = out
+	if err := common.WriteLevel(path, lvl, true); err != nil {
+		return err
+	}
+
+	// Re-run structural check
+	if errs := validator.ValidateStructural(*lvl); len(errs) > 0 {
+		return fmt.Errorf("post-sanitize structural validation failed: %v", errs)
+	}
+
+	common.Info("Sanitized duplicate vine entries in %s", path)
+	return nil
 }

@@ -45,17 +45,31 @@
 3. **Run the app**
 
    ```bash
-   flutter run
+   task run
    ```
+
+### 🛠️ Development with Task
+
+This project uses [Taskfile](https://taskfile.dev) to manage development workflows. It is highly recommended to install it:
+
+```bash
+brew install go-task
+```
+
+Common commands:
+- `task setup`: Initial project setup (dependencies, etc.)
+- `task run`: Run the web application
+- `task test:all`: Run all tests across all modules
+- `task validate`: Full project health check (lint, format, test, build)
+- `task validate:fix`: Automatically fix common linting/formatting issues
 
 ### Platform-Specific Setup
 
 **iOS Development:**
 
 ```bash
-# Install iOS dependencies
-flutter precache --ios
-cd ios && pod install && cd ..
+# Install iOS dependencies (precache + pod install)
+task setup
 ```
 
 **Android Development:**
@@ -108,35 +122,36 @@ parable-bloom/
 ### Testing
 
 ```bash
-# Run all tests
-flutter test
+# Run all tests (Flutter + Tools)
+task test:all
 
-# Run specific test file
+# Run specific Flutter test file
 flutter test test/level_validation_test.dart
 
-# Run integration tests
-flutter test integration_test/
+# Run level-builder tests
+task lb:test
 ```
 
 ### Building for Release
 
-**Android APK:**
+**Multi-platform Release:**
 
 ```bash
-flutter build apk --release
+task release:web
+task release:android
+task release:ios
 ```
 
-**iOS (requires macOS + Xcode):**
+**Single Component Builds (with caching):**
 
 ```bash
-flutter build ios --release
+task build:all   # Builds Flutter web, Level Builder, and Hugo
 ```
 
 ## 📚 Documentation
 
 - **[🎮 Game Design Document](documentation/GAME_DESIGN.md)** - Complete mechanics, features, and design philosophy
 - **[🏗️ Architecture Guide](documentation/ARCHITECTURE.md)** - State management, persistence, and Firebase roadmap
-- **[💻 Technical Implementation](documentation/TECHNICAL_IMPLEMENTATION.md)** - Code structure, testing, and deployment
 - **[📖 API Reference](https://pub.dev/documentation)** - Generated API docs
 - **[🚀 Release Process](documentation/RELEASE_PROCESS.md)** - Automated release and deployment guide
 
@@ -157,11 +172,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 This project follows the [Flutter Style Guide](https://flutter.dev/docs/development/tools/formatting). Run:
 
 ```bash
-# Format code
-flutter format lib/
+# Format and fix issues across all modules
+task validate:fix
 
-# Analyze code
-flutter analyze
+# Check for issues without fixing
+task validate
 ```
 
 ## 📄 License

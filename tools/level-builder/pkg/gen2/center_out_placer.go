@@ -18,7 +18,7 @@ type CenterOutPlacer struct{}
 
 // PlaceVines places vines from center outward, guaranteeing each has a clear exit at placement time.
 // Returns vines that can be solved in LIFO order (last placed = first cleared).
-func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([]model.Vine, map[string]string, error) {
+func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, stats *GenerationStats) ([]model.Vine, map[string]string, error) {
 	w, h := config.GridWidth, config.GridHeight
 	totalCells := w * h
 	occupied := make(map[string]string)
@@ -28,28 +28,51 @@ func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([
 	common.Verbose("Target vine lengths: %v", targetLengths)
 
 	var vines []model.Vine
+	var coverage float64
 
 	// Phase 1: Place vines from center outward with LIFO guarantee
-	for i, targetLen := range targetLengths {
-		vineID := fmt.Sprintf("vine_%d", i+1)
+	for _, targetLen := range targetLengths {
+		// Use dynamic ID based on current placed vines to avoid duplicates
+		vineID := fmt.Sprintf("vine_%d", len(vines)+1)
 
 		vine, newOccupied, err := p.placeVineWithExitGuarantee(
-			vineID, targetLen, w, h, occupied, rng,
+			vineID, targetLen, w, h, occupied, rng, stats,
 		)
 		if err != nil {
 			common.Verbose("Could not place vine %s: %v", vineID, err)
-			continue
+
+			// Delegate to AttemptLocalBacktrack (modularized)
+			vineRecovered, _, updatedVines, updatedOccupied, btErr := AttemptLocalBacktrack(vines, occupied, vineID, targetLen, p, w, h, rng, config, stats)
+			if btErr != nil {
+				common.Verbose("Local backtracking failed for %s: %v", vineID, btErr)
+				continue
+			}
+
+			// Use recovered vine and updated state
+			vines = updatedVines
+			occupied = updatedOccupied
+			vine = vineRecovered
 		}
 
-		vines = append(vines, vine)
+		// Merge newly-occupied cells from a successful placement into the global occupied map
 		for k, v := range newOccupied {
 			occupied[k] = v
 		}
 
-		coverage := float64(len(occupied)) / float64(totalCells)
-		common.Verbose("Placed vine %s with %d segments, coverage: %.1f%%", vineID, len(vine.OrderedPath), coverage*100)
+		// Avoid double-appending if recovered state already includes the vine
+		exists := false
+		for _, v := range vines {
+			if v.ID == vine.ID {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			vines = append(vines, vine)
+		}
 
-		// Early exit if we've achieved target coverage
+		// Update coverage and early exit if we've achieved target coverage
+		coverage = float64(len(occupied)) / float64(totalCells)
 		if coverage >= config.MinCoverage {
 			common.Verbose("Achieved target coverage %.1f%%, stopping placement", coverage*100)
 			break
@@ -57,7 +80,7 @@ func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([
 	}
 
 	// Phase 2: Fill remaining gaps with 2-cell filler vines (LIFO guaranteed)
-	coverage := float64(len(occupied)) / float64(totalCells)
+	coverage = float64(len(occupied)) / float64(totalCells)
 	if coverage < config.MinCoverage {
 		common.Verbose("Coverage %.1f%% below target %.1f%%, adding filler vines...", coverage*100, config.MinCoverage*100)
 		fillerVines, fillerOccupied := p.createFillerVines(vines, occupied, w, h, config.MinCoverage, rng)
@@ -85,10 +108,14 @@ func (p *CenterOutPlacer) placeVineWithExitGuarantee(
 	w, h int,
 	occupied map[string]string,
 	rng *rand.Rand,
+	stats *GenerationStats,
 ) (model.Vine, map[string]string, error) {
 	const maxAttempts = 100
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
+		if stats != nil {
+			stats.PlacementAttempts++
+		}
 		// Choose seed cell (center-biased)
 		seed := p.chooseCenterSeed(w, h, occupied, rng)
 		if seed == nil {
@@ -301,11 +328,11 @@ func (p *CenterOutPlacer) chooseNextGrowthCell(
 		score := 0.0
 
 		if dir == preferredDir {
-			score += 2.0 // Prefer growth direction
+			score += 1.5 // Balanced preference for forward growth
 		}
 		for _, perpDir := range common.PerpendicularDirections(preferredDir) {
 			if dir == perpDir {
-				score += 1.0 // Allow turns
+				score += 1.5 // Balanced preference for turns (creates winding without trapping)
 				break
 			}
 		}
@@ -415,24 +442,22 @@ func (p *CenterOutPlacer) createFillerVines(
 	targetCells := int(float64(w*h) * targetCoverage)
 	fillerVines := []model.Vine{}
 	fillerOccupied := make(map[string]string)
-	fillerID := len(existingVines) + 1
+	// Compute next filler ID by scanning existing vine IDs to avoid collisions
+	fillerID := 1
+	for _, ev := range existingVines {
+		var idx int
+		if n, err := fmt.Sscanf(ev.ID, "vine_%d", &idx); n == 1 && err == nil {
+			if idx >= fillerID {
+				fillerID = idx + 1
+			}
+		}
+	}
 
 	// Phase 1: LIFO-guaranteed fillers (heads with clear exit)
-	vines1, occ1, nextID := p.fillWithLIFOGuarantee(fillerID, occupied, w, h, targetCells, rng)
+	vines1, occ1, _ := p.fillWithLIFOGuarantee(fillerID, occupied, w, h, targetCells, rng)
 	fillerVines = append(fillerVines, vines1...)
 	for k, v := range occ1 {
 		fillerOccupied[k] = v
-	}
-	fillerID = nextID
-
-	// Phase 2: Non-LIFO fillers for remaining cells (will need solver verification)
-	currentCoverage := len(occupied) + len(fillerOccupied)
-	if currentCoverage < targetCells {
-		vines2, occ2, _ := p.fillWithoutLIFOGuarantee(fillerID, occupied, fillerOccupied, w, h, targetCells, rng)
-		fillerVines = append(fillerVines, vines2...)
-		for k, v := range occ2 {
-			fillerOccupied[k] = v
-		}
 	}
 
 	return fillerVines, fillerOccupied
@@ -480,108 +505,6 @@ func (p *CenterOutPlacer) fillWithLIFOGuarantee(
 	}
 
 	return vines, fillerOccupied, fillerID
-}
-
-// fillWithoutLIFOGuarantee places filler vines without exit path requirement
-func (p *CenterOutPlacer) fillWithoutLIFOGuarantee(
-	startID int,
-	occupied, fillerOccupied map[string]string,
-	w, h int,
-	targetCells int,
-	rng *rand.Rand,
-) ([]model.Vine, map[string]string, int) {
-	vines := []model.Vine{}
-	newOccupied := make(map[string]string)
-	fillerID := startID
-	maxIterations := (w * h * 3) / 2
-	lastCoverage := len(occupied) + len(fillerOccupied)
-
-	for i := 0; i < maxIterations; i++ {
-		combined := mergeOccupied(mergeOccupied(occupied, fillerOccupied), newOccupied)
-		currentCoverage := len(combined)
-
-		if currentCoverage >= targetCells {
-			break
-		}
-		if i > 10 && currentCoverage == lastCoverage {
-			break
-		}
-		lastCoverage = currentCoverage
-
-		vine, vineOccupied := p.tryPlaceAnyFillerVine(fmt.Sprintf("vine_%d", fillerID), w, h, combined, rng)
-		if vine.ID == "" {
-			break
-		}
-
-		vines = append(vines, vine)
-		for k, v := range vineOccupied {
-			newOccupied[k] = v
-		}
-		fillerID++
-	}
-
-	return vines, newOccupied, fillerID
-}
-
-// tryPlaceAnyFillerVine places a 2-cell vine without exit path requirement
-func (p *CenterOutPlacer) tryPlaceAnyFillerVine(
-	vineID string,
-	w, h int,
-	occupied map[string]string,
-	rng *rand.Rand,
-) (model.Vine, map[string]string) {
-	// Find all empty cells
-	var emptyCells []model.Point
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			key := fmt.Sprintf("%d,%d", x, y)
-			if _, occ := occupied[key]; !occ {
-				emptyCells = append(emptyCells, model.Point{X: x, Y: y})
-			}
-		}
-	}
-
-	if len(emptyCells) < 2 {
-		return model.Vine{}, nil
-	}
-
-	// Shuffle for randomness
-	rng.Shuffle(len(emptyCells), func(i, j int) {
-		emptyCells[i], emptyCells[j] = emptyCells[j], emptyCells[i]
-	})
-
-	// Try each empty cell as potential head
-	for _, head := range emptyCells {
-		// Find a free neighbor for neck
-		neighbors := p.getAvailableNeighbors(head, w, h, occupied, nil)
-		if len(neighbors) == 0 {
-			continue
-		}
-
-		// Pick first available neighbor
-		neck := neighbors[0]
-
-		// Calculate head direction based on head→neck vector
-		neckDir := common.DirectionFromPoints(head, neck)
-		headDir := common.OppositeDirection(neckDir)
-
-		// Valid placement (no exit path check)
-		headKey := fmt.Sprintf("%d,%d", head.X, head.Y)
-		neckKey := fmt.Sprintf("%d,%d", neck.X, neck.Y)
-
-		vineOccupied := map[string]string{
-			headKey: vineID,
-			neckKey: vineID,
-		}
-
-		return model.Vine{
-			ID:            vineID,
-			HeadDirection: headDir,
-			OrderedPath:   []model.Point{head, neck},
-		}, vineOccupied
-	}
-
-	return model.Vine{}, nil
 }
 
 // edgeCandidate represents an edge cell with its exit direction

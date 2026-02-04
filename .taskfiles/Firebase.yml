@@ -1,0 +1,154 @@
+version: "3"
+
+tasks:
+  login:
+    desc: Log in to Firebase
+    cmds:
+      - firebase login
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
+  init:
+    desc: Initialize Firebase in the project
+    cmds:
+      - firebase init
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
+  emulators:start:
+    desc: Start Firebase emulators
+    cmds:
+      - firebase emulators:start
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
+  emulators:exec:
+    desc: Execute a command with Firebase emulators running (arguments validated via wrapper)
+    vars:
+      CLI_ARGS: ""
+    cmds:
+      - ./scripts/firebase/emulators_exec.sh "{{.CLI_ARGS}}"
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
+  functions:deploy:
+    desc: Deploy Firebase functions
+    cmds:
+      - firebase deploy --only functions
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
+  firestore:rules:deploy:
+    desc: Deploy Firestore security rules
+    cmds:
+      - firebase deploy --only firestore:rules
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
+  storage:rules:deploy:
+    desc: Deploy Cloud Storage security rules
+    cmds:
+      - firebase deploy --only storage:rules
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
+  hosting:deploy:
+    desc: Deploy Firebase Hosting
+    cmds:
+      - firebase deploy --only hosting
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
+  deploy:all:
+    desc: Deploy all Firebase services
+    cmds:
+      - firebase deploy
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
+  # Hosting Specific (using secrets or preview channels)
+  h:deploy:
+    desc: Deploy to Firebase Hosting (uses FIREBASE_CI_TOKEN env var)
+    vars:
+      FIREBASE_CI_TOKEN: ""
+    preconditions:
+      - sh: '[ -n "{{.FIREBASE_CI_TOKEN}}" ]'
+        msg: "FIREBASE_CI_TOKEN is not set. Set via environment or CI secrets."
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+    cmds:
+      - firebase deploy --only hosting --token "{{.FIREBASE_CI_TOKEN}}"
+
+  h:preview:
+    desc: Deploy preview channel
+    cmds:
+      - firebase hosting:channel:deploy "pr-{{.PR_NUMBER}}"
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
+  # FlutterFire Configuration
+  configure:
+    desc: Configure Firebase using FlutterFire CLI for local development
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=android,ios,web,linux,macos,windows --yes
+    preconditions:
+      - sh: command -v flutterfire >/dev/null 2>&1
+        msg: "FlutterFire CLI is not installed."
+
+  configure:android:
+    desc: Configure Firebase for Android only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=android --yes
+    preconditions:
+      - sh: command -v flutterfire >/dev/null 2>&1
+        msg: "FlutterFire CLI is not installed."
+
+  configure:ios:
+    desc: Configure Firebase for iOS only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=ios --yes
+    preconditions:
+      - sh: command -v flutterfire >/dev/null 2>&1
+        msg: "FlutterFire CLI is not installed."
+
+  configure:web:
+    desc: Configure Firebase for Web only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=web --yes
+    preconditions:
+      - sh: command -v flutterfire >/dev/null 2>&1
+        msg: "FlutterFire CLI is not installed."
+
+  configure:linux:
+    desc: Configure Firebase for Linux only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=linux --yes
+    preconditions:
+      - sh: command -v flutterfire >/dev/null 2>&1
+        msg: "FlutterFire CLI is not installed."
+
+  configure:macos:
+    desc: Configure Firebase for macOS only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=macos --yes
+    preconditions:
+      - sh: command -v flutterfire >/dev/null 2>&1
+        msg: "FlutterFire CLI is not installed."
+
+  configure:windows:
+    desc: Configure Firebase for Windows only
+    cmds:
+      - flutterfire configure --project=parable-bloom --platforms=windows --yes
+    preconditions:
+      - sh: command -v flutterfire >/dev/null 2>&1
+        msg: "FlutterFire CLI is not installed."

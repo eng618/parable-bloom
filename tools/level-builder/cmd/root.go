@@ -11,7 +11,6 @@ import (
 
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/batch"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/clean"
-	"github.com/eng618/parable-bloom/tools/level-builder/cmd/generate"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/gen2"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/render"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/repair"
@@ -87,7 +86,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&logFile, "log-file", "l", "", "path to log file (default: stdout)")
 
 	// Register subcommands
-	rootCmd.AddCommand(generate.GetCommand())
 	rootCmd.AddCommand(gen2.GetCommand())
 	rootCmd.AddCommand(batch.GetCommand())
 	rootCmd.AddCommand(validate.GetCommand())

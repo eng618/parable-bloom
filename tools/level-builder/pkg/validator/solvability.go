@@ -1,8 +1,7 @@
 package validator
 
 import (
-	"fmt"
-	"math"
+	"container/heap"
 	"sort"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
@@ -69,23 +68,28 @@ func IsSolvableWithStats(lvl model.Level, maxStates int, useAstar bool, astarWei
 func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 	vines := lvl.Vines
 	vineCount := len(vines)
+	w, h := lvl.GridSize[0], lvl.GridSize[1]
+	gridArea := w * h
 
-	// Build vine cells map
-	vineCells := make([]map[string]bool, vineCount)
+	// Build vine indices map
+	vineIndices := make([][]int, vineCount)
 	for i, v := range vines {
-		m := map[string]bool{}
-		for _, p := range v.OrderedPath {
-			m[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
+		indices := make([]int, len(v.OrderedPath))
+		for j, p := range v.OrderedPath {
+			indices[j] = p.Y*w + p.X
 		}
-		vineCells[i] = m
+		vineIndices[i] = indices
 	}
 
 	fullMask := (1 << uint(vineCount)) - 1
-	// Use a simple slice-backed queue for correctness and clarity.
 	visited := make([]bool, 1<<uint(vineCount))
-	queue := []int{fullMask}
+	queue := make([]int, 0, 1024)
+	queue = append(queue, fullMask)
 	visited[fullMask] = true
 	states := 0
+
+	// Reusable occupancy buffer
+	occupied := make([]bool, gridArea)
 
 	for len(queue) > 0 {
 		if states >= maxStates {
@@ -99,13 +103,23 @@ func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 			return true, states
 		}
 
-		occupiedAll := computeOccupied(mask, vineCount, vineCells)
+		// Update occupancy bitset
+		for i := 0; i < gridArea; i++ {
+			occupied[i] = false
+		}
+		for i := 0; i < vineCount; i++ {
+			if (mask & (1 << uint(i))) != 0 {
+				for _, idx := range vineIndices[i] {
+					occupied[idx] = true
+				}
+			}
+		}
 
 		for i := 0; i < vineCount; i++ {
 			if (mask & (1 << uint(i))) == 0 {
 				continue
 			}
-			if canVineClearExact(lvl, i, occupiedAll, vineCells[i]) {
+			if canVineClearFast(lvl, i, occupied, vineIndices[i]) {
 				next := mask & ^(1 << uint(i))
 				if !visited[next] {
 					visited[next] = true
@@ -118,93 +132,67 @@ func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 	return false, states
 }
 
-func canVineClearExact(lvl model.Level, vineIndex int, occupiedAll map[string]bool, selfCells map[string]bool) bool {
-	vine := lvl.Vines[vineIndex]
-	if len(vine.OrderedPath) == 0 {
-		return false
-	}
+func canVineClearFast(lvl model.Level, vineIndex int, occupiedAll []bool, selfIndices []int) bool {
+	v := lvl.Vines[vineIndex]
+	w, h := lvl.GridSize[0], lvl.GridSize[1]
+	dx, dy := directionDelta(v.HeadDirection)
 
-	// Prepare current positions as slice of points
-	positions := make([]model.Point, len(vine.OrderedPath))
-	copy(positions, vine.OrderedPath)
+	// Current positions (as indices)
+	positions := make([]int, len(selfIndices))
+	copy(positions, selfIndices)
 
-	w := lvl.GridSize[0]
-	h := lvl.GridSize[1]
+	maxDist := w + h + len(positions)
+	for step := 0; step < maxDist; step++ {
+		// Calculate next head position
+		headIdx := positions[0]
+		hx, hy := headIdx%w, headIdx/w
+		nx, ny := hx+dx, hy+dy
 
-	maxCheckDistance := int(math.Min(300, math.Max(10, float64(w+h+len(positions)+10))))
-
-	for step := 0; step < maxCheckDistance; step++ {
-		newPositions := simulateVineMovementFromPositions(positions, vine.HeadDirection)
-
-		if !validateNewPositions(newPositions, occupiedAll, selfCells) {
-			return false
-		}
-
-		// check head exit
-		head := newPositions[0]
-		if head.X < 0 || head.X >= w || head.Y < 0 || head.Y >= h {
+		// Check head exit
+		if nx < 0 || nx >= w || ny < 0 || ny >= h {
 			return true
 		}
 
-		positions = newPositions
-	}
+		nextIdx := ny*w + nx
+		// Check collision with others (ignoring self)
+		if occupiedAll[nextIdx] {
+			collidesWithSelf := false
+			for _, si := range positions {
+				if si == nextIdx {
+					collidesWithSelf = true
+					break
+				}
+			}
+			if !collidesWithSelf {
+				return false
+			}
+		}
 
+		// Shift body
+		for i := len(positions) - 1; i > 0; i-- {
+			positions[i] = positions[i-1]
+		}
+		positions[0] = nextIdx
+	}
 	return false
 }
 
-func validateNewPositions(newPositions []model.Point, occupiedAll map[string]bool, selfCells map[string]bool) bool {
-	seen := map[string]bool{}
-	for _, np := range newPositions {
-		k := fmt.Sprintf("%d,%d", np.X, np.Y)
-
-		// Self-overlap after movement is not allowed.
-		if seen[k] {
-			return false
-		}
-		seen[k] = true
-
-		// Collision with any other vine.
-		if occupiedAll[k] && !selfCells[k] {
-			return false
-		}
-	}
-	return true
-}
-
-func simulateVineMovementFromPositions(positions []model.Point, direction string) []model.Point {
-	if len(positions) == 0 {
-		return positions
-	}
-
-	head := positions[0]
-	dx, dy := 0, 0
-	switch direction {
-	case "right":
-		dx = 1
-	case "left":
-		dx = -1
-	case "up":
-		dy = 1
-	case "down":
-		dy = -1
-	}
-
-	newHead := model.Point{X: head.X + dx, Y: head.Y + dy}
-	newPositions := make([]model.Point, 0, len(positions))
-	newPositions = append(newPositions, newHead)
-	for i := 1; i < len(positions); i++ {
-		newPositions = append(newPositions, positions[i-1])
-	}
-	return newPositions
-}
-
-// Heuristic solver with stats
+// isSolvableHeuristicWithStats uses a best-first search with a simple unblocking heuristic
 func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 	vines := lvl.Vines
 	vineCount := len(vines)
+	w, h := lvl.GridSize[0], lvl.GridSize[1]
+	gridArea := w * h
 
-	// Precompute occupied cell sets
-	vineCells := buildVineCells(lvl)
+	// Precompute vine indices
+	vineIndices := make([][]int, vineCount)
+	for i, v := range vines {
+		indices := make([]int, len(v.OrderedPath))
+		for j, p := range v.OrderedPath {
+			indices[j] = p.Y*w + p.X
+		}
+		vineIndices[i] = indices
+	}
 
 	// Precompute blocking relationships
 	blocking := make([][]bool, vineCount)
@@ -216,41 +204,55 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 			if i == j {
 				continue
 			}
-			if doesVineBlockVine(vines[i], vines[j], lvl.GridSize) {
+			if doesVineBlockVineFast(vines[i], vines[j], lvl.GridSize) {
 				blocking[i][j] = true
 			}
 		}
 	}
 
-	fullMask := (1 << uint(vineCount)) - 1
-	// Use map for visited to avoid exponential allocation
-	visited := make(map[int]bool)
-	queue := make([]int, 0, 1024)
-	queue = append(queue, fullMask)
+	visited := make(map[int64]bool)
+	pq := &priorityQueueMask{}
+	heap.Init(pq)
+
+	fullMask := int64((1 << uint(vineCount)) - 1)
+	if vineCount == 64 {
+		fullMask = -1 // 0xFFFFFFFF...
+	}
+
+	heap.Push(pq, &maskItem{mask: fullMask, priority: 0})
 	visited[fullMask] = true
 	states := 0
+	occupied := make([]bool, gridArea)
 
-	for len(queue) > 0 && states < maxStates {
-		mask := queue[0]
-		queue = queue[1:]
+	for pq.Len() > 0 && states < maxStates {
+		item := heap.Pop(pq).(*maskItem)
+		mask := item.mask
 		states++
 
 		if mask == 0 {
 			return true, states
 		}
 
-		occupied := computeOccupied(mask, vineCount, vineCells)
+		// Update occupancy
+		for idx := 0; idx < gridArea; idx++ {
+			occupied[idx] = false
+		}
+		for i := 0; i < vineCount; i++ {
+			if (mask & (1 << uint(i))) != 0 {
+				for _, idx := range vineIndices[i] {
+					occupied[idx] = true
+				}
+			}
+		}
 
-		movable := determineMovableVines(lvl, mask, occupied)
-
+		movable := determineMovableVinesFast(lvl, mask, occupied, vineIndices)
 		if len(movable) == 0 {
 			continue
 		}
 
-		// Sort movable by number of vines they unblock (descending)
+		// Sort movable by number of vines they unblock
 		sort.Slice(movable, func(a, b int) bool {
-			aCount := 0
-			bCount := 0
+			aCount, bCount := 0, 0
 			for k := 0; k < vineCount; k++ {
 				if (mask & (1 << uint(k))) != 0 {
 					if blocking[movable[a]][k] {
@@ -266,9 +268,11 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 
 		for _, i := range movable {
 			next := mask & ^(1 << uint(i))
-			if !visited[next] && len(queue) < maxStates {
+			if !visited[next] {
 				visited[next] = true
-				queue = append(queue, next)
+				// Priority: fewer vines remaining is better
+				priority := countSetBits64(next)
+				heap.Push(pq, &maskItem{mask: next, priority: priority})
 			}
 		}
 	}
@@ -276,70 +280,76 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 	return false, states
 }
 
-// Helper functions to reduce complexity
-func buildVineCells(lvl model.Level) []map[string]bool {
-	vines := lvl.Vines
-	vineCount := len(vines)
-	vineCells := make([]map[string]bool, vineCount)
-	for i, v := range vines {
-		m := map[string]bool{}
-		for _, p := range v.OrderedPath {
-			m[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
-		}
-		vineCells[i] = m
+func countSetBits64(n int64) int {
+	count := 0
+	for n != 0 {
+		n &= (n - 1)
+		count++
 	}
-	return vineCells
+	return count
 }
 
-func computeOccupied(mask int, vineCount int, vineCells []map[string]bool) map[string]bool {
-	occupied := map[string]bool{}
-	for i := 0; i < vineCount; i++ {
-		if (mask & (1 << uint(i))) == 0 {
-			continue
-		}
-		for k := range vineCells[i] {
-			occupied[k] = true
-		}
-	}
-	return occupied
+type maskItem struct {
+	mask     int64
+	priority int
 }
 
-func determineMovableVines(lvl model.Level, mask int, occupied map[string]bool) []int {
+type priorityQueueMask []*maskItem
+
+func (pq priorityQueueMask) Len() int           { return len(pq) }
+func (pq priorityQueueMask) Less(i, j int) bool { return pq[i].priority < pq[j].priority }
+func (pq priorityQueueMask) Swap(i, j int)      { pq[i], pq[j] = pq[j], pq[i] }
+func (pq *priorityQueueMask) Push(x interface{}) {
+	*pq = append(*pq, x.(*maskItem))
+}
+func (pq *priorityQueueMask) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	*pq = old[0 : n-1]
+	return item
+}
+
+func determineMovableVinesFast(lvl model.Level, mask int64, occupied []bool, vineIndices [][]int) []int {
 	vines := lvl.Vines
-	vineCount := len(vines)
+	w, h := lvl.GridSize[0], lvl.GridSize[1]
 	movable := make([]int, 0, 8)
-	for i := 0; i < vineCount; i++ {
+	for i := 0; i < len(vines); i++ {
 		if (mask & (1 << uint(i))) == 0 {
 			continue
 		}
 		v := vines[i]
 		head := v.OrderedPath[0]
 		dx, dy := directionDelta(v.HeadDirection)
-		nxt := fmt.Sprintf("%d,%d", head.X+dx, head.Y+dy)
-		if head.X+dx < 0 || head.X+dx >= lvl.GridSize[0] || head.Y+dy < 0 || head.Y+dy >= lvl.GridSize[1] {
+		nx, ny := head.X+dx, head.Y+dy
+
+		if nx < 0 || nx >= w || ny < 0 || ny >= h {
 			movable = append(movable, i)
 			continue
 		}
-		if !occupied[nxt] {
+
+		idx := ny*w + nx
+		if !occupied[idx] {
 			movable = append(movable, i)
 		}
 	}
 	return movable
 }
 
-func doesVineBlockVine(blocker, blocked model.Vine, gridSize []int) bool {
+func doesVineBlockVineFast(blocker, blocked model.Vine, gridSize []int) bool {
 	if len(blocked.OrderedPath) == 0 {
 		return false
 	}
+	w, h := gridSize[0], gridSize[1]
 	head := blocked.OrderedPath[0]
 	dx, dy := directionDelta(blocked.HeadDirection)
 	nx, ny := head.X+dx, head.Y+dy
-	if nx < 0 || nx >= gridSize[0] || ny < 0 || ny >= gridSize[1] {
+	if nx < 0 || nx >= w || ny < 0 || ny >= h {
 		return false // can exit, not blocked
 	}
-	nxt := fmt.Sprintf("%d,%d", nx, ny)
+	blockIdx := ny*w + nx
 	for _, p := range blocker.OrderedPath {
-		if fmt.Sprintf("%d,%d", p.X, p.Y) == nxt {
+		if p.Y*w+p.X == blockIdx {
 			return true
 		}
 	}

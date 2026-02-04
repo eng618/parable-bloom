@@ -1,7 +1,9 @@
 package batch
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
@@ -39,6 +41,12 @@ type Config struct {
 	DryRun    bool
 	OutputDir string // Where to write levels (default: assets/levels)
 	BaseSeed  int64  // Base seed for deterministic generation (default: levelID * 31337)
+	// Batch-level options
+	Aggressive  bool
+	DumpDir     string
+	StatsOut    string  // Optional directory to write per-level stats JSON files
+	MinCoverage float64 // Optional override for minimum coverage (0.0-1.0). 0 = no override
+	Strategy    string  // Optional strategy override (direction-first, center-out)
 }
 
 // Result contains results for a single level in a batch.
@@ -144,59 +152,102 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 
 	startTime := time.Now()
 
-	genConfig, err := buildGenerationConfig(levelID, difficulty, config)
-	if err != nil {
-		result.Success = false
-		result.Error = err.Error()
-		return result
-	}
+	var level model.Level
+	var stats gen2.GenerationStats
+	var genCfg gen2.GenerationConfig
 
-	if config.DryRun {
-		result.Success = true
-		result.GenerationMS = 0
-		result.Coverage = 85.0
-		result.BlockingDepth = 2
-		common.Info("DRY RUN: Would generate level %d (%s) at %s", levelID, difficulty, genConfig.OutputFile)
-		return result
-	}
-
-	level, err := generateLevel(genConfig, config.UseLIFO)
-	if err != nil {
-		// If standard generation failed, try LIFO fallback
-		if !config.UseLIFO {
-			common.Warning("  Level %d failed standard generation: %v. Attempting LIFO fallback...", levelID, err)
-			
-			// Retry with LIFO
-			level, err = generateLevel(genConfig, true)
-			if err == nil {
-				common.Info("  ✓ Level %d generated using LIFO fallback (Guaranteed Solvable)", levelID)
-				result.Error = "" // Clear error
-				// Continue to validation below
-			} else {
-				// LIFO also failed (unlikely but possible)
-				result.Success = false
-				result.Error = fmt.Sprintf("Standard and LIFO generation failed: %v", err)
-				return result
-			}
-		} else {
-			// Already using LIFO, so it really failed
+	const maxRetries = 10
+	for retry := 0; retry < maxRetries; retry++ {
+		var err error
+		currentSeed := (int64(levelID) * 31337) + int64(retry*12345)
+		genCfg, err = buildGenerationConfig(levelID, difficulty, config)
+		if err != nil {
 			result.Success = false
 			result.Error = err.Error()
 			return result
 		}
+		genCfg.Seed = currentSeed
+
+		if config.DryRun {
+			result.Success = true
+			result.GenerationMS = 0
+			result.Coverage = 85.0
+			result.BlockingDepth = 2
+			common.Info("DRY RUN: Would generate level %d (%s) at %s", levelID, difficulty, genCfg.OutputFile)
+			return result
+		}
+
+		level, stats, err = generateLevel(genCfg)
+
+		// If generation failed OR validation fails, try LIFO fallback (if not already LIFO)
+		valid := false
+		if err == nil {
+			_, err = validateGeneratedLevel(level)
+			if err == nil {
+				valid = true
+			}
+		}
+
+		if !valid {
+			// If we weren't already using LIFO, try LIFO fallback
+			if genCfg.Strategy != gen2.StrategyCenterOut {
+				common.Warning("  Level %d failed strategy %v or validation: %v. Attempting LIFO fallback (attempt %d)...", levelID, genCfg.Strategy, err, retry+1)
+
+				// Retry with LIFO on same seed
+				fallbackCfg := genCfg
+				fallbackCfg.Strategy = gen2.StrategyCenterOut
+				fallbackCfg.MinCoverage = 1.0 // LIFO always targets 100% coverage
+				level, stats, err = generateLevel(fallbackCfg)
+				if err == nil {
+					// Re-validate LIFO result
+					_, vErr := validateGeneratedLevel(level)
+					if vErr == nil {
+						common.Info("  ✓ Level %d generated using LIFO fallback (Guaranteed Solvable)", levelID)
+						valid = true
+						genCfg = fallbackCfg // use fallback config for final result
+					}
+				}
+			}
+		}
+
+		if valid {
+			coverage, _ := validateGeneratedLevel(level)
+			result.Success = true
+			result.Coverage = coverage
+			result.BlockingDepth = 2
+			result.GenerationMS = time.Since(startTime).Milliseconds()
+			goto success
+		}
+
+		common.Warning("  Level %d: attempt %d failed. Retrying with different seed...", levelID, retry+1)
 	}
 
-	coverage, err := validateGeneratedLevel(level)
-	if err != nil {
-		result.Success = false
-		result.Error = err.Error()
-		return result
-	}
+	result.Success = false
+	result.Error = "failed to generate solvable level after maximum retries"
+	return result
 
-	result.Success = true
-	result.Coverage = coverage
-	result.BlockingDepth = 2 // TODO: Extract from analysis
-	result.GenerationMS = time.Since(startTime).Milliseconds()
+success:
+
+	// Optionally write per-level stats JSON to StatsOut directory
+	if config.StatsOut != "" {
+		_ = os.MkdirAll(config.StatsOut, 0o755)
+		statsObj := map[string]interface{}{
+			"level_id":             levelID,
+			"coverage":             result.Coverage,
+			"generation_ms":        result.GenerationMS,
+			"placement_attempts":   stats.PlacementAttempts,
+			"backtracks_attempted": stats.BacktracksAttempted,
+			"dumps_produced":       stats.DumpsProduced,
+			"max_blocking_depth":   stats.MaxBlockingDepth,
+		}
+		if stats.BlockingDepthSamples > 0 {
+			statsObj["avg_blocking_depth"] = float64(stats.TotalBlockingDepth) / float64(stats.BlockingDepthSamples)
+		}
+		fname := fmt.Sprintf("%s/level_%d_stats.json", config.StatsOut, levelID)
+		b, _ := json.MarshalIndent(statsObj, "", "  ")
+		_ = os.WriteFile(fname, b, 0o644)
+		common.Info("Wrote per-level stats: %s", fname)
+	}
 
 	common.Info("Generated level %d (%s) - Coverage: %.1f%%, Time: %dms",
 		levelID, difficulty, result.Coverage, result.GenerationMS)
@@ -226,19 +277,48 @@ func buildGenerationConfig(levelID int, difficulty string, config Config) (gen2.
 	vineCount := computeVineCount(spec, totalCells, targetCoverage)
 	maxMoves := vineCount * 2
 
-	return gen2.GenerationConfig{
-		LevelID:     levelID,
-		GridWidth:   gridWidth,
-		GridHeight:  gridHeight,
-		VineCount:   vineCount,
-		MaxMoves:    maxMoves,
-		OutputFile:  fmt.Sprintf("%s/level_%d.json", config.OutputDir, levelID),
-		Randomize:   false,
-		Seed:        int64(levelID) * 31337,
-		Overwrite:   config.Overwrite,
-		MinCoverage: targetCoverage,
-		Difficulty:  difficulty,
-	}, nil
+	// Default backtracking settings
+	backtrackWindow := 3
+	maxBackAttempts := 2
+	if config.Aggressive {
+		backtrackWindow = 6
+		maxBackAttempts = 6
+	}
+
+	genCfg := gen2.GenerationConfig{
+		LevelID:              levelID,
+		GridWidth:            gridWidth,
+		GridHeight:           gridHeight,
+		VineCount:            vineCount,
+		MaxMoves:             maxMoves,
+		OutputFile:           fmt.Sprintf("%s/level_%d.json", config.OutputDir, levelID),
+		Randomize:            false,
+		Seed:                 int64(levelID) * 31337,
+		Overwrite:            config.Overwrite,
+		MinCoverage:          targetCoverage,
+		Difficulty:           difficulty,
+		Strategy:             determineStrategy(levelID, difficulty, config),
+		BacktrackWindow:      backtrackWindow,
+		MaxBacktrackAttempts: maxBackAttempts,
+	}
+
+	if genCfg.Strategy == gen2.StrategyCenterOut {
+		genCfg.MinCoverage = 1.0
+	}
+
+	// Apply global MinCoverage override if provided (0 = no override)
+	if config.MinCoverage > 0 {
+		if config.MinCoverage < 0.0 || config.MinCoverage > 1.0 {
+			return gen2.GenerationConfig{}, fmt.Errorf("invalid MinCoverage override: %v", config.MinCoverage)
+		}
+		genCfg.MinCoverage = config.MinCoverage
+	}
+
+	if config.DumpDir != "" {
+		genCfg.DumpDir = config.DumpDir
+	}
+
+	return genCfg, nil
 }
 
 func computeVineCount(spec generator.DifficultySpec, totalCells int, targetCoverage float64) int {
@@ -267,22 +347,54 @@ func computeVineCount(spec generator.DifficultySpec, totalCells int, targetCover
 	return vineCount
 }
 
-func generateLevel(genConfig gen2.GenerationConfig, useLIFO bool) (model.Level, error) {
-	if useLIFO {
-		lvl, _, err := gen2.GenerateLevelLIFO(genConfig)
-		return lvl, err
+func generateLevel(genConfig gen2.GenerationConfig) (model.Level, gen2.GenerationStats, error) {
+	return gen2.GenerateLevel(genConfig)
+}
+
+func determineStrategy(levelID int, difficulty string, config Config) string {
+	// If explicit strategy override provided, use it
+	if config.Strategy != "" {
+		return config.Strategy
 	}
-	lvl, _, err := gen2.GenerateLevel(genConfig)
-	return lvl, err
+
+	// Always use LIFO for Transcendent
+	if difficulty == "Transcendent" {
+		return gen2.StrategyCenterOut
+	}
+
+	// For other levels, introduce variety
+	// Use levelID + moduleID to make it deterministic but varied
+	seed := int64(levelID + config.ModuleID)
+	r := (seed % 10) // 0-9
+
+	switch difficulty {
+	case "Seedling", "Sprout":
+		// 80% Direction-First, 20% Center-Out
+		if r < 8 {
+			return gen2.StrategyDirectionFirst
+		}
+		return gen2.StrategyCenterOut
+	case "Nurturing", "Flourishing":
+		// 60% Direction-First, 40% Center-Out
+		if r < 6 {
+			return gen2.StrategyDirectionFirst
+		}
+		return gen2.StrategyCenterOut
+	default:
+		return gen2.StrategyDirectionFirst
+	}
 }
 
 func validateGeneratedLevel(level model.Level) (float64, error) {
 	structErrors := validator.ValidateStructural(level)
 	if len(structErrors) > 0 {
+		for _, e := range structErrors {
+			common.Warning("  [STRUCTURAL ERROR] Level %d: %v", level.ID, e)
+		}
 		return 0, fmt.Errorf("structural validation failed: %d errors", len(structErrors))
 	}
 
-	solvable, _, err := validator.IsSolvable(level, 100000)
+	solvable, _, err := validator.IsSolvable(level, 1000000)
 	if err != nil {
 		return 0, fmt.Errorf("solvability check error: %v", err)
 	}

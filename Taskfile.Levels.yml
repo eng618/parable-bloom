@@ -1,0 +1,68 @@
+version: "3"
+
+tasks:
+  generate:all:
+    desc: Generate all 5 modules using the robust v2 batch generator (overwrites existing)
+    dir: .
+    cmds:
+      - ./generate_all.sh
+
+  stats:
+    desc: Show stats for generated levels
+    dir: tools/level-builder
+    cmds:
+      - go run . validate --check-solvable=false
+
+  validate:
+    desc: Validate existing levels and modules using the Go tool
+    dir: tools/level-builder
+    cmds:
+      - go run . validate
+
+  validate-solvable:
+    desc: Validate existing levels and run solvability checks (may be slow)
+    dir: tools/level-builder
+    vars:
+      MAX_STATES: "2000000"
+      USE_ASTAR: "true"
+      ASTAR_WEIGHT: "10"
+    cmds:
+      - go run . validate --check-solvable --max-states "{{.MAX_STATES}}" --use-astar="{{.USE_ASTAR}}" --astar-weight="{{.ASTAR_WEIGHT}}"
+
+  tutorials:validate:
+    desc: Validate tutorial lessons using the Go tool
+    dir: tools/level-builder
+    cmds:
+      - go run . validate-tutorials
+
+  tutorials:validate-solvable:
+    desc: Validate tutorial lessons and run solvability checks (may be slow)
+    dir: tools/level-builder
+    vars:
+      MAX_STATES: "2000000"
+      USE_ASTAR: "true"
+      ASTAR_WEIGHT: "10"
+    cmds:
+      - go run . validate-tutorials --check-solvable --max-states "{{.MAX_STATES}}" --use-astar="{{.USE_ASTAR}}" --astar-weight="{{.ASTAR_WEIGHT}}"
+
+  validate-experiments:
+    desc: Run solvability experiments comparing BFS and A* (outputs bfs/astar stats)
+    dir: tools/level-builder
+    vars:
+      MAX_STATES: "200000"
+      ASTAR_WEIGHT: "10"
+    cmds:
+      - go run . validate --check-solvable --max-states "{{.MAX_STATES}}" --use-astar=false
+      - mv validation_stats.json validation_stats_bfs.json || true
+      - go run . validate --check-solvable --max-states "{{.MAX_STATES}}" --use-astar=true --astar-weight "{{.ASTAR_WEIGHT}}"
+      - mv validation_stats.json validation_stats_astar.json || true
+      - echo "Created validation_stats_bfs.json and validation_stats_astar.json"
+
+  astar-weight-sweep:
+    desc: Sweep A* weight parameter and collect stats (weights comma-separated, default 5,10,20)
+    dir: tools/level-builder
+    vars:
+      MAX_STATES: "200000"
+    cmds:
+      - ./scripts/levels/astar_weight_sweep.sh "${WEIGHTS:-5,10,20}" "{{.MAX_STATES}}"
+      - echo "Created validation_stats_astar_w*.json"

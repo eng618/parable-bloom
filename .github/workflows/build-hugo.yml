@@ -23,9 +23,11 @@ jobs:
           hugo-version: 'latest'
           extended: true
 
+      - name: Set up Task
+        uses: arduino/setup-task@v2
+
       - name: Build Hugo site
-        working-directory: tools/hugo-site
-        run: hugo --destination ../../docs --minify
+        run: task hugo:build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

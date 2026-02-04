@@ -31,10 +31,12 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Set up Task
+        uses: arduino/setup-task@v2
+
       - name: Run solvability validation
-        working-directory: tools/level-builder
         run: |
-          go run . validate --check-solvable --max-states=100000 --use-astar=true --astar-weight=10
+          task levels:validate-solvable
 
       - name: Upload validation logs on failure
         if: failure()

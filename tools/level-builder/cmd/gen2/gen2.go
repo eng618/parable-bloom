@@ -17,7 +17,7 @@ Usage examples:
 
 	level-builder gen2 --level-id 1000 --difficulty Transcendent
 	level-builder gen2 --level-id 1001 --difficulty Flourishing --randomize
-	level-builder gen2 --level-id 1002 --difficulty Seedling --lifo
+	level-builder gen2 --level-id 1002 --difficulty Seedling --strategy center-out
 	level-builder gen2 --level-id 1003 --difficulty Nurturing --seed 12345
 
 The command validates input parameters, configures generation based on difficulty specs,
@@ -26,7 +26,10 @@ executes the generation algorithm, reports results, and optionally visualizes th
 package gen2
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -44,7 +47,15 @@ var (
 	seed       int64
 	overwrite  bool
 	difficulty string
-	useLIFO    bool
+	strategy   string
+	useLIFO    bool // Deprecated: use --strategy center-out
+
+	// Backtracking flags (optional)
+	backtrackWindow      int
+	maxBacktrackAttempts int
+	dumpDir              string // Aggressive mode for batch runs (larger window and attempts)
+	aggressive           bool
+	statsOut             string // Optional JSON/CSV output path for generation stats
 )
 
 // gen2Cmd represents the gen2 command
@@ -63,12 +74,12 @@ Available difficulties:
 
 Generation Modes:
   - Default: Direction-first placement with A* solvability checks
-  - LIFO (--lifo): Center-out placement with LIFO guarantee (no solver needed, 100% coverage)
+  - Center-Out (--strategy center-out): Center-out placement with LIFO guarantee (100% coverage)
 
 Examples:
   level-builder gen2 --level-id 1000 --difficulty Transcendent
   level-builder gen2 --level-id 1001 --difficulty Flourishing --randomize
-  level-builder gen2 --level-id 1002 --difficulty Seedling --lifo  # 100% coverage mode
+  level-builder gen2 --level-id 1002 --difficulty Seedling --strategy center-out
   level-builder gen2 --level-id 1003 --difficulty Nurturing --seed 12345`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		common.Info("Starting gen2 level generation...")
@@ -99,7 +110,7 @@ Examples:
 
 		// Target coverage from difficulty spec, or 100% for LIFO mode
 		var targetCoverage float64
-		if useLIFO {
+		if strategy == gen2.StrategyCenterOut || useLIFO {
 			targetCoverage = 1.0 // LIFO mode targets 100% coverage
 			common.Verbose("LIFO mode: targeting 100%% coverage with center-out placement")
 		} else {
@@ -140,18 +151,42 @@ Examples:
 		}
 
 		// Create generation config
+		// Apply conservative defaults unless aggressive mode requested
+		if backtrackWindow == 0 {
+			if aggressive {
+				backtrackWindow = 6
+			} else {
+				backtrackWindow = 3
+			}
+		}
+		if maxBacktrackAttempts == 0 {
+			if aggressive {
+				maxBacktrackAttempts = 6
+			} else {
+				maxBacktrackAttempts = 2
+			}
+		}
+
 		config := gen2.GenerationConfig{
-			LevelID:     levelID,
-			GridWidth:   gridWidth,
-			GridHeight:  gridHeight,
-			VineCount:   vineCount,
-			MaxMoves:    maxMoves,
-			OutputFile:  outputFile,
-			Randomize:   randomize,
-			Seed:        seed,
-			Overwrite:   overwrite,
-			MinCoverage: targetCoverage,
-			Difficulty:  difficulty,
+			LevelID:              levelID,
+			GridWidth:            gridWidth,
+			GridHeight:           gridHeight,
+			VineCount:            vineCount,
+			MaxMoves:             maxMoves,
+			OutputFile:           outputFile,
+			Randomize:            randomize,
+			Seed:                 seed,
+			Overwrite:            overwrite,
+			MinCoverage:          targetCoverage,
+			Difficulty:           difficulty,
+			Strategy:             strategy,
+			BacktrackWindow:      backtrackWindow,
+			MaxBacktrackAttempts: maxBacktrackAttempts,
+			DumpDir:              dumpDir,
+		}
+
+		if strategy == "" && useLIFO {
+			config.Strategy = gen2.StrategyCenterOut
 		}
 
 		// Start performance monitoring
@@ -162,7 +197,7 @@ Examples:
 		var stats gen2.GenerationStats
 		var err error
 
-		if useLIFO {
+		if config.Strategy == gen2.StrategyCenterOut {
 			common.Info("Using LIFO generation (center-out placement with guaranteed solvability)")
 			level, stats, err = gen2.GenerateLevelLIFO(config)
 		} else {
@@ -182,7 +217,7 @@ Examples:
 		common.Info("  Generation time: %v", generationTime)
 		common.Info("  Placement attempts: %d", stats.PlacementAttempts)
 		if !useLIFO {
-			common.Info("  Solvability checks: %d", stats.SolvabilityChecks)
+			common.Info("  Solvability checks: solver=%s states=%d gave_up=%v", stats.SolvabilityChecks.Solver, stats.SolvabilityChecks.StatesExplored, stats.SolvabilityChecks.GaveUp)
 		}
 		common.Info("  Max blocking depth: %d", stats.MaxBlockingDepth)
 		common.Info("  Grid coverage: %.1f%%", stats.GridCoverage*100)
@@ -204,6 +239,31 @@ Examples:
 		// Render the level directly
 		common.RenderLevelToWriter(cmd.OutOrStdout(), &commonLevel, "unicode", false)
 
+		// Optionally dump stats to file
+		if statsOut != "" {
+			outDir := filepath.Dir(statsOut)
+			if outDir != "" {
+				_ = os.MkdirAll(outDir, 0755)
+			}
+			statsObj := map[string]interface{}{
+				"level_id":             levelID,
+				"generation_time_sec":  generationTime.Seconds(),
+				"placement_attempts":   stats.PlacementAttempts,
+				"backtracks_attempted": stats.BacktracksAttempted,
+				"dumps_produced":       stats.DumpsProduced,
+				"max_blocking_depth":   stats.MaxBlockingDepth,
+				"grid_coverage":        stats.GridCoverage,
+				"solvability_solver":   stats.SolvabilityChecks.Solver,
+				"solvability_states":   stats.SolvabilityChecks.StatesExplored,
+			}
+			if stats.BlockingDepthSamples > 0 {
+				statsObj["avg_blocking_depth"] = float64(stats.TotalBlockingDepth) / float64(stats.BlockingDepthSamples)
+			}
+			b, _ := json.MarshalIndent(statsObj, "", "  ")
+			_ = os.WriteFile(statsOut, b, 0644)
+			common.Info("Wrote generation stats: %s", statsOut)
+		}
+
 		return nil
 	},
 }
@@ -215,11 +275,19 @@ func init() {
 	gen2Cmd.Flags().BoolVar(&randomize, "randomize", false, "use time-based random seed")
 	gen2Cmd.Flags().Int64Var(&seed, "seed", 0, "specific seed for reproducible generation")
 	gen2Cmd.Flags().BoolVar(&overwrite, "overwrite", false, "overwrite existing files")
-	gen2Cmd.Flags().BoolVar(&useLIFO, "lifo", false, "use LIFO mode (center-out placement, 100%% coverage, no solver)")
+	gen2Cmd.Flags().StringVar(&strategy, "strategy", "", "placement strategy (direction-first, center-out)")
+	gen2Cmd.Flags().BoolVar(&useLIFO, "lifo", false, "DEPRECATED: use --strategy center-out")
+
+	// Backtracking CLI flags
+	gen2Cmd.Flags().IntVar(&backtrackWindow, "backtrack-window", 0, "local backtrack window (how many prior vines to remove on failure). Default: 3")
+	gen2Cmd.Flags().IntVar(&maxBacktrackAttempts, "max-backtrack-attempts", 0, "max local backtrack retries to try before giving up. Default: 2")
+	gen2Cmd.Flags().StringVar(&dumpDir, "dump-dir", "", "directory to write failing generation dumps (default: tools/level-builder/failing_dumps)")
+	gen2Cmd.Flags().BoolVar(&aggressive, "aggressive", false, "enable aggressive backtracking defaults for batch runs (window=6 attempts=6)")
+	gen2Cmd.Flags().StringVar(&statsOut, "stats-out", "", "optional path to write generation stats as JSON")
 
 	// Mark required flags
-	gen2Cmd.MarkFlagRequired("level-id")
-	gen2Cmd.MarkFlagRequired("difficulty")
+	_ = gen2Cmd.MarkFlagRequired("level-id")
+	_ = gen2Cmd.MarkFlagRequired("difficulty")
 }
 
 // GetCommand returns the gen2 command for registration with root

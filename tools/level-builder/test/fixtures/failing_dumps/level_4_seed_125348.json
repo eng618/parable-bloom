@@ -1,0 +1,13 @@
+{
+  "attempt": 0,
+  "coverage": 0.9428571428571428,
+  "grid": [
+    7,
+    10
+  ],
+  "level_id": 4,
+  "message": "high-coverage LIFO not solvable",
+  "occupied": {},
+  "seed": 125348,
+  "vines": []
+}

@@ -200,12 +200,13 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
 
 All levels must pass the strict validator in `tools/level-builder`.
 
-1. **Coverage**: Difficulty-based coverage targets (see Section 5.1) - not 100% occupancy.
-2. **Solvability**: The level must be solvable within `max_moves`.
+1. **Coverage**: Difficulty-based coverage targets (see Section 5.1). The validator applies a **40.1% tolerance** (OccupancyTolerance) to account for adaptive generator relaxation and legacy sparse levels.
+2. **Solvability**: The level must be solvable within `max_moves`. The search budget is configurable, defaulting to **2,000,000 states** for robust verification of complex puzzles.
 3. **Connectivity**: All vine segments must be 4-connected (Manhattan distance = 1). `head_direction` must match head-to-neck vector.
 4. **No Overlaps**: No two vine segments may share a coordinate.
 5. **Minimum Length**: All vines must have at least 2 cells.
-6. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
+6. **No Coverage Gaps**: While 100% occupancy is not required, any cells not occupied by vines must be explicitly masked out. The validator issues a **warning** for uncovered, unmasked cells.
+7. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
 
 ## 5. Level Generation (gen2)
 
@@ -276,6 +277,7 @@ The Go-based toolchain located in `tools/level-builder` handles all operations.
   ```bash
   go run . validate --check-solvable
   ```
+  *Outputs results to `logs/validation_stats.json`.*
 
 - **render**: Visualize levels in terminal
 

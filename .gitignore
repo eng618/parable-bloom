@@ -26,6 +26,10 @@ migrate_working_dir/
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
 
+# Code coverage reports
+tools/level-builder/coverage.out
+/coverage/
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
@@ -34,7 +38,6 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-/coverage/
 
 # Symbolication related
 app.*.symbols
@@ -81,14 +84,8 @@ private_keys/
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
 .codacy/cli-config.yaml
-.codacy/tools-configs/analysis_options.yaml
-.codacy/tools-configs/eslint.config.mjs
-.codacy/tools-configs/lizard.yaml
-.codacy/tools-configs/pylint.rc
-.codacy/tools-configs/revive.toml
-.codacy/tools-configs/ruleset.xml
-.codacy/tools-configs/semgrep.yaml
-.codacy/tools-configs/trivy.yaml
+.codacy/tools-configs/
+.codacy/logs/
 results.sarif
 
 # Example level images and videos
@@ -96,10 +93,20 @@ documentation/example-levels/*
 assets/levels_backup/*
 
 # Build artifacts for level-builder tool
+/level-builder
 tools/level-builder/level-builder
 tools/level-builder/validation_stats.json
 tools/level-builder/validation_stats*
 tools/level-builder/validation.log
 
+# Level dumps from failing level generations
+tools/level-builder/assets/
+
 # Hugo generated site
 docs/
+
+# Level dumps from failing level generations
+logs/
+
+# Taskfile checksums
+.task/

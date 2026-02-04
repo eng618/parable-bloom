@@ -593,12 +593,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
    ```bash
    # Semantic version bumps (each creates a unique tag vX.Y.Z+BUILD)
-   task version:bump:patch    # 1.0.0+1 → 1.0.1+2
-   task version:bump:minor    # 1.0.0+1 → 1.1.0+2
-   task version:bump:major    # 1.0.0+1 → 2.0.0+2
+   task release:bump:patch    # 1.0.0+1 → 1.0.1+2
+   task release:bump:minor    # 1.0.0+1 → 1.1.0+2
+   task release:bump:major    # 1.0.0+1 → 2.0.0+2
    
    # Build number only bump (also creates tag)
-   task version:bump:build    # 1.0.0+1 → 1.0.0+2
+   task release:bump:build    # 1.0.0+1 → 1.0.0+2
    ```
 
    This auto-generates changelog, commits changes, and creates a git tag.
@@ -631,7 +631,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sets up Flutter (with cache), Java, Gradle cache
 - Decodes and configures Android keystore + google-services.json
 - Calculates unique build version: `BUILD_NUMBER = GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT`
-- Runs `task build:android BUILD_NAME=... BUILD_NUMBER=...`
+- Runs `task release:android BUILD_NAME=... BUILD_NUMBER=...`
 - Uploads signed `.aab` to Google Play Console internal testing track via Fastlane (draft release)
 - Uploads `.aab` artifact to Actions for reference
 
@@ -639,7 +639,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Downloads firebase_options.dart
 - Sets up Flutter with caching
-- Runs `task build:web`
+- Runs `task release:web`
 - Packages and uploads web build artifact
 
 #### Job: build-linux (ubuntu-latest)
@@ -647,14 +647,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Installs GTK development libraries
 - Downloads firebase_options.dart
 - Sets up Flutter with caching
-- Runs `task build:linux`
+- Runs `task release:linux`
 - Packages and uploads Linux build artifact
 
 #### Job: build-windows (windows-latest)
 
 - Downloads firebase_options.dart
 - Sets up Flutter with caching
-- Runs `task build:windows`
+- Runs `task release:windows`
 - Packages and uploads Windows build artifact
 
 #### Job: build-ios (macos-latest)

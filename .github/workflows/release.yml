@@ -132,7 +132,7 @@ jobs:
           echo "$PARABLE_BLOOM_GOOGLE_SERVICES_JSON" | base64 -d > android/app/google-services.json
 
       - name: Install dependencies
-        run: task get
+        run: task flutter:get
 
       - name: Set Android build version
         if: matrix.platform == 'android'
@@ -144,19 +144,19 @@ jobs:
 
       - name: Build web
         if: matrix.platform == 'web'
-        run: task build:web
+        run: task release:web
 
       - name: Build Linux
         if: matrix.platform == 'linux'
-        run: task build:linux
+        run: task release:linux
 
       - name: Build Windows
         if: matrix.platform == 'windows'
-        run: task build:windows
+        run: task release:windows
 
       - name: Build Android App Bundle
         if: matrix.platform == 'android'
-        run: task build:android BUILD_NAME="$BUILD_NAME" BUILD_NUMBER="$BUILD_NUMBER"
+        run: task release:android BUILD_NAME="$BUILD_NAME" BUILD_NUMBER="$BUILD_NUMBER"
 
       - name: Package web build
         if: matrix.platform == 'web'
@@ -282,6 +282,9 @@ jobs:
           key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.lock') }}
           restore-keys: ${{ runner.os }}-pub-
 
+      - name: Set up Task
+        uses: arduino/setup-task@v2
+
       - name: Cache CocoaPods
         uses: actions/cache@v4
         with:
@@ -332,14 +335,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          flutter pub get
+          task flutter:get
           if [ "${{ matrix.platform }}" == "ios" ]; then
             cd ios && pod install
           fi
 
       - name: Build macOS
         if: matrix.platform == 'macos'
-        run: flutter build macos --release
+        run: task release:macos
 
       - name: Setup Ruby for Fastlane
         if: matrix.platform == 'ios'
@@ -358,8 +361,7 @@ jobs:
       - name: Deploy to TestFlight
         if: matrix.platform == 'ios'
         run: |
-          cd ios
-          fastlane beta
+          task fastlane:ios:beta
 
       - name: Package macOS build
         if: matrix.platform == 'macos'
@@ -387,7 +389,7 @@ jobs:
           rm -f /tmp/distribution-cert.p12
           rm -f /tmp/profile.mobileprovision
           rm -rf ~/private_keys
-          cd ios && fastlane cleanup
+          task fastlane:ios:cleanup
 
 
   release:

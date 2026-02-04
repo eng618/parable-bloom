@@ -30,7 +30,7 @@ type VinePlacementStats struct {
 }
 
 // PlaceVines places vines using direction-first strategy with extension passes
-func (p *DirectionFirstPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand) ([]model.Vine, map[string]string, error) {
+func (p *DirectionFirstPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, stats *GenerationStats) ([]model.Vine, map[string]string, error) {
 	w, h := config.GridWidth, config.GridHeight
 	totalCells := w * h
 
@@ -43,8 +43,9 @@ func (p *DirectionFirstPlacer) PlaceVines(config GenerationConfig, rng *rand.Ran
 	common.Verbose("Placing %d vines with direction-first strategy", config.VineCount)
 
 	// Phase 1: Place initial vines using direction-first growth
-	for i, targetLen := range lengths {
-		vineID := fmt.Sprintf("vine_%d", i+1)
+	for _, targetLen := range lengths {
+		// Use dynamic ID based on current placed vines to avoid duplicates
+		vineID := fmt.Sprintf("vine_%d", len(vines)+1)
 
 		vine, newOccupied, err := p.growDirectionFirstVine(
 			vineID, targetLen, w, h, occupied, rng,
@@ -174,8 +175,23 @@ func (p *DirectionFirstPlacer) growDirectionFirstVine(
 		for len(path) < targetLen {
 			current := path[len(path)-1]
 
-			// Get available neighbors, preferring the grow direction
-			next := p.chooseNextCell(current, growDir, path, w, h, occupied, localOccupied, rng)
+			var next *model.Point
+			if len(path) == 1 {
+				// CRITICAL: The first growth step (neck) MUST be in the grow direction
+				// to match the chosen headDirection.
+				dx, dy := common.DeltaForDirection(growDir)
+				cand := model.Point{X: current.X + dx, Y: current.Y + dy}
+				if cand.X >= 0 && cand.X < w && cand.Y >= 0 && cand.Y < h {
+					key := fmt.Sprintf("%d,%d", cand.X, cand.Y)
+					if _, globallyOcc := occupied[key]; !globallyOcc {
+						next = &cand
+					}
+				}
+			} else {
+				// Subsequent segments can turn
+				next = p.chooseNextCell(current, growDir, path, w, h, occupied, localOccupied, rng)
+			}
+
 			if next == nil {
 				break // Can't grow further
 			}
@@ -282,13 +298,13 @@ func (p *DirectionFirstPlacer) scoreNeighbor(
 
 	// Prefer the growth direction (opposite to head)
 	if dir == preferredDir {
-		score += 2.0
+		score += 1.5 // Balanced preference for forward growth
 	}
 
-	// Allow turns with moderate preference (for winding paths)
+	// Balanced turn preference for winding paths
 	for _, perpDir := range common.PerpendicularDirections(preferredDir) {
 		if dir == perpDir {
-			score += 1.0
+			score += 1.5 // Balanced (creates winding without trapping)
 			break
 		}
 	}
@@ -442,7 +458,16 @@ func (p *DirectionFirstPlacer) createFillerVines(
 	targetCells := int(float64(w*h) * targetCoverage)
 	fillerVines := []model.Vine{}
 	fillerOccupied := make(map[string]string)
-	fillerID := len(existingVines) + 1
+	// Compute next filler ID by scanning existing vine IDs to avoid collisions
+	fillerID := 1
+	for _, ev := range existingVines {
+		var idx int
+		if n, err := fmt.Sscanf(ev.ID, "vine_%d", &idx); n == 1 && err == nil {
+			if idx >= fillerID {
+				fillerID = idx + 1
+			}
+		}
+	}
 
 	for len(occupied)+len(fillerOccupied) < targetCells {
 		seed := p.findFillerSeed(w, h, occupied, fillerOccupied, rng)
