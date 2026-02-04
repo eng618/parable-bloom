@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flame/game.dart';
 
+import '../../../../core/app_theme.dart';
 import '../../../../providers/game_providers.dart';
 import '../../../../providers/tutorial_providers.dart';
 import '../../../game/presentation/widgets/garden_game.dart';
@@ -43,6 +44,30 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final tutorialProgress = ref.watch(tutorialProgressProvider);
     final currentLesson = tutorialProgress.currentLesson;
+
+    // Update game theme colors when theme changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_game != null) {
+        final extension = Theme.of(context).extension<AppThemeExtension>()!;
+        final gameBackground = AppTheme.getGameBackground(
+          Theme.of(context).brightness,
+        );
+        final gameSurface = AppTheme.getGameSurface(
+          Theme.of(context).brightness,
+        );
+        final gridBackground = AppTheme.getGridBackground(
+          Theme.of(context).brightness,
+        );
+
+        _game!.updateThemeColors(
+          gameBackground,
+          gameSurface,
+          gridBackground,
+          tapEffectColor: extension.tapEffect,
+          vineAttemptedColor: extension.vineAttempted,
+        );
+      }
+    });
 
     // Listen for level completion
     ref.listen<bool>(levelCompleteProvider, (previous, next) {
