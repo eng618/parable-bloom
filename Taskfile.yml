@@ -71,6 +71,7 @@ tasks:
     desc: Shortcut for flutter:upgrade
     cmds:
       - task: flutter:upgrade
+      - task: lb:upgrade
 
   build:all:
     desc: Build all project components (Flutter web, Level Builder, and Hugo site)
