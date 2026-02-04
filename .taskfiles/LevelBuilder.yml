@@ -84,6 +84,18 @@ tasks:
     cmds:
       - golangci-lint run --fix
 
+  format:
+    desc: Show diff of level-builder Go module code formatting
+    dir: tools/level-builder
+    cmds:
+      - golangci-lint fmt --diff-colored
+
+  format:fix:
+    desc: Format level-builder Go module code
+    dir: tools/level-builder
+    cmds:
+      - golangci-lint fmt
+
   build:
     desc: Build the level-builder Go module
     dir: tools/level-builder

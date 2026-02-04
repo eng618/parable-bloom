@@ -177,7 +177,6 @@ func canVineClearFast(lvl model.Level, vineIndex int, occupiedAll []bool, selfIn
 	return false
 }
 
-
 // isSolvableHeuristicWithStats uses a best-first search with a simple unblocking heuristic
 func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 	vines := lvl.Vines
@@ -310,7 +309,6 @@ func (pq *priorityQueueMask) Pop() interface{} {
 	*pq = old[0 : n-1]
 	return item
 }
-
 
 func determineMovableVinesFast(lvl model.Level, mask int64, occupied []bool, vineIndices [][]int) []int {
 	vines := lvl.Vines

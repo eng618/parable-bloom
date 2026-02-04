@@ -239,7 +239,6 @@ func (p *CircuitBoardPlacer) chooseCircuitSeed(w, h int, occupied map[string]str
 	panic("no empty cells with neighbors available") // Should not happen
 }
 
-
 // getAvailableNeighbors returns unoccupied neighboring cells
 func (p *CircuitBoardPlacer) getAvailableNeighbors(pos model.Point, w, h int, globalOccupied, localOccupied map[string]string) []model.Point {
 	deltas := []model.Point{

@@ -507,7 +507,6 @@ func (p *CenterOutPlacer) fillWithLIFOGuarantee(
 	return vines, fillerOccupied, fillerID
 }
 
-
 // edgeCandidate represents an edge cell with its exit direction
 type edgeCandidate struct {
 	pt  model.Point

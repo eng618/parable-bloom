@@ -110,7 +110,7 @@ func heuristicPriorityFast(mask int64, lvl model.Level, vineIndices [][]int, wei
 
 		nextIdx := ny*w + nx
 		for j := 0; j < len(lvl.Vines); j++ {
-			if (mask & (1 << uint(j))) == 0 || i == j {
+			if (mask&(1<<uint(j))) == 0 || i == j {
 				continue
 			}
 			for _, idx := range vineIndices[j] {
