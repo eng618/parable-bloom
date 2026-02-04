@@ -69,11 +69,17 @@ jobs:
         run: |
           go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
-      - name: Run Analysis
-        run: task analyze:all
+      - name: Lint Flutter
+        if: needs.changes.outputs.flutter == 'true'
+        run: |
+          task flutter:analyze
+          task flutter:format:check
 
-      - name: Check Formatting
-        run: task format:check:all
+      - name: Lint Level Builder (Go)
+        if: needs.changes.outputs.level-builder == 'true'
+        run: |
+          task lb:lint
+          task lb:format:check
 
   test:
     needs: [changes, lint]
@@ -101,8 +107,13 @@ jobs:
       - name: Set up Task
         uses: arduino/setup-task@v2
 
-      - name: Run Tests
-        run: task test:all
+      - name: Run Flutter Tests
+        if: needs.changes.outputs.flutter == 'true'
+        run: task flutter:test
+
+      - name: Run Level Builder Tests (Go)
+        if: needs.changes.outputs.level-builder == 'true'
+        run: task lb:test
 
       - name: Run Codacy Coverage Reporter
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
@@ -161,8 +172,17 @@ jobs:
             flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes --token="$FIREBASE_TOKEN"
           fi
 
-      - name: Build All
-        run: task build:all
+      - name: Build Flutter Web
+        if: needs.changes.outputs.flutter == 'true'
+        run: task flutter:build:web
+
+      - name: Build Level Builder (Go)
+        if: needs.changes.outputs.level-builder == 'true'
+        run: task lb:build
+
+      - name: Build Hugo Site
+        if: needs.changes.outputs.hugo == 'true'
+        run: task hugo:build
 
   level-data-validate:
     name: Level data validation (Task)
