@@ -53,10 +53,12 @@ jobs:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
         run: |
           if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "::error::FIREBASE_CI_TOKEN is empty! Please check GitHub Secrets for this repository."
-            exit 1
+            echo "FIREBASE_CI_TOKEN is empty! Using dummy firebase options for build."
+            echo "DEPLOY_SKIPPED=true" >> $GITHUB_ENV
+            dart run scripts/generate_dummy_firebase_options.dart
+          else
+            flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes --token="$FIREBASE_TOKEN"
           fi
-          flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes --token="$FIREBASE_TOKEN"
 
       - name: Determine environment
         id: env
@@ -72,14 +74,14 @@ jobs:
 
       - name: Deploy to Hosting
         run: firebase deploy --only hosting --token ${{ secrets.FIREBASE_CI_TOKEN }}
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main'
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && env.DEPLOY_SKIPPED != 'true'
 
       - name: Deploy Preview (develop branch)
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop'
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop' && env.DEPLOY_SKIPPED != 'true'
         run: firebase hosting:channel:deploy preview --token ${{ secrets.FIREBASE_CI_TOKEN }}
 
       - name: Deploy Preview (PR only)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && env.DEPLOY_SKIPPED != 'true'
         id: deploy-preview
         run: |
           CHANNEL_NAME="pr-${{ github.event.pull_request.number }}"

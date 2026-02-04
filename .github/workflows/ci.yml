@@ -63,10 +63,11 @@ jobs:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
         run: |
           if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "::error::FIREBASE_CI_TOKEN is empty! Please check GitHub Secrets for this repository."
-            exit 1
+            echo "FIREBASE_CI_TOKEN is empty! Using dummy firebase options for build."
+            dart run scripts/generate_dummy_firebase_options.dart
+          else
+            flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes --token="$FIREBASE_TOKEN"
           fi
-          flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes --token="$FIREBASE_TOKEN"
 
       - name: Run task validate
         run: task validate
