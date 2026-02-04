@@ -3,15 +3,24 @@ version: "3"
 tasks:
   install:
     desc: Install Hugo extended edition via Go
+    status:
+      - command -v hugo >/dev/null 2>&1
     cmds:
       - CGO_ENABLED=1 go install -tags extended github.com/gohugoio/hugo@latest
     preconditions:
       - sh: command -v go >/dev/null 2>&1
         msg: "Go is not installed."
 
+  get:
+    desc: Set up Hugo environment (install tool and initialize themes)
+    deps: [install]
+    cmds:
+      - git submodule update --init --recursive
+
   serve:
     desc: Start Hugo development server
     dir: tools/hugo-site
+    deps: [build]
     cmds:
       - hugo server -D
     preconditions:

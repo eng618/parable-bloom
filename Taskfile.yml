@@ -24,6 +24,7 @@ tasks:
     cmds:
       - task: flutter:get
       - task: lb:get
+      - task: hugo:get
       - task: _setup:ios:pod-install
       - task: _setup:macos:pod-install
 

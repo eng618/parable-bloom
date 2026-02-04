@@ -3,7 +3,7 @@
 # https://blowfish.page/docs/getting-started/
 
 theme = "blowfish"
-baseURL = "https://eng618.github.io/parable-bloom/"
+baseURL = "https://parable-bloom.pages.dev/"
 title = "Parable Bloom"
 defaultContentLanguage = "en"
 
