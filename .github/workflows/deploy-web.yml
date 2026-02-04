@@ -17,6 +17,9 @@ jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_SKIPPED: 'false'
+      APP_ENV: 'preview'
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -74,14 +77,14 @@ jobs:
 
       - name: Deploy to Hosting
         run: firebase deploy --only hosting --token ${{ secrets.FIREBASE_CI_TOKEN }}
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && env.DEPLOY_SKIPPED != 'true'
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && env.DEPLOY_SKIPPED != 'true' }}
 
       - name: Deploy Preview (develop branch)
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop' && env.DEPLOY_SKIPPED != 'true'
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop' && env.DEPLOY_SKIPPED != 'true' }}
         run: firebase hosting:channel:deploy preview --token ${{ secrets.FIREBASE_CI_TOKEN }}
 
       - name: Deploy Preview (PR only)
-        if: github.event_name == 'pull_request' && env.DEPLOY_SKIPPED != 'true'
+        if: ${{ github.event_name == 'pull_request' && env.DEPLOY_SKIPPED != 'true' }}
         id: deploy-preview
         run: |
           CHANNEL_NAME="pr-${{ github.event.pull_request.number }}"
