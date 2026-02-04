@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 includes:
   flutter: .taskfiles/Flutter.yml
@@ -76,6 +76,12 @@ tasks:
     cmds:
       - task: flutter:test
       - task: lb:test
+
+  coverage:all:
+    desc: Generate coverage reports for all modules
+    cmds:
+      - task: flutter:test:coverage
+      - task: lb:test:coverage
 
   analyze:all:
     desc: Run static analysis for all modules (Flutter analyze and Level Builder lint)

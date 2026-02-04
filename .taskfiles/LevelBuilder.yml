@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   validate:
@@ -39,6 +39,12 @@ tasks:
     dir: tools/level-builder
     cmds:
       - go test ./...
+
+  test:coverage:
+    desc: Run level-builder Go module tests with coverage
+    dir: tools/level-builder
+    cmds:
+      - go test ./... -coverprofile=coverage.out
 
   test:quick:
     desc: Run fast level-builder tests (used in validate and CI)

@@ -26,6 +26,10 @@ migrate_working_dir/
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
 
+# Code coverage reports
+tools/level-builder/coverage.out
+/coverage/
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
@@ -34,7 +38,6 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-/coverage/
 
 # Symbolication related
 app.*.symbols
