@@ -13,6 +13,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      HAS_CODACY_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN != '' }}
 
     steps:
       - uses: actions/checkout@v6
@@ -76,10 +78,10 @@ jobs:
         env:
           APP_ENV: dev
 
-
       - name: Run Codacy Coverage Reporter
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
-        if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
+        if: env.HAS_CODACY_TOKEN == 'true'
+        continue-on-error: true
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: coverage/lcov.info,tools/level-builder/coverage.out
