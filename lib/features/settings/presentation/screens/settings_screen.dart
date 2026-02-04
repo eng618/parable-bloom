@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/game_providers.dart';
 import '../../../../providers/tutorial_providers.dart';
 import '../../../../screens/home_screen.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../auth/presentation/screens/auth_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -31,6 +33,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         children: [
           const SizedBox(height: 16),
+          _buildSectionHeader(context, 'Account'),
+          _buildAccountTile(context, ref),
+          const Divider(),
           _buildSectionHeader(context, 'Appearance'),
           _buildThemeTile(context, ref, themeMode),
           const Divider(),
@@ -100,6 +105,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
+      ),
+    );
+  }
+
+  Widget _buildAccountTile(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(authUserProvider);
+
+    return userAsync.when(
+      data: (user) {
+        final isAnonymous = user?.isAnonymous ?? true;
+        final email = user?.email;
+        final subtitle = isAnonymous
+            ? 'Guest Account (Not Synced)'
+            : 'Signed in as ${email ?? "User"}';
+
+        return ListTile(
+          leading: Icon(
+            isAnonymous ? Icons.account_circle_outlined : Icons.account_circle,
+            color: isAnonymous ? null : Theme.of(context).colorScheme.primary,
+          ),
+          title: Text(isAnonymous ? 'Sign In / Sign Up' : 'Account Status'),
+          subtitle: Text(subtitle),
+          trailing: isAnonymous
+              ? const Icon(Icons.chevron_right)
+              : IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: () async {
+                    await ref.read(authServiceProvider).signOut();
+                  },
+                ),
+          onTap: isAnonymous
+              ? () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AuthScreen(),
+                    ),
+                  );
+                }
+              : null, // Disable tap if already signed in, logic is in logout button
+        );
+      },
+      loading: () => const ListTile(
+        leading: CircularProgressIndicator(),
+        title: Text('Account'),
+      ),
+      error: (e, s) => ListTile(
+        leading: const Icon(Icons.error),
+        title: const Text('Account Error'),
+        subtitle: Text(e.toString()),
       ),
     );
   }

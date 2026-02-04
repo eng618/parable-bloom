@@ -78,7 +78,7 @@ tasks:
     cmds:
       - flutter run -d chrome
 
-  flutter:dev:
+  dev:
     desc: Run the application in dev mode for the current platform (delegates to platform-specific dev tasks)
     cmds:
       - |

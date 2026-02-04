@@ -478,9 +478,8 @@ final cloudGameProgressRepositoryProvider = Provider<GameProgressRepository>((
 
 // Current repository selector - defaults to local, can be switched to cloud
 final gameProgressRepositoryProvider = Provider<GameProgressRepository>((ref) {
-  // For now, use local repository. In the future, this could check user preferences
-  // and return either local or cloud repository based on sync settings
-  return ref.watch(localGameProgressRepositoryProvider);
+  // Use the cloud-aware repository which handles both local and cloud sync
+  return ref.watch(cloudGameProgressRepositoryProvider);
 });
 
 // Settings repository provider

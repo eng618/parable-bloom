@@ -9,6 +9,7 @@ import 'features/journal/presentation/screens/journal_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 import 'providers/game_providers.dart';
 import 'screens/home_screen.dart';
+import 'features/auth/presentation/providers/auth_providers.dart';
 
 class ParableBloomApp extends ConsumerStatefulWidget {
   const ParableBloomApp({super.key});
@@ -23,6 +24,10 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Initialize game progress (load from persistence)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(gameProgressProvider.notifier).initialize();
+    });
   }
 
   @override
@@ -50,6 +55,18 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     ref.watch(backgroundAudioControllerProvider);
+
+    // Listen to auth changes to trigger sync
+    ref.listen(authUserProvider, (previous, next) async {
+      final user = next.value;
+      final previousUser = previous?.value;
+
+      // If user logged in (or changed), sync from cloud
+      if (user != null && user.uid != previousUser?.uid) {
+        debugPrint('App: User logged in/changed. Triggering sync...');
+        await ref.read(gameProgressProvider.notifier).manualSync();
+      }
+    });
 
     return MaterialApp(
       title: 'Parable Bloom',
