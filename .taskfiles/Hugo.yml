@@ -19,7 +19,7 @@ tasks:
         msg: "Hugo is not installed."
 
   build:
-    desc: Build Hugo site to docs/
+    desc: Build Hugo site to public/
     dir: tools/hugo-site
     sources:
       - "content/**/*"
@@ -27,7 +27,7 @@ tasks:
       - "static/**/*"
       - "hugo.toml"
     generates:
-      - "../../docs/**/*"
+      - "public/**/*"
     cmds:
       - hugo --minify
     preconditions:

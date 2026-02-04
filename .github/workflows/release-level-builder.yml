@@ -1,0 +1,60 @@
+name: Release Level Builder
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/level-builder/**'
+      - '.taskfiles/LevelBuilder.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            output_name: level-builder-linux-amd64
+          - os: ubuntu-latest
+            goos: windows
+            goarch: amd64
+            output_name: level-builder-windows-amd64.exe
+          - os: ubuntu-latest
+            goos: darwin
+            goarch: amd64
+            output_name: level-builder-darwin-amd64
+          - os: ubuntu-latest
+            goos: darwin
+            goarch: arm64
+            output_name: level-builder-darwin-arm64
+
+    runs-on: ${{ matrix.os }}
+    name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.21.0'
+
+      - name: Setup Task
+        uses: arduino/setup-task@v2
+
+      - name: Build
+        working-directory: tools/level-builder
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: go build -o ../../${{ matrix.output_name }} .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output_name }}
+          path: ${{ matrix.output_name }}

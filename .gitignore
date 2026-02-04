@@ -104,6 +104,7 @@ tools/level-builder/assets/
 
 # Hugo generated site
 docs/
+/tools/hugo-site/public/
 
 # Level dumps from failing level generations
 logs/
