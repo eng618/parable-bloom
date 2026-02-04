@@ -201,8 +201,8 @@ void main(List<String> arguments) async {
         print('\n🎉 Version bump complete!');
         print('\nNext steps:');
         print('  1. Review changes: git log -1 --stat');
-        print('  2. Push to remote: git push origin develop --tags');
-        print('  3. Create PR: develop → main');
+        print('  2. Push to remote: git push origin main --tags');
+        print('  3. Create PR: [If using a release branch] → main');
       } else {
         print('⚠️  No changes detected, skipping commit');
       }
