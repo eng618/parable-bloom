@@ -14,6 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.3.0] - 2026-02-04
+
+### Added
+- TODO: Document new features
+
+### Changed
+- TODO: Document changes
+
+### Fixed
+- TODO: Document bug fixes
+
 ## [1.2.0] - 2026-02-04
 
 ### Added
