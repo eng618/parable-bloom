@@ -5,6 +5,13 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      full_test:
+        description: 'Run full test suite (ignore path filters)'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,10 +24,10 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      flutter: ${{ steps.filter.outputs.flutter }}
-      level-builder: ${{ steps.filter.outputs.level-builder }}
-      hugo: ${{ steps.filter.outputs.hugo }}
-      firebase: ${{ steps.filter.outputs.firebase }}
+      flutter: ${{ steps.filter.outputs.flutter || inputs.full_test }}
+      level-builder: ${{ steps.filter.outputs.level-builder || inputs.full_test }}
+      hugo: ${{ steps.filter.outputs.hugo || inputs.full_test }}
+      firebase: ${{ steps.filter.outputs.firebase || inputs.full_test }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
