@@ -273,8 +273,6 @@ void main() {
     expect(find.text('Home'), findsOneWidget);
   });
 
-  // TODO: Fix Flame timer disposal issue in test environment
-  /*
   testWidgets('GameHeader pause button shows pause menu', (tester) async {
     final repo = _InMemoryRepo();
     final overrides = [
@@ -325,5 +323,4 @@ void main() {
     // Drain any pending timers from the game loop
     await tester.pump(const Duration(seconds: 1));
   });
-  */
 }
