@@ -39,6 +39,10 @@ jobs:
         env:
           FIREBASE_CI_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
         run: |
+          if [ -z "$FIREBASE_CI_TOKEN" ]; then
+            echo "::error::FIREBASE_CI_TOKEN is empty! Please check GitHub Secrets for this repository."
+            exit 1
+          fi
           npm install -g firebase-tools
           dart pub global activate flutterfire_cli
           export PATH="$PATH:$HOME/.pub-cache/bin"
