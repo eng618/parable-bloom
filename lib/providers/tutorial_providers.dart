@@ -74,18 +74,18 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
     final allComplete = newCompleted.length == 5;
     final nextLesson = allComplete ? null : lessonId + 1;
 
-    state = state.copyWith(
-      currentLesson: nextLesson,
-      completedLessons: newCompleted,
-      allLessonsCompleted: allComplete,
-    );
-
-    // Update game progress to reflect lesson completion
+    // Update game progress to reflect lesson completion FIRST
     await ref.read(gameProgressProvider.notifier).completeLesson(
           lessonId: lessonId,
           nextLesson: nextLesson,
           allLessonsCompleted: allComplete,
         );
+
+    state = state.copyWith(
+      currentLesson: nextLesson,
+      completedLessons: newCompleted,
+      allLessonsCompleted: allComplete,
+    );
   }
 
   /// Resets all lessons (for replay)
