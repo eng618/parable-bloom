@@ -107,4 +107,14 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
     }
     state = state.copyWith(currentLesson: lessonId);
   }
+
+  /// Resets tutorial state for replay without persisting changes
+  /// This allows replaying the tutorial without affecting main game progress
+  void resetForReplay() {
+    state = const TutorialProgress(
+      currentLesson: 1,
+      completedLessons: {},
+      allLessonsCompleted: false,
+    );
+  }
 }

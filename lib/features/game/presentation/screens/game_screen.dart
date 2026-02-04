@@ -216,7 +216,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         },
         onHome: () {
           Navigator.of(context).pop(); // Close dialog
-          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+          Navigator.of(context).popUntil((route) => route.isFirst);
         },
       ),
     );
@@ -456,7 +456,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
 
     // Navigate back to home screen and clear game screen from stack
-    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   Future<void> _showParableUnlockedDialog(ModuleData module) async {
@@ -542,9 +542,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil('/', (route) => false);
+                Navigator.of(context).popUntil((route) => route.isFirst);
               },
               child: const Text('CONTINUE'),
             ),
@@ -611,8 +609,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
                   }
-                  Navigator.of(context)
-                      .pushNamedAndRemoveUntil('/', (route) => false);
+                  Navigator.of(context).popUntil((route) => route.isFirst);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,

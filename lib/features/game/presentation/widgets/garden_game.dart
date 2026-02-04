@@ -46,6 +46,9 @@ class GardenGame extends FlameGame with TapCallbacks {
     return game;
   }
 
+  /// Get the current lesson ID (null if not a lesson)
+  int? get currentLessonId => _currentLessonData?.id;
+
   void updateThemeColors(
     Color backgroundColor,
     Color surfaceColor,
@@ -360,7 +363,7 @@ class GardenGame extends FlameGame with TapCallbacks {
       maxMoves: 999, // Unlimited moves for lessons
       minMoves: 0,
       complexity: 'tutorial',
-      grace: 0, // No grace system for lessons
+      grace: 3, // Use standard grace for tutorial so GameHeader displays hearts
       mask: MaskData(mode: 'show-all', points: []),
     );
 

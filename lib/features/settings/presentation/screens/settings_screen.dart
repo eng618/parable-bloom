@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/game_providers.dart';
+import '../../../../providers/tutorial_providers.dart';
 import '../../../../screens/home_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -738,13 +739,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _performRedoTutorial(BuildContext context, WidgetRef ref) async {
     Navigator.of(context).pop(); // Close dialog
 
-    // Wait for tutorial reset to complete
-    await ref.read(gameProgressProvider.notifier).resetTutorial();
+    // Only reset the in-memory tutorial progress state - don't persist changes
+    // This allows replaying the tutorial without affecting main game progress
+    ref.read(tutorialProgressProvider.notifier).resetForReplay();
 
     // Invalidate current level to force reload
     ref.invalidate(currentLevelProvider);
 
-    // Navigate back to home, then to tutorial flow to start lessons
+    // Navigate directly to tutorial flow
     if (context.mounted) {
       Navigator.of(context).popUntil((route) => route.isFirst);
       Navigator.of(context).pushNamed('/tutorial');

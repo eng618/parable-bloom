@@ -580,19 +580,12 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   }
 
   Future<void> resetTutorial() async {
-    final newCompletedLevels = Set<int>.from(state.completedLevels)
-      ..removeWhere(
-          (level) => level >= 1 && level <= 5); // Remove tutorial levels
-
-    // Only save the current level if user is already in the main game (level 6+)
-    // If they're still in tutorial (level 1-5), don't save anything
-    final savedLevel = state.currentLevel > 5 ? state.currentLevel : null;
-
+    // Just reset the tutorial completed flag
+    // We don't remove levels 1-5 from completedLevels anymore since they are distinct from lessons
     final newProgress = state.copyWith(
       tutorialCompleted: false,
-      currentLevel: 1,
-      completedLevels: newCompletedLevels,
-      savedMainGameLevel: savedLevel,
+      // Keep current level as is, or ensure it's at least 1
+      currentLevel: state.currentLevel < 1 ? 1 : state.currentLevel,
     );
 
     await _saveProgress(newProgress);
@@ -611,8 +604,10 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       currentLesson: nextLesson,
       lessonCompleted: allLessonsCompleted,
       tutorialCompleted: allLessonsCompleted,
-      // When all lessons complete, move to level 1
-      currentLevel: allLessonsCompleted ? 1 : state.currentLevel,
+      // When tutorial first completes, ensure we start at level 1 if not already further
+      currentLevel: (allLessonsCompleted && state.currentLevel < 1)
+          ? 1
+          : state.currentLevel,
     );
 
     await _saveProgress(newProgress);
@@ -1112,13 +1107,15 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   }
 
   void _checkLevelComplete() {
-    // Only complete when all vines have finished their exit animation
-    final allAnimationsDone = state.values.every(
-        (vineState) => vineState.animationState == VineAnimationState.cleared);
+    // Level is complete when all vines have either finished clearing
+    // or are currently animating their clear animation
+    final allFinished = state.values.every((vineState) =>
+        vineState.isCleared ||
+        vineState.animationState == VineAnimationState.animatingClear);
     debugPrint(
-      'VineStatesNotifier: Checking completion - allAnimationsDone: $allAnimationsDone, total vines: ${state.length}',
+      'VineStatesNotifier: Checking completion - allFinished: $allFinished, total vines: ${state.length}',
     );
-    if (allAnimationsDone) {
+    if (allFinished && state.isNotEmpty) {
       debugPrint(
         'VineStatesNotifier: LEVEL COMPLETE detected! Setting levelCompleteProvider to true',
       );

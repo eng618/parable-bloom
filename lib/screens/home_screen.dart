@@ -3,14 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/game_providers.dart';
 
-/// Helper function to format level display text.
-/// Shows "Lesson X" for tutorial levels, "Level X" for main levels.
-String _formatLevelText(int levelNumber, bool tutorialCompleted) {
-  if (!tutorialCompleted && levelNumber >= 1 && levelNumber <= 5) {
-    return 'Lesson $levelNumber';
-  }
-  return 'Level $levelNumber';
-}
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -117,7 +109,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       elevation: 4,
                     ),
                     child: Text(
-                      'Play ${_formatLevelText(gameProgress.currentLevel, gameProgress.tutorialCompleted)}',
+                      gameProgress.tutorialCompleted
+                          ? 'Play Level ${gameProgress.currentLevel}'
+                          : 'Start Tutorial',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -141,7 +135,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     elevation: 4,
                   ),
                   child: Text(
-                    'Play ${_formatLevelText(gameProgress.currentLevel, gameProgress.tutorialCompleted)}',
+                    gameProgress.tutorialCompleted
+                        ? 'Play Level ${gameProgress.currentLevel}'
+                        : 'Start Tutorial',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -199,11 +195,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _playNextLevel() {
-    // Check if there's an active lesson and route accordingly
+    // Check if tutorial is completed and route accordingly
     final gameProgress = ref.read(gameProgressProvider);
 
-    if (gameProgress.currentLesson != null && !gameProgress.tutorialCompleted) {
-      // Route to tutorial flow if there's an active lesson
+    if (!gameProgress.tutorialCompleted) {
+      // Route to tutorial flow if tutorial is not completed
       Navigator.of(context).pushNamed('/tutorial');
     } else {
       // Route to game for regular levels

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parable_bloom/features/tutorial/domain/entities/lesson_data.dart';
 import 'package:hive/hive.dart';
-import 'package:parable_bloom/features/tutorial/domain/entities/lesson.dart';
 import 'package:parable_bloom/providers/game_providers.dart';
 import 'package:parable_bloom/providers/tutorial_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
@@ -93,7 +92,7 @@ class _FakeBox implements Box<dynamic> {
 }
 
 void main() {
-  testWidgets('Completion dialog advances to next lesson', (tester) async {
+  testWidgets('Level complete advances to next lesson', (tester) async {
     final repo = _InMemoryRepo();
     final overrides = [
       hiveBoxProvider.overrideWithValue(_FakeBox()),
@@ -104,7 +103,7 @@ void main() {
           LessonData(
             id: 1,
             title: 'Test',
-            objective: 'obj',
+            objective: 'Test objective',
             instructions: 'inst',
             learningPoints: ['p1', 'p2'],
             gridWidth: 3,
@@ -146,22 +145,24 @@ void main() {
     // Allow widgets to build (single frame to avoid heavy Flame rendering)
     await tester.pump();
 
+    // Wait for widgets to build fully
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+
+    // Verify GameHeader is present (pause button)
+    expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
+
     // Simulate level complete
     final container = ProviderScope.containerOf(
         tester.element(find.byType(TutorialFlowScreen)));
     container.read(levelCompleteProvider.notifier).setComplete(true);
-    // Pump once to process the completion listener and show the dialog
+    // Pump once to process the completion listener
     await tester.pump();
 
-    // Completion dialog should show
-    expect(find.text('Lesson Complete!'), findsOneWidget);
+    // Level complete overlay should show (celebration icon)
+    expect(find.byIcon(Icons.celebration), findsOneWidget);
 
-    // Tap Next Lesson (invoke onPressed directly to avoid hit-test flakiness)
-    expect(find.text('Next Lesson'), findsOneWidget);
-    final nextBtn = tester.widget<ElevatedButton>(
-        find.widgetWithText(ElevatedButton, 'Next Lesson'));
-    nextBtn.onPressed?.call();
-    await tester.pump(const Duration(milliseconds: 100));
+    // Wait for the 2-second delay and lesson advancement
+    await tester.pump(const Duration(seconds: 3));
 
     // TutorialProgress should have advanced to lesson 2
     final progress = container.read(tutorialProgressProvider);
@@ -258,14 +259,11 @@ void main() {
       container.read(levelCompleteProvider.notifier).setComplete(true);
       await tester.pump();
 
-      expect(find.text('Lesson Complete!'), findsOneWidget);
+      // Level complete overlay should show (celebration icon)
+      expect(find.byIcon(Icons.celebration), findsOneWidget);
 
-      final buttonText = i == 5 ? 'Start the Game!' : 'Next Lesson';
-      expect(find.text(buttonText), findsOneWidget);
-      final btnFinder = find.widgetWithText(ElevatedButton, buttonText);
-      final btnWidget = tester.widget<ElevatedButton>(btnFinder);
-      btnWidget.onPressed?.call();
-      await tester.pump(const Duration(milliseconds: 100));
+      // Wait for the 2-second delay
+      await tester.pump(const Duration(seconds: 3));
     }
 
     // Final pump to allow navigation to replace the route
@@ -274,4 +272,58 @@ void main() {
     // After finishing all lessons, we should navigate to Home
     expect(find.text('Home'), findsOneWidget);
   });
+
+  // TODO: Fix Flame timer disposal issue in test environment
+  /*
+  testWidgets('GameHeader pause button shows pause menu', (tester) async {
+    final repo = _InMemoryRepo();
+    final overrides = [
+      hiveBoxProvider.overrideWithValue(_FakeBox()),
+      gameProgressRepositoryProvider.overrideWithValue(repo),
+      disableAnimationsProvider.overrideWithValue(true),
+      lessonProvider(1).overrideWithValue(
+        const AsyncValue.data(
+          LessonData(
+            id: 1,
+            title: 'Test',
+            objective: 'Test objective',
+            instructions: 'inst',
+            learningPoints: ['p1', 'p2'],
+            gridWidth: 3,
+            gridHeight: 3,
+            vines: [],
+          ),
+        ),
+      ),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: MaterialApp(
+          home: const TutorialFlowScreen(),
+        ),
+      ),
+    );
+
+    // Wait for widgets to build fully
+    // Use pump instead of pumpAndSettle to avoid timeout from Flame game loop
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Tap the pause button (use warnIfMissed: false because Flame game overlays may affect hit testing)
+    await tester.tap(find.byIcon(Icons.pause_rounded), warnIfMissed: false);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Pause menu should show with "Paused" text
+    expect(find.text('Paused'), findsOneWidget);
+
+    // Verify Home and Restart buttons are present
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Restart'), findsOneWidget);
+
+    // Drain any pending timers from the game loop
+    await tester.pump(const Duration(seconds: 1));
+  });
+  */
 }
