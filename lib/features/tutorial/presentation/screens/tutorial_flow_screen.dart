@@ -90,8 +90,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     return ref.watch(lessonProvider(currentLesson)).when(
           data: (lesson) {
             // Create or recreate game when lesson changes
-            if (_game == null ||
-                _game!.currentLessonId != lesson.id) {
+            if (_game == null || _game!.currentLessonId != lesson.id) {
               _game = GardenGame.fromLesson(lesson, ref: ref);
               // Show instruction overlay for new lesson
               _showInstructionOverlay = true;

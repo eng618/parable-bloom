@@ -113,7 +113,8 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                   const SizedBox(width: 8),
                   Icon(
                     Icons.close,
-                    color: colorScheme.onPrimaryContainer.withValues(alpha: 0.6),
+                    color:
+                        colorScheme.onPrimaryContainer.withValues(alpha: 0.6),
                     size: 18,
                   ),
                 ],
