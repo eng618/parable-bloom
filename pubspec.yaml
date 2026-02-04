@@ -125,3 +125,5 @@ flutter_launcher_icons:
   linux:
     generate: true
     image_path: assets/art/app_icon.png
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/art/app_icon.png
