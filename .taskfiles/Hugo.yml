@@ -1,6 +1,9 @@
 version: "3"
 
 tasks:
+  # -----------------------------------------------------------------------------
+  # Tooling Management
+
   install:
     desc: Install Hugo extended edition via Go
     status:
@@ -17,6 +20,9 @@ tasks:
     cmds:
       - git submodule update --init --recursive
 
+  # -----------------------------------------------------------------------------
+  # Development
+
   serve:
     desc: Start Hugo development server
     dir: tools/hugo-site
@@ -26,6 +32,9 @@ tasks:
     preconditions:
       - sh: command -v hugo >/dev/null 2>&1
         msg: "Hugo is not installed."
+
+  # -----------------------------------------------------------------------------
+  # Build
 
   build:
     desc: Build Hugo site to public/
@@ -42,6 +51,9 @@ tasks:
     preconditions:
       - sh: command -v hugo >/dev/null 2>&1
         msg: "Hugo is not installed."
+
+  # -----------------------------------------------------------------------------
+  # Content Creation
 
   new:
     desc: Create new content page (usage - task hugo:new PAGE=privacy)

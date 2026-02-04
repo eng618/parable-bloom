@@ -1,6 +1,9 @@
 version: "3"
 
 tasks:
+  # -----------------------------------------------------------------------------
+  # Account Management
+
   login:
     desc: Log in to Firebase
     cmds:
@@ -9,6 +12,9 @@ tasks:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
 
+  # -----------------------------------------------------------------------------
+  # Project Initialization
+
   init:
     desc: Initialize Firebase in the project
     cmds:
@@ -16,6 +22,9 @@ tasks:
     preconditions:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
+
+  # -----------------------------------------------------------------------------
+  # Local Emulators
 
   emulators:start:
     desc: Start Firebase emulators
@@ -34,6 +43,9 @@ tasks:
     preconditions:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
+
+  # -----------------------------------------------------------------------------
+  # Deployment
 
   functions:deploy:
     desc: Deploy Firebase functions
@@ -96,7 +108,9 @@ tasks:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
 
+  # -----------------------------------------------------------------------------
   # FlutterFire Configuration
+
   configure:
     desc: Configure Firebase using FlutterFire CLI for local development
     cmds:

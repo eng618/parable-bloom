@@ -1,6 +1,9 @@
 version: "3"
 
 tasks:
+  # -----------------------------------------------------------------------------
+  # Standardization Tasks for Level Builder Go Module
+
   validate:
     desc: Validate level-builder Go module
     dir: tools/level-builder
@@ -15,6 +18,9 @@ tasks:
     cmds:
       - task: format
       - task: lint:fix
+
+  # -----------------------------------------------------------------------------
+  # Dependency Management
 
   get:
     desc: Get level-builder Go module dependencies
@@ -32,6 +38,9 @@ tasks:
     cmds:
       - go get -u ./...
       - go mod tidy
+
+  # -----------------------------------------------------------------------------
+  # Testing
 
   test:
     desc: Run level-builder Go module tests
@@ -68,6 +77,9 @@ tasks:
       - go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
       - go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
 
+  # -----------------------------------------------------------------------------
+  # Linting
+
   lint:
     desc: Run level-builder Go module linting using golangci-lint
     dir: tools/level-builder
@@ -83,6 +95,9 @@ tasks:
     cmds:
       - golangci-lint run --fix
 
+  # -----------------------------------------------------------------------------
+  # Formatting
+
   format:check:
     desc: Check level-builder Go module code formatting
     dir: tools/level-builder
@@ -94,6 +109,9 @@ tasks:
     dir: tools/level-builder
     cmds:
       - golangci-lint fmt
+
+  # -----------------------------------------------------------------------------
+  # Build
 
   build:
     desc: Build the level-builder Go module

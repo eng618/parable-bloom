@@ -1,6 +1,9 @@
 version: "3"
 
 tasks:
+  # -----------------------------------------------------------------------------
+  # Versioning
+
   bump:patch:
     desc: Bump patch version and tag (1.0.0 → 1.0.1)
     cmds:
@@ -26,6 +29,9 @@ tasks:
     cmds:
       - dart run scripts/bump_version.dart --set "{{.VERSION}}"
 
+  # -----------------------------------------------------------------------------
+  # Changelog Management
+
   changelog:update:
     desc: Update CHANGELOG.md from git commits
     cmds:
@@ -36,7 +42,9 @@ tasks:
     cmds:
       - dart run scripts/update_changelog.dart --dry-run
 
+  # -----------------------------------------------------------------------------
   # High-level Release Builds
+
   web:
     desc: Build the web application for release
     cmds:

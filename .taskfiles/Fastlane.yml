@@ -1,6 +1,9 @@
-version: '3'
+version: "3"
 
 tasks:
+  # -----------------------------------------------------------------------------
+  # Android Deployment
+
   android:deploy:
     desc: Deploy Android to Google Play (Internal Testing) via Fastlane
     dir: android
@@ -36,6 +39,9 @@ tasks:
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
         msg: "Fastlane is not installed."
+
+  # -----------------------------------------------------------------------------
+  # iOS Deployment
 
   ios:beta:
     desc: Deploy iOS to TestFlight via Fastlane
@@ -76,6 +82,9 @@ tasks:
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
         msg: "Fastlane is not installed."
+
+  # -----------------------------------------------------------------------------
+  # CI Support
 
   ios:setup:
     desc: Setup iOS keychain for CI

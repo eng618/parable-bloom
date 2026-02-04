@@ -1,6 +1,9 @@
 version: "3"
 
 tasks:
+  # -----------------------------------------------------------------------------
+  # Build
+
   build:web:
     desc: Build the Flutter application for Web
     sources:
@@ -47,6 +50,9 @@ tasks:
     platforms: [darwin]
     cmds:
       - flutter build macos --release
+
+  # -----------------------------------------------------------------------------
+  # Development
 
   serve:web:
     desc: Serve the application locally
@@ -128,6 +134,9 @@ tasks:
       - task: ios:pod-install
       - ./scripts/ios/boot_simulator.sh
 
+  # -----------------------------------------------------------------------------
+  # Platform-Specific Management
+
   ios:pod-install:
     desc: Run CocoaPods install in ios directory
     platforms: [darwin]
@@ -144,7 +153,9 @@ tasks:
       - pod install
     run: once
 
-  # Environment-Specific Tasks
+  # -----------------------------------------------------------------------------
+  # Environment Management
+
   serve:dev:
     desc: Run the application in development environment
     cmds:
@@ -205,6 +216,9 @@ tasks:
     cmds:
       - flutter test --dart-define=APP_ENV=prod
 
+  # -----------------------------------------------------------------------------
+  # Standardization and Validation
+
   analyze:
     desc: Analyze the Flutter code
     cmds:
@@ -256,6 +270,9 @@ tasks:
       - task: format
       - task: lint:fix
 
+  # -----------------------------------------------------------------------------
+  # Asset Management
+
   generate_icons:
     desc: Generate app icons and favicon for all platforms using flutter_launcher_icons
     cmds:
@@ -265,6 +282,9 @@ tasks:
     desc: Update app icons using flutter_launcher_icons
     cmds:
       - flutter pub run flutter_launcher_icons:main
+
+  # -----------------------------------------------------------------------------
+  # Dependency Management
 
   get:
     desc: Get Flutter dependencies
@@ -279,6 +299,9 @@ tasks:
     desc: Upgrade Flutter dependencies
     cmds:
       - flutter pub upgrade
+
+  # -----------------------------------------------------------------------------
+  # Cleanup
 
   clean:
     desc: Clean the Flutter build cache
