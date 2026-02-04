@@ -12,6 +12,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v6.0.1
@@ -57,9 +58,8 @@ jobs:
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
       - name: Generate firebase_options.dart
-        run: flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
+        timeout-minutes: 5
+        run: flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes --token=${{ secrets.FIREBASE_CI_TOKEN }}
 
       - name: Run task validate
         run: task validate

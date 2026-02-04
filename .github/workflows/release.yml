@@ -8,6 +8,7 @@ on:
 jobs:
   firebase-config:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6.0.1
 
@@ -205,7 +206,7 @@ jobs:
         run: |
           # Decode service account JSON to file
           echo "$PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" | base64 -d > /tmp/service-account.json
-          
+
           cd android
           fastlane deploy
         env:
@@ -391,13 +392,8 @@ jobs:
           rm -rf ~/private_keys
           task fastlane:ios:cleanup
 
-
   release:
-    needs:
-      [
-        firebase-config,
-        build,
-      ]
+    needs: [firebase-config, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
