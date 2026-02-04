@@ -146,7 +146,7 @@ void main() {
     await tester.pump();
 
     // Wait for widgets to build fully
-    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
 
     // Verify GameHeader is present (pause button)
     expect(find.byIcon(Icons.pause_rounded), findsOneWidget);

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 /// A simple, dismissable instruction overlay for tutorial levels.
@@ -24,6 +25,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   bool _dismissed = false;
+  Timer? _dismissTimer;
 
   @override
   void initState() {
@@ -45,7 +47,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
     _controller.forward();
 
     // Auto-dismiss after delay
-    Future.delayed(widget.autoDismissDelay, () {
+    _dismissTimer = Timer(widget.autoDismissDelay, () {
       if (mounted && !_dismissed) {
         _dismiss();
       }
@@ -54,6 +56,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
 
   @override
   void dispose() {
+    _dismissTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
