@@ -14,5 +14,5 @@ Built with Flutter and Flame for cross-platform gaming experience.
 
 ## Contact
 
-- Email: <support@parablebloom.com>
+- Email: <parablebloom.support@garciaericn.com>
 - GitHub: [eng618/parable-bloom](https://github.com/eng618/parable-bloom)

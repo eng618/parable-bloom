@@ -12,11 +12,11 @@ title = "Parable Bloom"
   logo = "img/logo.png"
   # secondaryLogo = "img/secondary-logo.png"
   description = "A zen hyper-casual arrow puzzle game with faith-based themes."
-  # copyright = "Copy, _right?_ :thinking_face:"
+  copyright = "© GVTech 2026"
 
 [params.author]
   name = "Eric Garcia"
-  email = "parable-bloom@garciaericn.com"
+  email = "parablebloom.support@garciaericn.com"
 #   image = "img/blowfish_logo.png"
 #   imageQuality = 96
 #   headline = "I'm only human"

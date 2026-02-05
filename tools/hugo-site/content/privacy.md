@@ -17,4 +17,4 @@ Parable Bloom respects your privacy. This app does not collect personal data.
 
 ## Contact
 
-For questions, email: <support@parablebloom.com>
+For questions, email: <parablebloom.support@garciaericn.com>

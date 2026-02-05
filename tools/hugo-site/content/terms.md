@@ -21,4 +21,4 @@ This app is licensed to you for personal use only.
 The app is provided "as is" without warranties.
 
 ## Contact
-<support@parablebloom.com>
+<parablebloom.support@garciaericn.com>
