@@ -143,6 +143,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: recursive
 
       - name: Set up Flutter
         if: needs.changes.outputs.flutter == 'true'
