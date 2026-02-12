@@ -1,8 +1,6 @@
 package generator
 
 import (
-	crand "crypto/rand"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -15,19 +13,8 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
 
-// Path resolution: Use common.LevelsDir(), common.DataDir(), common.ModulesFile() instead of hardcoded paths
-
-// cryptoSeedInt64 returns a crypto-random int64 seed, falling back to time on error
-func cryptoSeedInt64() int64 {
-	var b [8]byte
-	if _, err := crand.Read(b[:]); err != nil {
-		return time.Now().UnixNano()
-	}
-	return int64(binary.LittleEndian.Uint64(b[:]))
-}
-
-// GenerationConfig holds configuration for level generation
-type GenerationConfig struct {
+// LegacyBatchConfig holds configuration for batch level generation (legacy)
+type LegacyBatchConfig struct {
 	Count         int
 	BaseSeed      int64
 	UseRandomSeed bool
@@ -82,14 +69,14 @@ func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, diffi
 	}
 
 	// Ensure output directories exist
-	if err := os.MkdirAll(levelsDir, 0755); err != nil {
+	if err := os.MkdirAll(levelsDir, 0o755); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err := os.MkdirAll(dataDir, 0o755); err != nil {
 		return err
 	}
 
-	cfg := GenerationConfig{
+	cfg := LegacyBatchConfig{
 		Count:         count,
 		BaseSeed:      baseSeed,
 		UseRandomSeed: useRandomSeed,
@@ -109,7 +96,7 @@ func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, diffi
 }
 
 // generateLevels generates a series of individual levels.
-func generateLevels(cfg GenerationConfig) error {
+func generateLevels(cfg LegacyBatchConfig) error {
 	levelsDir, err := common.LevelsDir()
 	if err != nil {
 		return fmt.Errorf("failed to resolve levels directory: %w", err)
@@ -187,7 +174,7 @@ func generateLevels(cfg GenerationConfig) error {
 // generateModule generates a complete module with balanced difficulty progression.
 // Each module has 21 levels: 20 regular levels (5 each of Seedling, Sprout, Nurturing, Flourishing)
 // plus 1 Transcendent boss level at the end.
-func generateModule(cfg GenerationConfig) error {
+func generateModule(cfg LegacyBatchConfig) error {
 	const levelsPerModule = 21
 	const regularLevels = 20
 
@@ -332,7 +319,7 @@ func updateModuleRegistry(moduleID int, startID int) error {
 		return fmt.Errorf("failed to marshal modules.json: %w", err)
 	}
 
-	if err := os.WriteFile(registryPath, jsonData, 0644); err != nil {
+	if err := os.WriteFile(registryPath, jsonData, 0o644); err != nil {
 		return fmt.Errorf("failed to write modules.json: %w", err)
 	}
 

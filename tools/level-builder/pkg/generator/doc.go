@@ -1,4 +1,4 @@
-// package gen2 implements version 2 of the game's level generation system.
+// package generator implements version 2 of the game's level generation system.
 //
 // Overview
 // -------
@@ -149,7 +149,7 @@
 //     plugged in and A/B tested without touching the core placer.
 //
 // Package gen2 contains the level generation version 2 implementation.
-package gen2
+package generator
 
 /*
 TODO: impliment the following

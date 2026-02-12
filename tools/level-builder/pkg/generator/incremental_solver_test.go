@@ -1,4 +1,4 @@
-package gen2
+package generator
 
 import (
 	"testing"

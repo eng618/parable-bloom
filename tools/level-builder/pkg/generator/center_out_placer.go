@@ -1,4 +1,4 @@
-package gen2
+package generator
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
-	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -401,7 +400,7 @@ func (p *CenterOutPlacer) calculateVineLengths(config GenerationConfig, rng *ran
 
 	// Get average length from difficulty specs
 	avgLen := 5 // Default
-	if spec, ok := generator.DifficultySpecs[config.Difficulty]; ok {
+	if spec, ok := DifficultySpecs[config.Difficulty]; ok {
 		avgLen = (spec.AvgLengthRange[0] + spec.AvgLengthRange[1]) / 2
 	}
 

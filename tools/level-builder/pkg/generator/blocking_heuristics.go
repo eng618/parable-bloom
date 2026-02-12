@@ -1,4 +1,4 @@
-package gen2
+package generator
 
 import (
 	"fmt"
@@ -79,19 +79,4 @@ func PickBacktrackCandidates(graph map[string]map[string]bool, failingVine strin
 		out = append(out, list[i].id)
 	}
 	return out
-}
-
-func deltaForDirection(dir string) (int, int) {
-	switch dir {
-	case "right":
-		return 1, 0
-	case "left":
-		return -1, 0
-	case "up":
-		return 0, 1
-	case "down":
-		return 0, -1
-	default:
-		return 0, 0
-	}
 }

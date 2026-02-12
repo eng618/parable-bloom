@@ -1,9 +1,8 @@
-package gen2
+package generator
 
 import (
 	"fmt"
 
-	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -23,10 +22,10 @@ func convertCommonPointsToModel(commonPoints []model.Point) []model.Point {
 // AssembleLevel creates the final level data structure
 func (a *LevelAssembler) AssembleLevel(config GenerationConfig, vines []model.Vine, mask *model.Mask, seed int64) model.Level {
 	// Get difficulty spec for this tier
-	spec, ok := generator.DifficultySpecs[config.Difficulty]
+	spec, ok := DifficultySpecs[config.Difficulty]
 	if !ok {
 		// Fallback to Seedling if unknown difficulty
-		spec = generator.DifficultySpecs["Seedling"]
+		spec = DifficultySpecs["Seedling"]
 	}
 
 	// Convert vines to model format with color_index assignment
@@ -106,7 +105,7 @@ func (a *LevelAssembler) complexityForDifficulty(difficulty string) string {
 
 // generateColorScheme creates a color palette using the shared ColorPalette
 func (a *LevelAssembler) generateColorScheme(colorCount int) []string {
-	palette := generator.ColorPalette
+	palette := ColorPalette
 	if colorCount > len(palette) {
 		colorCount = len(palette)
 	}

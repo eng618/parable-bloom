@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
-	"github.com/eng618/parable-bloom/tools/level-builder/pkg/gen2"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
@@ -15,7 +14,6 @@ import (
 
 // getCoverageForDifficulty is removed. We now enforce 100% coverage globally.
 const targetCoverage = 1.0
-
 
 // Config holds configuration for batch level generation.
 type Config struct {
@@ -137,27 +135,27 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 	startTime := time.Now()
 
 	var level model.Level
-	var stats gen2.GenerationStats
-	var genCfg gen2.GenerationConfig
+	var stats generator.GenerationStats
+	var genCfg generator.GenerationConfig
 
 	// Strategy Chain:
 	// 1. Requested Strategy (from config or auto-determined)
 	// 2. Center-Out (LIFO) - strongest solvability guarantee
 	// 3. Direction-First - backup for organic shapes
-	
+
 	strategiesToTry := []string{}
-	
+
 	// Determine primary strategy
 	primary := determineStrategy(levelID, difficulty, config)
 	strategiesToTry = append(strategiesToTry, primary)
 
 	// Add fallbacks if they aren't the primary
-	if primary != gen2.StrategyCenterOut {
-		strategiesToTry = append(strategiesToTry, gen2.StrategyCenterOut)
+	if primary != generator.StrategyCenterOut {
+		strategiesToTry = append(strategiesToTry, generator.StrategyCenterOut)
 	}
-	if primary != gen2.StrategyDirectionFirst && primary != gen2.StrategyCenterOut {
+	if primary != generator.StrategyDirectionFirst && primary != generator.StrategyCenterOut {
 		// Only add DirectionFirst if it wasn't already tried
-		strategiesToTry = append(strategiesToTry, gen2.StrategyDirectionFirst)
+		strategiesToTry = append(strategiesToTry, generator.StrategyDirectionFirst)
 	}
 
 	const maxRetriesPerStrategy = 5
@@ -167,7 +165,7 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 			var err error
 			// Vary seed for each attempt
 			currentSeed := (int64(levelID) * 31337) + int64(retry*12345) + int64(len(strat))
-			
+
 			genCfg, err = buildGenerationConfig(levelID, difficulty, config)
 			if err != nil {
 				result.Success = false
@@ -210,7 +208,7 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 				goto success
 			}
 		}
-		
+
 		common.Warning("  Level %d: Strategy %s failed after %d attempts. Trying next fallback...", levelID, strat, maxRetriesPerStrategy)
 	}
 
@@ -247,21 +245,21 @@ success:
 	return result
 }
 
-func buildGenerationConfig(levelID int, difficulty string, config Config) (gen2.GenerationConfig, error) {
+func buildGenerationConfig(levelID int, difficulty string, config Config) (generator.GenerationConfig, error) {
 	spec, ok := generator.DifficultySpecs[difficulty]
 	if !ok {
-		return gen2.GenerationConfig{}, fmt.Errorf("unknown difficulty: %s", difficulty)
+		return generator.GenerationConfig{}, fmt.Errorf("unknown difficulty: %s", difficulty)
 	}
 
 	gridRange, ok := generator.GridSizeRanges[difficulty]
 	if !ok {
-		return gen2.GenerationConfig{}, fmt.Errorf("no grid size config for difficulty: %s", difficulty)
+		return generator.GenerationConfig{}, fmt.Errorf("no grid size config for difficulty: %s", difficulty)
 	}
 
 	gridWidth := (gridRange.MinW + gridRange.MaxW) / 2
 	gridHeight := (gridRange.MinH + gridRange.MaxH) / 2
 	if gridWidth < 2 || gridHeight < 2 {
-		return gen2.GenerationConfig{}, fmt.Errorf("invalid grid size computed for %s", difficulty)
+		return generator.GenerationConfig{}, fmt.Errorf("invalid grid size computed for %s", difficulty)
 	}
 
 	totalCells := gridWidth * gridHeight
@@ -278,7 +276,7 @@ func buildGenerationConfig(levelID int, difficulty string, config Config) (gen2.
 		maxBackAttempts = 6
 	}
 
-	genCfg := gen2.GenerationConfig{
+	genCfg := generator.GenerationConfig{
 		LevelID:              levelID,
 		GridWidth:            gridWidth,
 		GridHeight:           gridHeight,
@@ -298,7 +296,7 @@ func buildGenerationConfig(levelID int, difficulty string, config Config) (gen2.
 	// Apply global MinCoverage override if provided (0 = no override)
 	if config.MinCoverage > 0 {
 		if config.MinCoverage < 0.0 || config.MinCoverage > 1.0 {
-			return gen2.GenerationConfig{}, fmt.Errorf("invalid MinCoverage override: %v", config.MinCoverage)
+			return generator.GenerationConfig{}, fmt.Errorf("invalid MinCoverage override: %v", config.MinCoverage)
 		}
 		genCfg.MinCoverage = config.MinCoverage
 	} else {
@@ -339,8 +337,8 @@ func computeVineCount(spec generator.DifficultySpec, totalCells int, targetCover
 	return vineCount
 }
 
-func generateLevel(genConfig gen2.GenerationConfig) (model.Level, gen2.GenerationStats, error) {
-	return gen2.GenerateLevel(genConfig)
+func generateLevel(genConfig generator.GenerationConfig) (model.Level, generator.GenerationStats, error) {
+	return generator.GenerateLevel(genConfig)
 }
 
 func determineStrategy(levelID int, difficulty string, config Config) string {
@@ -351,7 +349,7 @@ func determineStrategy(levelID int, difficulty string, config Config) string {
 
 	// Always use LIFO for Transcendent
 	if difficulty == "Transcendent" {
-		return gen2.StrategyCenterOut
+		return generator.StrategyCenterOut
 	}
 
 	// For other levels, introduce variety
@@ -363,17 +361,17 @@ func determineStrategy(levelID int, difficulty string, config Config) string {
 	case "Seedling", "Sprout":
 		// 80% Direction-First, 20% Center-Out
 		if r < 8 {
-			return gen2.StrategyDirectionFirst
+			return generator.StrategyDirectionFirst
 		}
-		return gen2.StrategyCenterOut
+		return generator.StrategyCenterOut
 	case "Nurturing", "Flourishing":
 		// 60% Direction-First, 40% Center-Out
 		if r < 6 {
-			return gen2.StrategyDirectionFirst
+			return generator.StrategyDirectionFirst
 		}
-		return gen2.StrategyCenterOut
+		return generator.StrategyCenterOut
 	default:
-		return gen2.StrategyDirectionFirst
+		return generator.StrategyDirectionFirst
 	}
 }
 
