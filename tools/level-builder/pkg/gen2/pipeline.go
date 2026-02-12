@@ -30,18 +30,21 @@ func GenerateRobust(config GenerationConfig) (model.Level, GenerationStats, erro
 		config.LevelID, config.GridWidth, config.GridHeight, seed)
 
 	var placer VinePlacementStrategy
-	switch config.Strategy {
-	case StrategyCenterOut:
-		placer = &CenterOutPlacer{}
-	case StrategyDirectionFirst:
-		placer = &DirectionFirstPlacer{}
-	default:
-		// Default to DirectionFirst for standard runs, or CenterOut if difficulty is Transcendent
+	var err error
+
+	// Use the registry to get the requested strategy
+	if config.Strategy == "" {
+		// Default validation in case config is empty, but batch should handle this
 		if config.Difficulty == "Transcendent" {
-			placer = &CenterOutPlacer{}
+			config.Strategy = StrategyCenterOut
 		} else {
-			placer = &DirectionFirstPlacer{}
+			config.Strategy = StrategyDirectionFirst
 		}
+	}
+
+	placer, err = GetStrategy(config.Strategy)
+	if err != nil {
+		return model.Level{}, stats, fmt.Errorf("failed to get strategy %s: %w", config.Strategy, err)
 	}
 
 	gapFiller := NewGapFiller(config.GridWidth, config.GridHeight, rng)

@@ -13,25 +13,9 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
 
-// getCoverageForDifficulty returns the target coverage for each difficulty tier.
-func getCoverageForDifficulty(difficulty string) float64 {
-	switch difficulty {
-	case "Tutorial":
-		return 0.70
-	case "Seedling":
-		return 0.85
-	case "Sprout":
-		return 0.80
-	case "Nurturing":
-		return 0.75
-	case "Flourishing":
-		return 0.70
-	case "Transcendent":
-		return 0.60
-	default:
-		return 0.75
-	}
-}
+// getCoverageForDifficulty is removed. We now enforce 100% coverage globally.
+const targetCoverage = 1.0
+
 
 // Config holds configuration for batch level generation.
 type Config struct {
@@ -156,74 +140,82 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 	var stats gen2.GenerationStats
 	var genCfg gen2.GenerationConfig
 
-	const maxRetries = 10
-	for retry := 0; retry < maxRetries; retry++ {
-		var err error
-		currentSeed := (int64(levelID) * 31337) + int64(retry*12345)
-		genCfg, err = buildGenerationConfig(levelID, difficulty, config)
-		if err != nil {
-			result.Success = false
-			result.Error = err.Error()
-			return result
-		}
-		genCfg.Seed = currentSeed
+	// Strategy Chain:
+	// 1. Requested Strategy (from config or auto-determined)
+	// 2. Center-Out (LIFO) - strongest solvability guarantee
+	// 3. Direction-First - backup for organic shapes
+	
+	strategiesToTry := []string{}
+	
+	// Determine primary strategy
+	primary := determineStrategy(levelID, difficulty, config)
+	strategiesToTry = append(strategiesToTry, primary)
 
-		if config.DryRun {
-			result.Success = true
-			result.GenerationMS = 0
-			result.Coverage = 85.0
-			result.BlockingDepth = 2
-			common.Info("DRY RUN: Would generate level %d (%s) at %s", levelID, difficulty, genCfg.OutputFile)
-			return result
-		}
+	// Add fallbacks if they aren't the primary
+	if primary != gen2.StrategyCenterOut {
+		strategiesToTry = append(strategiesToTry, gen2.StrategyCenterOut)
+	}
+	if primary != gen2.StrategyDirectionFirst && primary != gen2.StrategyCenterOut {
+		// Only add DirectionFirst if it wasn't already tried
+		strategiesToTry = append(strategiesToTry, gen2.StrategyDirectionFirst)
+	}
 
-		level, stats, err = generateLevel(genCfg)
+	const maxRetriesPerStrategy = 5
 
-		// If generation failed OR validation fails, try LIFO fallback (if not already LIFO)
-		valid := false
-		if err == nil {
-			_, err = validateGeneratedLevel(level)
-			if err == nil {
-				valid = true
+	for _, strat := range strategiesToTry {
+		for retry := 0; retry < maxRetriesPerStrategy; retry++ {
+			var err error
+			// Vary seed for each attempt
+			currentSeed := (int64(levelID) * 31337) + int64(retry*12345) + int64(len(strat))
+			
+			genCfg, err = buildGenerationConfig(levelID, difficulty, config)
+			if err != nil {
+				result.Success = false
+				result.Error = err.Error()
+				return result
 			}
-		}
+			genCfg.Seed = currentSeed
+			genCfg.Strategy = strat
 
-		if !valid {
-			// If we weren't already using LIFO, try LIFO fallback
-			if genCfg.Strategy != gen2.StrategyCenterOut {
-				common.Warning("  Level %d failed strategy %v or validation: %v. Attempting LIFO fallback (attempt %d)...", levelID, genCfg.Strategy, err, retry+1)
+			if config.DryRun {
+				result.Success = true
+				result.GenerationMS = 0
+				result.Coverage = 100.0
+				result.BlockingDepth = 2
+				common.Info("DRY RUN: Would generate level %d (%s) using %s", levelID, difficulty, strat)
+				return result
+			}
 
-				// Retry with LIFO on same seed
-				fallbackCfg := genCfg
-				fallbackCfg.Strategy = gen2.StrategyCenterOut
-				fallbackCfg.MinCoverage = 1.0 // LIFO always targets 100% coverage
-				level, stats, err = generateLevel(fallbackCfg)
-				if err == nil {
-					// Re-validate LIFO result
-					_, vErr := validateGeneratedLevel(level)
-					if vErr == nil {
-						common.Info("  ✓ Level %d generated using LIFO fallback (Guaranteed Solvable)", levelID)
-						valid = true
-						genCfg = fallbackCfg // use fallback config for final result
-					}
+			// Generate
+			level, stats, err = generateLevel(genCfg)
+
+			// Validate
+			valid := false
+			if err == nil {
+				_, valErr := validateGeneratedLevel(level)
+				if valErr == nil {
+					valid = true
+				} else {
+					// common.Warning("  Validation failed for level %d (%s): %v", levelID, strat, valErr)
 				}
 			}
-		}
 
-		if valid {
-			coverage, _ := validateGeneratedLevel(level)
-			result.Success = true
-			result.Coverage = coverage
-			result.BlockingDepth = 2
-			result.GenerationMS = time.Since(startTime).Milliseconds()
-			goto success
+			if valid {
+				coverage, _ := validateGeneratedLevel(level)
+				result.Success = true
+				result.Coverage = coverage
+				result.BlockingDepth = 2 // TODO: calculate actual blocking depth
+				result.GenerationMS = time.Since(startTime).Milliseconds()
+				common.Info("  ✓ Level %d generated using %s (Attempt %d)", levelID, strat, retry+1)
+				goto success
+			}
 		}
-
-		common.Warning("  Level %d: attempt %d failed. Retrying with different seed...", levelID, retry+1)
+		
+		common.Warning("  Level %d: Strategy %s failed after %d attempts. Trying next fallback...", levelID, strat, maxRetriesPerStrategy)
 	}
 
 	result.Success = false
-	result.Error = "failed to generate solvable level after maximum retries"
+	result.Error = "failed to generate solvable level after exhausting all strategies"
 	return result
 
 success:
@@ -273,7 +265,8 @@ func buildGenerationConfig(levelID int, difficulty string, config Config) (gen2.
 	}
 
 	totalCells := gridWidth * gridHeight
-	targetCoverage := getCoverageForDifficulty(difficulty)
+	// Enforce 100% coverage for all levels as per Design Doc
+	targetCoverage := 1.0
 	vineCount := computeVineCount(spec, totalCells, targetCoverage)
 	maxMoves := vineCount * 2
 
@@ -302,16 +295,15 @@ func buildGenerationConfig(levelID int, difficulty string, config Config) (gen2.
 		MaxBacktrackAttempts: maxBackAttempts,
 	}
 
-	if genCfg.Strategy == gen2.StrategyCenterOut {
-		genCfg.MinCoverage = 1.0
-	}
-
 	// Apply global MinCoverage override if provided (0 = no override)
 	if config.MinCoverage > 0 {
 		if config.MinCoverage < 0.0 || config.MinCoverage > 1.0 {
 			return gen2.GenerationConfig{}, fmt.Errorf("invalid MinCoverage override: %v", config.MinCoverage)
 		}
 		genCfg.MinCoverage = config.MinCoverage
+	} else {
+		// Default to 1.0 if no override
+		genCfg.MinCoverage = 1.0
 	}
 
 	if config.DumpDir != "" {

@@ -29,12 +29,22 @@ mkdir -p "$STATS_DIR"
 OUTPUT_DIR="$REPO_ROOT/assets/levels"
 mkdir -p "$OUTPUT_DIR"
 
+# Allow optional strategy variable
+STRATEGY=${1:-""}
+
 for i in {1..5}
 do
     echo "----------------------------------------"
     echo "Generating Module $i (aggressive LIFO)..."
     echo "----------------------------------------"
-    ./tools/level-builder/level-builder batch --module "$i" --overwrite --verbose --dump-dir "$FAILED_DUMP_DIR" --stats-out "$STATS_DIR" --log-file "$LOG_DIR/module_$i.log" --output-dir "$OUTPUT_DIR"
+    
+    CMD="./tools/level-builder/level-builder batch --module \"$i\" --overwrite --verbose --dump-dir \"$FAILED_DUMP_DIR\" --stats-out \"$STATS_DIR\" --log-file \"$LOG_DIR/module_$i.log\" --output-dir \"$OUTPUT_DIR\""
+    
+    if [ ! -z "$STRATEGY" ]; then
+        CMD="$CMD --strategy \"$STRATEGY\""
+    fi
+    
+    eval $CMD
 
     if [ $? -ne 0 ]; then
         echo "❌ Module $i generation failed!"
@@ -44,6 +54,16 @@ do
     sleep 2
 done
 
+echo "----------------------------------------"
+echo "Validating all generated levels..."
+echo "----------------------------------------"
+./tools/level-builder/level-builder validate --directory "$OUTPUT_DIR" --check-solvable --verbose
+
+if [ $? -ne 0 ]; then
+    echo "❌ Validation failed for some levels!"
+    exit 1
+fi
+
 echo "========================================"
-echo "🎉 All 5 modules generated successfully!"
+echo "🎉 All 5 modules generated and validated successfully!"
 echo "========================================"
