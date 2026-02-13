@@ -64,7 +64,7 @@ func (s *LegacyClearableStrategy) PlaceVines(cfg config.GenerationConfig, rng *r
 	// Anchor ratio - usually 0.3 in legacy code, but adaptive. Use default 0.3 for now.
 	anchorRatio := 0.3
 
-	vines, err := ClearableFirstPlacement(gridSize, spec, profile, genCfg, seed, anchorRatio, common.MinGridCoverage, false)
+	vines, err := ClearableFirstPlacement(gridSize, spec, profile, genCfg, seed, anchorRatio, common.MinGridCoverage, true)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -4,7 +4,7 @@ package common
 // This threshold balances between maximizing grid utilization and maintaining
 // solvability. Lower values are more lenient and allow more generation attempts
 // to succeed, while higher values create denser puzzles but may reduce success rates.
-const MinGridCoverage = 0.90
+const MinGridCoverage = 0.95
 
 // MinCoverageForDifficulty returns the minimum target grid coverage for each difficulty tier.
 // These values are used by regulators during generation and in the final structural validation.
@@ -15,15 +15,15 @@ func MinCoverageForDifficulty(difficulty string) float64 {
 	case "Seedling":
 		return 0.85
 	case "Sprout":
-		return 0.80
+		return 0.90
 	case "Nurturing":
-		return 0.75
+		return 0.95
 	case "Flourishing":
-		return 0.70
+		return 0.95
 	case "Transcendent":
-		return 0.60
+		return 0.95
 	default:
-		return 0.75
+		return 0.95
 	}
 }
 

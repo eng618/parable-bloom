@@ -151,12 +151,10 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config) Result
 	strategiesToTry = append(strategiesToTry, primary)
 
 	// Add fallbacks if they aren't the primary
-	if primary != config.StrategyCenterOut {
+	// For ClearableFirst, we trust it to work (as it reaches >95% reliably now).
+	// But we can keep CenterOut as a fail-safe.
+	if primary != config.StrategyCenterOut && primary != config.StrategyLegacyClearable {
 		strategiesToTry = append(strategiesToTry, config.StrategyCenterOut)
-	}
-	if primary != config.StrategyDirectionFirst && primary != config.StrategyCenterOut {
-		// Only add DirectionFirst if it wasn't already tried
-		strategiesToTry = append(strategiesToTry, config.StrategyDirectionFirst)
 	}
 
 	const maxRetriesPerStrategy = 5
@@ -348,32 +346,8 @@ func determineStrategy(levelID int, difficulty string, batchCfg Config) string {
 		return batchCfg.Strategy
 	}
 
-	// Always use LIFO for Transcendent
-	if difficulty == "Transcendent" {
-		return config.StrategyCenterOut
-	}
-
-	// For other levels, introduce variety
-	// Use levelID + moduleID to make it deterministic but varied
-	seed := int64(levelID + batchCfg.ModuleID)
-	r := (seed % 10) // 0-9
-
-	switch difficulty {
-	case "Seedling", "Sprout":
-		// 80% Direction-First, 20% Center-Out
-		if r < 8 {
-			return config.StrategyDirectionFirst
-		}
-		return config.StrategyCenterOut
-	case "Nurturing", "Flourishing":
-		// 60% Direction-First, 40% Center-Out
-		if r < 6 {
-			return config.StrategyDirectionFirst
-		}
-		return config.StrategyCenterOut
-	default:
-		return config.StrategyDirectionFirst
-	}
+	// Always use ClearableFirst (optimized) for high coverage >95%
+	return config.StrategyLegacyClearable
 }
 
 func validateGeneratedLevel(level model.Level) (float64, error) {

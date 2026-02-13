@@ -258,6 +258,7 @@ func ClearableFirstPlacement(
 						if !solver.IsSolvableGreedy() {
 							// Revert
 							vine.OrderedPath = origPath
+
 							continue
 						}
 						// Keep extension
@@ -268,6 +269,7 @@ func ClearableFirstPlacement(
 					} else {
 						// Non-greedy: just extend
 						vine.OrderedPath = append(vine.OrderedPath, n)
+
 						occupied[fmt.Sprintf("%d,%d", n.X, n.Y)] = true
 						lengthCounts[len(vine.OrderedPath)]++
 						extended = true

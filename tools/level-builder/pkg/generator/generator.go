@@ -429,7 +429,7 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 				vines, mask, err = strategies.TileGridIntoVines(gridSize, spec, profile, generatorCfg, attemptRng)
 			} else {
 				// Try clearable-first with adaptive anchor ratio
-				vines, err = strategies.ClearableFirstPlacement(gridSize, spec, profile, generatorCfg, attemptRng.Int63(), anchorRatio, common.MinGridCoverage, false)
+				vines, err = strategies.ClearableFirstPlacement(gridSize, spec, profile, generatorCfg, attemptRng.Int63(), anchorRatio, common.MinGridCoverage, true)
 			}
 			if err == nil {
 				// Generate mask for empty cells (inline mask generation)

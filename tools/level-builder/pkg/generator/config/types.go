@@ -21,8 +21,9 @@ type BlockingAnalyzer interface {
 }
 
 const (
-	StrategyDirectionFirst = "direction-first"
-	StrategyCenterOut      = "center-out" // LIFO
+	StrategyDirectionFirst  = "direction-first"
+	StrategyCenterOut       = "center-out"       // LIFO
+	StrategyLegacyClearable = "legacy-clearable" // Optimized ClearableFirst
 )
 
 // GenerationConfig holds configuration for level generation
