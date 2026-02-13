@@ -10,6 +10,7 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/ui"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
 
@@ -89,14 +90,20 @@ func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
 
 	startLevelID := (batchCfg.ModuleID-1)*21 + 1
 
+	spin := ui.NewSpinner(fmt.Sprintf("Generating Module %d...", batchCfg.ModuleID))
+	spin.Start()
+	defer spin.Stop()
+
 	tiers := getDifficultyTiers()
 	for tierIdx, tier := range tiers {
 		for levelInTier := 0; levelInTier < 5; levelInTier++ {
 			levelID := startLevelID + tierIdx*5 + levelInTier
+			spin.UpdateMessage("Generating Level %d/21 (%s)...", (tierIdx*5 + levelInTier + 1), tier.Name)
 			result := generateSingleLevel(
 				levelID,
 				tier.Name,
 				batchCfg,
+				spin,
 			)
 			batch.Levels = append(batch.Levels, result)
 			if result.Success {
@@ -109,10 +116,12 @@ func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
 
 	// Transcendent challenge level (position 21)
 	challengeLevelID := startLevelID + 20
+	spin.UpdateMessage("Generating Level 21/21 (Transcendent)...")
 	result := generateSingleLevel(
 		challengeLevelID,
 		"Transcendent",
 		batchCfg,
+		spin,
 	)
 	batch.Levels = append(batch.Levels, result)
 	if result.Success {
@@ -127,7 +136,7 @@ func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
 }
 
 // generateSingleLevel generates a single level and returns results.
-func generateSingleLevel(levelID int, difficulty string, batchCfg Config) Result {
+func generateSingleLevel(levelID int, difficulty string, batchCfg Config, spin *ui.Spinner) Result {
 	result := Result{
 		LevelID:    levelID,
 		Difficulty: difficulty,
@@ -176,7 +185,7 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config) Result
 				result.GenerationMS = 0
 				result.Coverage = 100.0
 				result.BlockingDepth = 2
-				common.Info("DRY RUN: Would generate level %d (%s) using %s", levelID, difficulty, strat)
+				spin.LogInfo("DRY RUN: Would generate level %d (%s) using %s", levelID, difficulty, strat)
 				return result
 			}
 
@@ -190,7 +199,7 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config) Result
 				if valErr == nil {
 					valid = true
 				} else {
-					common.Warning("  Validation failed for level %d (%s): %v", levelID, strat, valErr)
+					spin.LogWarning("  Validation failed for level %d (%s): %v", levelID, strat, valErr)
 				}
 			}
 
@@ -200,12 +209,12 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config) Result
 				result.Coverage = coverage
 				result.BlockingDepth = 2 // TODO: calculate actual blocking depth
 				result.GenerationMS = time.Since(startTime).Milliseconds()
-				common.Info("  ✓ Level %d generated using %s (Attempt %d)", levelID, strat, retry+1)
+				spin.LogInfo("  ✓ Level %d generated using %s (Attempt %d)", levelID, strat, retry+1)
 				goto success
 			}
 		}
 
-		common.Warning("  Level %d: Strategy %s failed after %d attempts. Trying next fallback...", levelID, strat, maxRetriesPerStrategy)
+		spin.LogWarning("  Level %d: Strategy %s failed after %d attempts. Trying next fallback...", levelID, strat, maxRetriesPerStrategy)
 	}
 
 	result.Success = false
@@ -232,10 +241,10 @@ success:
 		fname := fmt.Sprintf("%s/level_%d_stats.json", batchCfg.StatsOut, levelID)
 		b, _ := json.MarshalIndent(statsObj, "", "  ")
 		_ = os.WriteFile(fname, b, 0o644)
-		common.Info("Wrote per-level stats: %s", fname)
+		spin.LogInfo("Wrote per-level stats: %s", fname)
 	}
 
-	common.Info("Generated level %d (%s) - Coverage: %.1f%%, Time: %dms",
+	spin.LogInfo("Generated level %d (%s) - Coverage: %.1f%%, Time: %dms",
 		levelID, difficulty, result.Coverage, result.GenerationMS)
 
 	return result
