@@ -1,15 +1,18 @@
-package generator
+package strategies_test
 
 import (
 	"fmt"
 	"path/filepath"
 	"testing"
+
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 )
 
 // TestGeneratedLevelsHaveUniqueVineIDs verifies that all generated vines
 // have unique IDs. Uses small grids and relaxed coverage for test stability.
 func TestGeneratedLevelsHaveUniqueVineIDs(t *testing.T) {
-	tests := []GenerationConfig{
+	tests := []config.GenerationConfig{
 		{LevelID: 1, GridWidth: 5, GridHeight: 6, VineCount: 4, Randomize: false, Seed: 11111, MinCoverage: 0.70, Overwrite: true, Difficulty: "Seedling"},
 		{LevelID: 2, GridWidth: 5, GridHeight: 6, VineCount: 4, Randomize: false, Seed: 22222, MinCoverage: 0.70, Overwrite: true, Difficulty: "Seedling"},
 		{LevelID: 3, GridWidth: 5, GridHeight: 6, VineCount: 4, Randomize: false, Seed: 33333, MinCoverage: 0.70, Overwrite: true, Difficulty: "Seedling"},
@@ -18,7 +21,7 @@ func TestGeneratedLevelsHaveUniqueVineIDs(t *testing.T) {
 	for _, cfg := range tests {
 		tmpDir := t.TempDir()
 		cfg.OutputFile = filepath.Join(tmpDir, fmt.Sprintf("level_%d.json", cfg.LevelID))
-		level, _, err := GenerateLevelLIFO(cfg)
+		level, _, err := generator.GenerateLevelLIFO(cfg)
 		if err != nil {
 			t.Fatalf("generation failed for seed %d: %v", cfg.Seed, err)
 		}

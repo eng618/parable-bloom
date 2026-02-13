@@ -1,8 +1,12 @@
-package generator
+package utils
+
+import (
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+)
 
 // GetPresetProfile returns a VarietyProfile tuned for the given difficulty tier.
-func GetPresetProfile(difficulty string) VarietyProfile {
-	spec := DifficultySpecs[difficulty]
+func GetPresetProfile(difficulty string) config.VarietyProfile {
+	spec := config.DifficultySpecs[difficulty]
 	minL, maxL := spec.AvgLengthRange[0], spec.AvgLengthRange[1]
 	median := (minL + maxL) / 2
 
@@ -29,7 +33,7 @@ func GetPresetProfile(difficulty string) VarietyProfile {
 		regionBias = "balanced"
 	}
 
-	return VarietyProfile{
+	return config.VarietyProfile{
 		LengthMix:  lengthMix,
 		TurnMix:    turnMix,
 		RegionBias: regionBias,
@@ -38,28 +42,28 @@ func GetPresetProfile(difficulty string) VarietyProfile {
 }
 
 // GetGeneratorConfigForDifficulty returns tuned generator parameters for a difficulty tier.
-func GetGeneratorConfigForDifficulty(difficulty string) GeneratorConfig {
+func GetGeneratorConfigForDifficulty(difficulty string) config.GeneratorConfig {
 	switch difficulty {
 	case "Tutorial":
-		return GeneratorConfig{MaxSeedRetries: 8, LocalRepairRadius: 1, RepairRetries: 1}
+		return config.GeneratorConfig{MaxSeedRetries: 8, LocalRepairRadius: 1, RepairRetries: 1}
 	case "Seedling":
-		return GeneratorConfig{MaxSeedRetries: 12, LocalRepairRadius: 1, RepairRetries: 2}
+		return config.GeneratorConfig{MaxSeedRetries: 12, LocalRepairRadius: 1, RepairRetries: 2}
 	case "Sprout":
-		return GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
+		return config.GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
 	case "Nurturing":
-		return GeneratorConfig{MaxSeedRetries: 40, LocalRepairRadius: 3, RepairRetries: 4}
+		return config.GeneratorConfig{MaxSeedRetries: 40, LocalRepairRadius: 3, RepairRetries: 4}
 	case "Flourishing":
-		return GeneratorConfig{MaxSeedRetries: 60, LocalRepairRadius: 4, RepairRetries: 6}
+		return config.GeneratorConfig{MaxSeedRetries: 60, LocalRepairRadius: 4, RepairRetries: 6}
 	case "Transcendent":
-		return GeneratorConfig{MaxSeedRetries: 120, LocalRepairRadius: 5, RepairRetries: 8}
+		return config.GeneratorConfig{MaxSeedRetries: 120, LocalRepairRadius: 5, RepairRetries: 8}
 	default:
-		return GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
+		return config.GeneratorConfig{MaxSeedRetries: 20, LocalRepairRadius: 2, RepairRetries: 3}
 	}
 }
 
 // GraceForDifficulty returns the default grace value for a difficulty.
 func GraceForDifficulty(difficulty string) int {
-	if spec, ok := DifficultySpecs[difficulty]; ok {
+	if spec, ok := config.DifficultySpecs[difficulty]; ok {
 		return spec.DefaultGrace
 	}
 	return 3
@@ -67,7 +71,7 @@ func GraceForDifficulty(difficulty string) int {
 
 // DefaultGridSize returns default grid size for a difficulty (used when not specified).
 func DefaultGridSize(difficulty string) []int {
-	ranges, ok := GridSizeRanges[difficulty]
+	ranges, ok := config.GridSizeRanges[difficulty]
 	if !ok {
 		return []int{9, 12}
 	}

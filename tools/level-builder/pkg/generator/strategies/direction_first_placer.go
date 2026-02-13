@@ -1,4 +1,4 @@
-package generator
+package strategies
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -30,7 +31,7 @@ type VinePlacementStats struct {
 }
 
 // PlaceVines places vines using direction-first strategy with extension passes
-func (p *DirectionFirstPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, stats *GenerationStats) ([]model.Vine, map[string]string, error) {
+func (p *DirectionFirstPlacer) PlaceVines(config config.GenerationConfig, rng *rand.Rand, stats *config.GenerationStats) ([]model.Vine, map[string]string, error) {
 	w, h := config.GridWidth, config.GridHeight
 	totalCells := w * h
 
@@ -95,7 +96,7 @@ func (p *DirectionFirstPlacer) PlaceVines(config GenerationConfig, rng *rand.Ran
 }
 
 // calculateVineLengths computes target lengths based on difficulty specs
-func (p *DirectionFirstPlacer) calculateVineLengths(config GenerationConfig, rng *rand.Rand) []int {
+func (p *DirectionFirstPlacer) calculateVineLengths(config config.GenerationConfig, rng *rand.Rand) []int {
 	totalCells := config.GridWidth * config.GridHeight
 
 	// Target total cells to fill based on coverage
@@ -150,7 +151,6 @@ func (p *DirectionFirstPlacer) growDirectionFirstVine(
 	occupied map[string]string,
 	rng *rand.Rand,
 ) (model.Vine, map[string]string, error) {
-
 	// Try multiple seeds to find one that works
 	maxSeedAttempts := 20
 	for attempt := 0; attempt < maxSeedAttempts; attempt++ {
@@ -231,37 +231,54 @@ func (p *DirectionFirstPlacer) isCandidateCell(x, y, w, h int, occupied map[stri
 	return p.hasFreeNeighbor(x, y, w, h, occupied)
 }
 
-// collectCandidateCells collects empty cells with free neighbors, categorized as edge or interior
-func (p *DirectionFirstPlacer) collectCandidateCells(w, h int, occupied map[string]string) (edge, interior []model.Point) {
+// collectCandidateCells collects empty cells with free neighbors, categorized as corner, edge or interior
+func (p *DirectionFirstPlacer) collectCandidateCells(w, h int, occupied map[string]string) (corner, edge, interior []model.Point) {
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			if !p.isCandidateCell(x, y, w, h, occupied) {
 				continue
 			}
 			pt := model.Point{X: x, Y: y}
-			if isEdgeCell(x, y, w, h) {
+			if p.isCornerCell(x, y, w, h) {
+				corner = append(corner, pt)
+			} else if isEdgeCell(x, y, w, h) {
 				edge = append(edge, pt)
 			} else {
 				interior = append(interior, pt)
 			}
 		}
 	}
-	return edge, interior
+	return corner, edge, interior
 }
 
 // chooseSeed finds a suitable starting cell for a new vine
 func (p *DirectionFirstPlacer) chooseSeed(w, h int, occupied map[string]string, rng *rand.Rand) *model.Point {
-	edgeCandidates, interiorCandidates := p.collectCandidateCells(w, h, occupied)
+	cornerCandidates, edgeCandidates, interiorCandidates := p.collectCandidateCells(w, h, occupied)
 
-	// Prefer edges (80% chance if available)
+	// Prefer corners (90% chance if available)
+	if len(cornerCandidates) > 0 && rng.Float64() < 0.9 {
+		return &cornerCandidates[rng.Intn(len(cornerCandidates))]
+	}
+
+	// Then prefer edges (80% chance if available)
 	if len(edgeCandidates) > 0 && (len(interiorCandidates) == 0 || rng.Float64() < 0.8) {
 		return &edgeCandidates[rng.Intn(len(edgeCandidates))]
 	}
+
 	if len(interiorCandidates) > 0 {
 		return &interiorCandidates[rng.Intn(len(interiorCandidates))]
 	}
 
+	// Fallback to any available if preferences failed but candidates exist (e.g. only corners left but rng > 0.9)
+	if len(cornerCandidates) > 0 {
+		return &cornerCandidates[rng.Intn(len(cornerCandidates))]
+	}
+
 	return nil
+}
+
+func (p *DirectionFirstPlacer) isCornerCell(x, y, w, h int) bool {
+	return (x == 0 || x == w-1) && (y == 0 || y == h-1)
 }
 
 // hasFreeNeighbor checks if a cell has at least one unoccupied orthogonal neighbor

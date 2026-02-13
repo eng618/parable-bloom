@@ -1,4 +1,4 @@
-package generator
+package strategies
 
 import (
 	"fmt"
@@ -6,14 +6,16 @@ import (
 	"math/rand"
 	"sort"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 // calculateVineLengths computes the initial vine count and their lengths based on constraints and profile.
 func calculateVineLengths(
 	gridSize []int,
-	constraints DifficultySpec,
-	profile VarietyProfile,
+	constraints config.DifficultySpec,
+	profile config.VarietyProfile,
 	rng *rand.Rand,
 ) (int, []int) {
 	w := gridSize[0]
@@ -78,8 +80,8 @@ func calculateVineLengths(
 func growVines(
 	gridSize []int,
 	lengths []int,
-	profile VarietyProfile,
-	cfg GeneratorConfig,
+	profile config.VarietyProfile,
+	cfg config.GeneratorConfig,
 	rng *rand.Rand,
 ) ([]model.Vine, map[string]bool, error) {
 	w := gridSize[0]
@@ -132,9 +134,9 @@ func growVines(
 // difficulty constraints and a variety profile. It returns vines and a mask for empty cells.
 func TileGridIntoVines(
 	gridSize []int,
-	constraints DifficultySpec,
-	profile VarietyProfile,
-	cfg GeneratorConfig,
+	constraints config.DifficultySpec,
+	profile config.VarietyProfile,
+	cfg config.GeneratorConfig,
 	rng *rand.Rand,
 ) ([]model.Vine, *model.Mask, error) {
 	_, lengths := calculateVineLengths(gridSize, constraints, profile, rng)
@@ -171,8 +173,8 @@ func GrowFromSeed(
 	occupied map[string]bool,
 	gridSize []int,
 	targetLen int,
-	profile VarietyProfile,
-	_ GeneratorConfig,
+	profile config.VarietyProfile,
+	_ config.GeneratorConfig,
 	rng *rand.Rand,
 ) (model.Vine, map[string]bool, error) {
 	w := gridSize[0]
@@ -180,8 +182,8 @@ func GrowFromSeed(
 
 	// DIRECTION-FIRST APPROACH: Choose head direction before growing vine
 	// This dramatically improves solvability by ensuring vines point toward exits
-	desiredHeadDir := chooseExitDirection(seed, gridSize, profile.DirBalance, rng)
-	headDx, headDy := deltaForDirection(desiredHeadDir)
+	desiredHeadDir := utils.ChooseExitDirection(seed, gridSize, profile.DirBalance, rng)
+	headDx, headDy := utils.DeltaForDirection(desiredHeadDir)
 
 	// Start path with seed as the head
 	path := []model.Point{seed}
@@ -230,7 +232,7 @@ func GrowFromSeed(
 		if len(path) == 1 {
 			// First segment after head: prefer growing opposite to head direction
 			// This creates the "neck" segment
-			neckDx, neckDy := deltaForDirection(oppositeDirection(desiredHeadDir))
+			neckDx, neckDy := utils.DeltaForDirection(utils.OppositeDirection(desiredHeadDir))
 			neck := model.Point{X: head.X + neckDx, Y: head.Y + neckDy}
 
 			// Check if neck position is available
@@ -418,7 +420,7 @@ func availableNeighbors(p model.Point, w, h int, occ map[string]bool) []model.Po
 func pickSeedWithRegionBias(
 	w, h int,
 	occ map[string]bool,
-	profile VarietyProfile,
+	profile config.VarietyProfile,
 	rng *rand.Rand,
 ) *model.Point {
 	// if no profile fields set, fall back to uniform
@@ -475,7 +477,7 @@ func pickSeedWithRegionBias(
 }
 
 // chooseLengthBucket picks short/medium/long based on LengthMix weights.
-func chooseLengthBucket(profile VarietyProfile, rng *rand.Rand) string {
+func chooseLengthBucket(profile config.VarietyProfile, rng *rand.Rand) string {
 	if len(profile.LengthMix) == 0 {
 		return "medium"
 	}

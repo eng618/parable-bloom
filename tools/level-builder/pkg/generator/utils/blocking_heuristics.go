@@ -1,4 +1,4 @@
-package generator
+package utils
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ func BuildBlockingGraph(vines []model.Vine) map[string]map[string]bool {
 			continue
 		}
 		head := b.OrderedPath[0]
-		dx, dy := deltaForDirection(b.HeadDirection)
+		dx, dy := DeltaForDirection(b.HeadDirection)
 		tx := head.X + dx
 		ty := head.Y + dy
 		key := fmt.Sprintf("%d,%d", tx, ty)

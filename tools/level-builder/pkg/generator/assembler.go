@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -20,12 +21,12 @@ func convertCommonPointsToModel(commonPoints []model.Point) []model.Point {
 }
 
 // AssembleLevel creates the final level data structure
-func (a *LevelAssembler) AssembleLevel(config GenerationConfig, vines []model.Vine, mask *model.Mask, seed int64) model.Level {
+func (a *LevelAssembler) AssembleLevel(cfg config.GenerationConfig, vines []model.Vine, mask *model.Mask, seed int64) model.Level {
 	// Get difficulty spec for this tier
-	spec, ok := DifficultySpecs[config.Difficulty]
+	spec, ok := config.DifficultySpecs[cfg.Difficulty]
 	if !ok {
 		// Fallback to Seedling if unknown difficulty
-		spec = DifficultySpecs["Seedling"]
+		spec = config.DifficultySpecs["Seedling"]
 	}
 
 	// Convert vines to model format with color_index assignment
@@ -63,15 +64,15 @@ func (a *LevelAssembler) AssembleLevel(config GenerationConfig, vines []model.Vi
 	}
 
 	// Determine complexity based on difficulty tier
-	complexity := a.complexityForDifficulty(config.Difficulty)
+	complexity := a.complexityForDifficulty(cfg.Difficulty)
 
 	level := model.Level{
-		ID:          config.LevelID,
-		Name:        fmt.Sprintf("Level %d", config.LevelID),
-		Difficulty:  config.Difficulty,
-		GridSize:    []int{config.GridWidth, config.GridHeight},
+		ID:          cfg.LevelID,
+		Name:        fmt.Sprintf("Level %d", cfg.LevelID),
+		Difficulty:  cfg.Difficulty,
+		GridSize:    []int{cfg.GridWidth, cfg.GridHeight},
 		Vines:       modelVines,
-		MaxMoves:    config.MaxMoves,
+		MaxMoves:    cfg.MaxMoves,
 		MinMoves:    minMoves,
 		Complexity:  complexity,
 		Grace:       spec.DefaultGrace,
@@ -105,7 +106,7 @@ func (a *LevelAssembler) complexityForDifficulty(difficulty string) string {
 
 // generateColorScheme creates a color palette using the shared ColorPalette
 func (a *LevelAssembler) generateColorScheme(colorCount int) []string {
-	palette := ColorPalette
+	palette := config.ColorPalette
 	if colorCount > len(palette) {
 		colorCount = len(palette)
 	}

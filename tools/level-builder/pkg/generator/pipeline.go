@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/strategies"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -16,50 +18,50 @@ import (
 // 2. Recovery (Local Backtracking)
 // 3. Aggressive Gap Filling
 // 4. Mandatory Masking
-func GenerateRobust(config GenerationConfig) (model.Level, GenerationStats, error) {
+func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.GenerationStats, error) {
 	startTime := time.Now()
-	stats := GenerationStats{}
+	stats := config.GenerationStats{}
 
 	// 1. Setup
-	seed := config.Seed
-	if config.Randomize {
+	seed := cfg.Seed
+	if cfg.Randomize {
 		seed = cryptoSeedInt64()
 	}
 	rng := math_rand.New(math_rand.NewSource(seed))
 	common.Verbose("Starting Robust Generation for Level %d (Size: %dx%d, Seed: %d)",
-		config.LevelID, config.GridWidth, config.GridHeight, seed)
+		cfg.LevelID, cfg.GridWidth, cfg.GridHeight, seed)
 
-	var placer VinePlacementStrategy
+	var placer config.VinePlacementStrategy
 	var err error
 
 	// Use the registry to get the requested strategy
-	if config.Strategy == "" {
+	if cfg.Strategy == "" {
 		// Default validation in case config is empty, but batch should handle this
-		if config.Difficulty == "Transcendent" {
-			config.Strategy = StrategyCenterOut
+		if cfg.Difficulty == "Transcendent" {
+			cfg.Strategy = config.StrategyCenterOut
 		} else {
-			config.Strategy = StrategyDirectionFirst
+			cfg.Strategy = config.StrategyDirectionFirst
 		}
 	}
 
-	placer, err = GetStrategy(config.Strategy)
+	placer, err = GetStrategy(cfg.Strategy)
 	if err != nil {
-		return model.Level{}, stats, fmt.Errorf("failed to get strategy %s: %w", config.Strategy, err)
+		return model.Level{}, stats, fmt.Errorf("failed to get strategy %s: %w", cfg.Strategy, err)
 	}
 
-	gapFiller := NewGapFiller(config.GridWidth, config.GridHeight, rng)
+	gapFiller := strategies.NewGapFiller(cfg.GridWidth, cfg.GridHeight, rng)
 	assembler := &LevelAssembler{}
 
 	// 2. Initial Placement Phase
 	// Using "CenterOutPlacer" because it guarantees LIFO solvability by construction
-	vines, occupied, err := placer.PlaceVines(config, rng, &stats)
+	vines, occupied, err := placer.PlaceVines(cfg, rng, &stats)
 	// Note: PlaceVines internally handles backtracking for primary vines.
 	// If it returns error, it failed even after retries.
 	if err != nil {
 		// If no failure dump was written by the placer (e.g. DirectionFirst doesn't use backtracking helper),
 		// write one now to ensure we have a deterministic record of the failure.
 		if stats.DumpsProduced == 0 {
-			_ = writeFailureDump(config, seed, 0, err.Error(), vines, occupied, &stats)
+			_ = strategies.WriteFailureDump(cfg, seed, 0, err.Error(), vines, occupied, &stats)
 		}
 
 		if len(vines) < 2 {
@@ -99,7 +101,7 @@ func GenerateRobust(config GenerationConfig) (model.Level, GenerationStats, erro
 	}
 
 	common.Verbose("Added %d filler vines. Total coverage: %d/%d",
-		len(fillerVines), len(occupied), config.GridWidth*config.GridHeight)
+		len(fillerVines), len(occupied), cfg.GridWidth*cfg.GridHeight)
 
 	// 4. Sanitize Phase
 	// Ensure unique IDs before final assembly
@@ -116,14 +118,14 @@ func GenerateRobust(config GenerationConfig) (model.Level, GenerationStats, erro
 	// 5. Mandatory Masking Phase
 	// Any cell not in finalOccupied MUST be masked to ensure 100% playable coverage
 	var mask *model.Mask
-	emptyCells := findEmptyCells(config.GridWidth, config.GridHeight, finalOccupied)
+	emptyCells := findEmptyCells(cfg.GridWidth, cfg.GridHeight, finalOccupied)
 	if len(emptyCells) > 0 {
 		common.Verbose("Masking %d empty cells to guarantee 100%% coverage", len(emptyCells))
 		mask = &model.Mask{Mode: "hide", Points: emptyCells}
 	}
 
 	// 6. Assembly
-	level := assembler.AssembleLevel(config, vines, mask, seed)
+	level := assembler.AssembleLevel(cfg, vines, mask, seed)
 
 	stats.GenerationTime = time.Since(startTime)
 	stats.GenerationTime = time.Since(startTime)

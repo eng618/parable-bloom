@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/strategies"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
@@ -347,17 +350,17 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 	startTime := time.Now()
 
 	// Get difficulty-specific constraints
-	spec, ok := DifficultySpecs[difficulty]
+	spec, ok := config.DifficultySpecs[difficulty]
 	if !ok {
 		return model.Level{}, fmt.Errorf("unknown difficulty: %s", difficulty)
 	}
 
 	// Get grid size for this level
-	gridSize := GridSizeForLevel(id)
+	gridSize := utils.GridSizeForLevel(id)
 
 	// Get variety profile and generator config for this difficulty
-	profile := GetPresetProfile(difficulty)
-	generatorCfg := GetGeneratorConfigForDifficulty(difficulty)
+	profile := utils.GetPresetProfile(difficulty)
+	generatorCfg := utils.GetGeneratorConfigForDifficulty(difficulty)
 
 	originalOccupancy := spec.MinGridOccupancy
 	common.Verbose("Level %d: difficulty=%s, grid=%dx%d, target_occupancy=%.1f%%, max_attempts=%d",
@@ -423,10 +426,10 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 			if tilingFailures > 100 {
 				// Last-resort: try standard tiling as a fallback to escape pathological cases
 				common.Verbose("⚠️  Falling back to TileGridIntoVines after %d tiling failures", tilingFailures)
-				vines, mask, err = TileGridIntoVines(gridSize, spec, profile, generatorCfg, attemptRng)
+				vines, mask, err = strategies.TileGridIntoVines(gridSize, spec, profile, generatorCfg, attemptRng)
 			} else {
 				// Try clearable-first with adaptive anchor ratio
-				vines, err = ClearableFirstPlacement(gridSize, spec, profile, generatorCfg, attemptRng.Int63(), anchorRatio, false)
+				vines, err = strategies.ClearableFirstPlacement(gridSize, spec, profile, generatorCfg, attemptRng.Int63(), anchorRatio, common.MinGridCoverage, false)
 			}
 			if err == nil {
 				// Generate mask for empty cells (inline mask generation)
@@ -451,10 +454,10 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 			}
 		} else if difficulty == "Nurturing" || difficulty == "Flourishing" || difficulty == "Transcendent" {
 			// For higher difficulties on normal grids, use solver-aware placement
-			vines, mask, err = SolverAwarePlacement(gridSize, spec, profile, generatorCfg, attemptRng)
+			vines, mask, err = strategies.SolverAwarePlacement(gridSize, spec, profile, generatorCfg, attemptRng)
 		} else {
 			// Use standard tiling for easier difficulties on normal grids
-			vines, mask, err = TileGridIntoVines(gridSize, spec, profile, generatorCfg, attemptRng)
+			vines, mask, err = strategies.TileGridIntoVines(gridSize, spec, profile, generatorCfg, attemptRng)
 		}
 
 		if err != nil {
@@ -466,7 +469,7 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 		}
 
 		// Assign color indices from palette
-		assignColorIndices(vines, len(ColorPalette), rng)
+		assignColorIndices(vines, len(config.ColorPalette), rng)
 
 		// Build level
 		level = model.Level{
@@ -478,8 +481,8 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 			MaxMoves:    0, // Will calculate below
 			MinMoves:    0, // Will calculate below
 			Complexity:  common.ComplexityForDifficulty(difficulty),
-			Grace:       GraceForDifficulty(difficulty),
-			ColorScheme: ColorPalette, // Use standard palette
+			Grace:       utils.GraceForDifficulty(difficulty),
+			ColorScheme: config.ColorPalette, // Use standard palette
 			Mask:        mask,
 
 			// Generation metadata

@@ -2,12 +2,15 @@ package generator
 
 import (
 	"testing"
+
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/strategies"
 )
 
 func TestRegisterStrategy(t *testing.T) {
 	// Register a test strategy
-	dummyFactory := func() VinePlacementStrategy {
-		return &CenterOutPlacer{} // Revert to known type for simplicity, or mock if possible
+	dummyFactory := func() config.VinePlacementStrategy {
+		return &strategies.CenterOutPlacer{} // Revert to known type for simplicity, or mock if possible
 	}
 	RegisterStrategy("test-strategy", "A test strategy", dummyFactory)
 
@@ -45,8 +48,8 @@ func TestGetUnknownStrategy(t *testing.T) {
 
 func TestCoreStrategiesRegistered(t *testing.T) {
 	// Verify core strategies are present
-	expected := []string{StrategyCenterOut, StrategyDirectionFirst, "circuit-board"}
-	
+	expected := []string{config.StrategyCenterOut, config.StrategyDirectionFirst, "circuit-board"}
+
 	for _, name := range expected {
 		_, err := GetStrategy(name)
 		if err != nil {

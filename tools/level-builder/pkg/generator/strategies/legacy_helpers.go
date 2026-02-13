@@ -1,4 +1,4 @@
-package generator
+package strategies
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -35,8 +36,8 @@ func backtrackVines(vines []model.Vine, occupied map[string]string, count int) (
 	return vines, occupied
 }
 
-// writeFailureDump writes a deterministic dump (JSON + ASCII render) for failing generation states.
-func writeFailureDump(config GenerationConfig, seed int64, attempt int, message string, vines []model.Vine, occupied map[string]string, stats *GenerationStats) error {
+// WriteFailureDump writes a deterministic dump (JSON + ASCII render) for failing generation states.
+func WriteFailureDump(config config.GenerationConfig, seed int64, attempt int, message string, vines []model.Vine, occupied map[string]string, stats *config.GenerationStats) error {
 	// Default dump dir
 	dumpDir := config.DumpDir
 	if dumpDir == "" {
@@ -110,7 +111,7 @@ func writeFailureDump(config GenerationConfig, seed int64, attempt int, message 
 }
 
 // Helper func needed for writeFailureDump
-func calculateGridCoverage(config GenerationConfig, occupied map[string]string) float64 {
+func calculateGridCoverage(config config.GenerationConfig, occupied map[string]string) float64 {
 	totalCells := config.GridWidth * config.GridHeight
 	occupiedCells := len(occupied)
 	return float64(occupiedCells) / float64(totalCells)
@@ -120,10 +121,12 @@ func calculateGridCoverage(config GenerationConfig, occupied map[string]string) 
 func convertVinesToModel(vines []model.Vine) []model.Vine {
 	result := make([]model.Vine, len(vines))
 	for i, v := range vines {
+		path := make([]model.Point, len(v.OrderedPath))
+		copy(path, v.OrderedPath)
 		result[i] = model.Vine{
 			ID:            v.ID,
 			HeadDirection: v.HeadDirection,
-			OrderedPath:   convertCommonPointsToModel(v.OrderedPath), // from assembler.go? No wait, assembler.go has it
+			OrderedPath:   path,
 		}
 	}
 	return result

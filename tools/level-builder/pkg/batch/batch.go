@@ -8,6 +8,7 @@ import (
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
@@ -55,38 +56,38 @@ type ModuleBatch struct {
 type difficultyTier struct {
 	Index int
 	Name  string
-	Specs generator.DifficultySpec
+	Specs config.DifficultySpec
 }
 
 // getDifficultyTiers returns the 4 non-transcendent difficulty tiers in order.
 func getDifficultyTiers() []difficultyTier {
 	return []difficultyTier{
-		{Index: 0, Name: "Seedling", Specs: generator.DifficultySpecs["Seedling"]},
-		{Index: 1, Name: "Sprout", Specs: generator.DifficultySpecs["Sprout"]},
-		{Index: 2, Name: "Nurturing", Specs: generator.DifficultySpecs["Nurturing"]},
-		{Index: 3, Name: "Flourishing", Specs: generator.DifficultySpecs["Flourishing"]},
+		{Index: 0, Name: "Seedling", Specs: config.DifficultySpecs["Seedling"]},
+		{Index: 1, Name: "Sprout", Specs: config.DifficultySpecs["Sprout"]},
+		{Index: 2, Name: "Nurturing", Specs: config.DifficultySpecs["Nurturing"]},
+		{Index: 3, Name: "Flourishing", Specs: config.DifficultySpecs["Flourishing"]},
 	}
 }
 
 // GenerateModule generates all 21 levels for a module (5 per tier + 1 Transcendent).
 // Pattern: levels 1-5 (Seedling), 6-10 (Sprout), 11-15 (Nurturing), 16-20 (Flourishing), 21 (Transcendent).
 // For module N, level IDs start at (N-1)*21+1.
-func GenerateModule(config Config) (*ModuleBatch, error) {
-	if config.ModuleID < 1 || config.ModuleID > 5 {
-		return nil, fmt.Errorf("invalid module ID: %d (must be 1-5)", config.ModuleID)
+func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
+	if batchCfg.ModuleID < 1 || batchCfg.ModuleID > 5 {
+		return nil, fmt.Errorf("invalid module ID: %d (must be 1-5)", batchCfg.ModuleID)
 	}
 
-	if config.OutputDir == "" {
-		config.OutputDir = "assets/levels"
+	if batchCfg.OutputDir == "" {
+		batchCfg.OutputDir = "assets/levels"
 	}
 
 	startTime := time.Now()
 	batch := &ModuleBatch{
-		ModuleID: config.ModuleID,
+		ModuleID: batchCfg.ModuleID,
 		Levels:   []Result{},
 	}
 
-	startLevelID := (config.ModuleID-1)*21 + 1
+	startLevelID := (batchCfg.ModuleID-1)*21 + 1
 
 	tiers := getDifficultyTiers()
 	for tierIdx, tier := range tiers {
@@ -95,7 +96,7 @@ func GenerateModule(config Config) (*ModuleBatch, error) {
 			result := generateSingleLevel(
 				levelID,
 				tier.Name,
-				config,
+				batchCfg,
 			)
 			batch.Levels = append(batch.Levels, result)
 			if result.Success {
@@ -111,7 +112,7 @@ func GenerateModule(config Config) (*ModuleBatch, error) {
 	result := generateSingleLevel(
 		challengeLevelID,
 		"Transcendent",
-		config,
+		batchCfg,
 	)
 	batch.Levels = append(batch.Levels, result)
 	if result.Success {
@@ -126,7 +127,7 @@ func GenerateModule(config Config) (*ModuleBatch, error) {
 }
 
 // generateSingleLevel generates a single level and returns results.
-func generateSingleLevel(levelID int, difficulty string, config Config) Result {
+func generateSingleLevel(levelID int, difficulty string, batchCfg Config) Result {
 	result := Result{
 		LevelID:    levelID,
 		Difficulty: difficulty,
@@ -135,8 +136,8 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 	startTime := time.Now()
 
 	var level model.Level
-	var stats generator.GenerationStats
-	var genCfg generator.GenerationConfig
+	var stats config.GenerationStats
+	var genCfg config.GenerationConfig
 
 	// Strategy Chain:
 	// 1. Requested Strategy (from config or auto-determined)
@@ -146,16 +147,16 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 	strategiesToTry := []string{}
 
 	// Determine primary strategy
-	primary := determineStrategy(levelID, difficulty, config)
+	primary := determineStrategy(levelID, difficulty, batchCfg)
 	strategiesToTry = append(strategiesToTry, primary)
 
 	// Add fallbacks if they aren't the primary
-	if primary != generator.StrategyCenterOut {
-		strategiesToTry = append(strategiesToTry, generator.StrategyCenterOut)
+	if primary != config.StrategyCenterOut {
+		strategiesToTry = append(strategiesToTry, config.StrategyCenterOut)
 	}
-	if primary != generator.StrategyDirectionFirst && primary != generator.StrategyCenterOut {
+	if primary != config.StrategyDirectionFirst && primary != config.StrategyCenterOut {
 		// Only add DirectionFirst if it wasn't already tried
-		strategiesToTry = append(strategiesToTry, generator.StrategyDirectionFirst)
+		strategiesToTry = append(strategiesToTry, config.StrategyDirectionFirst)
 	}
 
 	const maxRetriesPerStrategy = 5
@@ -166,7 +167,7 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 			// Vary seed for each attempt
 			currentSeed := (int64(levelID) * 31337) + int64(retry*12345) + int64(len(strat))
 
-			genCfg, err = buildGenerationConfig(levelID, difficulty, config)
+			genCfg, err = buildGenerationConfig(levelID, difficulty, batchCfg)
 			if err != nil {
 				result.Success = false
 				result.Error = err.Error()
@@ -175,7 +176,7 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 			genCfg.Seed = currentSeed
 			genCfg.Strategy = strat
 
-			if config.DryRun {
+			if batchCfg.DryRun {
 				result.Success = true
 				result.GenerationMS = 0
 				result.Coverage = 100.0
@@ -219,8 +220,8 @@ func generateSingleLevel(levelID int, difficulty string, config Config) Result {
 success:
 
 	// Optionally write per-level stats JSON to StatsOut directory
-	if config.StatsOut != "" {
-		_ = os.MkdirAll(config.StatsOut, 0o755)
+	if batchCfg.StatsOut != "" {
+		_ = os.MkdirAll(batchCfg.StatsOut, 0o755)
 		statsObj := map[string]interface{}{
 			"level_id":             levelID,
 			"coverage":             result.Coverage,
@@ -233,7 +234,7 @@ success:
 		if stats.BlockingDepthSamples > 0 {
 			statsObj["avg_blocking_depth"] = float64(stats.TotalBlockingDepth) / float64(stats.BlockingDepthSamples)
 		}
-		fname := fmt.Sprintf("%s/level_%d_stats.json", config.StatsOut, levelID)
+		fname := fmt.Sprintf("%s/level_%d_stats.json", batchCfg.StatsOut, levelID)
 		b, _ := json.MarshalIndent(statsObj, "", "  ")
 		_ = os.WriteFile(fname, b, 0o644)
 		common.Info("Wrote per-level stats: %s", fname)
@@ -245,21 +246,21 @@ success:
 	return result
 }
 
-func buildGenerationConfig(levelID int, difficulty string, config Config) (generator.GenerationConfig, error) {
-	spec, ok := generator.DifficultySpecs[difficulty]
+func buildGenerationConfig(levelID int, difficulty string, batchCfg Config) (config.GenerationConfig, error) { // Renamed param to avoid collision
+	spec, ok := config.DifficultySpecs[difficulty]
 	if !ok {
-		return generator.GenerationConfig{}, fmt.Errorf("unknown difficulty: %s", difficulty)
+		return config.GenerationConfig{}, fmt.Errorf("unknown difficulty: %s", difficulty)
 	}
 
-	gridRange, ok := generator.GridSizeRanges[difficulty]
+	gridRange, ok := config.GridSizeRanges[difficulty]
 	if !ok {
-		return generator.GenerationConfig{}, fmt.Errorf("no grid size config for difficulty: %s", difficulty)
+		return config.GenerationConfig{}, fmt.Errorf("no grid size config for difficulty: %s", difficulty)
 	}
 
 	gridWidth := (gridRange.MinW + gridRange.MaxW) / 2
 	gridHeight := (gridRange.MinH + gridRange.MaxH) / 2
 	if gridWidth < 2 || gridHeight < 2 {
-		return generator.GenerationConfig{}, fmt.Errorf("invalid grid size computed for %s", difficulty)
+		return config.GenerationConfig{}, fmt.Errorf("invalid grid size computed for %s", difficulty)
 	}
 
 	totalCells := gridWidth * gridHeight
@@ -271,47 +272,47 @@ func buildGenerationConfig(levelID int, difficulty string, config Config) (gener
 	// Default backtracking settings
 	backtrackWindow := 3
 	maxBackAttempts := 2
-	if config.Aggressive {
+	if batchCfg.Aggressive {
 		backtrackWindow = 6
 		maxBackAttempts = 6
 	}
 
-	genCfg := generator.GenerationConfig{
+	genCfg := config.GenerationConfig{
 		LevelID:              levelID,
 		GridWidth:            gridWidth,
 		GridHeight:           gridHeight,
 		VineCount:            vineCount,
 		MaxMoves:             maxMoves,
-		OutputFile:           fmt.Sprintf("%s/level_%d.json", config.OutputDir, levelID),
+		OutputFile:           fmt.Sprintf("%s/level_%d.json", batchCfg.OutputDir, levelID),
 		Randomize:            false,
 		Seed:                 int64(levelID) * 31337,
-		Overwrite:            config.Overwrite,
+		Overwrite:            batchCfg.Overwrite,
 		MinCoverage:          targetCoverage,
 		Difficulty:           difficulty,
-		Strategy:             determineStrategy(levelID, difficulty, config),
+		Strategy:             determineStrategy(levelID, difficulty, batchCfg),
 		BacktrackWindow:      backtrackWindow,
 		MaxBacktrackAttempts: maxBackAttempts,
 	}
 
 	// Apply global MinCoverage override if provided (0 = no override)
-	if config.MinCoverage > 0 {
-		if config.MinCoverage < 0.0 || config.MinCoverage > 1.0 {
-			return generator.GenerationConfig{}, fmt.Errorf("invalid MinCoverage override: %v", config.MinCoverage)
+	if batchCfg.MinCoverage > 0 {
+		if batchCfg.MinCoverage < 0.0 || batchCfg.MinCoverage > 1.0 {
+			return config.GenerationConfig{}, fmt.Errorf("invalid MinCoverage override: %v", batchCfg.MinCoverage)
 		}
-		genCfg.MinCoverage = config.MinCoverage
+		genCfg.MinCoverage = batchCfg.MinCoverage
 	} else {
 		// Default to 1.0 if no override
 		genCfg.MinCoverage = 1.0
 	}
 
-	if config.DumpDir != "" {
-		genCfg.DumpDir = config.DumpDir
+	if batchCfg.DumpDir != "" {
+		genCfg.DumpDir = batchCfg.DumpDir
 	}
 
 	return genCfg, nil
 }
 
-func computeVineCount(spec generator.DifficultySpec, totalCells int, targetCoverage float64) int {
+func computeVineCount(spec config.DifficultySpec, totalCells int, targetCoverage float64) int {
 	avgLength := (spec.AvgLengthRange[0] + spec.AvgLengthRange[1]) / 2
 	if avgLength < 2 {
 		avgLength = 2
@@ -337,41 +338,41 @@ func computeVineCount(spec generator.DifficultySpec, totalCells int, targetCover
 	return vineCount
 }
 
-func generateLevel(genConfig generator.GenerationConfig) (model.Level, generator.GenerationStats, error) {
+func generateLevel(genConfig config.GenerationConfig) (model.Level, config.GenerationStats, error) {
 	return generator.GenerateLevel(genConfig)
 }
 
-func determineStrategy(levelID int, difficulty string, config Config) string {
+func determineStrategy(levelID int, difficulty string, batchCfg Config) string {
 	// If explicit strategy override provided, use it
-	if config.Strategy != "" {
-		return config.Strategy
+	if batchCfg.Strategy != "" {
+		return batchCfg.Strategy
 	}
 
 	// Always use LIFO for Transcendent
 	if difficulty == "Transcendent" {
-		return generator.StrategyCenterOut
+		return config.StrategyCenterOut
 	}
 
 	// For other levels, introduce variety
 	// Use levelID + moduleID to make it deterministic but varied
-	seed := int64(levelID + config.ModuleID)
+	seed := int64(levelID + batchCfg.ModuleID)
 	r := (seed % 10) // 0-9
 
 	switch difficulty {
 	case "Seedling", "Sprout":
 		// 80% Direction-First, 20% Center-Out
 		if r < 8 {
-			return generator.StrategyDirectionFirst
+			return config.StrategyDirectionFirst
 		}
-		return generator.StrategyCenterOut
+		return config.StrategyCenterOut
 	case "Nurturing", "Flourishing":
 		// 60% Direction-First, 40% Center-Out
 		if r < 6 {
-			return generator.StrategyDirectionFirst
+			return config.StrategyDirectionFirst
 		}
-		return generator.StrategyCenterOut
+		return config.StrategyCenterOut
 	default:
-		return generator.StrategyDirectionFirst
+		return config.StrategyDirectionFirst
 	}
 }
 

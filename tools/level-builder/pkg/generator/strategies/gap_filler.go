@@ -1,4 +1,4 @@
-package generator
+package strategies
 
 import (
 	"fmt"

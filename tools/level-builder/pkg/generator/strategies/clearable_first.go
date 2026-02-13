@@ -1,10 +1,12 @@
-package generator
+package strategies
 
 import (
 	"fmt"
 	"math/rand"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -16,11 +18,12 @@ import (
 // a base set of vines can always clear, preventing total blocking scenarios.
 func ClearableFirstPlacement(
 	gridSize []int,
-	constraints DifficultySpec,
-	profile VarietyProfile,
-	cfg GeneratorConfig,
+	constraints config.DifficultySpec,
+	profile config.VarietyProfile,
+	cfg config.GeneratorConfig,
 	seed int64,
 	anchorRatio float64, // e.g., 0.3 for 30% anchor vines
+	minCoverage float64, // target coverage (e.g. 0.95)
 	greedy bool, // if true, check solvability after each vine placement
 ) ([]model.Vine, error) {
 	rng := rand.New(rand.NewSource(seed))
@@ -28,8 +31,11 @@ func ClearableFirstPlacement(
 	if anchorRatio < 0 || anchorRatio > 1 {
 		anchorRatio = 0.3 // default 30%
 	}
+	if minCoverage <= 0 {
+		minCoverage = common.MinGridCoverage
+	}
 
-	// GREEDY-FILL ALGORITHM: Place vines until 100% grid coverage
+	// GREEDY-FILL ALGORITHM: Place vines until target coverage
 	// No pre-calculated vine count - keep adding until grid is full
 	gridArea := gridSize[0] * gridSize[1]
 
@@ -67,8 +73,8 @@ func ClearableFirstPlacement(
 
 		// Check if grid is full
 		currentCells := len(occupied)
-		if currentCells >= gridArea {
-			break // 100% coverage achieved
+		if float64(currentCells)/float64(gridArea) >= minCoverage {
+			break // target coverage achieved
 		}
 
 		remainingCells := gridArea - currentCells
@@ -77,7 +83,7 @@ func ClearableFirstPlacement(
 		}
 
 		// Pick seed near edge
-		seedPoint, found := pickEdgeSeed(occupied, gridSize, edgeBuffer, rng)
+		seedPoint, found := utils.PickEdgeSeed(occupied, gridSize, edgeBuffer, rng)
 		if !found {
 			continue
 		}
@@ -118,7 +124,7 @@ func ClearableFirstPlacement(
 		lengthCounts[len(vine.OrderedPath)]++
 	}
 
-	// Phase 2: Fill remaining space until 100% coverage
+	// Phase 2: Fill remaining space until target coverage
 	fillAttempts := 0
 	maxFillAttempts := gridArea * 2 // Reduced from *10 to prevent infinite loops
 	// Track consecutive failures for fill phase
@@ -135,10 +141,10 @@ func ClearableFirstPlacement(
 			break
 		}
 
-		// Check if grid is 100% full
+		// Check if grid is full
 		currentCells := len(occupied)
-		if currentCells >= gridArea {
-			break // SUCCESS: 100% coverage!
+		if float64(currentCells)/float64(gridArea) >= minCoverage {
+			break // SUCCESS: target coverage!
 		}
 
 		remainingCells := gridArea - currentCells
@@ -156,9 +162,9 @@ func ClearableFirstPlacement(
 		if fillFailures > maxConsecutiveFillFails/2 {
 			common.Verbose("⚠️  ClearableFirst: fill stuck (%d fails), preferring sparse seeds and reseeding", fillFailures)
 			seedPoint = pickRandomSeedWithPreference(gridSize, occupied, rng)
-			// Occasionally reseed RNG to try different trajectories
+			// Occasionally reseed RNG to try different trajectories (determinstic)
 			if fillFailures > maxConsecutiveFillFails {
-				rng.Seed(cryptoSeedInt64() + int64(fillAttempts))
+				rng.Seed(seed + int64(fillAttempts)*31)
 				fillFailures = 0
 			}
 		} else {
@@ -169,19 +175,25 @@ func ClearableFirstPlacement(
 			continue // no available seeds
 		}
 
+		// Relax short vine constraints if we are struggling
+		effectiveMaxShort := maxShortVines
+		if fillFailures > 20 {
+			effectiveMaxShort = 999999 // Ignore limit
+		}
+
 		// Choose vine length with variety
-		vineLen := chooseVineLengthSkewed(minVineLen, maxVineLen, remainingCells, lengthCounts, maxShortVines, rng)
+		vineLen := chooseVineLengthSkewed(minVineLen, maxVineLen, remainingCells, lengthCounts, effectiveMaxShort, rng)
 
 		vine, newOcc, err := GrowFromSeed(seedPoint, occupied, gridSize, vineLen, profile, cfg, rng)
 		if err != nil || len(vine.OrderedPath) < minVineLen {
 			continue
 		}
 
-		// Reject short vines if we've already hit the limit (maintain variety)
+		// Reject short vines if we've already hit the limit (maintain variety), unless desperate
 		actualLen := len(vine.OrderedPath)
 		if actualLen <= 3 {
 			shortCount := lengthCounts[2] + lengthCounts[3]
-			if shortCount >= maxShortVines {
+			if shortCount >= effectiveMaxShort {
 				continue // skip this short vine
 			}
 		}
@@ -206,10 +218,73 @@ func ClearableFirstPlacement(
 		fillFailures = 0 // Reset consecutive failure counter on success
 	}
 
-	// Verify we achieved near-100% coverage (allow small gaps for solvability)
+	// Phase 3: Extension - Try to fill remaining gaps by extending existing vines
+	// This captures single isolated cells that are too small for new vines
+	if float64(len(occupied))/float64(gridArea) < minCoverage {
+		// common.Verbose("Phase 3: Extending vines to fill gaps...")
+		maxExtensionPasses := 3
+		for pass := 0; pass < maxExtensionPasses; pass++ {
+			extended := false
+			for i := range vines {
+				// Early exit if target coverage met
+				if float64(len(occupied))/float64(gridArea) >= minCoverage {
+					break
+				}
+
+				vine := &vines[i]
+				tail := vine.OrderedPath[len(vine.OrderedPath)-1]
+
+				// Find empty neighbors of tail
+				neighbors := getUnoccupiedNeighbors(tail, gridSize[0], gridSize[1], occupied)
+				if len(neighbors) == 0 {
+					continue
+				}
+
+				// Try each neighbor
+				for _, n := range neighbors {
+					// Check solvability if greedy
+					if greedy {
+						// Temporarily extend
+						origPath := make([]model.Point, len(vine.OrderedPath))
+						copy(origPath, vine.OrderedPath)
+						vine.OrderedPath = append(vine.OrderedPath, n)
+
+						// Create temp level ensuring we don't modify other state
+						testLevel := &model.Level{
+							GridSize: gridSize,
+							Vines:    vines, // vines[i] is already modified in place
+						}
+						solver := common.NewSolver(testLevel)
+						if !solver.IsSolvableGreedy() {
+							// Revert
+							vine.OrderedPath = origPath
+							continue
+						}
+						// Keep extension
+						occupied[fmt.Sprintf("%d,%d", n.X, n.Y)] = true
+						lengthCounts[len(vine.OrderedPath)]++
+						extended = true
+						break // Only extend once per pass per vine
+					} else {
+						// Non-greedy: just extend
+						vine.OrderedPath = append(vine.OrderedPath, n)
+						occupied[fmt.Sprintf("%d,%d", n.X, n.Y)] = true
+						lengthCounts[len(vine.OrderedPath)]++
+						extended = true
+						break
+					}
+				}
+			}
+			if !extended {
+				break
+			}
+		}
+	}
+
+	// Verify we achieved near-target coverage
 	finalCoverage := float64(len(occupied)) / float64(gridArea)
-	if finalCoverage < common.MinGridCoverage {
-		return nil, fmt.Errorf("insufficient coverage: got %.1f%%, need %.0f%%+", finalCoverage*100, common.MinGridCoverage*100)
+	if finalCoverage < minCoverage {
+		return nil, fmt.Errorf("insufficient coverage: got %.1f%%, need %.1f%%+", finalCoverage*100, minCoverage*100)
 	}
 
 	// Quick circular-block detection before returning to avoid producing
@@ -371,4 +446,19 @@ func chooseVineLengthSkewed(minLen, maxLen, remainingCells int, lengthCounts map
 	}
 
 	return effectiveMax // fallback
+}
+
+// getUnoccupiedNeighbors returns orthogonal neighbors that are not in occupied map
+func getUnoccupiedNeighbors(pt model.Point, w, h int, occupied map[string]bool) []model.Point {
+	deltas := []struct{ dx, dy int }{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
+	var neighbors []model.Point
+	for _, d := range deltas {
+		nx, ny := pt.X+d.dx, pt.Y+d.dy
+		if nx >= 0 && nx < w && ny >= 0 && ny < h {
+			if !occupied[fmt.Sprintf("%d,%d", nx, ny)] {
+				neighbors = append(neighbors, model.Point{X: nx, Y: ny})
+			}
+		}
+	}
+	return neighbors
 }

@@ -1,4 +1,4 @@
-package generator
+package strategies
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -17,7 +18,7 @@ type CenterOutPlacer struct{}
 
 // PlaceVines places vines from center outward, guaranteeing each has a clear exit at placement time.
 // Returns vines that can be solved in LIFO order (last placed = first cleared).
-func (p *CenterOutPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, stats *GenerationStats) ([]model.Vine, map[string]string, error) {
+func (p *CenterOutPlacer) PlaceVines(config config.GenerationConfig, rng *rand.Rand, stats *config.GenerationStats) ([]model.Vine, map[string]string, error) {
 	w, h := config.GridWidth, config.GridHeight
 	totalCells := w * h
 	occupied := make(map[string]string)
@@ -107,7 +108,7 @@ func (p *CenterOutPlacer) placeVineWithExitGuarantee(
 	w, h int,
 	occupied map[string]string,
 	rng *rand.Rand,
-	stats *GenerationStats,
+	stats *config.GenerationStats,
 ) (model.Vine, map[string]string, error) {
 	const maxAttempts = 100
 
@@ -322,7 +323,23 @@ func (p *CenterOutPlacer) chooseNextGrowthCell(
 	}
 
 	var scoredNeighbors []scored
+
+	// Baseline verification: Count reachable cells before move
+	// This is expensive but necessary for high coverage
+	baselineReachable := p.countReachableEmptyCells(ctx.w, ctx.h, ctx.globalOccupied, ctx.localOccupied)
+
 	for _, n := range neighbors {
+		// Verify this move doesn't disconnect the grid
+		// Temporarily mark n as occupied
+		ctx.localOccupied[fmt.Sprintf("%d,%d", n.X, n.Y)] = ctx.vineID
+		newReachable := p.countReachableEmptyCells(ctx.w, ctx.h, ctx.globalOccupied, ctx.localOccupied)
+		delete(ctx.localOccupied, fmt.Sprintf("%d,%d", n.X, n.Y))
+
+		// If we lose more than 1 reachable cell (the one we just took), we caused a disconnect
+		if newReachable < baselineReachable-1 {
+			continue // Skip this move, it creates an island
+		}
+
 		dir := common.DirectionFromPoints(current, n)
 		score := 0.0
 
@@ -331,14 +348,15 @@ func (p *CenterOutPlacer) chooseNextGrowthCell(
 		}
 		for _, perpDir := range common.PerpendicularDirections(preferredDir) {
 			if dir == perpDir {
-				score += 1.5 // Balanced preference for turns (creates winding without trapping)
+				score += 1.5 // Balanced preference for turns
 				break
 			}
 		}
 
-		// Prefer cells with more free neighbors (avoids dead ends)
-		freeCount := len(p.getAvailableNeighbors(n, ctx.w, ctx.h, ctx.globalOccupied, ctx.localOccupied))
-		score += float64(freeCount) * 0.3
+		// Check immediate neighbor availability (freeCount)
+		nNeighbors := p.getAvailableNeighbors(n, ctx.w, ctx.h, ctx.globalOccupied, ctx.localOccupied)
+		freeCount := len(nNeighbors)
+		score += float64(freeCount) * 0.8
 
 		score += ctx.rng.Float64() * 0.5 // Randomness
 
@@ -350,10 +368,71 @@ func (p *CenterOutPlacer) chooseNextGrowthCell(
 	})
 
 	// Weighted selection
-	if len(scoredNeighbors) > 1 && ctx.rng.Float64() < 0.7 {
+	if len(scoredNeighbors) > 1 && ctx.rng.Float64() < 0.8 {
 		return &scoredNeighbors[0].pt
 	}
-	return &scoredNeighbors[ctx.rng.Intn(len(scoredNeighbors))].pt
+	if len(scoredNeighbors) > 0 {
+		return &scoredNeighbors[ctx.rng.Intn(len(scoredNeighbors))].pt
+	}
+	return nil
+}
+
+// countReachableEmptyCells returns the number of empty cells reachable from the edge
+func (p *CenterOutPlacer) countReachableEmptyCells(w, h int, globalOccupied, localOccupied map[string]string) int {
+	queue := []model.Point{}
+	visited := make(map[string]bool)
+
+	// Add all empty edge cells to queue
+	for x := 0; x < w; x++ {
+		p1, p2 := model.Point{X: x, Y: 0}, model.Point{X: x, Y: h - 1}
+		if !p.isOccupied(p1, globalOccupied, localOccupied) {
+			queue = append(queue, p1)
+			visited[fmt.Sprintf("%d,%d", x, 0)] = true
+		}
+		if !p.isOccupied(p2, globalOccupied, localOccupied) {
+			queue = append(queue, p2)
+			visited[fmt.Sprintf("%d,%d", x, h-1)] = true
+		}
+	}
+	for y := 1; y < h-1; y++ {
+		p1, p2 := model.Point{X: 0, Y: y}, model.Point{X: w - 1, Y: y}
+		if !p.isOccupied(p1, globalOccupied, localOccupied) {
+			queue = append(queue, p1)
+			visited[fmt.Sprintf("0,%d", y)] = true
+		}
+		if !p.isOccupied(p2, globalOccupied, localOccupied) {
+			queue = append(queue, p2)
+			visited[fmt.Sprintf("%d,%d", w-1, y)] = true
+		}
+	}
+
+	count := 0
+	deltas := []struct{ dx, dy int }{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
+
+	for len(queue) > 0 {
+		curr := queue[0]
+		queue = queue[1:]
+		count++
+
+		for _, d := range deltas {
+			nx, ny := curr.X+d.dx, curr.Y+d.dy
+			if nx >= 0 && nx < w && ny >= 0 && ny < h {
+				key := fmt.Sprintf("%d,%d", nx, ny)
+				if !visited[key] && !p.isOccupied(model.Point{X: nx, Y: ny}, globalOccupied, localOccupied) {
+					visited[key] = true
+					queue = append(queue, model.Point{X: nx, Y: ny})
+				}
+			}
+		}
+	}
+	return count
+}
+
+func (p *CenterOutPlacer) isOccupied(pt model.Point, global, local map[string]string) bool {
+	key := fmt.Sprintf("%d,%d", pt.X, pt.Y)
+	_, g := global[key]
+	_, l := local[key]
+	return g || l
 }
 
 // getAvailableNeighbors returns unoccupied orthogonal neighbors
@@ -392,22 +471,22 @@ func (p *CenterOutPlacer) hasFreeNeighbor(x, y, w, h int, occupied map[string]st
 }
 
 // calculateVineLengths computes target lengths based on difficulty
-func (p *CenterOutPlacer) calculateVineLengths(config GenerationConfig, rng *rand.Rand) []int {
-	totalCells := config.GridWidth * config.GridHeight
+func (p *CenterOutPlacer) calculateVineLengths(genConfig config.GenerationConfig, rng *rand.Rand) []int {
+	totalCells := genConfig.GridWidth * genConfig.GridHeight
 
 	// Target to fill most of the grid
-	targetFill := int(float64(totalCells) * config.MinCoverage)
+	targetFill := int(float64(totalCells) * genConfig.MinCoverage)
 
 	// Get average length from difficulty specs
 	avgLen := 5 // Default
-	if spec, ok := DifficultySpecs[config.Difficulty]; ok {
+	if spec, ok := config.DifficultySpecs[genConfig.Difficulty]; ok {
 		avgLen = (spec.AvgLengthRange[0] + spec.AvgLengthRange[1]) / 2
 	}
 
 	// Calculate how many vines we need
 	vineCount := targetFill / avgLen
-	if vineCount < config.VineCount {
-		vineCount = config.VineCount
+	if vineCount < genConfig.VineCount {
+		vineCount = genConfig.VineCount
 	}
 
 	// Generate lengths with variance
@@ -419,7 +498,7 @@ func (p *CenterOutPlacer) calculateVineLengths(config GenerationConfig, rng *ran
 			length = 2
 		}
 		// Cap length to prevent overly long vines
-		maxLen := (config.GridWidth + config.GridHeight) / 2
+		maxLen := (genConfig.GridWidth + genConfig.GridHeight) / 2
 		if length > maxLen {
 			length = maxLen
 		}

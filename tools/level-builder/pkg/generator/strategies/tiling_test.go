@@ -1,4 +1,4 @@
-package generator
+package strategies_test
 
 import (
 	"fmt"
@@ -6,6 +6,9 @@ import (
 	"testing"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/strategies"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -30,17 +33,16 @@ func TestTileGridIntoVines_BasicGeneration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			spec, ok := DifficultySpecs[tt.difficulty]
+			spec, ok := config.DifficultySpecs[tt.difficulty]
 			if !ok {
 				t.Fatalf("Unknown difficulty: %s", tt.difficulty)
 			}
 
-			profile := GetPresetProfile(tt.difficulty)
-			cfg := GetGeneratorConfigForDifficulty(tt.difficulty)
+			profile := utils.GetPresetProfile(tt.difficulty)
+			cfg := utils.GetGeneratorConfigForDifficulty(tt.difficulty)
 			rng := rand.New(rand.NewSource(12345))
 
-			vines, mask, err := TileGridIntoVines(tt.gridSize, spec, profile, cfg, rng)
-
+			vines, mask, err := strategies.TileGridIntoVines(tt.gridSize, spec, profile, cfg, rng)
 			if err != nil {
 				t.Fatalf("TileGridIntoVines() error = %v", err)
 			}
@@ -98,7 +100,6 @@ func TestGenerateSingleLevel_SmallGrid(t *testing.T) {
 			// Note: Can't override GridSizeForLevel at runtime
 			// This test will use actual grid size calculation
 			level, err := generateSingleLevel(1, tt.difficulty, tt.seed, rng)
-
 			if err != nil {
 				// Log the error but don't fail - generation may legitimately fail
 				t.Logf("Generation failed (this may be expected): %v", err)
@@ -123,8 +124,8 @@ func TestGenerateSingleLevel_SmallGrid(t *testing.T) {
 // TestGrowFromSeed_BasicGrowth tests vine growth from a seed
 func TestGrowFromSeed_BasicGrowth(t *testing.T) {
 	gridSize := []int{10, 10}
-	profile := GetPresetProfile("Seedling")
-	cfg := GetGeneratorConfigForDifficulty("Seedling")
+	profile := utils.GetPresetProfile("Seedling")
+	cfg := utils.GetGeneratorConfigForDifficulty("Seedling")
 	rng := rand.New(rand.NewSource(12345))
 
 	tests := []struct {
@@ -169,7 +170,7 @@ func TestGrowFromSeed_BasicGrowth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			vine, newOcc, err := GrowFromSeed(tt.seed, tt.occupied, gridSize, tt.targetLen, profile, cfg, rng)
+			vine, newOcc, err := strategies.GrowFromSeed(tt.seed, tt.occupied, gridSize, tt.targetLen, profile, cfg, rng)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GrowFromSeed() error = %v, wantErr %v", err, tt.wantErr)
@@ -227,13 +228,13 @@ func TestTileGridIntoVines_SolvabilityRate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			spec, ok := DifficultySpecs[tt.difficulty]
+			spec, ok := config.DifficultySpecs[tt.difficulty]
 			if !ok {
 				t.Fatalf("Unknown difficulty: %s", tt.difficulty)
 			}
 
-			profile := GetPresetProfile(tt.difficulty)
-			cfg := GetGeneratorConfigForDifficulty(tt.difficulty)
+			profile := utils.GetPresetProfile(tt.difficulty)
+			cfg := utils.GetGeneratorConfigForDifficulty(tt.difficulty)
 
 			successCount := 0
 			greedySuccesses := 0
@@ -241,8 +242,7 @@ func TestTileGridIntoVines_SolvabilityRate(t *testing.T) {
 
 			for i := 0; i < tt.attempts; i++ {
 				rng := rand.New(rand.NewSource(int64(12345 + i)))
-				vines, mask, err := TileGridIntoVines(tt.gridSize, spec, profile, cfg, rng)
-
+				vines, mask, err := strategies.TileGridIntoVines(tt.gridSize, spec, profile, cfg, rng)
 				if err != nil {
 					continue
 				}

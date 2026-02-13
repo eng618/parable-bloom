@@ -1,4 +1,4 @@
-package generator
+package strategies
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -14,9 +15,9 @@ import (
 // complexity while maintaining solvability.
 func SolverAwarePlacement(
 	gridSize []int,
-	constraints DifficultySpec,
-	profile VarietyProfile,
-	cfg GeneratorConfig,
+	constraints config.DifficultySpec,
+	profile config.VarietyProfile,
+	cfg config.GeneratorConfig,
 	rng *rand.Rand,
 ) ([]model.Vine, *model.Mask, error) {
 	// Start with tiling algorithm to get base vines
@@ -59,7 +60,7 @@ func SolverAwarePlacement(
 
 // shouldAddBlockingComplexity determines if we should try to add blocking patterns
 // based on difficulty constraints.
-func shouldAddBlockingComplexity(constraints DifficultySpec) bool {
+func shouldAddBlockingComplexity(constraints config.DifficultySpec) bool {
 	// Add complexity for difficulties with more vines (typically Nurturing+)
 	return constraints.VineCountRange[0] >= 8
 }

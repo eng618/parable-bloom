@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/strategies"
 )
 
 // StrategyFactory is a function that creates a new instance of a VinePlacementStrategy
-type StrategyFactory func() VinePlacementStrategy
+type StrategyFactory func() config.VinePlacementStrategy
 
 // StrategyInfo contains metadata about a registered strategy
 type StrategyInfo struct {
@@ -17,7 +20,7 @@ type StrategyInfo struct {
 }
 
 var (
-	strategies     = make(map[string]StrategyInfo)
+	stMap          = make(map[string]StrategyInfo)
 	strategiesLock sync.RWMutex
 )
 
@@ -26,7 +29,7 @@ func RegisterStrategy(name, description string, factory StrategyFactory) {
 	strategiesLock.Lock()
 	defer strategiesLock.Unlock()
 
-	strategies[name] = StrategyInfo{
+	stMap[name] = StrategyInfo{
 		Name:        name,
 		Description: description,
 		Factory:     factory,
@@ -34,11 +37,11 @@ func RegisterStrategy(name, description string, factory StrategyFactory) {
 }
 
 // GetStrategy returns a new instance of the requested strategy
-func GetStrategy(name string) (VinePlacementStrategy, error) {
+func GetStrategy(name string) (config.VinePlacementStrategy, error) {
 	strategiesLock.RLock()
 	defer strategiesLock.RUnlock()
 
-	info, ok := strategies[name]
+	info, ok := stMap[name]
 	if !ok {
 		return nil, fmt.Errorf("unknown strategy: %s", name)
 	}
@@ -52,7 +55,7 @@ func ListStrategies() []StrategyInfo {
 	defer strategiesLock.RUnlock()
 
 	var list []StrategyInfo
-	for _, info := range strategies {
+	for _, info := range stMap {
 		list = append(list, info)
 	}
 
@@ -65,16 +68,27 @@ func ListStrategies() []StrategyInfo {
 
 // init registers the core strategies
 func init() {
-	RegisterStrategy(StrategyCenterOut, "Center-out LIFO strategy (guaranteed solvable)", func() VinePlacementStrategy {
-		return &CenterOutPlacer{} // Properly returns pointer to struct implementing interface
+	RegisterStrategy(config.StrategyCenterOut, "Center-out LIFO strategy (guaranteed solvable)", func() config.VinePlacementStrategy {
+		return &strategies.CenterOutPlacer{}
 	})
 
-	RegisterStrategy(StrategyDirectionFirst, "Direction-first strategy (organic looking)", func() VinePlacementStrategy {
-		return &DirectionFirstPlacer{} 
+	RegisterStrategy(config.StrategyDirectionFirst, "Direction-first strategy (organic looking)", func() config.VinePlacementStrategy {
+		return &strategies.DirectionFirstPlacer{}
 	})
 
 	// CircuitBoard is experimental/legacy but preserved
-	RegisterStrategy("circuit-board", "Circuit-board aesthetic (experimental)", func() VinePlacementStrategy {
-		return &CircuitBoardPlacer{}
+	RegisterStrategy("circuit-board", "Circuit-board aesthetic (experimental)", func() config.VinePlacementStrategy {
+		return &strategies.CircuitBoardPlacer{}
+	})
+
+	// Legacy strategies
+	RegisterStrategy(strategies.StrategyLegacyTiling, "Legacy Tiling (Standard)", func() config.VinePlacementStrategy {
+		return &strategies.LegacyTilingStrategy{}
+	})
+	RegisterStrategy(strategies.StrategyLegacyClearable, "Legacy Clearable-First", func() config.VinePlacementStrategy {
+		return &strategies.LegacyClearableStrategy{}
+	})
+	RegisterStrategy(strategies.StrategyLegacySolverAware, "Legacy Solver-Aware", func() config.VinePlacementStrategy {
+		return &strategies.LegacySolverAwareStrategy{}
 	})
 }

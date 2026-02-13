@@ -1,4 +1,4 @@
-package generator
+package strategies
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 	"sort"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -20,8 +22,8 @@ func AttemptLocalBacktrack(
 	p *CenterOutPlacer,
 	w, h int,
 	rng *rand.Rand,
-	config GenerationConfig,
-	stats *GenerationStats,
+	config config.GenerationConfig,
+	stats *config.GenerationStats,
 ) (model.Vine, map[string]string, []model.Vine, map[string]string, error) {
 	backtrackWindow := config.BacktrackWindow
 	if backtrackWindow == 0 {
@@ -32,10 +34,10 @@ func AttemptLocalBacktrack(
 		maxBack = 2
 	}
 
-	graph := BuildBlockingGraph(vines)
+	graph := utils.BuildBlockingGraph(vines)
 
 	// Prefer heuristic candidates first (direct blockers or high impact)
-	cands := PickBacktrackCandidates(graph, vineID, backtrackWindow)
+	cands := utils.PickBacktrackCandidates(graph, vineID, backtrackWindow)
 	for _, candidate := range cands {
 		if stats != nil {
 			stats.BacktracksAttempted++
@@ -141,7 +143,7 @@ func AttemptLocalBacktrack(
 				score int
 			}
 			var combos []combo
-			graph := BuildBlockingGraph(vines)
+			graph := utils.BuildBlockingGraph(vines)
 			for sz := 2; sz <= maxCombo && sz <= chainLen; sz++ {
 				// iterate combinations (simple lexicographic), compute score
 				idx := make([]int, sz)
@@ -199,7 +201,7 @@ func AttemptLocalBacktrack(
 		}
 	}
 
-	_ = writeFailureDump(config, config.Seed, 0, fmt.Sprintf("Could not place vine %s after local backtracking and cycle-breaker repair", vineID), vines, occupied, stats)
+	_ = WriteFailureDump(config, config.Seed, 0, fmt.Sprintf("Could not place vine %s after local backtracking and cycle-breaker repair", vineID), vines, occupied, stats)
 	return model.Vine{}, nil, vines, occupied, fmt.Errorf("local backtracking failed for vine %s", vineID)
 }
 
@@ -214,7 +216,7 @@ func tryRemoveCandidatesAndPlace(
 	p *CenterOutPlacer,
 	w, h int,
 	rng *rand.Rand,
-	stats *GenerationStats,
+	stats *config.GenerationStats,
 ) (struct {
 	vine    model.Vine
 	vineOcc map[string]string

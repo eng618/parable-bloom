@@ -1,8 +1,9 @@
-package generator
+package strategies
 
 import (
 	"fmt"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -10,7 +11,7 @@ import (
 type DFSBlockingAnalyzer struct{}
 
 // AnalyzeBlocking analyzes blocking relationships and detects circular dependencies
-func (a *DFSBlockingAnalyzer) AnalyzeBlocking(vines []model.Vine, occupied map[string]string) (BlockingAnalysis, error) {
+func (a *DFSBlockingAnalyzer) AnalyzeBlocking(vines []model.Vine, occupied map[string]string) (config.BlockingAnalysis, error) {
 	// Build blocking graph: A -> B means "A blocks B"
 	graph := a.buildBlockingGraph(vines, occupied)
 
@@ -20,7 +21,7 @@ func (a *DFSBlockingAnalyzer) AnalyzeBlocking(vines []model.Vine, occupied map[s
 	// Detect circular dependencies
 	hasCircular, circularChains := a.detectCircularBlocking(graph)
 
-	analysis := BlockingAnalysis{
+	analysis := config.BlockingAnalysis{
 		MaxDepth:       maxDepth,
 		HasCircular:    hasCircular,
 		CircularChains: circularChains,

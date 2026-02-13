@@ -1,4 +1,4 @@
-package generator
+package utils
 
 import (
 	"math/rand"
@@ -7,9 +7,9 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
-// chooseExitDirection picks a head direction that points toward the nearest grid edge.
+// ChooseExitDirection picks a head direction that points toward the nearest grid edge.
 // This dramatically improves solvability by ensuring vines can exit the grid.
-func chooseExitDirection(seed model.Point, gridSize []int, dirBalance map[string]float64, rng *rand.Rand) string {
+func ChooseExitDirection(seed model.Point, gridSize []int, dirBalance map[string]float64, rng *rand.Rand) string {
 	width, height := gridSize[0], gridSize[1]
 	x, y := seed.X, seed.Y
 
@@ -70,8 +70,8 @@ func chooseExitDirection(seed model.Point, gridSize []int, dirBalance map[string
 	return "up"
 }
 
-// deltaForDirection returns the (dx, dy) movement vector for a direction string.
-func deltaForDirection(dir string) (int, int) {
+// DeltaForDirection returns the (dx, dy) movement vector for a direction string.
+func DeltaForDirection(dir string) (int, int) {
 	switch dir {
 	case "right":
 		return 1, 0
@@ -86,8 +86,8 @@ func deltaForDirection(dir string) (int, int) {
 	}
 }
 
-// oppositeDirection returns the reverse of a direction.
-func oppositeDirection(dir string) string {
+// OppositeDirection returns the reverse of a direction.
+func OppositeDirection(dir string) string {
 	switch dir {
 	case "right":
 		return "left"
@@ -102,8 +102,8 @@ func oppositeDirection(dir string) string {
 	}
 }
 
-// distanceToNearestEdge calculates the minimum distance from a point to any grid edge.
-func distanceToNearestEdge(pos model.Point, gridSize []int) int {
+// DistanceToNearestEdge calculates the minimum distance from a point to any grid edge.
+func DistanceToNearestEdge(pos model.Point, gridSize []int) int {
 	width, height := gridSize[0], gridSize[1]
 	x, y := pos.X, pos.Y
 
@@ -126,14 +126,14 @@ func distanceToNearestEdge(pos model.Point, gridSize []int) int {
 	return minDist
 }
 
-// isNearEdge returns true if the point is within the specified distance from any edge.
-func isNearEdge(pos model.Point, gridSize []int, edgeDistance int) bool {
-	return distanceToNearestEdge(pos, gridSize) <= edgeDistance
+// IsNearEdge returns true if the point is within the specified distance from any edge.
+func IsNearEdge(pos model.Point, gridSize []int, edgeDistance int) bool {
+	return DistanceToNearestEdge(pos, gridSize) <= edgeDistance
 }
 
-// pickEdgeSeed selects a random seed point near the grid edges.
+// PickEdgeSeed selects a random seed point near the grid edges.
 // This is useful for placing clearable "anchor" vines.
-func pickEdgeSeed(occupied map[string]bool, gridSize []int, edgeDistance int, rng *rand.Rand) (model.Point, bool) {
+func PickEdgeSeed(occupied map[string]bool, gridSize []int, edgeDistance int, rng *rand.Rand) (model.Point, bool) {
 	width, height := gridSize[0], gridSize[1]
 
 	var candidates []model.Point
@@ -142,7 +142,7 @@ func pickEdgeSeed(occupied map[string]bool, gridSize []int, edgeDistance int, rn
 			pt := model.Point{X: x, Y: y}
 			key := common.PointKey(pt)
 
-			if !occupied[key] && isNearEdge(pt, gridSize, edgeDistance) {
+			if !occupied[key] && IsNearEdge(pt, gridSize, edgeDistance) {
 				candidates = append(candidates, pt)
 			}
 		}

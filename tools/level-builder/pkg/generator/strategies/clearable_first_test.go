@@ -1,4 +1,4 @@
-package generator
+package strategies_test
 
 import (
 	"fmt"
@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/strategies"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
-func getTestDifficultySpec() DifficultySpec {
-	return DifficultySpec{
+func getTestDifficultySpec() config.DifficultySpec {
+	return config.DifficultySpec{
 		VineCountRange:   [2]int{5, 10},
 		AvgLengthRange:   [2]int{3, 5},
 		MaxBlockingDepth: 3,
@@ -25,10 +27,10 @@ func getTestDifficultySpec() DifficultySpec {
 func TestClearableFirstPlacement_LargeGridReliability(t *testing.T) {
 	gridSize := []int{14, 22} // Level 45+ size that failed with old algorithm
 	constraints := getTestDifficultySpec()
-	profile := VarietyProfile{
+	profile := config.VarietyProfile{
 		TurnMix: 0.3,
 	}
-	cfg := GeneratorConfig{}
+	cfg := config.GeneratorConfig{}
 
 	const numAttempts = 20
 	successCount := 0
@@ -38,7 +40,7 @@ func TestClearableFirstPlacement_LargeGridReliability(t *testing.T) {
 		seed := int64(1000 + i)
 		start := time.Now()
 
-		vines, err := ClearableFirstPlacement(gridSize, constraints, profile, cfg, seed, 0.3, true)
+		vines, err := strategies.ClearableFirstPlacement(gridSize, constraints, profile, cfg, seed, 0.3, 0.95, true)
 		elapsed := time.Since(start)
 		totalTime += elapsed
 
@@ -103,10 +105,10 @@ func TestClearableFirstPlacement_GridSizeComparison(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			constraints := getTestDifficultySpec()
-			profile := VarietyProfile{
+			profile := config.VarietyProfile{
 				TurnMix: 0.3,
 			}
-			cfg := GeneratorConfig{}
+			cfg := config.GeneratorConfig{}
 
 			successCount := 0
 			var totalTime time.Duration
@@ -115,7 +117,7 @@ func TestClearableFirstPlacement_GridSizeComparison(t *testing.T) {
 				seed := int64(2000 + i)
 				start := time.Now()
 
-				vines, err := ClearableFirstPlacement(tc.gridSize, constraints, profile, cfg, seed, 0.3, true)
+				vines, err := strategies.ClearableFirstPlacement(tc.gridSize, constraints, profile, cfg, seed, 0.3, 0.95, true)
 				elapsed := time.Since(start)
 				totalTime += elapsed
 
@@ -163,15 +165,15 @@ func TestClearableFirstPlacement_GridSizeComparison(t *testing.T) {
 func BenchmarkClearableFirstPlacement(b *testing.B) {
 	gridSize := []int{14, 22}
 	constraints := getTestDifficultySpec()
-	profile := VarietyProfile{
+	profile := config.VarietyProfile{
 		TurnMix: 0.3,
 	}
-	cfg := GeneratorConfig{}
+	cfg := config.GeneratorConfig{}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		seed := int64(3000 + i)
-		_, err := ClearableFirstPlacement(gridSize, constraints, profile, cfg, seed, 0.3, true)
+		_, err := strategies.ClearableFirstPlacement(gridSize, constraints, profile, cfg, seed, 0.3, 0.95, true)
 		if err != nil {
 			b.Fatalf("Generation failed: %v", err)
 		}
@@ -194,7 +196,7 @@ func TestClearableFirstPlacement_FullCoverage(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Use 100% coverage instead of 93%
-			constraints := DifficultySpec{
+			constraints := config.DifficultySpec{
 				VineCountRange:   [2]int{5, 10},
 				AvgLengthRange:   [2]int{3, 5},
 				MaxBlockingDepth: 3,
@@ -202,10 +204,10 @@ func TestClearableFirstPlacement_FullCoverage(t *testing.T) {
 				MinGridOccupancy: 1.0, // 100% coverage!
 				DefaultGrace:     3,
 			}
-			profile := VarietyProfile{
+			profile := config.VarietyProfile{
 				TurnMix: 0.3,
 			}
-			cfg := GeneratorConfig{}
+			cfg := config.GeneratorConfig{}
 
 			successCount := 0
 			var totalTime time.Duration
@@ -214,7 +216,7 @@ func TestClearableFirstPlacement_FullCoverage(t *testing.T) {
 				seed := int64(5000 + i)
 				start := time.Now()
 
-				vines, err := ClearableFirstPlacement(tc.gridSize, constraints, profile, cfg, seed, 0.3, true)
+				vines, err := strategies.ClearableFirstPlacement(tc.gridSize, constraints, profile, cfg, seed, 0.3, 0.95, true)
 				elapsed := time.Since(start)
 				totalTime += elapsed
 
@@ -273,10 +275,10 @@ func TestClearableFirstPlacement_BeforeAfterComparison(t *testing.T) {
 
 	gridSize := []int{14, 22}
 	constraints := getTestDifficultySpec()
-	profile := VarietyProfile{
+	profile := config.VarietyProfile{
 		TurnMix: 0.3,
 	}
-	cfg := GeneratorConfig{}
+	cfg := config.GeneratorConfig{}
 
 	successCount := 0
 	var totalTime time.Duration
@@ -285,7 +287,7 @@ func TestClearableFirstPlacement_BeforeAfterComparison(t *testing.T) {
 	for i := 0; i < numTests; i++ {
 		seed := int64(4000 + i)
 		start := time.Now()
-		vines, err := ClearableFirstPlacement(gridSize, constraints, profile, cfg, seed, 0.3, true)
+		vines, err := strategies.ClearableFirstPlacement(gridSize, constraints, profile, cfg, seed, 0.3, 0.95, true)
 		elapsed := time.Since(start)
 		totalTime += elapsed
 

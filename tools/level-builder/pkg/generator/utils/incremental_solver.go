@@ -1,4 +1,4 @@
-package generator
+package utils
 
 import (
 	"fmt"
@@ -38,7 +38,7 @@ func IsLikelySolvablePartial(vines []model.Vine, occupied map[string]string, w, 
 				continue
 			}
 			head := v.OrderedPath[0]
-			dx, dy := deltaForDirection(v.HeadDirection)
+			dx, dy := DeltaForDirection(v.HeadDirection)
 			tx := head.X + dx
 			ty := head.Y + dy
 

@@ -1,4 +1,4 @@
-package generator
+package strategies
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -14,7 +15,7 @@ import (
 type CircuitBoardPlacer struct{}
 
 // PlaceVines places vines with circuit-board-like winding patterns
-func (p *CircuitBoardPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand, stats *GenerationStats) ([]model.Vine, map[string]string, error) {
+func (p *CircuitBoardPlacer) PlaceVines(config config.GenerationConfig, rng *rand.Rand, stats *config.GenerationStats) ([]model.Vine, map[string]string, error) {
 	w, h := config.GridWidth, config.GridHeight
 	totalCells := w * h
 	targetCells := int(float64(totalCells) * config.MinCoverage) // Use configurable coverage target
@@ -65,7 +66,7 @@ func (p *CircuitBoardPlacer) PlaceVines(config GenerationConfig, rng *rand.Rand,
 }
 
 // calculateVineLengths computes target lengths for circuit-board vines
-func (p *CircuitBoardPlacer) calculateVineLengths(config GenerationConfig, rng *rand.Rand) []int {
+func (p *CircuitBoardPlacer) calculateVineLengths(config config.GenerationConfig, rng *rand.Rand) []int {
 	totalCells := config.GridWidth * config.GridHeight
 	avgLength := totalCells / config.VineCount
 
@@ -122,10 +123,9 @@ func (p *CircuitBoardPlacer) growCircuitVine(
 	targetLen int,
 	w, h int,
 	occupied map[string]string,
-	config GenerationConfig,
+	config config.GenerationConfig,
 	rng *rand.Rand,
 ) (model.Vine, map[string]string, error) {
-
 	// Choose starting position biased toward edges (circuit board style)
 	seed := p.chooseCircuitSeed(w, h, occupied, rng)
 
@@ -272,7 +272,6 @@ func (p *CircuitBoardPlacer) chooseCircuitSegment(
 	w, h int,
 	rng *rand.Rand,
 ) model.Point {
-
 	if len(neighbors) == 1 {
 		return neighbors[0]
 	}

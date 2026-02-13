@@ -1,10 +1,13 @@
-package generator
+package strategies_test
 
 import (
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 )
 
 func TestReplayRegressionSeeds(t *testing.T) {
@@ -41,7 +44,7 @@ func TestReplayRegressionSeeds(t *testing.T) {
 			}
 
 			tmpDir := t.TempDir()
-			config := GenerationConfig{
+			config := config.GenerationConfig{
 				LevelID:              levelID,
 				GridWidth:            gridW,
 				GridHeight:           gridH,
@@ -58,7 +61,7 @@ func TestReplayRegressionSeeds(t *testing.T) {
 				OutputFile:           filepath.Join(tmpDir, "level.json"),
 			}
 
-			level, _, err := GenerateLevelLIFO(config)
+			level, _, err := generator.GenerateLevelLIFO(config)
 			if err == nil {
 				if level.ID != levelID {
 					t.Fatalf("expected generated level ID %d got %d", levelID, level.ID)

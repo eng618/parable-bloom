@@ -2,7 +2,6 @@ package repair
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,7 +11,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
-	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/strategies"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
@@ -146,19 +147,19 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun bool) (bool, error
 	// Use the generator package to regenerate the level
 	// This ensures consistency with the generation algorithm
 	difficulty := common.DifficultyForLevel(id)
-	gridSize := generator.GridSizeForLevel(id)
+	gridSize := utils.GridSizeForLevel(id)
 	levelSeed := int64(id) * 31337
 
 	common.Verbose("Regenerating level %d (difficulty: %s, grid: %dx%d)", id, difficulty, gridSize[0], gridSize[1])
 
 	// Get difficulty spec
-	spec, ok := generator.DifficultySpecs[difficulty]
+	spec, ok := config.DifficultySpecs[difficulty]
 	if !ok {
 		return true, fmt.Errorf("unknown difficulty: %s", difficulty)
 	}
 
 	// Use a deterministic variety profile based on level ID
-	profile := generator.VarietyProfile{
+	profile := config.VarietyProfile{
 		LengthMix: map[string]float64{
 			"short":  0.3,
 			"medium": 0.5,
@@ -175,17 +176,38 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun bool) (bool, error
 	}
 
 	// Generator config
-	cfg := generator.GeneratorConfig{
+	cfg := config.GeneratorConfig{
 		MaxSeedRetries:    50,
 		LocalRepairRadius: 3,
 		RepairRetries:     10,
 	}
 
 	// Generate vines using tiling algorithm
-	rng := rand.New(rand.NewSource(levelSeed))
-	vines, mask, genErr := generator.TileGridIntoVines(gridSize, spec, profile, cfg, rng)
+	vines, genErr := strategies.ClearableFirstPlacement(gridSize, spec, profile, cfg, levelSeed, 0.3, common.MinGridCoverage, true)
 	if genErr != nil {
 		return true, fmt.Errorf("failed to generate vines for level %d: %w", id, genErr)
+	}
+
+	// Calculate empty cells for masking
+	occupied := make(map[string]bool)
+	for _, v := range vines {
+		for _, p := range v.OrderedPath {
+			occupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
+		}
+	}
+
+	var maskedPoints []model.Point
+	for y := 0; y < gridSize[1]; y++ {
+		for x := 0; x < gridSize[0]; x++ {
+			if !occupied[fmt.Sprintf("%d,%d", x, y)] {
+				maskedPoints = append(maskedPoints, model.Point{X: x, Y: y})
+			}
+		}
+	}
+
+	mask := &model.Mask{
+		Mode:   "hide",
+		Points: maskedPoints,
 	}
 
 	level := model.Level{
@@ -197,8 +219,8 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun bool) (bool, error
 		MaxMoves:    10,
 		MinMoves:    1,
 		Complexity:  difficulty,
-		Grace:       generator.GraceForDifficulty(difficulty),
-		ColorScheme: generator.ColorPalette,
+		Grace:       utils.GraceForDifficulty(difficulty),
+		ColorScheme: config.ColorPalette,
 		Mask:        mask,
 	}
 
