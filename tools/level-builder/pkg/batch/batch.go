@@ -150,14 +150,11 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config) Result
 	primary := determineStrategy(levelID, difficulty, batchCfg)
 	strategiesToTry = append(strategiesToTry, primary)
 
-	// Add fallbacks if they aren't the primary
-	// For ClearableFirst, we trust it to work (as it reaches >95% reliably now).
-	// But we can keep CenterOut as a fail-safe.
-	if primary != config.StrategyCenterOut && primary != config.StrategyLegacyClearable {
+	if primary != config.StrategyCenterOut {
 		strategiesToTry = append(strategiesToTry, config.StrategyCenterOut)
 	}
 
-	const maxRetriesPerStrategy = 5
+	const maxRetriesPerStrategy = 20
 
 	for _, strat := range strategiesToTry {
 		for retry := 0; retry < maxRetriesPerStrategy; retry++ {
@@ -193,7 +190,7 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config) Result
 				if valErr == nil {
 					valid = true
 				} else {
-					// common.Warning("  Validation failed for level %d (%s): %v", levelID, strat, valErr)
+					common.Warning("  Validation failed for level %d (%s): %v", levelID, strat, valErr)
 				}
 			}
 

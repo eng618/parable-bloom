@@ -24,6 +24,7 @@ func AttemptLocalBacktrack(
 	rng *rand.Rand,
 	config config.GenerationConfig,
 	stats *config.GenerationStats,
+	strictLIFO bool,
 ) (model.Vine, map[string]string, []model.Vine, map[string]string, error) {
 	backtrackWindow := config.BacktrackWindow
 	if backtrackWindow == 0 {
@@ -36,44 +37,46 @@ func AttemptLocalBacktrack(
 
 	graph := utils.BuildBlockingGraph(vines)
 
-	// Prefer heuristic candidates first (direct blockers or high impact)
-	cands := utils.PickBacktrackCandidates(graph, vineID, backtrackWindow)
-	for _, candidate := range cands {
-		if stats != nil {
-			stats.BacktracksAttempted++
-		}
-		common.Verbose("AttemptLocalBacktrack: trying heuristic candidate %s", candidate)
-		// Remove the candidate vine specifically
-		vCopy := make([]model.Vine, 0, len(vines))
-		for _, v := range vines {
-			if v.ID == candidate {
-				continue
+	if !strictLIFO {
+		// Prefer heuristic candidates first (direct blockers or high impact)
+		cands := utils.PickBacktrackCandidates(graph, vineID, backtrackWindow)
+		for _, candidate := range cands {
+			if stats != nil {
+				stats.BacktracksAttempted++
 			}
-			vCopy = append(vCopy, v)
-		}
-		occCopy := make(map[string]string)
-		for k, v := range occupied {
-			occCopy[k] = v
-		}
-		// remove candidate cells
-		for _, v := range vines {
-			if v.ID != candidate {
-				continue
+			common.Verbose("AttemptLocalBacktrack: trying heuristic candidate %s", candidate)
+			// Remove the candidate vine specifically
+			vCopy := make([]model.Vine, 0, len(vines))
+			for _, v := range vines {
+				if v.ID == candidate {
+					continue
+				}
+				vCopy = append(vCopy, v)
 			}
-			for _, pt := range v.OrderedPath {
-				key := fmt.Sprintf("%d,%d", pt.X, pt.Y)
-				delete(occCopy, key)
-			}
-		}
-
-		vineAttempt, newOcc, err := p.placeVineWithExitGuarantee(vineID, targetLen, w, h, occCopy, rng, stats)
-		if err == nil {
-			// successful placement after removing candidate
-			for k, v := range newOcc {
+			occCopy := make(map[string]string)
+			for k, v := range occupied {
 				occCopy[k] = v
 			}
-			vCopy = append(vCopy, vineAttempt)
-			return vineAttempt, newOcc, vCopy, occCopy, nil
+			// remove candidate cells
+			for _, v := range vines {
+				if v.ID != candidate {
+					continue
+				}
+				for _, pt := range v.OrderedPath {
+					key := fmt.Sprintf("%d,%d", pt.X, pt.Y)
+					delete(occCopy, key)
+				}
+			}
+
+			vineAttempt, newOcc, err := p.placeVineWithExitGuarantee(vineID, targetLen, w, h, occCopy, rng, stats)
+			if err == nil {
+				// successful placement after removing candidate
+				for k, v := range newOcc {
+					occCopy[k] = v
+				}
+				vCopy = append(vCopy, vineAttempt)
+				return vineAttempt, newOcc, vCopy, occCopy, nil
+			}
 		}
 	}
 
@@ -97,6 +100,10 @@ func AttemptLocalBacktrack(
 			vines = append(vines, vine)
 			return vine, newOcc, vines, occupied, nil
 		}
+	}
+
+	if strictLIFO {
+		return model.Vine{}, nil, vines, occupied, fmt.Errorf("strict LIFO backtracking failed for vine %s", vineID)
 	}
 
 	// Cycle-breaker repair: analyze blocking graph for cycles and attempt targeted removals

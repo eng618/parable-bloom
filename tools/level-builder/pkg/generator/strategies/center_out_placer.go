@@ -30,6 +30,10 @@ func (p *CenterOutPlacer) PlaceVines(config config.GenerationConfig, rng *rand.R
 	var vines []model.Vine
 	var coverage float64
 
+	// Use strict LIFO for large levels to guarantee solvability.
+	// For small levels, relax strictness to allow heuristic backtracking, relying on validator.
+	strictLIFO := len(targetLengths) >= 20
+
 	// Phase 1: Place vines from center outward with LIFO guarantee
 	for _, targetLen := range targetLengths {
 		// Use dynamic ID based on current placed vines to avoid duplicates
@@ -42,7 +46,7 @@ func (p *CenterOutPlacer) PlaceVines(config config.GenerationConfig, rng *rand.R
 			common.Verbose("Could not place vine %s: %v", vineID, err)
 
 			// Delegate to AttemptLocalBacktrack (modularized)
-			vineRecovered, _, updatedVines, updatedOccupied, btErr := AttemptLocalBacktrack(vines, occupied, vineID, targetLen, p, w, h, rng, config, stats)
+			vineRecovered, _, updatedVines, updatedOccupied, btErr := AttemptLocalBacktrack(vines, occupied, vineID, targetLen, p, w, h, rng, config, stats, strictLIFO)
 			if btErr != nil {
 				common.Verbose("Local backtracking failed for %s: %v", vineID, btErr)
 				continue
@@ -239,12 +243,23 @@ func (p *CenterOutPlacer) growVineBody(
 	localOccupied[fmt.Sprintf("%d,%d", neck.X, neck.Y)] = vineID
 
 	// Grow remaining body segments
+	// Calculate forbidden cells (Head's exit path)
+	forbidden := make(map[string]bool)
+	dx, dy := common.DeltaForDirection(headDir)
+	ex, ey := head.X+dx, head.Y+dy
+	for ex >= 0 && ex < w && ey >= 0 && ey < h {
+		forbidden[fmt.Sprintf("%d,%d", ex, ey)] = true
+		ex += dx
+		ey += dy
+	}
+
 	ctx := &growContext{
 		w: w, h: h,
 		globalOccupied: globalOccupied,
 		localOccupied:  localOccupied,
 		vineID:         vineID,
 		rng:            rng,
+		forbidden:      forbidden,
 	}
 	path = p.growRemainingBody(path, neck, growDir, targetLen, ctx)
 
@@ -283,6 +298,7 @@ type growContext struct {
 	localOccupied  map[string]string
 	vineID         string
 	rng            *rand.Rand
+	forbidden      map[string]bool
 }
 
 // growRemainingBody continues vine growth after head and neck are placed
@@ -312,6 +328,16 @@ func (p *CenterOutPlacer) chooseNextGrowthCell(
 	ctx *growContext,
 ) *model.Point {
 	neighbors := p.getAvailableNeighbors(current, ctx.w, ctx.h, ctx.globalOccupied, ctx.localOccupied)
+
+	// Pre-filter neighbors to avoid forbidden cells (exit path)
+	var validNeighbors []model.Point
+	for _, n := range neighbors {
+		if !ctx.forbidden[fmt.Sprintf("%d,%d", n.X, n.Y)] {
+			validNeighbors = append(validNeighbors, n)
+		}
+	}
+	neighbors = validNeighbors
+
 	if len(neighbors) == 0 {
 		return nil
 	}

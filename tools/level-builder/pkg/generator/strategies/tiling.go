@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"sort"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
@@ -355,6 +356,11 @@ func GrowFromSeed(
 		// Unexpected: head and neck not adjacent (shouldn't happen with proper growth)
 		actualHeadDir = desiredHeadDir
 	}
+
+	// Check for mismatch (DEBUG)
+	// if actualHeadDir == "down" && dy == 1 {
+	common.Verbose("DEBUG: GrowFromSeed created: head=%v neck=%v dx=%d dy=%d dir=%s", head, neck, dx, dy, actualHeadDir)
+	// }
 
 	// Return vine with CORRECT head direction based on actual path geometry
 	return model.Vine{HeadDirection: actualHeadDir, OrderedPath: path}, occ, nil

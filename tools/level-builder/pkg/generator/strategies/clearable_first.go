@@ -270,6 +270,18 @@ func ClearableFirstPlacement(
 						// Non-greedy: just extend
 						vine.OrderedPath = append(vine.OrderedPath, n)
 
+						// DEBUG CHECK
+						if len(vine.OrderedPath) >= 2 {
+							h := vine.OrderedPath[0]
+							neck := vine.OrderedPath[1]
+							dx := h.X - neck.X
+							dy := h.Y - neck.Y
+							if (dx == 0 && dy == 1 && vine.HeadDirection != "up") ||
+								(dx == 0 && dy == -1 && vine.HeadDirection != "down") {
+								common.Verbose("DEBUG: ClearableFirst EXTENSION BROKE DIRECTION! vine=%v head=%v neck=%v dir=%s", vine.ID, h, neck, vine.HeadDirection)
+							}
+						}
+
 						occupied[fmt.Sprintf("%d,%d", n.X, n.Y)] = true
 						lengthCounts[len(vine.OrderedPath)]++
 						extended = true

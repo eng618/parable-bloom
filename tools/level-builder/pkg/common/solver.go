@@ -37,38 +37,45 @@ func (s *Solver) IsSolvableGreedy() bool {
 		vineIndices[i] = indices
 	}
 
-	// Active vines mask
-	remainingMask := (1 << uint64(vineCount)) - 1
-	if vineCount == 64 {
-		remainingMask = -1
+	// Active vines tracking
+	activeVines := make([]bool, vineCount)
+	for i := 0; i < vineCount; i++ {
+		activeVines[i] = true
 	}
+	activeCount := vineCount
 
 	// Occupied buffer
 	occupied := make([]bool, gridArea)
 
-	for remainingMask != 0 {
+	for activeCount > 0 {
 		foundClearable := false
 
-		// Build occupied set
+		// Build occupied set from active vines
 		for i := 0; i < gridArea; i++ {
 			occupied[i] = false
 		}
 		for i := 0; i < vineCount; i++ {
-			if (remainingMask & (1 << uint64(i))) != 0 {
+			if activeVines[i] {
 				for _, idx := range vineIndices[i] {
 					occupied[idx] = true
 				}
 			}
 		}
 
+		// Try to find a clearable vine
+		// Optimization: could iterate only active vines, but iterating all is simpler for now
 		for i := 0; i < vineCount; i++ {
-			if (remainingMask & (1 << uint64(i))) == 0 {
+			if !activeVines[i] {
 				continue
 			}
 
 			if s.canVineClearFast(&vines[i], occupied, vineIndices[i], w) {
-				remainingMask &= ^(1 << uint64(i))
+				activeVines[i] = false
+				activeCount--
 				foundClearable = true
+				// Restart loop to reflect new empty space immediately?
+				// Greedy Strategy: remove one, then re-evaluate.
+				// For LIFO check, removing one by one is correct.
 				break
 			}
 		}

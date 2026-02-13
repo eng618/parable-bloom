@@ -24,19 +24,27 @@ func isSolvableExactAStarWithStats(lvl model.Level, maxStates int, astarWeight i
 		vineIndices[i] = indices
 	}
 
-	fullMask := int64((1 << uint(vineCount)) - 1)
-	if vineCount == 64 {
-		fullMask = -1
+	var fullMask uint64
+	if vineCount >= 64 {
+		fullMask = ^uint64(0)
+	} else {
+		fullMask = (uint64(1) << uint(vineCount)) - 1
+	}
+
+	// Precompute mask visibility
+	maskBitset := make([]bool, gridArea)
+	for i := 0; i < gridArea; i++ {
+		maskBitset[i] = !lvl.IsCellVisible(i%w, i/w)
 	}
 
 	// A* structures
-	visited := make(map[int64]bool)
+	visited := make(map[uint64]bool)
 	pq := &priorityQueueMask{}
 	heap.Init(pq)
 
 	heap.Push(pq, &maskItem{
 		mask:     fullMask,
-		priority: heuristicPriorityFast(fullMask, lvl, vineIndices, astarWeight),
+		priority: heuristicPriorityFast(fullMask, lvl, vineIndices, astarWeight, maskBitset),
 	})
 	visited[fullMask] = true
 
@@ -55,12 +63,10 @@ func isSolvableExactAStarWithStats(lvl model.Level, maxStates int, astarWeight i
 			return true, states
 		}
 
-		// Update occupancy
-		for idx := 0; idx < gridArea; idx++ {
-			occupied[idx] = false
-		}
+		// Update occupancy with precomputed mask and active vines
+		copy(occupied, maskBitset)
 		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) != 0 {
+			if (mask & (uint64(1) << uint(i))) != 0 {
 				for _, idx := range vineIndices[i] {
 					occupied[idx] = true
 				}
@@ -69,14 +75,14 @@ func isSolvableExactAStarWithStats(lvl model.Level, maxStates int, astarWeight i
 
 		// movable vines
 		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) == 0 {
+			if (mask & (uint64(1) << uint(i))) == 0 {
 				continue
 			}
 			if canVineClearFast(lvl, i, occupied, vineIndices[i]) {
-				next := mask & ^(1 << uint(i))
+				next := mask & ^(uint64(1) << uint(i))
 				if !visited[next] {
 					visited[next] = true
-					priority := heuristicPriorityFast(next, lvl, vineIndices, astarWeight)
+					priority := heuristicPriorityFast(next, lvl, vineIndices, astarWeight, maskBitset)
 					heap.Push(pq, &maskItem{mask: next, priority: priority})
 				}
 			}
@@ -87,13 +93,13 @@ func isSolvableExactAStarWithStats(lvl model.Level, maxStates int, astarWeight i
 }
 
 // heuristicPriorityFast computes a simple heuristic: blockedCount*weight + remainingVines
-func heuristicPriorityFast(mask int64, lvl model.Level, vineIndices [][]int, weight int) int {
+func heuristicPriorityFast(mask uint64, lvl model.Level, vineIndices [][]int, weight int, maskBitset []bool) int {
 	w, h := lvl.GridSize[0], lvl.GridSize[1]
 	remaining := 0
 	blocked := 0
 
 	for i := 0; i < len(lvl.Vines); i++ {
-		if (mask & (1 << uint(i))) == 0 {
+		if (mask & (uint64(1) << uint(i))) == 0 {
 			continue
 		}
 		remaining++
@@ -109,8 +115,15 @@ func heuristicPriorityFast(mask int64, lvl model.Level, vineIndices [][]int, wei
 		}
 
 		nextIdx := ny*w + nx
+		// Blocked by grid mask?
+		if maskBitset[nextIdx] {
+			blocked++
+			continue
+		}
+
+		// Blocked by other vines?
 		for j := 0; j < len(lvl.Vines); j++ {
-			if (mask&(1<<uint(j))) == 0 || i == j {
+			if (mask&(uint64(1)<<uint(j))) == 0 || i == j {
 				continue
 			}
 			for _, idx := range vineIndices[j] {

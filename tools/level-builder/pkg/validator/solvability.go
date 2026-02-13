@@ -2,8 +2,10 @@ package validator
 
 import (
 	"container/heap"
+	"fmt"
 	"sort"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -33,7 +35,15 @@ func IsSolvableWithOptions(lvl model.Level, maxStates int, useAstar bool, astarW
 	if vineCount == 0 {
 		return true, SolvabilityStats{Solver: "none", StatesExplored: 0, GaveUp: false}, nil
 	}
-
+	if vineCount >= 64 {
+		// Use unlimited greedy solver for large levels
+		solver := common.NewSolver(&lvl)
+		if solver.IsSolvableGreedy() {
+			return true, SolvabilityStats{Solver: "greedy-unlimited", StatesExplored: 0, GaveUp: false}, nil
+		}
+		// If greedy fails, report failure (though it might still be solvable)
+		return false, SolvabilityStats{Solver: "greedy-unlimited", GaveUp: true}, fmt.Errorf("greedy solver failed for %d vines", vineCount)
+	}
 	if vineCount <= 24 {
 		if useAstar {
 			ok, states := isSolvableExactAStarWithStats(lvl, maxStates, astarWeight)
@@ -81,9 +91,9 @@ func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 		vineIndices[i] = indices
 	}
 
-	fullMask := (1 << uint(vineCount)) - 1
-	visited := make([]bool, 1<<uint(vineCount))
-	queue := make([]int, 0, 1024)
+	fullMask := (uint64(1) << uint(vineCount)) - 1
+	visited := make(map[uint64]bool)
+	queue := make([]uint64, 0, 1024)
 	queue = append(queue, fullMask)
 	visited[fullMask] = true
 	states := 0
@@ -103,12 +113,12 @@ func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 			return true, states
 		}
 
-		// Update occupancy bitset
+		// Update occupancy bitset with active vines (masked cells are ignored - they are passible)
 		for i := 0; i < gridArea; i++ {
 			occupied[i] = false
 		}
 		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) != 0 {
+			if (mask & (uint64(1) << uint(i))) != 0 {
 				for _, idx := range vineIndices[i] {
 					occupied[idx] = true
 				}
@@ -116,11 +126,11 @@ func isSolvableExactWithStats(lvl model.Level, maxStates int) (bool, int) {
 		}
 
 		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) == 0 {
+			if (mask & (uint64(1) << uint(i))) == 0 {
 				continue
 			}
 			if canVineClearFast(lvl, i, occupied, vineIndices[i]) {
-				next := mask & ^(1 << uint(i))
+				next := mask & ^(uint64(1) << uint(i))
 				if !visited[next] {
 					visited[next] = true
 					queue = append(queue, next)
@@ -210,13 +220,15 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 		}
 	}
 
-	visited := make(map[int64]bool)
+	visited := make(map[uint64]bool)
 	pq := &priorityQueueMask{}
 	heap.Init(pq)
 
-	fullMask := int64((1 << uint(vineCount)) - 1)
-	if vineCount == 64 {
-		fullMask = -1 // 0xFFFFFFFF...
+	var fullMask uint64
+	if vineCount >= 64 {
+		fullMask = ^uint64(0)
+	} else {
+		fullMask = (uint64(1) << uint(vineCount)) - 1
 	}
 
 	heap.Push(pq, &maskItem{mask: fullMask, priority: 0})
@@ -233,12 +245,12 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 			return true, states
 		}
 
-		// Update occupancy
+		// Update occupancy with active vines (masked cells are passible)
 		for idx := 0; idx < gridArea; idx++ {
 			occupied[idx] = false
 		}
 		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint(i))) != 0 {
+			if (mask & (uint64(1) << uint(i))) != 0 {
 				for _, idx := range vineIndices[i] {
 					occupied[idx] = true
 				}
@@ -254,7 +266,7 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 		sort.Slice(movable, func(a, b int) bool {
 			aCount, bCount := 0, 0
 			for k := 0; k < vineCount; k++ {
-				if (mask & (1 << uint(k))) != 0 {
+				if (mask & (uint64(1) << uint(k))) != 0 {
 					if blocking[movable[a]][k] {
 						aCount++
 					}
@@ -267,7 +279,7 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 		})
 
 		for _, i := range movable {
-			next := mask & ^(1 << uint(i))
+			next := mask & ^(uint64(1) << uint(i))
 			if !visited[next] {
 				visited[next] = true
 				// Priority: fewer vines remaining is better
@@ -280,7 +292,7 @@ func isSolvableHeuristicWithStats(lvl model.Level, maxStates int) (bool, int) {
 	return false, states
 }
 
-func countSetBits64(n int64) int {
+func countSetBits64(n uint64) int {
 	count := 0
 	for n != 0 {
 		n &= (n - 1)
@@ -290,7 +302,7 @@ func countSetBits64(n int64) int {
 }
 
 type maskItem struct {
-	mask     int64
+	mask     uint64
 	priority int
 }
 
@@ -302,6 +314,7 @@ func (pq priorityQueueMask) Swap(i, j int)      { pq[i], pq[j] = pq[j], pq[i] }
 func (pq *priorityQueueMask) Push(x interface{}) {
 	*pq = append(*pq, x.(*maskItem))
 }
+
 func (pq *priorityQueueMask) Pop() interface{} {
 	old := *pq
 	n := len(old)
@@ -310,12 +323,12 @@ func (pq *priorityQueueMask) Pop() interface{} {
 	return item
 }
 
-func determineMovableVinesFast(lvl model.Level, mask int64, occupied []bool, vineIndices [][]int) []int {
+func determineMovableVinesFast(lvl model.Level, mask uint64, occupied []bool, vineIndices [][]int) []int {
 	vines := lvl.Vines
 	w, h := lvl.GridSize[0], lvl.GridSize[1]
 	movable := make([]int, 0, 8)
 	for i := 0; i < len(vines); i++ {
-		if (mask & (1 << uint(i))) == 0 {
+		if (mask & (uint64(1) << uint(i))) == 0 {
 			continue
 		}
 		v := vines[i]

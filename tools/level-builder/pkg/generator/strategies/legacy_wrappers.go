@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
@@ -64,7 +63,7 @@ func (s *LegacyClearableStrategy) PlaceVines(cfg config.GenerationConfig, rng *r
 	// Anchor ratio - usually 0.3 in legacy code, but adaptive. Use default 0.3 for now.
 	anchorRatio := 0.3
 
-	vines, err := ClearableFirstPlacement(gridSize, spec, profile, genCfg, seed, anchorRatio, common.MinGridCoverage, true)
+	vines, err := ClearableFirstPlacement(gridSize, spec, profile, genCfg, seed, anchorRatio, spec.MinGridOccupancy, true)
 	if err != nil {
 		return nil, nil, err
 	}
