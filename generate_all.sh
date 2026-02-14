@@ -57,7 +57,7 @@ done
 echo "----------------------------------------"
 echo "Validating all generated levels..."
 echo "----------------------------------------"
-./tools/level-builder/level-builder validate --directory "$OUTPUT_DIR" --check-solvable --verbose
+./tools/level-builder/level-builder validate --working-dir "$REPO_ROOT" --check-solvable --verbose
 
 if [ $? -ne 0 ]; then
     echo "❌ Validation failed for some levels!"

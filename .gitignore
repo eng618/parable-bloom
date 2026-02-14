@@ -111,3 +111,8 @@ logs/
 
 # Taskfile checksums
 .task/
+
+# Go build cache
+.gocache/
+.gotmp/
+tools/level-builder/.gocache/
