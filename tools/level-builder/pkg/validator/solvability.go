@@ -35,13 +35,15 @@ func IsSolvableWithOptions(lvl model.Level, maxStates int, useAstar bool, astarW
 	if vineCount == 0 {
 		return true, SolvabilityStats{Solver: "none", StatesExplored: 0, GaveUp: false}, nil
 	}
+	// Optimization: Always try greedy solver first. It's very fast and correct for "easy" levels.
+	// This prevents the slow A* solver from timing out on large levels that are actually trivial.
+	solver := common.NewSolver(&lvl)
+	if solver.IsSolvableGreedy() {
+		return true, SolvabilityStats{Solver: "greedy-fast", StatesExplored: 0, GaveUp: false}, nil
+	}
+
 	if vineCount >= 64 {
-		// Use unlimited greedy solver for large levels
-		solver := common.NewSolver(&lvl)
-		if solver.IsSolvableGreedy() {
-			return true, SolvabilityStats{Solver: "greedy-unlimited", StatesExplored: 0, GaveUp: false}, nil
-		}
-		// If greedy fails, report failure (though it might still be solvable)
+		// If greedy fails on massive levels, we can't do exact search anyway
 		return false, SolvabilityStats{Solver: "greedy-unlimited", GaveUp: true}, fmt.Errorf("greedy solver failed for %d vines", vineCount)
 	}
 	if vineCount <= 24 {
