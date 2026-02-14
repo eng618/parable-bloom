@@ -46,22 +46,19 @@ tasks:
     desc: Run level-builder Go module tests
     dir: tools/level-builder
     cmds:
-      - mkdir -p .gotmp .gocache
-      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/... ./cmd/... -short -coverprofile=coverage.txt
+      - go test ./pkg/... ./cmd/... -short -coverprofile=coverage.out
 
   test:quick:
     desc: Run fast level-builder tests (used in validate and CI)
     dir: tools/level-builder
     cmds:
-      - mkdir -p .gotmp .gocache
-      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/... ./cmd/... -short
-      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/gen2/... -run TestGeneratedLevelsHaveUniqueVineIDs -v
+      - go test ./pkg/... ./cmd/... -short
 
   test:cover:
     desc: Generate HTML coverage report
     dir: tools/level-builder
     cmds:
-      - go tool cover -html=coverage.txt
+      - go tool cover -html=coverage.out
 
   test:summary:
     desc: Run tests with gotestsum for better summary
@@ -83,19 +80,9 @@ tasks:
     desc: Run extended level-builder tests (heavy/resilience)
     dir: tools/level-builder
     cmds:
-      - mkdir -p .gotmp .gocache
-      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache task test-resilience
-      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
-      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
-      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/... ./cmd/...
-
-  test-resilience:
-    desc: Run focused resilience tests for level-builder
-    dir: tools/level-builder
-    cmds:
-      - mkdir -p .gotmp .gocache
-      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
-      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
+      - go test ./pkg/generator/strategies -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
+      - go test ./pkg/generator/strategies -run TestAttemptLocalBacktrackRecovers -v
+      - go test ./pkg/... ./cmd/...
 
   # -----------------------------------------------------------------------------
   # Linting
