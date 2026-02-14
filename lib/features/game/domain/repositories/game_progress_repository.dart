@@ -17,6 +17,10 @@ abstract class GameProgressRepository {
   /// This is a no-op for local-only repositories.
   Future<void> syncToCloud();
 
+  /// Syncs progress from cloud if available and enabled.
+  /// This is a no-op for local-only repositories.
+  Future<void> syncFromCloud();
+
   /// Gets the last sync timestamp.
   /// Returns null if never synced or not applicable.
   Future<DateTime?> getLastSyncTime();

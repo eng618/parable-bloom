@@ -41,6 +41,11 @@ class HiveGameProgressRepository implements GameProgressRepository {
   }
 
   @override
+  Future<void> syncFromCloud() async {
+    // No-op for local-only repository
+  }
+
+  @override
   Future<DateTime?> getLastSyncTime() async {
     final timestamp = _box.get(_lastSyncTimeKey);
     return timestamp != null

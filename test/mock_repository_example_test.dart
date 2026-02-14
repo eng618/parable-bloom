@@ -28,6 +28,11 @@ class MockGameProgressRepository implements GameProgressRepository {
   }
 
   @override
+  Future<void> syncFromCloud() async {
+    _lastSyncTime = DateTime.now();
+  }
+
+  @override
   Future<DateTime?> getLastSyncTime() async => _lastSyncTime;
 
   @override
