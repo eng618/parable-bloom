@@ -63,8 +63,6 @@ func BenchmarkClearableFirstCoverage(b *testing.B) {
 			successCount++
 			cov := metrics.CalculateCoverage([]int{genCfg.GridWidth, genCfg.GridHeight}, vines)
 			totalCoverage += cov
-		} else {
-			// Failed generation adds 0 coverage
 		}
 	}
 
@@ -126,7 +124,7 @@ func TestFindFailingSeed(t *testing.T) {
 		MinCoverage: 0.95,
 	}
 
-	spec, _ := config.DifficultySpecs[diff]
+	spec := config.DifficultySpecs[diff]
 	tuningCfg := utils.GetGeneratorConfigForDifficulty(diff)
 	profile := utils.GetPresetProfile(diff)
 

@@ -14,9 +14,6 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
 
-// getCoverageForDifficulty is removed. We now enforce 100% coverage globally.
-const targetCoverage = 1.0
-
 // Config holds configuration for batch level generation.
 type Config struct {
 	ModuleID  int

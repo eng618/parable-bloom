@@ -1,5 +1,5 @@
 /*
-Package batch provides the command-line interface for batch-generating entire modules using gen2.
+Package batch provides the command-line interface for batch-generating entire modules.
 
 The batch command orchestrates the generation of 21 levels per module, with difficulty
 progression across tiers:

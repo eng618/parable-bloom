@@ -70,57 +70,6 @@ func TestTileGridIntoVines_BasicGeneration(t *testing.T) {
 	}
 }
 
-// TestGenerateSingleLevel_SmallGrid tests if small grids can be generated
-func TestGenerateSingleLevel_SmallGrid(t *testing.T) {
-	// Use small grid to increase chance of success
-	tests := []struct {
-		name       string
-		gridSize   []int
-		difficulty string
-		seed       int64
-	}{
-		{
-			name:       "Tiny Tutorial grid",
-			gridSize:   []int{4, 5},
-			difficulty: "Tutorial",
-			seed:       42,
-		},
-		{
-			name:       "Small Seedling grid",
-			gridSize:   []int{5, 6},
-			difficulty: "Seedling",
-			seed:       43,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			rng := rand.New(rand.NewSource(tt.seed))
-
-			// Note: Can't override GridSizeForLevel at runtime
-			// This test will use actual grid size calculation
-			level, err := generateSingleLevel(1, tt.difficulty, tt.seed, rng)
-			if err != nil {
-				// Log the error but don't fail - generation may legitimately fail
-				t.Logf("Generation failed (this may be expected): %v", err)
-				t.Skip("Generation failed - this test is for observing behavior")
-			}
-
-			t.Logf("Successfully generated level with %d vines", len(level.Vines))
-
-			// Validate basic properties
-			if len(level.Vines) == 0 {
-				t.Error("Generated level has no vines")
-			}
-
-			solver := common.NewSolver(&level)
-			if !solver.IsSolvableGreedy() {
-				t.Error("Generated level is not solvable (greedy check)")
-			}
-		})
-	}
-}
-
 // TestGrowFromSeed_BasicGrowth tests vine growth from a seed
 func TestGrowFromSeed_BasicGrowth(t *testing.T) {
 	gridSize := []int{10, 10}

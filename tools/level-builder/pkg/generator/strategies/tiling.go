@@ -195,11 +195,22 @@ func GrowFromSeed(
 	}
 	occ[fmt.Sprintf("%d,%d", seed.X, seed.Y)] = true
 
+	// Calculate exit path points (forbidden for vine body)
+	// The vine body should never block the head's exit path
+	forbidden := make(map[string]bool)
+	currX, currY := seed.X+headDx, seed.Y+headDy
+	for currX >= 0 && currX < w && currY >= 0 && currY < h {
+		forbidden[fmt.Sprintf("%d,%d", currX, currY)] = true
+		currX += headDx
+		currY += headDy
+	}
+
 	// Grow vine segments, preferring to grow opposite to head direction (backward growth)
 	// This creates vines that naturally point toward exits
 	for len(path) < targetLen {
 		head := path[len(path)-1]
-		neighbors := availableNeighbors(head, w, h, occ)
+		// Pass forbidden map to filter neighbors
+		neighbors := availableNeighborsWithForbidden(head, w, h, occ, forbidden)
 		if len(neighbors) == 0 {
 			// Stuck - validate minimum length before returning
 			if len(path) < 2 {
@@ -401,8 +412,8 @@ func calculateDensityScore(p model.Point, occupied map[string]bool, gridSize []i
 	return densityScore*2.0 + edgeBonus
 }
 
-// availableNeighbors lists unoccupied Manhattan neighbors within grid.
-func availableNeighbors(p model.Point, w, h int, occ map[string]bool) []model.Point {
+// availableNeighborsWithForbidden lists unoccupied Manhattan neighbors within grid, excluding forbidden cells.
+func availableNeighborsWithForbidden(p model.Point, w, h int, occ map[string]bool, forbidden map[string]bool) []model.Point {
 	candidates := []model.Point{
 		{X: p.X + 1, Y: p.Y},
 		{X: p.X - 1, Y: p.Y},
@@ -414,7 +425,8 @@ func availableNeighbors(p model.Point, w, h int, occ map[string]bool) []model.Po
 		if c.X < 0 || c.X >= w || c.Y < 0 || c.Y >= h {
 			continue
 		}
-		if occ[fmt.Sprintf("%d,%d", c.X, c.Y)] {
+		key := fmt.Sprintf("%d,%d", c.X, c.Y)
+		if occ[key] || forbidden[key] {
 			continue
 		}
 		out = append(out, c)

@@ -72,7 +72,7 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
     "grace": {
       "type": "integer",
       "description": "Allowed mistakes",
-      "enum": [3, 4, 999] 
+      "enum": [3, 4, 999]
     },
     "color_scheme": {
       "type": "array",
@@ -87,7 +87,14 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
     },
     "difficulty": {
       "type": "string",
-      "enum": ["Tutorial", "Seedling", "Sprout", "Nurturing", "Flourishing", "Transcendent"]
+      "enum": [
+        "Tutorial",
+        "Seedling",
+        "Sprout",
+        "Nurturing",
+        "Flourishing",
+        "Transcendent"
+      ]
     },
     "complexity": {
       "type": "string",
@@ -105,15 +112,25 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
         "points": {
           "type": "array",
           "items": {
-            "type": "object", 
-            "properties": { "x": { "type": "integer" }, "y": { "type": "integer" } }, 
-            "required": ["x", "y"] 
+            "type": "object",
+            "properties": {
+              "x": { "type": "integer" },
+              "y": { "type": "integer" }
+            },
+            "required": ["x", "y"]
           }
         }
       }
     }
   },
-  "required": ["id", "grid_size", "vines", "max_moves", "grace", "color_scheme"],
+  "required": [
+    "id",
+    "grid_size",
+    "vines",
+    "max_moves",
+    "grace",
+    "color_scheme"
+  ],
 
   "$defs": {
     "vine": {
@@ -128,14 +145,17 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
           "type": "array",
           "items": {
             "type": "object",
-            "properties": { "x": { "type": "integer" }, "y": { "type": "integer" } },
+            "properties": {
+              "x": { "type": "integer" },
+              "y": { "type": "integer" }
+            },
             "required": ["x", "y"]
           },
           "minItems": 2
         },
         "color_index": {
-            "type": "integer", 
-            "description": "Index into color_scheme array. Defaults to 0."
+          "type": "integer",
+          "description": "Index into color_scheme array. Defaults to 0."
         }
       },
       "required": ["id", "head_direction", "ordered_path"]
@@ -154,9 +174,9 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
   "properties": {
     "version": { "type": "string" },
     "tutorials": {
-        "type": "array",
-        "description": "List of tutorial level IDs",
-        "items": { "type": "integer" }
+      "type": "array",
+      "description": "List of tutorial level IDs",
+      "items": { "type": "integer" }
     },
     "modules": {
       "type": "array",
@@ -165,7 +185,10 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
         "properties": {
           "id": { "type": "integer" },
           "name": { "type": "string" },
-          "theme_seed": { "type": "string", "description": "e.g., 'forest', 'sunset'" },
+          "theme_seed": {
+            "type": "string",
+            "description": "e.g., 'forest', 'sunset'"
+          },
           "levels": {
             "type": "array",
             "description": "Sequence of standard 'Lesson' levels",
@@ -188,7 +211,14 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
           },
           "unlock_message": { "type": "string" }
         },
-        "required": ["id", "name", "levels", "challenge_level", "parable", "theme_seed"]
+        "required": [
+          "id",
+          "name",
+          "levels",
+          "challenge_level",
+          "parable",
+          "theme_seed"
+        ]
       }
     }
   },
@@ -214,13 +244,13 @@ The `gen2` command in `tools/level-builder` is the primary level generation syst
 
 ### 5.1 Difficulty Specifications
 
-| Difficulty | Grid Size Range | Vine Count | Avg Length | Coverage Target | Grace | Complexity |
-|------------|-----------------|------------|------------|-----------------|-------|------------|
-| Seedling | 6×8 to 9×12 | 3-6 | 3-5 | 85% | 5 | low |
-| Sprout | 9×12 to 12×16 | 5-10 | 4-6 | 80% | 4 | medium |
-| Nurturing | 9×16 to 12×20 | 8-15 | 5-8 | 75% | 3 | medium |
-| Flourishing | 12×20 to 16×24 | 12-20 | 6-10 | 70% | 2 | high |
-| Transcendent | 16×28 to 24×40 | 15-25 | 8-12 | 60% | 1 | very_high |
+| Difficulty   | Grid Size Range | Vine Count | Avg Length | Coverage Target | Grace | Complexity |
+| ------------ | --------------- | ---------- | ---------- | --------------- | ----- | ---------- |
+| Seedling     | 6×8 to 9×12     | 3-6        | 3-5        | 85%             | 5     | low        |
+| Sprout       | 9×12 to 12×16   | 5-10       | 4-6        | 80%             | 4     | medium     |
+| Nurturing    | 9×16 to 12×20   | 8-15       | 5-8        | 75%             | 3     | medium     |
+| Flourishing  | 12×20 to 16×24  | 12-20      | 6-10       | 70%             | 2     | high       |
+| Transcendent | 16×28 to 24×40  | 15-25      | 8-12       | 60%             | 1     | very_high  |
 
 ### 5.2 Direction-First Placement Algorithm
 
@@ -236,7 +266,7 @@ The algorithm prioritizes **exit path guarantee** by selecting head direction fi
 
 Instead of restarting on unsolvable placements, gen2 uses intelligent backtracking:
 
-1. **Check After Placement**: After each vine is placed, verify solvability using the exact A* solver.
+1. **Check After Placement**: After each vine is placed, verify solvability using the exact A\* solver.
 2. **Backtrack on Failure**: If unsolvable, remove the last 3 vines (configurable) and retry with different random choices.
 3. **Attempt Limit**: Maximum 10 generation attempts before reporting failure.
 
@@ -277,7 +307,8 @@ The Go-based toolchain located in `tools/level-builder` handles all operations.
   ```bash
   go run . validate --check-solvable
   ```
-  *Outputs results to `logs/validation_stats.json`.*
+
+  _Outputs results to `logs/validation_stats.json`._
 
 - **render**: Visualize levels in terminal
 

@@ -161,6 +161,66 @@ func ValidateStructural(lvl model.Level) []error {
 		errors = append(errors, circularError)
 	}
 
+	// Check for self-blocking vines (vine blocking its own exit path)
+	if selfBlockingErrors := ValidateSelfBlocking(lvl); len(selfBlockingErrors) > 0 {
+		errors = append(errors, selfBlockingErrors...)
+	}
+
+	return errors
+}
+
+// ValidateSelfBlocking checks if any vine blocks its own exit path.
+// The "exit path" is the straight line from the vine's head in its HeadDirection to the grid edge.
+// If any segment of the SAME vine occupies a cell on this path, the vine is self-blocking.
+func ValidateSelfBlocking(lvl model.Level) []error {
+	var errors []error
+	w, h := lvl.GridSize[0], lvl.GridSize[1]
+
+	for _, v := range lvl.Vines {
+		if len(v.OrderedPath) < 1 {
+			continue
+		}
+
+		head := v.OrderedPath[0]
+		dx, dy := 0, 0
+		switch v.HeadDirection {
+		case "right":
+			dx, dy = 1, 0
+		case "left":
+			dx, dy = -1, 0
+		case "up":
+			dx, dy = 0, 1
+		case "down":
+			dx, dy = 0, -1
+		default:
+			continue // Invalid direction handled elsewhere
+		}
+
+		// Calculate exit path points
+		exitPath := make(map[string]bool)
+		currX, currY := head.X+dx, head.Y+dy
+		for currX >= 0 && currX < w && currY >= 0 && currY < h {
+			exitPath[fmt.Sprintf("%d,%d", currX, currY)] = true
+			currX += dx
+			currY += dy
+		}
+
+		// Check if any segment of THIS vine intersects the exit path
+		// Skip head (index 0) as it defines the start of the path
+		for i := 1; i < len(v.OrderedPath); i++ {
+			p := v.OrderedPath[i]
+			key := fmt.Sprintf("%d,%d", p.X, p.Y)
+			if exitPath[key] {
+				errors = append(errors, StructuralError{
+					VineID:  v.ID,
+					Message: fmt.Sprintf("self-blocking: segment at (%d,%d) blocks head exit path", p.X, p.Y),
+				})
+				// Report once per vine
+				break
+			}
+		}
+	}
+
 	return errors
 }
 

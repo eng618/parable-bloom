@@ -17,7 +17,7 @@ type Spinner struct {
 func NewSpinner(msg string) *Spinner {
 	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
 	s.Suffix = " " + msg
-	s.Color("cyan", "bold")
+	_ = s.Color("cyan", "bold") // Unchecked return value: s.Color returns error, but we ignore it here.
 	return &Spinner{s: s}
 }
 

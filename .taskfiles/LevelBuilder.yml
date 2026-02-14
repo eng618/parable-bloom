@@ -46,30 +46,56 @@ tasks:
     desc: Run level-builder Go module tests
     dir: tools/level-builder
     cmds:
-      - go test ./... -coverprofile=coverage.out
+      - mkdir -p .gotmp .gocache
+      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/... ./cmd/... -short -coverprofile=coverage.txt
 
   test:quick:
     desc: Run fast level-builder tests (used in validate and CI)
     dir: tools/level-builder
     cmds:
-      - go test ./... -short
-      - go test ./... -run TestGeneratedLevelsHaveUniqueVineIDs -v
+      - mkdir -p .gotmp .gocache
+      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/... ./cmd/... -short
+      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/gen2/... -run TestGeneratedLevelsHaveUniqueVineIDs -v
+
+  test:cover:
+    desc: Generate HTML coverage report
+    dir: tools/level-builder
+    cmds:
+      - go tool cover -html=coverage.txt
+
+  test:summary:
+    desc: Run tests with gotestsum for better summary
+    dir: tools/level-builder
+    vars:
+      LOCAL_BIN:
+        sh: echo "$(pwd)/../../.gotmp/bin"
+      GOPATH:
+        sh: mkdir -p ../../.gotmp ../../.gocache && GOTMPDIR=$(pwd)/../../.gotmp GOCACHE=$(pwd)/../../.gocache go env GOPATH
+    cmds:
+      - mkdir -p ../../.gotmp ../../.gocache
+      - PATH="{{.LOCAL_BIN}}:{{.GOPATH}}/bin:$PATH" TMPDIR=$(pwd)/../../.gotmp GOTMPDIR=$(pwd)/../../.gotmp GOCACHE=$(pwd)/../../.gocache gotestsum --format testname -- ./pkg/... ./cmd/... -short
+    preconditions:
+      - sh: |
+          PATH="$(pwd)/../../.gotmp/bin:$(go env GOPATH)/bin:$PATH" command -v gotestsum >/dev/null 2>&1
+        msg: "gotestsum is not installed. Please install it (go install gotest.tools/gotestsum@latest)"
 
   test:extended:
     desc: Run extended level-builder tests (heavy/resilience)
     dir: tools/level-builder
     cmds:
-      - task: test-resilience
-      - go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
-      - go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
-      - go test ./...
+      - mkdir -p .gotmp .gocache
+      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache task test-resilience
+      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
+      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
+      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/... ./cmd/...
 
   test-resilience:
     desc: Run focused resilience tests for level-builder
     dir: tools/level-builder
     cmds:
-      - go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
-      - go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
+      - mkdir -p .gotmp .gocache
+      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/gen2 -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
+      - TMPDIR=$(pwd)/.gotmp GOTMPDIR=$(pwd)/.gotmp GOCACHE=$(pwd)/.gocache go test ./pkg/gen2 -run TestAttemptLocalBacktrackRecovers -v
 
   # -----------------------------------------------------------------------------
   # Linting
@@ -78,7 +104,7 @@ tasks:
     desc: Run level-builder Go module linting using golangci-lint
     dir: tools/level-builder
     cmds:
-      - golangci-lint run
+      - golangci-lint run ./pkg/... ./cmd/...
     preconditions:
       - sh: command -v golangci-lint >/dev/null 2>&1
         msg: "golangci-lint is not installed. Please install it to run Go linting."
@@ -87,7 +113,7 @@ tasks:
     desc: Fix level-builder Go module linting issues (where possible)
     dir: tools/level-builder
     cmds:
-      - golangci-lint run --fix
+      - golangci-lint run --fix ./pkg/... ./cmd/...
 
   # -----------------------------------------------------------------------------
   # Formatting

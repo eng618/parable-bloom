@@ -14,7 +14,7 @@ type: "Architecture Documentation"
 - **Game Engine**: Flame (Rendering, Input)
 - **State Management**: Riverpod (Reactive, Decoupled)
 - **Local Persistence**: Hive (Key-Value Store)
-- **Cloud Backend**: Firebase (Firestore, Auth) - *Planned/In-Progress*
+- **Cloud Backend**: Firebase (Firestore, Auth) - _Planned/In-Progress_
 - **Languages**: Dart (App), Go 1.25+ (Level Builder CLI)
 - **Development Tools**:
   - Level Builder CLI (`tools/level-builder/`) - Level generation, validation, debugging
@@ -218,7 +218,7 @@ The **level-builder** is a Go-based CLI tool that serves as the single source of
 # Produces validation_stats.json with detailed metrics
 ```
 
-**Performance**: Validates all 44 levels in ~29ms using exact A* solver (14-22 states per level).
+**Performance**: Validates all 44 levels in ~29ms using exact A\* solver (14-22 states per level).
 
 **Use Cases**:
 
@@ -342,7 +342,7 @@ The level-builder performs **heavy validation** during development:
 
 - All runtime checks from Flutter
 - Circular blocking detection (DFS cycle detection)
-- Exact solvability (A* search with configurable budgets)
+- Exact solvability (A\* search with configurable budgets)
 - Performance metrics (states explored, solve time)
 - Mask validation (visible cells vs vine positions)
 
@@ -380,7 +380,7 @@ The level-builder performs **heavy validation** during development:
 
 ### 6.4 Algorithms & Performance
 
-#### Exact A* Solver
+#### Exact A\* Solver
 
 **Algorithm**: Breadth-First Search (BFS) with priority queue, explores vine removal sequences to find solution paths.
 
@@ -399,7 +399,7 @@ The level-builder performs **heavy validation** during development:
 
 **Comparison to Flutter Solver**:
 
-- Go CLI: Exact A*, exhaustive search, reports metrics
+- Go CLI: Exact A\*, exhaustive search, reports metrics
 - Flutter Runtime: Greedy heuristic, fast checks, no detailed metrics
 
 **Rationale**: Development-time validation can afford exhaustive search, runtime validation needs fast startup.

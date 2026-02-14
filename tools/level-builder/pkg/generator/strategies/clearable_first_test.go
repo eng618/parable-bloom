@@ -25,6 +25,9 @@ func getTestDifficultySpec() config.DifficultySpec {
 // TestClearableFirstPlacement_LargeGridReliability tests the reliability of
 // clearable-first placement on large 14x22 grids that previously had 0% success.
 func TestClearableFirstPlacement_LargeGridReliability(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping slow reliability test in short mode")
+	}
 	gridSize := []int{14, 22} // Level 45+ size that failed with old algorithm
 	constraints := getTestDifficultySpec()
 	profile := config.VarietyProfile{
@@ -92,6 +95,9 @@ func TestClearableFirstPlacement_LargeGridReliability(t *testing.T) {
 // TestClearableFirstPlacement_GridSizeComparison compares performance across
 // different grid sizes to document scaling characteristics.
 func TestClearableFirstPlacement_GridSizeComparison(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping slow grid size comparison test in short mode")
+	}
 	testCases := []struct {
 		name     string
 		gridSize []int
@@ -183,6 +189,9 @@ func BenchmarkClearableFirstPlacement(b *testing.B) {
 // TestClearableFirstPlacement_FullCoverage tests generation with 100% grid coverage
 // (the original goal) to see if the algorithm can handle complete grid filling.
 func TestClearableFirstPlacement_FullCoverage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping slow full coverage test in short mode")
+	}
 	testCases := []struct {
 		name     string
 		gridSize []int
@@ -264,6 +273,9 @@ func TestClearableFirstPlacement_FullCoverage(t *testing.T) {
 // TestClearableFirstPlacement_BeforeAfterComparison documents the improvement
 // from the old algorithm to the new clearable-first approach.
 func TestClearableFirstPlacement_BeforeAfterComparison(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping algorithm comparison test in short mode")
+	}
 	t.Log("\n=== Algorithm Improvement Summary ===")
 	t.Log("Grid: 14x22 (308 cells)")
 	t.Log("")

@@ -11,7 +11,7 @@ import (
 )
 
 func TestReplayRegressionSeeds(t *testing.T) {
-	pattern := "../../test/fixtures/failing_dumps/*.json"
+	pattern := "../../../test/fixtures/failing_dumps/*.json"
 	files, err := filepath.Glob(pattern)
 	if err != nil {
 		t.Fatalf("failed to glob fixtures: %v", err)
