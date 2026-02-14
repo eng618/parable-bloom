@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/ui"
 )
 
 func TestGenerateModuleWritesStats(t *testing.T) {
@@ -18,7 +20,8 @@ func TestGenerateModuleWritesStats(t *testing.T) {
 	}
 
 	// Run GenerateModule for a single level via generateSingleLevel helper
-	result := generateSingleLevel(1, "Seedling", cfg)
+	spin := ui.NewSpinner("test")
+	result := generateSingleLevel(1, "Seedling", cfg, spin)
 	if !result.Success {
 		t.Fatalf("expected generation to succeed, got error: %s", result.Error)
 	}
