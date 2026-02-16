@@ -1,0 +1,32 @@
+/* Premium Styles */
+
+/* Glassmorphism for cards */
+.article-link, .card {
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-default-appearance="dark"] .article-link, 
+[data-default-appearance="dark"] .card {
+    background: rgba(30, 30, 30, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Hover effects */
+.article-link:hover, .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Hero text enhancement */
+h1.font-extrabold {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    letter-spacing: -0.02em;
+}
+
+/* Button Gradients based on Forest theme (green/sage) */
+.bg-primary-600 {
+    background-image: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
+}

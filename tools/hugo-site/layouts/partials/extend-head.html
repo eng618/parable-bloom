@@ -1,0 +1,79 @@
+<!-- Firefly Animation and Premium Overrides -->
+<style>
+  /* Firefly Container */
+  #firefly-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1; /* Behind everything */
+    overflow: hidden;
+  }
+
+  .firefly {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: radial-gradient(circle, rgba(234, 255, 209, 0.8) 0%, rgba(234, 255, 209, 0) 70%);
+    border-radius: 50%;
+    opacity: 0;
+    animation: simpleFloat 15s infinite linear;
+    bottom: -10px; /* Start below screen */
+  }
+  
+  /* Dark mode adjustment for fireflies */
+  [data-default-appearance="dark"] .firefly {
+    background: radial-gradient(circle, rgba(160, 255, 160, 0.6) 0%, rgba(160, 255, 160, 0) 70%);
+  }
+
+  @keyframes simpleFloat {
+    0% {
+      transform: translateY(0) translateX(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-110vh) translateX(20px);
+      opacity: 0;
+    }
+  }
+
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const container = document.createElement('div');
+    container.id = 'firefly-container';
+    document.body.appendChild(container);
+
+    const fireflyCount = 30; // Number of fireflies
+
+    for (let i = 0; i < fireflyCount; i++) {
+      const div = document.createElement('div');
+      div.classList.add('firefly');
+      
+      // Random positioning
+      div.style.left = Math.random() * 100 + 'vw';
+      
+      // Random animation duration/delay
+      const duration = 15 + Math.random() * 15; // 15-30s
+      const delay = Math.random() * 20; // 0-20s delay
+      
+      div.style.animationDuration = duration + 's';
+      div.style.animationDelay = '-' + delay + 's'; // Negative delay to start mid-animation
+      
+      // Random size variation
+      const scale = 0.5 + Math.random() * 1.5;
+      div.style.transform = `scale(${scale})`; // Initial scale override, handled in keyframes better if we want complex motion
+
+      container.appendChild(div);
+    }
+  });
+</script>
