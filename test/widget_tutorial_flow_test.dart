@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parable_bloom/core/app_theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parable_bloom/features/tutorial/domain/entities/lesson_data.dart';
@@ -39,6 +40,9 @@ class _InMemoryRepo implements GameProgressRepository {
 
   @override
   Future<bool> isCloudSyncEnabled() async => false;
+
+  @override
+  Future<void> syncFromCloud() async {}
 }
 
 // Minimal fake Hive Box to avoid initializing Hive in widget tests.
@@ -137,6 +141,7 @@ void main() {
       ProviderScope(
         overrides: overrides,
         child: MaterialApp(
+          theme: AppTheme.lightTheme,
           home: const TutorialFlowScreen(),
         ),
       ),
@@ -241,6 +246,7 @@ void main() {
       ProviderScope(
         overrides: overrides,
         child: MaterialApp(
+          theme: AppTheme.lightTheme,
           initialRoute: '/tutorial',
           routes: {
             '/': (ctx) => const Scaffold(body: Center(child: Text('Home'))),
@@ -299,6 +305,7 @@ void main() {
       ProviderScope(
         overrides: overrides,
         child: MaterialApp(
+          theme: AppTheme.lightTheme,
           home: const TutorialFlowScreen(),
         ),
       ),

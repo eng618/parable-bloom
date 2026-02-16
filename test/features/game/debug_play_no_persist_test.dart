@@ -37,6 +37,9 @@ class FakeRepo implements GameProgressRepository {
 
   @override
   Future<bool> isCloudSyncEnabled() async => false;
+
+  @override
+  Future<void> syncFromCloud() async {}
 }
 
 // Minimal fake analytics to avoid needing Firebase in tests

@@ -11,16 +11,70 @@ import 'package:parable_bloom/features/game/data/repositories/firebase_game_prog
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 
 // Mock Firestore
-class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
+class MockFirebaseFirestore extends Mock implements FirebaseFirestore {
+  @override
+  CollectionReference<Map<String, dynamic>> collection(String? collectionPath) {
+    return super.noSuchMethod(
+      Invocation.method(#collection, [collectionPath]),
+      returnValue: MockCollectionReference(),
+    ) as CollectionReference<Map<String, dynamic>>;
+  }
+}
 
 class MockCollectionReference extends Mock
-    implements CollectionReference<Map<String, dynamic>> {}
+    implements CollectionReference<Map<String, dynamic>> {
+  @override
+  DocumentReference<Map<String, dynamic>> doc([String? path]) {
+    return super.noSuchMethod(
+      Invocation.method(#doc, [path]),
+      returnValue: MockDocumentReference(),
+    ) as DocumentReference<Map<String, dynamic>>;
+  }
+}
 
 class MockDocumentReference extends Mock
-    implements DocumentReference<Map<String, dynamic>> {}
+    implements DocumentReference<Map<String, dynamic>> {
+  @override
+  CollectionReference<Map<String, dynamic>> collection(String? collectionPath) {
+    return super.noSuchMethod(
+      Invocation.method(#collection, [collectionPath]),
+      returnValue: MockCollectionReference(),
+    ) as CollectionReference<Map<String, dynamic>>;
+  }
+
+  @override
+  Future<void> set(Map<String, dynamic>? data, [SetOptions? options]) {
+    return super.noSuchMethod(
+      Invocation.method(#set, [data, options]),
+      returnValue: Future<void>.value(),
+    ) as Future<void>;
+  }
+
+  @override
+  Future<DocumentSnapshot<Map<String, dynamic>>> get([GetOptions? options]) {
+    return super.noSuchMethod(
+      Invocation.method(#get, [options]),
+      returnValue: Future.value(MockDocumentSnapshot()),
+    ) as Future<DocumentSnapshot<Map<String, dynamic>>>;
+  }
+
+  @override
+  Future<void> delete() {
+    return super.noSuchMethod(
+      Invocation.method(#delete, []),
+      returnValue: Future<void>.value(),
+    ) as Future<void>;
+  }
+}
 
 class MockDocumentSnapshot extends Mock
-    implements DocumentSnapshot<Map<String, dynamic>> {}
+    implements DocumentSnapshot<Map<String, dynamic>> {
+  @override
+  bool get exists => super.noSuchMethod(Invocation.getter(#exists), returnValue: false) as bool;
+  
+  @override
+  Map<String, dynamic>? data() => super.noSuchMethod(Invocation.method(#data, []), returnValue: null) as Map<String, dynamic>?;
+}
 
 void main() {
   late Box box;
@@ -50,6 +104,31 @@ void main() {
     mockFirestore = MockFirebaseFirestore();
 
     repository = FirebaseGameProgressRepository(box, mockFirestore, mockAuth);
+
+    // Setup Firestore Mocks
+    final mockCollection = MockCollectionReference();
+    final mockDoc = MockDocumentReference();
+    final mockSubCollection = MockCollectionReference();
+    final mockSubDoc = MockDocumentReference();
+    final mockSnapshot = MockDocumentSnapshot();
+
+    // Stub chain: firestore -> collection -> doc -> collection -> doc
+    // Using explicit values to satisfy sound null safety for non-nullable parameters
+    when(mockFirestore.collection('game_progress_dev')).thenReturn(mockCollection);
+    when(mockCollection.doc('test-user-id')).thenReturn(mockDoc);
+    when(mockDoc.collection('data')).thenReturn(mockSubCollection);
+    when(mockSubCollection.doc('progress')).thenReturn(mockSubDoc);
+    
+    // Stub operations
+    // get() takes optional GetOptions, so any is okay if inferred correctly.
+    // set() takes non-nullable Map<String, dynamic>, using any as dynamic to satisfy type check.
+    when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+    when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async => {});
+    when(mockSubDoc.delete()).thenAnswer((_) async => {});
+    
+    // Default snapshot state (does not exist)
+    when(mockSnapshot.exists).thenReturn(false);
+    when(mockSnapshot.data()).thenReturn(null);
   });
 
   tearDown(() async {
