@@ -324,6 +324,17 @@
 //	-j, --workers string       Number of concurrent workers (integer, 'half', or 'full')
 //	-w, --working-dir string   Working directory for asset paths
 //
+// ## Path Resolution
+//
+// The level-builder uses a smart path resolution strategy to support the monorepo
+// structure. It searches up the directory tree for marker files (nx.json, bun.lock,
+// or pubspec.yaml) to identify the repository root. Once identified, it looks for
+// assets in:
+//  1. apps/parable-bloom/assets (Monorepo standard)
+//  2. assets (Standalone/Legacy standard)
+//
+// This allows the tool to be run from any subdirectory within the monorepo.
+//
 // ## Environment Variables
 //
 // The tool respects standard Go environment variables and can be configured

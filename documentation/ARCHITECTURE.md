@@ -157,6 +157,10 @@ nx.json                # Nx workspace configuration
 Taskfile.yml           # Root orchestration
 ```
 
+### 5.1 Monorepo Path Resolution
+
+Tools within the workspace (like the Level Builder) use a smart path resolution strategy to support both standalone and monorepo layouts. They identify the repository root by searching for marker files (`nx.json`, `bun.lock`, `pubspec.yaml`) and then resolve assets relative to the identified root, prioritizing the `apps/parable-bloom/assets` directory in monorepo structures.
+
 ---
 
 ## 6. Level Builder Tool (Go CLI)

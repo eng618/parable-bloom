@@ -22,7 +22,7 @@ var (
 // RepoMarkerFiles are files that indicate the root of the parable-bloom repository.
 // We specifically use pubspec.yaml because it's only at the project root,
 // unlike go.mod or assets/ which also exist in tools/level-builder.
-var RepoMarkerFiles = []string{"pubspec.yaml"}
+var RepoMarkerFiles = []string{"nx.json", "bun.lock", "pubspec.yaml"}
 
 // initPaths resolves asset paths once at startup.
 // It looks for the repo root by checking:
@@ -37,7 +37,14 @@ func initPaths() {
 			return
 		}
 
-		resolvedAssetsDir = filepath.Join(repoRoot, "assets")
+		// Support both monorepo and legacy structures
+		monorepoAssets := filepath.Join(repoRoot, "apps", "parable-bloom", "assets")
+		if _, err := os.Stat(monorepoAssets); err == nil {
+			resolvedAssetsDir = monorepoAssets
+		} else {
+			resolvedAssetsDir = filepath.Join(repoRoot, "assets")
+		}
+
 		resolvedLevelsDir = filepath.Join(resolvedAssetsDir, "levels")
 		resolvedDataDir = filepath.Join(resolvedAssetsDir, "data")
 		resolvedModulesFile = filepath.Join(resolvedDataDir, "modules.json")
@@ -80,10 +87,15 @@ func isRepoRoot(dir string) bool {
 	for _, marker := range RepoMarkerFiles {
 		markerPath := filepath.Join(dir, marker)
 		if _, err := os.Stat(markerPath); err == nil {
-			// Found a marker, but also verify "assets" directory exists
-			assetsPath := filepath.Join(dir, "assets")
-			if _, err := os.Stat(assetsPath); err == nil {
-				return true
+			// Found a marker, check for assets in standard or monorepo locations
+			assetsPaths := []string{
+				filepath.Join(dir, "assets"),
+				filepath.Join(dir, "apps", "parable-bloom", "assets"),
+			}
+			for _, assetsPath := range assetsPaths {
+				if _, err := os.Stat(assetsPath); err == nil {
+					return true
+				}
 			}
 		}
 	}
