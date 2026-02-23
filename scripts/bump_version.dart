@@ -224,10 +224,8 @@ Future<bool> updateChangelog(String newVersion) async {
     return false;
   }
 
-  final content = changelogFile.readAsStringSync();
+  String content = changelogFile.readAsStringSync();
   final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD
-
-  // Extract semantic version (without build number)
   final semanticVersion = newVersion.split('+')[0];
 
   // Check if version already exists
@@ -236,49 +234,69 @@ Future<bool> updateChangelog(String newVersion) async {
     return true;
   }
 
-  // Find insertion point (after # Changelog header and before first ## version)
-  final lines = content.split('\n');
-  int insertIndex = -1;
-
-  for (int i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith('## [') || lines[i].startsWith('## Unreleased')) {
-      insertIndex = i;
-      break;
-    }
-  }
-
-  if (insertIndex == -1) {
-    // If no versions found, insert after header
+  // Rename [Unreleased] to the new version and add a new [Unreleased] section
+  if (content.contains('## [Unreleased]')) {
+    print('🔄 Renaming [Unreleased] section to [$semanticVersion]...');
+    content = content.replaceFirst(
+      '## [Unreleased]',
+      '## [Unreleased]\n\n## [$semanticVersion] - $today',
+    );
+  } else {
+    // If no [Unreleased] section exists, insert it at the top
+    print('⚠️  [Unreleased] section not found. Inserting new version section...');
+    final lines = content.split('\n');
+    int insertIndex = -1;
     for (int i = 0; i < lines.length; i++) {
-      if (lines[i].trim().isNotEmpty && !lines[i].startsWith('#')) {
+      if (lines[i].startsWith('## [')) {
         insertIndex = i;
         break;
       }
     }
+
+    final newSection = '\n## [$semanticVersion] - $today\n\n### Added\n- New version release\n';
+    if (insertIndex >= 0) {
+      lines.insert(insertIndex, newSection);
+      content = lines.join('\n');
+    } else {
+      content += newSection;
+    }
   }
 
-  final newSection = '''
+  changelogFile.writeAsStringSync(content);
 
-## [$semanticVersion] - $today
+  // Update compare links at the bottom if they exist
+  _updateChangelogLinks(changelogFile, semanticVersion);
 
-### Added
-- TODO: Document new features
-
-### Changed
-- TODO: Document changes
-
-### Fixed
-- TODO: Document bug fixes
-''';
-
-  if (insertIndex >= 0) {
-    lines.insert(insertIndex, newSection);
-  } else {
-    lines.add(newSection);
-  }
-
-  changelogFile.writeAsStringSync(lines.join('\n'));
   return true;
+}
+
+void _updateChangelogLinks(File file, String newVersion) {
+  String content = file.readAsStringSync();
+  final lines = content.split('\n');
+  int unreleasedLinkIndex = lines.indexWhere((line) => line.startsWith('[Unreleased]:'));
+  
+  if (unreleasedLinkIndex >= 0) {
+    // Example: [Unreleased]: https://github.com/.../v1.0.0...HEAD
+    // Example: [1.0.0]: https://github.com/.../tag/v1.0.0
+    final unreleasedLine = lines[unreleasedLinkIndex];
+    final repoUrlMatch = RegExp(r'(https://github\.com/[^/]+/[^/]+)').firstMatch(unreleasedLine);
+    
+    if (repoUrlMatch != null) {
+      final repoUrl = repoUrlMatch.group(1);
+      
+      // Update Unreleased link to point from new tag to HEAD
+      lines[unreleasedLinkIndex] = '[Unreleased]: $repoUrl/compare/v$newVersion...HEAD';
+      
+      // Add or update the new version link
+      final newVersionLink = '[$newVersion]: $repoUrl/releases/tag/v$newVersion';
+      
+      // Find where to insert the new link (alphabetical or chronological)
+      int insertIndex = unreleasedLinkIndex + 1;
+      lines.insert(insertIndex, newVersionLink);
+      
+      file.writeAsStringSync(lines.join('\n'));
+    }
+  }
 }
 
 void printUsage() {

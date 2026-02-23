@@ -3,7 +3,6 @@
     "version": "22.5.2"
   },
   "release": {
-    "projects": ["parable-bloom", "hugo-site", "level-builder"],
     "version": {
       "generatorOptions": {
         "currentVersionResolver": "git-tag",
@@ -15,7 +14,11 @@
     },
     "groups": {
       "default": {
-        "projects": ["parable-bloom", "hugo-site", "level-builder"],
+        "projects": [
+          "parable-bloom",
+          "hugo-site",
+          "level-builder"
+        ],
         "projectsRelationship": "independent"
       }
     },

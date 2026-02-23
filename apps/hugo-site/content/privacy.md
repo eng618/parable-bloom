@@ -4,11 +4,11 @@ date: 2026-02-04
 draft: false
 ---
 
-# Privacy Policy
+## Privacy Policy
 
 **Effective Date:** February 04, 2026
 
-**Last Updated:** February 04, 2026
+**Last Updated:** February 23, 2026
 
 ## 1. Introduction
 
@@ -25,9 +25,10 @@ We prioritize your privacy and do not collect Personal Identifiable Information 
 To help us improve the game's stability and gameplay experience, we use third-party analytics tools (specifically **Google Firebase Analytics**) to automatically collect certain anonymous technical information. This data is **aggregated and anonymized**, meaning it is not linked to your identity.
 
 This information includes:
-*   **Usage Data**: Details about how you use the app, such as level completion rates, button taps, and session duration. This helps us balance difficulty and improve the user experience.
-*   **Device Information**: Information about your device, such as the model, operating system version, and general location (country/region) derived from IP addresses (which are anonymized before storage).
-*   **Crash & Performance Reports**: Logs related to app crashes or performance issues to help us identify and fix bugs.
+
+- **Usage Data**: Details about how you use the app, such as level completion rates, button taps, and session duration. This helps us balance difficulty and improve the user experience.
+- **Device Information**: Information about your device, such as the model, operating system version, and general location (country/region) derived from IP addresses (which are anonymized before storage).
+- **Crash & Performance Reports**: Logs related to app crashes or performance issues to help us identify and fix bugs.
 
 ### 2.2 Future Data Services
 
@@ -36,16 +37,17 @@ As **Parable Bloom** evolves, we may introduce features that utilize cloud servi
 ## 3. How We Use Your Information
 
 We use the collected anonymous data solely for the following purposes:
-*   **To operate and maintain the App**: Ensuring the game runs smoothly on your device.
-*   **To improve the App**: Analyzing gameplay data to fix difficulty spikes, resolve bugs, and enhance performance.
-*   **To communicate**: If you contact us for support, we use your email address only to respond to your inquiries.
+
+- **To operate and maintain the App**: Ensuring the game runs smoothly on your device.
+- **To improve the App**: Analyzing gameplay data to fix difficulty spikes, resolve bugs, and enhance performance.
+- **To communicate**: If you contact us for support, we use your email address only to respond to your inquiries.
 
 ## 4. Third-Party Service Providers
 
 We employ third-party companies and individuals to facilitate our App ("Service Providers"), to provide the App on our behalf, to perform Service-related services, or to assist us in analyzing how our App is used.
 
-*   **Google Firebase**: We use Firebase for analytics and crash reporting. Google may collect data as described in their privacy policy.
-    *   [Google Privacy & Terms](https://policies.google.com/privacy)
+- **Google Firebase**: We use Firebase for analytics and crash reporting. Google may collect data as described in their privacy policy.
+  - [Google Privacy & Terms](https://policies.google.com/privacy)
 
 ## 5. Children's Privacy
 

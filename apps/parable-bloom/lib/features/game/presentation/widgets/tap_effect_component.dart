@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
@@ -11,18 +13,28 @@ class TapEffectComponent extends PositionComponent {
   final double duration;
 
   double _elapsed = 0.0;
+  final List<({double angle, double speed, double size})> _sparkles = [];
 
   TapEffectComponent({
     required this.tapPosition,
     this.color = Colors.white,
-    this.maxRadius = 15.0, // Reduced default to prevent large effects
+    this.maxRadius = 15.0,
     this.duration = 0.4,
   }) : super(
           position: tapPosition,
           anchor: Anchor.center,
-          priority:
-              10000, // Render on top of everything with very high priority
-        );
+          priority: 10000,
+        ) {
+    // Generate random sparkle data
+    final random = math.Random();
+    for (int i = 0; i < 6; i++) {
+      _sparkles.add((
+        angle: random.nextDouble() * math.pi * 2,
+        speed: 15.0 + random.nextDouble() * 25.0,
+        size: 1.0 + random.nextDouble() * 1.5,
+      ));
+    }
+  }
 
   @override
   void update(double dt) {
@@ -66,6 +78,19 @@ class TapEffectComponent extends PositionComponent {
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset.zero, currentRadius * 0.5, innerPaint);
+    }
+
+    // Draw radiating sparkles
+    for (final sparkle in _sparkles) {
+      final distance = progress * sparkle.speed;
+      final sparkleX = math.cos(sparkle.angle) * distance;
+      final sparkleY = math.sin(sparkle.angle) * distance;
+
+      final sparklePaint = Paint()
+        ..color = color.withValues(alpha: opacity * 0.8)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(Offset(sparkleX, sparkleY), sparkle.size, sparklePaint);
     }
   }
 

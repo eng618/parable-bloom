@@ -78,6 +78,14 @@ The application uses a reactive architecture where the UI and Game Engine observ
 - **`LevelSolver`**: A Breadth-First Search (BFS) solver that validates level solvability and determines blocking relationships.
 - **Blocking Logic**: A vine is "blocked" if its path is obstructed by another vine. This is recalculated dynamically after every move.
 
+### 3.3 Visual Effects & Animations (Juice)
+
+The game implements several high-performance visual systems within the Flame `PositionComponent` hierarchy:
+
+- **Wavy Component Logic**: `VineComponent` uses a `sin` wave based on `GameTime` to animate vine segments, creating a living garden effect without heavy redraw costs.
+- **Particle System**: `TapEffectComponent` and `VineComponent` (bloom) utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
+- **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input.
+
 ---
 
 ## 4. Persistence Layer

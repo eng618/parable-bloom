@@ -21,7 +21,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   final WidgetRef ref;
   LevelData? _currentLevelData;
   LessonData? _currentLessonData;
-  RectangleComponent? _gameBackground;
+  SpriteComponent? _gameBackground;
 
   // Theme colors - updated dynamically from app theme
   late Color _backgroundColor;
@@ -70,10 +70,18 @@ class GardenGame extends FlameGame with TapCallbacks {
     // gridColor parameter kept for API compatibility but not currently used
 
     // Update existing components if they exist - must replace the Paint to trigger redraw
-    if (_gameBackground != null) {
-      debugPrint('GardenGame: Updating _gameBackground to $_surfaceColor');
-      _gameBackground!.paint = Paint()..color = _surfaceColor;
-    }
+    // Update background color
+    _backgroundColor = backgroundColor;
+    _surfaceColor = surfaceColor;
+
+    // We no longer tint the _gameBackground sprite with a solid color
+    // as it should show the actual artwork.
+  }
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    _gameBackground?.size = size;
   }
 
   /// Expose current vine-attempted color for renderers (VineComponent)
@@ -82,6 +90,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   @override
   Future<void> onLoad() async {
     debugPrint('GardenGame: onLoad called');
+    images.prefix = 'assets/art/';
     await super.onLoad();
 
     // Reset grace for new level
@@ -90,14 +99,19 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Load current level first
     await _loadCurrentLevel();
 
-    // TODO: Replace with actual parable background image
-    // Load parable background
-    _gameBackground = RectangleComponent(
-      size: size,
-      paint: Paint()..color = _surfaceColor,
-      priority: -2,
-    );
-    add(_gameBackground!);
+    // Load parable background artwork
+    try {
+      final backgroundSprite = await loadSprite('grid_bg.png');
+      _gameBackground = SpriteComponent(
+        sprite: backgroundSprite,
+        size: size,
+        priority: -2,
+      );
+      add(_gameBackground!);
+    } catch (e) {
+      debugPrint('GardenGame: Failed to load background sprite: $e');
+      // Continue without background or use a fallback color
+    }
 
     // Create grid and background components
     _createLevelComponents();

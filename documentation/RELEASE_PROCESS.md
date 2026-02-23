@@ -493,7 +493,7 @@ If you prefer manual control:
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/) format:
 
-```
+```markdown
 <type>(<scope>): <subject>
 
 <body>
@@ -524,13 +524,12 @@ git commit -m "chore: bump version to 1.2.0"
 
 ### Changelog Generation
 
-**TODO**: Create `scripts/update_changelog.dart` that:
-
-1. Reads git commits since last tag
-2. Groups commits by type (Features, Fixes, etc.)
-3. Generates markdown sections
-4. Updates `CHANGELOG.md` with new version section
-5. Preserves existing changelog history
+- [x] Create `scripts/update_changelog.dart` that:
+  - [x] Reads git commits since last tag
+  - [x] Groups commits by type (Features, Fixes, etc.)
+  - [x] Generates markdown sections
+  - [x] Updates `CHANGELOG.md` with new version section
+  - [x] Preserves existing changelog history
 
 Usage:
 
@@ -768,7 +767,7 @@ bws secret list
 
 Complete this checklist to set up the automated release pipeline:
 
-### Prerequisites
+### Deployment Prerequisites
 
 - [ ] Install BWS CLI
 - [ ] Authenticate with Bitwarden (`BWS_ACCESS_TOKEN`)
@@ -787,12 +786,12 @@ Complete this checklist to set up the automated release pipeline:
 
 ### Android Setup
 
-- [ ] Generate release keystore
-- [ ] Update `android/app/build.gradle.kts` with signing config
+- [x] Generate release keystore
+- [x] Update `android/app/build.gradle.kts` with signing config
 - [ ] Test local release build
 - [ ] Create Google Play service account
-- [ ] Initialize Fastlane in `android/`
-- [ ] Create `android/fastlane/Fastfile`
+- [x] Initialize Fastlane in `android/`
+- [x] Create `android/fastlane/Fastfile`
 
 ### iOS Setup
 
@@ -863,7 +862,7 @@ bws secret create "SECRET_NAME" --value "secret-value"
 
 ### File Structure
 
-```
+```text
 parable-bloom/
 ├── apps/
 │   ├── parable-bloom/

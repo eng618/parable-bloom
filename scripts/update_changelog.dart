@@ -56,7 +56,9 @@ void main(List<String> arguments) async {
   }
 
   // Get commits since tag
-  final gitArgs = ['log', '--pretty=format:%H|%s|%b'];
+  // Get commits since tag using a unique delimiter for multiline handling
+  const commitDelimiter = '---COMMIT_END---';
+  final gitArgs = ['log', '--pretty=format:%H|%s|%b$commitDelimiter'];
   if (sinceTag.isNotEmpty) {
     gitArgs.add('$sinceTag..HEAD');
   }
@@ -67,15 +69,17 @@ void main(List<String> arguments) async {
     exit(1);
   }
 
-  final commits = (logResult.stdout as String)
-      .split('\n')
-      .where((line) => line.isNotEmpty)
-      .map((line) {
-    final parts = line.split('|');
+  final rawLog = logResult.stdout as String;
+  final commits = rawLog
+      .split(commitDelimiter)
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty)
+      .map((entry) {
+    final parts = entry.split('|');
     return {
       'hash': parts[0],
       'subject': parts.length > 1 ? parts[1] : '',
-      'body': parts.length > 2 ? parts[2] : '',
+      'body': parts.length > 2 ? parts.sublist(2).join('|') : '',
     };
   }).toList();
 
@@ -193,7 +197,12 @@ void main(List<String> arguments) async {
     buffer.writeln();
   }
 
-  final changelogContent = buffer.toString();
+  final String changelogContent = buffer.toString().trim();
+
+  if (changelogContent.isEmpty) {
+    print('✅ No new categorized changes found');
+    if (!dryRun) exit(0);
+  }
 
   if (dryRun) {
     print('📄 Preview of changelog entries:\n');

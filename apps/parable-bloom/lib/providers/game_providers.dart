@@ -1372,7 +1372,6 @@ class CameraStateNotifier extends Notifier<CameraState> {
     state = state.copyWith(panOffset: constrainedOffset);
   }
 
-  // Constrain pan offset to keep grid visible
   vm.Vector2 _constrainPanOffset(
     vm.Vector2 offset, {
     required double screenWidth,
@@ -1385,23 +1384,26 @@ class CameraStateNotifier extends Notifier<CameraState> {
     final gridWidth = gridCols * scaledCellSize;
     final gridHeight = gridRows * scaledCellSize;
 
-    // Calculate centered position
-    final centeredX = (screenWidth - gridWidth) / 2;
-    final centeredY = (screenHeight - gridHeight) / 2;
-
     // Allow panning but keep at least 20% of grid visible
     const visibleThreshold = 0.2;
-    final maxOffsetX = gridWidth * (1 - visibleThreshold);
-    final maxOffsetY = gridHeight * (1 - visibleThreshold);
+    // For smaller grids that fit on screen, constrain pan tightly
+    // For larger grids, constrain to keep at least visibleThreshold of the grid on screen
+    final maxOffsetX = screenWidth > gridWidth 
+        ? gridWidth * 0.2 // Max 20% drift if it fits fully
+        : gridWidth * (1 - visibleThreshold);
+        
+    final maxOffsetY = screenHeight > gridHeight 
+        ? gridHeight * 0.2 
+        : gridHeight * (1 - visibleThreshold);
 
-    // Constrain offset
+    // Constrain offset (panOffset is relative to the center, so clamp symmetrically)
     final constrainedX = offset.x.clamp(
-      centeredX - maxOffsetX,
-      centeredX + maxOffsetX,
+      -maxOffsetX,
+      maxOffsetX,
     );
     final constrainedY = offset.y.clamp(
-      centeredY - maxOffsetY,
-      centeredY + maxOffsetY,
+      -maxOffsetY,
+      maxOffsetY,
     );
 
     return vm.Vector2(constrainedX, constrainedY);

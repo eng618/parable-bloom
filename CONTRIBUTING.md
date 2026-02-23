@@ -118,4 +118,34 @@ Contributors are acknowledged in the project's acknowledgments section. We appre
 
 ---
 
-*Questions? Open an issue or start a discussion!*
+## 📦 Release Process
+
+We use an automated release pipeline with **Nx Release**, **Fastlane**, and custom Dart scripts.
+
+### 1. Version Bumping & Changelog
+
+To prepare a new release, run:
+
+```bash
+task release:bump
+```
+
+This will:
+
+- Determine the next version based on **Conventional Commits**.
+- Run `scripts/update_changelog.dart` to categorize new commits.
+- Run `scripts/bump_version.dart` to sync versions across `pubspec.yaml` and tools.
+- Create a git tag (e.g., `v1.3.1+1`).
+
+### 2. Platform Releases
+
+Releases are handled via GitHub Actions upon pushing a version tag.
+
+- **Android**: Fastlane uploads the App Bundle to Google Play Console.
+- **iOS**: Fastlane uploads the IPA to TestFlight.
+
+See [RELEASE_PROCESS.md](documentation/RELEASE_PROCESS.md) for full automation details.
+
+---
+
+_Questions? Open an issue or start a discussion!_

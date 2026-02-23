@@ -4,11 +4,11 @@ date: 2026-02-04
 draft: false
 ---
 
-# Terms of Service
+## Terms of Service
 
 **Effective Date:** February 04, 2026
 
-**Last Updated:** February 04, 2026
+**Last Updated:** February 23, 2026
 
 ## 1. Acceptance of Terms
 
@@ -21,15 +21,17 @@ Subject to your compliance with these Terms, GVTech grants you a limited, non-ex
 ## 3. Restrictions
 
 You agree not to, and you will not permit others to:
-*   **License, sell, rent, lease, assign, distribute, transmit, host, outsource, disclose, or otherwise commercially exploit** the App or make the App available to any third party.
-*   **Modify, make derivative works of, disassemble, decrypt, reverse compile, or reverse engineer** any part of the App.
-*   **Remove, alter, or obscure** any proprietary notice (including any notice of copyright or trademark) of GVTech or its affiliates, partners, suppliers, or the licensors of the App.
+
+- **License, sell, rent, lease, assign, distribute, transmit, host, outsource, disclose, or otherwise commercially exploit** the App or make the App available to any third party.
+- **Modify, make derivative works of, disassemble, decrypt, reverse compile, or reverse engineer** any part of the App.
+- **Remove, alter, or obscure** any proprietary notice (including any notice of copyright or trademark) of GVTech or its affiliates, partners, suppliers, or the licensors of the App.
 
 ## 4. Updates and Telemetry
 
 We may provide enhancements or improvements to the features/functionality of the App, which may include patches, bug fixes, updates, upgrades, and other modifications ("Updates").
 
-You acknowledge that the App may automatically collect anonymous usage statistics and crash reports ("Telemetry") to assist in the diagnosis of technical issues and the improvement of the user experience, as detailed in our [Privacy Policy](/privacy).
+You acknowledge that the App may automatically collect anonymous usage statistics and crash reports ("Telemetry") to assist in the diagnosis of technical issues and the improvement of the user experience, as detailed in our [Privacy Policy](privacy.md).
+Sarah
 
 ## 5. Intellectual Property
 

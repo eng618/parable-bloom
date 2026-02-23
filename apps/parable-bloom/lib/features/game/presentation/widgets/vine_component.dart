@@ -39,6 +39,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Track if we've already notified parent of clearing
   final bool _alreadyNotifiedCleared = false;
 
+  // Wavy animation state
+  double _totalTime = 0.0;
+
   VineComponent({required this.vineData, required this.cellSize}) {
     // Initialize visual positions directly from vine data (pure x,y coordinates)
     _currentVisualPositions = List<Map<String, int>>.from(
@@ -113,17 +116,20 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final nextX = nextCell['x'] as int;
       final nextY = nextCell['y'] as int;
 
-      // Transform to visual coordinates (y=0 at bottom)
-      final currentVisualY = visualHeight - 1 - currentY;
+      final visualY = visualHeight - 1 - currentY;
       final nextVisualY = visualHeight - 1 - nextY;
 
+      // Add wavy offset
+      final horizontalWave = math.sin(_totalTime * 2.5 + i * 0.8) * 1.5;
+      final verticalWave = math.cos(_totalTime * 2.0 + i * 0.6) * 1.2;
+
       final start = Offset(
-        currentX * cellSize + cellSize / 2,
-        currentVisualY * cellSize + cellSize / 2,
+        currentX * cellSize + cellSize / 2 + horizontalWave,
+        visualY * cellSize + cellSize / 2 + verticalWave,
       );
       final end = Offset(
-        nextX * cellSize + cellSize / 2,
-        nextVisualY * cellSize + cellSize / 2,
+        nextX * cellSize + cellSize / 2 + horizontalWave,
+        nextVisualY * cellSize + cellSize / 2 + verticalWave,
       );
 
       canvas.drawLine(start, end, segmentPaint);
@@ -308,6 +314,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   @override
   void update(double dt) {
     super.update(dt);
+    _totalTime += dt;
 
     if (!_isAnimating) return;
 
@@ -747,6 +754,21 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(particleX, particleY), 2.0, particlePaint);
+    }
+
+    // Add extra "dust" particles that move further
+    final dustCount = 6;
+    for (int i = 0; i < dustCount; i++) {
+      final angle = (i / dustCount) * 2 * math.pi + (progress * 0.5);
+      final distance = progress * cellSize * 2.5;
+      final x = center.dx + distance * math.cos(angle);
+      final y = center.dy + distance * math.sin(angle);
+
+      final dustPaint = Paint()
+        ..color = renderColor.withValues(alpha: (1.0 - progress) * 0.4)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(Offset(x, y), 1.0, dustPaint);
     }
   }
 

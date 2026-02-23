@@ -18,14 +18,22 @@ class BackgroundAudioController {
     }
 
     if (!_loaded) {
-      await _player.setAsset("assets/audio/background.mp3");
-      await _player.setLoopMode(LoopMode.one);
-      _loaded = true;
+      try {
+        await _player.setAsset("assets/audio/background.mp3");
+        await _player.setLoopMode(LoopMode.one);
+        _loaded = true;
+      } catch (e) {
+        print("BackgroundAudioController: Failed to load asset: $e");
+        return;
+      }
     }
 
     try {
       await _player.play();
-    } catch (_) {}
+    } catch (e) {
+      // Autoplay is often blocked on web until user interaction
+      print("BackgroundAudioController: Play failed (likely autoplay block): $e");
+    }
   }
 
   Future<void> dispose() async {
