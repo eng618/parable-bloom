@@ -1,0 +1,17 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "dart",
+      "package-name": "parable-bloom"
+    },
+    "tools/level-builder": {
+      "release-type": "go",
+      "package-name": "level-builder"
+    },
+    "tools/hugo-site": {
+      "release-type": "simple",
+      "package-name": "hugo-site"
+    }
+  },
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
+}

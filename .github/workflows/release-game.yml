@@ -1,26 +1,16 @@
 name: Release Game
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'tools/level-builder/**'
-      - 'tools/hugo-site/**'
-      - '.taskfiles/Hugo.yml'
-      - '.taskfiles/LevelBuilder.yml'
-      - 'docs/**'
-      - 'README.md'
-    tags:
-      - 'v*'
-  workflow_dispatch:
+  release:
+    types: [published]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  cancel-in-progress: false
 
 jobs:
   firebase-config:
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -159,8 +149,11 @@ jobs:
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             BUILD_NAME="${GITHUB_REF_NAME#v}"
           else
-            BUILD_NAME="0.0.0" # Placeholder for non-tag builds
+            BUILD_NAME="0.0.0"
           fi
+          # Strip build metadata if present
+          BUILD_NAME="${BUILD_NAME%+*}"
+
           BUILD_NUMBER=$((GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT))
           echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
@@ -224,7 +217,6 @@ jobs:
           gem install fastlane
 
       - name: Deploy to Google Play (Internal Testing)
-        # Only deploy on tags that start with v
         if: matrix.platform == 'android' && steps.play.outputs.upload == 'true' && startsWith(github.ref, 'refs/tags/v')
         continue-on-error: true
         run: |
@@ -269,10 +261,9 @@ jobs:
           rm -f /tmp/parable-bloom.jks
           rm -f /tmp/service-account.json
 
-  release:
+  upload-assets:
     needs: [firebase-config, build]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
     steps:
@@ -288,10 +279,9 @@ jobs:
           name: windows-build
           path: ./artifacts/
 
-      - name: Create Release
+      - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
           files: |
             artifacts/parable-bloom-linux-${{ github.ref_name }}.tar.gz
             artifacts/parable-bloom-windows-${{ github.ref_name }}.zip
