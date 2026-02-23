@@ -417,3 +417,30 @@ The level-builder performs **heavy validation** during development:
 ---
 
 ## 7. Testing & Quality Assurance
+
+The project follows a multi-tiered testing strategy:
+
+- **Unit Tests**: Core logic, solvers, and providers.
+- **Widget Tests**: UI components and interaction flows.
+- **Level Validation**: Structural and solvability checks via Go CLI and Dart runtime.
+- **Integration Tests**: End-to-end flows in simulated environments.
+
+---
+
+## 8. Troubleshooting & Configuration
+
+### 8.1 Firebase Configuration (CLI Issues)
+
+If `flutterfire configure` fails with errors like `UnsupportedError: not found in web`, follow these manual steps to reconstruct the configuration:
+
+1. **Retrieve SDK Configs**: Use `firebase-tools` or the Firebase Console to get the configuration for each platform (Web, Android, iOS).
+2. **Manual `firebase_options.dart`**: Reconstruct the file in `lib/firebase_options.dart` following the standard FlutterFire template, populating it with the retrieved values.
+3. **Platform Config Files**:
+   - **Android**: Ensure `android/app/google-services.json` is present and correct.
+   - **iOS/macOS**: Ensure `ios/Runner/GoogleService-Info.plist` and `macos/Runner/GoogleService-Info.plist` are present and correct.
+4. **Windows/Linux**: These platforms typically use a Web configuration. In the Firebase console, register a separate Web app for Windows/Linux and use its credentials in the `windows` section of `DefaultFirebaseOptions`.
+
+### 8.2 Nx & Monorepo
+
+- Use `task dev` to start the development server across all platforms via Nx.
+- If dependencies fall out of sync, run `flutter pub get` in the specific app directory or `nx run parable-bloom:get` (if configured).

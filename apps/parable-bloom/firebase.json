@@ -1,58 +1,58 @@
 {
-    "flutter": {
-        "platforms": {
-            "android": {
-                "default": {
-                    "projectId": "parable-bloom",
-                    "appId": "1:697900014066:android:3f2b49ceb7551ec5c1f36b",
-                    "fileOutput": "android/app/google-services.json"
-                }
-            },
-            "dart": {
-                "lib/firebase_options.dart": {
-                    "projectId": "parable-bloom",
-                    "configurations": {
-                        "android": "1:697900014066:android:3f2b49ceb7551ec5c1f36b",
-                        "ios": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
-                        "macos": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
-                        "web": "1:697900014066:web:97c78a6c780f8f46c1f36b",
-                        "windows": "1:697900014066:web:5c7178307a57cf67c1f36b"
-                    }
-                }
-            },
-            "ios": {
-                "default": {
-                    "projectId": "parable-bloom",
-                    "appId": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
-                    "uploadDebugSymbols": false,
-                    "fileOutput": "ios/Runner/GoogleService-Info.plist"
-                }
-            },
-            "macos": {
-                "default": {
-                    "projectId": "parable-bloom",
-                    "appId": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
-                    "uploadDebugSymbols": false,
-                    "fileOutput": "macos/Runner/GoogleService-Info.plist"
-                }
-            }
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "parable-bloom",
+          "appId": "1:697900014066:android:3f2b49ceb7551ec5c1f36b",
+          "fileOutput": "android/app/google-services.json"
         }
-    },
-    "firestore": {
-        "rules": "firestore.rules"
-    },
-    "hosting": {
-        "public": "build/web",
-        "ignore": [
-            "firebase.json",
-            "**/.*",
-            "**/node_modules/**"
-        ],
-        "rewrites": [
-            {
-                "source": "**",
-                "destination": "/index.html"
-            }
-        ]
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "parable-bloom",
+          "configurations": {
+            "android": "1:697900014066:android:3f2b49ceb7551ec5c1f36b",
+            "ios": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
+            "macos": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
+            "web": "1:697900014066:web:97c78a6c780f8f46c1f36b",
+            "windows": "1:697900014066:web:5c7178307a57cf67c1f36b"
+          }
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "parable-bloom",
+          "appId": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "parable-bloom",
+          "appId": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      }
     }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
 }
