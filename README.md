@@ -8,7 +8,7 @@
 
 **A zen hyper-casual arrow puzzle game** with faith-based themes, where players tap directional vines to slide them off a grid in Snake-like movement. Body segments follow as a queue, and blocked vines animate back with spiritual messaging.
 
-> *"God's grace is endless—try again!"*
+> _"God's grace is endless—try again!"_
 
 ## ✨ Features
 
@@ -57,11 +57,13 @@ brew install go-task
 ```
 
 Common commands:
+
 - `task setup`: Initial project setup (dependencies, etc.)
 - `task run`: Run the web application
-- `task test:all`: Run all tests across all modules
-- `task validate`: Full project health check (lint, format, test, build)
-- `task validate:fix`: Automatically fix common linting/formatting issues
+- `task test:all`: Run all tests across all modules (via `nx`)
+- `task validate`: Full project health check (lint, test, build via `nx`)
+- `nx run parable-bloom:build`: Build specific project
+- `nx run-many -t test`: Run tests across all projects
 
 ### Platform-Specific Setup
 
@@ -101,22 +103,20 @@ flutter doctor --android-licenses
 
 ```text
 parable-bloom/
-├── lib/                    # Flutter source code
-│   ├── core/              # App-wide utilities & themes
-│   ├── features/          # Feature modules
-│   │   ├── game/          # Game logic & UI
-│   │   └── settings/      # Settings & preferences
-│   ├── providers/         # Riverpod state management
-│   └── shared/            # Shared utilities
-├── assets/                # Game assets & levels
-│   ├── levels/            # Module-structured level JSONs
-│   └── art/               # Sprites & textures
-├── documentation/         # Documentation
-│   ├── GAME_DESIGN.md     # Complete GDD
-│   ├── ARCHITECTURE.md    # Technical architecture
-│   └── TECHNICAL_IMPLEMENTATION.md
-├── test/                  # Unit & integration tests
-└── android/ios/           # Platform-specific code
+├── apps/
+│   ├── parable-bloom/       # Flutter application
+│   │   ├── lib/            # Flutter source code
+│   │   ├── assets/         # Game assets & levels
+│   │   ├── test/           # Platform tests
+│   │   └── android/ios/... # Platform-specific code
+│   └── hugo-site/         # Documentation site source
+├── tools/
+│   └── level-builder/     # Go-based level generation tools
+├── scripts/               # Workspace-wide utility scripts
+├── documentation/
+│   ├── GAME_DESIGN.md     # Game design document
+│   └── ARCHITECTURE.md    # Technical architecture
+└── nx.json                # Nx workspace configuration
 ```
 
 ### Testing
@@ -124,12 +124,6 @@ parable-bloom/
 ```bash
 # Run all tests (Flutter + Tools)
 task test:all
-
-# Run specific Flutter test file
-flutter test test/level_validation_test.dart
-
-# Run level-builder tests
-task lb:test
 ```
 
 ### Building for Release
@@ -197,4 +191,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*Made with ❤️ and Flutter*
+_Made with ❤️ and Flutter_

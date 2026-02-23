@@ -17,6 +17,7 @@ tasks:
 
   init:
     desc: Initialize Firebase in the project
+    dir: apps/parable-bloom
     cmds:
       - firebase init
     preconditions:
@@ -28,6 +29,7 @@ tasks:
 
   emulators:start:
     desc: Start Firebase emulators
+    dir: apps/parable-bloom
     cmds:
       - firebase emulators:start
     preconditions:
@@ -49,6 +51,7 @@ tasks:
 
   functions:deploy:
     desc: Deploy Firebase functions
+    dir: apps/parable-bloom
     cmds:
       - firebase deploy --only functions
     preconditions:
@@ -57,6 +60,7 @@ tasks:
 
   firestore:rules:deploy:
     desc: Deploy Firestore security rules
+    dir: apps/parable-bloom
     cmds:
       - firebase deploy --only firestore:rules
     preconditions:
@@ -65,6 +69,7 @@ tasks:
 
   storage:rules:deploy:
     desc: Deploy Cloud Storage security rules
+    dir: apps/parable-bloom
     cmds:
       - firebase deploy --only storage:rules
     preconditions:
@@ -73,6 +78,7 @@ tasks:
 
   hosting:deploy:
     desc: Deploy Firebase Hosting
+    dir: apps/parable-bloom
     cmds:
       - firebase deploy --only hosting
     preconditions:
@@ -81,6 +87,7 @@ tasks:
 
   deploy:all:
     desc: Deploy all Firebase services
+    dir: apps/parable-bloom
     cmds:
       - firebase deploy
     preconditions:
@@ -90,6 +97,7 @@ tasks:
   # Hosting Specific (using secrets or preview channels)
   h:deploy:
     desc: Deploy to Firebase Hosting (uses FIREBASE_CI_TOKEN env var)
+    dir: apps/parable-bloom
     vars:
       FIREBASE_CI_TOKEN: ""
     preconditions:
@@ -102,6 +110,7 @@ tasks:
 
   h:preview:
     desc: Deploy preview channel
+    dir: apps/parable-bloom
     cmds:
       - firebase hosting:channel:deploy "pr-{{.PR_NUMBER}}"
     preconditions:
@@ -113,6 +122,7 @@ tasks:
 
   configure:
     desc: Configure Firebase using FlutterFire CLI for local development
+    dir: apps/parable-bloom
     cmds:
       - flutterfire configure --project=parable-bloom --platforms=android,ios,web,linux,macos,windows --yes
     preconditions:

@@ -49,10 +49,8 @@ tasks:
     dir: tools/level-builder
     vars:
       MAX_STATES: "2000000"
-      USE_ASTAR: "true"
-      ASTAR_WEIGHT: "10"
     cmds:
-      - go run . validate-tutorials --check-solvable --max-states "{{.MAX_STATES}}" --use-astar="{{.USE_ASTAR}}" --astar-weight="{{.ASTAR_WEIGHT}}"
+      - go run . validate-tutorials --check-solvable --max-states "{{.MAX_STATES}}"
 
   # -----------------------------------------------------------------------------
   # Solver Benchmarking

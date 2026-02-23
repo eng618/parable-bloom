@@ -6,214 +6,94 @@ on:
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
-    inputs:
-      full_test:
-        description: 'Run full test suite (ignore path filters)'
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
-  changes:
+  validate:
     runs-on: ubuntu-latest
-    outputs:
-      flutter: ${{ steps.filter.outputs.flutter || inputs.full_test }}
-      level-builder: ${{ steps.filter.outputs.level-builder || inputs.full_test }}
-      hugo: ${{ steps.filter.outputs.hugo || inputs.full_test }}
-      firebase: ${{ steps.filter.outputs.firebase || inputs.full_test }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            flutter:
-              - 'lib/**'
-              - 'assets/**'
-              - 'pubspec.*'
-              - 'analysis_options.yaml'
-              - 'test/**'
-            level-builder:
-              - 'tools/level-builder/**'
-            hugo:
-              - 'tools/hugo-site/**'
-            firebase:
-              - 'firebase.json'
-              - 'firestore.rules'
-              - '.firebaserc'
-
-  lint:
-    needs: changes
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Flutter
-        if: needs.changes.outputs.flutter == 'true'
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Set up Go
-        if: needs.changes.outputs.level-builder == 'true'
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.25'
-
-      - name: Set up Task
-        uses: arduino/setup-task@v2
-
-      - name: Install golangci-lint
-        if: needs.changes.outputs.level-builder == 'true'
-        run: |
-          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
-
-      - name: Generate dummy firebase_options.dart
-        if: needs.changes.outputs.flutter == 'true'
-        run: dart run scripts/generate_dummy_firebase_options.dart
-
-      - name: Lint Flutter
-        if: needs.changes.outputs.flutter == 'true'
-        run: |
-          task flutter:analyze
-          task flutter:format:check
-
-      - name: Lint Level Builder (Go)
-        if: needs.changes.outputs.level-builder == 'true'
-        run: |
-          task lb:lint
-          task lb:format:check
-
-  test:
-    needs: [changes, lint]
-    runs-on: ubuntu-latest
-    env:
-      HAS_CODACY_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
-      - name: Set up Flutter
-        if: needs.changes.outputs.flutter == 'true'
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Set up Go
-        if: needs.changes.outputs.level-builder == 'true'
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.25'
-
-      - name: Set up Task
-        uses: arduino/setup-task@v2
-
-      - name: Generate dummy firebase_options.dart
-        if: needs.changes.outputs.flutter == 'true'
-        run: dart run scripts/generate_dummy_firebase_options.dart
-
-      - name: Run Flutter Tests
-        if: needs.changes.outputs.flutter == 'true'
-        run: task flutter:test
-
-      - name: Run Level Builder Tests (Go)
-        if: needs.changes.outputs.level-builder == 'true'
-        run: task lb:test
-
-      - name: Run Codacy Coverage Reporter
-        uses: codacy/codacy-coverage-reporter-action@v1.3.0
-        if: env.HAS_CODACY_TOKEN == 'true'
-        continue-on-error: true
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: coverage/lcov.info,tools/level-builder/coverage.out
-
-  build:
-    needs: [changes, lint]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
           submodules: recursive
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Flutter
-        if: needs.changes.outputs.flutter == 'true'
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
           cache: true
 
       - name: Set up Go
-        if: needs.changes.outputs.level-builder == 'true'
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version: "1.25"
 
       - name: Setup Hugo
-        if: needs.changes.outputs.hugo == 'true'
         uses: peaceiris/actions-hugo@v3
         with:
-          hugo-version: 'latest'
+          hugo-version: "latest"
           extended: true
 
-      - name: Set up Task
-        uses: arduino/setup-task@v2
-
-      - name: Install Firebase & FlutterFire CLI
-        if: needs.changes.outputs.flutter == 'true' || needs.changes.outputs.firebase == 'true'
+      - name: Install tools
         run: |
-          npm install -g firebase-tools
+          bun add -g firebase-tools
           dart pub global activate flutterfire_cli
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
-      - name: Generate firebase_options.dart
-        if: needs.changes.outputs.flutter == 'true'
-        timeout-minutes: 5
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
+      - name: Create Dummy Firebase Options
         run: |
-          if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "FIREBASE_CI_TOKEN is empty! Using dummy firebase options for build."
-            dart run scripts/generate_dummy_firebase_options.dart
-          else
-            flutterfire configure --project=parable-bloom --out=lib/firebase_options.dart --platforms=web --yes --token="$FIREBASE_TOKEN"
-          fi
+          cat <<EOF > apps/parable-bloom/lib/firebase_options.dart
+          import 'package:firebase_core/firebase_core.dart';
+          import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-      - name: Build Flutter Web
-        if: needs.changes.outputs.flutter == 'true'
-        run: task flutter:build:web
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform {
+              return const FirebaseOptions(
+                apiKey: 'dummy-api-key',
+                appId: 'dummy-app-id',
+                messagingSenderId: 'dummy-sender-id',
+                projectId: 'dummy-project-id',
+                authDomain: 'dummy-project.firebaseapp.com',
+                storageBucket: 'dummy-project.appspot.com',
+                measurementId: 'dummy-measurement-id',
+              );
+            }
+          }
+          EOF
 
-      - name: Build Level Builder (Go)
-        if: needs.changes.outputs.level-builder == 'true'
-        run: task lb:build
+      - name: Initialize Nx
+        run: bunx nx --version
 
-      - name: Build Hugo Site
-        if: needs.changes.outputs.hugo == 'true'
-        run: task hugo:build
+      - name: Validate all projects
+        run: bunx nx run-many -t lint test build --parallel=3
 
-  level-data-validate:
-    name: Level data validation (Task)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.25'
-      - name: Set up Task
-        uses: arduino/setup-task@v2
-      - name: Validate levels (Task)
+      - name: Level Data Validation
         run: |
-          task levels:validate
-          task levels:tutorials:validate
+          bunx nx run level-builder:validate
+          bunx nx run level-builder:tutorials-validate

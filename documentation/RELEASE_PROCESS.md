@@ -7,12 +7,12 @@ Comprehensive guide for automating Android/iOS releases with Bitwarden Secrets M
 Parable Bloom uses a fully automated release pipeline that:
 
 - ✅ Manages secrets via Bitwarden Secrets Manager (BWS)
-- ✅ Auto-increments versions in `pubspec.yaml` (semantic version + build number)
-- ✅ Generates changelog from git commits
-- ✅ Builds signed Android `.aab` for Google Play Console
-- ✅ Builds Web (Firebase Hosting), Linux & Windows (for testing)
-- ✅ Auto-uploads Android to Google Play Console (internal testing track) via Fastlane
-- ✅ Creates lightweight GitHub releases (tag + auto-generated release notes)
+- ✅ Auto-increments versions in `pubspec.yaml` (managed by Nx Release + custom hooks)
+- ✅ Generates changelog from git commits (automated via Nx Release)
+- ✅ Builds signed Android `.aab` for Google Play Console (orchestrated via Task/Nx)
+- ✅ Builds Web (Firebase Hosting), Linux & Windows (orchestrated via Task/Nx)
+- ✅ Auto-uploads Android to Google Play Console via Fastlane
+- ✅ Creates automated GitHub releases via Nx Release
 - ⏳ iOS support temporarily disabled (awaiting Apple Developer account setup)
 - ⏳ macOS support temporarily disabled (build issues to resolve later)
 
@@ -41,9 +41,11 @@ Parable Bloom uses a fully automated release pipeline that:
 - [ ] **Flutter SDK** 3.24+ with Dart 3.0+
 - [ ] **Task** (go-task) — `brew install go-task/tap/go-task`
 - [ ] **BWS CLI** — Bitwarden Secrets Manager CLI
-- [ ] **Firebase CLI** — `npm install -g firebase-tools`
+- [ ] **Firebase CLI** — `bun add -g firebase-tools`
 - [ ] **FlutterFire CLI** — `dart pub global activate flutterfire_cli`
 - [ ] **Fastlane** — `brew install fastlane` or `gem install fastlane`
+- [ ] **Node.js** 24+ — `brew install node`
+- [ ] **Nx CLI** — `bun add -g nx` (Optional, can use `bunx nx`)
 
 ### Installation: BWS CLI
 
@@ -370,7 +372,7 @@ Fastlane automates store uploads, beta distributions, and metadata management.
    ```bash
    # Get your project ID
    PROJECT_ID=$(bws project list | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
-   
+
    # Create secret
    bws secret create "PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" "$(base64 -i ~/Downloads/service-account.json)" "$PROJECT_ID"
    ```
@@ -553,18 +555,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - 2026-01-15
 
 ### Added
+
 - New level unlock animations
 - Grace system for failed attempts
 
 ### Fixed
+
 - Vine blocking state calculation
 - Level progress persistence
 
 ### Changed
+
 - Improved UI responsiveness
 - Updated level difficulty curve
 
 ## [1.1.0] - 2026-01-10
+
 ...
 ```
 
@@ -589,19 +595,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    flutter test
    ```
 
-3. **Bump version** (choose one):
+3. **Bump version** (via Nx):
 
    ```bash
-   # Semantic version bumps (each creates a unique tag vX.Y.Z+BUILD)
-   task release:bump:patch    # 1.0.0+1 → 1.0.1+2
-   task release:bump:minor    # 1.0.0+1 → 1.1.0+2
-   task release:bump:major    # 1.0.0+1 → 2.0.0+2
-   
-   # Build number only bump (also creates tag)
-   task release:bump:build    # 1.0.0+1 → 1.0.0+2
+   # Dry-run to see what will happen
+   bunx nx release --dry-run
+
+   # Bump version (independent for each project)
+   bunx nx release --yes
    ```
 
-   This auto-generates changelog, commits changes, and creates a git tag.
+   The automated process:
+   1. Calculates new versions based on Conventional Commits.
+   2. Updates `package.json` files and syncs to `pubspec.yaml` via hooks.
+   3. Generates the `CHANGELOG.md`.
+   4. Creates git commits and tags.
 
 4. **Push to GitHub**:
 
@@ -619,7 +627,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Job: firebase-config (ubuntu-latest)
 
-- Checks out code, sets up Flutter + npm
+- Checks out code, sets up Flutter + Node 24 + Bun
 - Installs Firebase CLI and FlutterFire CLI
 - Runs `flutterfire configure` for Android, Web, Linux, Windows platforms
 - Uploads `lib/firebase_options.dart` as shared artifact for build jobs
@@ -833,19 +841,19 @@ Complete this checklist to set up the automated release pipeline:
 ### Commands
 
 ```bash
-# Version management
-dart run scripts/bump_version.dart --patch
-dart run scripts/bump_version.dart --minor
-dart run scripts/bump_version.dart --major
-dart run scripts/update_changelog.dart
+# Version management (Full automated bump + changelog + tag)
+task release:bump
+# Or manually via Nx
+bunx nx release --specifier patch --yes
 
 # Local builds
 task release:android
 task release:ios
+task release:web
 
-# Fastlane
-cd android && fastlane deploy
-cd ios && fastlane beta
+# Fastlane (must be run from project android/ios subfolders)
+cd apps/parable-bloom/android && fastlane deploy
+cd apps/parable-bloom/ios && fastlane beta
 
 # BWS secrets
 bws secret list
@@ -857,28 +865,34 @@ bws secret create "SECRET_NAME" --value "secret-value"
 
 ```
 parable-bloom/
+├── apps/
+│   ├── parable-bloom/
+│   │   ├── android/
+│   │   │   ├── app/
+│   │   │   │   └── build.gradle.kts     # Updated with release signing
+│   │   │   └── fastlane/
+│   │   │       ├── Fastfile             # Android Fastlane configuration
+│   │   │       └── Appfile
+│   │   ├── ios/
+│   │   │   ├── ExportOptions.plist      # iOS export configuration
+│   │   │   ├── Runner.xcodeproj/        # Updated for manual signing
+│   │   │   └── fastlane/
+│   │   │       ├── Fastfile             # iOS Fastlane configuration
+│   │   │       └── Appfile
+│   │   ├── pubspec.yaml                 # Target for version bumps
+│   │   └── ...
 ├── .github/
 │   └── workflows/
-│       └── release.yml              # Updated with Android/iOS jobs
-├── android/
-│   ├── app/
-│   │   └── build.gradle.kts         # Updated with release signing
-│   └── fastlane/
-│       ├── Fastfile                 # Android Fastlane configuration
-│       └── Appfile
-├── ios/
-│   ├── ExportOptions.plist          # iOS export configuration
-│   ├── Runner.xcodeproj/            # Updated for manual signing
-│   └── fastlane/
-│       ├── Fastfile                 # iOS Fastlane configuration
-│       └── Appfile
+│       ├── ci.yml                       # Consolidated CI
+│       ├── release.yml                  # Versioning trigger
+│       └── publish.yml                  # Build/Publish trigger on tags
 ├── scripts/
-│   ├── bump_version.dart            # Version automation
-│   └── update_changelog.dart        # Changelog generation
+│   ├── bump_version.dart                # Version automation hook
+│   └── update_changelog.dart            # Changelog generation backend
 ├── documentation/
-│   └── RELEASE_PROCESS.md           # This file
-├── CHANGELOG.md                     # Auto-generated changelog
-└── Taskfile.yaml                    # Updated with release tasks
+│   └── RELEASE_PROCESS.md               # This file
+├── CHANGELOG.md                         # Workspace-wide changelog
+└── Taskfile.yml                         # Root orchestration
 ```
 
 ---

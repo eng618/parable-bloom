@@ -70,10 +70,14 @@ class MockDocumentReference extends Mock
 class MockDocumentSnapshot extends Mock
     implements DocumentSnapshot<Map<String, dynamic>> {
   @override
-  bool get exists => super.noSuchMethod(Invocation.getter(#exists), returnValue: false) as bool;
-  
+  bool get exists =>
+      super.noSuchMethod(Invocation.getter(#exists), returnValue: false)
+          as bool;
+
   @override
-  Map<String, dynamic>? data() => super.noSuchMethod(Invocation.method(#data, []), returnValue: null) as Map<String, dynamic>?;
+  Map<String, dynamic>? data() =>
+      super.noSuchMethod(Invocation.method(#data, []), returnValue: null)
+          as Map<String, dynamic>?;
 }
 
 void main() {
@@ -114,18 +118,19 @@ void main() {
 
     // Stub chain: firestore -> collection -> doc -> collection -> doc
     // Using explicit values to satisfy sound null safety for non-nullable parameters
-    when(mockFirestore.collection('game_progress_dev')).thenReturn(mockCollection);
+    when(mockFirestore.collection('game_progress_dev'))
+        .thenReturn(mockCollection);
     when(mockCollection.doc('test-user-id')).thenReturn(mockDoc);
     when(mockDoc.collection('data')).thenReturn(mockSubCollection);
     when(mockSubCollection.doc('progress')).thenReturn(mockSubDoc);
-    
+
     // Stub operations
     // get() takes optional GetOptions, so any is okay if inferred correctly.
     // set() takes non-nullable Map<String, dynamic>, using any as dynamic to satisfy type check.
     when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
     when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async => {});
     when(mockSubDoc.delete()).thenAnswer((_) async => {});
-    
+
     // Default snapshot state (does not exist)
     when(mockSnapshot.exists).thenReturn(false);
     when(mockSnapshot.data()).thenReturn(null);

@@ -1,0 +1,32 @@
+{
+  "installation": {
+    "version": "22.5.2"
+  },
+  "release": {
+    "projects": ["parable-bloom", "hugo-site", "level-builder"],
+    "version": {
+      "generatorOptions": {
+        "currentVersionResolver": "git-tag",
+        "specifierSource": "conventional-commits"
+      },
+      "hooks": {
+        "postVersion": "dart run scripts/bump_version.dart --set {newVersion} --no-commit --no-changelog"
+      }
+    },
+    "groups": {
+      "default": {
+        "projects": ["parable-bloom", "hugo-site", "level-builder"],
+        "projectsRelationship": "independent"
+      }
+    },
+    "changelog": {
+      "projectChangelogs": {
+        "renderOptions": {
+          "authors": true,
+          "mapAuthorsToGithubUsernames": true
+        }
+      }
+    }
+  },
+  "$schema": "./node_modules/nx/schemas/nx-schema.json"
+}
