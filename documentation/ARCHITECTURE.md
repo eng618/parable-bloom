@@ -233,9 +233,14 @@ The **level-builder** is a Go-based CLI tool that serves as the single source of
 #### Tutorials Validate
 
 ```bash
-# Validate lesson files with lesson-specific rules
-./level-builder tutorials validate
+# Validate tutorial lesson files (alias for validate-tutorials)
+./level-builder tutorials
+
+# Validate with solvability checks
+./level-builder tutorials --check-solvable
 ```
+
+**Note**: Advanced solver flags like `--use-astar` and `--astar-weight` are currently only supported for main level validation. Tutorials use a standard BFS solver.
 
 **Use Cases**:
 

@@ -23,6 +23,20 @@
         "command": "task lb:lint",
         "cwd": "."
       }
+    },
+    "validate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "task levels:validate-solvable",
+        "cwd": "."
+      }
+    },
+    "tutorials-validate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "task levels:tutorials:validate-solvable",
+        "cwd": "."
+      }
     }
   },
   "release": {
