@@ -41,11 +41,11 @@ Parable Bloom uses a fully automated release pipeline that:
 - [ ] **Flutter SDK** 3.24+ with Dart 3.0+
 - [ ] **Task** (go-task) — `brew install go-task/tap/go-task`
 - [ ] **BWS CLI** — Bitwarden Secrets Manager CLI
-- [ ] **Firebase CLI** — `npm install -g firebase-tools`
+- [ ] **Firebase CLI** — `bun add -g firebase-tools`
 - [ ] **FlutterFire CLI** — `dart pub global activate flutterfire_cli`
 - [ ] **Fastlane** — `brew install fastlane` or `gem install fastlane`
-- [ ] **Node.js** 20+ — `brew install node`
-- [ ] **Nx CLI** — `npm install -g nx` (Optional, can use `npx nx`)
+- [ ] **Node.js** 24+ — `brew install node`
+- [ ] **Nx CLI** — `bun add -g nx` (Optional, can use `bunx nx`)
 
 ### Installation: BWS CLI
 
@@ -599,10 +599,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
    ```bash
    # Dry-run to see what will happen
-   npx nx release --dry-run
+   bunx nx release --dry-run
 
    # Bump version (independent for each project)
-   npx nx release --yes
+   bunx nx release --yes
    ```
 
    The automated process:
@@ -627,7 +627,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Job: firebase-config (ubuntu-latest)
 
-- Checks out code, sets up Flutter + npm
+- Checks out code, sets up Flutter + Node 24 + Bun
 - Installs Firebase CLI and FlutterFire CLI
 - Runs `flutterfire configure` for Android, Web, Linux, Windows platforms
 - Uploads `lib/firebase_options.dart` as shared artifact for build jobs
@@ -844,7 +844,7 @@ Complete this checklist to set up the automated release pipeline:
 # Version management (Full automated bump + changelog + tag)
 task release:bump
 # Or manually via Nx
-npx nx release --specifier patch --yes
+bunx nx release --specifier patch --yes
 
 # Local builds
 task release:android
