@@ -45,8 +45,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Track if we've already notified parent of clearing
   final bool _alreadyNotifiedCleared = false;
 
-  // Wavy animation state
-  double _totalTime = 0.0;
 
   VineComponent({required this.vineData, required this.cellSize}) {
     // Initialize visual positions directly from vine data (pure x,y coordinates)
@@ -112,13 +110,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       final visualY = visualHeight - 1 - y;
 
-      // Add wavy offset
-      final horizontalWave = math.sin(_totalTime * 2.5 + i * 0.8) * 1.5;
-      final verticalWave = math.cos(_totalTime * 2.0 + i * 0.6) * 1.2;
-
       final center = Offset(
-        x * cellSize + cellSize / 2 + horizontalWave,
-        visualY * cellSize + cellSize / 2 + verticalWave,
+        x * cellSize + cellSize / 2,
+        visualY * cellSize + cellSize / 2,
       );
 
       _drawSegmentSprite(canvas, i, center, baseColor, useWithered);
@@ -290,7 +284,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   @override
   void update(double dt) {
     super.update(dt);
-    _totalTime += dt;
 
     if (!_isAnimating) return;
 

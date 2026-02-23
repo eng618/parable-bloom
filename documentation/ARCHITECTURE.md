@@ -82,7 +82,7 @@ The application uses a reactive architecture where the UI and Game Engine observ
 
 The game implements several high-performance visual systems within the Flame `PositionComponent` hierarchy:
 
-- **Wavy Component Logic**: `VineComponent` uses a `sin` wave based on `GameTime` to animate vine segments, creating a living garden effect without heavy redraw costs.
+- **Tap Feedback**: `TapEffectComponent` handles the visual pulse and particle effects on user interaction.
 - **Particle System**: `TapEffectComponent` and `VineComponent` (bloom) utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
 - **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input.
 

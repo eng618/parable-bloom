@@ -100,7 +100,6 @@ Colors are used functionally to indicate vine roles and difficulty.
 
 The game focuses on a "premium zen" feel through subtle visual feedback:
 
-- **Wavy Animations**: Vines exhibit a gentle sinusoidal wave while idle, giving them an organic, living quality.
 - **Radiating Sparkles**: Tapping any cell triggers a pulse ring with radiating sparkles, providing immediate and satisfying feedback.
 - **Enhanced Bloom particles**: When a vine is cleared, it triggers a multi-layered explosion of color-matched dust and glow particles, celebrating the "unblocking" of the garden.
 - **Smooth Camera Transitions**: Level starts and ends feature smooth zoom/pan animations to guide the player's focus.
