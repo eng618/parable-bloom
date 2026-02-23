@@ -44,6 +44,8 @@ Parable Bloom uses a fully automated release pipeline that:
 - [ ] **Firebase CLI** — `npm install -g firebase-tools`
 - [ ] **FlutterFire CLI** — `dart pub global activate flutterfire_cli`
 - [ ] **Fastlane** — `brew install fastlane` or `gem install fastlane`
+- [ ] **Node.js** 20+ — `brew install node`
+- [ ] **Nx CLI** — `npm install -g nx` (Optional, can use `npx nx`)
 
 ### Installation: BWS CLI
 
@@ -839,19 +841,19 @@ Complete this checklist to set up the automated release pipeline:
 ### Commands
 
 ```bash
-# Version management
-dart run scripts/bump_version.dart --patch
-dart run scripts/bump_version.dart --minor
-dart run scripts/bump_version.dart --major
-dart run scripts/update_changelog.dart
+# Version management (Full automated bump + changelog + tag)
+task release:bump
+# Or manually via Nx
+npx nx release --specifier patch --yes
 
 # Local builds
 task release:android
 task release:ios
+task release:web
 
-# Fastlane
-cd android && fastlane deploy
-cd ios && fastlane beta
+# Fastlane (must be run from project android/ios subfolders)
+cd apps/parable-bloom/android && fastlane deploy
+cd apps/parable-bloom/ios && fastlane beta
 
 # BWS secrets
 bws secret list
@@ -863,28 +865,34 @@ bws secret create "SECRET_NAME" --value "secret-value"
 
 ```
 parable-bloom/
+├── apps/
+│   ├── parable-bloom/
+│   │   ├── android/
+│   │   │   ├── app/
+│   │   │   │   └── build.gradle.kts     # Updated with release signing
+│   │   │   └── fastlane/
+│   │   │       ├── Fastfile             # Android Fastlane configuration
+│   │   │       └── Appfile
+│   │   ├── ios/
+│   │   │   ├── ExportOptions.plist      # iOS export configuration
+│   │   │   ├── Runner.xcodeproj/        # Updated for manual signing
+│   │   │   └── fastlane/
+│   │   │       ├── Fastfile             # iOS Fastlane configuration
+│   │   │       └── Appfile
+│   │   ├── pubspec.yaml                 # Target for version bumps
+│   │   └── ...
 ├── .github/
 │   └── workflows/
-│       └── release.yml              # Updated with Android/iOS jobs
-├── android/
-│   ├── app/
-│   │   └── build.gradle.kts         # Updated with release signing
-│   └── fastlane/
-│       ├── Fastfile                 # Android Fastlane configuration
-│       └── Appfile
-├── ios/
-│   ├── ExportOptions.plist          # iOS export configuration
-│   ├── Runner.xcodeproj/            # Updated for manual signing
-│   └── fastlane/
-│       ├── Fastfile                 # iOS Fastlane configuration
-│       └── Appfile
+│       ├── ci.yml                       # Consolidated CI
+│       ├── release.yml                  # Versioning trigger
+│       └── publish.yml                  # Build/Publish trigger on tags
 ├── scripts/
-│   ├── bump_version.dart            # Version automation
-│   └── update_changelog.dart        # Changelog generation
+│   ├── bump_version.dart                # Version automation hook
+│   └── update_changelog.dart            # Changelog generation backend
 ├── documentation/
-│   └── RELEASE_PROCESS.md           # This file
-├── CHANGELOG.md                     # Auto-generated changelog
-└── Taskfile.yaml                    # Updated with release tasks
+│   └── RELEASE_PROCESS.md               # This file
+├── CHANGELOG.md                         # Workspace-wide changelog
+└── Taskfile.yml                         # Root orchestration
 ```
 
 ---

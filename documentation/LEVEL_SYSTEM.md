@@ -21,7 +21,7 @@ Key concepts:
 ## 2. File Structure
 
 ```text
-assets/
+apps/parable-bloom/assets/
 ├── data/
 │   └── modules.json        # Registry of modules, progression, and parables
 ├── tutorials/              # Separate tutorial component
@@ -297,15 +297,13 @@ The Go-based toolchain located in `tools/level-builder` handles all operations.
 - **gen2**: Primary level generation with direction-first algorithm
 
   ```bash
-  go run . gen2 --level-id 101 --difficulty Seedling
-  go run . gen2 --level-id 201 --difficulty Sprout --seed 12345
-  go run . gen2 --level-id 301 --difficulty Nurturing --randomize
+  task levels:gen -- LEVEL_ID=101 DIFFICULTY=Seedling
   ```
 
 - **validate**: Check all assets against schema and logic
 
   ```bash
-  go run . validate --check-solvable
+  task levels:validate
   ```
 
   _Outputs results to `logs/validation_stats.json`._
@@ -313,13 +311,13 @@ The Go-based toolchain located in `tools/level-builder` handles all operations.
 - **render**: Visualize levels in terminal
 
   ```bash
-  go run . render --id 1 --style unicode
+  task levels:render -- ID=1 STYLE=unicode
   ```
 
 - **tutorials validate**: Validate lesson files
 
   ```bash
-  go run . tutorials validate
+  task levels:tutorials:validate
   ```
 
 ### 6.2 Deprecated Commands
