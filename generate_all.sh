@@ -26,7 +26,7 @@ STATS_DIR="$LOG_DIR/stats_batch_aggressive"
 mkdir -p "$STATS_DIR"
 
 # Absolute output directory for generated level files (ensures assets/levels at repo root)
-OUTPUT_DIR="$REPO_ROOT/assets/levels"
+OUTPUT_DIR="$REPO_ROOT/apps/parable-bloom/assets/levels"
 mkdir -p "$OUTPUT_DIR"
 
 # Allow optional strategy variable
