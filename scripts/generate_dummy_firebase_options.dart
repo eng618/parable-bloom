@@ -86,7 +86,14 @@ class DefaultFirebaseOptions {
 }
 ''';
 
-  final file = File('lib/firebase_options.dart');
+  // In Nx Monorepo, target the specific app path
+  final file = File('apps/parable-bloom/lib/firebase_options.dart');
+  
+  // Create directory if it doesn't exist
+  if (!file.parent.existsSync()) {
+    file.parent.createSync(recursive: true);
+  }
+  
   file.writeAsStringSync(content);
-  print('Generated dummy lib/firebase_options.dart');
+  print('Generated dummy firebase_options.dart in apps/parable-bloom/lib/');
 }

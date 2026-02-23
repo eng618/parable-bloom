@@ -16,21 +16,31 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
       - name: Install Task
         uses: arduino/setup-task@v2
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install Firebase & FlutterFire CLI
         run: |
           bun add -g firebase-tools
           dart pub global activate flutterfire_cli
-          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
-          flutterfire configure --project=parable-bloom --platforms=android,web --yes --out=apps/parable-bloom/lib/firebase_options.dart --token="${{ secrets.FIREBASE_CI_TOKEN }}"
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          cd apps/parable-bloom
+          flutterfire configure \
+            --project=parable-bloom \
+            --platforms=android,ios,macos,web,windows \
+            --yes \
+            --out=lib/firebase_options.dart \
+            --token="${{ secrets.FIREBASE_CI_TOKEN }}"
+
       - name: Upload firebase_options.dart
         uses: actions/upload-artifact@v6
         with:
@@ -43,6 +53,7 @@ jobs:
       matrix:
         platform: [web, android]
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v6
       - name: Download firebase_options.dart
@@ -50,30 +61,36 @@ jobs:
         with:
           name: firebase_options
           path: apps/parable-bloom/lib
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
+
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
       - name: Install Task
         uses: arduino/setup-task@v2
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
           cache: true
+
       - name: Set up Java
         if: matrix.platform == 'android'
         uses: actions/setup-java@v4
         with:
           distribution: "zulu"
           java-version: "17"
+
       - name: Fetch secrets from Bitwarden
         if: matrix.platform == 'android'
         uses: bitwarden/sm-action@v2
@@ -85,6 +102,7 @@ jobs:
             5f57faf9-5fde-4f7a-8823-b3c9002a8e77 > PARABLE_BLOOM_ANDROID_KEY_PASSWORD
             81045dc0-4686-468e-8688-b3c9002c2a00 > PARABLE_BLOOM_ANDROID_STORE_PASSWORD
             d5507ff8-ab4f-4724-bf64-b3c9006d87fc > PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
+
       - name: Decode and setup keystore
         if: matrix.platform == 'android'
         run: |
@@ -93,17 +111,21 @@ jobs:
           echo "ANDROID_KEY_ALIAS=$PARABLE_BLOOM_ANDROID_KEY_ALIAS" >> $GITHUB_ENV
           echo "ANDROID_KEY_PASSWORD=$PARABLE_BLOOM_ANDROID_KEY_PASSWORD" >> $GITHUB_ENV
           echo "ANDROID_STORE_PASSWORD=$PARABLE_BLOOM_ANDROID_STORE_PASSWORD" >> $GITHUB_ENV
+
       - name: Build Game
         run: bunx nx run parable-bloom:release-${{ matrix.platform }}
+
       - name: Deploy to Firebase Hosting
         if: matrix.platform == 'web'
         run: bunx nx run parable-bloom:deploy-web --token="${{ secrets.FIREBASE_CI_TOKEN }}"
+
       - name: Deploy to Google Play (Internal)
         if: matrix.platform == 'android'
         run: |
           echo "$PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" | base64 -d > /tmp/service-account.json
           export GOOGLE_PLAY_SERVICE_ACCOUNT_PATH=/tmp/service-account.json
           bunx nx run parable-bloom:deploy-android
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v6
         with:
@@ -123,9 +145,11 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: "1.25"
+
       - name: Build Level Builder
         run: |
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/level-builder-${{ matrix.goos }}-${{ matrix.goarch }} ./tools/level-builder
+
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:

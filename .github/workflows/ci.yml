@@ -66,26 +66,8 @@ jobs:
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
           go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
-      - name: Create Dummy Firebase Options
-        run: |
-          cat <<EOF > apps/parable-bloom/lib/firebase_options.dart
-          import 'package:firebase_core/firebase_core.dart';
-          import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
-
-          class DefaultFirebaseOptions {
-            static FirebaseOptions get currentPlatform {
-              return const FirebaseOptions(
-                apiKey: 'dummy-api-key',
-                appId: 'dummy-app-id',
-                messagingSenderId: 'dummy-sender-id',
-                projectId: 'dummy-project-id',
-                authDomain: 'dummy-project.firebaseapp.com',
-                storageBucket: 'dummy-project.appspot.com',
-                measurementId: 'dummy-measurement-id',
-              );
-            }
-          }
-          EOF
+      - name: Generate Dummy Firebase Options
+        run: dart scripts/generate_dummy_firebase_options.dart
 
       - name: Initialize Nx
         run: bunx nx --version

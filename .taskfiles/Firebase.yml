@@ -108,6 +108,11 @@ tasks:
   # -----------------------------------------------------------------------------
   # FlutterFire Configuration
 
+  generate-dummy-options:
+    desc: Generate a dummy firebase_options.dart for local development/testing
+    cmds:
+      - dart scripts/generate_dummy_firebase_options.dart
+
   configure:
     desc: Configure Firebase using FlutterFire CLI for local development
     dir: apps/parable-bloom
