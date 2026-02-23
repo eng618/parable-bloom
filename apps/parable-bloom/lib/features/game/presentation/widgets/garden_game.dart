@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -22,6 +23,8 @@ class GardenGame extends FlameGame with TapCallbacks {
   LevelData? _currentLevelData;
   LessonData? _currentLessonData;
   SpriteComponent? _gameBackground;
+  Sprite? _bgDaySprite;
+  Sprite? _bgNightSprite;
 
   // Theme colors - updated dynamically from app theme
   late Color _backgroundColor;
@@ -74,14 +77,34 @@ class GardenGame extends FlameGame with TapCallbacks {
     _backgroundColor = backgroundColor;
     _surfaceColor = surfaceColor;
 
+    if (_gameBackground != null) {
+      final isDark = _backgroundColor.computeLuminance() < 0.5;
+      _gameBackground!.sprite = isDark ? _bgNightSprite : _bgDaySprite;
+    }
+
     // We no longer tint the _gameBackground sprite with a solid color
     // as it should show the actual artwork.
+  }
+
+  void _updateBackgroundSize() {
+    if (_gameBackground != null && _gameBackground!.sprite != null) {
+      final spriteSize = _gameBackground!.sprite!.srcSize;
+      final scaleX = size.x / spriteSize.x;
+      final scaleY = size.y / spriteSize.y;
+      final scale = math.max(scaleX, scaleY);
+      
+      _gameBackground!.size = spriteSize * scale;
+      _gameBackground!.position = Vector2(
+        (size.x - _gameBackground!.size.x) / 2,
+        (size.y - _gameBackground!.size.y) / 2,
+      );
+    }
   }
 
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    _gameBackground?.size = size;
+    _updateBackgroundSize();
   }
 
   /// Expose current vine-attempted color for renderers (VineComponent)
@@ -101,13 +124,17 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     // Load parable background artwork
     try {
-      final backgroundSprite = await loadSprite('grid_bg.png');
+      _bgDaySprite = await loadSprite('bg_day.png');
+      _bgNightSprite = await loadSprite('bg_night.png');
+      
+      final isDark = _backgroundColor.computeLuminance() < 0.5;
+
       _gameBackground = SpriteComponent(
-        sprite: backgroundSprite,
-        size: size,
+        sprite: isDark ? _bgNightSprite : _bgDaySprite,
         priority: -2,
       );
       add(_gameBackground!);
+      _updateBackgroundSize();
     } catch (e) {
       debugPrint('GardenGame: Failed to load background sprite: $e');
       // Continue without background or use a fallback color

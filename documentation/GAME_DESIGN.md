@@ -72,7 +72,9 @@ Tutorials include animated arrows and text hints guiding the player through corr
 
 - **Style**: Minimalist, organic, watercolor.
 - **Atmosphere**: Calming, serene, "Zen Garden."
-- **Modes**: Adaptive Light (warm earth tones) and Dark (cool night shades) themes.
+- **Backgrounds**: Dynamic vertical (9:16) backgrounds. Day features a bright sky and green grass, fading into `#F8F5EF`. Night features a dark sky and dark grass, fading into `#1A2E3F`. Both utilize a bare wood trellis pattern.
+- **Vines**: Vines are rendered using a highly cohesive watercolor sprite sheet featuring wooden dowels wrapped in vines. Vines have two visual states: **Healthy** (green vines, active movement) and **Withered** (brown vines, triggered when blocked or bouncing back).
+- **Modes**: Adaptive Light and Dark themes that sync with the background imagery.
 
 ### Color Palette & Meaning
 

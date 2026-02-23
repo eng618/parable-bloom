@@ -3,13 +3,19 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import 'package:flame/sprite.dart';
+import 'package:flame/flame.dart';
+
 import '../../../../core/vine_color_palette.dart';
 import '../../../../providers/game_providers.dart';
+import 'garden_game.dart';
 import 'grid_component.dart';
 
 class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final VineData vineData;
   final double cellSize;
+
+  static SpriteSheet? _spriteSheet;
 
   bool _isAnimating = false;
   bool _willClearAfterAnimation =
@@ -55,6 +61,15 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     position = Vector2.zero();
     size = parent.size;
 
+    if (_spriteSheet == null) {
+      final game = parent.parent as GardenGame;
+      final image = await game.images.load('vine_spritesheet.png');
+      _spriteSheet = SpriteSheet(
+        image: image,
+        srcSize: Vector2(128, 128),
+      );
+    }
+
     // Visual positions are already initialized in constructor
     // This is just for logging
 
@@ -76,170 +91,131 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final level = parent.getCurrentLevelData();
     if (level == null) return;
 
-    // For optimization, we allow rendering even if cleared during animation
-    // The vine should complete its animation sequence before disappearing
-
     final isBlocked = vineState.isBlocked;
     final isAttempted = vineState.hasBeenAttempted;
 
-    // Determine vine color.
-    // - `vine_color` is a palette key resolved via VineColorPalette.
-    // - Apply a calm deterministic variation per vine id.
     final seedColor = VineColorPalette.resolve(vineData.vineColor);
     final calmColor = _deriveCalmVariant(seedColor, vineData.id);
-    // Compute final render color. Attempted/blocked color applies only when
-    // the vine has been attempted and is currently blocked (bounce-back).
     final baseColor = VineComponent.computeRenderColor(
       calmColor,
       isAttempted,
       (parent.parent).vineAttemptedColor,
     );
 
-    // Calculate direction from vine data
-    final direction = _calculateVineDirection();
-
-    // Draw line segments connecting cells (tails)
-    final segmentPaint = Paint()
-      ..color = baseColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
-
+    final useWithered = isBlocked && isAttempted;
     final visualHeight = level.gridHeight;
 
-    for (int i = 0; i < _currentVisualPositions.length - 1; i++) {
-      final currentCell = _currentVisualPositions[i];
-      final nextCell = _currentVisualPositions[i + 1];
-
-      final currentX = currentCell['x'] as int;
-      final currentY = currentCell['y'] as int;
-      final nextX = nextCell['x'] as int;
-      final nextY = nextCell['y'] as int;
-
-      final visualY = visualHeight - 1 - currentY;
-      final nextVisualY = visualHeight - 1 - nextY;
-
-      // Add wavy offset
-      final horizontalWave = math.sin(_totalTime * 2.5 + i * 0.8) * 1.5;
-      final verticalWave = math.cos(_totalTime * 2.0 + i * 0.6) * 1.2;
-
-      final start = Offset(
-        currentX * cellSize + cellSize / 2 + horizontalWave,
-        visualY * cellSize + cellSize / 2 + verticalWave,
-      );
-      final end = Offset(
-        nextX * cellSize + cellSize / 2 + horizontalWave,
-        nextVisualY * cellSize + cellSize / 2 + verticalWave,
-      );
-
-      canvas.drawLine(start, end, segmentPaint);
-    }
-
-    // Draw dots and heads
     for (int i = 0; i < _currentVisualPositions.length; i++) {
       final cell = _currentVisualPositions[i];
       final x = cell['x'] as int;
       final y = cell['y'] as int;
 
-      // Transform to visual coordinates (y=0 at bottom)
       final visualY = visualHeight - 1 - y;
 
-      final isHead = direction != null && i == 0; // Head is at position 0
+      // Add wavy offset
+      final horizontalWave = math.sin(_totalTime * 2.5 + i * 0.8) * 1.5;
+      final verticalWave = math.cos(_totalTime * 2.0 + i * 0.6) * 1.2;
 
-      final rect = Rect.fromCenter(
-        center: Offset(
-          x * cellSize + cellSize / 2,
-          visualY * cellSize + cellSize / 2,
-        ),
-        width: cellSize * 0.73,
-        height: cellSize * 0.73,
+      final center = Offset(
+        x * cellSize + cellSize / 2 + horizontalWave,
+        visualY * cellSize + cellSize / 2 + verticalWave,
       );
 
-      if (isHead) {
-        _drawArrowHead(
-          canvas,
-          rect,
-          baseColor,
-          direction,
-          isBlocked,
-          isAttempted,
-        );
-      } else {
-        final bodyPaint = Paint()
-          ..color = baseColor
-          ..style = PaintingStyle.fill;
-        canvas.drawCircle(rect.center, 3, bodyPaint);
-      }
+      _drawSegmentSprite(canvas, i, center, baseColor, useWithered);
     }
 
-    // Draw bloom effect if active
     if (_isShowingBloomEffect && _bloomEffectPosition != null) {
       _drawBloomEffect(canvas);
     }
   }
 
-  void _drawArrowHead(
+  void _drawSegmentSprite(
     Canvas canvas,
-    Rect rect,
-    Color color,
-    String direction,
-    bool isBlocked,
-    bool isAttempted,
+    int index,
+    Offset center,
+    Color tintColor,
+    bool isWithered,
   ) {
-    final center = rect.center;
-    final path = Path();
+    if (_spriteSheet == null || _currentVisualPositions.isEmpty) return;
 
-    final scale = 0.55;
-    final h = rect.height * scale;
-    final w = rect.width * scale;
+    final cell = _currentVisualPositions[index];
+    final isHead = index == 0;
+    final isTail = index == _currentVisualPositions.length - 1;
 
-    final left = center.dx - w / 2;
-    final right = center.dx + w / 2;
-    final top = center.dy - h / 2;
-    final bottom = center.dy + h / 2;
+    double rotation = 0.0;
+    int col = 0;
 
-    switch (direction) {
-      case 'right':
-        path.moveTo(left, top + h * 0.1);
-        path.lineTo(right, center.dy);
-        path.lineTo(left, bottom - h * 0.1);
-        path.close();
-        break;
-      case 'left':
-        path.moveTo(right, top + h * 0.1);
-        path.lineTo(left, center.dy);
-        path.lineTo(right, bottom - h * 0.1);
-        path.close();
-        break;
-      case 'down':
-        path.moveTo(left + w * 0.1, top);
-        path.lineTo(right - w * 0.1, top);
-        path.lineTo(center.dx, bottom);
-        path.close();
-        break;
-      case 'up':
-        path.moveTo(left + w * 0.1, bottom);
-        path.lineTo(right - w * 0.1, bottom);
-        path.lineTo(center.dx, top);
-        path.close();
-        break;
+    if (isHead) {
+      final String dir = _calculateVineDirection() ?? 'up';
+      switch (dir) {
+        case 'up': rotation = 0; col = 0; break;
+        case 'down': rotation = 0; col = 1; break;
+        case 'left': rotation = 0; col = 2; break;
+        case 'right': rotation = 0; col = 3; break;
+      }
+    } else if (isTail && index > 0) {
+      col = 6;
+      final bodyCell = _currentVisualPositions[index - 1];
+      final dx = bodyCell['x']! - cell['x']!;
+      final dy = bodyCell['y']! - cell['y']!; // Grid coordinates
+
+      if (dx > 0) rotation = math.pi / 2;
+      else if (dx < 0) rotation = -math.pi / 2;
+      else if (dy > 0) rotation = 0;
+      else if (dy < 0) rotation = math.pi;
+    } else if (index > 0 && index < _currentVisualPositions.length - 1) {
+      final prevCell = _currentVisualPositions[index - 1];
+      final nextCell = _currentVisualPositions[index + 1];
+
+      final dx1 = prevCell['x']! - cell['x']!;
+      final dy1 = prevCell['y']! - cell['y']!;
+      final dx2 = nextCell['x']! - cell['x']!;
+      final dy2 = nextCell['y']! - cell['y']!;
+
+      if (dx1 == -dx2 && dy1 == -dy2) {
+        // Straight component
+        col = 4;
+        if (dx1 != 0) rotation = math.pi / 2;
+        else rotation = 0;
+      } else {
+        // Corner component
+        col = 5;
+        bool hasUp = (dy1 > 0) || (dy2 > 0);
+        bool hasDown = (dy1 < 0) || (dy2 < 0);
+        bool hasRight = (dx1 > 0) || (dx2 > 0);
+        bool hasLeft = (dx1 < 0) || (dx2 < 0);
+
+        if (hasUp && hasRight) rotation = 0;
+        else if (hasRight && hasDown) rotation = math.pi / 2;
+        else if (hasDown && hasLeft) rotation = math.pi;
+        else if (hasLeft && hasUp) rotation = -math.pi / 2;
+      }
+    } else {
+      // Single cell vine (fallback)
+      col = 0;
     }
 
-    final shadowPaint = Paint()
-      ..color = Colors.black45
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-    canvas.drawPath(path.shift(const Offset(2, 2)), shadowPaint);
+    final row = isWithered ? 1 : 0;
+    final sprite = _spriteSheet!.getSprite(row, col);
 
-    final arrowPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(path, arrowPaint);
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(rotation);
 
-    final borderPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawPath(path, borderPaint);
+    // Apply color tint to vine sprites
+    final paint = Paint()..colorFilter = ColorFilter.mode(tintColor, BlendMode.modulate);
+
+    // Provide scaled size to fill cell
+    // Depending on the tile margin, might need scale factor
+    final scaleFactor = 1.0; 
+    sprite.render(
+      canvas,
+      size: Vector2(cellSize * scaleFactor, cellSize * scaleFactor),
+      position: Vector2(-cellSize * scaleFactor / 2, -cellSize * scaleFactor / 2),
+      overridePaint: paint,
+    );
+
+    canvas.restore();
   }
 
   String? _calculateVineDirection() {
