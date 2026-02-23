@@ -27,7 +27,35 @@
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "task deploy",
+        "command": "task firebase:deploy:all",
+        "cwd": "."
+      }
+    },
+    "release-web": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "task flutter:build:web",
+        "cwd": "."
+      }
+    },
+    "release-android": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "task flutter:build:appbundle",
+        "cwd": "."
+      }
+    },
+    "deploy-web": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "task firebase:hosting:deploy",
+        "cwd": "."
+      }
+    },
+    "deploy-android": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd apps/parable-bloom/android && fastlane deploy",
         "cwd": "."
       }
     }
