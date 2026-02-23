@@ -71,6 +71,7 @@ jobs:
             dart run scripts/generate_dummy_firebase_options.dart
           else
             cd apps/parable-bloom
+            flutter pub get
             flutterfire configure \
               --project=parable-bloom \
               --platforms=web \
