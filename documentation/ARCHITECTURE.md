@@ -1,12 +1,4 @@
----
-title: "Parable Bloom - Architecture & Technical Reference"
-version: "5.0"
-last_updated: "2026-01-10"
-status: "Live"
-type: "Architecture Documentation"
----
-
-# Parable Bloom - Architecture & Technical Reference
+# Architecture & Technical Reference
 
 ## 1. Technology Stack
 
@@ -16,6 +8,10 @@ type: "Architecture Documentation"
 - **Local Persistence**: Hive (Key-Value Store)
 - **Cloud Backend**: Firebase (Firestore, Auth) - _Planned/In-Progress_
 - **Languages**: Dart (App), Go 1.25+ (Level Builder CLI)
+- **Minimum OS Targets**:
+  - **iOS**: 16.0+
+  - **macOS**: 11.0+
+  - **Android**: API 21+
 - **Development Tools**:
   - Level Builder CLI (`tools/level-builder/`) - Level generation, validation, debugging
   - Hugo Static Site Generator (`tools/hugo-site/`) - Documentation hosting
@@ -47,21 +43,12 @@ The game now features a **separate, immersive lessons system** that teaches core
 #### Data Structure
 
 ```text
-assets/lessons/
+apps/parable-bloom/assets/lessons/
 ├── lesson_1.json
 ├── lesson_2.json
 ├── lesson_3.json
 ├── lesson_4.json
 └── lesson_5.json
-
-Each contains: id, title, objective, instructions, learning_points, grid_size, vines
-
-**Text Guidelines**
-
-- Keep instructions short (1–3 brief sentences).
-- Recommended max lengths: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**.
-- Ensure **at least 2 learning_points** per lesson (UI expects at least two).
-- Text is trimmed and validated when loading via `LessonData.fromJson`; add tests to ensure compliance.
 ```
 
 #### State Management
@@ -329,7 +316,7 @@ The level-builder performs **heavy validation** during development:
 
 #### Division of Responsibilities
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Development Time                         │
 │  ┌────────────────────────────────────────────────────────┐ │

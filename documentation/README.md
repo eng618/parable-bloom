@@ -1,12 +1,4 @@
----
-title: "Parable Bloom – Master Documentation Index"
-version: "4.0"
-last_updated: "2026-01-03"
-status: "Live"
-type: "Master Index"
----
-
-# Parable Bloom – Master Documentation Index
+# Master Documentation Index
 
 ## 🌿 Welcome to Parable Bloom
 
@@ -42,6 +34,6 @@ Credits and licenses for third-party assets.
 
 ## 🚀 Quick Start
 
-1. **Run the App**: `task run`
-2. **Validate Levels**: `task levels:validate`
-3. **Generate Levels**: `task levels:generate`
+1. **Run Application**: `task run`
+2. **Validate Workspace**: `task validate`
+3. **Generate Levels**: `task levels:generate:all`
