@@ -13,18 +13,6 @@ tasks:
         msg: "Firebase CLI is not installed."
 
   # -----------------------------------------------------------------------------
-  # Project Initialization
-
-  init:
-    desc: Initialize Firebase in the project
-    dir: apps/parable-bloom
-    cmds:
-      - firebase init
-    preconditions:
-      - sh: command -v firebase >/dev/null 2>&1
-        msg: "Firebase CLI is not installed."
-
-  # -----------------------------------------------------------------------------
   # Local Emulators
 
   emulators:start:
@@ -131,6 +119,7 @@ tasks:
 
   configure:android:
     desc: Configure Firebase for Android only
+    dir: apps/parable-bloom
     cmds:
       - flutterfire configure --project=parable-bloom --platforms=android --yes
     preconditions:
@@ -139,6 +128,7 @@ tasks:
 
   configure:ios:
     desc: Configure Firebase for iOS only
+    dir: apps/parable-bloom
     cmds:
       - flutterfire configure --project=parable-bloom --platforms=ios --yes
     preconditions:
@@ -147,6 +137,7 @@ tasks:
 
   configure:web:
     desc: Configure Firebase for Web only
+    dir: apps/parable-bloom
     cmds:
       - flutterfire configure --project=parable-bloom --platforms=web --yes
     preconditions:
@@ -155,6 +146,7 @@ tasks:
 
   configure:linux:
     desc: Configure Firebase for Linux only
+    dir: apps/parable-bloom
     cmds:
       - flutterfire configure --project=parable-bloom --platforms=linux --yes
     preconditions:
@@ -163,6 +155,7 @@ tasks:
 
   configure:macos:
     desc: Configure Firebase for macOS only
+    dir: apps/parable-bloom
     cmds:
       - flutterfire configure --project=parable-bloom --platforms=macos --yes
     preconditions:
@@ -171,6 +164,7 @@ tasks:
 
   configure:windows:
     desc: Configure Firebase for Windows only
+    dir: apps/parable-bloom
     cmds:
       - flutterfire configure --project=parable-bloom --platforms=windows --yes
     preconditions:

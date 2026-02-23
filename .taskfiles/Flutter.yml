@@ -75,12 +75,14 @@ tasks:
 
   dev:linux:
     desc: Run the application in dev mode with Chromium
+    dir: apps/parable-bloom
     platforms: [linux]
     cmds:
       - CHROME_EXECUTABLE=/snap/bin/chromium flutter run -d chrome
 
   dev:darwin:
     desc: Run the application in dev mode with Chrome
+    dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
       - flutter run -d chrome
@@ -93,29 +95,34 @@ tasks:
 
   serve:linux:
     desc: Serve the application on Linux
+    dir: apps/parable-bloom
     platforms: [linux]
     cmds:
       - flutter run -d linux
 
   serve:windows:
     desc: Serve the application on Windows
+    dir: apps/parable-bloom
     platforms: [windows]
     cmds:
       - flutter run -d windows
 
   serve:macos:
     desc: Serve the application on macOS
+    dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
       - flutter run -d macos
 
   serve:android:
     desc: Serve the application on Android
+    dir: apps/parable-bloom
     cmds:
       - flutter run -d 'SM S901U'
 
   serve:ios:
     desc: Serve the application on iOS simulator (auto-selects available simulator)
+    dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
       - task: _ensure_ios_sim
@@ -123,6 +130,7 @@ tasks:
 
   serve:ios:clean:
     desc: Clean and serve the application on iOS simulator
+    dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
       - task: clean
@@ -161,61 +169,73 @@ tasks:
 
   serve:dev:
     desc: Run the application in development environment
+    dir: apps/parable-bloom
     cmds:
       - flutter run --dart-define=APP_ENV=dev
 
   serve:dev:web:
     desc: Run the web application in development environment
+    dir: apps/parable-bloom
     cmds:
       - flutter run -d chrome --dart-define=APP_ENV=dev
 
   serve:preview:
     desc: Run the application in preview environment
+    dir: apps/parable-bloom
     cmds:
       - flutter run --dart-define=APP_ENV=preview
 
   serve:preview:web:
     desc: Run the web application in preview environment
+    dir: apps/parable-bloom
     cmds:
       - flutter run -d chrome --dart-define=APP_ENV=preview
 
   serve:prod:
     desc: Run the application in production environment
+    dir: apps/parable-bloom
     cmds:
       - flutter run --dart-define=APP_ENV=prod
 
   serve:prod:web:
     desc: Run the web application in production environment
+    dir: apps/parable-bloom
     cmds:
       - flutter run -d chrome --dart-define=APP_ENV=prod
 
   build:web:dev:
     desc: Build the web application for development environment
+    dir: apps/parable-bloom
     cmds:
       - flutter build web --release --dart-define=APP_ENV=dev
 
   build:web:preview:
     desc: Build the web application for preview environment
+    dir: apps/parable-bloom
     cmds:
       - flutter build web --release --dart-define=APP_ENV=preview
 
   build:web:prod:
     desc: Build the web application for production environment
+    dir: apps/parable-bloom
     cmds:
       - flutter build web --release --dart-define=APP_ENV=prod
 
   test:dev:
     desc: Run tests in development environment
+    dir: apps/parable-bloom
     cmds:
       - flutter test --dart-define=APP_ENV=dev
 
   test:preview:
     desc: Run tests in preview environment
+    dir: apps/parable-bloom
     cmds:
       - flutter test --dart-define=APP_ENV=preview
 
   test:prod:
     desc: Run tests in production environment
+    dir: apps/parable-bloom
     cmds:
       - flutter test --dart-define=APP_ENV=prod
 

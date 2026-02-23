@@ -6,7 +6,7 @@ tasks:
 
   android:deploy:
     desc: Deploy Android to Google Play (Internal Testing) via Fastlane
-    dir: android
+    dir: apps/parable-bloom/android
     cmds:
       - fastlane deploy
     preconditions:
@@ -15,7 +15,7 @@ tasks:
 
   android:beta:
     desc: Deploy Android to Google Play Beta Track via Fastlane
-    dir: android
+    dir: apps/parable-bloom/android
     cmds:
       - fastlane beta
     preconditions:
@@ -24,7 +24,7 @@ tasks:
 
   android:build:
     desc: Build Android release bundle via Fastlane (no upload)
-    dir: android
+    dir: apps/parable-bloom/android
     cmds:
       - fastlane build_release
     preconditions:
@@ -33,7 +33,7 @@ tasks:
 
   android:validate:
     desc: Validate Android bundle and credentials
-    dir: android
+    dir: apps/parable-bloom/android
     cmds:
       - fastlane validate
     preconditions:
@@ -46,7 +46,7 @@ tasks:
   ios:beta:
     desc: Deploy iOS to TestFlight via Fastlane
     platforms: [darwin]
-    dir: ios
+    dir: apps/parable-bloom/ios
     cmds:
       - fastlane beta
     preconditions:
@@ -56,7 +56,7 @@ tasks:
   ios:release:
     desc: Deploy iOS to App Store via Fastlane
     platforms: [darwin]
-    dir: ios
+    dir: apps/parable-bloom/ios
     cmds:
       - fastlane release
     preconditions:
@@ -66,7 +66,7 @@ tasks:
   ios:build:
     desc: Build iOS IPA via Fastlane (no upload)
     platforms: [darwin]
-    dir: ios
+    dir: apps/parable-bloom/ios
     cmds:
       - fastlane build_release
     preconditions:
@@ -76,7 +76,7 @@ tasks:
   ios:validate:
     desc: Validate iOS credentials and configuration
     platforms: [darwin]
-    dir: ios
+    dir: apps/parable-bloom/ios
     cmds:
       - fastlane validate
     preconditions:
@@ -89,7 +89,7 @@ tasks:
   ios:setup:
     desc: Setup iOS keychain for CI
     platforms: [darwin]
-    dir: ios
+    dir: apps/parable-bloom/ios
     cmds:
       - fastlane setup_keychain
     preconditions:
@@ -99,7 +99,7 @@ tasks:
   ios:cleanup:
     desc: Clean up iOS CI artifacts
     platforms: [darwin]
-    dir: ios
+    dir: apps/parable-bloom/ios
     cmds:
       - fastlane cleanup
     preconditions:
