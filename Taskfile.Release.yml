@@ -14,35 +14,11 @@ tasks:
   # -----------------------------------------------------------------------------
   # Versioning
 
-  bump:patch:
-    desc: Bump patch version and tag (1.0.0 → 1.0.1)
+  bump:
+    desc: Bump versions and generate changelog (via nx release)
     deps: [_ensure:main]
     cmds:
-      - dart run scripts/bump_version.dart --patch
-
-  bump:minor:
-    desc: Bump minor version and tag (1.0.0 → 1.1.0)
-    deps: [_ensure:main]
-    cmds:
-      - dart run scripts/bump_version.dart --minor
-
-  bump:major:
-    desc: Bump major version and tag (1.0.0 → 2.0.0)
-    deps: [_ensure:main]
-    cmds:
-      - dart run scripts/bump_version.dart --major
-
-  bump:build:
-    desc: Bump build number and tag (tag includes build) (1.0.0+1 → 1.0.0+2)
-    deps: [_ensure:main]
-    cmds:
-      - dart run scripts/bump_version.dart --build
-
-  set:
-    desc: Set specific version (usage - task release:set VERSION=2.0.0+5)
-    deps: [_ensure:main]
-    cmds:
-      - dart run scripts/bump_version.dart --set "{{.VERSION}}"
+      - npx nx release --yes
 
   # -----------------------------------------------------------------------------
   # Changelog Management

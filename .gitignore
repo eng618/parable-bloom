@@ -23,12 +23,19 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
-#Ignore vscode AI rules
+# Node / Nx
+node_modules/
+.nx/
+dist/
+tmp/
+package-lock.json
+
+# Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
 
 # Code coverage reports
+**/coverage/
 tools/level-builder/coverage.out
-/coverage/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -37,7 +44,7 @@ tools/level-builder/coverage.out
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
+**/build/
 
 # Symbolication related
 app.*.symbols
@@ -46,27 +53,27 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
 
 # Firebase configuration files
 .firebase/
-lib/firebase_options.dart
-ios/Runner/GoogleService-Info.plist
-android/app/google-services.json
-web/firebase-config.js
-macos/Runner/GoogleService-Info.plist
+**/lib/firebase_options.dart
+**/ios/Runner/GoogleService-Info.plist
+**/android/app/google-services.json
+**/web/firebase-config.js
+**/macos/Runner/GoogleService-Info.plist
 
 # Fastlane
-*/fastlane/report.xml
-*/fastlane/Preview.html
-*/fastlane/screenshots
-*/fastlane/test_output
-*/fastlane/.env*
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
+**/fastlane/.env*
 
 # Android signing
-android/key.properties
+**/android/key.properties
 *.jks
 *.keystore
 
@@ -75,13 +82,13 @@ android/key.properties
 *.mobileprovision
 *.cer
 *.certSigningRequest
-ios/ExportOptions-*.plist
+**/ios/ExportOptions-*.plist
 
 # App Store Connect API keys
 *.p8
 private_keys/
 
-#Ignore vscode AI rules
+# Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
 .codacy/cli-config.yaml
 .codacy/tools-configs/
@@ -104,6 +111,8 @@ tools/level-builder/assets/
 
 # Hugo generated site
 docs/
+apps/hugo-site/public/
+apps/hugo-site/resources/
 /tools/hugo-site/public/
 
 # Level dumps from failing level generations
@@ -116,3 +125,12 @@ logs/
 .gocache/
 .gotmp/
 tools/level-builder/.gocache/
+
+# Nx installation
+.nx/installation
+.nx/cache
+.nx/workspace-data
+
+# Executables
+nx
+nx.bat

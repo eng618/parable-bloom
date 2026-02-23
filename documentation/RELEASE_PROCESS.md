@@ -7,12 +7,12 @@ Comprehensive guide for automating Android/iOS releases with Bitwarden Secrets M
 Parable Bloom uses a fully automated release pipeline that:
 
 - ✅ Manages secrets via Bitwarden Secrets Manager (BWS)
-- ✅ Auto-increments versions in `pubspec.yaml` (semantic version + build number)
-- ✅ Generates changelog from git commits
-- ✅ Builds signed Android `.aab` for Google Play Console
-- ✅ Builds Web (Firebase Hosting), Linux & Windows (for testing)
-- ✅ Auto-uploads Android to Google Play Console (internal testing track) via Fastlane
-- ✅ Creates lightweight GitHub releases (tag + auto-generated release notes)
+- ✅ Auto-increments versions in `pubspec.yaml` (managed by Nx Release + custom hooks)
+- ✅ Generates changelog from git commits (automated via Nx Release)
+- ✅ Builds signed Android `.aab` for Google Play Console (orchestrated via Task/Nx)
+- ✅ Builds Web (Firebase Hosting), Linux & Windows (orchestrated via Task/Nx)
+- ✅ Auto-uploads Android to Google Play Console via Fastlane
+- ✅ Creates automated GitHub releases via Nx Release
 - ⏳ iOS support temporarily disabled (awaiting Apple Developer account setup)
 - ⏳ macOS support temporarily disabled (build issues to resolve later)
 
@@ -370,7 +370,7 @@ Fastlane automates store uploads, beta distributions, and metadata management.
    ```bash
    # Get your project ID
    PROJECT_ID=$(bws project list | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
-   
+
    # Create secret
    bws secret create "PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" "$(base64 -i ~/Downloads/service-account.json)" "$PROJECT_ID"
    ```
@@ -553,18 +553,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - 2026-01-15
 
 ### Added
+
 - New level unlock animations
 - Grace system for failed attempts
 
 ### Fixed
+
 - Vine blocking state calculation
 - Level progress persistence
 
 ### Changed
+
 - Improved UI responsiveness
 - Updated level difficulty curve
 
 ## [1.1.0] - 2026-01-10
+
 ...
 ```
 
@@ -589,19 +593,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    flutter test
    ```
 
-3. **Bump version** (choose one):
+3. **Bump version** (via Nx):
 
    ```bash
-   # Semantic version bumps (each creates a unique tag vX.Y.Z+BUILD)
-   task release:bump:patch    # 1.0.0+1 → 1.0.1+2
-   task release:bump:minor    # 1.0.0+1 → 1.1.0+2
-   task release:bump:major    # 1.0.0+1 → 2.0.0+2
-   
-   # Build number only bump (also creates tag)
-   task release:bump:build    # 1.0.0+1 → 1.0.0+2
+   # Dry-run to see what will happen
+   npx nx release --dry-run
+
+   # Bump version (independent for each project)
+   npx nx release --yes
    ```
 
-   This auto-generates changelog, commits changes, and creates a git tag.
+   The automated process:
+   1. Calculates new versions based on Conventional Commits.
+   2. Updates `package.json` files and syncs to `pubspec.yaml` via hooks.
+   3. Generates the `CHANGELOG.md`.
+   4. Creates git commits and tags.
 
 4. **Push to GitHub**:
 

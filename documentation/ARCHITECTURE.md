@@ -147,50 +147,27 @@ The environment is determined at runtime via `EnvironmentConfig` (e.g., using `S
 ## 5. Directory Structure
 
 ```text
-lib/
-├── core/               # Config, Constants, Utils
-│   ├── app_theme.dart  # Centralized theme system with Material 3, brand colors, and game-specific extensions
-│   └── ...
-├── features/
-│   ├── game/           # Flame components, Logic, UI (Main game levels)
-│   ├── tutorial/       # Lessons system (separate from main game)
-│   │   ├── domain/
-│   │   │   └── entities/
-│   │   │       ├── lesson.dart        # Lesson metadata entity
-│   │   │       └── lesson_data.dart   # Rendering-ready lesson data
-│   │   └── presentation/
-│   │       ├── screens/
-│   │       │   └── tutorial_flow_screen.dart  # Lesson progression wrapper
-│   │       └── widgets/
-│   │           └── lesson_preview_dialog.dart # Instructional dialog
-│   ├── journal/        # Parable reader
-│   └── settings/       # Settings UI
-├── providers/
-│   ├── game_providers.dart      # GameProgress, LevelData providers
-│   └── tutorial_providers.dart  # Lesson providers (NEW)
-├── services/           # Audio, Haptics, Analytics
-└── shared/             # Common widgets, Themes
-
-assets/
-├── levels/             # Main game levels (44 levels)
-├── lessons/            # Tutorial lessons (5 lessons) (NEW)
-└── data/
-    └── modules.json    # Module definitions
+apps/
+├── parable-bloom/       # Flutter Application
+│   ├── lib/            # source code (core, features, providers, services, shared)
+│   ├── assets/         # game assets (levels, lessons, art, data)
+│   ├── test/           # platform tests
+│   └── android/ios/... # platform-specific code
+└── hugo-site/         # Documentation Site Source
 
 tools/
-└── level-builder/      # Go CLI tool for level generation & validation
-    ├── cmd/            # Command implementations
-    │   ├── generate/   # Level generation (batch, module-aware)
-    │   ├── validate/   # Structural + solvability validation
-    │   ├── render/     # ASCII/Unicode grid visualization
-    │   ├── repair/     # Corrupted level regeneration
-    │   └── tutorials/  # Lesson-specific validation
-    ├── pkg/            # Core libraries
-    │   ├── models/     # Level, Vine, Grid data structures
-    │   ├── solver/     # Exact A* solvability algorithm
-    │   ├── tiling/     # Grid-to-vine conversion logic
-    │   └── validator/  # Structural validation rules
-    └── doc.go          # Comprehensive tool documentation
+└── level-builder/     # Go CLI tool for level generation & validation
+    ├── cmd/           # Command implementations
+    ├── pkg/           # Core libraries
+    └── doc.go         # Tool documentation
+
+scripts/               # Workspace-wide utility scripts
+├── bump_version.dart  # Versioning logic (synced with Nx Release)
+└── ...
+
+documentation/         # Design & architecture docs
+nx.json                # Nx workspace configuration
+Taskfile.yml           # Root orchestration
 ```
 
 ---
@@ -334,7 +311,7 @@ The Flutter app performs **lightweight runtime checks** at startup:
 
 **Purpose**: Catch runtime-specific issues, ensure safe game state initialization.
 
-**Location**: [test/level_validation_test.dart](../test/level_validation_test.dart)
+**Location**: [apps/parable-bloom/test/level_validation_test.dart](../apps/parable-bloom/test/level_validation_test.dart)
 
 #### Comprehensive Validation (Go CLI)
 
@@ -438,19 +415,6 @@ The level-builder performs **heavy validation** during development:
 - ✅ **Ready**: Add `level-builder gen2` for transcendent level generation
 - ✅ **Ready**: Upload `validation_stats.json` as CI artifact for performance tracking
 - ❌ **Blocked**: Cannot add generation testing until generator bug fixed
-
-### 6.6 Testing Summary
-
-**Full test results**: See [tools/level-builder/TESTING_SUMMARY.md](../tools/level-builder/TESTING_SUMMARY.md)
-
-**Key Findings (2026-01-10)**:
-
-- ✅ Validation: Excellent performance, exact solver, all 44 levels pass
-- ✅ Render: Both unicode/ascii styles work, useful for debugging
-- ✅ Repair: Deterministic regeneration ready, 0 corrupted files found
-- ✅ Tutorials: All 5 lessons validate successfully
-- ✅ Gen2: Circuit-board transcendent level generation working, 57.5% coverage, 8-depth blocking chains
-- ❌ Generation: **Critical bug** - infinite loop when attempting to create solvable levels
 
 **Recommended Action**: Proceed with CI/CD integration of validation/tutorials/gen2, address generator separately before full regeneration.
 

@@ -25,7 +25,7 @@ tasks:
 
   serve:
     desc: Start Hugo development server
-    dir: tools/hugo-site
+    dir: apps/hugo-site
     deps: [build]
     cmds:
       - hugo server -D
@@ -38,7 +38,7 @@ tasks:
 
   build:
     desc: Build Hugo site to public/
-    dir: tools/hugo-site
+    dir: apps/hugo-site
     sources:
       - "content/**/*"
       - "layouts/**/*"
@@ -57,7 +57,7 @@ tasks:
 
   new:
     desc: Create new content page (usage - task hugo:new PAGE=privacy)
-    dir: tools/hugo-site
+    dir: apps/hugo-site
     cmds:
       - hugo new content "{{.PAGE}}.md"
     preconditions:

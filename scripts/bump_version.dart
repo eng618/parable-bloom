@@ -55,9 +55,9 @@ void main(List<String> arguments) async {
   print('🚀 Parable Bloom Version Bumper\n');
 
   // Read current version from pubspec.yaml
-  final pubspecFile = File('pubspec.yaml');
+  final pubspecFile = File('apps/parable-bloom/pubspec.yaml');
   if (!pubspecFile.existsSync()) {
-    print('❌ Error: pubspec.yaml not found. Run from project root.');
+    print('❌ Error: pubspec.yaml not found in apps/parable-bloom/.');
     exit(1);
   }
 
@@ -175,7 +175,7 @@ void main(List<String> arguments) async {
 
       if (hasChanges) {
         // Add files
-        await Process.run('git', ['add', 'pubspec.yaml']);
+        await Process.run('git', ['add', 'apps/parable-bloom/pubspec.yaml']);
         if (!noChangelog && File('CHANGELOG.md').existsSync()) {
           await Process.run('git', ['add', 'CHANGELOG.md']);
         }
@@ -210,7 +210,7 @@ void main(List<String> arguments) async {
   } else {
     print('\n✅ Version updated in pubspec.yaml');
     print('\n📝 Manual steps required:');
-    print('  1. Commit changes: git add pubspec.yaml CHANGELOG.md');
+    print('  1. Commit changes: git add apps/parable-bloom/pubspec.yaml CHANGELOG.md');
     print(
         '  2. Create commit: git commit -m "chore: bump version to $newVersion"');
     print('  3. Create tag: git tag $tagName');
