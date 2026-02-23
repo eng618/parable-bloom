@@ -427,9 +427,42 @@ The project follows a multi-tiered testing strategy:
 
 ---
 
-## 8. Troubleshooting & Configuration
+## 8. CI/CD & Automation
 
-### 8.1 Firebase Configuration (CLI Issues)
+The project uses GitHub Actions for continuous integration and deployment, managing complexity across the monorepo and Firebase services.
+
+### 8.1 Validation (CI)
+
+- **Workflow**: `.github/workflows/ci.yml`
+- **Trigger**: Pull requests and pushes to `main`/`develop`.
+- **Tasks**: Nx-orchestrated linting (`analyze`), formatting checks, and unit tests across all packages (Flutter, Go, Hugo).
+- **Firebase**: Uses `scripts/generate_dummy_firebase_options.dart` to allow builds to pass without requiring cloud secrets.
+
+### 8.2 Web Deployment & Previews
+
+- **Workflow**: `.github/workflows/deploy-web.yml`
+- **Trigger**:
+  - `workflow_run`: Executes after CI success on `main` (Prod) or `develop` (Preview).
+  - `pull_request`: Deploys isolated preview channels for every PR.
+- **Features**:
+  - Automated Firebase Hosting channel creation.
+  - Interactive PR comments with preview URLs.
+  - Environment isolation via `APP_ENV` (`prod` vs `preview`).
+
+### 8.3 Production Releases
+
+- **Workflow**: `.github/workflows/publish.yml`
+- **Trigger**: Version tags matching `v*` (Game) or `level-builder-v*` (Tool).
+- **Tasks**:
+  - Generates production `firebase_options.dart` via FlutterFire CLI.
+  - Signed Android builds (`.aab`) with Bitwarden Secrets Manager integration.
+  - Web production build and manual release tagging.
+
+---
+
+## 9. Troubleshooting & Configuration
+
+### 9.1 Firebase Configuration (CLI Issues)
 
 If `flutterfire configure` fails with errors like `UnsupportedError: not found in web`, follow these manual steps to reconstruct the configuration:
 
