@@ -25,6 +25,7 @@ jobs:
     env:
       DEPLOY_SKIPPED: "false"
       APP_ENV: "preview"
+      SKIP_DEPLOY: "false"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -85,7 +86,15 @@ jobs:
           dart pub global activate flutterfire_cli
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
+      - name: Check Secrets
+        run: |
+          if [ -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" ]; then
+            echo "SKIP_DEPLOY=true" >> $GITHUB_ENV
+            echo "FIREBASE_SERVICE_ACCOUNT_KEY is empty. Skipping deployment."
+          fi
+
       - name: Authenticate to Google Cloud
+        if: env.SKIP_DEPLOY != 'true'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
@@ -94,7 +103,11 @@ jobs:
         timeout-minutes: 5
         run: |
           task flutter:get
-          task firebase:configure:ci:web
+          if [ "${{ env.SKIP_DEPLOY }}" == "true" ]; then
+            task firebase:generate-dummy-options
+          else
+            task firebase:configure:ci:web
+          fi
 
       - name: Determine environment
         id: env
@@ -110,14 +123,14 @@ jobs:
 
       - name: Deploy to Hosting
         run: task firebase:h:deploy
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && env.DEPLOY_SKIPPED != 'true' }}
+        if: ${{ env.SKIP_DEPLOY != 'true' && github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && env.DEPLOY_SKIPPED != 'true' }}
 
       - name: Deploy Preview (develop branch)
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop' && env.DEPLOY_SKIPPED != 'true' }}
+        if: ${{ env.SKIP_DEPLOY != 'true' && github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop' && env.DEPLOY_SKIPPED != 'true' }}
         run: task firebase:hosting:channel:deploy CHANNEL=preview
 
       - name: Deploy Preview (PR only)
-        if: ${{ github.event_name == 'pull_request' && env.DEPLOY_SKIPPED != 'true' }}
+        if: ${{ env.SKIP_DEPLOY != 'true' && github.event_name == 'pull_request' && env.DEPLOY_SKIPPED != 'true' }}
         id: deploy-preview
         run: |
           CHANNEL_NAME="pr-${{ github.event.pull_request.number }}"
@@ -131,7 +144,7 @@ jobs:
           echo "Channel deployed to: $PREVIEW_URL"
 
       - name: Comment PR with Preview URL
-        if: github.event_name == 'pull_request' && env.DEPLOY_SKIPPED != 'true'
+        if: env.SKIP_DEPLOY != 'true' && github.event_name == 'pull_request' && env.DEPLOY_SKIPPED != 'true'
         uses: actions/github-script@v8
         with:
           script: |
