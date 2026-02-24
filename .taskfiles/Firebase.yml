@@ -98,7 +98,7 @@ tasks:
     vars:
       CHANNEL: '{{.CHANNEL | default "preview"}}'
     cmds:
-      - firebase hosting:channel:deploy "{{.CHANNEL}}" --project parable-bloom {{.CLI_ARGS}}
+      - firebase hosting:channel:deploy "{{.CHANNEL}}" --project parable-bloom --no-authorized-domains {{.CLI_ARGS}}
     preconditions:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."

@@ -499,4 +499,21 @@ If `flutterfire configure` fails with errors like `UnsupportedError: not found i
 ### 8.2 Nx & Monorepo
 
 - Use `task dev` to start the development server across all platforms via Nx.
-- If dependencies fall out of sync, run `flutter pub get` in the specific app directory or `nx run parable-bloom:get` (if configured).
+
+### 9.2 Firebase Hosting (Preview Channels)
+
+#### Issue: Auth Sync Warnings
+
+When deploying to a preview channel (e.g., in CI for PRs), you may see warnings like:
+
+- `⚠  hosting:channel: Unable to add channel domain to Firebase Auth.`
+- `⚠  hosting:channel: Unable to sync Firebase Auth state.`
+
+**Solutions**:
+
+1. **Suppress Warnings**: Add the `--no-authorized-domains` flag to your `firebase hosting:channel:deploy` command. This is suitable if you don't need Firebase Auth to work on temporary preview domains.
+2. **Fix Permissions**: Grant the service account used for deployment the **Firebase Auth Admin** (`roles/firebaseauth.admin`) or **Identity Toolkit Admin** (`roles/identitytoolkit.admin`) role in the Google Cloud Console.
+
+### 10. Manual Environment Promotion
+
+- To promote a `preview` build to `production`, use the `firebase hosting:clone` command or trigger a deployment from the `main` branch.

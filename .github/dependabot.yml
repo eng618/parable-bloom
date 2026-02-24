@@ -1,7 +1,3 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 version: 2
 updates:
   # Enable version updates for github actions
@@ -11,25 +7,34 @@ updates:
       interval: 'monthly'
 
   # Enable version updates for go
-  # - package-ecosystem: gomod
-  #   directory: "/"
-  #   schedule:
-  #     interval: "monthly"
+  - package-ecosystem: gomod
+    directory: "/tools/level-builder"
+    schedule:
+      interval: "monthly"
 
-  # Enable version updates for npm
-  # - package-ecosystem: "npm"
-  #   directory: "/"
-  #   schedule:
-  #     interval: "monthly"
+  # Enable version updates for Bun (Root, Apps, and Tools)
+  - package-ecosystem: "bun"
+    directory: "/"
+    schedule:
+      interval: "monthly"
 
-  # Enable version updates for Docker
-  # - package-ecosystem: "docker"
-  #   directory: "/"
-  #   schedule:
-  #     interval: "monthly"
+  - package-ecosystem: "bun"
+    directory: "/apps/hugo-site"
+    schedule:
+      interval: "monthly"
 
-  # Enable version updates for Dart
+  - package-ecosystem: "bun"
+    directory: "/apps/parable-bloom"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "bun"
+    directory: "/tools/level-builder"
+    schedule:
+      interval: "monthly"
+
+  # Enable version updates for Pub (Flutter App)
   - package-ecosystem: 'pub'
-    directory: '/'
+    directory: '/apps/parable-bloom'
     schedule:
       interval: 'monthly'
