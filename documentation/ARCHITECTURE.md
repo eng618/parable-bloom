@@ -119,6 +119,9 @@ abstract class ProgressRepository {
 - `HiveProgressRepository`: Local storage (Default).
 - `FirebaseProgressRepository`: Cloud storage (Syncs when online).
 
+**Auto-Sync Behavior**:
+When a user explicitly creates an account, links an anonymous account to an email/password, or signs into an existing account, **Cloud Sync** is automatically enabled for their local device. This ensures their progres is synchronized seamlessly without requiring manual opt-in from the settings menu.
+
 ---
 
 ## 4. Environment Strategy

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../providers/auth_providers.dart';
+import '../../../../providers/game_providers.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -56,27 +58,46 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         }
       }
 
+      // Automatically enable cloud sync when a persistent account is created/linked/signed-in
+      if (mounted) {
+        await ref.read(gameProgressProvider.notifier).enableCloudSync();
+      }
+
       // If successful, close the screen
       if (mounted) {
         Navigator.of(context).pop();
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        setState(() {
+          switch (e.code) {
+            case 'email-already-in-use':
+            case 'credential-already-in-use':
+              _errorMessage =
+                  'This email is already in use by another account. Please sign in instead.';
+              break;
+            case 'user-not-found':
+              _errorMessage = 'No user found with this email.';
+              break;
+            case 'wrong-password':
+            case 'invalid-credential':
+              _errorMessage = 'Incorrect password.';
+              break;
+            case 'invalid-email':
+              _errorMessage = 'The email address is invalid.';
+              break;
+            case 'weak-password':
+              _errorMessage = 'The password provided is too weak.';
+              break;
+            default:
+              _errorMessage = e.message ?? 'An unknown authentication error occurred.';
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = e.toString();
-          // Improve error parsing here for user friendliness
-          if (_errorMessage!.contains('email-already-in-use')) {
-            _errorMessage = "Email is already in use. Please log in.";
-          } else if (_errorMessage!.contains('wrong-password')) {
-            _errorMessage = "Incorrect password.";
-          } else if (_errorMessage!.contains('weak-password')) {
-            _errorMessage = "Password is too weak.";
-          } else if (_errorMessage!.contains('user-not-found')) {
-            _errorMessage = "No user found with this email.";
-          } else if (_errorMessage!.contains('credential-already-in-use')) {
-            _errorMessage =
-                "This email is already associated with another account.";
-          }
         });
       }
     } finally {
