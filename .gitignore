@@ -109,9 +109,8 @@ tools/level-builder/validation.log
 tools/level-builder/assets/
 
 # Hugo generated site
-docs/
 apps/hugo-site/public/
-apps/hugo-site/resources/
+# apps/hugo-site/resources/
 
 # Level dumps from failing level generations
 logs/
@@ -125,9 +124,9 @@ logs/
 tools/level-builder/.gocache/
 
 # Nx installation
-.nx/installation
-.nx/cache
-.nx/workspace-data
+.nx/installation/
+.nx/cache/
+.nx/workspace-data/
 
 # Executables
 nx

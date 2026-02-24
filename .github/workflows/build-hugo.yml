@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "tools/hugo-site/**"
+      - "apps/hugo-site/**"
 
 jobs:
   build:
@@ -34,4 +34,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs
+          publish_dir: apps/hugo-site/public
