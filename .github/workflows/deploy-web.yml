@@ -70,9 +70,7 @@ jobs:
             echo "DEPLOY_SKIPPED=true" >> $GITHUB_ENV
             dart run scripts/generate_dummy_firebase_options.dart
           else
-            cp .firebaserc apps/parable-bloom/
             cd apps/parable-bloom
-            firebase use parable-bloom --token "$FIREBASE_TOKEN"
             flutter pub get
             flutterfire configure \
               --project=parable-bloom \
@@ -97,7 +95,6 @@ jobs:
       - name: Deploy to Hosting
         run: |
           cd apps/parable-bloom
-          firebase use parable-bloom --token ${{ secrets.FIREBASE_CI_TOKEN }}
           firebase deploy --project parable-bloom --only hosting --token ${{ secrets.FIREBASE_CI_TOKEN }}
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && env.DEPLOY_SKIPPED != 'true' }}
 
@@ -105,7 +102,6 @@ jobs:
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop' && env.DEPLOY_SKIPPED != 'true' }}
         run: |
           cd apps/parable-bloom
-          firebase use parable-bloom --token ${{ secrets.FIREBASE_CI_TOKEN }}
           firebase hosting:channel:deploy preview --project parable-bloom --token ${{ secrets.FIREBASE_CI_TOKEN }}
 
       - name: Deploy Preview (PR only)
@@ -113,7 +109,6 @@ jobs:
         id: deploy-preview
         run: |
           cd apps/parable-bloom
-          firebase use parable-bloom --token ${{ secrets.FIREBASE_CI_TOKEN }}
           CHANNEL_NAME="pr-${{ github.event.pull_request.number }}"
           firebase hosting:channel:deploy $CHANNEL_NAME --project parable-bloom --json --token ${{ secrets.FIREBASE_CI_TOKEN }} > deploy_output.json
           cat deploy_output.json
