@@ -110,6 +110,9 @@ class GardenGame extends FlameGame with TapCallbacks {
   /// Expose current vine-attempted color for renderers (VineComponent)
   Color get vineAttemptedColor => _vineAttemptedColor;
 
+  /// Expose whether simple vines are enabled
+  bool get useSimpleVines => ref.read(useSimpleVinesProvider);
+
   @override
   Future<void> onLoad() async {
     debugPrint('GardenGame: onLoad called');

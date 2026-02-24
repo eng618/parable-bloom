@@ -20,4 +20,10 @@ abstract class SettingsRepository {
 
   /// Enable/disable haptic feedback.
   Future<void> setHapticsEnabled(bool enabled);
+
+  /// Whether simple/trellis vines are enabled.
+  Future<bool> getUseSimpleVines();
+
+  /// Enable/disable simple/trellis vines.
+  Future<void> setUseSimpleVines(bool enabled);
 }

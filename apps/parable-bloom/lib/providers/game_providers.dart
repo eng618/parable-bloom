@@ -798,6 +798,25 @@ class BackgroundAudioEnabledNotifier extends Notifier<bool> {
   }
 }
 
+// Simple/Trellis vines enabled setting
+final useSimpleVinesProvider = NotifierProvider<UseSimpleVinesNotifier, bool>(
+  UseSimpleVinesNotifier.new,
+);
+
+class UseSimpleVinesNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final box = ref.watch(hiveBoxProvider);
+    return box.get('useSimpleVines', defaultValue: false) as bool;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setUseSimpleVines(enabled);
+  }
+}
+
 // Haptics enabled setting
 // TODO: Implement actual haptic feedback logic in the game events
 final hapticsEnabledProvider = NotifierProvider<HapticsEnabledNotifier, bool>(

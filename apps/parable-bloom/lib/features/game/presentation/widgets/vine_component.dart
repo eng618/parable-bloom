@@ -4,7 +4,6 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flame/sprite.dart';
-import 'package:flame/flame.dart';
 
 import '../../../../core/vine_color_palette.dart';
 import '../../../../providers/game_providers.dart';
@@ -15,7 +14,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final VineData vineData;
   final double cellSize;
 
-  static SpriteSheet? _spriteSheet;
+  static SpriteSheet? _classicSpriteSheet;
+  static SpriteSheet? _trellisSpriteSheet;
 
   bool _isAnimating = false;
   bool _willClearAfterAnimation =
@@ -59,13 +59,26 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     position = Vector2.zero();
     size = parent.size;
 
-    if (_spriteSheet == null) {
-      final game = parent.parent as GardenGame;
+    final game = parent.parent as GardenGame;
+    if (_classicSpriteSheet == null) {
       final image = await game.images.load('vine_spritesheet.png');
-      _spriteSheet = SpriteSheet(
+      _classicSpriteSheet = SpriteSheet(
         image: image,
         srcSize: Vector2(128, 128),
       );
+    }
+
+    if (_trellisSpriteSheet == null) {
+      try {
+        final image = await game.images.load('trellis_vines_spritesheet.png');
+        _trellisSpriteSheet = SpriteSheet(
+          image: image,
+          srcSize: Vector2(128, 128),
+        );
+      } catch (e) {
+        debugPrint('Failed to load trellis_vines_spritesheet.png: $e. Falling back to classic.');
+        _trellisSpriteSheet = _classicSpriteSheet;
+      }
     }
 
     // Visual positions are already initialized in constructor
@@ -130,74 +143,120 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     Color tintColor,
     bool isWithered,
   ) {
-    if (_spriteSheet == null || _currentVisualPositions.isEmpty) return;
+    if (_currentVisualPositions.isEmpty) return;
 
-    final cell = _currentVisualPositions[index];
     final isHead = index == 0;
     final isTail = index == _currentVisualPositions.length - 1;
 
-    double rotation = 0.0;
+    final game = parent.parent as GardenGame;
+    final useSimpleVines = game.useSimpleVines;
+    final row = isWithered ? 1 : 0;
     int col = 0;
+    double rotation = 0;
 
+    // Give priority to trellis spritesheet's pre-rotated columns
     if (isHead) {
       final String dir = _calculateVineDirection() ?? 'up';
       switch (dir) {
-        case 'up': rotation = 0; col = 0; break;
-        case 'down': rotation = 0; col = 1; break;
-        case 'left': rotation = 0; col = 2; break;
-        case 'right': rotation = 0; col = 3; break;
+        case 'up':
+          rotation = 0;
+          col = 0;
+          break;
+        case 'down':
+          if (useSimpleVines) {
+            rotation = math.pi;
+            col = 0; // Classic usually just has one head rotated? No, let's check.
+          } else {
+            rotation = 0;
+            col = 1;
+          }
+          break;
+        case 'left':
+          if (useSimpleVines) {
+            rotation = -math.pi / 2;
+            col = 0;
+          } else {
+            rotation = 0;
+            col = 2;
+          }
+          break;
+        case 'right':
+          if (useSimpleVines) {
+            rotation = math.pi / 2;
+            col = 0;
+          } else {
+            rotation = 0;
+            col = 3;
+          }
+          break;
       }
     } else if (isTail && index > 0) {
       col = 6;
-      final bodyCell = _currentVisualPositions[index - 1];
-      final dx = bodyCell['x']! - cell['x']!;
-      final dy = bodyCell['y']! - cell['y']!; // Grid coordinates
+      final prev = _currentVisualPositions[index - 1];
+      final curr = _currentVisualPositions[index];
+      final dx = curr['x']! - prev['x']!;
+      final dy = curr['y']! - prev['y']!; // Grid coordinates (dy > 0 is down)
 
-      if (dx > 0) rotation = math.pi / 2;
-      else if (dx < 0) rotation = -math.pi / 2;
-      else if (dy > 0) rotation = 0;
-      else if (dy < 0) rotation = math.pi;
-    } else if (index > 0 && index < _currentVisualPositions.length - 1) {
-      final prevCell = _currentVisualPositions[index - 1];
-      final nextCell = _currentVisualPositions[index + 1];
+      if (dx > 0) {
+        rotation = math.pi / 2;
+      } else if (dx < 0) {
+        rotation = -math.pi / 2;
+      } else if (dy > 0) {
+        rotation = math.pi; // Tail moving DOWN (so tail is at bottom)
+      } else if (dy < 0) {
+        rotation = 0; // Tail moving UP
+      }
+    } else {
+      // Body segment (straight or corner)
+      final prev = _currentVisualPositions[index - 1];
+      final curr = _currentVisualPositions[index];
+      final next = _currentVisualPositions[index + 1];
 
-      final dx1 = prevCell['x']! - cell['x']!;
-      final dy1 = prevCell['y']! - cell['y']!;
-      final dx2 = nextCell['x']! - cell['x']!;
-      final dy2 = nextCell['y']! - cell['y']!;
+      final dx1 = curr['x']! - prev['x']!;
+      final dy1 = curr['y']! - prev['y']!;
+      final dx2 = next['x']! - curr['x']!;
+      final dy2 = next['y']! - curr['y']!;
 
-      if (dx1 == -dx2 && dy1 == -dy2) {
+      if (dx1 == dx2 && dy1 == dy2) {
         // Straight component
         col = 4;
-        if (dx1 != 0) rotation = math.pi / 2;
-        else rotation = 0;
+        if (dx1 != 0) {
+          rotation = math.pi / 2;
+        } else {
+          rotation = 0;
+        }
       } else {
         // Corner component
         col = 5;
-        bool hasUp = (dy1 > 0) || (dy2 > 0);
-        bool hasDown = (dy1 < 0) || (dy2 < 0);
-        bool hasRight = (dx1 > 0) || (dx2 > 0);
-        bool hasLeft = (dx1 < 0) || (dx2 < 0);
+        final hasUp = (dy1 < 0 || dy2 < 0);
+        final hasDown = (dy1 > 0 || dy2 > 0);
+        final hasLeft = (dx1 < 0 || dx2 < 0);
+        final hasRight = (dx1 > 0 || dx2 > 0);
 
-        if (hasUp && hasRight) rotation = 0;
-        else if (hasRight && hasDown) rotation = math.pi / 2;
-        else if (hasDown && hasLeft) rotation = math.pi;
-        else if (hasLeft && hasUp) rotation = -math.pi / 2;
+        if (hasUp && hasRight) {
+          rotation = 0;
+        } else if (hasRight && hasDown) {
+          rotation = math.pi / 2;
+        } else if (hasDown && hasLeft) {
+          rotation = math.pi;
+        } else if (hasLeft && hasUp) {
+          rotation = -math.pi / 2;
+        }
       }
-    } else {
-      // Single cell vine (fallback)
-      col = 0;
     }
 
-    final row = isWithered ? 1 : 0;
-    final sprite = _spriteSheet!.getSprite(row, col);
+    final spriteSheet = useSimpleVines ? _classicSpriteSheet : _trellisSpriteSheet;
+    if (spriteSheet == null) return; // Check after selecting which sheet to use
+    final sprite = spriteSheet.getSprite(row, col);
 
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(rotation);
 
-    // Apply color tint to vine sprites
-    final paint = Paint()..colorFilter = ColorFilter.mode(tintColor, BlendMode.modulate);
+    // Apply color tint ONLY to classic vine sprites
+    final paint = useSimpleVines
+        ? (Paint()..colorFilter = ColorFilter.mode(tintColor, BlendMode.modulate))
+        : Paint();
 
     // Provide scaled size to fill cell
     // Depending on the tile margin, might need scale factor

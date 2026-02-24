@@ -24,6 +24,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final themeMode = ref.watch(themeModeProvider);
     final backgroundAudioEnabled = ref.watch(backgroundAudioEnabledProvider);
     final hapticsEnabled = ref.watch(hapticsEnabledProvider);
+    final useSimpleVines = ref.watch(useSimpleVinesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -38,6 +39,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           _buildSectionHeader(context, 'Appearance'),
           _buildThemeTile(context, ref, themeMode),
+          SwitchListTile(
+            secondary: Icon(
+              useSimpleVines ? Icons.grid_view : Icons.park,
+              color: useSimpleVines
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+            title: const Text('Classic Vines'),
+            subtitle: const Text('Use simple vine assets (visually impaired mode)'),
+            value: useSimpleVines,
+            onChanged: (value) async {
+              await ref.read(useSimpleVinesProvider.notifier).setEnabled(value);
+            },
+          ),
           const Divider(),
           _buildSectionHeader(context, 'Audio & Haptics'),
           SwitchListTile(

@@ -15,6 +15,9 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _hapticsEnabledKey = 'hapticsEnabled';
   static const bool _defaultHapticsEnabled = true;
 
+  static const String _useSimpleVinesKey = 'useSimpleVines';
+  static const bool _defaultUseSimpleVines = false;
+
   HiveSettingsRepository(this.hiveBox);
 
   @override
@@ -50,5 +53,16 @@ class HiveSettingsRepository implements SettingsRepository {
   @override
   Future<void> setHapticsEnabled(bool enabled) async {
     await hiveBox.put(_hapticsEnabledKey, enabled);
+  }
+
+  @override
+  Future<bool> getUseSimpleVines() async {
+    return hiveBox.get(_useSimpleVinesKey, defaultValue: _defaultUseSimpleVines)
+        as bool;
+  }
+
+  @override
+  Future<void> setUseSimpleVines(bool enabled) async {
+    await hiveBox.put(_useSimpleVinesKey, enabled);
   }
 }
