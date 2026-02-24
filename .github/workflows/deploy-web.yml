@@ -13,10 +13,15 @@ permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       DEPLOY_SKIPPED: "false"
       APP_ENV: "preview"
@@ -36,6 +41,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: "bun"
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
