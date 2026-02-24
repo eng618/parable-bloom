@@ -112,7 +112,6 @@ tools/level-builder/assets/
 docs/
 apps/hugo-site/public/
 apps/hugo-site/resources/
-/tools/hugo-site/public/
 
 # Level dumps from failing level generations
 logs/
