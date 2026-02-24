@@ -35,8 +35,4 @@ jobs:
       - name: Build Hugo site
         run: task hugo:build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: apps/hugo-site/public
+      # This is now automatically deployed by Cloudflare Pages
