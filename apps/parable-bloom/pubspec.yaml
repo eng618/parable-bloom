@@ -111,20 +111,20 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 flutter_launcher_icons:
-  image_path: assets/art/app_icon.png
+  image_path: assets/art/app_icon_branded.png
   android: true
   ios: true
   web:
     generate: true
-    image_path: assets/art/app_icon.png
+    image_path: assets/art/app_icon_branded.png
   macos:
     generate: true
-    image_path: assets/art/app_icon.png
+    image_path: assets/art/app_icon_branded.png
   windows:
     generate: true
-    image_path: assets/art/app_icon.png
+    image_path: assets/art/app_icon_branded.png
   linux:
     generate: true
-    image_path: assets/art/app_icon.png
+    image_path: assets/art/app_icon_branded.png
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: assets/art/app_icon.png
+  adaptive_icon_foreground: assets/art/app_icon_branded.png
