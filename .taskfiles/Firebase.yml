@@ -96,11 +96,14 @@ tasks:
     cmds:
       - firebase deploy --only hosting --token "{{.FIREBASE_CI_TOKEN}}"
 
-  h:preview:
-    desc: Deploy preview channel
+  hosting:channel:deploy:
+    desc: Deploy to a Firebase Hosting channel
     dir: apps/parable-bloom
+    vars:
+      CHANNEL: '{{.CHANNEL | default "preview"}}'
+      TOKEN: '{{.TOKEN}}'
     cmds:
-      - firebase hosting:channel:deploy "pr-{{.PR_NUMBER}}"
+      - firebase hosting:channel:deploy "{{.CHANNEL}}" --project parable-bloom {{if .TOKEN}}--token "{{.TOKEN}}"{{end}} {{.CLI_ARGS}}
     preconditions:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
@@ -172,6 +175,36 @@ tasks:
     dir: apps/parable-bloom
     cmds:
       - flutterfire configure --project=parable-bloom --platforms=windows --yes
+    preconditions:
+      - sh: command -v flutterfire >/dev/null 2>&1
+        msg: "FlutterFire CLI is not installed."
+
+  # -----------------------------------------------------------------------------
+  # CI Configuration
+
+  configure:ci:web:
+    desc: Configure Firebase for Web in CI
+    dir: apps/parable-bloom
+    vars:
+      TOKEN: '{{.TOKEN}}'
+    cmds:
+      - task: configure:ci
+        vars: {TOKEN: "{{.TOKEN}}", PLATFORMS: "web"}
+
+  configure:ci:
+    desc: Configure Firebase for multiple platforms in CI
+    dir: apps/parable-bloom
+    vars:
+      TOKEN: '{{.TOKEN}}'
+      PLATFORMS: '{{.PLATFORMS | default "android,ios,macos,web,windows"}}'
+    cmds:
+      - |
+        flutterfire configure \
+          --project=parable-bloom \
+          --platforms={{.PLATFORMS}} \
+          --yes \
+          --out=lib/firebase_options.dart \
+          {{if .TOKEN}}--token "{{.TOKEN}}"{{end}}
     preconditions:
       - sh: command -v flutterfire >/dev/null 2>&1
         msg: "FlutterFire CLI is not installed."

@@ -68,16 +68,11 @@ jobs:
           if [ -z "$FIREBASE_TOKEN" ]; then
             echo "FIREBASE_CI_TOKEN is empty! Using dummy firebase options for build."
             echo "DEPLOY_SKIPPED=true" >> $GITHUB_ENV
-            dart run scripts/generate_dummy_firebase_options.dart
+            task firebase:generate-dummy-options
           else
             cd apps/parable-bloom
             flutter pub get
-            flutterfire configure \
-              --project=parable-bloom \
-              --platforms=web \
-              --yes \
-              --out=lib/firebase_options.dart \
-              --token="$FIREBASE_TOKEN"
+            task firebase:configure:ci:web TOKEN="$FIREBASE_TOKEN"
           fi
 
       - name: Determine environment
@@ -93,24 +88,19 @@ jobs:
         run: task flutter:build:web:${{ env.APP_ENV }}
 
       - name: Deploy to Hosting
-        run: |
-          cd apps/parable-bloom
-          firebase deploy --project parable-bloom --only hosting --token ${{ secrets.FIREBASE_CI_TOKEN }}
+        run: task firebase:h:deploy FIREBASE_CI_TOKEN=${{ secrets.FIREBASE_CI_TOKEN }}
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && env.DEPLOY_SKIPPED != 'true' }}
 
       - name: Deploy Preview (develop branch)
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop' && env.DEPLOY_SKIPPED != 'true' }}
-        run: |
-          cd apps/parable-bloom
-          firebase hosting:channel:deploy preview --project parable-bloom --token ${{ secrets.FIREBASE_CI_TOKEN }}
+        run: task firebase:hosting:channel:deploy CHANNEL=preview TOKEN=${{ secrets.FIREBASE_CI_TOKEN }}
 
       - name: Deploy Preview (PR only)
         if: ${{ github.event_name == 'pull_request' && env.DEPLOY_SKIPPED != 'true' }}
         id: deploy-preview
         run: |
-          cd apps/parable-bloom
           CHANNEL_NAME="pr-${{ github.event.pull_request.number }}"
-          firebase hosting:channel:deploy $CHANNEL_NAME --project parable-bloom --json --token ${{ secrets.FIREBASE_CI_TOKEN }} > deploy_output.json
+          task firebase:hosting:channel:deploy CHANNEL=$CHANNEL_NAME TOKEN=${{ secrets.FIREBASE_CI_TOKEN }} CLI_ARGS="--json" > deploy_output.json
           cat deploy_output.json
 
           # Use node to extract the URL from JSON output consistently

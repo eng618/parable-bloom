@@ -628,7 +628,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Checks out code, sets up Flutter + Node 24 + Bun
 - Installs Firebase CLI and FlutterFire CLI
-- Runs `flutterfire configure` for Android, Web, Linux, Windows platforms
+- Runs `task firebase:configure:ci` to generate `firebase_options.dart` for all supported platforms.
 - Uploads `lib/firebase_options.dart` as shared artifact for build jobs
 
 #### Job: build-android (ubuntu-latest)

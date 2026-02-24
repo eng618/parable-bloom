@@ -33,13 +33,7 @@ jobs:
           bun add -g firebase-tools
           dart pub global activate flutterfire_cli
           export PATH="$PATH:$HOME/.pub-cache/bin"
-          cd apps/parable-bloom
-          flutterfire configure \
-            --project=parable-bloom \
-            --platforms=android,ios,macos,web,windows \
-            --yes \
-            --out=lib/firebase_options.dart \
-            --token="${{ secrets.FIREBASE_CI_TOKEN }}"
+          task firebase:configure:ci TOKEN="${{ secrets.FIREBASE_CI_TOKEN }}"
 
       - name: Upload firebase_options.dart
         uses: actions/upload-artifact@v6
