@@ -28,7 +28,6 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   // Theme colors - updated dynamically from app theme
   late Color _backgroundColor;
-  late Color _surfaceColor;
   late Color _tapEffectColor;
   late Color _vineAttemptedColor;
 
@@ -36,7 +35,6 @@ class GardenGame extends FlameGame with TapCallbacks {
     debugPrint('GardenGame: Constructor called - creating new instance');
     // Initialize with default theme colors - will be updated by game screen
     _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
-    _surfaceColor = const Color(0xFF2C3E50); // Default dark surface
     _tapEffectColor = const Color(0xFFE6E1E5); // Default light for dark theme
     _vineAttemptedColor = const Color(0xFFFFFFFF);
   }
@@ -63,7 +61,6 @@ class GardenGame extends FlameGame with TapCallbacks {
       'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor, tap=$tapEffectColor, vineAttempted=$vineAttemptedColor',
     );
     _backgroundColor = backgroundColor;
-    _surfaceColor = surfaceColor;
     if (tapEffectColor != null) {
       _tapEffectColor = tapEffectColor;
     }
@@ -75,28 +72,40 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Update existing components if they exist - must replace the Paint to trigger redraw
     // Update background color
     _backgroundColor = backgroundColor;
-    _surfaceColor = surfaceColor;
 
     if (_gameBackground != null) {
       final isDark = _backgroundColor.computeLuminance() < 0.5;
       _gameBackground!.sprite = isDark ? _bgNightSprite : _bgDaySprite;
     }
 
+    _updateBackgroundOpacity();
+
     // We no longer tint the _gameBackground sprite with a solid color
     // as it should show the actual artwork.
+  }
+
+  void _updateBackgroundOpacity([bool? isSimpleVines]) {
+    if (_gameBackground != null) {
+      final simple = isSimpleVines ?? useSimpleVines;
+      if (simple) {
+        _gameBackground!.setOpacity(0.0);
+      } else {
+        _gameBackground!.setOpacity(1.0); // Full opacity for new assets
+      }
+    }
   }
 
   void _updateBackgroundSize() {
     if (_gameBackground != null && _gameBackground!.sprite != null) {
       final spriteSize = _gameBackground!.sprite!.srcSize;
-      final scaleX = size.x / spriteSize.x;
-      final scaleY = size.y / spriteSize.y;
-      final scale = math.max(scaleX, scaleY);
+      
+      // Scale to match window height exactly
+      final scale = size.y / spriteSize.y;
       
       _gameBackground!.size = spriteSize * scale;
       _gameBackground!.position = Vector2(
         (size.x - _gameBackground!.size.x) / 2,
-        (size.y - _gameBackground!.size.y) / 2,
+        0, // Align to top
       );
     }
   }
@@ -127,8 +136,8 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     // Load parable background artwork
     try {
-      _bgDaySprite = await loadSprite('bg_day.png');
-      _bgNightSprite = await loadSprite('bg_night.png');
+      _bgDaySprite = await loadSprite('bg_day_new.png');
+      _bgNightSprite = await loadSprite('bg_night_new.png');
       
       final isDark = _backgroundColor.computeLuminance() < 0.5;
 
@@ -138,6 +147,7 @@ class GardenGame extends FlameGame with TapCallbacks {
       );
       add(_gameBackground!);
       _updateBackgroundSize();
+      _updateBackgroundOpacity();
     } catch (e) {
       debugPrint('GardenGame: Failed to load background sprite: $e');
       // Continue without background or use a fallback color
@@ -158,6 +168,11 @@ class GardenGame extends FlameGame with TapCallbacks {
         // Force projection lines to redraw when vine states change
         projectionLines.update(0);
       }
+    });
+
+    // Listen to simple vines toggle changes to update background opacity dynamically
+    ref.listenManual(useSimpleVinesProvider, (previous, next) {
+      _updateBackgroundOpacity(next);
     });
 
     // Listen to projection lines visibility and animation state

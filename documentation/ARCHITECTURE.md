@@ -85,9 +85,9 @@ The game implements several high-performance visual systems within the Flame `Po
 - **Tap Feedback**: `TapEffectComponent` handles the visual pulse and particle effects on user interaction.
 - **Particle System**: `TapEffectComponent` and `VineComponent` (bloom) utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
 - **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input.
-- **Vine Styles**: `VineComponent` supports dynamic switching between **Classic** and **Trellis** styles.
-  - **Trellis Mode**: Uses `trellis_vines_spritesheet.png` and disables `BlendMode.modulate` to preserve generated watercolor colors.
-  - **Classic Mode**: Uses `vine_spritesheet.png` and applies `ColorFilter.mode(tintColor, BlendMode.modulate)` for theme-based coloring.
+- **Vine Styles**: `VineComponent` supports dynamic switching between **Classic** and **Simple** styles.
+  - **Classic Mode**: Uses the fully assembled `vines_classic_spritesheet.png` and disables `BlendMode.modulate` to preserve generated watercolor colors.
+  - **Simple Mode**: Uses the high-contrast `vine_simple_spritesheet.png` and colorizes them dynamically with `BlendMode.modulate`.)` for theme-based coloring.
   - Managed by `useSimpleVinesProvider` and toggled via the Settings screen.
 
 ---
@@ -161,7 +161,8 @@ tools/
     └── doc.go         # Tool documentation
 
 scripts/               # Workspace-wide utility scripts
-├── bump_version.dart  # Versioning logic (synced with Nx Release)
+├── bump_version.dart          # Versioning logic (synced with Nx Release)
+├── build_vine_spritesheet.py  # Automates generation of classic spritesheets from vine asset segments
 └── ...
 
 documentation/         # Design & architecture docs

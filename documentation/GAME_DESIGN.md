@@ -6,7 +6,7 @@ status: "Active"
 type: "Game Design Document"
 ---
 
-# Parable Bloom – Game Design Document
+## Parable Bloom – Game Design Document
 
 ## 1. Executive Summary
 
@@ -74,8 +74,8 @@ Tutorials include animated arrows and text hints guiding the player through corr
 - **Atmosphere**: Calming, serene, "Zen Garden."
 - **Backgrounds**: Dynamic vertical (9:16) backgrounds. Day features a bright sky and green grass, fading into `#F8F5EF`. Night features a dark sky and dark grass, fading into `#1A2E3F`. Both utilize a bare wood trellis pattern.
 - **Vines**: Two visual styles are available to players:
-  - **Trellis (Premium)**: Features 128x128 watercolor-style vines wrapping around thin wooden dowels (~22px thick). Designed for maximum immersion and "Zen Garden" aesthetics.
-  - **Classic (Simple)**: Minimalist arrow-based vines designed for high contrast and clarity. This mode serves as an accessibility/visually-impaired mode.
+  - **Classic (Premium)**: Features 128x128 watercolor-style vines wrapping around thin wooden dowels (~22px thick). Designed for maximum immersion and "Zen Garden" aesthetics. Asset: `vines_classic_spritesheet.png`.
+  - **Simple (Accessibility)**: Minimalist arrow-based vines designed for high contrast and clarity. This mode allows logic-based dynamic color-tinting. Asset: `vine_simple_spritesheet.png`.
 - **Modes**: Adaptive Light and Dark themes that sync with the background imagery.
 
 ### Color Palette & Meaning

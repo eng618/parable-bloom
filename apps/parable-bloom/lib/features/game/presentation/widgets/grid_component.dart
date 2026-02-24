@@ -9,10 +9,6 @@ import '../../../game/domain/services/level_solver_service.dart';
 import 'garden_game.dart';
 import 'vine_component.dart';
 
-// TODO: Add vine rendering system
-// This component will eventually render actual vine sprites
-// For now, it renders placeholder colored rectangles
-
 class GridComponent extends PositionComponent
     with TapCallbacks, ParentIsA<GardenGame> {
   final double cellSize;

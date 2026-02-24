@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:vector_math/vector_math_64.dart' as vm;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
 import '../../../../providers/game_providers.dart';
@@ -24,6 +26,10 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   bool _showInstructionOverlay = true;
   bool _isLevelCompleteOverlayVisible = false;
   String _currentCongratulationMessage = '';
+
+  double _lastScale = 1.0;
+  vm.Vector2 _lastFocalPoint = vm.Vector2.zero();
+  vm.Vector2 _panStartOffset = vm.Vector2.zero();
 
   // Congratulatory messages (same as GameScreen)
   static const List<String> _congratulationMessages = [
@@ -123,14 +129,11 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
             return Scaffold(
               backgroundColor: colorScheme.surface,
+              floatingActionButton: _buildProjectionLinesFAB(),
               body: Stack(
                 children: [
                   // Game widget
-                  GameWidget<GardenGame>(
-                    game: _game!,
-                    loadingBuilder: (_) =>
-                        const Center(child: CircularProgressIndicator()),
-                  ),
+                  _buildGameWidgetWithGestures(),
 
                   // Game header with pause button and grace display
                   SafeArea(
@@ -165,6 +168,8 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                   // Level complete overlay
                   if (_isLevelCompleteOverlayVisible)
                     _buildLevelCompleteOverlay(),
+
+                  if (kIsWeb) _buildZoomControls(lesson.gridWidth, lesson.gridHeight),
                 ],
               ),
             );
@@ -180,6 +185,155 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
             ),
           ),
         );
+  }
+
+  Widget _buildGameWidgetWithGestures() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GestureDetector(
+          onScaleStart: _handleScaleStart,
+          onScaleUpdate: (details) => _handleScaleUpdate(
+            details,
+            constraints.maxWidth,
+            constraints.maxHeight,
+          ),
+          onScaleEnd: _handleScaleEnd,
+          child: GameWidget<GardenGame>(
+            game: _game!,
+            loadingBuilder: (_) =>
+                const Center(child: CircularProgressIndicator()),
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleScaleStart(ScaleStartDetails details) {
+    final cameraState = ref.read(cameraStateProvider);
+    _lastScale = cameraState.zoom;
+    _lastFocalPoint = vm.Vector2(
+      details.focalPoint.dx,
+      details.focalPoint.dy,
+    );
+    _panStartOffset = cameraState.panOffset;
+  }
+
+  void _handleScaleUpdate(
+    ScaleUpdateDetails details,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    final tutorialProgress = ref.read(tutorialProgressProvider);
+    if (tutorialProgress.allLessonsCompleted) return;
+
+    final lessonNum = tutorialProgress.currentLesson;
+    // We can't easily get LevelData here without watching the provider, 
+    // but we have it in the build method.
+    // For simplicity, let's just use the current lesson's dimensions if we can.
+    // However, lessonProvider is an asynclistener.
+    // Let's watch the data once.
+    final lessonData = ref.read(lessonProvider(lessonNum)).value;
+    if (lessonData == null) return;
+
+    final cameraNotifier = ref.read(cameraStateProvider.notifier);
+
+    // Handle zoom (pinch)
+    if (details.scale != 1.0) {
+      final newZoom = _lastScale * details.scale;
+      cameraNotifier.updateZoom(newZoom);
+    }
+
+    // Handle pan (drag) - only when not zooming significantly
+    if ((details.scale - 1.0).abs() < 0.1) {
+      final focalDelta = vm.Vector2(
+        details.focalPoint.dx - _lastFocalPoint.x,
+        details.focalPoint.dy - _lastFocalPoint.y,
+      );
+
+      final newOffset = _panStartOffset + focalDelta;
+
+      cameraNotifier.updatePanOffset(
+        newOffset,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+        gridCols: lessonData.gridWidth,
+        gridRows: lessonData.gridHeight,
+        cellSize: GardenGame.cellSize,
+      );
+    }
+  }
+
+  void _handleScaleEnd(ScaleEndDetails details) {
+    _lastScale = ref.read(cameraStateProvider).zoom;
+    _panStartOffset = ref.read(cameraStateProvider).panOffset;
+  }
+
+  Widget _buildProjectionLinesFAB() {
+    return FloatingActionButton(
+      onPressed: () {
+        ref.read(projectionLinesVisibleProvider.notifier).toggle();
+      },
+      tooltip: 'Toggle projection lines',
+      child: const Icon(Icons.tag),
+    );
+  }
+
+  Widget _buildZoomControls(int gridWidth, int gridHeight) {
+    final cameraState = ref.watch(cameraStateProvider);
+
+    return Positioned(
+      right: 16,
+      bottom: 80,
+      child: Card(
+        elevation: 4,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Zoom In',
+              onPressed: cameraState.zoom >= cameraState.maxZoom
+                  ? null
+                  : () {
+                      final newZoom = (cameraState.zoom + 0.2).clamp(
+                        cameraState.minZoom,
+                        cameraState.maxZoom,
+                      );
+                      ref.read(cameraStateProvider.notifier).updateZoom(newZoom);
+                    },
+            ),
+            const Divider(height: 1),
+            IconButton(
+              icon: const Icon(Icons.remove),
+              tooltip: 'Zoom Out',
+              onPressed: cameraState.zoom <= cameraState.minZoom
+                  ? null
+                  : () {
+                      final newZoom = (cameraState.zoom - 0.2).clamp(
+                        cameraState.minZoom,
+                        cameraState.maxZoom,
+                      );
+                      ref.read(cameraStateProvider.notifier).updateZoom(newZoom);
+                    },
+            ),
+            const Divider(height: 1),
+            IconButton(
+              icon: const Icon(Icons.center_focus_strong),
+              tooltip: 'Reset Zoom',
+              onPressed: () {
+                ref.read(cameraStateProvider.notifier).resetToCenter(
+                      screenWidth: MediaQuery.of(context).size.width,
+                      screenHeight: MediaQuery.of(context).size.height,
+                      gridCols: gridWidth,
+                      gridRows: gridHeight,
+                      cellSize: GardenGame.cellSize,
+                    );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildLessonProgressIndicator(int currentLesson) {
