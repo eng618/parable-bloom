@@ -61,7 +61,7 @@ forgejoDefaultServer = "https://v11.next.forgejo.org"
 [homepage]
   layout = "hero" # valid options: page, profile, hero, card, background, custom
   homepageImage = "hero-background.png" # used in: hero, and card
-  showRecent = true
+  showRecent = false
   showRecentItems = 5
   showMoreLink = false
   showMoreLinkDest = "/posts/"
@@ -168,11 +168,11 @@ forgejoDefaultServer = "https://v11.next.forgejo.org"
   # enableTrackEvent = true
 
 [buymeacoffee]
-  # identifier = ""
-  # globalWidget = true
-  # globalWidgetMessage = "Hello"
-  # globalWidgetColor = "#FFDD00"
-  # globalWidgetPosition = "right"
+  identifier = "eng618"
+  globalWidget = true
+  globalWidgetMessage = "Buy me a coffee"
+  globalWidgetColor = "#FFDD00"
+  globalWidgetPosition = "right"
 
 [verification]
   # google = ""
