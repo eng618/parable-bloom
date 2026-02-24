@@ -5,6 +5,9 @@
   "targets": {
     "build": {
       "executor": "nx:run-commands",
+      "outputs": [
+        "{projectRoot}/level-builder"
+      ],
       "options": {
         "command": "task lb:build",
         "cwd": "."
@@ -33,6 +36,7 @@
     },
     "tutorials-validate": {
       "executor": "nx:run-commands",
+      "cache": true,
       "options": {
         "command": "task levels:tutorials:validate-solvable",
         "cwd": "."

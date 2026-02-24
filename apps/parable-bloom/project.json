@@ -5,9 +5,20 @@
   "targets": {
     "build": {
       "executor": "nx:run-commands",
+      "outputs": [
+        "{projectRoot}/build/web"
+      ],
       "options": {
         "command": "task flutter:build:web",
         "cwd": "."
+      },
+      "configurations": {
+        "preview": {
+          "command": "task flutter:build:web:preview"
+        },
+        "prod": {
+          "command": "task flutter:build:web:prod"
+        }
       }
     },
     "test": {
@@ -33,6 +44,10 @@
     },
     "release-web": {
       "executor": "nx:run-commands",
+      "cache": true,
+      "outputs": [
+        "{projectRoot}/build/web"
+      ],
       "options": {
         "command": "task flutter:build:web",
         "cwd": "."
@@ -40,6 +55,10 @@
     },
     "release-android": {
       "executor": "nx:run-commands",
+      "cache": true,
+      "outputs": [
+        "{projectRoot}/build/app/outputs/bundle/release"
+      ],
       "options": {
         "command": "task flutter:build:appbundle",
         "cwd": "."

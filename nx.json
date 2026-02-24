@@ -2,6 +2,65 @@
   "installation": {
     "version": "22.5.2"
   },
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/test/**/*",
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/**/*.test.dart",
+      "!{projectRoot}/docs/**/*"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/Taskfile.yml",
+      "{workspaceRoot}/.taskfiles/**/*",
+      "{workspaceRoot}/Taskfile.Levels.yml",
+      "{workspaceRoot}/Taskfile.Release.yml"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
+    },
+    "test": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default"
+      ]
+    },
+    "lint": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default"
+      ]
+    },
+    "validate": {
+      "cache": true,
+      "dependsOn": [
+        "lint",
+        "test",
+        "build"
+      ]
+    },
+    "deploy": {
+      "cache": true,
+      "dependsOn": [
+        "build"
+      ]
+    }
+  },
   "release": {
     "version": {
       "generatorOptions": {

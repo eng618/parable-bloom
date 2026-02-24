@@ -29,10 +29,40 @@ jobs:
           hugo-version: "latest"
           extended: true
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Cache Nx
+        uses: actions/cache@v5
+        with:
+          path: .nx/cache
+          key: ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-
+            ${{ runner.os }}-nx-
+
       - name: Set up Task
         uses: arduino/setup-task@v2
 
+      - name: Install dependencies
+        run: bun install
+
       - name: Build Hugo site
-        run: task hugo:build
+        run: bunx nx build hugo-site
 
       # This is now automatically deployed by Cloudflare Pages

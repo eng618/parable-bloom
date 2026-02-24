@@ -472,6 +472,15 @@ The project uses GitHub Actions for continuous integration and deployment, manag
   - Signed Android builds (`.aab`) with Bitwarden Secrets Manager integration.
   - Web production build and manual release tagging.
 
+### 8.4 Nx Caching
+
+The project utilizes Nx's task caching to accelerate repetitive tasks like builds, tests, and linting.
+
+- **Cached Targets**: `build`, `test`, `lint`, `validate`, `deploy`.
+- **Global Dependencies**: Changes to `Taskfile.yml`, `nx.json`, or any files in `.taskfiles/` will invalidate the cache for all projects.
+- **Outputs**: Build artifacts such as `apps/parable-bloom/build/web`, `apps/hugo-site/public`, and the `level-builder` binary are cached and restored by Nx.
+- **CI Performance**: GitHub Actions workflows are configured to cache the `.nx/cache` directory, significantly reducing PR validation times.
+
 ---
 
 ## 9. Troubleshooting & Configuration
