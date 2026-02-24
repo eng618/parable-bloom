@@ -84,26 +84,21 @@ tasks:
 
   # Hosting Specific (using secrets or preview channels)
   h:deploy:
-    desc: Deploy to Firebase Hosting (uses FIREBASE_CI_TOKEN env var)
+    desc: Deploy to Firebase Hosting
     dir: apps/parable-bloom
-    vars:
-      FIREBASE_CI_TOKEN: ""
     preconditions:
-      - sh: '[ -n "{{.FIREBASE_CI_TOKEN}}" ]'
-        msg: "FIREBASE_CI_TOKEN is not set. Set via environment or CI secrets."
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
     cmds:
-      - firebase deploy --only hosting --token "{{.FIREBASE_CI_TOKEN}}"
+      - firebase deploy --only hosting
 
   hosting:channel:deploy:
     desc: Deploy to a Firebase Hosting channel
     dir: apps/parable-bloom
     vars:
       CHANNEL: '{{.CHANNEL | default "preview"}}'
-      TOKEN: '{{.TOKEN}}'
     cmds:
-      - firebase hosting:channel:deploy "{{.CHANNEL}}" --project parable-bloom {{if .TOKEN}}--token "{{.TOKEN}}"{{end}} {{.CLI_ARGS}}
+      - firebase hosting:channel:deploy "{{.CHANNEL}}" --project parable-bloom {{.CLI_ARGS}}
     preconditions:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
@@ -185,17 +180,14 @@ tasks:
   configure:ci:web:
     desc: Configure Firebase for Web in CI
     dir: apps/parable-bloom
-    vars:
-      TOKEN: '{{.TOKEN}}'
     cmds:
       - task: configure:ci
-        vars: {TOKEN: "{{.TOKEN}}", PLATFORMS: "web"}
+        vars: {PLATFORMS: "web"}
 
   configure:ci:
     desc: Configure Firebase for multiple platforms in CI
     dir: apps/parable-bloom
     vars:
-      TOKEN: '{{.TOKEN}}'
       PLATFORMS: '{{.PLATFORMS | default "android,ios,macos,web,windows"}}'
     cmds:
       - |
@@ -203,8 +195,7 @@ tasks:
           --project=parable-bloom \
           --platforms={{.PLATFORMS}} \
           --yes \
-          --out=lib/firebase_options.dart \
-          {{if .TOKEN}}--token "{{.TOKEN}}"{{end}}
+          --out=lib/firebase_options.dart
     preconditions:
       - sh: command -v flutterfire >/dev/null 2>&1
         msg: "FlutterFire CLI is not installed."

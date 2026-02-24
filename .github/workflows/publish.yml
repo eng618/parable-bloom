@@ -21,7 +21,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: "bun"
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -34,12 +33,17 @@ jobs:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+
       - name: Install Firebase & FlutterFire CLI
         run: |
           bun add -g firebase-tools
           dart pub global activate flutterfire_cli
           export PATH="$PATH:$HOME/.pub-cache/bin"
-          task firebase:configure:ci TOKEN="${{ secrets.FIREBASE_CI_TOKEN }}"
+          task firebase:configure:ci
 
       - name: Upload firebase_options.dart
         uses: actions/upload-artifact@v6
@@ -66,7 +70,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: "bun"
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -113,12 +116,17 @@ jobs:
           echo "ANDROID_KEY_PASSWORD=$PARABLE_BLOOM_ANDROID_KEY_PASSWORD" >> $GITHUB_ENV
           echo "ANDROID_STORE_PASSWORD=$PARABLE_BLOOM_ANDROID_STORE_PASSWORD" >> $GITHUB_ENV
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+
       - name: Build Game
         run: bunx nx run parable-bloom:release-${{ matrix.platform }}
 
       - name: Deploy to Firebase Hosting
         if: matrix.platform == 'web'
-        run: bunx nx run parable-bloom:deploy-web --token="${{ secrets.FIREBASE_CI_TOKEN }}"
+        run: bunx nx run parable-bloom:deploy-web
 
       - name: Deploy to Google Play (Internal)
         if: matrix.platform == 'android'
