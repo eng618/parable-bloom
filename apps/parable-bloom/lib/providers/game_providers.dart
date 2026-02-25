@@ -499,6 +499,25 @@ final cloudSyncEnabledProvider = FutureProvider<bool>((ref) async {
   return notifier.isCloudSyncEnabled();
 });
 
+final boardZoomScaleProvider =
+    AsyncNotifierProvider<BoardZoomScaleNotifier, double>(
+  BoardZoomScaleNotifier.new,
+);
+
+class BoardZoomScaleNotifier extends AsyncNotifier<double> {
+  @override
+  Future<double> build() async {
+    final repository = ref.watch(settingsRepositoryProvider);
+    return repository.getBoardZoomScale();
+  }
+
+  Future<void> setScale(double scale) async {
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setBoardZoomScale(scale);
+    state = AsyncValue.data(scale);
+  }
+}
+
 final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.isCloudSyncAvailable();
@@ -1277,9 +1296,11 @@ class CameraStateNotifier extends Notifier<CameraState> {
     final initialZoom =
         zoomToFitWidth < zoomToFitHeight ? zoomToFitWidth : zoomToFitHeight;
 
-    // Start from fit-to-screen, animate to 1.0x
+    final boardZoomScale = ref.read(boardZoomScaleProvider).value ?? 1.0;
+
+    // Start from fit-to-screen, animate to target scale
     _animationStartZoom = initialZoom;
-    _animationTargetZoom = 1.0;
+    _animationTargetZoom = 1.0 * boardZoomScale;
     _animationStartOffset = vm.Vector2.zero();
     _animationTargetOffset = vm.Vector2.zero();
     _animationProgress = 0.0;
@@ -1292,7 +1313,7 @@ class CameraStateNotifier extends Notifier<CameraState> {
     );
 
     debugPrint(
-      'CameraStateNotifier: Starting animation from zoom $initialZoom to 1.0',
+      'CameraStateNotifier: Starting animation from zoom $initialZoom to $_animationTargetZoom',
     );
 
     // If animations are disabled (e.g., during tests), skip creating timers
@@ -1434,7 +1455,7 @@ class CameraStateNotifier extends Notifier<CameraState> {
     state = CameraState.defaultState();
   }
 
-  // Reset to 1.0x zoom and centered position (for manual reset)
+  // Reset to default scaled zoom and centered position (for manual reset)
   void resetToCenter({
     required double screenWidth,
     required double screenHeight,
@@ -1444,9 +1465,11 @@ class CameraStateNotifier extends Notifier<CameraState> {
   }) {
     if (state.isAnimating) return;
 
-    // Set zoom to 1.0 and pan offset to zero (which centers the grid)
+    final boardZoomScale = ref.read(boardZoomScaleProvider).value ?? 1.0;
+
+    // Set zoom to board scale and pan offset to zero (which centers the grid)
     state = state.copyWith(
-      zoom: 1.0,
+      zoom: 1.0 * boardZoomScale,
       panOffset: vm.Vector2.zero(),
     );
   }

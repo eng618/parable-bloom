@@ -76,6 +76,8 @@ Tutorials include animated arrows and text hints guiding the player through corr
 - **Vines**: Two visual styles are available to players:
   - **Classic (Premium)**: Features 128x128 watercolor-style vines wrapping around thin wooden dowels (~22px thick). Designed for maximum immersion and "Zen Garden" aesthetics. Asset: `vines_classic_spritesheet.png`.
   - **Simple (Accessibility)**: Minimalist arrow-based vines designed for high contrast and clarity. This mode allows logic-based dynamic color-tinting. Asset: `vine_simple_spritesheet.png`.
+  - Managed by `useSimpleVinesProvider` and toggled via the Settings screen.
+- **Board Default Zoom**: A user-configurable setting (0.5x to 2.0x) that adjusts how close the camera starts to the board, improving visibility for different screen sizes and accessibility needs.
 - **Modes**: Adaptive Light and Dark themes that sync with the background imagery.
 
 ### Color Palette & Meaning

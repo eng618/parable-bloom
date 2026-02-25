@@ -18,6 +18,9 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _useSimpleVinesKey = 'useSimpleVines';
   static const bool _defaultUseSimpleVines = false;
 
+  static const String _boardZoomScaleKey = 'boardZoomScale';
+  static const double _defaultBoardZoomScale = 1.0;
+
   HiveSettingsRepository(this.hiveBox);
 
   @override
@@ -64,5 +67,16 @@ class HiveSettingsRepository implements SettingsRepository {
   @override
   Future<void> setUseSimpleVines(bool enabled) async {
     await hiveBox.put(_useSimpleVinesKey, enabled);
+  }
+
+  @override
+  Future<double> getBoardZoomScale() async {
+    return hiveBox.get(_boardZoomScaleKey, defaultValue: _defaultBoardZoomScale)
+        as double;
+  }
+
+  @override
+  Future<void> setBoardZoomScale(double scale) async {
+    await hiveBox.put(_boardZoomScaleKey, scale);
   }
 }

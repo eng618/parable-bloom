@@ -245,8 +245,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       sprite = _classicSpriteSheet!.getSprite(row, col);
     }
 
-    if (sprite == null) return;
-
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(rotation);

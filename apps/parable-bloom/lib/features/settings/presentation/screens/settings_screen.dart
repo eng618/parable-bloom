@@ -39,6 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           _buildSectionHeader(context, 'Appearance'),
           _buildThemeTile(context, ref, themeMode),
+          _buildBoardZoomTile(context, ref),
           SwitchListTile(
             secondary: Icon(
               useSimpleVines ? Icons.grid_view : Icons.park,
@@ -183,6 +184,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       title: const Text('Theme'),
       subtitle: Text(_getThemeLabel(currentMode)),
       onTap: () => _showThemeDialog(context, ref, currentMode),
+    );
+  }
+
+  Widget _buildBoardZoomTile(BuildContext context, WidgetRef ref) {
+    final zoomAsync = ref.watch(boardZoomScaleProvider);
+    
+    return zoomAsync.when(
+      data: (zoom) => ListTile(
+        leading: Icon(
+          Icons.zoom_in,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: const Text('Board Default Zoom'),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Adjust how close the camera starts'),
+            Slider(
+              value: zoom,
+              min: 0.5,
+              max: 2.0,
+              divisions: 15,
+              label: '${zoom.toStringAsFixed(1)}x',
+              onChanged: (value) async {
+                await ref.read(boardZoomScaleProvider.notifier).setScale(value);
+              },
+            ),
+          ],
+        ),
+      ),
+      loading: () => const ListTile(
+        leading: Icon(Icons.zoom_in),
+        title: Text('Board Default Zoom'),
+        subtitle: LinearProgressIndicator(),
+      ),
+      error: (e, s) => ListTile(
+        leading: const Icon(Icons.error),
+        title: const Text('Board Default Zoom Error'),
+        subtitle: Text(e.toString()),
+      ),
     );
   }
 

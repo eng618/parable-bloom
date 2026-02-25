@@ -72,6 +72,7 @@ The application uses a reactive architecture where the UI and Game Engine observ
 - **`graceProvider`**: Manages the "Grace" (lives) system.
 - **`currentLevelProvider`**: Holds the canonical data for the active level (grid size, vine positions).
 - **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
+- **`boardZoomScaleProvider`**: Manages the user's preferred default board zoom scale (0.5x to 2.0x).
 
 ### 3.2 Logic & Solvers
 
@@ -94,9 +95,12 @@ The game implements several high-performance visual systems within the Flame `Po
 
 ## 4. Persistence Layer
 
-### 4.1 Local-First (Hive)
+We use **Hive** for immediate, offline-capable storage. Key persisted settings include:
 
-We use **Hive** for immediate, offline-capable storage.
+- **Theme Mode**: System, Light, or Dark.
+- **Vines Style**: Classic or Simple.
+- **Board Zoom Scale**: The default camera zoom level for the board.
+- **Audio/Haptics**: Individual toggles for sound and vibration.
 
 - **Boxes**: `game_progress`, `settings`.
 - **Sync**: `GameProgressNotifier` writes to Hive synchronously to ensure no data loss.

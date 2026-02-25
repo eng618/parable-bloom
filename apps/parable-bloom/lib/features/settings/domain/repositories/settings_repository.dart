@@ -26,4 +26,10 @@ abstract class SettingsRepository {
 
   /// Enable/disable simple/trellis vines.
   Future<void> setUseSimpleVines(bool enabled);
+
+  /// Get the user's preferred board zoom scale (Default 1.0).
+  Future<double> getBoardZoomScale();
+
+  /// Set the user's preferred board zoom scale.
+  Future<void> setBoardZoomScale(double scale);
 }
