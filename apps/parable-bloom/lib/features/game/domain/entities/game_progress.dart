@@ -121,11 +121,23 @@ class GameProgress {
       identical(this, other) ||
       other is GameProgress &&
           runtimeType == other.runtimeType &&
+          currentLesson == other.currentLesson &&
+          _setEquals(completedLessons, other.completedLessons) &&
+          lessonCompleted == other.lessonCompleted &&
           currentLevel == other.currentLevel &&
-          _setEquals(completedLevels, other.completedLevels);
+          _setEquals(completedLevels, other.completedLevels) &&
+          tutorialCompleted == other.tutorialCompleted &&
+          savedMainGameLevel == other.savedMainGameLevel;
 
   @override
-  int get hashCode => currentLevel.hashCode ^ completedLevels.hashCode;
+  int get hashCode =>
+      currentLesson.hashCode ^
+      completedLessons.hashCode ^
+      lessonCompleted.hashCode ^
+      currentLevel.hashCode ^
+      completedLevels.hashCode ^
+      tutorialCompleted.hashCode ^
+      savedMainGameLevel.hashCode;
 
   bool _setEquals(Set<int> a, Set<int> b) {
     return a.length == b.length && a.every(b.contains);
@@ -133,5 +145,5 @@ class GameProgress {
 
   @override
   String toString() =>
-      'GameProgress(currentLevel: $currentLevel, completedLevels: $completedLevels)';
+      'GameProgress(currentLesson: $currentLesson, lessonCompleted: $lessonCompleted, currentLevel: $currentLevel, tutorialCompleted: $tutorialCompleted)';
 }
