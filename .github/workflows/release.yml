@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_PAT_CLASSIC || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -126,6 +126,32 @@ jobs:
 
       - name: Push Changes
         if: github.event.inputs.dry-run == 'false'
-        run: git push origin HEAD:main --tags
+        run: |
+          # Try to push to main. If it fails, fallback to a PR.
+          if git push origin HEAD:main --tags; then
+            echo "✅ Successfully pushed to main"
+          else
+            echo "⚠️  Push to main failed (likely due to branch protection)."
+            echo "📦 Pushing to a new release branch and creating a pull request..."
+            
+            # Use the version from parable-bloom for the branch name
+            PV=$(node -p "require('./apps/parable-bloom/package.json').version")
+            PR_BRANCH="release/v$PV-$(date +%s)"
+            
+            git checkout -b "$PR_BRANCH"
+            git push origin "$PR_BRANCH" --tags
+            
+            gh pr create --title "release: v$PV" \
+                         --body "Automated release sync for v$PV. 
+                         
+                         This PR contains the version bump and changelog updates that couldn't be pushed directly to \`main\` due to branch protection rules.
+                         
+                         **Note for Squash Mergers:** The git tag (\`v$PV\`) is already pushed and points to the commit in this branch. Even after squash merging and branch deletion, the tag will remain in the repository history." \
+                         --base main \
+                         --head "$PR_BRANCH"
+            
+            echo "🚀 PR created successfully."
+          fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT_CLASSIC || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
