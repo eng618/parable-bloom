@@ -78,5 +78,12 @@
         "cwd": "."
       }
     }
+  },
+  "release": {
+    "version": {
+      "generatorOptions": {
+        "packageRoot": "apps/parable-bloom"
+      }
+    }
   }
 }

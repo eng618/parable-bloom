@@ -75,22 +75,44 @@
         ],
         "releaseTagPattern": "v{version}",
         "version": {
+          "generatorOptions": {
+            "currentVersionResolver": "disk"
+          },
           "hooks": {
             "postVersion": "dart run scripts/bump_version.dart --set {newVersion} --no-commit --no-changelog"
           }
+        },
+        "changelog": {
+          "automaticFromRef": true
         }
       },
       "hugo-site": {
         "projects": [
           "hugo-site"
         ],
-        "releaseTagPattern": "hugo-site-v{version}"
+        "releaseTagPattern": "hugo-site-v{version}",
+        "version": {
+          "generatorOptions": {
+            "currentVersionResolver": "disk"
+          }
+        },
+        "changelog": {
+          "automaticFromRef": true
+        }
       },
       "level-builder": {
         "projects": [
           "level-builder"
         ],
-        "releaseTagPattern": "level-builder-v{version}"
+        "releaseTagPattern": "level-builder-v{version}",
+        "version": {
+          "generatorOptions": {
+            "currentVersionResolver": "disk"
+          }
+        },
+        "changelog": {
+          "automaticFromRef": true
+        }
       }
     },
     "changelog": {

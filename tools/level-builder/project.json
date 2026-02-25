@@ -42,5 +42,12 @@
         "cwd": "."
       }
     }
+  },
+  "release": {
+    "version": {
+      "generatorOptions": {
+        "packageRoot": "tools/level-builder"
+      }
+    }
   }
 }
