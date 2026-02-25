@@ -61,7 +61,7 @@ class AppTheme {
   }
 
   /// Tap effect color (light mode) - darker for contrast on light background
-  static const Color tapEffectLight = Color(0xFF1C1B1F); // Dark gray
+  static const Color tapEffectLight = Color(0xFF8E8A86); // Muted gray
 
   /// Tap effect color (dark mode) - lighter for contrast on dark background
   static const Color tapEffectDark = Color(0xFFE6E1E5); // Light gray

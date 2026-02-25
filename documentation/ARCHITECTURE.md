@@ -169,7 +169,7 @@ tools/
 
 scripts/               # Workspace-wide utility scripts
 ├── bump_version.dart          # Versioning logic (synced with Nx Release)
-├── build_vine_spritesheet.py   # Automates generation of classic spritesheets from vine asset segments
+├── build_vine_spritesheet.py   # Automates generation of classic spritesheets from vine asset segments (includes rotting wood effect for withered vines)
 ├── rebuild_simple_vines.py     # Generates the geometric/simple spritesheet with consistent thickness
 └── ...
 
