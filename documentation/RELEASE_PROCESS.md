@@ -435,32 +435,31 @@ Version format in `pubspec.yaml`: `MAJOR.MINOR.PATCH+BUILD_NUMBER`
 
 ### Automated Version Bumping
 
-**TODO**: Create `scripts/bump_version.dart` that:
+The project uses **Nx Release** organized into three project-specific groups:
 
-1. Reads current version from `pubspec.yaml`
-2. Increments based on flag: `--major`, `--minor`, `--patch`, `--build`
-3. Updates `pubspec.yaml` with new version
-4. Updates `CHANGELOG.md` with new version section
-5. Creates git commit: `chore: bump version to X.Y.Z+N`
-6. Creates git tag: `vX.Y.Z`
+1. **`parable-bloom`**: Game app. Tags: `v*`. Hook: `scripts/bump_version.dart` (syncs version to `pubspec.yaml`).
+2. **`hugo-site`**: Documentation site. Tags: `hugo-site-v*`.
+3. **`level-builder`**: Go CLI tool. Tags: `level-builder-v*`.
 
 Usage:
 
 ```bash
-# Bump patch version (1.0.0+1 → 1.0.1+2)
-dart run scripts/bump_version.dart --patch
+# Bump patch version for all projects
+bunx nx release --specifier patch --yes
 
-# Bump minor version (1.0.1+2 → 1.1.0+3)
-dart run scripts/bump_version.dart --minor
-
-# Bump major version (1.1.0+3 → 2.0.0+4)
-dart run scripts/bump_version.dart --major
-
-# Bump build number only (1.0.0+1 → 1.0.0+2)
-dart run scripts/bump_version.dart --build
+# Bump minor version for just the game
+bunx nx release --specifier minor --projects parable-bloom --yes
 ```
 
-### Manual Version Update
+The automated process:
+
+1. Calculates new versions based on Conventional Commits or provided specifier.
+2. Updates `package.json` files.
+3. Runs `scripts/bump_version.dart` for the game app to sync with `pubspec.yaml`.
+4. Generates the `CHANGELOG.md`.
+5. Creates git commits and project-specific tags.
+
+### Manual Version Update (Not Recommended)
 
 If you prefer manual control:
 
@@ -606,9 +605,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
    The automated process:
    1. Calculates new versions based on Conventional Commits.
-   2. Updates `package.json` files and syncs to `pubspec.yaml` via hooks.
-   3. Generates the `CHANGELOG.md`.
-   4. Creates git commits and tags.
+   2. Updates `package.json` files and syncs to `pubspec.yaml` via hooks (game only).
+   3. Generates the `CHANGELOG.md` for each project.
+   4. Creates a single git commit and project-specific tags (e.g., `v1.3.1`, `hugo-site-v1.0.1`).
 
 4. **Push to GitHub**:
 
@@ -756,10 +755,21 @@ bws secret list
 - Check git tags: `git tag -l`
 - Delete tag if needed: `git tag -d v1.0.0 && git push origin :refs/tags/v1.0.0`
 
-**Problem**: `pubspec.yaml parse error`
+**Problem**: `pubspec.yaml` parse error
 
 - Validate YAML syntax: `flutter pub get`
 - Check version format: `1.0.0+1` (not `1.0.0-beta+1`)
+
+**Problem**: `Unable to determine the previous git tag`
+
+- This usually happens during the first release after moving to Nx groups.
+- Ensure `release.groups.<group>.changelog.automaticFromRef` is set to `true` in `nx.json`.
+- Nx will then fallback to the first commit of the repo to generate the initial changelog.
+
+**Problem**: `Missing authentication (bunx npm login)`
+
+- Nx Release defaults to attempting an NPM publish for JS projects.
+- Ensure `"publish": false` is set in the release group configuration in `nx.json`.
 
 ---
 

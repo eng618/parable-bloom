@@ -26,7 +26,13 @@ The technical specification for creating and validating levels.
 
 - **Key Topics**: JSON schemas, Coordinate system, Validation rules, Tooling guide.
 
-### 4. [Attributions (ATTRIBUTIONS.md)](ATTRIBUTIONS.md)
+### 4. [Release Process (RELEASE_PROCESS.md)](RELEASE_PROCESS.md)
+
+Automation for versioning, changelog, and store deployments.
+
+- **Key Topics**: Nx Release, Fastlane, BWS secrets, store uploads.
+
+### 5. [Attributions (ATTRIBUTIONS.md)](ATTRIBUTIONS.md)
 
 Credits and licenses for third-party assets.
 

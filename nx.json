@@ -63,10 +63,7 @@
   },
   "release": {
     "version": {
-      "generatorOptions": {
-        "currentVersionResolver": "disk",
-        "specifierSource": "conventional-commits"
-      }
+      "currentVersionResolver": "disk"
     },
     "groups": {
       "parable-bloom": {
@@ -74,13 +71,10 @@
           "parable-bloom"
         ],
         "releaseTagPattern": "v{version}",
+        "publish": false,
         "version": {
-          "generatorOptions": {
-            "currentVersionResolver": "disk"
-          },
-          "hooks": {
-            "postVersion": "dart run scripts/bump_version.dart --set {newVersion} --no-commit --no-changelog"
-          }
+          "currentVersionResolver": "disk",
+          "postVersionCommand": "dart run scripts/bump_version.dart --set {newVersion} --no-commit --no-changelog"
         },
         "changelog": {
           "automaticFromRef": true
@@ -91,10 +85,9 @@
           "hugo-site"
         ],
         "releaseTagPattern": "hugo-site-v{version}",
+        "publish": false,
         "version": {
-          "generatorOptions": {
-            "currentVersionResolver": "disk"
-          }
+          "currentVersionResolver": "disk"
         },
         "changelog": {
           "automaticFromRef": true
@@ -105,10 +98,9 @@
           "level-builder"
         ],
         "releaseTagPattern": "level-builder-v{version}",
+        "publish": false,
         "version": {
-          "generatorOptions": {
-            "currentVersionResolver": "disk"
-          }
+          "currentVersionResolver": "disk"
         },
         "changelog": {
           "automaticFromRef": true
