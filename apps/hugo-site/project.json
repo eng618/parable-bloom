@@ -20,12 +20,5 @@
         "cwd": "."
       }
     }
-  },
-  "release": {
-    "version": {
-      "generatorOptions": {
-        "packageRoot": "apps/hugo-site"
-      }
-    }
   }
 }

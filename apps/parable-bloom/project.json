@@ -78,14 +78,5 @@
         "cwd": "."
       }
     }
-  },
-  "release": {
-    "version": {
-      "generatorOptions": {
-        "packageRoot": "apps/parable-bloom",
-        "currentVersionResolver": "version-file",
-        "versionFile": "apps/parable-bloom/pubspec.yaml"
-      }
-    }
   }
 }

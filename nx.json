@@ -64,24 +64,37 @@
   "release": {
     "version": {
       "generatorOptions": {
-        "currentVersionResolver": "git-tag",
+        "currentVersionResolver": "disk",
         "specifierSource": "conventional-commits"
-      },
-      "hooks": {
-        "postVersion": "dart run scripts/bump_version.dart --set {newVersion} --no-commit --no-changelog"
       }
     },
     "groups": {
-      "default": {
+      "parable-bloom": {
         "projects": [
-          "parable-bloom",
-          "hugo-site",
+          "parable-bloom"
+        ],
+        "releaseTagPattern": "v{version}",
+        "version": {
+          "hooks": {
+            "postVersion": "dart run scripts/bump_version.dart --set {newVersion} --no-commit --no-changelog"
+          }
+        }
+      },
+      "hugo-site": {
+        "projects": [
+          "hugo-site"
+        ],
+        "releaseTagPattern": "hugo-site-v{version}"
+      },
+      "level-builder": {
+        "projects": [
           "level-builder"
         ],
-        "projectsRelationship": "independent"
+        "releaseTagPattern": "level-builder-v{version}"
       }
     },
     "changelog": {
+      "automaticFromRef": true,
       "projectChangelogs": {
         "renderOptions": {
           "authors": true,
