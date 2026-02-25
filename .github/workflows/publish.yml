@@ -182,7 +182,13 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
 
       - name: Build Game
-        run: bunx nx run parable-bloom:release-${{ matrix.platform }}
+        run: |
+          if [ "${{ matrix.platform }}" == "android" ]; then
+            BUILD_NUMBER=$((GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT))
+            bunx nx run parable-bloom:release-android --args="BUILD_NUMBER=$BUILD_NUMBER"
+          else
+            bunx nx run parable-bloom:release-web
+          fi
 
       - name: Install Firebase CLI
         if: matrix.platform == 'web'
