@@ -60,9 +60,7 @@ jobs:
             ${{ runner.os }}-nx-
 
       - name: Install dependencies
-        run: |
-          bun install
-          flutter pub get
+        run: bun install
 
       - name: Install Task
         uses: arduino/setup-task@v2
@@ -75,6 +73,9 @@ jobs:
         with:
           channel: "stable"
           cache: true
+
+      - name: Sync workspace dependencies
+        run: flutter pub get
 
       - name: Configure Git
         run: |
