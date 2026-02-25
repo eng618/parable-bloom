@@ -36,12 +36,28 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: "bun"
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
+      - name: Cache Bun
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb', '**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Cache Nx
+        uses: actions/cache@v5
+        with:
+          path: .nx/cache
+          key: ${{ runner.os }}-nx-${{ hashFiles('bun.lockb', 'bun.lock', 'nx.json') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-nx-${{ hashFiles('bun.lockb', 'bun.lock', 'nx.json') }}-
+            ${{ runner.os }}-nx-
 
       - name: Install dependencies
         run: bun install
