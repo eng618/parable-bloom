@@ -100,3 +100,9 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Changes
+        if: github.event.inputs.dry-run == 'false'
+        run: git push origin HEAD:main --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT_CLASSIC || secrets.GITHUB_TOKEN }}
