@@ -1,3 +1,18 @@
+## 1.4.0 (2026-02-25)
+
+### 🚀 Features
+
+- Introduce new withered vine assets with a rotting wood effect, update the classic spritesheet, and adjust the `tapEffectLight` theme color. ([f3cb392](https://github.com/eng618/parable-bloom/commit/f3cb392))
+- Adjust visual scaling of game elements including cell size, tap effects, grid dots, debug text, and projection lines. ([7a35222](https://github.com/eng618/parable-bloom/commit/7a35222))
+
+### 🩹 Fixes
+
+- Update GameProgress equality and hash code to include all fields and add comprehensive equality tests. ([3b22dea](https://github.com/eng618/parable-bloom/commit/3b22dea))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.3.2 (2026-02-25)
 
 ### 🚀 Features

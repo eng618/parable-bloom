@@ -1,3 +1,14 @@
+## 1.4.0 (2026-02-25)
+
+### 🚀 Features
+
+- Introduce new withered vine assets with a rotting wood effect, update the classic spritesheet, and adjust the `tapEffectLight` theme color. ([f3cb392](https://github.com/eng618/parable-bloom/commit/f3cb392))
+- Dynamically fetch and increment Android build number from Google Play's internal track. ([9c437ef](https://github.com/eng618/parable-bloom/commit/9c437ef))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.3.2 (2026-02-25)
 
 ### 🚀 Features
