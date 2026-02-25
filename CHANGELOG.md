@@ -127,6 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-02-25
+
 ### Added
 
 - Automated release pipeline with Bitwarden Secrets Manager integration
@@ -163,5 +165,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive test suite for game logic and animations
 - Documentation for architecture, game design, and level system
 
-[Unreleased]: https://github.com/eng618/parable-bloom/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/eng618/parable-bloom/compare/v1.3.2...HEAD
+[1.3.2]: https://github.com/eng618/parable-bloom/releases/tag/v1.3.2
 [1.0.0]: https://github.com/eng618/parable-bloom/releases/tag/v1.0.0
