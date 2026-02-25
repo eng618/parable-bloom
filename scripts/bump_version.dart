@@ -69,46 +69,52 @@ void main(List<String> arguments) async {
 
   // Parse version
   final versionParts = currentVersion.split('+');
-  if (versionParts.length != 2) {
-    print('❌ Error: Invalid version format. Expected: X.Y.Z+BUILD');
-    exit(1);
+  final semanticVersionPart = versionParts[0];
+  int build = 0;
+  if (versionParts.length > 1) {
+    build = int.tryParse(versionParts[1]) ?? 0;
   }
 
-  final semanticVersion = versionParts[0].split('.');
+  final semanticVersion = semanticVersionPart.split('.');
   if (semanticVersion.length != 3) {
     print('❌ Error: Invalid semantic version. Expected: MAJOR.MINOR.PATCH');
     exit(1);
   }
 
-  int major = int.parse(semanticVersion[0]);
-  int minor = int.parse(semanticVersion[1]);
-  int patch = int.parse(semanticVersion[2]);
-  int build = int.parse(versionParts[1]);
+  int major = int.tryParse(semanticVersion[0]) ?? 0;
+  int minor = int.tryParse(semanticVersion[1]) ?? 0;
+  int patch = int.tryParse(semanticVersion[2]) ?? 0;
 
   // Calculate new version
   String newVersion;
   if (customVersion != null) {
-    newVersion = customVersion;
+    if (customVersion.contains('+')) {
+      newVersion = customVersion;
+    } else {
+      // If setting a version from Nx (no build number), append incremented build number
+      build++;
+      newVersion = '$customVersion+$build';
+    }
     print('🎯 Setting version to: $newVersion');
   } else {
+    // Always increment build number regardless of bump type
+    build++;
+
     switch (bumpType) {
       case '--major':
         major++;
         minor = 0;
         patch = 0;
-        build = 1;
         break;
       case '--minor':
         minor++;
         patch = 0;
-        build = 1;
         break;
       case '--patch':
         patch++;
-        build = 1;
         break;
       case '--build':
-        build++;
+        // major, minor, patch stay the same, build already incremented
         break;
     }
 

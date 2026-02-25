@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       specifier:
-        description: "Semver specifier (e.g., patch, minor, major) or exact version"
+        description: "Semver specifier (patch, minor, major, build) or exact version"
         required: false
         default: "patch"
         type: string
       dry-run:
         description: "Dry run (do not push changes)"
         required: false
-        default: true
+        default: false
         type: boolean
 
 concurrency:
@@ -81,10 +81,22 @@ jobs:
 
       - name: Run Nx Release
         run: |
+          SPECIFIER="${{ github.event.inputs.specifier }}"
           EXTRA_ARGS=""
           if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
             EXTRA_ARGS="--dry-run"
           fi
-          bunx nx release --specifier ${{ github.event.inputs.specifier }} --yes $EXTRA_ARGS
+
+          if [ "$SPECIFIER" == "build" ]; then
+            echo "🚀 Bumping build number only..."
+            BUMP_ARGS="--build"
+            if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
+              BUMP_ARGS="$BUMP_ARGS --dry-run"
+            fi
+            # Using the script directly for build bumps as Nx doesn't natively handle Flutter build numbers
+            dart run scripts/bump_version.dart $BUMP_ARGS
+          else
+            bunx nx release --specifier $SPECIFIER --yes $EXTRA_ARGS
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
