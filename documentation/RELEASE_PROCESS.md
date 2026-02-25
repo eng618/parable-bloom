@@ -431,7 +431,7 @@ Version format in `pubspec.yaml`: `MAJOR.MINOR.PATCH+BUILD_NUMBER`
 
 - Example: `1.0.0+1` → Version 1.0.0, Build 1
 - Semantic versioning: MAJOR.MINOR.PATCH
-- Build number: Auto-incremented integer
+- Build number: Dynamically fetched and incremented based on the latest version code in the Google Play Console (internal track). This ensures monotonically increasing version codes without relying on manual state or large formulas.
 
 ### Automated Version Bumping
 
@@ -636,7 +636,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Downloads firebase_options.dart from firebase-config job
 - Sets up Flutter (with cache), Java, Gradle cache
 - Decodes and configures Android keystore + google-services.json
-- Calculates unique build version: `BUILD_NUMBER = GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT`
+- Calculates unique build version: Dynamically fetches the highest `versionCode` currently on the internal track using Fastlane and increments it by 1.
 - Runs `task release:android BUILD_NAME=... BUILD_NUMBER=...`
 - Uploads signed `.aab` to Google Play Console internal testing track via Fastlane (draft release)
 - Uploads `.aab` artifact to Actions for reference

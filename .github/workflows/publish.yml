@@ -189,11 +189,20 @@ jobs:
           bundler-cache: true
           working-directory: apps/parable-bloom/android
 
+      - name: Fetch Latest Version Code
+        if: matrix.platform == 'android'
+        run: |
+          echo "$PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" | base64 -d > /tmp/service-account.json
+          export GOOGLE_PLAY_SERVICE_ACCOUNT_PATH=/tmp/service-account.json
+          # Fetch the highest version code from the internal track
+          LATEST_CODE=$(cd apps/parable-bloom/android && bundle exec fastlane get_latest_version_code | grep "LATEST_VERSION_CODE=" | cut -d '=' -f 2)
+          echo "Found latest version code: $LATEST_CODE"
+          echo "ANDROID_VERSION_CODE=$((LATEST_CODE + 1))" >> $GITHUB_ENV
+
       - name: Build Game
         run: |
           if [ "${{ matrix.platform }}" == "android" ]; then
-            BUILD_NUMBER=$((GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT))
-            bunx nx run parable-bloom:release-android --args="BUILD_NUMBER=$BUILD_NUMBER"
+            bunx nx run parable-bloom:release-android --args="BUILD_NUMBER=${{ env.ANDROID_VERSION_CODE }}"
           else
             bunx nx run parable-bloom:release-web
           fi

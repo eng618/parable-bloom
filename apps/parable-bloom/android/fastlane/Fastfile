@@ -23,6 +23,18 @@ platform :android do
     )
   end
 
+  desc "Get the latest version code from a specific Google Play track"
+  lane :get_latest_version_code do |options|
+    track = options[:track] || "internal"
+    version_codes = google_play_track_version_codes(
+      package_name: "com.garciaericn.parable_bloom",
+      track: track,
+      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json'
+    )
+    latest = version_codes.max || 0
+    puts "LATEST_VERSION_CODE=#{latest}"
+  end
+
   desc "Deploy a new version to the Google Play Console (Internal Testing)"
   lane :deploy do
     # The release bundle is expected to be built + signed by Flutter
