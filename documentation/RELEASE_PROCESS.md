@@ -437,7 +437,7 @@ Version format in `pubspec.yaml`: `MAJOR.MINOR.PATCH+BUILD_NUMBER`
 
 The project uses **Nx Release** organized into three project-specific groups:
 
-1. **`parable-bloom`**: Game app. Tags: `v*`. Hook: `scripts/bump_version.dart` (syncs version to `pubspec.yaml`).
+1. **`parable-bloom`**: Game app. Tags: `v*`. The release workflow automatically runs `scripts/bump_version.dart` after versioning to sync the version to `pubspec.yaml`.
 2. **`hugo-site`**: Documentation site. Tags: `hugo-site-v*`.
 3. **`level-builder`**: Go CLI tool. Tags: `level-builder-v*`.
 
@@ -451,11 +451,11 @@ bunx nx release --specifier patch --yes
 bunx nx release --specifier minor --projects parable-bloom --yes
 ```
 
-The automated process:
+The automated process (managed by the `release.yml` workflow):
 
 1. Calculates new versions based on Conventional Commits or provided specifier.
 2. Updates `package.json` files.
-3. Runs `scripts/bump_version.dart` for the game app to sync with `pubspec.yaml`.
+3. Identifies the new version and runs `scripts/bump_version.dart` for the game app to sync with `pubspec.yaml`.
 4. Generates the `CHANGELOG.md`.
 5. Creates git commits and project-specific tags.
 
@@ -769,7 +769,8 @@ bws secret list
 **Problem**: `Missing authentication (bunx npm login)`
 
 - Nx Release defaults to attempting an NPM publish for JS projects.
-- Ensure `"publish": false` is set in the release group configuration in `nx.json`.
+- In recent versions of Nx (v20+), `"publish": false` is NOT a valid property in `nx.json`.
+- Instead, ensure you use the `--skip-publish` flag when running `nx release` in CI, or configure the `release` block in each project's `project.json` if you need persistent project-level control.
 
 ---
 

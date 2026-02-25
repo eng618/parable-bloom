@@ -71,10 +71,8 @@
           "parable-bloom"
         ],
         "releaseTagPattern": "v{version}",
-        "publish": false,
         "version": {
-          "currentVersionResolver": "disk",
-          "postVersionCommand": "dart run scripts/bump_version.dart --set {newVersion} --no-commit --no-changelog"
+          "currentVersionResolver": "disk"
         },
         "changelog": {
           "automaticFromRef": true
@@ -85,7 +83,6 @@
           "hugo-site"
         ],
         "releaseTagPattern": "hugo-site-v{version}",
-        "publish": false,
         "version": {
           "currentVersionResolver": "disk"
         },
@@ -98,7 +95,6 @@
           "level-builder"
         ],
         "releaseTagPattern": "level-builder-v{version}",
-        "publish": false,
         "version": {
           "currentVersionResolver": "disk"
         },

@@ -93,10 +93,30 @@ jobs:
             if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
               BUMP_ARGS="$BUMP_ARGS --dry-run"
             fi
-            # Using the script directly for build bumps as Nx doesn't natively handle Flutter build numbers
             dart run scripts/bump_version.dart $BUMP_ARGS
           else
-            bunx nx release --specifier $SPECIFIER --yes $EXTRA_ARGS
+            # Run Nx Release to handle versioning, changelog, and tagging
+            bunx nx release --specifier $SPECIFIER --yes --skip-publish $EXTRA_ARGS
+
+            # Extract the new version from the project manifest
+            NEW_VERSION=$(node -p "require('./apps/parable-bloom/package.json').version")
+            echo "📦 New version identified from Nx: $NEW_VERSION"
+
+            # Sync the version to pubspec.yaml using the Dart script
+            # We skip commit/tagging here as tagging $NEW_VERSION would conflict with the tag just created by Nx
+            BUMP_ARGS="--set $NEW_VERSION --no-commit --no-changelog"
+            if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
+              BUMP_ARGS="$BUMP_ARGS --dry-run"
+            fi
+
+            echo "🔄 Syncing version $NEW_VERSION to pubspec.yaml..."
+            dart run scripts/bump_version.dart $BUMP_ARGS
+
+            # If not a dry run, commit the pubspec.yaml change
+            if [ "${{ github.event.inputs.dry-run }}" == "false" ]; then
+              git add apps/parable-bloom/pubspec.yaml
+              git commit -m "chore: sync flutter version to $NEW_VERSION" || echo "No changes to commit"
+            fi
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
