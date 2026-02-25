@@ -14,7 +14,7 @@ import 'projection_lines_component.dart';
 import 'tap_effect_component.dart';
 
 class GardenGame extends FlameGame with TapCallbacks {
-  static const double cellSize = 36.0; // Pixels per cell
+  static const double cellSize = 72.0; // Pixels per cell
 
   late GridComponent grid;
   late ProjectionLinesComponent projectionLines;
@@ -290,7 +290,7 @@ class GardenGame extends FlameGame with TapCallbacks {
         final tapEffect = TapEffectComponent(
           tapPosition: position,
           color: _tapEffectColor,
-          maxRadius: 15.0, // Reduced to prevent large effects
+          maxRadius: 30.0, // Reduced to prevent large effects
           duration: 0.4,
         );
         grid.add(tapEffect);
@@ -480,7 +480,7 @@ class GardenGame extends FlameGame with TapCallbacks {
       final tapEffect = TapEffectComponent(
         tapPosition: tapPos,
         color: _tapEffectColor,
-        maxRadius: 15.0, // Reduced to prevent large effects
+        maxRadius: 30.0, // Reduced to prevent large effects
         duration: 0.4,
       );
       add(tapEffect);

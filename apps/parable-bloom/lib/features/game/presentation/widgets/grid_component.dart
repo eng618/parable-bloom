@@ -307,7 +307,7 @@ class CellComponent extends RectangleComponent
     final dotPaint = Paint()
       ..color = dotColor
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, 1.5, dotPaint);
+    canvas.drawCircle(center, 3.0, dotPaint);
 
     // Debug: draw x,y labels in corner only if debug mode is enabled
     final gardenGame = game;
@@ -320,7 +320,7 @@ class CellComponent extends RectangleComponent
         text: '$gridX,$gridY',
         style: TextStyle(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-          fontSize: 10,
+          fontSize: 14,
         ),
       );
       textPainter.layout();

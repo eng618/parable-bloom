@@ -83,7 +83,7 @@ class ProjectionLinesComponent extends PositionComponent
     final linePaint = Paint()
       ..color = Colors.grey.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
+      ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
 
     final visualHeight = _currentLevel!.gridHeight;
