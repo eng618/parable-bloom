@@ -1001,6 +1001,7 @@ class VineState {
   final bool isBlocked;
   final bool isCleared;
   final bool hasBeenAttempted;
+  final bool isWithered;
   final VineAnimationState animationState;
 
   VineState({
@@ -1008,6 +1009,7 @@ class VineState {
     required this.isBlocked,
     required this.isCleared,
     this.hasBeenAttempted = false,
+    this.isWithered = false,
     this.animationState = VineAnimationState.normal,
   });
 
@@ -1015,6 +1017,7 @@ class VineState {
     bool? isBlocked,
     bool? isCleared,
     bool? hasBeenAttempted,
+    bool? isWithered,
     VineAnimationState? animationState,
   }) {
     return VineState(
@@ -1022,6 +1025,7 @@ class VineState {
       isBlocked: isBlocked ?? this.isBlocked,
       isCleared: isCleared ?? this.isCleared,
       hasBeenAttempted: hasBeenAttempted ?? this.hasBeenAttempted,
+      isWithered: isWithered ?? this.isWithered,
       animationState: animationState ?? this.animationState,
     );
   }
@@ -1070,6 +1074,7 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
       final animationState =
           currentState?.animationState ?? VineAnimationState.normal;
       final hasBeenAttempted = currentState?.hasBeenAttempted ?? false;
+      final isWithered = currentState?.isWithered ?? false;
 
       bool isBlocked = false;
 
@@ -1087,6 +1092,7 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
         isBlocked: isBlocked,
         isCleared: isCleared,
         hasBeenAttempted: hasBeenAttempted,
+        isWithered: isWithered,
         animationState: animationState,
       );
     }
@@ -1119,7 +1125,10 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
 
       state = {
         ...state,
-        vineId: s.copyWith(hasBeenAttempted: true),
+        vineId: s.copyWith(
+          hasBeenAttempted: true,
+          isWithered: true,
+        ),
       };
 
       // Increment wrong taps counter

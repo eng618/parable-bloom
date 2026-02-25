@@ -96,7 +96,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final level = parent.getCurrentLevelData();
     if (level == null) return;
 
-    final isBlocked = vineState.isBlocked;
     final isAttempted = vineState.hasBeenAttempted;
 
     final seedColor = VineColorPalette.resolve(vineData.vineColor);
@@ -107,7 +106,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       parent.parent.vineAttemptedColor,
     );
 
-    final useWithered = isBlocked && isAttempted;
+    final useWithered = vineState.isWithered;
     final visualHeight = level.gridHeight;
 
     for (int i = 0; i < _currentVisualPositions.length; i++) {
