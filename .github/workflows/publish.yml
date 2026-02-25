@@ -77,6 +77,12 @@ jobs:
           name: firebase_options
           path: apps/parable-bloom/lib/firebase_options.dart
 
+      - name: Upload google-services.json
+        uses: actions/upload-artifact@v6
+        with:
+          name: google-services
+          path: apps/parable-bloom/android/app/google-services.json
+
   build-game:
     needs: firebase-config
     strategy:
@@ -92,6 +98,13 @@ jobs:
         with:
           name: firebase_options
           path: apps/parable-bloom/lib
+
+      - name: Download google-services.json
+        if: matrix.platform == 'android'
+        uses: actions/download-artifact@v7
+        with:
+          name: google-services
+          path: apps/parable-bloom/android/app
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
