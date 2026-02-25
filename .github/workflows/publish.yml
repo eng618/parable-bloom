@@ -232,6 +232,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/level-builder-v')
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: tools/level-builder
