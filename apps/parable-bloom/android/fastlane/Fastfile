@@ -1,6 +1,8 @@
 # Fastfile for Android - Parable Bloom
 # Documentation: https://docs.fastlane.tools/
 
+opt_out_usage
+
 require 'fileutils'
 
 default_platform(:android)
