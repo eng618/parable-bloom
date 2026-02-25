@@ -181,6 +181,14 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
 
+      - name: Setup Ruby for Fastlane
+        if: matrix.platform == 'android'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: apps/parable-bloom/android
+
       - name: Build Game
         run: |
           if [ "${{ matrix.platform }}" == "android" ]; then
