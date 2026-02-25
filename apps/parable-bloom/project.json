@@ -60,7 +60,7 @@
         "{projectRoot}/build/app/outputs/bundle/release"
       ],
       "options": {
-        "command": "task flutter:build:appbundle",
+        "command": "task release:android",
         "cwd": "."
       }
     },
