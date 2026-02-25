@@ -80,6 +80,7 @@ jobs:
   build-game:
     needs: firebase-config
     strategy:
+      fail-fast: false
       matrix:
         platform: [web, android]
     runs-on: ubuntu-latest
@@ -169,6 +170,10 @@ jobs:
 
       - name: Build Game
         run: bunx nx run parable-bloom:release-${{ matrix.platform }}
+
+      - name: Install Firebase CLI
+        if: matrix.platform == 'web'
+        run: bun add -g firebase-tools
 
       - name: Deploy to Firebase Hosting
         if: matrix.platform == 'web'
