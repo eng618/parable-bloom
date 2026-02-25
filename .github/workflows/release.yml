@@ -96,7 +96,7 @@ jobs:
             dart run scripts/bump_version.dart $BUMP_ARGS
           else
             # Run Nx Release to handle versioning, changelog, and tagging
-            bunx nx release --specifier $SPECIFIER --yes --skip-publish $EXTRA_ARGS
+            bunx nx release --specifier $SPECIFIER --skip-publish $EXTRA_ARGS
 
             # Extract the new version from the project manifest
             NEW_VERSION=$(node -p "require('./apps/parable-bloom/package.json').version")
