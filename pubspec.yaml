@@ -1,0 +1,6 @@
+name: parable_bloom_workspace
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dev_dependencies:
+  yaml: ^3.1.2

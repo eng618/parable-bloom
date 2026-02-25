@@ -60,7 +60,9 @@ jobs:
             ${{ runner.os }}-nx-
 
       - name: Install dependencies
-        run: bun install
+        run: |
+          bun install
+          flutter pub get
 
       - name: Install Task
         uses: arduino/setup-task@v2
