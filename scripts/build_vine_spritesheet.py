@@ -92,13 +92,23 @@ def process_segment(file_path, row):
     new_width = int(width * scale)
     new_height = int(height * scale)
     
+    # Determine if this is a head or tail that needs separation
+    is_head = 'head' in filename
+    is_tail = 'tail' in filename
+    separation_scale = 0.88 # 12% separation gap
+    
     # Force the "long" dimension to be exactly CELL_SIZE to ensure gap-less connections
     # excluding corners which are handled differently.
+    # Heads and tails are slightly shorter to provide separation.
     if 'corner' not in filename:
+        target_size = CELL_SIZE
+        if is_head or is_tail:
+            target_size = int(CELL_SIZE * separation_scale)
+            
         if width > height:
-            new_width = CELL_SIZE
+            new_width = target_size
         else:
-            new_height = CELL_SIZE
+            new_height = target_size
             
     # Resize with high quality
     img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
@@ -122,24 +132,44 @@ def process_segment(file_path, row):
     
     if 'corner' in filename:
         # Exact joint centering
-        # Corner connects TOP and RIGHT.
-        # So native joint is at bottom-left of the bounding box!
-        # X spans [0, body_thickness]
-        # Y spans [height - body_thickness, height]
-        
         native_cx = body_thickness / 2.0
         native_cy = height - (body_thickness / 2.0)
         
         scaled_cx = native_cx * scale
         scaled_cy = native_cy * scale
         
-        # Place the image such that scaled_cx aligns with 64, and scaled_cy aligns with 64
-        offset_x = int(64 - scaled_cx)
-        offset_y = int(64 - scaled_cy)
+        offset_x = int(CELL_SIZE/2 - scaled_cx)
+        offset_y = int(CELL_SIZE/2 - scaled_cy)
     else:
-        # Standard centering for bodies, heads, and tails
-        offset_x = (CELL_SIZE - new_width) // 2
-        offset_y = (CELL_SIZE - new_height) // 2
+        # Standard centering for bodies
+        # Shifting logic for heads and tails to maintain joint connection
+        if is_head:
+            if 'up' in filename:
+                # Tip at top, joint at bottom
+                offset_x = (CELL_SIZE - new_width) // 2
+                offset_y = CELL_SIZE - new_height
+            elif 'down' in filename:
+                # Tip at bottom, joint at top
+                offset_x = (CELL_SIZE - new_width) // 2
+                offset_y = 0
+            elif 'left' in filename:
+                # Tip at left, joint at right
+                offset_x = CELL_SIZE - new_width
+                offset_y = (CELL_SIZE - new_height) // 2
+            elif 'right' in filename:
+                # Tip at right, joint at left
+                offset_x = 0
+                offset_y = (CELL_SIZE - new_height) // 2
+            else:
+                offset_x = (CELL_SIZE - new_width) // 2
+                offset_y = (CELL_SIZE - new_height) // 2
+        elif is_tail:
+            # Tip at bottom, joint at top
+            offset_x = (CELL_SIZE - new_width) // 2
+            offset_y = 0
+        else:
+            offset_x = (CELL_SIZE - new_width) // 2
+            offset_y = (CELL_SIZE - new_height) // 2
         
     cell.paste(img, (offset_x, offset_y))
     
