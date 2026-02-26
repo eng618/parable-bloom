@@ -1,3 +1,14 @@
+## 1.4.2 (2026-02-26)
+
+### 🚀 Features
+
+- add password reset for accounts ([e04db94](https://github.com/eng618/parable-bloom/commit/e04db94))
+- Implement user account deletion, integrate Firebase Crashlytics. ([3e6d0e9](https://github.com/eng618/parable-bloom/commit/3e6d0e9))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.4.1 (2026-02-26)
 
 This was a version bump only for parable-bloom to align it with other projects, there were no code changes.
