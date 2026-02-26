@@ -107,6 +107,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
           _buildSectionHeader(context, 'Danger Zone'),
           _buildResetDataTile(context, ref),
+          _buildDeleteAccountTile(context, ref),
         ],
       ),
     );
@@ -437,6 +438,134 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       subtitle: const Text('Delete all progress, settings, and cloud data'),
       onTap: () => _showResetDataDialog(context, ref),
     );
+  }
+
+  Widget _buildDeleteAccountTile(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(authUserProvider);
+    final user = userAsync.value;
+
+    if (user == null || user.isAnonymous) {
+      return const SizedBox.shrink(); // Don't show option to delete anonymous accounts
+    }
+
+    return ListTile(
+      leading: Icon(
+        Icons.person_remove,
+        color: Theme.of(context).colorScheme.error,
+      ),
+      title: Text(
+        'Delete Account',
+        style: TextStyle(color: Theme.of(context).colorScheme.error),
+      ),
+      subtitle: const Text('Permanently delete your account and cloud data'),
+      onTap: () => _showDeleteAccountDialog(context, ref),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning,
+              color: Theme.of(dialogContext).colorScheme.error,
+            ),
+            const SizedBox(width: 8),
+            const Text('Delete Account'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This action cannot be undone. This will permanently delete your account, including all cloud data, settings, and progress associated with it.',
+              style: Theme.of(dialogContext).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'You may be required to sign in again before deletion can complete.',
+              style: Theme.of(
+                dialogContext,
+              ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _performAccountDeletion(context, ref);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+            ),
+            child: const Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _performAccountDeletion(BuildContext context, WidgetRef ref) async {
+    BuildContext? loadingContext;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        loadingContext = ctx;
+        return const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Deleting account...'),
+            ],
+          ),
+        );
+      },
+    );
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      await authService.deleteAccount();
+
+      // Navigate back to the start or login screen when done
+      if (loadingContext != null && loadingContext!.mounted) {
+        Navigator.of(loadingContext!).pop();
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account successfully deleted.')),
+        );
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const AuthScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (loadingContext != null && loadingContext!.mounted) {
+        Navigator.of(loadingContext!).pop();
+      }
+
+      // Reauthentication might be required.
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete account: $e\n\nYou may need to sign out and sign back in to verify your identity before deleting your account.'),
+            duration: const Duration(seconds: 10),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildDebugGridCoordinatesTile(BuildContext context, WidgetRef ref) {

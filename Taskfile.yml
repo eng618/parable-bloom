@@ -25,6 +25,7 @@ tasks:
       - task: flutter:get
       - task: lb:get
       - task: hugo:get
+      - task: firebase:configure
       - task: _setup:ios:pod-install
       - task: _setup:macos:pod-install
 

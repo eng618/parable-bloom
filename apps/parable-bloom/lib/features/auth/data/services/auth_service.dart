@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
 /// Service responsible for handling user authentication.
@@ -20,8 +21,9 @@ class AuthService {
       final credential = await _firebaseAuth.signInAnonymously();
       debugPrint('AuthService: Signed in anonymously: ${credential.user?.uid}');
       return credential;
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('AuthService: Error signing in anonymously: $e');
+      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error signing in anonymously');
       rethrow;
     }
   }
@@ -40,8 +42,9 @@ class AuthService {
       // If we were anonymous, link could be handled here or separately.
       // For now, raw creation.
       return credential;
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('AuthService: Error creating user: $e');
+      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error creating user');
       rethrow;
     }
   }
@@ -59,10 +62,11 @@ class AuthService {
       final credential =
           EmailAuthProvider.credential(email: email, password: password);
       return await user.linkWithCredential(credential);
-    } catch (e) {
+    } catch (e, stack) {
       // If the email is already in use by another account, we might want to sign in to that account instead.
       // handling that case requires UI intervention (merge accounts?)
       debugPrint('AuthService: Error linking account: $e');
+      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error linking account');
       rethrow;
     }
   }
@@ -77,8 +81,26 @@ class AuthService {
         email: email,
         password: password,
       );
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('AuthService: Error signing in: $e');
+      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error signing in');
+      rethrow;
+    }
+  }
+
+  /// Delete the user account.
+  Future<void> deleteAccount() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+          code: 'no-current-user', message: 'No user signed in');
+    }
+    try {
+      await user.delete();
+      debugPrint('AuthService: Account deleted successfully');
+    } catch (e, stack) {
+      debugPrint('AuthService: Error deleting account: $e');
+      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error deleting account');
       rethrow;
     }
   }
