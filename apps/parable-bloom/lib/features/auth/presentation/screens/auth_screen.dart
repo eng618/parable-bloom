@@ -109,6 +109,94 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
   }
 
+  Future<void> _showForgotPasswordDialog() async {
+    final emailController = TextEditingController(text: _emailController.text);
+    bool isSending = false;
+    
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Reset Password'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Enter your email address to receive a password reset link.'),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  if (isSending) ...[
+                    const SizedBox(height: 16),
+                    const CircularProgressIndicator(),
+                  ]
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSending ? null : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isSending
+                      ? null
+                      : () async {
+                          final email = emailController.text.trim();
+                          if (email.isEmpty || !email.contains('@')) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter a valid email address.')),
+                            );
+                            return;
+                          }
+
+                          setDialogState(() => isSending = true);
+
+                          try {
+                            final authService = ref.read(authServiceProvider);
+                            await authService.sendPasswordResetEmail(email);
+                            
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                SnackBar(content: Text('Password reset email sent to $email')),
+                              );
+                            }
+                          } on FirebaseAuthException catch (e) {
+                            if (dialogContext.mounted) {
+                              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                SnackBar(content: Text(e.message ?? 'An error occurred')),
+                              );
+                            }
+                          } catch (e) {
+                            if (dialogContext.mounted) {
+                              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                const SnackBar(content: Text('Failed to send reset email.')),
+                              );
+                            }
+                          } finally {
+                            if (dialogContext.mounted) {
+                              setDialogState(() => isSending = false);
+                            }
+                          }
+                        },
+                  child: const Text('Send Reset Link'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    emailController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -178,6 +266,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 16),
+                    if (_isLogin)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _showForgotPasswordDialog,
+                          child: const Text('Forgot Password?'),
+                        ),
+                      ),
                     const SizedBox(height: 24),
                     if (_isLoading)
                       const CircularProgressIndicator()

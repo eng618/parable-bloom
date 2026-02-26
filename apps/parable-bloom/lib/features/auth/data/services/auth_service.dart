@@ -105,6 +105,18 @@ class AuthService {
     }
   }
 
+  /// Send a password reset email
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      debugPrint('AuthService: Password reset email sent securely');
+    } catch (e, stack) {
+      debugPrint('AuthService: Error sending password reset email: $e');
+      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error sending password reset email');
+      rethrow;
+    }
+  }
+
   /// Sign out.
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
