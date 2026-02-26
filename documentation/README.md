@@ -32,7 +32,13 @@ Automation for versioning, changelog, and store deployments.
 
 - **Key Topics**: Nx Release, Fastlane, BWS secrets, store uploads.
 
-### 5. [Attributions (ATTRIBUTIONS.md)](ATTRIBUTIONS.md)
+### 5. [Store Onboarding (STORE_ONBOARDING.md)](STORE_ONBOARDING.md)
+
+Checklist and guidelines for App Store and Google Play Console release preparation and store listing questions.
+
+- **Key Topics**: Data safety, content rating, store assets.
+
+### 6. [Attributions (ATTRIBUTIONS.md)](ATTRIBUTIONS.md)
 
 Credits and licenses for third-party assets.
 
