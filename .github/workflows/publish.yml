@@ -72,13 +72,13 @@ jobs:
           task firebase:configure:ci
 
       - name: Upload firebase_options.dart
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: firebase_options
           path: apps/parable-bloom/lib/firebase_options.dart
 
       - name: Upload google-services.json
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: google-services
           path: apps/parable-bloom/android/app/google-services.json
@@ -223,7 +223,7 @@ jobs:
           bunx nx run parable-bloom:deploy-android
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: game-${{ matrix.platform }}
           path: apps/parable-bloom/build/app/outputs/bundle/release/app-release.aab
