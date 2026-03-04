@@ -7,7 +7,17 @@ import '../core/config/environment_config.dart';
 /// Handles console logging in development and breadcrumbs/error reporting
 /// in production via Firebase Crashlytics.
 class LoggerService {
-  static final FirebaseCrashlytics _crashlytics = FirebaseCrashlytics.instance;
+  // FirebaseCrashlytics is only available after a Firebase app is initialized.
+  // In unit tests we typically don't call `Firebase.initializeApp`, so we
+  // lazily resolve the instance and quietly ignore calls if it fails.
+  static FirebaseCrashlytics? get _crashlytics {
+    try {
+      return FirebaseCrashlytics.instance;
+    } catch (_) {
+      // initialization failure (no app) – just disable crashlytics
+      return null;
+    }
+  }
 
   /// Log an info message.
   ///
@@ -28,9 +38,9 @@ class LoggerService {
       if (stackTrace != null) debugPrint('StackTrace: $stackTrace');
     }
 
-    _crashlytics.log(formattedMessage);
+    _crashlytics?.log(formattedMessage);
     if (error != null) {
-      _crashlytics.recordError(error, stackTrace,
+      _crashlytics?.recordError(error, stackTrace,
           reason: formattedMessage, fatal: false);
     }
   }
@@ -54,9 +64,9 @@ class LoggerService {
       if (stackTrace != null) debugPrint('StackTrace: $stackTrace');
     }
 
-    _crashlytics.log(formattedMessage);
+    _crashlytics?.log(formattedMessage);
     if (error != null) {
-      _crashlytics.recordError(error, stackTrace,
+      _crashlytics?.recordError(error, stackTrace,
           reason: formattedMessage, fatal: false);
     }
   }
@@ -93,7 +103,7 @@ class LoggerService {
       if (stackTrace != null) debugPrint('StackTrace: $stackTrace');
     }
 
-    _crashlytics.recordError(
+    _crashlytics?.recordError(
       error ?? message,
       stackTrace,
       reason: formattedMessage,

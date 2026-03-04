@@ -47,6 +47,16 @@ class MockAuthService implements AuthService {
   }
 
   @override
+  Future<void> deleteAccount() async {
+    if (_exceptionToThrow != null) throw _exceptionToThrow!;
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    if (_exceptionToThrow != null) throw _exceptionToThrow!;
+  }
+
+  @override
   Future<void> signOut() async {
     if (_exceptionToThrow != null) throw _exceptionToThrow!;
   }
