@@ -9,6 +9,7 @@ import 'app.dart';
 import 'firebase_options.dart';
 import 'providers/game_providers.dart';
 import 'services/analytics_service.dart';
+import 'services/logger_service.dart';
 
 /// Entry point for Parable Bloom.
 ///
@@ -40,11 +41,12 @@ void main() async {
 
   // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
   PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    LoggerService.error('Uncaught platform error',
+        error: error, stackTrace: stack, fatal: true);
     return true;
   };
 
-  debugPrint('Firebase initialized with Crashlytics');
+  LoggerService.info('Firebase initialized with Crashlytics');
 
   // Initialize Analytics
   final analyticsService = AnalyticsService();

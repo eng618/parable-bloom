@@ -128,17 +128,43 @@ When a user explicitly creates an account, links an anonymous account to an emai
 
 ---
 
-## 4. Environment Strategy
+---
+
+## 5. Logging & Error Reporting
+
+The application uses a centralized `LoggerService` to handle all logging and error reporting, ensuring consistency across development and production environments.
+
+### 5.1 Centralized Logging (`LoggerService`)
+
+Instead of using `debugPrint` or `print`, all modules should use `LoggerService` for logging. This service provides:
+
+- **Level-Based Logging**: Support for `info`, `warn`, `debug`, and `error`.
+- **Environment Awareness**:
+  - In **Development/Preview**: Logs are printed to the console using `debugPrint`.
+  - In **All Environments**:
+    - Errors (`LoggerService.error`) are reported to **Firebase Crashlytics**.
+    - Info and Warn logs are added as **Crashlytics Breadcrumbs** to provide context for potential crashes.
+- **Traceability**: Support for optional `tag` and `metadata` to help filter and understand logs.
+
+### 5.2 Error Reporting Standards
+
+- **Try-Catch Blocks**: All caught exceptions that indicate a failure in a core process (e.g., auth, sync, asset loading) MUST be reported using `LoggerService.error`.
+- **Uncaught Errors**: Initialized in `main.dart`, `FlutterError.onError` and `PlatformDispatcher.instance.onError` are configured to capture and report all uncaught exceptions to Crashlytics.
+- **Asynchronous Errors**: All asynchronous errors in `main` or background tasks are captured and reported as fatal errors when appropriate.
+
+---
+
+## 6. Environment Strategy
 
 We use a **Single Firebase Project** strategy with **Collection-Based Isolation** to manage environments without complex build flavors.
 
-### 4.1 Collections
+### 6.1 Collections
 
 - **Development**: `game_progress_dev/{userId}/...`
 - **Preview/Staging**: `game_progress_preview/{userId}/...`
 - **Production**: `game_progress_prod/{userId}/...`
 
-### 4.2 Configuration
+### 6.2 Configuration
 
 The environment is determined at runtime via `EnvironmentConfig` (e.g., using `String.fromEnvironment` or `.env` files), which selects the appropriate Firestore collection suffix.
 
@@ -150,7 +176,7 @@ The environment is determined at runtime via `EnvironmentConfig` (e.g., using `S
 
 ---
 
-## 5. Directory Structure
+## 7. Directory Structure
 
 ```text
 apps/
@@ -178,15 +204,15 @@ nx.json                # Nx workspace configuration
 Taskfile.yml           # Root orchestration
 ```
 
-### 5.1 Monorepo Path Resolution
+### 7.1 Monorepo Path Resolution
 
 Tools within the workspace (like the Level Builder) use a smart path resolution strategy to support both standalone and monorepo layouts. They identify the repository root by searching for marker files (`nx.json`, `bun.lock`, `pubspec.yaml`) and then resolve assets relative to the identified root, prioritizing the `apps/parable-bloom/assets` directory in monorepo structures.
 
 ---
 
-## 6. Level Builder Tool (Go CLI)
+## 8. Level Builder Tool (Go CLI)
 
-### 6.1 Overview
+### 8.1 Overview
 
 The **level-builder** is a Go-based CLI tool that serves as the single source of truth for level generation, validation, and debugging. It replaces the deprecated `eng parable-bloom` CLI commands and complements the Flutter app's runtime validation.
 
@@ -196,7 +222,7 @@ The **level-builder** is a Go-based CLI tool that serves as the single source of
 
 **Documentation**: See `tools/level-builder/doc.go` for comprehensive usage, examples, and architecture details.
 
-### 6.2 Key Commands
+### 8.2 Key Commands
 
 #### Validate
 
@@ -315,7 +341,7 @@ The **level-builder** is a Go-based CLI tool that serves as the single source of
 - Deterministic seeding for reproducibility
 - Metadata tracking (complexity, min/max moves)
 
-### 6.3 Integration with Flutter App
+### 8.3 Integration with Flutter App
 
 #### Runtime Validation (Flutter)
 
@@ -372,7 +398,7 @@ The level-builder performs **heavy validation** during development:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 6.4 Algorithms & Performance
+### 8.4 Algorithms & Performance
 
 #### Exact A\* Solver
 
@@ -408,7 +434,7 @@ The level-builder performs **heavy validation** during development:
 6. **Circular Blocking**: DFS cycle detection on blocking graph (A blocks B blocks C blocks A = invalid)
 7. **Mask Consistency**: Vines only occupy visible cells (when mask mode != "show-all")
 
-### 6.5 Migration Status
+### 8.5 Migration Status
 
 #### Deprecated (Old System)
 
@@ -437,7 +463,7 @@ The level-builder performs **heavy validation** during development:
 
 ---
 
-## 7. Testing & Quality Assurance
+## 9. Testing & Quality Assurance
 
 The project follows a multi-tiered testing strategy:
 
@@ -448,18 +474,18 @@ The project follows a multi-tiered testing strategy:
 
 ---
 
-## 8. CI/CD & Automation
+## 10. CI/CD & Automation
 
 The project uses GitHub Actions for continuous integration and deployment, managing complexity across the monorepo and Firebase services.
 
-### 8.1 Validation (CI)
+### 10.1 Validation (CI)
 
 - **Workflow**: `.github/workflows/ci.yml`
 - **Trigger**: Pull requests and pushes to `main`/`develop`.
 - **Tasks**: Nx-orchestrated linting (`analyze`), formatting checks, and unit tests across all packages (Flutter, Go, Hugo).
 - **Firebase**: Uses `scripts/generate_dummy_firebase_options.dart` to allow builds to pass without requiring cloud secrets.
 
-### 8.2 Web Deployment & Previews
+### 10.2 Web Deployment & Previews
 
 - **Workflow**: `.github/workflows/deploy-web.yml`
 - **Trigger**:
@@ -470,7 +496,7 @@ The project uses GitHub Actions for continuous integration and deployment, manag
   - Interactive PR comments with preview URLs.
   - Environment isolation via `APP_ENV` (`prod` vs `preview`).
 
-### 8.3 Production Releases
+### 10.3 Production Releases
 
 - **Workflow**: `.github/workflows/publish.yml`
 - **Trigger**: Version tags matching `v*` (Game) or `level-builder-v*` (Tool).
@@ -479,7 +505,7 @@ The project uses GitHub Actions for continuous integration and deployment, manag
   - Signed Android builds (`.aab`) with Bitwarden Secrets Manager integration.
   - Web production build and manual release tagging.
 
-### 8.4 Nx Caching
+### 10.4 Nx Caching
 
 The project utilizes Nx's task caching to accelerate repetitive tasks like builds, tests, and linting.
 
@@ -490,9 +516,9 @@ The project utilizes Nx's task caching to accelerate repetitive tasks like build
 
 ---
 
-## 9. Troubleshooting & Configuration
+## 11. Troubleshooting & Configuration
 
-### 9.1 Firebase Configuration (CLI Issues)
+### 11.1 Firebase Configuration (CLI Issues)
 
 If `flutterfire configure` fails with errors like `UnsupportedError: not found in web`, follow these manual steps to reconstruct the configuration:
 
@@ -503,11 +529,11 @@ If `flutterfire configure` fails with errors like `UnsupportedError: not found i
    - **iOS/macOS**: Ensure `ios/Runner/GoogleService-Info.plist` and `macos/Runner/GoogleService-Info.plist` are present and correct.
 4. **Windows/Linux**: These platforms typically use a Web configuration. In the Firebase console, register a separate Web app for Windows/Linux and use its credentials in the `windows` section of `DefaultFirebaseOptions`.
 
-### 8.2 Nx & Monorepo
+### 11.2 Nx & Monorepo
 
 - Use `task dev` to start the development server across all platforms via Nx.
 
-### 9.2 Firebase Hosting (Preview Channels)
+### 11.3 Firebase Hosting (Preview Channels)
 
 #### Issue: Auth Sync Warnings
 
@@ -521,6 +547,6 @@ When deploying to a preview channel (e.g., in CI for PRs), you may see warnings 
 1. **Suppress Warnings**: Add the `--no-authorized-domains` flag to your `firebase hosting:channel:deploy` command. This is suitable if you don't need Firebase Auth to work on temporary preview domains.
 2. **Fix Permissions**: Grant the service account used for deployment the **Firebase Auth Admin** (`roles/firebaseauth.admin`) or **Identity Toolkit Admin** (`roles/identitytoolkit.admin`) role in the Google Cloud Console.
 
-### 10. Manual Environment Promotion
+### 11.4 Manual Environment Promotion
 
 - To promote a `preview` build to `production`, use the `firebase hosting:clone` command or trigger a deployment from the `main` branch.

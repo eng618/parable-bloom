@@ -10,6 +10,7 @@ import 'features/settings/presentation/screens/settings_screen.dart';
 import 'providers/game_providers.dart';
 import 'screens/home_screen.dart';
 import 'features/auth/presentation/providers/auth_providers.dart';
+import 'services/logger_service.dart';
 
 class ParableBloomApp extends ConsumerStatefulWidget {
   const ParableBloomApp({super.key});
@@ -63,7 +64,8 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
 
       // If user logged in (or changed), sync from cloud
       if (user != null && user.uid != previousUser?.uid) {
-        debugPrint('App: User logged in/changed. Triggering sync...');
+        LoggerService.info('User logged in/changed. Triggering sync...',
+            tag: 'App');
         await ref.read(gameProgressProvider.notifier).manualSync();
       }
     });

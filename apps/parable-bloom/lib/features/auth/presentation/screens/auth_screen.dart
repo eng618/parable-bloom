@@ -90,7 +90,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               _errorMessage = 'The password provided is too weak.';
               break;
             default:
-              _errorMessage = e.message ?? 'An unknown authentication error occurred.';
+              _errorMessage =
+                  e.message ?? 'An unknown authentication error occurred.';
           }
         });
       }
@@ -112,7 +113,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Future<void> _showForgotPasswordDialog() async {
     final emailController = TextEditingController(text: _emailController.text);
     bool isSending = false;
-    
+
     await showDialog(
       context: context,
       builder: (dialogContext) {
@@ -123,7 +124,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Enter your email address to receive a password reset link.'),
+                  const Text(
+                      'Enter your email address to receive a password reset link.'),
                   const SizedBox(height: 16),
                   TextField(
                     controller: emailController,
@@ -141,7 +143,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: isSending ? null : () => Navigator.of(dialogContext).pop(),
+                  onPressed: isSending
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
@@ -151,7 +155,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           final email = emailController.text.trim();
                           if (email.isEmpty || !email.contains('@')) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please enter a valid email address.')),
+                              const SnackBar(
+                                  content: Text(
+                                      'Please enter a valid email address.')),
                             );
                             return;
                           }
@@ -161,23 +167,29 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           try {
                             final authService = ref.read(authServiceProvider);
                             await authService.sendPasswordResetEmail(email);
-                            
+
                             if (dialogContext.mounted) {
                               Navigator.of(dialogContext).pop();
                               ScaffoldMessenger.of(dialogContext).showSnackBar(
-                                SnackBar(content: Text('Password reset email sent to $email')),
+                                SnackBar(
+                                    content: Text(
+                                        'Password reset email sent to $email')),
                               );
                             }
                           } on FirebaseAuthException catch (e) {
                             if (dialogContext.mounted) {
                               ScaffoldMessenger.of(dialogContext).showSnackBar(
-                                SnackBar(content: Text(e.message ?? 'An error occurred')),
+                                SnackBar(
+                                    content:
+                                        Text(e.message ?? 'An error occurred')),
                               );
                             }
                           } catch (e) {
                             if (dialogContext.mounted) {
                               ScaffoldMessenger.of(dialogContext).showSnackBar(
-                                const SnackBar(content: Text('Failed to send reset email.')),
+                                const SnackBar(
+                                    content:
+                                        Text('Failed to send reset email.')),
                               );
                             }
                           } finally {

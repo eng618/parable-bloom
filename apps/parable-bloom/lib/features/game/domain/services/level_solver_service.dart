@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import '../../../../services/logger_service.dart';
 
 // Import only the data model we need (will be moved in future commits)
 // For now, importing from providers to maintain compatibility
@@ -201,8 +201,9 @@ class LevelSolverService {
   }
 
   bool _isSolvableHeuristic(LevelData level, {required int maxStates}) {
-    debugPrint(
-      'LevelSolverService: Checking solvability for level ${level.id}',
+    LoggerService.info(
+      'Checking solvability for level ${level.id}',
+      tag: 'LevelSolverService',
     );
 
     final initialVines = level.vines.map((v) => v.id).toList();
@@ -239,8 +240,9 @@ class LevelSolverService {
       statesExplored++;
 
       if (currentVines.isEmpty) {
-        debugPrint(
-          'LevelSolverService: Solvable (explored $statesExplored states)',
+        LoggerService.info(
+          'Solvable (explored $statesExplored states)',
+          tag: 'LevelSolverService',
         );
         return true;
       }
@@ -274,11 +276,13 @@ class LevelSolverService {
     }
 
     if (statesExplored >= maxStates) {
-      debugPrint(
-        'LevelSolverService: Gave up after exploring $maxStates states - level may be too complex',
+      LoggerService.warn(
+        'Gave up after exploring $maxStates states - level may be too complex',
+        tag: 'LevelSolverService',
       );
     } else {
-      debugPrint('LevelSolverService: UNSOLVABLE level ${level.id}');
+      LoggerService.warn('UNSOLVABLE level ${level.id}',
+          tag: 'LevelSolverService');
     }
     return false;
   }

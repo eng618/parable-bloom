@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../services/logger_service.dart';
 import '../../../../providers/game_providers.dart';
 import '../../../../providers/tutorial_providers.dart';
 import '../../../../screens/home_screen.dart';
@@ -45,10 +46,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               useSimpleVines ? Icons.grid_view : Icons.park,
               color: useSimpleVines
                   ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  : Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
             ),
             title: const Text('Classic Vines'),
-            subtitle: const Text('Use simple vine assets (visually impaired mode)'),
+            subtitle:
+                const Text('Use simple vine assets (visually impaired mode)'),
             value: useSimpleVines,
             onChanged: (value) async {
               await ref.read(useSimpleVinesProvider.notifier).setEnabled(value);
@@ -190,7 +195,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _buildBoardZoomTile(BuildContext context, WidgetRef ref) {
     final zoomAsync = ref.watch(boardZoomScaleProvider);
-    
+
     return zoomAsync.when(
       data: (zoom) => ListTile(
         leading: Icon(
@@ -445,7 +450,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final user = userAsync.value;
 
     if (user == null || user.isAnonymous) {
-      return const SizedBox.shrink(); // Don't show option to delete anonymous accounts
+      return const SizedBox
+          .shrink(); // Don't show option to delete anonymous accounts
     }
 
     return ListTile(
@@ -560,7 +566,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to delete account: $e\n\nYou may need to sign out and sign back in to verify your identity before deleting your account.'),
+            content: Text(
+                'Failed to delete account: $e\n\nYou may need to sign out and sign back in to verify your identity before deleting your account.'),
             duration: const Duration(seconds: 10),
           ),
         );
@@ -902,60 +909,67 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }) async {
     try {
       // 1. Clear Firebase data first
-      debugPrint('ResetData: Clearing Firebase data...');
+      LoggerService.info('Clearing Firebase data...', tag: 'ResetData');
       final user = auth.currentUser;
 
       if (user != null) {
         // Clear user's cloud data
         final userDoc = firestore.collection('users').doc(user.uid);
         await userDoc.delete();
-        debugPrint('ResetData: Firebase data cleared for user ${user.uid}');
+        LoggerService.info('Firebase data cleared for user ${user.uid}',
+            tag: 'ResetData');
       }
 
       // 2. Clear Hive data
-      debugPrint('ResetData: Clearing Hive data...');
+      LoggerService.info('Clearing Hive data...', tag: 'ResetData');
       await box.clear();
-      debugPrint('ResetData: Hive data cleared');
+      LoggerService.info('Hive data cleared', tag: 'ResetData');
 
       // 3. Close the loading dialog immediately (before invalidating providers)
-      debugPrint('ResetData: Attempting to close loading dialog...');
+      LoggerService.debug('Attempting to close loading dialog...',
+          tag: 'ResetData');
       try {
         if (loadingContext != null && loadingContext.mounted) {
           Navigator.of(loadingContext).pop();
-          debugPrint('ResetData: Loading dialog closed');
+          LoggerService.debug('Loading dialog closed', tag: 'ResetData');
         }
-      } catch (dialogError) {
-        debugPrint('ResetData: Error closing dialog: $dialogError');
+      } catch (dialogError, stack) {
+        LoggerService.error('Error closing dialog',
+            error: dialogError, stackTrace: stack, tag: 'ResetData');
       }
 
       // 4. Check context before continuing
       if (!originalContext.mounted) {
-        debugPrint('ResetData: Original context not mounted, aborting');
+        LoggerService.warn('Original context not mounted, aborting',
+            tag: 'ResetData');
         return;
       }
 
       // 5. Navigate to home immediately (before invalidating UI providers)
-      debugPrint('ResetData: Navigating to home screen...');
+      LoggerService.info('Navigating to home screen...', tag: 'ResetData');
       try {
         await Navigator.of(originalContext).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
           (route) => false,
         );
-        debugPrint('ResetData: Navigation completed');
-      } catch (navError) {
-        debugPrint('ResetData: Navigation error: $navError');
+        LoggerService.debug('Navigation completed', tag: 'ResetData');
+      } catch (navError, stack) {
+        LoggerService.error('Navigation error',
+            error: navError, stackTrace: stack, tag: 'ResetData');
         return;
       }
 
       // 6. NOW invalidate only essential progress/level providers
       // (after navigation is complete)
       // These providers will rebuild with cleared data when HomeScreen loads
-      debugPrint('ResetData: Invalidating progress providers...');
+      LoggerService.debug('Invalidating progress providers...',
+          tag: 'ResetData');
       ref.invalidate(gameProgressProvider);
 
-      debugPrint('ResetData: Reset completed successfully');
-    } catch (e) {
-      debugPrint('ResetData: Error during reset: $e');
+      LoggerService.info('Reset completed successfully', tag: 'ResetData');
+    } catch (e, stack) {
+      LoggerService.error('Error during reset',
+          error: e, stackTrace: stack, tag: 'ResetData');
 
       // Close loading dialog safely
       if (loadingContext != null &&

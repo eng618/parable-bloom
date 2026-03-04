@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../../core/config/environment_config.dart';
+import '../../../../services/logger_service.dart';
 import '../../domain/entities/game_progress.dart';
 import '../../domain/repositories/game_progress_repository.dart';
 
@@ -61,8 +61,9 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     if (await isCloudSyncEnabled() && _userId != null) {
       // Fire and forget - if it fails, we'll catch it on next sync
       // We don't await this to keep UI responsive, but we could if we wanted validation
-      syncToCloud().catchError((e) {
-        debugPrint('Auto-sync failed: $e');
+      syncToCloud().catchError((e, stack) {
+        LoggerService.error('Auto-sync failed',
+            error: e, stackTrace: stack, tag: 'FirebaseGameProgressRepository');
       });
     }
   }
@@ -84,8 +85,9 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
             .collection('data')
             .doc(_progressDoc)
             .delete();
-      } catch (e) {
-        debugPrint('Cloud reset failed: $e');
+      } catch (e, stack) {
+        LoggerService.error('Cloud reset failed',
+            error: e, stackTrace: stack, tag: 'FirebaseGameProgressRepository');
       }
     }
   }
@@ -96,7 +98,8 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
     final userId = _userId;
     if (userId == null) {
-      debugPrint('Sync skipped: No user logged in');
+      LoggerService.debug('Sync skipped: No user logged in',
+          tag: 'FirebaseGameProgressRepository');
       return;
     }
 
@@ -109,7 +112,8 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
     // Only push if local changes are newer than last sync
     if (lastLocalUpdate <= lastSyncMillis && lastSyncMillis != 0) {
-      debugPrint('Sync skipped: Local data is already synced');
+      LoggerService.debug('Sync skipped: Local data is already synced',
+          tag: 'FirebaseGameProgressRepository');
       return;
     }
 
@@ -144,8 +148,9 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
             // Cloud is ahead! We should actually PULL this data to local, not overwrite it.
             // But we are in 'syncToCloud'.
             // Let's trigger a merge/pull logic.
-            debugPrint(
-                'Cloud is ahead (L${cloudProgress.currentLevel} vs L${localProgress.currentLevel}). handling conflict by merging.');
+            LoggerService.info(
+                'Cloud is ahead (L${cloudProgress.currentLevel} vs L${localProgress.currentLevel}). handling conflict by merging.',
+                tag: 'FirebaseGameProgressRepository');
             shouldPush = false;
             await _mergeRemoteToLocal(cloudProgress);
           }
@@ -166,10 +171,12 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
         // Update local sync timestamp
         await _localBox.put(_lastSyncTimeKey, now.millisecondsSinceEpoch);
-        debugPrint('Sync to cloud successful');
+        LoggerService.info('Sync to cloud successful',
+            tag: 'FirebaseGameProgressRepository');
       }
-    } catch (e) {
-      debugPrint('Sync to cloud failed: $e');
+    } catch (e, stack) {
+      LoggerService.error('Sync to cloud failed',
+          error: e, stackTrace: stack, tag: 'FirebaseGameProgressRepository');
       // Rethrow? No, fail silently but log.
     }
   }
@@ -198,8 +205,9 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
           await _mergeRemoteToLocal(cloudProgress);
         }
       }
-    } catch (e) {
-      debugPrint('Sync from cloud failed: $e');
+    } catch (e, stack) {
+      LoggerService.error('Sync from cloud failed',
+          error: e, stackTrace: stack, tag: 'FirebaseGameProgressRepository');
     }
   }
 
@@ -229,7 +237,8 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
         mergedTutorialCompleted != localProgress.tutorialCompleted;
 
     if (isDifferent) {
-      debugPrint('Merging cloud data into local...');
+      LoggerService.info('Merging cloud data into local...',
+          tag: 'FirebaseGameProgressRepository');
       final newProgress = localProgress.copyWith(
         currentLevel: maxCurrentLevel,
         completedLevels: mergedCompletedLevels,

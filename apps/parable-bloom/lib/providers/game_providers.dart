@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -20,6 +19,7 @@ import '../features/settings/domain/repositories/settings_repository.dart';
 import '../core/vine_color_palette.dart';
 import '../services/background_audio_controller.dart';
 import '../services/analytics_service.dart';
+import '../services/logger_service.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 // Camera state for zoom and pan
@@ -167,8 +167,9 @@ final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
         .map((moduleJson) =>
             ModuleData.fromJson(moduleJson as Map<String, dynamic>))
         .toList();
-  } catch (e) {
-    debugPrint('Error loading modules.json: $e');
+  } catch (e, stack) {
+    LoggerService.error('Error loading modules.json',
+        error: e, stackTrace: stack, tag: 'modulesProvider');
     return [];
   }
 });
@@ -192,8 +193,9 @@ class VineData {
     final vineColor = json['vine_color']?.toString().trim();
     if (vineColor != null && vineColor.isNotEmpty) {
       if (!VineColorPalette.isKnownKey(vineColor)) {
-        debugPrint(
-          'Warning: Unknown vine_color "$vineColor" will use default color',
+        LoggerService.warn(
+          'Unknown vine_color "$vineColor" will use default color',
+          tag: 'VineData',
         );
       }
     }
@@ -344,8 +346,9 @@ final hiveBoxProvider = Provider<Box>((ref) {
     // If Hive is not available (for example during widget tests or outside main), fall back to an in-memory box.
   }
 
-  debugPrint(
-      'hiveBoxProvider: No Hive box open; using in-memory fallback for tests');
+  LoggerService.debug(
+    'hiveBoxProvider: No Hive box open; using in-memory fallback for tests',
+  );
   return _InMemoryBox();
 });
 
@@ -541,15 +544,18 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     try {
       final progress = await repository.getProgress();
       state = progress;
-    } catch (e) {
+    } catch (e, stack) {
       // If loading fails, keep initial state
+      LoggerService.error('Error initializing GameProgress',
+          error: e, stackTrace: stack, tag: 'GameProgressNotifier');
       state = GameProgress.initial();
     }
   }
 
   Future<void> completeLevel(int levelNumber) async {
-    debugPrint(
-      'GameProgressNotifier: Completing level $levelNumber, current state: $state',
+    LoggerService.debug(
+      'Completing level $levelNumber, current state: $state',
+      tag: 'GameProgressNotifier',
     );
 
     final newCompletedLevels = Set<int>.from(state.completedLevels)
@@ -577,14 +583,16 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       tutorialCompleted: newTutorialCompleted,
     );
 
-    debugPrint(
-      'GameProgressNotifier: New progress: $newProgress',
+    LoggerService.debug(
+      'New progress: $newProgress',
+      tag: 'GameProgressNotifier',
     );
 
     await _saveProgress(newProgress);
 
-    debugPrint(
-      'GameProgressNotifier: After save, state is: $state',
+    LoggerService.debug(
+      'After save, state is: $state',
+      tag: 'GameProgressNotifier',
     );
 
     // Log level complete analytics
@@ -1101,7 +1109,7 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   }
 
   void clearVine(String vineId) {
-    debugPrint('VineStatesNotifier: Clearing vine $vineId');
+    LoggerService.debug('Clearing vine $vineId', tag: 'VineStatesNotifier');
     // Mark as cleared
     final mapWithCleared = Map<String, VineState>.from(state);
     if (mapWithCleared.containsKey(vineId)) {
@@ -1119,8 +1127,9 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
     if (s == null) return;
 
     if (!s.hasBeenAttempted) {
-      debugPrint(
-        'VineStatesNotifier: Marking $vineId as attempted and decrementing life',
+      LoggerService.info(
+        'Marking $vineId as attempted and decrementing life',
+        tag: 'VineStatesNotifier',
       );
 
       state = {
@@ -1146,8 +1155,9 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
       // Notify parent/provider to decrement grace
       ref.read(gameInstanceProvider.notifier).decrementGrace();
     } else {
-      debugPrint(
-        'VineStatesNotifier: $vineId already attempted, skipping life decrement',
+      LoggerService.debug(
+        '$vineId already attempted, skipping life decrement',
+        tag: 'VineStatesNotifier',
       );
     }
   }
@@ -1158,12 +1168,14 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
     final allFinished = state.values.every((vineState) =>
         vineState.isCleared ||
         vineState.animationState == VineAnimationState.animatingClear);
-    debugPrint(
-      'VineStatesNotifier: Checking completion - allFinished: $allFinished, total vines: ${state.length}',
+    LoggerService.debug(
+      'Checking completion - allFinished: $allFinished, total vines: ${state.length}',
+      tag: 'VineStatesNotifier',
     );
     if (allFinished && state.isNotEmpty) {
-      debugPrint(
-        'VineStatesNotifier: LEVEL COMPLETE detected! Setting levelCompleteProvider to true',
+      LoggerService.info(
+        'LEVEL COMPLETE detected! Setting levelCompleteProvider to true',
+        tag: 'VineStatesNotifier',
       );
       // Trigger level complete
       ref.read(levelCompleteProvider.notifier).setComplete(true);
@@ -1277,8 +1289,9 @@ class CameraStateNotifier extends Notifier<CameraState> {
     // Max zoom allows comfortable zooming in, but not excessively
     final maxZoom = 2.5;
 
-    debugPrint(
-      'CameraStateNotifier: Updated zoom bounds - min: $minZoom, max: $maxZoom (fit: $zoomToFit)',
+    LoggerService.debug(
+      'Updated zoom bounds - min: $minZoom, max: $maxZoom (fit: $zoomToFit)',
+      tag: 'CameraStateNotifier',
     );
 
     state = state.copyWith(
@@ -1321,15 +1334,18 @@ class CameraStateNotifier extends Notifier<CameraState> {
       isAnimating: true,
     );
 
-    debugPrint(
-      'CameraStateNotifier: Starting animation from zoom $initialZoom to $_animationTargetZoom',
+    LoggerService.debug(
+      'Starting animation from zoom $initialZoom to $_animationTargetZoom',
+      tag: 'CameraStateNotifier',
     );
 
     // If animations are disabled (e.g., during tests), skip creating timers
     if (ref.read(disableAnimationsProvider)) {
       state = state.copyWith(isAnimating: false, zoom: _animationTargetZoom);
-      debugPrint(
-          'CameraStateNotifier: Animations disabled - skipping animation');
+      LoggerService.debug(
+        'Animations disabled - skipping animation',
+        tag: 'CameraStateNotifier',
+      );
       return;
     }
 
@@ -1343,8 +1359,10 @@ class CameraStateNotifier extends Notifier<CameraState> {
         if (ref.read(disableAnimationsProvider)) {
           timer.cancel();
           state = state.copyWith(isAnimating: false);
-          debugPrint(
-              'CameraStateNotifier: Animations disabled during run - cancelling');
+          LoggerService.debug(
+            'Animations disabled during run - cancelling',
+            tag: 'CameraStateNotifier',
+          );
           return;
         }
 
@@ -1372,7 +1390,7 @@ class CameraStateNotifier extends Notifier<CameraState> {
         if (_animationProgress >= 1.0) {
           timer.cancel();
           state = state.copyWith(isAnimating: false);
-          debugPrint('CameraStateNotifier: Animation complete');
+          LoggerService.debug('Animation complete', tag: 'CameraStateNotifier');
         }
       },
     );
@@ -1437,12 +1455,12 @@ class CameraStateNotifier extends Notifier<CameraState> {
     const visibleThreshold = 0.2;
     // For smaller grids that fit on screen, constrain pan tightly
     // For larger grids, constrain to keep at least visibleThreshold of the grid on screen
-    final maxOffsetX = screenWidth > gridWidth 
+    final maxOffsetX = screenWidth > gridWidth
         ? gridWidth * 0.2 // Max 20% drift if it fits fully
         : gridWidth * (1 - visibleThreshold);
-        
-    final maxOffsetY = screenHeight > gridHeight 
-        ? gridHeight * 0.2 
+
+    final maxOffsetY = screenHeight > gridHeight
+        ? gridHeight * 0.2
         : gridHeight * (1 - visibleThreshold);
 
     // Constrain offset (panOffset is relative to the center, so clamp symmetrically)

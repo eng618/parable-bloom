@@ -11,6 +11,7 @@ import '../widgets/garden_game.dart';
 import '../widgets/pause_menu_dialog.dart';
 import '../widgets/pond_ripple_effect_component.dart';
 import '../widgets/ripple_fireworks_component.dart';
+import '../../../../services/logger_service.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -41,14 +42,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   void initState() {
     super.initState();
-    debugPrint('GameScreen: initState called, _game is null: ${_game == null}');
+    LoggerService.debug('GameScreen init',
+        tag: 'GameScreen', metadata: {'game_is_null': _game == null});
     _isLevelCompleteOverlayVisible = false;
     _currentCongratulationMessage = '';
   }
 
   @override
   void dispose() {
-    debugPrint('GameScreen: dispose called');
+    LoggerService.debug('GameScreen dispose', tag: 'GameScreen');
     super.dispose();
   }
 
@@ -82,11 +84,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     // Watch for level completion and show overlay
     ref.listen(levelCompleteProvider, (previous, next) {
-      debugPrint(
-        '_GameScreen: levelCompleteProvider changed from $previous to $next',
-      );
+      LoggerService.debug('levelCompleteProvider changed',
+          tag: 'GameScreen',
+          metadata: {
+            'previous': previous,
+            'next': next,
+          });
       if (next && (previous == null || !previous)) {
-        debugPrint('_GameScreen: Showing level complete overlay');
+        LoggerService.info('Showing level complete overlay', tag: 'GameScreen');
         _showLevelCompleteOverlay();
       }
     });
@@ -94,7 +99,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Watch for total game completion
     ref.listen(gameCompletedProvider, (previous, next) {
       if (next && (previous == null || !previous)) {
-        debugPrint('_GameScreen: Showing game completed dialog');
+        LoggerService.info('Showing game completed dialog', tag: 'GameScreen');
         _showGameCompletedDialog();
       }
     });
@@ -102,7 +107,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Watch for Game Over
     ref.listen(gameOverProvider, (previous, next) {
       if (next && (previous == null || !previous)) {
-        debugPrint('_GameScreen: Showing game over dialog');
+        LoggerService.info('Showing game over dialog', tag: 'GameScreen');
         _showGameOverDialog();
       }
     });
@@ -139,7 +144,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           onScaleEnd: _handleScaleEnd,
           child: GameWidget<GardenGame>(
             game: _game ??= () {
-              debugPrint('GameScreen: Creating new GardenGame instance');
+              LoggerService.debug('Creating new GardenGame instance',
+                  tag: 'GameScreen');
               return GardenGame(ref: ref);
             }(),
             loadingBuilder: (_) =>
@@ -423,8 +429,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             .read(gameProgressProvider.notifier)
             .completeLevel(currentLevel.id);
       } else {
-        debugPrint(
-            'GameScreen: Debug play — skipping persistence for level ${currentLevel.id}');
+        LoggerService.debug('Debug play — skipping persistence',
+            tag: 'GameScreen', metadata: {'level_id': currentLevel.id});
       }
     }
     ref.read(levelCompleteProvider.notifier).setComplete(false);
@@ -604,7 +610,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  debugPrint('_showGameCompletedDialog: Returning to home');
+                  LoggerService.info('Returning to home from completion dialog',
+                      tag: 'GameScreen');
                   ref.read(gameCompletedProvider.notifier).setCompleted(false);
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();

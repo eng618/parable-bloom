@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/app_theme.dart';
 import '../../../../providers/game_providers.dart';
 import '../../../../providers/tutorial_providers.dart';
+import '../../../../services/logger_service.dart';
 import '../../../game/presentation/widgets/garden_game.dart';
 import '../../../game/presentation/widgets/game_header.dart';
 import '../../../game/presentation/widgets/pause_menu_dialog.dart';
@@ -77,8 +78,8 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
     // Listen for level completion
     ref.listen<bool>(levelCompleteProvider, (previous, next) {
-      debugPrint(
-          'TutorialFlowScreen: levelCompleteProvider changed $previous -> $next');
+      LoggerService.debug('levelCompleteProvider changed $previous -> $next',
+          tag: 'TutorialFlowScreen');
       if (next && (previous == null || !previous)) {
         _showLevelCompleteOverlay();
       }
@@ -86,8 +87,8 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
     // Listen for game completion (all vines cleared)
     ref.listen<bool>(gameCompletedProvider, (previous, next) {
-      debugPrint(
-          'TutorialFlowScreen: gameCompletedProvider changed $previous -> $next');
+      LoggerService.debug('gameCompletedProvider changed $previous -> $next',
+          tag: 'TutorialFlowScreen');
       if (next && (previous == null || !previous)) {
         _showLevelCompleteOverlay();
       }
@@ -97,8 +98,8 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     if (tutorialProgress.allLessonsCompleted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          debugPrint(
-              'TutorialFlowScreen: All lessons completed - returning to home');
+          LoggerService.info('All lessons completed - returning to home',
+              tag: 'TutorialFlowScreen');
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       });
@@ -169,7 +170,8 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                   if (_isLevelCompleteOverlayVisible)
                     _buildLevelCompleteOverlay(),
 
-                  if (kIsWeb) _buildZoomControls(lesson.gridWidth, lesson.gridHeight),
+                  if (kIsWeb)
+                    _buildZoomControls(lesson.gridWidth, lesson.gridHeight),
                 ],
               ),
             );
@@ -227,7 +229,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     if (tutorialProgress.allLessonsCompleted) return;
 
     final lessonNum = tutorialProgress.currentLesson;
-    // We can't easily get LevelData here without watching the provider, 
+    // We can't easily get LevelData here without watching the provider,
     // but we have it in the build method.
     // For simplicity, let's just use the current lesson's dimensions if we can.
     // However, lessonProvider is an asynclistener.
@@ -299,7 +301,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                         cameraState.minZoom,
                         cameraState.maxZoom,
                       );
-                      ref.read(cameraStateProvider.notifier).updateZoom(newZoom);
+                      ref
+                          .read(cameraStateProvider.notifier)
+                          .updateZoom(newZoom);
                     },
             ),
             const Divider(height: 1),
@@ -313,7 +317,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                         cameraState.minZoom,
                         cameraState.maxZoom,
                       );
-                      ref.read(cameraStateProvider.notifier).updateZoom(newZoom);
+                      ref
+                          .read(cameraStateProvider.notifier)
+                          .updateZoom(newZoom);
                     },
             ),
             const Divider(height: 1),

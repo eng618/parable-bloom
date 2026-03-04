@@ -7,6 +7,7 @@ import 'package:flame/sprite.dart';
 
 import '../../../../core/vine_color_palette.dart';
 import '../../../../providers/game_providers.dart';
+import '../../../../services/logger_service.dart';
 import 'grid_component.dart';
 
 class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
@@ -44,7 +45,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Track if we've already notified parent of clearing
   final bool _alreadyNotifiedCleared = false;
 
-
   VineComponent({required this.vineData, required this.cellSize}) {
     // Initialize visual positions directly from vine data (pure x,y coordinates)
     _currentVisualPositions = List<Map<String, int>>.from(
@@ -78,12 +78,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // Visual positions are already initialized in constructor
     // This is just for logging
 
-    debugPrint('VineComponent loaded for vine ${vineData.id}');
-    debugPrint(
-      'Vine ordered path: ${vineData.orderedPath.map((p) => "(${p['x']},${p['y']})").join(' -> ')}',
-    );
-    debugPrint('Head direction: ${vineData.headDirection}');
-    debugPrint('Calculated direction: ${_calculateVineDirection()}');
+    LoggerService.debug('VineComponent loaded',
+        tag: 'VineComponent',
+        metadata: {
+          'vine_id': vineData.id,
+          'head_direction': vineData.headDirection,
+          'calculated_direction': _calculateVineDirection(),
+        });
   }
 
   @override
@@ -171,10 +172,18 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       } else {
         rotation = 0; // Use the pre-rotated sprite
         switch (dir) {
-          case 'up': col = 0; break;
-          case 'down': col = 1; break;
-          case 'left': col = 2; break;
-          case 'right': col = 3; break;
+          case 'up':
+            col = 0;
+            break;
+          case 'down':
+            col = 1;
+            break;
+          case 'left':
+            col = 2;
+            break;
+          case 'right':
+            col = 3;
+            break;
         }
       }
     } else if (isTail && index > 0) {
@@ -185,7 +194,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final dy = cell['y']! - prevCell['y']!; // Movement vector to tail
 
       if (dx > 0) {
-        rotation = -math.pi / 2; // Tail is to the right of prev, so points right
+        rotation =
+            -math.pi / 2; // Tail is to the right of prev, so points right
       } else if (dx < 0) {
         rotation = math.pi / 2; // Points left
       } else if (dy > 0) {
@@ -250,16 +260,18 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     // Apply color tint ONLY to simple vine sprites
     final paint = useSimpleVines
-        ? (Paint()..colorFilter = ColorFilter.mode(tintColor, BlendMode.modulate))
+        ? (Paint()
+          ..colorFilter = ColorFilter.mode(tintColor, BlendMode.modulate))
         : Paint();
 
     // Provide scaled size to fill cell
     // Depending on the tile margin, might need scale factor
-    final scaleFactor = 1.0; 
+    final scaleFactor = 1.0;
     sprite.render(
       canvas,
       size: Vector2(cellSize * scaleFactor, cellSize * scaleFactor),
-      position: Vector2(-cellSize * scaleFactor / 2, -cellSize * scaleFactor / 2),
+      position:
+          Vector2(-cellSize * scaleFactor / 2, -cellSize * scaleFactor / 2),
       overridePaint: paint,
     );
 
@@ -663,8 +675,16 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         visualY * cellSize + cellSize / 2,
       );
 
-      debugPrint(
-        'Bloom effect started at grid edge: head($headX,$headY) -> bloom($bloomX,$bloomY)',
+      LoggerService.debug(
+        'Bloom effect started at grid edge',
+        tag: 'VineComponent',
+        metadata: {
+          'vine_id': vineData.id,
+          'head_x': headX,
+          'head_y': headY,
+          'bloom_x': bloomX,
+          'bloom_y': bloomY,
+        },
       );
     }
   }
@@ -709,7 +729,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       debugVineAnimationLoggingProvider,
     );
     if (debugEnabled) {
-      debugPrint('VineComponent: $message');
+      LoggerService.debug(message,
+          tag: 'VineComponent', metadata: {'vine_id': vineData.id});
     }
   }
 

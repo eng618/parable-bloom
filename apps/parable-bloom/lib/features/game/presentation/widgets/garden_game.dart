@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/game_providers.dart';
+import '../../../../services/logger_service.dart';
 import '../../../tutorial/domain/entities/lesson_data.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
@@ -31,7 +31,8 @@ class GardenGame extends FlameGame with TapCallbacks {
   late Color _vineAttemptedColor;
 
   GardenGame({required this.ref}) {
-    debugPrint('GardenGame: Constructor called - creating new instance');
+    LoggerService.debug('Constructor called - creating new instance',
+        tag: 'GardenGame');
     // Initialize with default theme colors - will be updated by game screen
     _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
     _tapEffectColor = const Color(0xFFE6E1E5); // Default light for dark theme
@@ -56,8 +57,9 @@ class GardenGame extends FlameGame with TapCallbacks {
     Color? tapEffectColor,
     Color? vineAttemptedColor,
   }) {
-    debugPrint(
-      'GardenGame.updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor, tap=$tapEffectColor, vineAttempted=$vineAttemptedColor',
+    LoggerService.debug(
+      'updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor, tap=$tapEffectColor, vineAttempted=$vineAttemptedColor',
+      tag: 'GardenGame',
     );
     _backgroundColor = backgroundColor;
     if (tapEffectColor != null) {
@@ -97,10 +99,10 @@ class GardenGame extends FlameGame with TapCallbacks {
   void _updateBackgroundSize() {
     if (_gameBackground != null && _gameBackground!.sprite != null) {
       final spriteSize = _gameBackground!.sprite!.srcSize;
-      
+
       // Scale to match window height exactly
       final scale = size.y / spriteSize.y;
-      
+
       _gameBackground!.size = spriteSize * scale;
       _gameBackground!.position = Vector2(
         (size.x - _gameBackground!.size.x) / 2,
@@ -123,7 +125,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   @override
   Future<void> onLoad() async {
-    debugPrint('GardenGame: onLoad called');
+    LoggerService.debug('onLoad called', tag: 'GardenGame');
     images.prefix = 'assets/art/';
     await super.onLoad();
 
@@ -137,7 +139,7 @@ class GardenGame extends FlameGame with TapCallbacks {
     try {
       _bgDaySprite = await loadSprite('bg_day_new.png');
       _bgNightSprite = await loadSprite('bg_night_new.png');
-      
+
       final isDark = _backgroundColor.computeLuminance() < 0.5;
 
       _gameBackground = SpriteComponent(
@@ -147,8 +149,9 @@ class GardenGame extends FlameGame with TapCallbacks {
       add(_gameBackground!);
       _updateBackgroundSize();
       _updateBackgroundOpacity();
-    } catch (e) {
-      debugPrint('GardenGame: Failed to load background sprite: $e');
+    } catch (e, stack) {
+      LoggerService.error('Failed to load background sprite',
+          error: e, stackTrace: stack, tag: 'GardenGame');
       // Continue without background or use a fallback color
     }
 
@@ -311,7 +314,8 @@ class GardenGame extends FlameGame with TapCallbacks {
   Future<void> _loadCurrentLevel() async {
     // If this is a lesson, use the pre-loaded lesson data
     if (_currentLessonData != null) {
-      debugPrint('GardenGame: Loading lesson ${_currentLessonData!.id}');
+      LoggerService.info('Loading lesson ${_currentLessonData!.id}',
+          tag: 'GardenGame');
       _convertLessonToLevelData(_currentLessonData!);
       return;
     }
@@ -321,31 +325,35 @@ class GardenGame extends FlameGame with TapCallbacks {
     final levelNumber = debugSelected ?? gameProgress.currentLevel;
 
     if (debugSelected != null) {
-      debugPrint(
-          'GardenGame: Debug selected level $debugSelected — loading temporarily without changing saved progress');
+      LoggerService.debug(
+          'Debug selected level $debugSelected — loading temporarily without changing saved progress',
+          tag: 'GardenGame');
     }
 
-    debugPrint(
-      'GardenGame: Attempting to load level $levelNumber',
+    LoggerService.info(
+      'Attempting to load level $levelNumber',
+      tag: 'GardenGame',
     );
-    debugPrint('GardenGame: Game progress: $gameProgress');
+    LoggerService.debug('Game progress: $gameProgress', tag: 'GardenGame');
 
     try {
       // Load level data directly by level number
       final assetPath = 'assets/levels/level_$levelNumber.json';
-      debugPrint('GardenGame: Loading asset: $assetPath');
+      LoggerService.debug('Loading asset: $assetPath', tag: 'GardenGame');
 
       final levelJson = await rootBundle.loadString(assetPath);
-      debugPrint(
-        'GardenGame: Successfully loaded JSON string, length: ${levelJson.length}',
+      LoggerService.debug(
+        'Successfully loaded JSON string, length: ${levelJson.length}',
+        tag: 'GardenGame',
       );
 
       final jsonMap = json.decode(levelJson);
-      debugPrint('GardenGame: Successfully parsed JSON: $jsonMap');
+      LoggerService.debug('Successfully parsed JSON', tag: 'GardenGame');
 
       _currentLevelData = LevelData.fromJson(jsonMap);
-      debugPrint(
-        'GardenGame: Successfully created LevelData: ${_currentLevelData!.name}',
+      LoggerService.debug(
+        'Successfully created LevelData: ${_currentLevelData!.name}',
+        tag: 'GardenGame',
       );
 
       // Update providers
@@ -363,10 +371,12 @@ class GardenGame extends FlameGame with TapCallbacks {
         ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
       }
 
-      debugPrint('Loaded level $levelNumber: ${_currentLevelData!.name}');
+      LoggerService.info(
+          'Loaded level $levelNumber: ${_currentLevelData!.name}',
+          tag: 'GardenGame');
     } catch (e, stackTrace) {
-      debugPrint('Error loading level $levelNumber: $e');
-      debugPrint('Stack trace: $stackTrace');
+      LoggerService.error('Error loading level $levelNumber',
+          error: e, stackTrace: stackTrace, tag: 'GardenGame');
 
       // Determine if this error indicates all levels are completed
       final modulesAsync = ref.read(modulesProvider);
@@ -380,18 +390,20 @@ class GardenGame extends FlameGame with TapCallbacks {
         (maxEnd, module) => module.endLevel > maxEnd ? module.endLevel : maxEnd,
       );
 
-      debugPrint(
-        'GardenGame: Level $levelNumber failed to load. Total levels: $totalLevels',
+      LoggerService.warn(
+        'Level $levelNumber failed to load. Total levels: $totalLevels',
+        tag: 'GardenGame',
       );
 
       if (levelNumber > totalLevels) {
-        debugPrint(
-            'GardenGame: All levels completed! Setting game as completed.');
+        LoggerService.info('All levels completed! Setting game as completed.',
+            tag: 'GardenGame');
         ref.read(gameCompletedProvider.notifier).setCompleted(true);
       } else {
         // Level should exist but failed to load - critical error
-        debugPrint(
-          'GardenGame: CRITICAL ERROR - Level $levelNumber should exist but failed to load!',
+        LoggerService.error(
+          'CRITICAL ERROR - Level $levelNumber should exist but failed to load!',
+          tag: 'GardenGame',
         );
         ref.read(gameOverProvider.notifier).setGameOver(true);
       }
@@ -432,7 +444,8 @@ class GardenGame extends FlameGame with TapCallbacks {
     ref.read(levelWrongTapsProvider.notifier).reset();
     ref.read(levelCompleteProvider.notifier).setComplete(false);
 
-    debugPrint('Converted lesson ${lesson.id} to level data');
+    LoggerService.info('Converted lesson ${lesson.id} to level data',
+        tag: 'GardenGame');
   }
 
   Future<void> _setLevelDataOnGrid() async {

@@ -153,8 +153,6 @@ class PauseMenuDialog extends ConsumerWidget {
     );
   }
 
-
-
   Widget _buildActionButton(
     BuildContext context, {
     required IconData icon,

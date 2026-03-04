@@ -18,7 +18,7 @@ void main() {
 
     test('signInAnonymously sets current user', () async {
       final credential = await authService.signInAnonymously();
-      
+
       expect(credential.user, isNotNull);
       expect(credential.user?.isAnonymous, isTrue);
       expect(authService.currentUser, isNotNull);
@@ -30,7 +30,7 @@ void main() {
 
       final credential =
           await authService.createUserWithEmailAndPassword(email, password);
-          
+
       expect(credential.user, isNotNull);
       expect(credential.user?.email, equals(email));
       expect(authService.currentUser, isNotNull);

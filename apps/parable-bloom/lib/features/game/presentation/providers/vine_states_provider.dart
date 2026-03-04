@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/game_providers.dart';
+import '../../../../services/logger_service.dart';
 import '../../domain/services/level_solver_service.dart';
 
 // Vine state tracking provider
@@ -74,7 +74,8 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   }
 
   void clearVine(String vineId) {
-    debugPrint('VineStatesNotifier: Clearing vine $vineId');
+    LoggerService.debug('Clearing vine',
+        tag: 'VineStatesNotifier', metadata: {'vine_id': vineId});
     // Mark as cleared
     final mapWithCleared = Map<String, VineState>.from(state);
     if (mapWithCleared.containsKey(vineId)) {
@@ -92,8 +93,10 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
     if (s == null) return;
 
     if (!s.hasBeenAttempted) {
-      debugPrint(
-        'VineStatesNotifier: Marking $vineId as attempted and decrementing life',
+      LoggerService.debug(
+        'Marking vine as attempted and decrementing life',
+        tag: 'VineStatesNotifier',
+        metadata: {'vine_id': vineId},
       );
       state = {...state, vineId: s.copyWith(hasBeenAttempted: true)};
 
@@ -112,8 +115,10 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
       // Notify parent/provider to decrement grace
       ref.read(gameInstanceProvider.notifier).decrementGrace();
     } else {
-      debugPrint(
-        'VineStatesNotifier: $vineId already attempted, skipping life decrement',
+      LoggerService.debug(
+        'Vine already attempted, skipping life decrement',
+        tag: 'VineStatesNotifier',
+        metadata: {'vine_id': vineId},
       );
     }
   }
@@ -122,12 +127,18 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
     final allFinished = state.values.every((vineState) =>
         vineState.isCleared ||
         vineState.animationState == VineAnimationState.animatingClear);
-    debugPrint(
-      'VineStatesNotifier: Checking completion - all finished: $allFinished, total vines: ${state.length}',
+    LoggerService.debug(
+      'Checking completion',
+      tag: 'VineStatesNotifier',
+      metadata: {
+        'all_finished': allFinished,
+        'total_vines': state.length,
+      },
     );
     if (allFinished) {
-      debugPrint(
-        'VineStatesNotifier: LEVEL COMPLETE detected! Setting levelCompleteProvider to true',
+      LoggerService.info(
+        'LEVEL COMPLETE detected! Triggering provider...',
+        tag: 'VineStatesNotifier',
       );
       // Trigger level complete
       ref.read(levelCompleteProvider.notifier).setComplete(true);

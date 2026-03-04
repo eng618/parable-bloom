@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
+import '../../../../services/logger_service.dart';
 
 /// Service responsible for handling user authentication.
 class AuthService {
@@ -19,11 +18,12 @@ class AuthService {
   Future<UserCredential> signInAnonymously() async {
     try {
       final credential = await _firebaseAuth.signInAnonymously();
-      debugPrint('AuthService: Signed in anonymously: ${credential.user?.uid}');
+      LoggerService.info('Signed in anonymously: ${credential.user?.uid}',
+          tag: 'AuthService');
       return credential;
     } catch (e, stack) {
-      debugPrint('AuthService: Error signing in anonymously: $e');
-      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error signing in anonymously');
+      LoggerService.error('Error signing in anonymously',
+          error: e, stackTrace: stack, tag: 'AuthService');
       rethrow;
     }
   }
@@ -43,8 +43,8 @@ class AuthService {
       // For now, raw creation.
       return credential;
     } catch (e, stack) {
-      debugPrint('AuthService: Error creating user: $e');
-      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error creating user');
+      LoggerService.error('Error creating user',
+          error: e, stackTrace: stack, tag: 'AuthService');
       rethrow;
     }
   }
@@ -65,8 +65,8 @@ class AuthService {
     } catch (e, stack) {
       // If the email is already in use by another account, we might want to sign in to that account instead.
       // handling that case requires UI intervention (merge accounts?)
-      debugPrint('AuthService: Error linking account: $e');
-      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error linking account');
+      LoggerService.error('Error linking account',
+          error: e, stackTrace: stack, tag: 'AuthService');
       rethrow;
     }
   }
@@ -82,8 +82,8 @@ class AuthService {
         password: password,
       );
     } catch (e, stack) {
-      debugPrint('AuthService: Error signing in: $e');
-      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error signing in');
+      LoggerService.error('Error signing in',
+          error: e, stackTrace: stack, tag: 'AuthService');
       rethrow;
     }
   }
@@ -97,10 +97,10 @@ class AuthService {
     }
     try {
       await user.delete();
-      debugPrint('AuthService: Account deleted successfully');
+      LoggerService.info('Account deleted successfully', tag: 'AuthService');
     } catch (e, stack) {
-      debugPrint('AuthService: Error deleting account: $e');
-      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error deleting account');
+      LoggerService.error('Error deleting account',
+          error: e, stackTrace: stack, tag: 'AuthService');
       rethrow;
     }
   }
@@ -109,10 +109,11 @@ class AuthService {
   Future<void> sendPasswordResetEmail(String email) async {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
-      debugPrint('AuthService: Password reset email sent securely');
+      LoggerService.info('Password reset email sent securely',
+          tag: 'AuthService');
     } catch (e, stack) {
-      debugPrint('AuthService: Error sending password reset email: $e');
-      FirebaseCrashlytics.instance.recordError(e, stack, reason: 'AuthService: Error sending password reset email');
+      LoggerService.error('Error sending password reset email',
+          error: e, stackTrace: stack, tag: 'AuthService');
       rethrow;
     }
   }

@@ -1,4 +1,4 @@
-import "package:flutter/foundation.dart";
+import "../services/logger_service.dart";
 import "package:just_audio/just_audio.dart";
 
 class BackgroundAudioController {
@@ -23,17 +23,19 @@ class BackgroundAudioController {
         await _player.setAsset("assets/audio/background.mp3");
         await _player.setLoopMode(LoopMode.one);
         _loaded = true;
-      } catch (e) {
-        debugPrint("BackgroundAudioController: Failed to load asset: $e");
+      } catch (e, stack) {
+        LoggerService.error("Failed to load background audio asset",
+            error: e, stackTrace: stack, tag: 'BackgroundAudioController');
         return;
       }
     }
 
     try {
       await _player.play();
-    } catch (e) {
+    } catch (e, stack) {
       // Autoplay is often blocked on web until user interaction
-      debugPrint("BackgroundAudioController: Play failed (likely autoplay block): $e");
+      LoggerService.warn("Background audio play failed (likely autoplay block)",
+          error: e, stackTrace: stack, tag: 'BackgroundAudioController');
     }
   }
 

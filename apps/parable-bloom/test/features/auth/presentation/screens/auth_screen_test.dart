@@ -20,13 +20,15 @@ class MockAuthService implements AuthService {
   Stream<User?> get authStateChanges => const Stream.empty();
 
   @override
-  Future<UserCredential> createUserWithEmailAndPassword(String email, String password) async {
+  Future<UserCredential> createUserWithEmailAndPassword(
+      String email, String password) async {
     if (_exceptionToThrow != null) throw _exceptionToThrow!;
     throw UnimplementedError();
   }
 
   @override
-  Future<UserCredential> linkEmailAndPassword(String email, String password) async {
+  Future<UserCredential> linkEmailAndPassword(
+      String email, String password) async {
     if (_exceptionToThrow != null) throw _exceptionToThrow!;
     throw UnimplementedError();
   }
@@ -38,7 +40,8 @@ class MockAuthService implements AuthService {
   }
 
   @override
-  Future<UserCredential> signInWithEmailAndPassword(String email, String password) async {
+  Future<UserCredential> signInWithEmailAndPassword(
+      String email, String password) async {
     if (_exceptionToThrow != null) throw _exceptionToThrow!;
     throw UnimplementedError();
   }
@@ -69,15 +72,17 @@ void main() {
       );
     }
 
-    testWidgets('Shows invalid email error when Firebase throws invalid-email', (WidgetTester tester) async {
-      mockAuthService.throwException(FirebaseAuthException(code: 'invalid-email', message: 'Invalid email'));
+    testWidgets('Shows invalid email error when Firebase throws invalid-email',
+        (WidgetTester tester) async {
+      mockAuthService.throwException(FirebaseAuthException(
+          code: 'invalid-email', message: 'Invalid email'));
 
       await tester.pumpWidget(createAuthScreen());
 
       // Enter details
       await tester.enterText(find.byType(TextFormField).first, 'bad@email.com');
       await tester.enterText(find.byType(TextFormField).last, 'password123');
-      
+
       // Tap sign in
       await tester.tap(find.byType(FilledButton));
       await tester.pumpAndSettle();
@@ -85,31 +90,42 @@ void main() {
       expect(find.text('The email address is invalid.'), findsOneWidget);
     });
 
-    testWidgets('Shows already in use error when Firebase throws email-already-in-use', (WidgetTester tester) async {
-      mockAuthService.throwException(FirebaseAuthException(code: 'email-already-in-use', message: 'Already used'));
+    testWidgets(
+        'Shows already in use error when Firebase throws email-already-in-use',
+        (WidgetTester tester) async {
+      mockAuthService.throwException(FirebaseAuthException(
+          code: 'email-already-in-use', message: 'Already used'));
 
       await tester.pumpWidget(createAuthScreen());
 
       // Enter details
-      await tester.enterText(find.byType(TextFormField).first, 'test@example.com');
+      await tester.enterText(
+          find.byType(TextFormField).first, 'test@example.com');
       await tester.enterText(find.byType(TextFormField).last, 'password123');
-      
+
       // Tap sign in
       await tester.tap(find.byType(FilledButton));
       await tester.pumpAndSettle();
 
-      expect(find.text('This email is already in use by another account. Please sign in instead.'), findsOneWidget);
+      expect(
+          find.text(
+              'This email is already in use by another account. Please sign in instead.'),
+          findsOneWidget);
     });
 
-    testWidgets('Shows wrong password error when Firebase throws wrong-password', (WidgetTester tester) async {
-      mockAuthService.throwException(FirebaseAuthException(code: 'wrong-password', message: 'Wrong pwd'));
+    testWidgets(
+        'Shows wrong password error when Firebase throws wrong-password',
+        (WidgetTester tester) async {
+      mockAuthService.throwException(
+          FirebaseAuthException(code: 'wrong-password', message: 'Wrong pwd'));
 
       await tester.pumpWidget(createAuthScreen());
 
       // Enter details
-      await tester.enterText(find.byType(TextFormField).first, 'test@example.com');
+      await tester.enterText(
+          find.byType(TextFormField).first, 'test@example.com');
       await tester.enterText(find.byType(TextFormField).last, 'wrongpass');
-      
+
       // Tap sign in
       await tester.tap(find.byType(FilledButton));
       await tester.pumpAndSettle();

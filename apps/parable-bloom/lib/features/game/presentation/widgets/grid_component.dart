@@ -3,6 +3,7 @@ import 'package:flame/events.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../services/logger_service.dart';
 
 import '../../../../providers/game_providers.dart';
 import '../../../game/domain/services/level_solver_service.dart';
@@ -228,8 +229,8 @@ class GridComponent extends PositionComponent
 
     // Notify that a vine was tapped
     onVineTap?.call(clickedVine.id);
-
-    debugPrint('Sliding out vine: ${clickedVine.id}');
+    LoggerService.debug('Sliding out vine',
+        tag: 'GridComponent', metadata: {'vine_id': clickedVine.id});
     comp.slideOut();
   }
 
@@ -257,9 +258,8 @@ class GridComponent extends PositionComponent
 
     // Notify Riverpod provider
     onVineCleared?.call(vineId);
-
-    // Trigger parable reveal animation (placeholder)
-    debugPrint('Vine $vineId cleared! Trigger parable reveal animation');
+    LoggerService.info('Vine cleared',
+        tag: 'GridComponent', metadata: {'vine_id': vineId});
 
     // TODO: Add particle effects and sound when vine is cleared
     // TODO: Gradually reveal parable background/image
