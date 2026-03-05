@@ -10,4 +10,6 @@ module.exports = {
   turbopack: {
     root: ROOT,
   },
+  // Enable static export for fully static builds (for Cloudflare Pages, etc)
+  output: "export",
 };
