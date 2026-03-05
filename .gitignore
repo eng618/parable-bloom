@@ -133,4 +133,7 @@ tools/level-builder/.gocache/
 nx
 nx.bat
 
+# Next.js build artifacts and cache
 apps/parable-bloom-site/.next/
+apps/parable-bloom-site/.eslintcache
+apps/parable-bloom-site/next-env.d.ts

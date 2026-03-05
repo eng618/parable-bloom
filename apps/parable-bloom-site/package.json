@@ -1,25 +1,46 @@
 {
   "name": "parable-bloom-site",
   "version": "0.1.0",
-  "private": true,
   "scripts": {
-    "dev": "next dev --port 4201",
     "build": "next build",
-    "start": "next start --port 4201",
-    "lint": "next lint"
+    "dev": "next dev --port 4201",
+    "format": "prettier --write .",
+    "format:ci": "prettier --check .",
+    "lint": "eslint . --cache",
+    "lint:fix": "eslint . --cache --fix",
+    "lint:report": "eslint . --cache -o ./eslintReport.html -f html",
+    "prepare": "husky",
+    "start": "next start --port 4201"
   },
   "dependencies": {
     "@gv-tech/ui-web": "latest",
-    "next": "16.0.1",
-    "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "next": "16.1.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@eng618/prettier-config": "^2.9.1",
+    "@gv-tech/eslint-config": "^0.1.12",
+    "@next/eslint-plugin-next": "^16.1.6",
     "@types/node": "24.7.2",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
-    "eslint": "9.38.0",
-    "eslint-config-next": "16.0.1",
-    "typescript": "5.9.3"
-  }
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "^10.0.2",
+    "eslint-config-next": "16.1.6",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.2",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3"
+  },
+  "private": true,
+  "lint-staged": {
+    "*.(js|ts|mjs|cjs)?(x)": [
+      "prettier --write",
+      "eslint --cache --fix"
+    ],
+    "*.(md)?(x)": [
+      "prettier --write"
+    ]
+  },
+  "prettier": "@eng618/prettier-config"
 }

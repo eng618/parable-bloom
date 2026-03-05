@@ -21,6 +21,12 @@ tasks:
     cmds:
       - bun run build
 
+  format:
+    desc: Format code for the Next.js site
+    dir: apps/parable-bloom-site
+    cmds:
+      - bun run format
+
   lint:
     desc: Run lint checks for the Next.js site
     dir: apps/parable-bloom-site
