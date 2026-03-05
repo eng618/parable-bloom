@@ -1,15 +1,15 @@
 :root {
-  --bg-top: #f7f3e8;
-  --bg-bottom: #e4edd8;
-  --surface: #fffdf8;
-  --surface-alt: #f1f6ea;
-  --text-primary: #22220f;
-  --text-secondary: #565642;
-  --brand: #2f6b43;
-  --brand-soft: #498f5f;
-  --border: #d6dec9;
-  --radius: 16px;
-  --shadow: 0 18px 40px rgba(47, 107, 67, 0.15);
+  --bg-top: hsl(40 100% 97%);
+  --bg-bottom: hsl(151 66% 27%);
+  --surface: hsl(0 0% 100%);
+  --surface-alt: hsl(0 0% 96%);
+  --text-primary: hsl(222 47% 11%);
+  --text-secondary: hsl(215 16% 47%);
+  --brand: hsl(151 66% 27%);
+  --brand-soft: hsl(93 28% 54%);
+  --border: hsl(0 0% 88%);
+  --radius: 8px;
+  --shadow: 0 18px 40px hsla(151, 66%, 27%, 0.15);
 }
 
 * {
@@ -26,8 +26,8 @@ body {
 body {
   color: var(--text-primary);
   background:
-    radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.88), transparent 42%),
-    radial-gradient(circle at 82% 8%, rgba(171, 205, 160, 0.26), transparent 45%),
+    radial-gradient(circle at 10% 15%, hsla(255, 255, 255, 0.88), transparent 42%),
+    radial-gradient(circle at 82% 8%, hsla(171, 205, 160, 0.26), transparent 45%),
     linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
   font-family: "Alegreya Sans", "Segoe UI", sans-serif;
   line-height: 1.5;
@@ -66,7 +66,7 @@ a {
 }
 
 .site-nav-link:hover {
-  background: rgba(73, 143, 95, 0.12);
+  background: hsla(93, 28%, 54%, 0.12);
   color: var(--brand);
 }
 
@@ -76,7 +76,7 @@ a {
 }
 
 .hero {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(241, 246, 234, 0.96));
+  background: linear-gradient(145deg, hsla(255, 255, 255, 0.9), hsla(241, 246, 234, 0.96));
   border: 1px solid var(--border);
   border-radius: 26px;
   box-shadow: var(--shadow);
@@ -119,9 +119,9 @@ a {
 }
 
 .cta-primary {
-  color: #f8fff8;
+  color: hsl(0 0% 100%);
   background: linear-gradient(90deg, var(--brand), var(--brand-soft));
-  box-shadow: 0 8px 22px rgba(73, 143, 95, 0.28);
+  box-shadow: 0 8px 22px hsla(93, 28%, 54%, 0.28);
 }
 
 .cta-secondary {
@@ -143,6 +143,9 @@ a {
   padding: 1rem;
   transition: transform 160ms ease, box-shadow 220ms ease;
   animation: fadeInUp 600ms ease both;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
 }
 
 .card:nth-child(2) {
@@ -155,7 +158,7 @@ a {
 
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 24px rgba(47, 107, 67, 0.16);
+  box-shadow: 0 12px 24px hsla(151, 66%, 27%, 0.16);
 }
 
 .card h3 {
@@ -167,8 +170,20 @@ a {
   color: var(--text-secondary);
 }
 
+/* make card content grow so footer stays at bottom */
+.card .card-content {
+  flex: 1 1 auto;
+}
+
+/* ensure CTA fills the card footer width */
+.card footer,
+.card a,
+.card button {
+  width: 100%;
+}
+
 .page {
-  background: rgba(255, 253, 248, 0.9);
+  background: hsla(255, 253, 248, 0.9);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 1.25rem;

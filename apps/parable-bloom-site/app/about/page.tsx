@@ -1,33 +1,47 @@
+import type { Metadata } from "next";
+import { Text } from "@gv-tech/ui-web";
+
+export const metadata: Metadata = {
+  title: "About - Parable Bloom",
+  description: "Learn more about Parable Bloom, a zen hyper-casual arrow puzzle game with faith-based themes.",
+};
+
 export default function AboutPage() {
   return (
     <article className="page">
-      <h1>About</h1>
+      <Text variant="h1">About</Text>
 
-      <h2>Overview</h2>
-      <p>
+      <Text variant="h2">Overview</Text>
+      <Text variant="body">
         Parable Bloom is a zen hyper-casual arrow puzzle game with faith-based themes. Guide vines through
         gardens while uncovering spiritual parables.
-      </p>
+      </Text>
 
-      <h2>Development</h2>
-      <p>Built with Flutter and Flame for a cross-platform gaming experience.</p>
+      <Text variant="h2">Development</Text>
+      <Text variant="body">Built with Flutter and Flame for cross-platform gaming experience.</Text>
 
-      <h2>Download</h2>
+      <Text variant="h2">Download</Text>
       <ul>
         <li>
-          <a href="https://apps.apple.com/app/parable-bloom">Download on the App Store</a> (Coming Soon)
+          <Text variant="body">
+            <a href="https://apps.apple.com/app/parable-bloom">Download on the App Store</a> (Coming Soon)
+          </Text>
         </li>
         <li>
-          <a href="https://play.google.com/store/apps/details?id=com.garciaericn.parablebloom">Get it on Google Play</a>{" "}
-          (Coming Soon)
+          <Text variant="body">
+            <a href="https://play.google.com/store/apps/details?id=com.garciaericn.parablebloom">Get it on Google Play</a>{" "}
+            (Coming Soon)
+          </Text>
         </li>
       </ul>
 
-      <h2>Contact</h2>
+      <Text variant="h2">Contact</Text>
       <ul>
-        <li>Email: parablebloom.support@garciaericn.com</li>
+        <li><Text variant="body">Email: parablebloom.support@garciaericn.com</Text></li>
         <li>
-          GitHub: <a href="https://github.com/eng618/parable-bloom">eng618/parable-bloom</a>
+          <Text variant="body">
+            GitHub: <a href="https://github.com/eng618/parable-bloom">eng618/parable-bloom</a>
+          </Text>
         </li>
       </ul>
     </article>

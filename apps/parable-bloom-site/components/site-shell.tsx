@@ -1,5 +1,8 @@
+'use client';
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Text } from "@gv-tech/ui-web";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -18,7 +21,7 @@ export default function SiteShell({ children }: SiteShellProps) {
     <div className="site-shell">
       <header className="container site-nav" aria-label="Main navigation">
         <Link href="/" aria-label="Parable Bloom home">
-          <strong>Parable Bloom</strong>
+          <Text variant="h3" as="strong">Parable Bloom</Text>
         </Link>
         <nav className="site-nav-links">
           {navItems.map((item) => (
@@ -29,7 +32,9 @@ export default function SiteShell({ children }: SiteShellProps) {
         </nav>
       </header>
       <main className="container">{children}</main>
-      <footer className="footer">(c) {new Date().getFullYear()} GVTech. All rights reserved.</footer>
+      <footer className="footer">
+        <Text variant="caption">(c) {new Date().getFullYear()} GVTech. All rights reserved.</Text>
+      </footer>
     </div>
   );
 }
