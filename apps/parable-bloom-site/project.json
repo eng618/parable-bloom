@@ -1,0 +1,36 @@
+{
+  "name": "parable-bloom-site",
+  "projectType": "application",
+  "sourceRoot": "apps/parable-bloom-site",
+  "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "task next:get",
+        "cwd": "."
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/.next"],
+      "options": {
+        "command": "task next:build",
+        "cwd": "."
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "task next:dev",
+        "cwd": "."
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "task next:lint",
+        "cwd": "."
+      }
+    }
+  }
+}

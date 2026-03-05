@@ -6,6 +6,7 @@ includes:
   lb: .taskfiles/LevelBuilder.yml
   fastlane: .taskfiles/Fastlane.yml
   hugo: .taskfiles/Hugo.yml
+  next: .taskfiles/Next.yml
   levels: Taskfile.Levels.yml
   release: Taskfile.Release.yml
 
@@ -19,12 +20,13 @@ tasks:
   # High-level Orchestration
 
   setup:
-    desc: Set up the project for development (Flutter, Go, and CocoaPods)
+    desc: Set up the project for development (Flutter, Go, Hugo, Next.js, and CocoaPods)
     run: once
     cmds:
       - task: flutter:get
       - task: lb:get
       - task: hugo:get
+      - task: next:get
       - task: firebase:configure
       - task: _setup:ios:pod-install
       - task: _setup:macos:pod-install
@@ -72,7 +74,7 @@ tasks:
       - task: lb:upgrade
 
   build:all:
-    desc: Build all project components (Flutter web, Level Builder, and Hugo site)
+    desc: Build all project components (Flutter web, Level Builder, Hugo site, and Next.js site)
     cmds:
       - bunx nx run-many -t build
 

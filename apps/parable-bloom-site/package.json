@@ -1,0 +1,25 @@
+{
+  "name": "parable-bloom-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 4201",
+    "build": "next build",
+    "start": "next start --port 4201",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@gv-tech/ui-web": "latest",
+    "next": "16.0.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.7.2",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "eslint": "9.38.0",
+    "eslint-config-next": "16.0.1",
+    "typescript": "5.9.3"
+  }
+}

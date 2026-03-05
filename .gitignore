@@ -132,3 +132,5 @@ tools/level-builder/.gocache/
 # Executables
 nx
 nx.bat
+
+apps/parable-bloom-site/.next/

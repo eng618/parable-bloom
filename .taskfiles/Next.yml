@@ -1,0 +1,29 @@
+version: "3"
+
+tasks:
+  get:
+    desc: Install dependencies for the Next.js site
+    dir: apps/parable-bloom-site
+    cmds:
+      - bun install
+
+  dev:
+    desc: Start Next.js development server for the site
+    dir: apps/parable-bloom-site
+    deps: [get]
+    cmds:
+      - bun run dev
+
+  build:
+    desc: Build the Next.js site
+    dir: apps/parable-bloom-site
+    deps: [get]
+    cmds:
+      - bun run build
+
+  lint:
+    desc: Run lint checks for the Next.js site
+    dir: apps/parable-bloom-site
+    deps: [get]
+    cmds:
+      - bun run lint

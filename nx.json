@@ -3,10 +3,7 @@
     "version": "22.5.2"
   },
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
       "!{projectRoot}/test/**/*",
@@ -24,41 +21,24 @@
   "targetDefaults": {
     "build": {
       "cache": true,
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     },
     "test": {
       "cache": true,
-      "inputs": [
-        "default",
-        "^default"
-      ]
+      "inputs": ["default", "^default"]
     },
     "lint": {
       "cache": true,
-      "inputs": [
-        "default",
-        "^default"
-      ]
+      "inputs": ["default", "^default"]
     },
     "validate": {
       "cache": true,
-      "dependsOn": [
-        "lint",
-        "test",
-        "build"
-      ]
+      "dependsOn": ["lint", "test", "build"]
     },
     "deploy": {
       "cache": true,
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     }
   },
   "release": {
@@ -67,9 +47,7 @@
     },
     "groups": {
       "parable-bloom": {
-        "projects": [
-          "parable-bloom"
-        ],
+        "projects": ["parable-bloom"],
         "releaseTagPattern": "v{version}",
         "version": {
           "currentVersionResolver": "disk"
@@ -79,9 +57,7 @@
         }
       },
       "hugo-site": {
-        "projects": [
-          "hugo-site"
-        ],
+        "projects": ["hugo-site"],
         "releaseTagPattern": "hugo-site-v{version}",
         "version": {
           "currentVersionResolver": "disk"
@@ -90,10 +66,18 @@
           "automaticFromRef": true
         }
       },
+      "parable-bloom-site": {
+        "projects": ["parable-bloom-site"],
+        "releaseTagPattern": "parable-bloom-site-v{version}",
+        "version": {
+          "currentVersionResolver": "disk"
+        },
+        "changelog": {
+          "automaticFromRef": true
+        }
+      },
       "level-builder": {
-        "projects": [
-          "level-builder"
-        ],
+        "projects": ["level-builder"],
         "releaseTagPattern": "level-builder-v{version}",
         "version": {
           "currentVersionResolver": "disk"

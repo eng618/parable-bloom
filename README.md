@@ -109,7 +109,8 @@ parable-bloom/
 │   │   ├── assets/         # Game assets & levels
 │   │   ├── test/           # Platform tests
 │   │   └── android/ios/... # Platform-specific code
-│   └── hugo-site/         # Documentation site source
+│   ├── hugo-site/          # Legacy Hugo marketing/docs site source
+│   └── parable-bloom-site/ # New Next.js marketing site (migration target)
 ├── tools/
 │   └── level-builder/     # Go-based level generation tools
 ├── scripts/               # Workspace-wide utility scripts
