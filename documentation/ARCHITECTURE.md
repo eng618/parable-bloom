@@ -146,6 +146,23 @@ Instead of using `debugPrint` or `print`, all modules should use `LoggerService`
     - Info and Warn logs are added as **Crashlytics Breadcrumbs** to provide context for potential crashes.
 - **Traceability**: Support for optional `tag` and `metadata` to help filter and understand logs.
 
+> **Test-friendly behavior**
+>
+> The logger is intentionally resilient in unit and widget tests: crashlytics is
+> looked up lazily and calls are no‑ops when no Firebase app has been initialized.
+> This allows tests to run without needing `Firebase.initializeApp` or real
+> Crashlytics configuration. When adding new logging methods or changing the
+> logger contract, update this documentation and verify that tests remain
+> unaffected.
+
+> **Mock/upstream contract changes**
+>
+> Service interfaces such as `AuthService` are commonly mocked in tests. If the
+> interface gains or removes methods, remember to update any hand‑rolled mock
+> classes (usually located alongside the tests) to prevent compile errors. For
+> substantial interfaces consider moving mocks to a shared `test/mocks/` helper
+> file or using `mockito`/`mocktail` to generate them automatically.
+
 ### 5.2 Error Reporting Standards
 
 - **Try-Catch Blocks**: All caught exceptions that indicate a failure in a core process (e.g., auth, sync, asset loading) MUST be reported using `LoggerService.error`.
