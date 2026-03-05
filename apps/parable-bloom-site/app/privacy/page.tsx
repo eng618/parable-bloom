@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import { Text } from "@gv-tech/ui-web";
+import { Text } from '@gv-tech/ui-web';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Privacy Policy - Parable Bloom",
-  description: "Read the privacy policy for Parable Bloom, detailing how we collect, use, and protect your data.",
+  title: 'Privacy Policy - Parable Bloom',
+  description: 'Read the privacy policy for Parable Bloom, detailing how we collect, use, and protect your data.',
 };
 
 export default function PrivacyPage() {
@@ -19,80 +19,144 @@ export default function PrivacyPage() {
 
       <Text variant="h2">1. Introduction</Text>
       <Text variant="body">
-        Welcome to <strong>Parable Bloom</strong>. At <strong>GVTech</strong> ("we," "us," or "our"), we respect your privacy and are committed to protecting the personal information you may provide to us. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application, <strong>Parable Bloom</strong>.
+        Welcome to <strong>Parable Bloom</strong>. At <strong>GVTech</strong> ("we," "us," or "our"), we respect your
+        privacy and are committed to protecting the personal information you may provide to us. This Privacy Policy
+        explains how we collect, use, and safeguard your information when you use our mobile application,{' '}
+        <strong>Parable Bloom</strong>.
       </Text>
       <Text variant="body">
-        Our mission is to provide a peaceful, zen, and faith-based gaming experience. We believe that your digital peace of mind is just as important as your spiritual one. Therefore, we design our services to collect the absolute minimum amount of data necessary to function and improve the game.
+        Our mission is to provide a peaceful, zen, and faith-based gaming experience. We believe that your digital peace
+        of mind is just as important as your spiritual one. Therefore, we design our services to collect the absolute
+        minimum amount of data necessary to function and improve the game.
       </Text>
 
       <Text variant="h2">2. Information We Collect</Text>
       <Text variant="body">
-        We prioritize your privacy and collect the minimum Personal Identifiable Information (PII) necessary. If you choose to create an account, we collect your email address; otherwise, data is collected anonymously.
+        We prioritize your privacy and collect the minimum Personal Identifiable Information (PII) necessary. If you
+        choose to create an account, we collect your email address; otherwise, data is collected anonymously.
       </Text>
       <Text variant="h3">2.1 Automatically Collected Information (Telemetry & Analytics)</Text>
       <Text variant="body">
-        To help us improve the game's stability and gameplay experience, we use third-party analytics tools (specifically <strong>Google Firebase Analytics</strong>) to automatically collect certain anonymous technical information. This data is <strong>aggregated and anonymized</strong>, meaning it is not linked to your identity.
+        To help us improve the game's stability and gameplay experience, we use third-party analytics tools
+        (specifically <strong>Google Firebase Analytics</strong>) to automatically collect certain anonymous technical
+        information. This data is <strong>aggregated and anonymized</strong>, meaning it is not linked to your identity.
       </Text>
-      <Text variant="body">
-        This information includes:
-      </Text>
+      <Text variant="body">This information includes:</Text>
       <ul>
-        <li><Text variant="body"><strong>Usage Data</strong>: Details about how you use the app, such as level completion rates, button taps, and session duration. This helps us balance difficulty and improve the user experience.</Text></li>
-        <li><Text variant="body"><strong>Device Information</strong>: Information about your device, such as the model, operating system version, and general location (country/region) derived from IP addresses (which are anonymized before storage).</Text></li>
-        <li><Text variant="body"><strong>Crash & Performance Reports</strong>: Logs related to app crashes or performance issues to help us identify and fix bugs.</Text></li>
+        <li>
+          <Text variant="body">
+            <strong>Usage Data</strong>: Details about how you use the app, such as level completion rates, button taps,
+            and session duration. This helps us balance difficulty and improve the user experience.
+          </Text>
+        </li>
+        <li>
+          <Text variant="body">
+            <strong>Device Information</strong>: Information about your device, such as the model, operating system
+            version, and general location (country/region) derived from IP addresses (which are anonymized before
+            storage).
+          </Text>
+        </li>
+        <li>
+          <Text variant="body">
+            <strong>Crash & Performance Reports</strong>: Logs related to app crashes or performance issues to help us
+            identify and fix bugs.
+          </Text>
+        </li>
       </ul>
       <Text variant="h3">2.2 Account Information</Text>
-      <Text variant="body">
-        If you choose to create an account, we collect:
-      </Text>
+      <Text variant="body">If you choose to create an account, we collect:</Text>
       <ul>
-        <li><Text variant="body"><strong>Email Address & Password</strong>: Used securely via Firebase Authentication to create and manage your account.</Text></li>
-        <li><Text variant="body"><strong>User ID</strong>: A unique identifier generated by Firebase to track your game progress and save data across devices.</Text></li>
+        <li>
+          <Text variant="body">
+            <strong>Email Address & Password</strong>: Used securely via Firebase Authentication to create and manage
+            your account.
+          </Text>
+        </li>
+        <li>
+          <Text variant="body">
+            <strong>User ID</strong>: A unique identifier generated by Firebase to track your game progress and save
+            data across devices.
+          </Text>
+        </li>
       </ul>
       <Text variant="body">
         If you play anonymously, a temporary User ID is generated without collecting your email address.
       </Text>
 
       <Text variant="h2">3. How We Use Your Information</Text>
-      <Text variant="body">
-        We use the collected data solely for the following purposes:
-      </Text>
+      <Text variant="body">We use the collected data solely for the following purposes:</Text>
       <ul>
-        <li><Text variant="body"><strong>Account Management</strong>: To create and secure your user account and save your game progress.</Text></li>
-        <li><Text variant="body"><strong>To operate and maintain the App</strong>: Ensuring the game runs smoothly on your device.</Text></li>
-        <li><Text variant="body"><strong>To improve the App</strong>: Analyzing gameplay data and crash logs to fix difficulty spikes, resolve bugs, and enhance performance.</Text></li>
-        <li><Text variant="body"><strong>To communicate</strong>: If you contact us for support, we use your email address only to respond to your inquiries.</Text></li>
+        <li>
+          <Text variant="body">
+            <strong>Account Management</strong>: To create and secure your user account and save your game progress.
+          </Text>
+        </li>
+        <li>
+          <Text variant="body">
+            <strong>To operate and maintain the App</strong>: Ensuring the game runs smoothly on your device.
+          </Text>
+        </li>
+        <li>
+          <Text variant="body">
+            <strong>To improve the App</strong>: Analyzing gameplay data and crash logs to fix difficulty spikes,
+            resolve bugs, and enhance performance.
+          </Text>
+        </li>
+        <li>
+          <Text variant="body">
+            <strong>To communicate</strong>: If you contact us for support, we use your email address only to respond to
+            your inquiries.
+          </Text>
+        </li>
       </ul>
 
       <Text variant="h2">4. Third-Party Service Providers</Text>
       <Text variant="body">
-        We employ third-party companies and individuals to facilitate our App ("Service Providers"), to provide the App on our behalf, to perform Service-related services, or to assist us in analyzing how our App is used.
+        We employ third-party companies and individuals to facilitate our App ("Service Providers"), to provide the App
+        on our behalf, to perform Service-related services, or to assist us in analyzing how our App is used.
       </Text>
       <ul>
-        <li><Text variant="body"><strong>Google Firebase</strong>: We use Firebase for analytics and crash reporting. Google may collect data as described in their privacy policy.</Text></li>
+        <li>
+          <Text variant="body">
+            <strong>Google Firebase</strong>: We use Firebase for analytics and crash reporting. Google may collect data
+            as described in their privacy policy.
+          </Text>
+        </li>
       </ul>
       <div>
         <ul>
-          <li><Text variant="body"><a href="https://policies.google.com/privacy">Google Privacy & Terms</a></Text></li>
+          <li>
+            <Text variant="body">
+              <a href="https://policies.google.com/privacy">Google Privacy & Terms</a>
+            </Text>
+          </li>
         </ul>
       </div>
 
       <Text variant="h2">5. Children's Privacy</Text>
       <Text variant="body">
-        <strong>Parable Bloom</strong> does not knowingly collect personally identifiable information from children under the age of 13. In the case we discover that a child under 13 has provided us with personal information, we immediately delete this from our servers. If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact us so that we will be able to do necessary actions.
+        <strong>Parable Bloom</strong> does not knowingly collect personally identifiable information from children
+        under the age of 13. In the case we discover that a child under 13 has provided us with personal information, we
+        immediately delete this from our servers. If you are a parent or guardian and you are aware that your child has
+        provided us with personal information, please contact us so that we will be able to do necessary actions.
       </Text>
 
       <Text variant="h2">6. Your Data Rights</Text>
       <Text variant="body">
-        Depending on your location, you may have rights regarding your data, including the right to request access to or deletion of data we hold about you.
+        Depending on your location, you may have rights regarding your data, including the right to request access to or
+        deletion of data we hold about you.
       </Text>
       <Text variant="body">
-        You can delete your account and all associated data directly within the app by navigating to <strong>Settings &gt; Delete Account</strong>. Alternatively, you may request account deletion at any time by visiting our <a href="/delete-account">Account Deletion Page</a>.
+        You can delete your account and all associated data directly within the app by navigating to{' '}
+        <strong>Settings &gt; Delete Account</strong>. Alternatively, you may request account deletion at any time by
+        visiting our <a href="/delete-account">Account Deletion Page</a>.
       </Text>
 
       <Text variant="h2">7. Changes to This Privacy Policy</Text>
       <Text variant="body">
-        We may update our Privacy Policy from time to time. Thus, you are advised to review this page periodically for any changes. We will notify you of any changes by posting the new Privacy Policy on this page. These changes are effective immediately after they are posted on this page.
+        We may update our Privacy Policy from time to time. Thus, you are advised to review this page periodically for
+        any changes. We will notify you of any changes by posting the new Privacy Policy on this page. These changes are
+        effective immediately after they are posted on this page.
       </Text>
 
       <Text variant="h2">8. Contact Us</Text>
@@ -100,7 +164,8 @@ export default function PrivacyPage() {
         If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us at:
       </Text>
       <Text variant="body">
-        <strong>Email</strong>: <a href="mailto:parablebloom.support@garciaericn.com">parablebloom.support@garciaericn.com</a>
+        <strong>Email</strong>:{' '}
+        <a href="mailto:parablebloom.support@garciaericn.com">parablebloom.support@garciaericn.com</a>
       </Text>
     </article>
   );

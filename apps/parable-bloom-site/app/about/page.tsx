@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import { Text } from "@gv-tech/ui-web";
+import { Text } from '@gv-tech/ui-web';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "About - Parable Bloom",
-  description: "Learn more about Parable Bloom, a zen hyper-casual arrow puzzle game with faith-based themes.",
+  title: 'About - Parable Bloom',
+  description: 'Learn more about Parable Bloom, a zen hyper-casual arrow puzzle game with faith-based themes.',
 };
 
 export default function AboutPage() {
@@ -13,8 +13,8 @@ export default function AboutPage() {
 
       <Text variant="h2">Overview</Text>
       <Text variant="body">
-        Parable Bloom is a zen hyper-casual arrow puzzle game with faith-based themes. Guide vines through
-        gardens while uncovering spiritual parables.
+        Parable Bloom is a zen hyper-casual arrow puzzle game with faith-based themes. Guide vines through gardens while
+        uncovering spiritual parables.
       </Text>
 
       <Text variant="h2">Development</Text>
@@ -29,7 +29,9 @@ export default function AboutPage() {
         </li>
         <li>
           <Text variant="body">
-            <a href="https://play.google.com/store/apps/details?id=com.garciaericn.parablebloom">Get it on Google Play</a>{" "}
+            <a href="https://play.google.com/store/apps/details?id=com.garciaericn.parablebloom">
+              Get it on Google Play
+            </a>{' '}
             (Coming Soon)
           </Text>
         </li>
@@ -37,7 +39,9 @@ export default function AboutPage() {
 
       <Text variant="h2">Contact</Text>
       <ul>
-        <li><Text variant="body">Email: parablebloom.support@garciaericn.com</Text></li>
+        <li>
+          <Text variant="body">Email: parablebloom.support@garciaericn.com</Text>
+        </li>
         <li>
           <Text variant="body">
             GitHub: <a href="https://github.com/eng618/parable-bloom">eng618/parable-bloom</a>

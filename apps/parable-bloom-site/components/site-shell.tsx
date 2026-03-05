@@ -1,15 +1,15 @@
 'use client';
 
-import Link from "next/link";
-import type { ReactNode } from "react";
-import { Text } from "@gv-tech/ui-web";
+import { Text } from '@gv-tech/ui-web';
+import Link from 'next/link';
+import type { ReactNode } from 'react';
 
 const navItems = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/terms", label: "Terms" },
-  { href: "/delete-account", label: "Delete Account" },
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms' },
+  { href: '/delete-account', label: 'Delete Account' },
 ];
 
 type SiteShellProps = {
@@ -19,9 +19,11 @@ type SiteShellProps = {
 export default function SiteShell({ children }: SiteShellProps) {
   return (
     <div className="site-shell">
-      <header className="container site-nav" aria-label="Main navigation">
+      <header className="site-nav container" aria-label="Main navigation">
         <Link href="/" aria-label="Parable Bloom home">
-          <Text variant="h3" as="strong">Parable Bloom</Text>
+          <Text variant="h3" as="strong">
+            Parable Bloom
+          </Text>
         </Link>
         <nav className="site-nav-links">
           {navItems.map((item) => (

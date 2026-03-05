@@ -89,10 +89,11 @@ tasks:
       - bunx nx run-many -t lint
 
   format:all:
-    desc: Format code across all modules
+    desc: Format code across all modules (Flutter, Level Builder, Next.js)
     cmds:
       - task: flutter:format
       - task: lb:format
+      - task: next:format
 
   format:check:all:
     desc: Check if code is formatted across all modules
@@ -105,9 +106,10 @@ tasks:
       - bunx nx run-many -t lint --fix
 
   lint:all:
-    desc: Run linting for all modules
+    desc: Run linting for all modules (Flutter, Next.js)
     cmds:
       - task: flutter:lint
+      - task: next:lint
       - task: lb:lint
 
   dev:

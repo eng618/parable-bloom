@@ -29,7 +29,7 @@ body {
     radial-gradient(circle at 10% 15%, hsla(255, 255, 255, 0.88), transparent 42%),
     radial-gradient(circle at 82% 8%, hsla(171, 205, 160, 0.26), transparent 45%),
     linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
-  font-family: "Alegreya Sans", "Segoe UI", sans-serif;
+  font-family: 'Alegreya Sans', 'Segoe UI', sans-serif;
   line-height: 1.5;
 }
 
@@ -87,7 +87,7 @@ a {
 
 .hero h1 {
   margin: 0;
-  font-family: "Fraunces", Georgia, serif;
+  font-family: 'Fraunces', Georgia, serif;
   font-size: clamp(2.1rem, 4.2vw, 3.6rem);
   line-height: 1.05;
 }
@@ -111,7 +111,10 @@ a {
   padding: 0.7rem 1rem;
   font-weight: 700;
   font-size: 0.9rem;
-  transition: transform 160ms ease, box-shadow 180ms ease, background 200ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 180ms ease,
+    background 200ms ease;
 }
 
 .cta:hover {
@@ -141,7 +144,9 @@ a {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1rem;
-  transition: transform 160ms ease, box-shadow 220ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 220ms ease;
   animation: fadeInUp 600ms ease both;
   display: flex;
   flex-direction: column;
@@ -192,7 +197,7 @@ a {
 
 .page h1,
 .page h2 {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: 'Fraunces', Georgia, serif;
 }
 
 .page p,
