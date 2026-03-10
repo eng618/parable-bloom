@@ -1,3 +1,4 @@
+import PlausibleAnalytics from '@/components/plausible-analytics';
 import SiteShell from '@/components/site-shell';
 import UiThemeProvider from '@/components/ui-theme-provider';
 import type { Metadata } from 'next';
@@ -19,6 +20,7 @@ export default function RootLayout({
       <body>
         <UiThemeProvider>
           <SiteShell>{children}</SiteShell>
+          <PlausibleAnalytics />
         </UiThemeProvider>
       </body>
     </html>
