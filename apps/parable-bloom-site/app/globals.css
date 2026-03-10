@@ -1,18 +1,36 @@
-:root {
-  --bg-top: hsl(40 100% 97%);
-  --bg-bottom: hsl(151 66% 27%);
-  --surface: hsl(0 0% 100%);
-  --surface-alt: hsl(0 0% 96%);
-  --text-primary: hsl(222 47% 11%);
-  --text-secondary: hsl(215 16% 47%);
-  --brand: hsl(151 66% 27%);
-  --brand-soft: hsl(93 28% 54%);
-  --border: hsl(0 0% 88%);
-  --radius: 8px;
-  --shadow: 0 18px 40px hsla(151, 66%, 27%, 0.15);
+@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&family=Alegreya+Sans:wght@400;500;700&display=swap');
+
+@theme {
+  /* Parable Bloom brand palette */
+  --color-brand: hsl(151 66% 27%);
+  --color-brand-soft: hsl(93 28% 54%);
+  --color-brand-pale: hsl(93 28% 54% / 0.12);
+  --color-surface: hsl(0 0% 100%);
+  --color-surface-alt: hsl(0 0% 96%);
+  --color-bg-top: hsl(40 100% 97%);
+  --color-bg-bottom: hsl(151 66% 27%);
+  --color-text-primary: hsl(222 47% 11%);
+  --color-text-secondary: hsl(215 16% 47%);
+  --color-border: hsl(0 0% 88%);
+
+  /* Zen shadow */
+  --shadow-zen: 0 18px 40px hsl(151 66% 27% / 0.15);
+  --shadow-zen-hover: 0 24px 48px hsl(151 66% 27% / 0.22);
+
+  /* Typography */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Alegreya Sans', 'Segoe UI', sans-serif;
+
+  /* Zen transition defaults */
+  --duration-zen: 400ms;
+  --ease-zen: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-* {
+/* ── Base ─────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -24,13 +42,26 @@ body {
 }
 
 body {
-  color: var(--text-primary);
+  color: var(--color-text-primary);
   background:
-    radial-gradient(circle at 10% 15%, hsla(255, 255, 255, 0.88), transparent 42%),
-    radial-gradient(circle at 82% 8%, hsla(171, 205, 160, 0.26), transparent 45%),
-    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
-  font-family: 'Alegreya Sans', 'Segoe UI', sans-serif;
-  line-height: 1.5;
+    radial-gradient(circle at 10% 15%, hsl(0 0% 100% / 0.88), transparent 42%),
+    radial-gradient(circle at 82% 8%, hsl(93 28% 54% / 0.14), transparent 45%),
+    linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg-bottom) 100%);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth transitions on all interactive elements */
+a,
+button {
+  transition:
+    color var(--duration-zen) var(--ease-zen),
+    background-color var(--duration-zen) var(--ease-zen),
+    border-color var(--duration-zen) var(--ease-zen),
+    box-shadow var(--duration-zen) var(--ease-zen),
+    transform 200ms var(--ease-zen),
+    opacity 300ms var(--ease-zen);
 }
 
 a {
@@ -38,184 +69,11 @@ a {
   text-decoration: none;
 }
 
-.site-shell {
-  min-height: 100vh;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-}
-
-.site-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.25rem;
-}
-
-.site-nav-links {
-  display: flex;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.site-nav-link {
-  padding: 0.5rem 0.8rem;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.site-nav-link:hover {
-  background: hsla(93, 28%, 54%, 0.12);
-  color: var(--brand);
-}
-
-.container {
-  width: min(1050px, 100% - 2rem);
-  margin: 0 auto;
-}
-
-.hero {
-  background: linear-gradient(145deg, hsla(255, 255, 255, 0.9), hsla(241, 246, 234, 0.96));
-  border: 1px solid var(--border);
-  border-radius: 26px;
-  box-shadow: var(--shadow);
-  padding: clamp(1.25rem, 3vw, 3rem);
-  margin-top: 0.5rem;
-  animation: fadeInUp 600ms ease;
-}
-
-.hero h1 {
-  margin: 0;
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: clamp(2.1rem, 4.2vw, 3.6rem);
-  line-height: 1.05;
-}
-
-.hero p {
-  margin-top: 1rem;
-  color: var(--text-secondary);
-  max-width: 66ch;
-}
-
-.actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-top: 1.1rem;
-}
-
-.cta {
-  border-radius: 999px;
-  border: 1px solid transparent;
-  padding: 0.7rem 1rem;
-  font-weight: 700;
-  font-size: 0.9rem;
-  transition:
-    transform 160ms ease,
-    box-shadow 180ms ease,
-    background 200ms ease;
-}
-
-.cta:hover {
-  transform: translateY(-2px);
-}
-
-.cta-primary {
-  color: hsl(0 0% 100%);
-  background: linear-gradient(90deg, var(--brand), var(--brand-soft));
-  box-shadow: 0 8px 22px hsla(93, 28%, 54%, 0.28);
-}
-
-.cta-secondary {
-  background: var(--surface);
-  border-color: var(--border);
-}
-
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-  margin: 1.5rem 0 0;
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem;
-  transition:
-    transform 160ms ease,
-    box-shadow 220ms ease;
-  animation: fadeInUp 600ms ease both;
-  display: flex;
-  flex-direction: column;
-  min-height: 220px;
-}
-
-.card:nth-child(2) {
-  animation-delay: 90ms;
-}
-
-.card:nth-child(3) {
-  animation-delay: 160ms;
-}
-
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px hsla(151, 66%, 27%, 0.16);
-}
-
-.card h3 {
-  margin: 0.2rem 0;
-}
-
-.card p {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
-/* make card content grow so footer stays at bottom */
-.card .card-content {
-  flex: 1 1 auto;
-}
-
-/* ensure CTA fills the card footer width */
-.card footer,
-.card a,
-.card button {
-  width: 100%;
-}
-
-.page {
-  background: hsla(255, 253, 248, 0.9);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 1.25rem;
-  margin-top: 0.75rem;
-}
-
-.page h1,
-.page h2 {
-  font-family: 'Fraunces', Georgia, serif;
-}
-
-.page p,
-.page li {
-  color: var(--text-secondary);
-}
-
-.footer {
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  padding: 1.4rem 0 1.8rem;
-}
-
+/* ── Animations ───────────────────────────────────────────────── */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -223,14 +81,78 @@ a {
   }
 }
 
-@media (max-width: 900px) {
-  .card-grid {
-    grid-template-columns: 1fr;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
+  to {
+    opacity: 1;
+  }
+}
 
-  .site-nav {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
   }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 600ms var(--ease-zen) both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 500ms var(--ease-zen) both;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+/* ── Typography helpers ───────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* ── Page article ─────────────────────────────────────────────── */
+.page-article {
+  background: hsl(40 100% 97% / 0.92);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  margin-top: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.page-article h1,
+.page-article h2 {
+  font-family: var(--font-display);
+  color: var(--color-text-primary);
+}
+
+.page-article p,
+.page-article li {
+  color: var(--color-text-secondary);
+}
+
+.page-article a {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-decoration-color: hsl(151 66% 27% / 0.4);
+  text-underline-offset: 3px;
+}
+
+.page-article a:hover {
+  text-decoration-color: var(--color-brand);
 }

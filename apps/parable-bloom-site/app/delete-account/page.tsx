@@ -2,14 +2,14 @@ import { Text } from '@gv-tech/ui-web';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Delete Account - Parable Bloom',
+  title: 'Delete Account',
   description: 'Instructions on how to delete your Parable Bloom account and associated data.',
   robots: 'noindex',
 };
 
 export default function DeleteAccountPage() {
   return (
-    <article className="page">
+    <article className="page-article animate-fade-in-up">
       <Text variant="h1">Deleting Your Parable Bloom Account</Text>
       <Text variant="body">
         We respect your data privacy. If you wish to delete your account and all associated data, choose one of the

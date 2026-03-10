@@ -2,13 +2,13 @@ import { Text } from '@gv-tech/ui-web';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - Parable Bloom',
+  title: 'Privacy Policy',
   description: 'Read the privacy policy for Parable Bloom, detailing how we collect, use, and protect your data.',
 };
 
 export default function PrivacyPage() {
   return (
-    <article className="page">
+    <article className="page-article animate-fade-in-up">
       <Text variant="h1">Privacy Policy</Text>
       <Text variant="body">
         <strong>Effective Date:</strong> February 04, 2026

@@ -2,13 +2,13 @@ import { Text } from '@gv-tech/ui-web';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service - Parable Bloom',
+  title: 'Terms of Service',
   description: 'Read the terms of service for Parable Bloom, outlining usage rights and responsibilities.',
 };
 
 export default function TermsPage() {
   return (
-    <article className="page">
+    <article className="page-article animate-fade-in-up">
       <Text variant="h1">Terms of Service</Text>
       <Text variant="body">
         <strong>Effective Date:</strong> February 04, 2026
