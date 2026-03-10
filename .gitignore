@@ -137,3 +137,4 @@ nx.bat
 apps/parable-bloom-site/.next/
 apps/parable-bloom-site/.eslintcache
 apps/parable-bloom-site/next-env.d.ts
+apps/parable-bloom-site/tsconfig.tsbuildinfo

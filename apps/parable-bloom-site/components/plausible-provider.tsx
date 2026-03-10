@@ -17,13 +17,7 @@ export default function PlausibleProvider() {
       }
 
       const plausibleModule = await import('@plausible-analytics/tracker');
-      const init = plausibleModule.init ?? plausibleModule.default?.init;
-
-      if (!init) {
-        return;
-      }
-
-      init({
+      plausibleModule.init({
         domain: plausibleDomain,
         endpoint: plausibleEndpoint,
         autoCapturePageviews: true,

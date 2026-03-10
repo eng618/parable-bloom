@@ -10,7 +10,8 @@
     "lint:fix": "eslint . --cache --fix",
     "lint:report": "eslint . --cache -o ./eslintReport.html -f html",
     "prepare": "husky",
-    "start": "next start --port 4201"
+    "start": "next start --port 4201",
+    "validate": "node ./scripts/validate.mjs"
   },
   "dependencies": {
     "@gv-tech/ui-web": "2.17.0",
