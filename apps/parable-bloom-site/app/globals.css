@@ -2,7 +2,7 @@
 @import 'tailwindcss';
 
 /* Scan @gv-tech/ui-web source so Tailwind v4 generates its utility classes */
-@source "../node_modules/@gv-tech/ui-web/src";
+@source '../node_modules/@gv-tech/ui-web/src';
 
 @theme {
   /* ── Design-system radius tokens ── */
@@ -147,7 +147,6 @@ a {
 }
 
 @keyframes float {
-
   0%,
   100% {
     transform: translateY(0);
