@@ -83,7 +83,7 @@ export default function SiteShell({ children }: SiteShellProps) {
 
       {/* ── Support FAB ── */}
       <SupportFab
-        creatorId="parablebloom"
+        creatorId="eng618"
         title="Support Parable Bloom"
         description="If you enjoy the game, consider buying us a coffee to support continued development 🌿"
         iframeTitle="Support Parable Bloom on Buy Me a Coffee"
