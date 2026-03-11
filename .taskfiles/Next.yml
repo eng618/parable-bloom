@@ -24,6 +24,7 @@ tasks:
   format:
     desc: Format code for the Next.js site
     dir: apps/parable-bloom-site
+    deps: [get]
     cmds:
       - bun run format
 
@@ -33,3 +34,10 @@ tasks:
     deps: [get]
     cmds:
       - bun run lint
+
+  validate:
+    desc: Run all validation checks for the Next.js site
+    dir: apps/parable-bloom-site
+    deps: [get]
+    cmds:
+      - bun run validate
