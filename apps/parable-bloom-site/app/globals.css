@@ -32,22 +32,22 @@
   --color-popover-foreground: hsl(var(--popover-foreground));
 
   /* ── Parable Bloom brand palette ── */
-  --color-brand: hsl(151 66% 27%);
-  --color-brand-soft: hsl(93 28% 54%);
-  --color-brand-pale: hsl(93 28% 54% / 0.12);
-  --color-surface: hsl(0 0% 100%);
-  --color-surface-alt: hsl(0 0% 96%);
-  --color-bg-top: hsl(40 100% 97%);
-  --color-bg-bottom: hsl(151 66% 27%);
-  --color-text-primary: hsl(222 47% 11%);
-  --color-text-secondary: hsl(215 16% 47%);
+  --color-brand: hsl(151deg 66% 27%);
+  --color-brand-soft: hsl(93deg 28% 54%);
+  --color-brand-pale: hsl(93deg 28% 54% / 12%);
+  --color-surface: hsl(0deg 0% 100%);
+  --color-surface-alt: hsl(0deg 0% 96%);
+  --color-bg-top: hsl(40deg 100% 97%);
+  --color-bg-bottom: hsl(151deg 66% 27%);
+  --color-text-primary: hsl(222deg 47% 11%);
+  --color-text-secondary: hsl(215deg 16% 47%);
 
   /* Zen shadow */
-  --shadow-zen: 0 18px 40px hsl(151 66% 27% / 0.15);
-  --shadow-zen-hover: 0 24px 48px hsl(151 66% 27% / 0.22);
+  --shadow-zen: 0 18px 40px hsl(151deg 66% 27% / 15%);
+  --shadow-zen-hover: 0 24px 48px hsl(151deg 66% 27% / 22%);
 
   /* Typography */
-  --font-display: 'Fraunces', Georgia, serif;
+  --font-display: 'Fraunces', georgia, serif;
   --font-body: 'Alegreya Sans', 'Segoe UI', sans-serif;
 
   /* Zen transition defaults */
@@ -98,8 +98,8 @@ body {
 body {
   color: var(--color-text-primary);
   background:
-    radial-gradient(circle at 10% 15%, hsl(0 0% 100% / 0.88), transparent 42%),
-    radial-gradient(circle at 82% 8%, hsl(93 28% 54% / 0.14), transparent 45%),
+    radial-gradient(circle at 10% 15%, hsl(0deg 0% 100% / 88%), transparent 42%),
+    radial-gradient(circle at 82% 8%, hsl(93deg 28% 54% / 14%), transparent 45%),
     linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg-bottom) 100%);
   font-family: var(--font-body);
   line-height: 1.6;
@@ -124,7 +124,7 @@ a {
 }
 
 /* ── Animations ───────────────────────────────────────────────── */
-@keyframes fadeInUp {
+@keyframes fade-in-up {
   from {
     opacity: 0;
     transform: translateY(16px);
@@ -136,7 +136,7 @@ a {
   }
 }
 
-@keyframes fadeIn {
+@keyframes fade-in {
   from {
     opacity: 0;
   }
@@ -147,6 +147,7 @@ a {
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0);
@@ -158,11 +159,11 @@ a {
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp 600ms var(--ease-zen) both;
+  animation: fade-in-up 600ms var(--ease-zen) both;
 }
 
 .animate-fade-in {
-  animation: fadeIn 500ms var(--ease-zen) both;
+  animation: fade-in 500ms var(--ease-zen) both;
 }
 
 .animate-float {
@@ -184,7 +185,7 @@ a {
 
 /* ── Page article ─────────────────────────────────────────────── */
 .page-article {
-  background: hsl(40 100% 97% / 0.92);
+  background: hsl(40deg 100% 97% / 92%);
   border: 1px solid var(--color-border);
   border-radius: 18px;
   padding: clamp(1.25rem, 3vw, 2.5rem);
@@ -206,7 +207,7 @@ a {
 .page-article a {
   color: var(--color-brand);
   text-decoration: underline;
-  text-decoration-color: hsl(151 66% 27% / 0.4);
+  text-decoration-color: hsl(151deg 66% 27% / 40%);
   text-underline-offset: 3px;
 }
 
