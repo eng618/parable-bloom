@@ -24,7 +24,7 @@
         "default": {
           "projectId": "parable-bloom",
           "appId": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
-          "uploadDebugSymbols": false,
+          "uploadDebugSymbols": true,
           "fileOutput": "ios/Runner/GoogleService-Info.plist"
         }
       },
@@ -32,7 +32,7 @@
         "default": {
           "projectId": "parable-bloom",
           "appId": "1:697900014066:ios:602ba81c4ad6f100c1f36b",
-          "uploadDebugSymbols": false,
+          "uploadDebugSymbols": true,
           "fileOutput": "macos/Runner/GoogleService-Info.plist"
         }
       }

@@ -106,6 +106,23 @@ tasks:
   # -----------------------------------------------------------------------------
   # FlutterFire Configuration
 
+  install:flutterfire:
+    desc: Install the FlutterFire CLI via Dart pub global
+    cmds:
+      - dart pub global activate flutterfire_cli
+    status:
+      - command -v flutterfire >/dev/null 2>&1
+
+  check:auth:
+    desc: Verify the user is logged into Firebase
+    cmds:
+      - firebase login:list
+    preconditions:
+      - sh: firebase login:list 2>&1 | grep -q '@'
+        msg: |
+          You are not logged into Firebase.
+          Run 'task firebase:login' to authenticate, then re-run 'task setup'.
+
   generate-dummy-options:
     desc: Generate a dummy firebase_options.dart for local development/testing
     cmds:
@@ -119,6 +136,10 @@ tasks:
     preconditions:
       - sh: command -v flutterfire >/dev/null 2>&1
         msg: "FlutterFire CLI is not installed."
+      - sh: firebase login:list 2>&1 | grep -q '@'
+        msg: |
+          You are not logged into Firebase.
+          Run 'task firebase:login' to authenticate, then re-run 'task setup'.
 
   configure:android:
     desc: Configure Firebase for Android only
@@ -128,6 +149,10 @@ tasks:
     preconditions:
       - sh: command -v flutterfire >/dev/null 2>&1
         msg: "FlutterFire CLI is not installed."
+      - sh: firebase login:list 2>&1 | grep -q '@'
+        msg: |
+          You are not logged into Firebase.
+          Run 'task firebase:login' to authenticate first.
 
   configure:ios:
     desc: Configure Firebase for iOS only
