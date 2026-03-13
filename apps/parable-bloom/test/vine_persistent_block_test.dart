@@ -139,6 +139,83 @@ void main() {
       expect(notifier.state['v2']!.isBlocked, isFalse);
     },
   );
+
+  test('markAttempted decrements grace only once per vine', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(vineStatesProvider.notifier);
+    notifier.state = {
+      'vine1': VineState(
+        id: 'vine1',
+        isBlocked: true,
+        isCleared: false,
+        hasBeenAttempted: false,
+      ),
+    };
+
+    expect(container.read(graceProvider), 3);
+
+    notifier.markAttempted('vine1');
+    expect(container.read(graceProvider), 2);
+    expect(notifier.state['vine1']!.hasBeenAttempted, isTrue);
+
+    // Repeated blocked taps on the same vine should not consume extra hearts.
+    notifier.markAttempted('vine1');
+    expect(container.read(graceProvider), 2);
+  });
+
+  test('anyVineAnimating resets after rapid clear and blocked transitions', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(vineStatesProvider.notifier);
+    final level = LevelData(
+      id: 100,
+      name: 'Animation State Reset',
+      difficulty: 'Seed',
+      gridWidth: 4,
+      gridHeight: 3,
+      vines: [
+        VineData(
+          id: 'v1',
+          headDirection: 'up',
+          orderedPath: [
+            {'x': 2, 'y': 0},
+            {'x': 2, 'y': 1},
+          ],
+        ),
+        VineData(
+          id: 'v2',
+          headDirection: 'right',
+          orderedPath: [
+            {'x': 1, 'y': 0},
+            {'x': 0, 'y': 0},
+          ],
+        ),
+      ],
+      maxMoves: 6,
+      minMoves: 2,
+      complexity: 'low',
+      grace: 2,
+      mask: MaskData(mode: 'show-all', points: const []),
+    );
+
+    notifier.resetForLevel(level);
+    expect(container.read(anyVineAnimatingProvider), isFalse);
+
+    notifier.setAnimationState('v1', VineAnimationState.animatingClear);
+    expect(container.read(anyVineAnimatingProvider), isTrue);
+
+    notifier.setAnimationState('v2', VineAnimationState.animatingBlocked);
+    expect(container.read(anyVineAnimatingProvider), isTrue);
+
+    notifier.setAnimationState('v2', VineAnimationState.normal);
+    notifier.setAnimationState('v1', VineAnimationState.cleared);
+    notifier.clearVine('v1');
+
+    expect(container.read(anyVineAnimatingProvider), isFalse);
+  });
 }
 
 // Minimal mock notifier used only for initialization in the test
