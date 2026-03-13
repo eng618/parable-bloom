@@ -44,5 +44,52 @@ class AnalyticsService {
     );
   }
 
+  Future<void> logSyncConflictDetected({
+    required String source,
+    required String conflictType,
+    required int localLevel,
+    int? cloudLevel,
+  }) async {
+    await _analytics.logEvent(
+      name: 'sync_conflict_detected',
+      parameters: {
+        'source': source,
+        'conflict_type': conflictType,
+        'local_level': localLevel,
+        'cloud_level': cloudLevel ?? -1,
+      },
+    );
+  }
+
+  Future<void> logSyncConflictResolved({
+    required String source,
+    required String conflictType,
+    required String resolution,
+    required bool automatic,
+  }) async {
+    await _analytics.logEvent(
+      name: 'sync_conflict_resolved',
+      parameters: {
+        'source': source,
+        'conflict_type': conflictType,
+        'resolution': resolution,
+        'automatic': automatic ? 1 : 0,
+      },
+    );
+  }
+
+  Future<void> logCloudSyncUnavailable({
+    required String source,
+    required String reason,
+  }) async {
+    await _analytics.logEvent(
+      name: 'cloud_sync_unavailable',
+      parameters: {
+        'source': source,
+        'reason': reason,
+      },
+    );
+  }
+
   // Add more as needed: hint_used, mercy_purchase, parable_viewed
 }

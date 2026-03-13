@@ -8,6 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mockito/mockito.dart';
 
 import 'package:parable_bloom/features/game/data/repositories/firebase_game_progress_repository.dart';
+import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 
 // Mock Firestore
@@ -86,6 +87,7 @@ void main() {
   late MockFirebaseFirestore mockFirestore;
   late FirebaseGameProgressRepository repository;
   late Directory tempDir;
+  late MockDocumentSnapshot mockSnapshot;
 
   setUpAll(() async {
     // Create a temporary directory for testing
@@ -114,7 +116,7 @@ void main() {
     final mockDoc = MockDocumentReference();
     final mockSubCollection = MockCollectionReference();
     final mockSubDoc = MockDocumentReference();
-    final mockSnapshot = MockDocumentSnapshot();
+    mockSnapshot = MockDocumentSnapshot();
 
     // Stub chain: firestore -> collection -> doc -> collection -> doc
     // Using explicit values to satisfy sound null safety for non-nullable parameters
@@ -206,6 +208,23 @@ void main() {
       // With mocked signed-in user, should be available
       final available = await repository.isCloudSyncAvailable();
       expect(available, isTrue);
+
+      final availability = await repository.getCloudSyncAvailability();
+      expect(availability.isAvailable, isTrue);
+      expect(availability.reason, CloudSyncAvailabilityReason.available);
+    });
+
+    test('should report anonymous account as unavailable', () async {
+      final anonymousAuth = MockFirebaseAuth(
+        mockUser: MockUser(uid: 'anon-user', isAnonymous: true),
+        signedIn: true,
+      );
+      repository =
+          FirebaseGameProgressRepository(box, mockFirestore, anonymousAuth);
+
+      final availability = await repository.getCloudSyncAvailability();
+      expect(availability.isAvailable, isFalse);
+      expect(availability.reason, CloudSyncAvailabilityReason.anonymousAccount);
     });
 
     test('should handle last sync time', () async {
@@ -237,6 +256,70 @@ void main() {
 
       // Sync should not throw (even if Firestore is mocked)
       await expectLater(repository.syncToCloud(), completes);
+    });
+
+    test('inspectSyncConflict returns cloudAhead when cloud dominates',
+        () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 2,
+        completedLevels: {1},
+      );
+      await repository.saveProgress(local);
+
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(
+        GameProgress.initial().copyWith(
+            currentLevel: 6, completedLevels: {1, 2, 3, 4, 5}).toJson(),
+      );
+
+      final conflict = await repository.inspectSyncConflict();
+      expect(conflict.type, SyncConflictType.cloudAhead);
+      expect(conflict.cloudProgress, isNotNull);
+      expect(conflict.cloudProgress!.currentLevel, 6);
+    });
+
+    test('resolveSyncConflict keepCloud replaces local state', () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 2,
+        completedLevels: {1},
+      );
+      await repository.saveProgress(local);
+
+      final cloud = GameProgress.initial().copyWith(
+        currentLevel: 8,
+        completedLevels: {1, 2, 3, 4, 5, 6, 7},
+      );
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(cloud.toJson());
+
+      await repository.resolveSyncConflict(SyncConflictResolution.keepCloud);
+
+      final resolved = await repository.getProgress();
+      expect(resolved.currentLevel, 8);
+      expect(resolved.completedLevels, {1, 2, 3, 4, 5, 6, 7});
+    });
+
+    test('resolveSyncConflict keepLocal pushes local state to cloud', () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 7,
+        completedLevels: {1, 2, 3, 4, 5, 6},
+      );
+      await repository.saveProgress(local);
+
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(
+        GameProgress.initial().copyWith(
+          currentLevel: 3,
+          completedLevels: {1, 2},
+        ).toJson(),
+      );
+
+      await repository.resolveSyncConflict(SyncConflictResolution.keepLocal);
+
+      final resolved = await repository.getProgress();
+      expect(resolved.currentLevel, 7);
+      expect(resolved.completedLevels, {1, 2, 3, 4, 5, 6});
+      expect(await repository.getLastSyncTime(), isNotNull);
     });
   });
 }

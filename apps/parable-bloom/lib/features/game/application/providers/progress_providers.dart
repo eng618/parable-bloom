@@ -6,6 +6,7 @@ import '../../../../providers/infrastructure_providers.dart';
 import '../../../../providers/service_providers.dart';
 import '../../../../services/logger_service.dart';
 import '../../data/repositories/firebase_game_progress_repository.dart';
+import '../../domain/entities/cloud_sync_state.dart';
 import '../../domain/entities/game_progress.dart';
 import 'counter_providers.dart';
 
@@ -22,6 +23,12 @@ final cloudSyncEnabledProvider = FutureProvider<bool>((ref) async {
 final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.isCloudSyncAvailable();
+});
+
+final cloudSyncAvailabilityProvider =
+    FutureProvider<CloudSyncAvailability>((ref) async {
+  final notifier = ref.watch(gameProgressProvider.notifier);
+  return notifier.getCloudSyncAvailability();
 });
 
 final lastSyncTimeProvider = FutureProvider<DateTime?>((ref) async {
@@ -173,6 +180,11 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     return await repository.isCloudSyncAvailable();
   }
 
+  Future<CloudSyncAvailability> getCloudSyncAvailability() async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    return await repository.getCloudSyncAvailability();
+  }
+
   Future<DateTime?> getLastSyncTime() async {
     final repository = ref.read(gameProgressRepositoryProvider);
     return await repository.getLastSyncTime();
@@ -184,5 +196,16 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       await repository.syncFromCloud();
       await initialize();
     }
+  }
+
+  Future<SyncConflictState> inspectSyncConflict() async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    return await repository.inspectSyncConflict();
+  }
+
+  Future<void> resolveSyncConflict(SyncConflictResolution resolution) async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    await repository.resolveSyncConflict(resolution);
+    await initialize();
   }
 }

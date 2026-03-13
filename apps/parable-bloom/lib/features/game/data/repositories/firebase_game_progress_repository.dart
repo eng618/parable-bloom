@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../../../core/config/environment_config.dart';
 import '../../../../services/logger_service.dart';
 import '../constants/game_progress_storage_keys.dart';
+import '../../domain/entities/cloud_sync_state.dart';
 import '../../domain/entities/game_progress.dart';
 import '../../domain/repositories/game_progress_repository.dart';
 
@@ -31,6 +32,16 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
   /// Gets the current user ID. Return null if not signed in.
   String? get _userId => _auth.currentUser?.uid;
+
+  bool get _isAnonymousUser => _auth.currentUser?.isAnonymous ?? true;
+
+  DocumentReference<Map<String, dynamic>> _progressRef(String userId) {
+    return _firestore
+        .collection(_collectionName)
+        .doc(userId)
+        .collection('data')
+        .doc(_progressDoc);
+  }
 
   @override
   Future<GameProgress> getProgress() async {
@@ -99,6 +110,12 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
       return;
     }
 
+    if (_isAnonymousUser) {
+      LoggerService.debug('Sync skipped: Anonymous account cannot sync',
+          tag: 'FirebaseGameProgressRepository');
+      return;
+    }
+
     final localProgress = await getProgress();
     final lastLocalUpdate =
         _localBox.get(GameProgressStorageKeys.lastLocalUpdate) as int? ?? 0;
@@ -114,66 +131,28 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
       return;
     }
 
-    final now = DateTime.now();
-
     try {
-      // OPTIONAL: Read cloud first to check for conflict?
-      // For now, to be "Robust", we should probably read it if we suspect conflict,
-      // but simpler "Last Write Wins" or "Max Progress Wins" is often better for games.
-      // Let's implement "Merge/Max Progress" strategy.
+      final cloudProgress = await _getCloudProgress(userId);
+      if (cloudProgress != null) {
+        final conflictType = _compareProgress(localProgress, cloudProgress);
+        if (conflictType == SyncConflictType.cloudAhead) {
+          await _saveLocalProgress(cloudProgress, updateSyncTime: true);
+          LoggerService.info('Cloud progress applied locally before push',
+              tag: 'FirebaseGameProgressRepository');
+          return;
+        }
 
-      final cloudDoc = await _firestore
-          .collection(_collectionName)
-          .doc(userId)
-          .collection('data')
-          .doc(_progressDoc)
-          .get();
-
-      bool shouldPush = true;
-
-      if (cloudDoc.exists) {
-        final cloudData = cloudDoc.data();
-        if (cloudData != null) {
-          final cloudProgress = GameProgress.fromJson(cloudData);
-
-          // IF cloud has strictly MORE progress, maybe we should pull instead?
-          // OR merge?
-          // Current Strategy: If Local has equal or greater level, push.
-          // If Cloud is ahead, we might have a conflict.
-
-          if (cloudProgress.currentLevel > localProgress.currentLevel) {
-            // Cloud is ahead! We should actually PULL this data to local, not overwrite it.
-            // But we are in 'syncToCloud'.
-            // Let's trigger a merge/pull logic.
-            LoggerService.info(
-                'Cloud is ahead (L${cloudProgress.currentLevel} vs L${localProgress.currentLevel}). handling conflict by merging.',
-                tag: 'FirebaseGameProgressRepository');
-            shouldPush = false;
-            await _mergeRemoteToLocal(cloudProgress);
-          }
+        if (conflictType == SyncConflictType.divergent) {
+          LoggerService.info(
+              'Sync push skipped: divergent progress needs user choice',
+              tag: 'FirebaseGameProgressRepository');
+          return;
         }
       }
 
-      if (shouldPush) {
-        await _firestore
-            .collection(_collectionName)
-            .doc(userId)
-            .collection('data')
-            .doc(_progressDoc)
-            .set({
-          ...localProgress.toJson(),
-          'lastUpdated': now.toIso8601String(),
-          'syncTimestamp': now.millisecondsSinceEpoch,
-        });
-
-        // Update local sync timestamp
-        await _localBox.put(
-          GameProgressStorageKeys.lastSyncTime,
-          now.millisecondsSinceEpoch,
-        );
-        LoggerService.info('Sync to cloud successful',
-            tag: 'FirebaseGameProgressRepository');
-      }
+      await _saveCloudProgress(userId, localProgress);
+      LoggerService.info('Sync to cloud successful',
+          tag: 'FirebaseGameProgressRepository');
     } catch (e, stack) {
       LoggerService.error('Sync to cloud failed',
           error: e, stackTrace: stack, tag: 'FirebaseGameProgressRepository');
@@ -190,20 +169,13 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     final userId = _userId;
     if (userId == null) return;
 
-    try {
-      final cloudDoc = await _firestore
-          .collection(_collectionName)
-          .doc(userId)
-          .collection('data')
-          .doc(_progressDoc)
-          .get();
+    if (_isAnonymousUser) return;
 
-      if (cloudDoc.exists) {
-        final cloudData = cloudDoc.data();
-        if (cloudData != null) {
-          final cloudProgress = GameProgress.fromJson(cloudData);
-          await _mergeRemoteToLocal(cloudProgress);
-        }
+    try {
+      final conflict = await inspectSyncConflict();
+      if (conflict.type == SyncConflictType.cloudAhead &&
+          conflict.cloudProgress != null) {
+        await _saveLocalProgress(conflict.cloudProgress!, updateSyncTime: true);
       }
     } catch (e, stack) {
       LoggerService.error('Sync from cloud failed',
@@ -211,58 +183,84 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     }
   }
 
-  /// Merges remote progress into local.
-  /// Strategy:
-  /// - Max Level wins.
-  /// - Completed Levels are unioned.
-  /// - Tutorial completed is OR'd.
-  Future<void> _mergeRemoteToLocal(GameProgress cloudProgress) async {
-    final localProgress = await getProgress();
-
-    // Merge Logic
-    final maxCurrentLevel =
-        (cloudProgress.currentLevel > localProgress.currentLevel)
-            ? cloudProgress.currentLevel
-            : localProgress.currentLevel;
-
-    final mergedCompletedLevels = Set<int>.from(localProgress.completedLevels)
-      ..addAll(cloudProgress.completedLevels);
-
-    final mergedTutorialCompleted =
-        localProgress.tutorialCompleted || cloudProgress.tutorialCompleted;
-
-    // Check if anything actually changed
-    final isDifferent = maxCurrentLevel != localProgress.currentLevel ||
-        mergedCompletedLevels.length != localProgress.completedLevels.length ||
-        mergedTutorialCompleted != localProgress.tutorialCompleted;
-
-    if (isDifferent) {
-      LoggerService.info('Merging cloud data into local...',
-          tag: 'FirebaseGameProgressRepository');
-      final newProgress = localProgress.copyWith(
-        currentLevel: maxCurrentLevel,
-        completedLevels: mergedCompletedLevels,
-        tutorialCompleted: mergedTutorialCompleted,
-        // We could merge lessons too if we had that logic exposed
-      );
-
-      // Save merged result locally
-      await _localBox.put(
-          GameProgressStorageKeys.progress, newProgress.toJson());
-      // Update update time
-      await _localBox.put(
-        GameProgressStorageKeys.lastLocalUpdate,
-        DateTime.now().millisecondsSinceEpoch,
-      );
-      // We can consider this "Synced" since it includes cloud data,
-      // BUT if we merged local data IN, we might want to push back to cloud?
-      // Let's assume next save or auto-sync will handle pushing the merged state back.
-    } else {
-      // If data is identical, we can just update the sync timestamp
-      final cloudTimestamp = DateTime.now()
-          .millisecondsSinceEpoch; // Or specific timestamp from cloud if we had it
-      await _localBox.put(GameProgressStorageKeys.lastSyncTime, cloudTimestamp);
+  Future<GameProgress?> _getCloudProgress(String userId) async {
+    final cloudDoc = await _progressRef(userId).get();
+    if (!cloudDoc.exists) {
+      return null;
     }
+
+    final cloudData = cloudDoc.data();
+    if (cloudData == null) {
+      return null;
+    }
+
+    return GameProgress.fromJson(cloudData);
+  }
+
+  Future<void> _saveLocalProgress(
+    GameProgress progress, {
+    required bool updateSyncTime,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _localBox.put(GameProgressStorageKeys.progress, progress.toJson());
+    await _localBox.put(GameProgressStorageKeys.lastLocalUpdate, now);
+    if (updateSyncTime) {
+      await _localBox.put(GameProgressStorageKeys.lastSyncTime, now);
+    }
+  }
+
+  Future<void> _saveCloudProgress(String userId, GameProgress progress) async {
+    final now = DateTime.now();
+    await _progressRef(userId).set({
+      ...progress.toJson(),
+      'lastUpdated': now.toIso8601String(),
+      'syncTimestamp': now.millisecondsSinceEpoch,
+    });
+    await _localBox.put(
+      GameProgressStorageKeys.lastSyncTime,
+      now.millisecondsSinceEpoch,
+    );
+  }
+
+  SyncConflictType _compareProgress(GameProgress local, GameProgress cloud) {
+    if (local == cloud) {
+      return SyncConflictType.none;
+    }
+
+    final localDominates = _dominates(local, cloud);
+    final cloudDominates = _dominates(cloud, local);
+
+    if (localDominates && !cloudDominates) {
+      return SyncConflictType.localAhead;
+    }
+
+    if (cloudDominates && !localDominates) {
+      return SyncConflictType.cloudAhead;
+    }
+
+    return SyncConflictType.divergent;
+  }
+
+  bool _dominates(GameProgress left, GameProgress right) {
+    final levelCheck = left.currentLevel >= right.currentLevel;
+    final levelsCheck = left.completedLevels.containsAll(right.completedLevels);
+    final lessonSetCheck =
+        left.completedLessons.containsAll(right.completedLessons);
+    final lessonCompletedCheck = !right.lessonCompleted || left.lessonCompleted;
+    final tutorialCheck = !right.tutorialCompleted || left.tutorialCompleted;
+
+    final strictBetter = left.currentLevel > right.currentLevel ||
+        left.completedLevels.length > right.completedLevels.length ||
+        left.completedLessons.length > right.completedLessons.length ||
+        (left.lessonCompleted && !right.lessonCompleted) ||
+        (left.tutorialCompleted && !right.tutorialCompleted);
+
+    return levelCheck &&
+        levelsCheck &&
+        lessonSetCheck &&
+        lessonCompletedCheck &&
+        tutorialCheck &&
+        strictBetter;
   }
 
   @override
@@ -275,7 +273,31 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
   @override
   Future<bool> isCloudSyncAvailable() async {
-    return _userId != null;
+    final availability = await getCloudSyncAvailability();
+    return availability.isAvailable;
+  }
+
+  @override
+  Future<CloudSyncAvailability> getCloudSyncAvailability() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      return const CloudSyncAvailability(
+        isAvailable: false,
+        reason: CloudSyncAvailabilityReason.signedOut,
+      );
+    }
+
+    if (user.isAnonymous) {
+      return const CloudSyncAvailability(
+        isAvailable: false,
+        reason: CloudSyncAvailabilityReason.anonymousAccount,
+      );
+    }
+
+    return const CloudSyncAvailability(
+      isAvailable: true,
+      reason: CloudSyncAvailabilityReason.available,
+    );
   }
 
   @override
@@ -284,9 +306,14 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
     // If enabling sync, try to sync immediately
     if (enabled && await isCloudSyncAvailable()) {
-      // Try to pull first to avoid overwriting remote with stale local
-      await syncFromCloud();
-      await syncToCloud();
+      final conflict = await inspectSyncConflict();
+      if (conflict.type == SyncConflictType.cloudAhead &&
+          conflict.cloudProgress != null) {
+        await _saveLocalProgress(conflict.cloudProgress!, updateSyncTime: true);
+      } else if (conflict.type == SyncConflictType.none ||
+          !conflict.cloudHasData) {
+        await syncToCloud();
+      }
     }
   }
 
@@ -296,5 +323,57 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
       GameProgressStorageKeys.cloudSyncEnabled,
       defaultValue: false,
     );
+  }
+
+  @override
+  Future<SyncConflictState> inspectSyncConflict() async {
+    final localProgress = await getProgress();
+    final userId = _userId;
+    if (userId == null || _isAnonymousUser) {
+      return SyncConflictState(
+        type: SyncConflictType.none,
+        localProgress: localProgress,
+        cloudProgress: null,
+      );
+    }
+
+    final cloudProgress = await _getCloudProgress(userId);
+    if (cloudProgress == null) {
+      return SyncConflictState(
+        type: SyncConflictType.none,
+        localProgress: localProgress,
+        cloudProgress: null,
+      );
+    }
+
+    return SyncConflictState(
+      type: _compareProgress(localProgress, cloudProgress),
+      localProgress: localProgress,
+      cloudProgress: cloudProgress,
+    );
+  }
+
+  @override
+  Future<void> resolveSyncConflict(SyncConflictResolution resolution) async {
+    final conflict = await inspectSyncConflict();
+    if (!conflict.cloudHasData) {
+      final userId = _userId;
+      if (userId != null && !_isAnonymousUser) {
+        await _saveCloudProgress(userId, conflict.localProgress);
+      }
+      return;
+    }
+
+    final userId = _userId;
+    if (userId == null || _isAnonymousUser) {
+      return;
+    }
+
+    if (resolution == SyncConflictResolution.keepCloud) {
+      await _saveLocalProgress(conflict.cloudProgress!, updateSyncTime: true);
+      return;
+    }
+
+    await _saveCloudProgress(userId, conflict.localProgress);
   }
 }

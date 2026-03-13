@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../constants/game_progress_storage_keys.dart';
+import '../../domain/entities/cloud_sync_state.dart';
 import '../../domain/entities/game_progress.dart';
 import '../../domain/repositories/game_progress_repository.dart';
 
@@ -58,6 +59,14 @@ class HiveGameProgressRepository implements GameProgressRepository {
   }
 
   @override
+  Future<CloudSyncAvailability> getCloudSyncAvailability() async {
+    return const CloudSyncAvailability(
+      isAvailable: false,
+      reason: CloudSyncAvailabilityReason.signedOut,
+    );
+  }
+
+  @override
   Future<void> setCloudSyncEnabled(bool enabled) async {
     await _box.put(GameProgressStorageKeys.cloudSyncEnabled, enabled);
   }
@@ -66,5 +75,20 @@ class HiveGameProgressRepository implements GameProgressRepository {
   Future<bool> isCloudSyncEnabled() async {
     return _box.get(GameProgressStorageKeys.cloudSyncEnabled,
         defaultValue: false);
+  }
+
+  @override
+  Future<SyncConflictState> inspectSyncConflict() async {
+    final localProgress = await getProgress();
+    return SyncConflictState(
+      type: SyncConflictType.none,
+      localProgress: localProgress,
+      cloudProgress: null,
+    );
+  }
+
+  @override
+  Future<void> resolveSyncConflict(SyncConflictResolution resolution) async {
+    // No-op in local repository.
   }
 }

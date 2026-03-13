@@ -1,4 +1,5 @@
 import '../entities/game_progress.dart';
+import '../entities/cloud_sync_state.dart';
 
 /// Repository for game progress persistence with optional cloud sync.
 /// Supports both local and cloud implementations for offline-first architecture.
@@ -28,10 +29,19 @@ abstract class GameProgressRepository {
   /// Checks if cloud sync is available and enabled.
   Future<bool> isCloudSyncAvailable();
 
+  /// Returns cloud sync availability details for user-facing UX.
+  Future<CloudSyncAvailability> getCloudSyncAvailability();
+
   /// Enables or disables cloud sync.
   /// Local storage continues to work regardless of this setting.
   Future<void> setCloudSyncEnabled(bool enabled);
 
   /// Checks if cloud sync is enabled by user preference.
   Future<bool> isCloudSyncEnabled();
+
+  /// Inspects local and cloud data to determine if user action is needed.
+  Future<SyncConflictState> inspectSyncConflict();
+
+  /// Resolves conflict by explicitly choosing which side to keep.
+  Future<void> resolveSyncConflict(SyncConflictResolution resolution);
 }

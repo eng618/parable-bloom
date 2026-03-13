@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 import 'package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart';
 
@@ -39,12 +40,32 @@ class MockGameProgressRepository implements GameProgressRepository {
   Future<bool> isCloudSyncAvailable() async => true;
 
   @override
+  Future<CloudSyncAvailability> getCloudSyncAvailability() async {
+    return const CloudSyncAvailability(
+      isAvailable: true,
+      reason: CloudSyncAvailabilityReason.available,
+    );
+  }
+
+  @override
   Future<void> setCloudSyncEnabled(bool enabled) async {
     _cloudSyncEnabled = enabled;
   }
 
   @override
   Future<bool> isCloudSyncEnabled() async => _cloudSyncEnabled;
+
+  @override
+  Future<SyncConflictState> inspectSyncConflict() async {
+    return SyncConflictState(
+      type: SyncConflictType.none,
+      localProgress: _progress,
+      cloudProgress: null,
+    );
+  }
+
+  @override
+  Future<void> resolveSyncConflict(SyncConflictResolution resolution) async {}
 }
 
 void main() {

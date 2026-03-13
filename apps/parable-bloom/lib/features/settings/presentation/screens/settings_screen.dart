@@ -12,6 +12,7 @@ import '../../../../providers/settings_providers.dart';
 import '../../../auth/application/providers/auth_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
 import '../../../auth/presentation/screens/auth_screen.dart';
+import '../../../game/domain/entities/cloud_sync_state.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../home/presentation/screens/home_screen.dart';
@@ -284,35 +285,64 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _buildCloudSyncTile(BuildContext context, WidgetRef ref) {
     final syncEnabledAsync = ref.watch(cloudSyncEnabledProvider);
-    final syncAvailableAsync = ref.watch(cloudSyncAvailableProvider);
+    final availabilityAsync = ref.watch(cloudSyncAvailabilityProvider);
     final lastSyncAsync = ref.watch(lastSyncTimeProvider);
 
     return Column(
       children: [
         // Main sync toggle
         syncEnabledAsync.when(
-          data: (isEnabled) => SwitchListTile(
-            secondary: Icon(
-              isEnabled ? Icons.cloud_done : Icons.cloud_off,
-              color: isEnabled
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.6),
+          data: (isEnabled) => availabilityAsync.when(
+            data: (availability) => SwitchListTile(
+              secondary: Icon(
+                isEnabled ? Icons.cloud_done : Icons.cloud_off,
+                color: isEnabled
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              title: const Text('Cloud Sync'),
+              subtitle: Text(_syncSubtitleForAvailability(availability)),
+              value: isEnabled,
+              onChanged: (value) async {
+                final notifier = ref.read(gameProgressProvider.notifier);
+                if (value && !availability.isAvailable) {
+                  await ref
+                      .read(analyticsServiceProvider)
+                      .logCloudSyncUnavailable(
+                        source: 'settings_toggle',
+                        reason: availability.reason.name,
+                      );
+                  if (!context.mounted) {
+                    return;
+                  }
+                  await _showEnableSyncUnavailableDialog(
+                    context,
+                    availability,
+                  );
+                  return;
+                }
+
+                if (value) {
+                  await notifier.enableCloudSync();
+                } else {
+                  await notifier.disableCloudSync();
+                }
+                ref.invalidate(cloudSyncEnabledProvider);
+                ref.invalidate(cloudSyncAvailabilityProvider);
+              },
             ),
-            title: const Text('Cloud Sync'),
-            subtitle: const Text('Backup progress across devices'),
-            value: isEnabled,
-            onChanged: (value) async {
-              final notifier = ref.read(gameProgressProvider.notifier);
-              if (value) {
-                await notifier.enableCloudSync();
-              } else {
-                await notifier.disableCloudSync();
-              }
-              // Refresh the UI
-              ref.invalidate(cloudSyncEnabledProvider);
-            },
+            loading: () => const ListTile(
+              leading: CircularProgressIndicator(),
+              title: Text('Cloud Sync'),
+              subtitle: Text('Loading account status...'),
+            ),
+            error: (error, stack) => ListTile(
+              leading: const Icon(Icons.error, color: Colors.red),
+              title: const Text('Cloud Sync'),
+              subtitle: Text('Error: ${error.toString()}'),
+            ),
           ),
           loading: () => const ListTile(
             leading: CircularProgressIndicator(),
@@ -327,15 +357,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
 
         // Sync status information
-        syncAvailableAsync.when(
-          data: (isAvailable) => syncEnabledAsync.maybeWhen(
+        availabilityAsync.when(
+          data: (availability) => syncEnabledAsync.maybeWhen(
             data: (isEnabled) {
               if (!isEnabled) return const SizedBox.shrink();
 
-              final availabilityText = isAvailable
-                  ? 'Available'
-                  : 'Unavailable (check internet connection)';
-              final availabilityColor = isAvailable
+              final availabilityText =
+                  _syncAvailabilityStatusText(availability);
+              final availabilityColor = availability.isAvailable
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.error;
 
@@ -344,7 +373,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      isAvailable ? Icons.check_circle : Icons.error,
+                      availability.isAvailable
+                          ? Icons.check_circle
+                          : Icons.error,
                       size: 16,
                       color: availabilityColor,
                     ),
@@ -409,6 +440,61 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ],
     );
+  }
+
+  String _syncSubtitleForAvailability(CloudSyncAvailability availability) {
+    switch (availability.reason) {
+      case CloudSyncAvailabilityReason.available:
+        return 'Backup progress across devices';
+      case CloudSyncAvailabilityReason.signedOut:
+        return 'Sign in to enable cloud backup';
+      case CloudSyncAvailabilityReason.anonymousAccount:
+        return 'Create an account to sync your progress';
+    }
+  }
+
+  String _syncAvailabilityStatusText(CloudSyncAvailability availability) {
+    switch (availability.reason) {
+      case CloudSyncAvailabilityReason.available:
+        return 'Connected to your account';
+      case CloudSyncAvailabilityReason.signedOut:
+        return 'Unavailable: sign in to enable sync';
+      case CloudSyncAvailabilityReason.anonymousAccount:
+        return 'Unavailable: guest accounts cannot sync';
+    }
+  }
+
+  Future<void> _showEnableSyncUnavailableDialog(
+    BuildContext context,
+    CloudSyncAvailability availability,
+  ) async {
+    final shouldOpenAuth = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cloud Sync Requires Account'),
+        content: Text(
+          availability.reason == CloudSyncAvailabilityReason.anonymousAccount
+              ? 'You are currently playing as a guest. Create or sign in to an account to back up progress across devices.'
+              : 'Sign in to your account to enable cloud sync and back up your progress.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Not now'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Sign In / Sign Up'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldOpenAuth == true && context.mounted) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const AuthScreen()),
+      );
+    }
   }
 
   String _getTimeAgo(DateTime dateTime) {

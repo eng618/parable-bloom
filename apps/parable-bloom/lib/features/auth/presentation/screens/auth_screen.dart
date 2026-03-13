@@ -4,6 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../application/providers/auth_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
+import '../../../game/domain/entities/cloud_sync_state.dart';
+import '../../../game/domain/entities/game_progress.dart';
+import '../../../../providers/service_providers.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -58,9 +61,41 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         }
       }
 
-      // Automatically enable cloud sync when a persistent account is created/linked/signed-in
-      if (mounted) {
-        await ref.read(gameProgressProvider.notifier).enableCloudSync();
+      final progressNotifier = ref.read(gameProgressProvider.notifier);
+      await progressNotifier.enableCloudSync();
+
+      final conflict = await progressNotifier.inspectSyncConflict();
+      if (conflict.type != SyncConflictType.none) {
+        await ref.read(analyticsServiceProvider).logSyncConflictDetected(
+              source: 'auth',
+              conflictType: conflict.type.name,
+              localLevel: conflict.localProgress.currentLevel,
+              cloudLevel: conflict.cloudProgress?.currentLevel,
+            );
+      }
+
+      if (conflict.type == SyncConflictType.cloudAhead) {
+        await progressNotifier.resolveSyncConflict(
+          SyncConflictResolution.keepCloud,
+        );
+        await ref.read(analyticsServiceProvider).logSyncConflictResolved(
+              source: 'auth',
+              conflictType: conflict.type.name,
+              resolution: SyncConflictResolution.keepCloud.name,
+              automatic: true,
+            );
+      } else if (conflict.requiresUserDecision && mounted) {
+        final resolution = await _showSyncConflictDialog(conflict);
+        if (resolution == null) {
+          return;
+        }
+        await progressNotifier.resolveSyncConflict(resolution);
+        await ref.read(analyticsServiceProvider).logSyncConflictResolved(
+              source: 'auth',
+              conflictType: conflict.type.name,
+              resolution: resolution.name,
+              automatic: false,
+            );
       }
 
       // If successful, close the screen
@@ -108,6 +143,62 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         });
       }
     }
+  }
+
+  String _progressSummary(GameProgress progress) {
+    return 'Level ${progress.currentLevel} • ${progress.completedLevels.length} levels completed';
+  }
+
+  Future<SyncConflictResolution?> _showSyncConflictDialog(
+    SyncConflictState conflict,
+  ) async {
+    final cloudProgress = conflict.cloudProgress;
+    if (cloudProgress == null) {
+      return SyncConflictResolution.keepLocal;
+    }
+
+    return showDialog<SyncConflictResolution>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final localSummary = _progressSummary(conflict.localProgress);
+        final cloudSummary = _progressSummary(cloudProgress);
+        final title = conflict.type == SyncConflictType.localAhead
+            ? 'Progress Found on This Device'
+            : 'Choose Progress to Keep';
+
+        return AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'We found different progress locally and in the cloud. Choose which one should be kept and synced to all devices.',
+              ),
+              const SizedBox(height: 16),
+              Text('This device: $localSummary'),
+              const SizedBox(height: 8),
+              Text('Cloud save: $cloudSummary'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(
+                SyncConflictResolution.keepCloud,
+              ),
+              child: const Text('Use Cloud Save'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(
+                SyncConflictResolution.keepLocal,
+              ),
+              child: const Text('Keep This Device'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _showForgotPasswordDialog() async {

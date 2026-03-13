@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:parable_bloom/services/analytics_service.dart';
+import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 import 'package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
@@ -36,6 +37,14 @@ class FakeRepo implements GameProgressRepository {
   Future<bool> isCloudSyncAvailable() async => false;
 
   @override
+  Future<CloudSyncAvailability> getCloudSyncAvailability() async {
+    return const CloudSyncAvailability(
+      isAvailable: false,
+      reason: CloudSyncAvailabilityReason.signedOut,
+    );
+  }
+
+  @override
   Future<void> setCloudSyncEnabled(bool enabled) async {}
 
   @override
@@ -43,6 +52,18 @@ class FakeRepo implements GameProgressRepository {
 
   @override
   Future<void> syncFromCloud() async {}
+
+  @override
+  Future<SyncConflictState> inspectSyncConflict() async {
+    return SyncConflictState(
+      type: SyncConflictType.none,
+      localProgress: GameProgress.initial(),
+      cloudProgress: null,
+    );
+  }
+
+  @override
+  Future<void> resolveSyncConflict(SyncConflictResolution resolution) async {}
 }
 
 // Minimal fake analytics to avoid needing Firebase in tests
