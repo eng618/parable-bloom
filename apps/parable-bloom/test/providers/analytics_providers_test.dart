@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:parable_bloom/features/game/presentation/providers/analytics_providers.dart';
+import 'package:parable_bloom/providers/counter_providers.dart';
 
 void main() {
   group('LevelTotalTapsNotifier', () {
