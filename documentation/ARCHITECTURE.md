@@ -246,6 +246,7 @@ The Flutter app follows a **feature-first structure with explicit app-shell and 
 - When a screen is specific to one feature, keep it under that feature. Example: `HomeScreen` now lives under `features/home/presentation/screens/` rather than a global `screens/` folder.
 - `lib/app/` may depend on features; features should not depend on `lib/app/`.
 - If a concept starts feature-local and later becomes shared, promote it deliberately into `core/`, `providers/`, or `services/` rather than creating parallel copies.
+- Avoid compatibility barrel files that re-export unrelated modules just for convenience. Tests and app code should import the specific provider/entity modules they actually use.
 
 #### Preferred feature shape
 

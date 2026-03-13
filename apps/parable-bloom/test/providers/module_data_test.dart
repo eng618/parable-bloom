@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:parable_bloom/providers/game_providers.dart';
+import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:parable_bloom/providers/game_providers.dart';
+import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/domain/services/level_solver_service.dart';
 import 'package:parable_bloom/features/tutorial/domain/entities/lesson_data.dart';
 import 'package:parable_bloom/core/vine_color_palette.dart';

@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parable_bloom/features/tutorial/application/providers/tutorial_providers.dart';
 import 'mock_repository_example_test.dart';
-import 'package:parable_bloom/providers/game_providers.dart';
+import 'package:parable_bloom/providers/infrastructure_providers.dart';
+import 'package:parable_bloom/providers/progress_providers.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

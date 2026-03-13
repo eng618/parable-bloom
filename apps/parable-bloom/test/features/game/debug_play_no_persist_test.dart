@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:parable_bloom/services/analytics_service.dart';
-import 'package:parable_bloom/providers/game_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 import 'package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart';
+import 'package:parable_bloom/providers/gameplay_state_providers.dart';
+import 'package:parable_bloom/providers/infrastructure_providers.dart';
+import 'package:parable_bloom/providers/progress_providers.dart';
+import 'package:parable_bloom/providers/service_providers.dart';
 
 class FakeRepo implements GameProgressRepository {
   bool saveCalled = false;

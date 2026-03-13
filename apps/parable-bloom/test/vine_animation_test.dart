@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:parable_bloom/providers/game_providers.dart';
+import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/domain/services/level_solver_service.dart';
+import 'package:parable_bloom/providers/gameplay_state_providers.dart';
 
 void main() {
   group('Vine Animation System Tests', () {
