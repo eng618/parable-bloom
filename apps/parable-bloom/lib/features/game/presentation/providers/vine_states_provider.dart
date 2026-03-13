@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/game_providers.dart';
+import '../../../../features/game/domain/entities/level_data.dart';
+import '../../../../providers/counter_providers.dart';
+import '../../../../providers/gameplay_state_providers.dart';
+import '../../../../providers/service_providers.dart';
 import '../../../../services/logger_service.dart';
 import '../../domain/services/level_solver_service.dart';
 

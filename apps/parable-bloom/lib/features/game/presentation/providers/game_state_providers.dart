@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/game_providers.dart';
+import '../../../../providers/gameplay_state_providers.dart' show graceProvider;
 import '../widgets/garden_game.dart';
 
 // Game state providers

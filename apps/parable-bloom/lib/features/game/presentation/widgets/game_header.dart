@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../providers/game_providers.dart';
+
+import '../../../../providers/gameplay_state_providers.dart';
 
 class GameHeader extends ConsumerWidget {
   final VoidCallback onPause;

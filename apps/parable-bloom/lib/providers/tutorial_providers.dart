@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:convert';
 
 import '../../features/tutorial/domain/entities/lesson_data.dart';
-import '../../providers/game_providers.dart';
+import 'progress_providers.dart';
 
 /// Provides lesson data by ID (1-5)
 final lessonProvider =

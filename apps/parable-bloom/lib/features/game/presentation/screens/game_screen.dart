@@ -5,7 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import '../../../../core/app_theme.dart';
-import '../../../../providers/game_providers.dart';
+import '../../../../features/game/domain/entities/level_data.dart';
+import '../../../../providers/camera_providers.dart';
+import '../../../../providers/gameplay_state_providers.dart';
+import '../../../../providers/progress_providers.dart';
+import '../../../../providers/service_providers.dart';
 import '../widgets/game_header.dart';
 import '../widgets/garden_game.dart';
 import '../widgets/pause_menu_dialog.dart';

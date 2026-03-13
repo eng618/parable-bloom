@@ -1,7 +1,8 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
-import "../../../../providers/game_providers.dart";
+import "../../../../providers/progress_providers.dart";
+import "../../../../providers/service_providers.dart";
 
 class JournalScreen extends ConsumerWidget {
   const JournalScreen({super.key});

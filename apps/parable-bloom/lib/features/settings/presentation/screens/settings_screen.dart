@@ -6,7 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../services/logger_service.dart';
-import '../../../../providers/game_providers.dart';
+import '../../../../providers/gameplay_state_providers.dart';
+import '../../../../providers/infrastructure_providers.dart';
+import '../../../../providers/progress_providers.dart';
+import '../../../../providers/service_providers.dart';
+import '../../../../providers/settings_providers.dart';
 import '../../../../providers/tutorial_providers.dart';
 import '../../../../screens/home_screen.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';

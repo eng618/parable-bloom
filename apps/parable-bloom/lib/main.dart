@@ -7,7 +7,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
 import 'firebase_options.dart';
-import 'providers/game_providers.dart';
+import 'providers/infrastructure_providers.dart';
+import 'providers/service_providers.dart';
 import 'services/analytics_service.dart';
 import 'services/logger_service.dart';
 

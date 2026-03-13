@@ -1,8 +1,6 @@
 import '../../../../services/logger_service.dart';
 
-// Import only the data model we need (will be moved in future commits)
-// For now, importing from providers to maintain compatibility
-import '../../../../providers/game_providers.dart' show LevelData, VineData;
+import '../entities/level_data.dart';
 
 /// Domain service for solving vine puzzle levels using BFS/A* algorithm.
 /// Pure business logic with no UI or state management dependencies.

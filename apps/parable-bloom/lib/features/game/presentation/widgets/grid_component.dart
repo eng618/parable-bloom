@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/game_board_layout.dart';
+import '../../../../features/game/domain/entities/level_data.dart';
+import '../../../../providers/gameplay_state_providers.dart';
+import '../../../../providers/service_providers.dart';
+import '../../../../providers/settings_providers.dart';
 import '../../../../services/logger_service.dart';
-
-import '../../../../providers/game_providers.dart';
 import '../../../game/domain/services/level_solver_service.dart';
 import 'garden_game.dart';
 import 'vine_component.dart';

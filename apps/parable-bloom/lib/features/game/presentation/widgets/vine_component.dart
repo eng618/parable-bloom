@@ -8,7 +8,9 @@ import 'package:flame/sprite.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/game_board_layout.dart';
 import '../../../../core/vine_color_palette.dart';
-import '../../../../providers/game_providers.dart';
+import '../../../../features/game/domain/entities/level_data.dart';
+import '../../../../providers/gameplay_state_providers.dart';
+import '../../../../providers/settings_providers.dart';
 import '../../../../services/logger_service.dart';
 import 'grid_component.dart';
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../providers/game_providers.dart';
+
+import '../../../../providers/settings_providers.dart';
 
 class PauseMenuDialog extends ConsumerWidget {
   final VoidCallback onRestart;
