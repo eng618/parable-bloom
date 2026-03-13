@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
-import 'package:parable_bloom/providers/gameplay_state_providers.dart';
+import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 
 void main() {
   test('markAttempted persists showBlocked when attempted while blocked', () {

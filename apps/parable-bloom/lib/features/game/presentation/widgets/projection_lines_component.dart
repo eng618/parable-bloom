@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/game_board_layout.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
-import '../../../../providers/gameplay_state_providers.dart';
+import '../../application/providers/gameplay_state_providers.dart';
 import 'garden_game.dart';
 
 /// Component that renders projection lines from vine heads

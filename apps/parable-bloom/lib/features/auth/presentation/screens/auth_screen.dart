@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../application/providers/auth_providers.dart';
-import '../../../../providers/progress_providers.dart';
+import '../../../game/application/providers/progress_providers.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/progress_providers.dart';
+import '../../../game/application/providers/progress_providers.dart';
 import '../../domain/entities/lesson_data.dart';
 
 final lessonProvider =

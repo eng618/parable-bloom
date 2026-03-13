@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/progress_providers.dart';
+import '../../../game/application/providers/progress_providers.dart';
 import '../../../../providers/service_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {

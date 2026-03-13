@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
-import '../core/constants/animation_timing.dart';
-import '../core/game_board_layout.dart';
-import '../services/logger_service.dart';
+import '../../../../core/constants/animation_timing.dart';
+import '../../../../core/game_board_layout.dart';
+import '../../../../providers/settings_providers.dart';
+import '../../../../services/logger_service.dart';
 import 'gameplay_state_providers.dart';
-import 'settings_providers.dart';
 
 class CameraState {
   final double zoom;

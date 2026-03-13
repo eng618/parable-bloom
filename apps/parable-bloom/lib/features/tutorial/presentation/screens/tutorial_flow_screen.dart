@@ -5,9 +5,9 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
-import '../../../../providers/camera_providers.dart';
-import '../../../../providers/gameplay_state_providers.dart';
 import '../../../../services/logger_service.dart';
+import '../../../game/application/providers/camera_providers.dart';
+import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../application/providers/tutorial_providers.dart';
 import '../../../game/presentation/widgets/garden_game.dart';
 import '../../../game/presentation/widgets/game_header.dart';

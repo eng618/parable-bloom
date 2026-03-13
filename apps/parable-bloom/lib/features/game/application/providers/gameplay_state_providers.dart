@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../features/game/domain/entities/level_data.dart';
-import '../features/game/domain/services/level_solver_service.dart';
-import '../features/game/presentation/widgets/garden_game.dart';
-import '../services/logger_service.dart';
+import '../../../../providers/service_providers.dart';
+import '../../../../services/logger_service.dart';
+import '../../domain/entities/level_data.dart';
+import '../../domain/services/level_solver_service.dart';
+import '../../presentation/widgets/garden_game.dart';
 import 'counter_providers.dart';
-import 'service_providers.dart';
 
 final currentLevelProvider = NotifierProvider<CurrentLevelNotifier, LevelData?>(
   CurrentLevelNotifier.new,

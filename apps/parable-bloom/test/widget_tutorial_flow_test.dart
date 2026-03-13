@@ -8,7 +8,7 @@ import 'package:hive/hive.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 import 'package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart';
 import 'package:parable_bloom/features/tutorial/presentation/screens/tutorial_flow_screen.dart';
-import 'package:parable_bloom/providers/gameplay_state_providers.dart';
+import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/providers/infrastructure_providers.dart';
 
 class _InMemoryRepo implements GameProgressRepository {

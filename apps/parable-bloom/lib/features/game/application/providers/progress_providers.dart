@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../features/game/data/repositories/firebase_game_progress_repository.dart';
-import '../features/game/domain/entities/game_progress.dart';
-import '../services/logger_service.dart';
+import '../../../../providers/infrastructure_providers.dart';
+import '../../../../providers/service_providers.dart';
+import '../../../../services/logger_service.dart';
+import '../../data/repositories/firebase_game_progress_repository.dart';
+import '../../domain/entities/game_progress.dart';
 import 'counter_providers.dart';
-import 'infrastructure_providers.dart';
-import 'service_providers.dart';
 
 final gameProgressProvider =
     NotifierProvider<GameProgressNotifier, GameProgress>(

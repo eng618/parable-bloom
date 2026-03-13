@@ -8,13 +8,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/game_board_layout.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
-import '../../../../providers/camera_providers.dart';
-import '../../../../providers/counter_providers.dart';
-import '../../../../providers/gameplay_state_providers.dart';
-import '../../../../providers/progress_providers.dart';
 import '../../../../providers/service_providers.dart';
 import '../../../../providers/settings_providers.dart';
 import '../../../../services/logger_service.dart';
+import '../../application/providers/camera_providers.dart';
+import '../../application/providers/counter_providers.dart';
+import '../../application/providers/gameplay_state_providers.dart';
+import '../../application/providers/progress_providers.dart';
 import '../../../tutorial/domain/entities/lesson_data.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
