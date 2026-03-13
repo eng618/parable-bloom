@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parable_bloom/features/auth/data/services/auth_service.dart';
-import 'package:parable_bloom/features/auth/presentation/providers/auth_providers.dart';
+import 'package:parable_bloom/features/auth/application/providers/auth_providers.dart';
 import 'package:parable_bloom/features/auth/presentation/screens/auth_screen.dart';
 
 class MockAuthService implements AuthService {

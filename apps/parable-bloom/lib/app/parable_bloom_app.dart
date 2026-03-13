@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_theme.dart';
 import '../core/config/environment_config.dart';
-import '../features/auth/presentation/providers/auth_providers.dart';
+import '../features/auth/application/providers/auth_providers.dart';
 import '../features/game/presentation/screens/game_screen.dart';
 import '../features/home/presentation/screens/home_screen.dart';
 import '../features/journal/presentation/screens/journal_screen.dart';
