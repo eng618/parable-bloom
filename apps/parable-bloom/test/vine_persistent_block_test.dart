@@ -72,6 +72,73 @@ void main() {
 
     expect(notifier.state['vine1']!.hasBeenAttempted, isFalse);
   });
+
+  test(
+    'animatingClear vine is excluded from blockers during rapid interactions',
+    () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(vineStatesProvider.notifier);
+
+      final level = LevelData(
+        id: 99,
+        name: 'Race Timing Regression',
+        difficulty: 'Seed',
+        gridWidth: 4,
+        gridHeight: 3,
+        vines: [
+          VineData(
+            id: 'v1',
+            headDirection: 'up',
+            orderedPath: [
+              {'x': 2, 'y': 0},
+              {'x': 2, 'y': 1},
+            ],
+          ),
+          VineData(
+            id: 'v2',
+            headDirection: 'right',
+            orderedPath: [
+              {'x': 1, 'y': 0},
+              {'x': 0, 'y': 0},
+            ],
+          ),
+        ],
+        maxMoves: 6,
+        minMoves: 2,
+        complexity: 'low',
+        grace: 2,
+        mask: MaskData(mode: 'show-all', points: const []),
+      );
+
+      notifier.resetForLevel(level);
+
+      // Baseline: v2 is blocked by v1 occupying the target cell directly ahead.
+      expect(notifier.state['v2']!.isBlocked, isTrue);
+
+      // Simulate first tap starting a clear animation.
+      notifier.setAnimationState('v1', VineAnimationState.animatingClear);
+
+      // During clear animation, v1 must stop blocking other vines.
+      expect(notifier.state['v1']!.animationState,
+          VineAnimationState.animatingClear);
+      expect(notifier.state['v2']!.isBlocked, isFalse);
+
+      // Simulate rapid second tap sequence while first vine is still animating.
+      notifier.setAnimationState('v2', VineAnimationState.animatingBlocked);
+      notifier.setAnimationState('v2', VineAnimationState.normal);
+
+      // First vine should still be able to finish its clear state transition.
+      notifier.setAnimationState('v1', VineAnimationState.cleared);
+      notifier.clearVine('v1');
+
+      expect(notifier.state['v1']!.isCleared, isTrue);
+      expect(notifier.state['v1']!.animationState, VineAnimationState.cleared);
+      expect(notifier.state['v2']!.animationState, VineAnimationState.normal);
+      expect(notifier.state['v2']!.isBlocked, isFalse);
+    },
+  );
 }
 
 // Minimal mock notifier used only for initialization in the test

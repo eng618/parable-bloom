@@ -28,6 +28,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Animation state
   int _currentAnimationStep = 0;
   int _totalAnimationSteps = 0;
+  int _maxForwardStepsThisRun = 0;
+  bool _canClearThisRun = false;
   double _animationTimer = 0.0;
   double _stepDuration =
       0.05; // seconds per step - smoother animation with slightly slower pace
@@ -295,18 +297,18 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _animationTimer = 0.0;
 
     final rawDistance = _calculateMovementDistance();
-    final canClear = rawDistance > 0;
+    _canClearThisRun = rawDistance > 0;
     // For blocked vines, rawDistance is negative, abs() gives distance to blocker
     // We animate TO the blocker (not past it), so use the full distance
-    final distanceToBlocker = rawDistance.abs();
-    final maxForwardSteps = distanceToBlocker;
+    _maxForwardStepsThisRun = rawDistance.abs();
 
-    if (canClear) {
+    if (_canClearThisRun) {
       // Vine can reach edge - calculate steps needed to exit completely off-screen
       // Add extra steps to ensure vine moves well beyond the visible area
       const int extraOffScreenSteps = 6; // Ensure vine is far off-screen
-      _totalAnimationSteps =
-          maxForwardSteps + vineData.orderedPath.length + extraOffScreenSteps;
+      _totalAnimationSteps = _maxForwardStepsThisRun +
+          vineData.orderedPath.length +
+          extraOffScreenSteps;
       _willClearAfterAnimation = true;
 
       // Set animation state to animatingClear - this removes it from blocking calculations
@@ -318,13 +320,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       _logDebug(
         'Starting CLEAR animation: vineId=${vineData.id}, '
-        'maxForwardSteps=$maxForwardSteps, totalSteps=$_totalAnimationSteps, '
+        'maxForwardSteps=$_maxForwardStepsThisRun, totalSteps=$_totalAnimationSteps, '
         'headPos=(${_currentVisualPositions[0]['x']},${_currentVisualPositions[0]['y']}), '
         'direction=${vineData.headDirection}',
       );
     } else {
       // Vine is blocked - move forward to the blocking cell, then reverse
-      _totalAnimationSteps = maxForwardSteps * 2;
+      _totalAnimationSteps = _maxForwardStepsThisRun * 2;
       _willClearAfterAnimation = false;
 
       // Set animation state to animatingBlocked
@@ -335,7 +337,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       _logDebug(
         'Starting BLOCKED animation: vineId=${vineData.id}, '
-        'maxForwardSteps=$maxForwardSteps (to blocker cell), totalSteps=$_totalAnimationSteps, '
+        'maxForwardSteps=$_maxForwardStepsThisRun (to blocker cell), totalSteps=$_totalAnimationSteps, '
         'headPos=(${_currentVisualPositions[0]['x']},${_currentVisualPositions[0]['y']}), '
         'direction=${vineData.headDirection}',
       );
@@ -379,6 +381,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           _positionHistory.clear();
           _isAnimating = false;
           _isBlockedAnimation = false;
+          _maxForwardStepsThisRun = 0;
+          _canClearThisRun = false;
 
           // Reset animation state to normal
           parent.setVineAnimationState(vineData.id, VineAnimationState.normal);
@@ -386,18 +390,14 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         return;
       }
 
-      // Normal forward movement (history-based snake animation)
-      final rawDistance = _calculateMovementDistance();
-      final canClear = rawDistance > 0;
-      final maxForwardDistance = rawDistance.abs();
-
-      if (_currentAnimationStep < maxForwardDistance) {
+      if (_currentAnimationStep < _maxForwardStepsThisRun) {
         // Check if we've reached the blocker position for a blocked vine
-        if (_currentAnimationStep + 1 >= maxForwardDistance && !canClear) {
+        if (_currentAnimationStep + 1 >= _maxForwardStepsThisRun &&
+            !_canClearThisRun) {
           // About to reach the blocker cell - mark as attempted before the final forward step
           _logDebug(
             'Marking vine attempted before reaching blocker: vineId=${vineData.id}, '
-            'step=$_currentAnimationStep, maxDistance=$maxForwardDistance',
+            'step=$_currentAnimationStep, maxDistance=$_maxForwardStepsThisRun',
           );
           parent.markVineAttempted(vineData.id);
         }
@@ -452,11 +452,12 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         _currentAnimationStep++;
 
         // Check if we've completed the forward animation for a blocked vine
-        if (_currentAnimationStep >= maxForwardDistance && !canClear) {
+        if (_currentAnimationStep >= _maxForwardStepsThisRun &&
+            !_canClearThisRun) {
           // Reached the blocker cell - start reverse animation
           _logDebug(
             'Reached blocker cell, starting reverse: vineId=${vineData.id}, '
-            'step=$_currentAnimationStep, maxDistance=$maxForwardDistance, '
+            'step=$_currentAnimationStep, maxDistance=$_maxForwardStepsThisRun, '
             'headPos=(${_currentVisualPositions[0]['x']},${_currentVisualPositions[0]['y']})',
           );
           _isBlockedAnimation = true;
@@ -546,6 +547,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           // Fallback: if animation times out, still show effect
           _startBloomEffect();
         }
+      } else if (!_canClearThisRun) {
+        // Safety net for blocked runs: if we somehow reach this branch without
+        // entering reverse mode, transition to reverse to avoid getting stuck.
+        _isBlockedAnimation = true;
+        _currentAnimationStep = 0;
       }
     }
   }
@@ -704,6 +710,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _positionHistory.clear();
     _currentAnimationStep = 0;
     _totalAnimationSteps = 0;
+    _maxForwardStepsThisRun = 0;
+    _canClearThisRun = false;
     _animationTimer = 0.0;
 
     // Set animation state to cleared - this properly marks the vine as cleared
