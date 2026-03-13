@@ -3,10 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:hive/hive.dart';
+import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/settings/presentation/screens/settings_screen.dart';
 import 'package:parable_bloom/providers/infrastructure_providers.dart';
-import 'package:parable_bloom/providers/service_providers.dart';
 import 'package:parable_bloom/providers/settings_providers.dart';
 
 // Minimal fake Hive box for provider reads in tests.

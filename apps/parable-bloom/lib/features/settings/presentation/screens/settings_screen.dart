@@ -10,6 +10,7 @@ import '../../../../providers/infrastructure_providers.dart';
 import '../../../../providers/service_providers.dart';
 import '../../../../providers/settings_providers.dart';
 import '../../../auth/application/providers/auth_providers.dart';
+import '../../../game/application/providers/module_providers.dart';
 import '../../../auth/presentation/screens/auth_screen.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';

@@ -9,6 +9,7 @@ import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../providers/service_providers.dart';
 import '../../application/providers/camera_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
+import '../../application/providers/module_providers.dart';
 import '../../application/providers/progress_providers.dart';
 import '../widgets/game_header.dart';
 import '../widgets/garden_game.dart';

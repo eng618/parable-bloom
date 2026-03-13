@@ -6,6 +6,7 @@ import '../../domain/entities/level_data.dart';
 import '../../domain/services/level_solver_service.dart';
 import '../../presentation/widgets/garden_game.dart';
 import 'counter_providers.dart';
+import 'solver_providers.dart';
 
 final currentLevelProvider = NotifierProvider<CurrentLevelNotifier, LevelData?>(
   CurrentLevelNotifier.new,
