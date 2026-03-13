@@ -1,11 +1,11 @@
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:convert';
 
-import '../../features/tutorial/domain/entities/lesson_data.dart';
-import 'progress_providers.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Provides lesson data by ID (1-5)
+import '../../../../providers/progress_providers.dart';
+import '../../domain/entities/lesson_data.dart';
+
 final lessonProvider =
     FutureProvider.family<LessonData, int>((ref, lessonId) async {
   if (lessonId < 1 || lessonId > 5) {
@@ -18,16 +18,15 @@ final lessonProvider =
   return LessonData.fromJson(data);
 });
 
-/// Tracks the current lesson and completion state
 final tutorialProgressProvider =
     NotifierProvider<TutorialProgressNotifier, TutorialProgress>(
   TutorialProgressNotifier.new,
 );
 
 class TutorialProgress {
-  final int currentLesson; // 1-5
-  final Set<int> completedLessons; // Which lessons completed (1-5)
-  final bool allLessonsCompleted; // True when all 5 complete
+  final int currentLesson;
+  final Set<int> completedLessons;
+  final bool allLessonsCompleted;
 
   const TutorialProgress({
     required this.currentLesson,
@@ -55,7 +54,6 @@ class TutorialProgress {
 class TutorialProgressNotifier extends Notifier<TutorialProgress> {
   @override
   TutorialProgress build() {
-    // Get initial state from game progress
     final gameProgress = ref.read(gameProgressProvider);
     return TutorialProgress(
       currentLesson: gameProgress.currentLesson ?? 1,
@@ -64,7 +62,6 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
     );
   }
 
-  /// Completes the current lesson and moves to next or marks all complete
   Future<void> completeLesson(int lessonId) async {
     if (lessonId < 1 || lessonId > 5) {
       throw ArgumentError('Lesson ID must be between 1 and 5');
@@ -74,7 +71,6 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
     final allComplete = newCompleted.length == 5;
     final nextLesson = allComplete ? null : lessonId + 1;
 
-    // Update game progress to reflect lesson completion FIRST
     await ref.read(gameProgressProvider.notifier).completeLesson(
           lessonId: lessonId,
           nextLesson: nextLesson,
@@ -88,7 +84,6 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
     );
   }
 
-  /// Resets all lessons (for replay)
   Future<void> resetAllLessons() async {
     state = state.copyWith(
       currentLesson: 1,
@@ -96,11 +91,9 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
       allLessonsCompleted: false,
     );
 
-    // Update game progress
     await ref.read(gameProgressProvider.notifier).resetLessons();
   }
 
-  /// Sets a specific lesson as current (for navigation)
   void setCurrentLesson(int lessonId) {
     if (lessonId < 1 || lessonId > 5) {
       throw ArgumentError('Lesson ID must be between 1 and 5');
@@ -108,8 +101,6 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
     state = state.copyWith(currentLesson: lessonId);
   }
 
-  /// Resets tutorial state for replay without persisting changes
-  /// This allows replaying the tutorial without affecting main game progress
   void resetForReplay() {
     state = const TutorialProgress(
       currentLesson: 1,

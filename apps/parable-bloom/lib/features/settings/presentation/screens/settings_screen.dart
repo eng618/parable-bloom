@@ -11,10 +11,10 @@ import '../../../../providers/infrastructure_providers.dart';
 import '../../../../providers/progress_providers.dart';
 import '../../../../providers/service_providers.dart';
 import '../../../../providers/settings_providers.dart';
-import '../../../../providers/tutorial_providers.dart';
 import '../../../home/presentation/screens/home_screen.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/screens/auth_screen.dart';
+import '../../../tutorial/application/providers/tutorial_providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});

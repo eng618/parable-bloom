@@ -234,6 +234,7 @@ The Flutter app follows a **feature-first structure with explicit app-shell and 
 
 - `lib/app/`: The application shell. This folder owns `MaterialApp`, startup orchestration, route registration, environment badges, and other app-wide composition concerns. It should not accumulate feature-specific business logic.
 - `lib/core/`: Stateless cross-cutting primitives such as theme, config, constants, geometry helpers, and low-level utilities.
+- Feature-owned provider orchestration belongs in `features/<feature>/application/` when it is not shared across features. Example: tutorial lesson loading and tutorial progression providers live under `features/tutorial/application/providers/`.
 - `lib/features/<feature>/`: The default home for user-facing product behavior. A feature owns its own `data`, `domain`, `presentation`, and optional `application` layers.
 - `lib/providers/`: Canonical Riverpod modules that are intentionally shared across features. This folder is reserved for provider families that are consumed by multiple feature slices or are required by the app shell.
 - `lib/services/`: Shared infrastructure services with process-wide scope, such as logging, analytics, or audio controllers.
