@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flame/sprite.dart';
 
+import '../../../../core/game_board_layout.dart';
 import '../../../../core/vine_color_palette.dart';
 import '../../../../providers/game_providers.dart';
 import '../../../../services/logger_service.dart';
@@ -118,8 +119,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final visualY = visualHeight - 1 - y;
 
       final center = Offset(
-        x * cellSize + cellSize / 2,
-        visualY * cellSize + cellSize / 2,
+        GameBoardLayout.cellCenterX(x),
+        GameBoardLayout.cellCenterY(visualY),
       );
 
       _drawSegmentSprite(canvas, i, center, baseColor, useWithered);
@@ -671,8 +672,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
       // Position the bloom effect at the grid edge exit point
       _bloomEffectPosition = Offset(
-        bloomX * cellSize + cellSize / 2,
-        visualY * cellSize + cellSize / 2,
+        GameBoardLayout.cellCenterX(bloomX),
+        GameBoardLayout.cellCenterY(visualY),
       );
 
       LoggerService.debug(

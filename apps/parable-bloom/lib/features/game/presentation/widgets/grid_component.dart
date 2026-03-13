@@ -3,6 +3,8 @@ import 'package:flame/events.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../../../../core/game_board_layout.dart';
 import '../../../../services/logger_service.dart';
 
 import '../../../../providers/game_providers.dart';
@@ -115,8 +117,8 @@ class GridComponent extends PositionComponent
     scale = Vector2.all(zoom);
 
     // Calculate scaled dimensions
-    final scaledWidth = cols * cellSize * zoom;
-    final scaledHeight = rows * cellSize * zoom;
+    final scaledWidth = GameBoardLayout.boardWidth(cols) * zoom;
+    final scaledHeight = GameBoardLayout.boardHeight(rows) * zoom;
 
     // Calculate centered position with pan offset
     final centeredX = (screenWidth - scaledWidth) / 2;
@@ -183,8 +185,11 @@ class GridComponent extends PositionComponent
         final cell = CellComponent(
           gridX: x,
           gridY: y,
-          size: Vector2(cellSize, cellSize),
-          position: Vector2(x * cellSize, visualRow * cellSize),
+          size: Vector2.all(GameBoardLayout.tapTargetSize),
+          position: Vector2(
+            GameBoardLayout.cellLeft(x),
+            GameBoardLayout.cellTop(visualRow),
+          ),
         );
         add(cell);
         cells[y].add(cell);
@@ -192,7 +197,10 @@ class GridComponent extends PositionComponent
     }
 
     // Update grid size
-    size = Vector2(cols * cellSize, rows * cellSize);
+    size = Vector2(
+      GameBoardLayout.boardWidth(cols),
+      GameBoardLayout.boardHeight(rows),
+    );
 
     // Position will be set by camera transform
     // Initialize with centered position if camera not yet applied
@@ -307,7 +315,7 @@ class CellComponent extends RectangleComponent
     final dotPaint = Paint()
       ..color = dotColor
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, 3.0, dotPaint);
+    canvas.drawCircle(center, GameBoardLayout.gridDotRadius, dotPaint);
 
     // Debug: draw x,y labels in corner only if debug mode is enabled
     final gardenGame = game;

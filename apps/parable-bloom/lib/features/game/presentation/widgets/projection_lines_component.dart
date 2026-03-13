@@ -1,6 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/game_board_layout.dart';
 import '../../../../providers/game_providers.dart';
 import 'garden_game.dart';
 
@@ -25,7 +26,10 @@ class ProjectionLinesComponent extends PositionComponent
     // Update size
     final cols = levelData.gridWidth;
     final rows = levelData.gridHeight;
-    size = Vector2(cols * cellSize, rows * cellSize);
+    size = Vector2(
+      GameBoardLayout.boardWidth(cols),
+      GameBoardLayout.boardHeight(rows),
+    );
 
     // Position will be set by camera transform
     // Initialize with centered position if camera not yet applied
@@ -56,8 +60,10 @@ class ProjectionLinesComponent extends PositionComponent
 
     // Calculate scaled dimensions
     if (_currentLevel != null) {
-      final scaledWidth = _currentLevel!.gridWidth * cellSize * zoom;
-      final scaledHeight = _currentLevel!.gridHeight * cellSize * zoom;
+      final scaledWidth =
+          GameBoardLayout.boardWidth(_currentLevel!.gridWidth) * zoom;
+      final scaledHeight =
+          GameBoardLayout.boardHeight(_currentLevel!.gridHeight) * zoom;
 
       // Calculate centered position with pan offset
       final centeredX = (screenWidth - scaledWidth) / 2;
@@ -111,8 +117,8 @@ class ProjectionLinesComponent extends PositionComponent
 
       // Get head center position (relative to this component)
       final headCenter = Offset(
-        headX * cellSize + cellSize / 2,
-        visualY * cellSize + cellSize / 2,
+        GameBoardLayout.cellCenterX(headX),
+        GameBoardLayout.cellCenterY(visualY),
       );
 
       // Calculate direction vector
@@ -138,10 +144,11 @@ class ProjectionLinesComponent extends PositionComponent
 
       // Calculate end point far off-screen
       // Extend the line to go well beyond the visible area
-      final maxDimension = (_currentLevel!.gridWidth > _currentLevel!.gridHeight
-              ? _currentLevel!.gridWidth
-              : _currentLevel!.gridHeight) *
-          cellSize;
+      final maxDimension =
+          GameBoardLayout.boardWidth(_currentLevel!.gridWidth) >
+                  GameBoardLayout.boardHeight(_currentLevel!.gridHeight)
+              ? GameBoardLayout.boardWidth(_currentLevel!.gridWidth)
+              : GameBoardLayout.boardHeight(_currentLevel!.gridHeight);
       final extensionLength = maxDimension * 2; // Go 2x the max dimension
 
       final endPoint = Offset(

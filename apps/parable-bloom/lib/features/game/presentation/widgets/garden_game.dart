@@ -6,6 +6,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/game_board_layout.dart';
 import '../../../../providers/game_providers.dart';
 import '../../../../services/logger_service.dart';
 import '../../../tutorial/domain/entities/lesson_data.dart';
@@ -14,7 +15,7 @@ import 'projection_lines_component.dart';
 import 'tap_effect_component.dart';
 
 class GardenGame extends FlameGame with TapCallbacks {
-  static const double cellSize = 72.0; // Pixels per cell
+  static const double cellSize = GameBoardLayout.cellSize;
 
   late GridComponent grid;
   late ProjectionLinesComponent projectionLines;
@@ -209,7 +210,6 @@ class GardenGame extends FlameGame with TapCallbacks {
       screenHeight: size.y,
       gridCols: _currentLevelData!.gridWidth,
       gridRows: _currentLevelData!.gridHeight,
-      cellSize: cellSize,
     );
 
     // Start animation from full-board view to 1.0x
@@ -218,7 +218,6 @@ class GardenGame extends FlameGame with TapCallbacks {
       screenHeight: size.y,
       gridCols: _currentLevelData!.gridWidth,
       gridRows: _currentLevelData!.gridHeight,
-      cellSize: cellSize,
     );
   }
 

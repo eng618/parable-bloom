@@ -201,7 +201,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         screenHeight: screenHeight,
         gridCols: currentLevel.gridWidth,
         gridRows: currentLevel.gridHeight,
-        cellSize: GardenGame.cellSize,
       );
     }
   }
@@ -291,13 +290,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               tooltip: 'Reset Zoom',
               splashColor: Colors.transparent,
               onPressed: () {
-                ref.read(cameraStateProvider.notifier).resetToCenter(
-                      screenWidth: MediaQuery.of(context).size.width,
-                      screenHeight: MediaQuery.of(context).size.height,
-                      gridCols: currentLevel.gridWidth,
-                      gridRows: currentLevel.gridHeight,
-                      cellSize: GardenGame.cellSize,
-                    );
+                ref.read(cameraStateProvider.notifier).resetToCenter();
               },
             ),
           ],

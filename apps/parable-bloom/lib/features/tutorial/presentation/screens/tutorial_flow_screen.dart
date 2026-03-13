@@ -260,7 +260,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         screenHeight: screenHeight,
         gridCols: lessonData.gridWidth,
         gridRows: lessonData.gridHeight,
-        cellSize: GardenGame.cellSize,
       );
     }
   }
@@ -327,13 +326,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
               icon: const Icon(Icons.center_focus_strong),
               tooltip: 'Reset Zoom',
               onPressed: () {
-                ref.read(cameraStateProvider.notifier).resetToCenter(
-                      screenWidth: MediaQuery.of(context).size.width,
-                      screenHeight: MediaQuery.of(context).size.height,
-                      gridCols: gridWidth,
-                      gridRows: gridHeight,
-                      cellSize: GardenGame.cellSize,
-                    );
+                ref.read(cameraStateProvider.notifier).resetToCenter();
               },
             ),
           ],

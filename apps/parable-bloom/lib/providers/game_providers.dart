@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../core/game_board_layout.dart';
 import '../features/game/data/repositories/firebase_game_progress_repository.dart';
 import '../features/game/data/repositories/hive_game_progress_repository.dart';
 import '../features/game/domain/entities/game_progress.dart';
@@ -1267,11 +1268,10 @@ class CameraStateNotifier extends Notifier<CameraState> {
     required double screenHeight,
     required int gridCols,
     required int gridRows,
-    required double cellSize,
   }) {
     // Calculate how much we need to zoom out to fit the entire board
-    final gridWidth = gridCols * cellSize;
-    final gridHeight = gridRows * cellSize;
+    final gridWidth = GameBoardLayout.boardWidth(gridCols);
+    final gridHeight = GameBoardLayout.boardHeight(gridRows);
 
     // Add padding around the grid (10% on each side)
     const padding = 0.9; // Use 90% of screen space
@@ -1306,11 +1306,10 @@ class CameraStateNotifier extends Notifier<CameraState> {
     required double screenHeight,
     required int gridCols,
     required int gridRows,
-    required double cellSize,
   }) {
     // Calculate initial "fit full board" zoom
-    final gridWidth = gridCols * cellSize;
-    final gridHeight = gridRows * cellSize;
+    final gridWidth = GameBoardLayout.boardWidth(gridCols);
+    final gridHeight = GameBoardLayout.boardHeight(gridRows);
 
     const padding = 0.9;
     final zoomToFitWidth = (screenWidth * padding) / gridWidth;
@@ -1420,7 +1419,6 @@ class CameraStateNotifier extends Notifier<CameraState> {
     required double screenHeight,
     required int gridCols,
     required int gridRows,
-    required double cellSize,
   }) {
     if (state.isAnimating) {
       return; // Don't allow manual control during animation
@@ -1433,7 +1431,6 @@ class CameraStateNotifier extends Notifier<CameraState> {
       screenHeight: screenHeight,
       gridCols: gridCols,
       gridRows: gridRows,
-      cellSize: cellSize,
     );
 
     state = state.copyWith(panOffset: constrainedOffset);
@@ -1445,11 +1442,9 @@ class CameraStateNotifier extends Notifier<CameraState> {
     required double screenHeight,
     required int gridCols,
     required int gridRows,
-    required double cellSize,
   }) {
-    final scaledCellSize = cellSize * state.zoom;
-    final gridWidth = gridCols * scaledCellSize;
-    final gridHeight = gridRows * scaledCellSize;
+    final gridWidth = GameBoardLayout.boardWidth(gridCols) * state.zoom;
+    final gridHeight = GameBoardLayout.boardHeight(gridRows) * state.zoom;
 
     // Allow panning but keep at least 20% of grid visible
     const visibleThreshold = 0.2;
@@ -1483,13 +1478,7 @@ class CameraStateNotifier extends Notifier<CameraState> {
   }
 
   // Reset to default scaled zoom and centered position (for manual reset)
-  void resetToCenter({
-    required double screenWidth,
-    required double screenHeight,
-    required int gridCols,
-    required int gridRows,
-    required double cellSize,
-  }) {
+  void resetToCenter() {
     if (state.isAnimating) return;
 
     final boardZoomScale = ref.read(boardZoomScaleProvider).value ?? 1.0;
