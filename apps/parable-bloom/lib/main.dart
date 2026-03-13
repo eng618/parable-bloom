@@ -11,6 +11,7 @@ import 'providers/infrastructure_providers.dart';
 import 'providers/service_providers.dart';
 import 'services/analytics_service.dart';
 import 'services/logger_service.dart';
+import 'services/plausible_analytics_client.dart';
 
 /// Entry point for Parable Bloom.
 ///
@@ -37,8 +38,10 @@ void main() async {
   // Initialize Firebase with FlutterFire-generated options
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Pass all uncaught "fatal" errors from the framework to Crashlytics
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  if (!kIsWeb) {
+    // Pass all uncaught "fatal" errors from the framework to Crashlytics.
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  }
 
   // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
   PlatformDispatcher.instance.onError = (error, stack) {
@@ -47,15 +50,22 @@ void main() async {
     return true;
   };
 
-  LoggerService.info('Firebase initialized with Crashlytics');
-
-  // Initialize Analytics
-  final analyticsService = AnalyticsService();
-  await analyticsService.init();
+  LoggerService.info(
+    kIsWeb
+        ? 'Firebase initialized (Crashlytics disabled on web)'
+        : 'Firebase initialized with Crashlytics',
+  );
 
   // Initialize Hive
   await Hive.initFlutter();
   final hiveBox = await Hive.openBox('garden_save');
+
+  // Initialize Analytics (Firebase + Plausible self-hosted)
+  final plausibleClient = PlausibleAnalyticsClient.fromEnvironment(
+    isOptedOut: () => hiveBox.get('plausible_ignore', defaultValue: false) as bool,
+  );
+  final analyticsService = AnalyticsService(plausibleClient: plausibleClient);
+  await analyticsService.init();
 
   runApp(
     ProviderScope(

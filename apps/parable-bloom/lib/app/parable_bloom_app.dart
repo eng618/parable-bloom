@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,6 +23,14 @@ class ParableBloomApp extends ConsumerStatefulWidget {
 
 class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     with WidgetsBindingObserver {
+  bool _didReceiveInteraction = false;
+
+  void _onPointerDown(PointerDownEvent _) {
+    if (_didReceiveInteraction) return;
+    _didReceiveInteraction = true;
+    ref.read(backgroundAudioControllerProvider).notifyUserInteraction();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -66,7 +75,7 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
       }
     });
 
-    return MaterialApp(
+    final app = MaterialApp(
       title: 'Parable Bloom',
       debugShowCheckedModeBanner: EnvironmentConfig.isProd() ? false : true,
       theme: AppTheme.lightTheme,
@@ -80,6 +89,14 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
         '/settings': (context) => const SettingsScreen(),
       },
     );
+    if (kIsWeb) {
+      return Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: _onPointerDown,
+        child: app,
+      );
+    }
+    return app;
   }
 
   Widget _buildHome() {

@@ -11,11 +11,48 @@ class LoggerService {
   // In unit tests we typically don't call `Firebase.initializeApp`, so we
   // lazily resolve the instance and quietly ignore calls if it fails.
   static FirebaseCrashlytics? get _crashlytics {
+    if (kIsWeb) {
+      return null;
+    }
     try {
       return FirebaseCrashlytics.instance;
     } catch (_) {
       // initialization failure (no app) – just disable crashlytics
       return null;
+    }
+  }
+
+  static void _safeCrashlyticsLog(String message) {
+    final crashlytics = _crashlytics;
+    if (crashlytics == null) {
+      return;
+    }
+    try {
+      crashlytics.log(message);
+    } catch (_) {
+      // Ignore Crashlytics runtime issues in local/dev environments.
+    }
+  }
+
+  static void _safeCrashlyticsRecordError(
+    Object error,
+    StackTrace? stackTrace, {
+    required String reason,
+    required bool fatal,
+  }) {
+    final crashlytics = _crashlytics;
+    if (crashlytics == null) {
+      return;
+    }
+    try {
+      crashlytics.recordError(
+        error,
+        stackTrace,
+        reason: reason,
+        fatal: fatal,
+      );
+    } catch (_) {
+      // Ignore Crashlytics runtime issues in local/dev environments.
     }
   }
 
@@ -38,10 +75,14 @@ class LoggerService {
       if (stackTrace != null) debugPrint('StackTrace: $stackTrace');
     }
 
-    _crashlytics?.log(formattedMessage);
+    _safeCrashlyticsLog(formattedMessage);
     if (error != null) {
-      _crashlytics?.recordError(error, stackTrace,
-          reason: formattedMessage, fatal: false);
+      _safeCrashlyticsRecordError(
+        error,
+        stackTrace,
+        reason: formattedMessage,
+        fatal: false,
+      );
     }
   }
 
@@ -64,10 +105,14 @@ class LoggerService {
       if (stackTrace != null) debugPrint('StackTrace: $stackTrace');
     }
 
-    _crashlytics?.log(formattedMessage);
+    _safeCrashlyticsLog(formattedMessage);
     if (error != null) {
-      _crashlytics?.recordError(error, stackTrace,
-          reason: formattedMessage, fatal: false);
+      _safeCrashlyticsRecordError(
+        error,
+        stackTrace,
+        reason: formattedMessage,
+        fatal: false,
+      );
     }
   }
 
@@ -103,7 +148,7 @@ class LoggerService {
       if (stackTrace != null) debugPrint('StackTrace: $stackTrace');
     }
 
-    _crashlytics?.recordError(
+    _safeCrashlyticsRecordError(
       error ?? message,
       stackTrace,
       reason: formattedMessage,

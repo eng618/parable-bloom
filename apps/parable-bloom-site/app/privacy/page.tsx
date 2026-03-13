@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         <strong>Effective Date:</strong> February 04, 2026
       </Text>
       <Text variant="body">
-        <strong>Last Updated:</strong> February 26, 2026
+        <strong>Last Updated:</strong> March 13, 2026
       </Text>
 
       <Text variant="h2">1. Introduction</Text>
@@ -38,8 +38,11 @@ export default function PrivacyPage() {
       <Text variant="h3">2.1 Automatically Collected Information (Telemetry & Analytics)</Text>
       <Text variant="body">
         To help us improve the game's stability and gameplay experience, we use third-party analytics tools
-        (specifically <strong>Google Firebase Analytics</strong>) to automatically collect certain anonymous technical
-        information. This data is <strong>aggregated and anonymized</strong>, meaning it is not linked to your identity.
+        (specifically <strong>Google Firebase Analytics</strong> and <strong>Plausible Analytics</strong>) to
+        automatically collect certain anonymous technical information. This data is{' '}
+        <strong>aggregated and anonymized</strong>, meaning it is not linked to your identity. Plausible Analytics is
+        self-hosted by GVTech, so event data never leaves our own infrastructure, uses no cookies, and stores no
+        personal data.
       </Text>
       <Text variant="body">This information includes:</Text>
       <ul>
@@ -119,19 +122,21 @@ export default function PrivacyPage() {
         <li>
           <Text variant="body">
             <strong>Google Firebase</strong>: We use Firebase for analytics and crash reporting. Google may collect data
-            as described in their privacy policy.
+            as described in their privacy policy.{' '}
+            <a href="https://policies.google.com/privacy">Google Privacy &amp; Terms</a>
+          </Text>
+        </li>
+        <li>
+          <Text variant="body">
+            <strong>Plausible Analytics (self-hosted)</strong>: We use a self-hosted instance of Plausible to collect
+            anonymous gameplay event data (e.g., level starts, level completions). No cookies are used, no
+            fingerprinting occurs, and no personal data is stored. All event data is processed on our own servers. You
+            can opt out at any time by setting <code>plausible_ignore</code> to <code>true</code> in your browser&apos;s
+            local storage, or via the Analytics toggle in{' '}
+            <a href="https://plausible.io/data-policy">Plausible Data Policy</a>
           </Text>
         </li>
       </ul>
-      <div>
-        <ul>
-          <li>
-            <Text variant="body">
-              <a href="https://policies.google.com/privacy">Google Privacy & Terms</a>
-            </Text>
-          </li>
-        </ul>
-      </div>
 
       <Text variant="h2">5. Children's Privacy</Text>
       <Text variant="body">
