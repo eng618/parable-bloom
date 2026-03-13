@@ -30,8 +30,15 @@ tasks:
       - task: firebase:install:flutterfire
       - task: firebase:check:auth
       - task: firebase:configure
+      - task: _setup:darwin:toolchain
       - task: _setup:ios:pod-install
       - task: _setup:macos:pod-install
+
+  _setup:darwin:toolchain:
+    internal: true
+    platforms: [darwin]
+    cmds:
+      - task: flutter:check:macos:toolchain
 
   _setup:ios:pod-install:
     internal: true
@@ -60,6 +67,12 @@ tasks:
     desc: Clean the Flutter build cache
     cmds:
       - task: flutter:clean
+
+  doctor:macos:
+    desc: Check macOS local development toolchain status
+    platforms: [darwin]
+    cmds:
+      - task: flutter:doctor:macos
 
   # -----------------------------------------------------------------------------
   # Common Shortcuts (Backwards Compatibility)

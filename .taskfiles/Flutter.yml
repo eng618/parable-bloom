@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 tasks:
   # -----------------------------------------------------------------------------
@@ -18,7 +18,7 @@ tasks:
       - flutter build web --release
     preconditions:
       - sh: command -v flutter >/dev/null 2>&1
-        msg: "Flutter is not installed."
+        msg: 'Flutter is not installed.'
 
   build:android:
     desc: Build the Android application
@@ -112,7 +112,77 @@ tasks:
     dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
+      - task: check:macos:toolchain
       - flutter run -d macos
+
+  check:macos:toolchain:
+    desc: Verify Xcode command-line tooling for macOS/iOS builds
+    platforms: [darwin]
+    cmds:
+      - xcode-select -p
+    preconditions:
+      - sh: command -v xcodebuild >/dev/null 2>&1
+        msg: |
+          Xcode build tools are not available.
+          Install Xcode from the App Store, then run:
+            sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+      - sh: xcode-select -p >/dev/null 2>&1
+        msg: |
+          Xcode command-line tools are not configured.
+          Run one of these commands:
+            xcode-select --install
+            sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+  doctor:macos:
+    desc: Show macOS development toolchain status for Flutter desktop/iOS work
+    platforms: [darwin]
+    silent: true
+    cmds:
+      - |
+        echo "== macOS doctor (Flutter + Apple toolchain) =="
+        echo
+
+        if command -v flutter >/dev/null 2>&1; then
+          echo "[OK] flutter: $(flutter --version | head -n 1)"
+        else
+          echo "[MISSING] flutter"
+        fi
+
+        if command -v xcodebuild >/dev/null 2>&1; then
+          echo "[OK] xcodebuild: $(xcodebuild -version | head -n 1)"
+        else
+          echo "[MISSING] xcodebuild (install Xcode and select developer dir)"
+        fi
+
+        if xcode-select -p >/dev/null 2>&1; then
+          echo "[OK] xcode-select path: $(xcode-select -p)"
+        else
+          echo "[MISSING] xcode-select configuration"
+        fi
+
+        if command -v pod >/dev/null 2>&1; then
+          echo "[OK] cocoapods: $(pod --version)"
+        else
+          echo "[MISSING] cocoapods (needed for iOS/macOS pods)"
+        fi
+
+        if command -v firebase >/dev/null 2>&1; then
+          echo "[OK] firebase CLI: $(firebase --version)"
+        else
+          echo "[MISSING] firebase CLI"
+        fi
+
+        if command -v flutterfire >/dev/null 2>&1; then
+          echo "[OK] flutterfire CLI: $(flutterfire --version | head -n 1)"
+        else
+          echo "[MISSING] flutterfire CLI"
+        fi
+
+        echo
+        echo "If xcodebuild is missing:"
+        echo "  1) Install Xcode from the App Store"
+        echo "  2) sudo xcode-select -s /Applications/Xcode.app/Contents/Developer"
+        echo "  3) sudo xcodebuild -runFirstLaunch"
 
   serve:android:
     desc: Serve the application on Android
@@ -322,7 +392,7 @@ tasks:
       - flutter pub get
     preconditions:
       - sh: command -v flutter >/dev/null 2>&1
-        msg: "Flutter is not installed. Please install Flutter to proceed."
+        msg: 'Flutter is not installed. Please install Flutter to proceed.'
 
   upgrade:
     desc: Upgrade Flutter dependencies
