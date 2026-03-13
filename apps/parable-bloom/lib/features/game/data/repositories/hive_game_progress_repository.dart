@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../constants/game_progress_storage_keys.dart';
 import '../../domain/entities/game_progress.dart';
 import '../../domain/repositories/game_progress_repository.dart';
 
@@ -8,15 +9,11 @@ import '../../domain/repositories/game_progress_repository.dart';
 class HiveGameProgressRepository implements GameProgressRepository {
   final Box _box;
 
-  static const String _progressKey = 'progress';
-  static const String _cloudSyncEnabledKey = 'cloud_sync_enabled';
-  static const String _lastSyncTimeKey = 'last_sync_time';
-
   HiveGameProgressRepository(this._box);
 
   @override
   Future<GameProgress> getProgress() async {
-    final data = _box.get(_progressKey);
+    final data = _box.get(GameProgressStorageKeys.progress);
     if (data != null) {
       return GameProgress.fromJson(Map<String, dynamic>.from(data));
     }
@@ -25,12 +22,13 @@ class HiveGameProgressRepository implements GameProgressRepository {
 
   @override
   Future<void> saveProgress(GameProgress progress) async {
-    await _box.put(_progressKey, progress.toJson());
+    await _box.put(GameProgressStorageKeys.progress, progress.toJson());
   }
 
   @override
   Future<void> resetProgress() async {
-    await _box.put(_progressKey, GameProgress.initial().toJson());
+    await _box.put(
+        GameProgressStorageKeys.progress, GameProgress.initial().toJson());
     // Optionally clear sync metadata but keep cloud sync preference
   }
 
@@ -47,7 +45,7 @@ class HiveGameProgressRepository implements GameProgressRepository {
 
   @override
   Future<DateTime?> getLastSyncTime() async {
-    final timestamp = _box.get(_lastSyncTimeKey);
+    final timestamp = _box.get(GameProgressStorageKeys.lastSyncTime);
     return timestamp != null
         ? DateTime.fromMillisecondsSinceEpoch(timestamp)
         : null;
@@ -61,11 +59,12 @@ class HiveGameProgressRepository implements GameProgressRepository {
 
   @override
   Future<void> setCloudSyncEnabled(bool enabled) async {
-    await _box.put(_cloudSyncEnabledKey, enabled);
+    await _box.put(GameProgressStorageKeys.cloudSyncEnabled, enabled);
   }
 
   @override
   Future<bool> isCloudSyncEnabled() async {
-    return _box.get(_cloudSyncEnabledKey, defaultValue: false);
+    return _box.get(GameProgressStorageKeys.cloudSyncEnabled,
+        defaultValue: false);
   }
 }

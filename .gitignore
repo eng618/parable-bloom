@@ -89,6 +89,7 @@ app.*.map.json
 private_keys/
 
 # Ignore vscode AI rules
+.codacy
 .github/instructions/codacy.instructions.md
 .codacy/cli-config.yaml
 .codacy/tools-configs/

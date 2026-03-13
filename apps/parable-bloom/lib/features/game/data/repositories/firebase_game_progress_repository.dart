@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../../core/config/environment_config.dart';
 import '../../../../services/logger_service.dart';
+import '../constants/game_progress_storage_keys.dart';
 import '../../domain/entities/game_progress.dart';
 import '../../domain/repositories/game_progress_repository.dart';
 
@@ -22,14 +23,6 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
   // Document path
   static const String _progressDoc = 'progress';
 
-  // Local storage keys
-  static const String _progressKey = 'progress';
-  static const String _cloudSyncEnabledKey = 'cloud_sync_enabled';
-  static const String _lastSyncTimeKey =
-      'last_sync_time'; // When we last successfully synced with cloud
-  static const String _lastLocalUpdateKey =
-      'last_local_update'; // When local data was last changed
-
   FirebaseGameProgressRepository(this._localBox, this._firestore, this._auth);
 
   /// Returns the Firestore collection name for the current environment.
@@ -42,7 +35,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
   @override
   Future<GameProgress> getProgress() async {
     // Always return local data first (offline-first)
-    final localData = _localBox.get(_progressKey);
+    final localData = _localBox.get(GameProgressStorageKeys.progress);
     if (localData != null) {
       return GameProgress.fromJson(Map<String, dynamic>.from(localData));
     }
@@ -54,8 +47,8 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
 
     // 1. Save locally
-    await _localBox.put(_progressKey, progress.toJson());
-    await _localBox.put(_lastLocalUpdateKey, now);
+    await _localBox.put(GameProgressStorageKeys.progress, progress.toJson());
+    await _localBox.put(GameProgressStorageKeys.lastLocalUpdate, now);
 
     // 2. Try to sync to cloud if possible
     if (await isCloudSyncEnabled() && _userId != null) {
@@ -73,8 +66,11 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     final initialProgress = GameProgress.initial();
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    await _localBox.put(_progressKey, initialProgress.toJson());
-    await _localBox.put(_lastLocalUpdateKey, now);
+    await _localBox.put(
+      GameProgressStorageKeys.progress,
+      initialProgress.toJson(),
+    );
+    await _localBox.put(GameProgressStorageKeys.lastLocalUpdate, now);
 
     // Also reset cloud data if available
     if (await isCloudSyncEnabled() && _userId != null) {
@@ -104,7 +100,8 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     }
 
     final localProgress = await getProgress();
-    final lastLocalUpdate = _localBox.get(_lastLocalUpdateKey) as int? ?? 0;
+    final lastLocalUpdate =
+        _localBox.get(GameProgressStorageKeys.lastLocalUpdate) as int? ?? 0;
 
     // We get the LAST successful sync time
     final lastSyncTime = await getLastSyncTime();
@@ -170,7 +167,10 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
         });
 
         // Update local sync timestamp
-        await _localBox.put(_lastSyncTimeKey, now.millisecondsSinceEpoch);
+        await _localBox.put(
+          GameProgressStorageKeys.lastSyncTime,
+          now.millisecondsSinceEpoch,
+        );
         LoggerService.info('Sync to cloud successful',
             tag: 'FirebaseGameProgressRepository');
       }
@@ -247,10 +247,13 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
       );
 
       // Save merged result locally
-      await _localBox.put(_progressKey, newProgress.toJson());
+      await _localBox.put(
+          GameProgressStorageKeys.progress, newProgress.toJson());
       // Update update time
       await _localBox.put(
-          _lastLocalUpdateKey, DateTime.now().millisecondsSinceEpoch);
+        GameProgressStorageKeys.lastLocalUpdate,
+        DateTime.now().millisecondsSinceEpoch,
+      );
       // We can consider this "Synced" since it includes cloud data,
       // BUT if we merged local data IN, we might want to push back to cloud?
       // Let's assume next save or auto-sync will handle pushing the merged state back.
@@ -258,13 +261,13 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
       // If data is identical, we can just update the sync timestamp
       final cloudTimestamp = DateTime.now()
           .millisecondsSinceEpoch; // Or specific timestamp from cloud if we had it
-      await _localBox.put(_lastSyncTimeKey, cloudTimestamp);
+      await _localBox.put(GameProgressStorageKeys.lastSyncTime, cloudTimestamp);
     }
   }
 
   @override
   Future<DateTime?> getLastSyncTime() async {
-    final timestamp = _localBox.get(_lastSyncTimeKey);
+    final timestamp = _localBox.get(GameProgressStorageKeys.lastSyncTime);
     return timestamp != null
         ? DateTime.fromMillisecondsSinceEpoch(timestamp)
         : null;
@@ -277,7 +280,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
   @override
   Future<void> setCloudSyncEnabled(bool enabled) async {
-    await _localBox.put(_cloudSyncEnabledKey, enabled);
+    await _localBox.put(GameProgressStorageKeys.cloudSyncEnabled, enabled);
 
     // If enabling sync, try to sync immediately
     if (enabled && await isCloudSyncAvailable()) {
@@ -289,6 +292,9 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
   @override
   Future<bool> isCloudSyncEnabled() async {
-    return _localBox.get(_cloudSyncEnabledKey, defaultValue: false);
+    return _localBox.get(
+      GameProgressStorageKeys.cloudSyncEnabled,
+      defaultValue: false,
+    );
   }
 }

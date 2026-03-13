@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flame/sprite.dart';
 
+import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/game_board_layout.dart';
 import '../../../../core/vine_color_palette.dart';
 import '../../../../providers/game_providers.dart';
@@ -31,8 +32,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   int _maxForwardStepsThisRun = 0;
   bool _canClearThisRun = false;
   double _animationTimer = 0.0;
-  double _stepDuration =
-      0.05; // seconds per step - smoother animation with slightly slower pace
+  double _stepDuration = AnimationTiming.vineStepSeconds;
 
   // History-based animation (snake-like movement)
   List<List<Map<String, int>>> _positionHistory = [];
@@ -41,8 +41,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Bloom effect after clearing
   bool _isShowingBloomEffect = false;
   double _bloomEffectTimer = 0.0;
-  final double _bloomEffectDuration =
-      0.5; // seconds - reduced for faster level completion
+  final double _bloomEffectDuration = AnimationTiming.vineBloomSeconds;
   Offset? _bloomEffectPosition; // Where to show the bloom effect
 
   // Track if we've already notified parent of clearing
@@ -623,7 +622,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _currentAnimationStep = 0;
     _totalAnimationSteps = distanceInCells * 2; // forward + backward
     _animationTimer = 0.0;
-    _stepDuration = 0.05; // faster for bump animation
+    _stepDuration = AnimationTiming.vineStepSeconds;
     // Note: slideBump not implemented with history-based animation yet
   }
 
