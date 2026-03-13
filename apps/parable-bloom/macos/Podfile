@@ -38,5 +38,19 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
+    # ensure pods use macOS 11.0 or higher so dependencies like dynamic_color compile
+    target.build_configurations.each do |config|
+      config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '11.0'
+      # silence zlib macro-redefined warning seen during gRPC compilation
+      config.build_settings['OTHER_CFLAGS'] ||= ''
+      config.build_settings['OTHER_CFLAGS'] += ' -Wno-macro-redefined'
+    end
+  end
+
+  # remove redundant C++ library flags that provoke duplicate warnings
+  Dir.glob('Pods/Target Support Files/**/*.xcconfig').each do |cfg|
+    text = File.read(cfg)
+    updated = text.gsub(/-l"c\+\+"/, '')
+    File.write(cfg, updated) if text != updated
   end
 end
