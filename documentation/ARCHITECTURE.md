@@ -198,7 +198,12 @@ The environment is determined at runtime via `EnvironmentConfig` (e.g., using `S
 ```text
 apps/
 ├── parable-bloom/       # Flutter Application
-│   ├── lib/            # source code (core, features, providers, services, shared)
+│   ├── lib/
+│   │   ├── app/         # App shell composition, startup wiring, route table, environment chrome
+│   │   ├── core/        # Cross-cutting constants, theme, config, utilities with no feature ownership
+│   │   ├── features/    # Feature-first slices (auth, game, home, journal, settings, tutorial)
+│   │   ├── providers/   # Canonical shared Riverpod modules used across feature boundaries
+│   │   └── services/    # Cross-feature infrastructure services (analytics, logging, audio)
 │   ├── assets/         # game assets (levels, lessons, art, data)
 │   ├── test/           # platform tests
 │   └── android/ios/... # platform-specific code
@@ -221,7 +226,40 @@ nx.json                # Nx workspace configuration
 Taskfile.yml           # Root orchestration
 ```
 
-### 7.1 Monorepo Path Resolution
+### 7.1 Flutter App Layout Rules
+
+The Flutter app follows a **feature-first structure with explicit app-shell and shared boundaries**.
+
+#### Folder ownership
+
+- `lib/app/`: The application shell. This folder owns `MaterialApp`, startup orchestration, route registration, environment badges, and other app-wide composition concerns. It should not accumulate feature-specific business logic.
+- `lib/core/`: Stateless cross-cutting primitives such as theme, config, constants, geometry helpers, and low-level utilities.
+- `lib/features/<feature>/`: The default home for user-facing product behavior. A feature owns its own `data`, `domain`, `presentation`, and optional `application` layers.
+- `lib/providers/`: Canonical Riverpod modules that are intentionally shared across features. This folder is reserved for provider families that are consumed by multiple feature slices or are required by the app shell.
+- `lib/services/`: Shared infrastructure services with process-wide scope, such as logging, analytics, or audio controllers.
+
+#### Expectations moving forward
+
+- New product behavior should go into a feature folder by default, not into a top-level shared folder.
+- A top-level provider file must be the single source of truth for its provider family. Do not create duplicate provider definitions inside a feature after a canonical shared provider exists.
+- When a screen is specific to one feature, keep it under that feature. Example: `HomeScreen` now lives under `features/home/presentation/screens/` rather than a global `screens/` folder.
+- `lib/app/` may depend on features; features should not depend on `lib/app/`.
+- If a concept starts feature-local and later becomes shared, promote it deliberately into `core/`, `providers/`, or `services/` rather than creating parallel copies.
+
+#### Preferred feature shape
+
+```text
+features/
+  game/
+    data/
+    domain/
+    application/   # optional: notifiers, use-cases, coordinators
+    presentation/
+```
+
+Not every feature needs every layer on day one, but folder names should reflect responsibility clearly when added.
+
+### 7.2 Monorepo Path Resolution
 
 Tools within the workspace (like the Level Builder) use a smart path resolution strategy to support both standalone and monorepo layouts. They identify the repository root by searching for marker files (`nx.json`, `bun.lock`, `pubspec.yaml`) and then resolve assets relative to the identified root, prioritizing the `apps/parable-bloom/assets` directory in monorepo structures.
 

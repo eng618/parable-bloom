@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/progress_providers.dart';
-import '../providers/service_providers.dart';
+import '../../../../providers/progress_providers.dart';
+import '../../../../providers/service_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +25,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Game Title
               Text(
                 'Parable Bloom',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
@@ -35,8 +34,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
-
-              // Main Image in the middle
               Expanded(
                 child: Center(
                   child: ClipRRect(
@@ -48,10 +45,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 48),
-
-              // Play Next Level Button or Completed Message
               modulesAsync.when(
                 data: (modules) {
                   final totalLevels = modules.fold<int>(
@@ -66,7 +60,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     return Column(
                       children: [
                         ElevatedButton(
-                          onPressed: null, // Disabled
+                          onPressed: null,
                           style: ElevatedButton.styleFrom(
                             disabledBackgroundColor: Theme.of(context)
                                 .colorScheme
@@ -155,10 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // Settings Button
               OutlinedButton.icon(
                 onPressed: () => _openSettings(),
                 icon: const Icon(Icons.settings),
@@ -176,10 +167,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              // Journal Button
               OutlinedButton.icon(
                 onPressed: () => _openJournal(),
                 icon: const Icon(Icons.menu_book),
@@ -205,14 +193,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _playNextLevel() {
-    // Check if tutorial is completed and route accordingly
     final gameProgress = ref.read(gameProgressProvider);
 
     if (!gameProgress.tutorialCompleted) {
-      // Route to tutorial flow if tutorial is not completed
       Navigator.of(context).pushNamed('/tutorial');
     } else {
-      // Route to game for regular levels
       Navigator.of(context).pushNamed('/game');
     }
   }

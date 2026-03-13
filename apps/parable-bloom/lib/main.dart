@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import 'app.dart';
+import 'app/parable_bloom_app.dart';
 import 'firebase_options.dart';
 import 'providers/infrastructure_providers.dart';
 import 'providers/service_providers.dart';

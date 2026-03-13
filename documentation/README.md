@@ -18,7 +18,7 @@ The creative vision, core mechanics, progression systems, and visual style.
 
 The technical foundation, state management, and deployment strategy.
 
-- **Key Topics**: Flutter/Flame, Riverpod providers, Hive persistence, Firebase environment strategy.
+- **Key Topics**: Flutter/Flame, Riverpod providers, feature-first folder structure, app shell boundaries, Hive persistence, Firebase environment strategy.
 
 ### 3. [Level System (LEVEL_SYSTEM.md)](LEVEL_SYSTEM.md)
 

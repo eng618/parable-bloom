@@ -12,7 +12,7 @@ import '../../../../providers/progress_providers.dart';
 import '../../../../providers/service_providers.dart';
 import '../../../../providers/settings_providers.dart';
 import '../../../../providers/tutorial_providers.dart';
-import '../../../../screens/home_screen.dart';
+import '../../../home/presentation/screens/home_screen.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/screens/auth_screen.dart';
 

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'features/tutorial/presentation/screens/tutorial_flow_screen.dart';
-import 'core/app_theme.dart';
-import 'core/config/environment_config.dart';
-import 'features/game/presentation/screens/game_screen.dart';
-import 'features/journal/presentation/screens/journal_screen.dart';
-import 'features/settings/presentation/screens/settings_screen.dart';
-import 'providers/progress_providers.dart';
-import 'providers/settings_providers.dart';
-import 'screens/home_screen.dart';
-import 'features/auth/presentation/providers/auth_providers.dart';
-import 'services/logger_service.dart';
+import '../core/app_theme.dart';
+import '../core/config/environment_config.dart';
+import '../features/auth/presentation/providers/auth_providers.dart';
+import '../features/game/presentation/screens/game_screen.dart';
+import '../features/home/presentation/screens/home_screen.dart';
+import '../features/journal/presentation/screens/journal_screen.dart';
+import '../features/settings/presentation/screens/settings_screen.dart';
+import '../features/tutorial/presentation/screens/tutorial_flow_screen.dart';
+import '../providers/progress_providers.dart';
+import '../providers/settings_providers.dart';
+import '../services/logger_service.dart';
 
 class ParableBloomApp extends ConsumerStatefulWidget {
   const ParableBloomApp({super.key});
@@ -26,7 +26,6 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Initialize game progress (load from persistence)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(gameProgressProvider.notifier).initialize();
     });
@@ -44,10 +43,8 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     final controller = ref.read(backgroundAudioControllerProvider);
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      // Stop audio when app loses focus
       controller.setEnabled(false);
     } else if (state == AppLifecycleState.resumed) {
-      // Resume audio if it was enabled
       final enabled = ref.read(backgroundAudioEnabledProvider);
       controller.setEnabled(enabled);
     }
@@ -58,12 +55,10 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     final themeMode = ref.watch(themeModeProvider);
     ref.watch(backgroundAudioControllerProvider);
 
-    // Listen to auth changes to trigger sync
     ref.listen(authUserProvider, (previous, next) async {
       final user = next.value;
       final previousUser = previous?.value;
 
-      // If user logged in (or changed), sync from cloud
       if (user != null && user.uid != previousUser?.uid) {
         LoggerService.info('User logged in/changed. Triggering sync...',
             tag: 'App');
@@ -87,12 +82,10 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     );
   }
 
-  /// Builds the home screen with an optional environment indicator overlay.
   Widget _buildHome() {
     return Stack(
       children: [
         const HomeScreen(),
-        // Environment indicator for non-production environments
         if (!EnvironmentConfig.isProd())
           Positioned(
             top: 0,
@@ -120,7 +113,6 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     );
   }
 
-  /// Returns the color for the environment indicator badge.
   Color _getEnvironmentColor() {
     switch (EnvironmentConfig.current) {
       case AppEnvironment.dev:
