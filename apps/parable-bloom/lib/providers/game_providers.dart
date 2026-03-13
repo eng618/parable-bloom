@@ -1,30 +1,28 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../core/constants/animation_timing.dart';
 import '../core/game_board_layout.dart';
 import '../features/game/data/repositories/firebase_game_progress_repository.dart';
-import '../features/game/data/repositories/hive_game_progress_repository.dart';
 import '../features/game/domain/entities/game_progress.dart';
 import '../features/game/domain/entities/level_data.dart';
-import '../features/game/domain/repositories/game_progress_repository.dart';
 import '../features/game/domain/services/level_solver_service.dart';
 import '../features/game/presentation/widgets/garden_game.dart';
-import '../features/settings/data/repositories/hive_settings_repository.dart';
-import '../features/settings/domain/repositories/settings_repository.dart';
-import '../services/background_audio_controller.dart';
+import 'counter_providers.dart';
+import 'infrastructure_providers.dart';
+import 'settings_providers.dart';
 import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 export '../features/game/domain/entities/level_data.dart';
+export 'counter_providers.dart';
+export 'infrastructure_providers.dart';
+export 'settings_providers.dart';
 
 // Camera state for zoom and pan
 class CameraState {
@@ -91,82 +89,6 @@ final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
   }
 });
 
-// Providers
-final hiveBoxProvider = Provider<Box>((ref) {
-  try {
-    // If the app initialized Hive and opened the garden_save box in main(), prefer that.
-    if (Hive.isBoxOpen('garden_save')) {
-      return Hive.box('garden_save');
-    }
-  } catch (e) {
-    // If Hive is not available (for example during widget tests or outside main), fall back to an in-memory box.
-  }
-
-  LoggerService.debug(
-    'hiveBoxProvider: No Hive box open; using in-memory fallback for tests',
-  );
-  return _InMemoryBox();
-});
-
-// Minimal in-memory box implementation used as a safe fallback in tests or when Hive
-// hasn't been initialized. It implements the commonly-used subset of the Hive Box API.
-class _InMemoryBox implements Box<dynamic> {
-  final Map _store = {};
-
-  @override
-  dynamic get(dynamic key, {dynamic defaultValue}) =>
-      _store.containsKey(key) ? _store[key] : defaultValue;
-
-  @override
-  Future<void> put(dynamic key, dynamic value) async => _store[key] = value;
-
-  @override
-  Future<void> delete(dynamic key) async => _store.remove(key);
-
-  @override
-  Future<int> clear() async {
-    final len = _store.length;
-    _store.clear();
-    return len;
-  }
-
-  @override
-  bool containsKey(dynamic key) => _store.containsKey(key);
-
-  @override
-  Iterable get keys => _store.keys;
-
-  @override
-  Iterable get values => _store.values;
-
-  @override
-  Map toMap() => Map.from(_store);
-
-  @override
-  int get length => _store.length;
-
-  @override
-  String get name => 'in_memory_box';
-
-  @override
-  bool get isOpen => true;
-
-  @override
-  Future<void> close() async {}
-
-  // Use noSuchMethod to gracefully handle other Box API calls we don't need here.
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-final firestoreProvider = Provider<FirebaseFirestore>((ref) {
-  return FirebaseFirestore.instance;
-});
-
-final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
-  return FirebaseAuth.instance;
-});
-
 final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
   throw UnimplementedError('AnalyticsService must be initialized in main');
 });
@@ -183,70 +105,6 @@ final levelSolverServiceProvider = Provider<LevelSolverService>((ref) {
   return LevelSolverService();
 });
 
-// Level tap tracking providers
-final levelTotalTapsProvider = NotifierProvider<LevelTotalTapsNotifier, int>(
-  LevelTotalTapsNotifier.new,
-);
-
-class LevelTotalTapsNotifier extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  void increment() {
-    state++;
-  }
-
-  void reset() {
-    state = 0;
-  }
-}
-
-final levelWrongTapsProvider = NotifierProvider<LevelWrongTapsNotifier, int>(
-  LevelWrongTapsNotifier.new,
-);
-
-class LevelWrongTapsNotifier extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  void increment() {
-    state++;
-  }
-
-  void reset() {
-    state = 0;
-  }
-}
-
-// Repository providers
-final localGameProgressRepositoryProvider = Provider<GameProgressRepository>((
-  ref,
-) {
-  final box = ref.watch(hiveBoxProvider);
-  return HiveGameProgressRepository(box);
-});
-
-final cloudGameProgressRepositoryProvider = Provider<GameProgressRepository>((
-  ref,
-) {
-  final box = ref.watch(hiveBoxProvider);
-  final firestore = ref.watch(firestoreProvider);
-  final auth = ref.watch(firebaseAuthProvider);
-  return FirebaseGameProgressRepository(box, firestore, auth);
-});
-
-// Current repository selector - defaults to local, can be switched to cloud
-final gameProgressRepositoryProvider = Provider<GameProgressRepository>((ref) {
-  // Use the cloud-aware repository which handles both local and cloud sync
-  return ref.watch(cloudGameProgressRepositoryProvider);
-});
-
-// Settings repository provider
-final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
-  final box = ref.watch(hiveBoxProvider);
-  return HiveSettingsRepository(box);
-});
-
 final gameProgressProvider =
     NotifierProvider<GameProgressNotifier, GameProgress>(
   GameProgressNotifier.new,
@@ -257,25 +115,6 @@ final cloudSyncEnabledProvider = FutureProvider<bool>((ref) async {
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.isCloudSyncEnabled();
 });
-
-final boardZoomScaleProvider =
-    AsyncNotifierProvider<BoardZoomScaleNotifier, double>(
-  BoardZoomScaleNotifier.new,
-);
-
-class BoardZoomScaleNotifier extends AsyncNotifier<double> {
-  @override
-  Future<double> build() async {
-    final repository = ref.watch(settingsRepositoryProvider);
-    return repository.getBoardZoomScale();
-  }
-
-  Future<void> setScale(double scale) async {
-    final repository = ref.read(settingsRepositoryProvider);
-    await repository.setBoardZoomScale(scale);
-    state = AsyncValue.data(scale);
-  }
-}
 
 final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
   final notifier = ref.watch(gameProgressProvider.notifier);
@@ -531,158 +370,6 @@ final gameInstanceProvider =
     NotifierProvider<GameInstanceNotifier, GardenGame?>(
   GameInstanceNotifier.new,
 );
-
-// Theme mode provider with Hive persistence
-enum AppThemeMode { light, dark, system }
-
-final themeModeProvider = NotifierProvider<ThemeModeNotifier, AppThemeMode>(
-  ThemeModeNotifier.new,
-);
-
-class ThemeModeNotifier extends Notifier<AppThemeMode> {
-  @override
-  AppThemeMode build() {
-    final box = ref.watch(hiveBoxProvider);
-    final value = box.get('themeMode', defaultValue: 'system');
-    switch (value) {
-      case 'light':
-        return AppThemeMode.light;
-      case 'dark':
-        return AppThemeMode.dark;
-      default:
-        return AppThemeMode.system;
-    }
-  }
-
-  Future<void> setThemeMode(AppThemeMode mode) async {
-    state = mode;
-    final repository = ref.read(settingsRepositoryProvider);
-    await repository.setThemeMode(mode.name);
-  }
-}
-
-// Background audio enabled setting
-final backgroundAudioEnabledProvider =
-    NotifierProvider<BackgroundAudioEnabledNotifier, bool>(
-  BackgroundAudioEnabledNotifier.new,
-);
-
-class BackgroundAudioEnabledNotifier extends Notifier<bool> {
-  @override
-  bool build() {
-    final box = ref.watch(hiveBoxProvider);
-    return box.get('backgroundAudioEnabled', defaultValue: true) as bool;
-  }
-
-  Future<void> setEnabled(bool enabled) async {
-    state = enabled;
-    final repository = ref.read(settingsRepositoryProvider);
-    await repository.setBackgroundAudioEnabled(enabled);
-  }
-}
-
-// Simple/Trellis vines enabled setting
-final useSimpleVinesProvider = NotifierProvider<UseSimpleVinesNotifier, bool>(
-  UseSimpleVinesNotifier.new,
-);
-
-class UseSimpleVinesNotifier extends Notifier<bool> {
-  @override
-  bool build() {
-    final box = ref.watch(hiveBoxProvider);
-    return box.get('useSimpleVines', defaultValue: false) as bool;
-  }
-
-  Future<void> setEnabled(bool enabled) async {
-    state = enabled;
-    final repository = ref.read(settingsRepositoryProvider);
-    await repository.setUseSimpleVines(enabled);
-  }
-}
-
-// Haptics enabled setting
-// TODO: Implement actual haptic feedback logic in the game events
-final hapticsEnabledProvider = NotifierProvider<HapticsEnabledNotifier, bool>(
-  HapticsEnabledNotifier.new,
-);
-
-class HapticsEnabledNotifier extends Notifier<bool> {
-  @override
-  bool build() {
-    final box = ref.watch(hiveBoxProvider);
-    return box.get('hapticsEnabled', defaultValue: true) as bool;
-  }
-
-  Future<void> setEnabled(bool enabled) async {
-    state = enabled;
-    final repository = ref.read(settingsRepositoryProvider);
-    await repository.setHapticsEnabled(enabled);
-  }
-}
-
-// Background audio controller (plays/loops based on backgroundAudioEnabledProvider)
-final backgroundAudioControllerProvider = Provider<BackgroundAudioController>((
-  ref,
-) {
-  final controller = BackgroundAudioController();
-
-  ref.onDispose(() {
-    unawaited(controller.dispose());
-  });
-
-  ref.listen<bool>(backgroundAudioEnabledProvider, (previous, next) {
-    unawaited(controller.setEnabled(next));
-  });
-
-  // Apply initial state.
-  unawaited(controller.setEnabled(ref.read(backgroundAudioEnabledProvider)));
-
-  return controller;
-});
-
-// Debug setting for showing grid coordinates
-final debugShowGridCoordinatesProvider =
-    NotifierProvider<DebugShowGridCoordinatesNotifier, bool>(
-  DebugShowGridCoordinatesNotifier.new,
-);
-
-class DebugShowGridCoordinatesNotifier extends Notifier<bool> {
-  @override
-  bool build() {
-    final box = ref.watch(hiveBoxProvider);
-    return box.get('debugShowGridCoordinates', defaultValue: false) as bool;
-  }
-
-  Future<void> setShowCoordinates(bool show) async {
-    state = show;
-    final box = ref.read(hiveBoxProvider);
-    await box.put('debugShowGridCoordinates', show);
-  }
-}
-
-// Debug setting for vine animation logging
-final debugVineAnimationLoggingProvider =
-    NotifierProvider<DebugVineAnimationLoggingNotifier, bool>(
-  DebugVineAnimationLoggingNotifier.new,
-);
-
-// Test-only override to make debug UI visible during widget tests. Defaults
-// to false in normal builds.
-final debugUiEnabledForTestsProvider = Provider<bool>((ref) => false);
-
-class DebugVineAnimationLoggingNotifier extends Notifier<bool> {
-  @override
-  bool build() {
-    final box = ref.watch(hiveBoxProvider);
-    return box.get('debugVineAnimationLogging', defaultValue: false) as bool;
-  }
-
-  Future<void> setEnabled(bool enabled) async {
-    state = enabled;
-    final box = ref.read(hiveBoxProvider);
-    await box.put('debugVineAnimationLogging', enabled);
-  }
-}
 
 // Debug-only selected level for temporary play sessions (debug builds only)
 class DebugSelectedLevelNotifier extends Notifier<int?> {
