@@ -15,6 +15,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## Android
 
+### android get_latest_version_code
+
+```sh
+[bundle exec] fastlane android get_latest_version_code
+```
+
+Get the latest version code from a specific Google Play track
+
 ### android deploy
 
 ```sh

@@ -4,6 +4,8 @@
 opt_out_usage
 
 require 'fileutils'
+require 'json'
+require 'shellwords'
 
 default_platform(:android)
 
@@ -138,27 +140,83 @@ platform :android do
 
   desc "Generate Play Store screenshots via Flutter integration test"
   lane :screenshots do
-    device_id = ENV["ANDROID_SCREENSHOT_DEVICE"] || "emulator-5554"
-    UI.message("📱 Using device #{device_id} for screenshots")
+    project_root = File.expand_path('../..', __dir__)
+    driver = 'test_driver/integration_test.dart'
+    target = 'integration_test/app_screenshots_test.dart'
+    source_dir = File.join(project_root, 'build', 'integration_test_screenshots')
+    destination_dir = File.expand_path('./screenshots/en-US', __dir__)
 
-    project_root = File.expand_path('..', __dir__)
-    test_path = File.join(project_root, 'integration_test', 'app_screenshots_test.dart')
+    FileUtils.mkdir_p(destination_dir)
+    FileUtils.rm_f(Dir[File.join(destination_dir, '*.png')])
 
-    sh("cd #{project_root} && flutter test #{test_path} -d #{device_id}")
+    device_ids = (ENV['ANDROID_SCREENSHOT_DEVICE_IDS'] || '')
+      .split(',')
+      .map(&:strip)
+      .reject(&:empty?)
 
-    metadata_dir = File.expand_path('metadata/android/en-US/images/phoneScreenshots', __dir__)
-    source_dir = File.expand_path('../../build/integration_test_screenshots', __dir__)
-
-    FileUtils.mkdir_p(metadata_dir)
-    FileUtils.rm_f(Dir[File.join(metadata_dir, '*.png')])
-
-    screenshots = Dir[File.join(source_dir, '*.png')]
-    raise "No screenshots found in #{source_dir}" if screenshots.empty?
-
-    screenshots.each do |file|
-      FileUtils.cp(file, metadata_dir)
+    if device_ids.empty?
+      adb_output = sh('adb devices -l')
+      device_ids = adb_output
+        .lines
+        .map(&:strip)
+        .reject(&:empty?)
+        .reject { |line| line.start_with?('List of devices attached') }
+        .select { |line| line.include?(' device ') || line.end_with?(' device') }
+        .map { |line| line.split.first }
     end
 
-    UI.success("📸 Screenshots copied to #{metadata_dir}")
+    if device_ids.empty?
+      UI.user_error!(
+        'No Android device/emulator found. Start an emulator and re-run. `adb devices -l` returned no connected Android devices.'
+      )
+    end
+
+    ready_device_ids = device_ids.select do |device_id|
+      escaped_device_id = Shellwords.escape(device_id)
+      sh("adb -s #{escaped_device_id} wait-for-device")
+
+      boot_completed = `adb -s #{escaped_device_id} shell getprop sys.boot_completed 2>/dev/null`.strip
+      package_service = `adb -s #{escaped_device_id} shell service check package 2>&1`.strip
+      activity_service = `adb -s #{escaped_device_id} shell service check activity 2>&1`.strip
+
+      is_ready = boot_completed == '1' &&
+        package_service.include?('found') &&
+        activity_service.include?('found')
+
+      unless is_ready
+        UI.important(
+          "Skipping Android device #{device_id}: boot_completed=#{boot_completed.inspect}, package=#{package_service.inspect}, activity=#{activity_service.inspect}"
+        )
+      end
+
+      is_ready
+    end
+
+    if ready_device_ids.empty?
+      UI.user_error!(
+        'No ready Android device/emulator found. Connected devices exist, but Android package/activity services are unavailable. Restart the emulator and re-run.'
+      )
+    end
+
+    ready_device_ids.each do |device_id|
+      device_name = device_id
+      slug = device_name.downcase.gsub(/[^a-z0-9]+/, '_').gsub(/^_|_$/, '')
+
+      UI.message("📱 Capturing screenshots on #{device_name} (#{device_id})")
+      FileUtils.rm_f(Dir[File.join(source_dir, '*.png')])
+
+      sh(
+        "cd #{project_root.shellescape} && flutter drive --driver=#{driver.shellescape} --target=#{target.shellescape} --dart-define=SCREENSHOT_MODE=true -d #{device_id.shellescape}"
+      )
+
+      screenshots = Dir[File.join(source_dir, '*.png')].sort
+      UI.user_error!("No screenshots generated in #{source_dir} for #{device_name}") if screenshots.empty?
+
+      screenshots.each do |file|
+        FileUtils.cp(file, File.join(destination_dir, "#{slug}_#{File.basename(file)}"))
+      end
+    end
+
+    UI.success("📸 Local screenshots copied to #{destination_dir}")
   end
 end

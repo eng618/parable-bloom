@@ -1,0 +1,17 @@
+# Snapshot configuration for iOS screenshots.
+# Override defaults with environment variables:
+# SNAPSHOT_SCHEME, SNAPSHOT_DEVICES, SNAPSHOT_LANGUAGES
+
+scheme(ENV["SNAPSHOT_SCHEME"] || "RunnerUITests")
+workspace("Runner.xcworkspace")
+
+devices((ENV["SNAPSHOT_DEVICES"] || "iPhone 6.7 inch,iPhone 6.5 inch,iPad Pro (12.9-inch) (6th generation)").split(",").map(&:strip))
+languages((ENV["SNAPSHOT_LANGUAGES"] || "en-US").split(",").map(&:strip))
+ios_version(ENV["SNAPSHOT_IOS_VERSION"]) if ENV["SNAPSHOT_IOS_VERSION"]
+
+output_directory("./fastlane/screenshots")
+clear_previous_screenshots(true)
+skip_open_summary(true)
+concurrent_simulators(false)
+stop_after_first_error(true)
+erase_simulator(true)

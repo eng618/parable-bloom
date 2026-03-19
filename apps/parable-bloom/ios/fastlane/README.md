@@ -1,4 +1,5 @@
-## fastlane documentation
+fastlane documentation
+----
 
 # Installation
 
@@ -29,6 +30,22 @@ Push a new build to TestFlight
 ```
 
 Deploy to App Store
+
+### ios screenshots
+
+```sh
+[bundle exec] fastlane ios screenshots
+```
+
+Capture localized App Store screenshots using snapshot
+
+### ios upload_screenshots
+
+```sh
+[bundle exec] fastlane ios upload_screenshots
+```
+
+Upload only screenshots to App Store Connect
 
 ### ios build_release
 
@@ -62,7 +79,7 @@ Setup keychain for CI
 
 Clean up CI artifacts
 
----
+----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
 

@@ -14,6 +14,8 @@ import '../features/tutorial/presentation/screens/tutorial_flow_screen.dart';
 import '../providers/settings_providers.dart';
 import '../services/logger_service.dart';
 
+const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
+
 class ParableBloomApp extends ConsumerStatefulWidget {
   const ParableBloomApp({super.key});
 
@@ -64,20 +66,23 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     final themeMode = ref.watch(themeModeProvider);
     ref.watch(backgroundAudioControllerProvider);
 
-    ref.listen(authUserProvider, (previous, next) async {
-      final user = next.value;
-      final previousUser = previous?.value;
+    if (!_isScreenshotMode) {
+      ref.listen(authUserProvider, (previous, next) async {
+        final user = next.value;
+        final previousUser = previous?.value;
 
-      if (user != null && user.uid != previousUser?.uid) {
-        LoggerService.info('User logged in/changed. Triggering sync...',
-            tag: 'App');
-        await ref.read(gameProgressProvider.notifier).manualSync();
-      }
-    });
+        if (user != null && user.uid != previousUser?.uid) {
+          LoggerService.info('User logged in/changed. Triggering sync...',
+              tag: 'App');
+          await ref.read(gameProgressProvider.notifier).manualSync();
+        }
+      });
+    }
 
     final app = MaterialApp(
       title: 'Parable Bloom',
-      debugShowCheckedModeBanner: EnvironmentConfig.isProd() ? false : true,
+      debugShowCheckedModeBanner:
+          _isScreenshotMode ? false : !EnvironmentConfig.isProd(),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _convertToThemeMode(themeMode),
@@ -103,7 +108,7 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     return Stack(
       children: [
         const HomeScreen(),
-        if (!EnvironmentConfig.isProd())
+        if (!_isScreenshotMode && !EnvironmentConfig.isProd())
           Positioned(
             top: 0,
             right: 0,

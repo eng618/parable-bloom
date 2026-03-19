@@ -12,6 +12,7 @@ Parable Bloom uses a fully automated release pipeline that:
 - ✅ Builds signed Android `.aab` for Google Play Console (orchestrated via Task/Nx)
 - ✅ Builds Web (Firebase Hosting), Linux & Windows (orchestrated via Task/Nx)
 - ✅ Auto-uploads Android to Google Play Console via Fastlane
+- ✅ Supports automated iOS screenshot capture and upload via Fastlane Snapshot
 - ✅ Creates automated GitHub releases via Nx Release
 - ⏳ iOS support temporarily disabled (awaiting Apple Developer account setup)
 - ⏳ macOS support temporarily disabled (build issues to resolve later)
@@ -29,8 +30,9 @@ Parable Bloom uses a fully automated release pipeline that:
 5. [Fastlane Configuration](#fastlane-configuration)
 6. [Version Management](#version-management)
 7. [Changelog Automation](#changelog-automation)
-8. [Release Workflow](#release-workflow)
-9. [Troubleshooting](#troubleshooting)
+8. [iOS Screenshot Automation](#ios-screenshot-automation)
+9. [Release Workflow](#release-workflow)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -487,6 +489,64 @@ If you prefer manual control:
 ---
 
 ## Changelog Automation
+
+## iOS Screenshot Automation
+
+Use Fastlane Snapshot with the shared `RunnerUITests` scheme to generate App Store screenshots and upload them to App Store Connect.
+
+### Screenshot Prerequisites
+
+- [ ] macOS machine with Xcode and iOS simulators installed
+- [ ] Fastlane installed and available on PATH
+- [ ] App Store Connect API secrets configured (for upload step)
+
+### Task Shortcuts
+
+From repository root:
+
+```bash
+# Capture screenshots to apps/parable-bloom/ios/fastlane/screenshots
+task fastlane:ios:screenshots
+
+# Upload local screenshots to App Store Connect (no binary upload)
+task fastlane:ios:screenshots:upload
+
+# Capture and upload in one command
+task fastlane:ios:screenshots:sync
+
+# Release namespace aliases
+task release:ios:screenshots
+task release:ios:screenshots:upload
+task release:ios:screenshots:sync
+```
+
+### Fastlane Commands (direct)
+
+From `apps/parable-bloom/ios`:
+
+```bash
+fastlane screenshots
+fastlane upload_screenshots
+```
+
+### Optional Snapshot Overrides
+
+You can override scheme/devices/languages without editing files:
+
+```bash
+SNAPSHOT_SCHEME=RunnerUITests \
+SNAPSHOT_DEVICES="iPhone 6.7 inch,iPhone 6.5 inch" \
+SNAPSHOT_LANGUAGES="en-US,es-ES" \
+task fastlane:ios:screenshots
+```
+
+### Extending Captured Screens
+
+The starter test currently captures a launch screenshot. Add more app navigation and `snapshot("XXName")` calls in:
+
+- `apps/parable-bloom/ios/RunnerUITests/RunnerUITests.swift`
+
+Keep screenshot names stable so App Store Connect asset diffs stay predictable.
 
 ### Conventional Commits
 

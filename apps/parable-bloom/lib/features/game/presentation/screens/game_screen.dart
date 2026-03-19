@@ -318,10 +318,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
+                  'Level Complete',
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w900,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
                   _currentCongratulationMessage,
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    // Subtle drop shadow to lift text from the scene
+                    color: Theme.of(context).colorScheme.onSurface,
                     shadows: [
                       Shadow(
                         blurRadius: 10.0,

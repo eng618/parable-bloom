@@ -97,6 +97,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     final vineState = parent.getCurrentVineState(vineData.id);
     if (vineState == null) return;
+    if (vineState.isCleared &&
+        vineState.animationState != VineAnimationState.animatingClear) {
+      return;
+    }
 
     final level = parent.getCurrentLevelData();
     if (level == null) return;

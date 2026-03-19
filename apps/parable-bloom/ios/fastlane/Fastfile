@@ -1,6 +1,9 @@
 # Fastfile for iOS - Parable Bloom
 # Documentation: https://docs.fastlane.tools/
 
+require 'json'
+require 'fileutils'
+
 default_platform(:ios)
 
 platform :ios do
@@ -80,6 +83,82 @@ platform :ios do
     )
 
     UI.success("✅ Successfully uploaded to App Store")
+  end
+
+  desc "Capture local App Store screenshots using Flutter integration tests"
+  lane :screenshots do
+    project_root = File.expand_path('../..', __dir__)
+    driver = 'test_driver/integration_test.dart'
+    target = 'integration_test/app_screenshots_test.dart'
+    source_dir = File.join(project_root, 'build', 'integration_test_screenshots')
+    destination_dir = File.expand_path('./screenshots/en-US', __dir__)
+
+    FileUtils.mkdir_p(destination_dir)
+    FileUtils.rm_f(Dir[File.join(destination_dir, '*.png')])
+
+    raw_devices = sh("cd #{project_root} && flutter devices --machine")
+    parsed_devices = JSON.parse(raw_devices)
+    ios_devices = parsed_devices.select do |d|
+      d['targetPlatform'].to_s.start_with?('ios')
+    end
+
+    device_ids = (ENV['IOS_SCREENSHOT_DEVICE_IDS'] || '')
+      .split(',')
+      .map(&:strip)
+      .reject(&:empty?)
+
+    if device_ids.empty?
+      iphone = ios_devices.find { |d| d['name'].to_s.include?('iPhone') }
+      ipad = ios_devices.find { |d| d['name'].to_s.include?('iPad') }
+      device_ids = [iphone, ipad].compact.map { |d| d['id'] }
+    end
+
+    if device_ids.empty?
+      available = parsed_devices.map { |d| "#{d['name']} (#{d['id']}, #{d['targetPlatform']})" }
+      UI.user_error!(
+        "No iOS simulator found. Launch at least one iPhone/iPad simulator and re-run. Visible devices: #{available.join(', ')}"
+      )
+    end
+
+    device_name_by_id = ios_devices.each_with_object({}) { |d, map| map[d['id']] = d['name'] }
+
+    device_ids.each do |device_id|
+      device_name = device_name_by_id[device_id] || device_id
+      slug = device_name.downcase.gsub(/[^a-z0-9]+/, '_').gsub(/^_|_$/, '')
+
+      UI.message("📱 Capturing screenshots on #{device_name} (#{device_id})")
+      FileUtils.rm_f(Dir[File.join(source_dir, '*.png')])
+
+      sh("cd #{project_root} && flutter drive --driver=#{driver} --target=#{target} --dart-define=SCREENSHOT_MODE=true -d #{device_id}")
+
+      screenshots = Dir[File.join(source_dir, '*.png')].sort
+      UI.user_error!("No screenshots generated in #{source_dir} for #{device_name}") if screenshots.empty?
+
+      screenshots.each do |file|
+        FileUtils.cp(file, File.join(destination_dir, "#{slug}_#{File.basename(file)}"))
+      end
+    end
+
+    if ENV['IOS_SCREENSHOT_FRAMEIT'] == 'true'
+      sh("cd #{__dir__} && frameit")
+    end
+
+    UI.success("✅ Local screenshots captured to #{destination_dir}")
+  end
+
+  desc "Upload only screenshots to App Store Connect"
+  lane :upload_screenshots do
+    _setup_app_store_connect_auth
+
+    upload_to_app_store(
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: false,
+      force: true,
+      submit_for_review: false
+    )
+
+    UI.success("✅ Screenshots uploaded to App Store Connect")
   end
 
   desc "Build IPA without uploading"

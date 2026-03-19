@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 tasks:
   _ensure:main:
@@ -50,8 +50,8 @@ tasks:
       - task: :flutter:get
       - task: :flutter:build:android
         vars:
-          BUILD_NAME: "{{.BUILD_NAME}}"
-          BUILD_NUMBER: "{{.BUILD_NUMBER}}"
+          BUILD_NAME: '{{.BUILD_NAME}}'
+          BUILD_NUMBER: '{{.BUILD_NUMBER}}'
 
   ios:
     desc: Build the iOS application
@@ -59,6 +59,28 @@ tasks:
       - task: :clean
       - task: :flutter:get
       - task: :flutter:build:ios
+
+  ios:screenshots:
+    desc: Capture iOS App Store screenshots
+    platforms: [darwin]
+    cmds:
+      - task: :fastlane:ios:screenshots
+
+  ios:screenshots:frame:
+    desc: Frame iOS screenshots locally (optional)
+    platforms: [darwin]
+    cmds:
+      - task: :fastlane:ios:screenshots:frame
+
+  android:screenshots:
+    desc: Capture Android Play Store screenshots locally
+    cmds:
+      - task: :fastlane:android:screenshots
+
+  android:screenshots:frame:
+    desc: Frame Android screenshots locally (optional)
+    cmds:
+      - task: :fastlane:android:screenshots:frame
 
   linux:
     desc: Build the Linux application

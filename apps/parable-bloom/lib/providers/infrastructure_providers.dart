@@ -10,6 +10,8 @@ import '../features/settings/data/repositories/hive_settings_repository.dart';
 import '../features/settings/domain/repositories/settings_repository.dart';
 import '../services/logger_service.dart';
 
+const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
+
 final hiveBoxProvider = Provider<Box>((ref) {
   try {
     if (Hive.isBoxOpen('garden_save')) {
@@ -98,6 +100,9 @@ final cloudGameProgressRepositoryProvider = Provider<GameProgressRepository>((
 });
 
 final gameProgressRepositoryProvider = Provider<GameProgressRepository>((ref) {
+  if (_isScreenshotMode) {
+    return ref.watch(localGameProgressRepositoryProvider);
+  }
   return ref.watch(cloudGameProgressRepositoryProvider);
 });
 

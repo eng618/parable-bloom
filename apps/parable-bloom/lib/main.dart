@@ -6,12 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app/parable_bloom_app.dart';
+import 'features/game/data/constants/game_progress_storage_keys.dart';
+import 'features/game/domain/entities/game_progress.dart';
 import 'firebase_options.dart';
 import 'providers/infrastructure_providers.dart';
 import 'providers/service_providers.dart';
 import 'services/analytics_service.dart';
 import 'services/logger_service.dart';
 import 'services/plausible_analytics_client.dart';
+
+const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
 /// Entry point for Parable Bloom.
 ///
@@ -35,10 +39,14 @@ import 'services/plausible_analytics_client.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase with FlutterFire-generated options
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  if (!_isScreenshotMode) {
+    // Initialize Firebase with FlutterFire-generated options
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
 
-  if (!kIsWeb) {
+  if (!_isScreenshotMode && !kIsWeb) {
     // Pass all uncaught "fatal" errors from the framework to Crashlytics.
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
   }
@@ -50,22 +58,36 @@ void main() async {
     return true;
   };
 
-  LoggerService.info(
-    kIsWeb
-        ? 'Firebase initialized (Crashlytics disabled on web)'
-        : 'Firebase initialized with Crashlytics',
-  );
+  if (_isScreenshotMode) {
+    LoggerService.info('Running in screenshot mode (Firebase disabled)');
+  } else {
+    LoggerService.info(
+      kIsWeb
+          ? 'Firebase initialized (Crashlytics disabled on web)'
+          : 'Firebase initialized with Crashlytics',
+    );
+  }
 
   // Initialize Hive
   await Hive.initFlutter();
   final hiveBox = await Hive.openBox('garden_save');
 
+  if (_isScreenshotMode) {
+    await _seedScreenshotData(hiveBox);
+  }
+
   // Initialize Analytics (Firebase + Plausible self-hosted)
-  final plausibleClient = PlausibleAnalyticsClient.fromEnvironment(
-    isOptedOut: () => hiveBox.get('plausible_ignore', defaultValue: false) as bool,
-  );
-  final analyticsService = AnalyticsService(plausibleClient: plausibleClient);
-  await analyticsService.init();
+  final AnalyticsService analyticsService;
+  if (_isScreenshotMode) {
+    analyticsService = AnalyticsService();
+  } else {
+    final plausibleClient = PlausibleAnalyticsClient.fromEnvironment(
+      isOptedOut: () =>
+          hiveBox.get('plausible_ignore', defaultValue: false) as bool,
+    );
+    analyticsService = AnalyticsService(plausibleClient: plausibleClient);
+    await analyticsService.init();
+  }
 
   runApp(
     ProviderScope(
@@ -76,4 +98,21 @@ void main() async {
       child: const ParableBloomApp(),
     ),
   );
+}
+
+Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
+  final seededProgress = GameProgress(
+    currentLesson: null,
+    completedLessons: {1, 2, 3, 4, 5},
+    lessonCompleted: true,
+    currentLevel: 6,
+    // Seed through level 42 so Journal shows multiple unlocked modules.
+    completedLevels: Set<int>.from(List.generate(42, (index) => index + 1)),
+    tutorialCompleted: true,
+    savedMainGameLevel: null,
+  );
+
+  await hiveBox.put(GameProgressStorageKeys.progress, seededProgress.toJson());
+  await hiveBox.put(GameProgressStorageKeys.cloudSyncEnabled, false);
+  await hiveBox.put('plausible_ignore', true);
 }
