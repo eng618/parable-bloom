@@ -8,30 +8,35 @@ updates:
 
   # Enable version updates for go
   - package-ecosystem: gomod
-    directory: "/tools/level-builder"
+    directory: '/tools/level-builder'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
 
   # Enable version updates for Bun (Root, Apps, and Tools)
-  - package-ecosystem: "bun"
-    directory: "/"
+  - package-ecosystem: 'bun'
+    directory: '/'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
 
-  - package-ecosystem: "bun"
-    directory: "/apps/hugo-site"
+  - package-ecosystem: 'bun'
+    directory: 'apps/parable-bloom-site'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
 
-  - package-ecosystem: "bun"
-    directory: "/apps/parable-bloom"
+  - package-ecosystem: 'bun'
+    directory: '/apps/hugo-site'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
 
-  - package-ecosystem: "bun"
-    directory: "/tools/level-builder"
+  - package-ecosystem: 'bun'
+    directory: '/apps/parable-bloom'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
+
+  - package-ecosystem: 'bun'
+    directory: '/tools/level-builder'
+    schedule:
+      interval: 'monthly'
 
   # Enable version updates for Pub (Flutter App)
   - package-ecosystem: 'pub'
