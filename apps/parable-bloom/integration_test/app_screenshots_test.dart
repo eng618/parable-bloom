@@ -9,8 +9,7 @@ import 'package:parable_bloom/main.dart' as app;
 import 'package:parable_bloom/providers/settings_providers.dart';
 
 void main() {
-  final binding =
-      IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
     // Required on Android before calling takeScreenshot().
@@ -39,54 +38,54 @@ Future<void> _captureStoreListingScreenshots(
   required AppThemeMode themeMode,
   required String suffix,
 }) async {
-    app.main();
+  app.main();
 
-    // Use bounded pumping instead of pumpAndSettle because Flame keeps ticking.
-    await _pumpFor(tester, const Duration(seconds: 6));
+  // Use bounded pumping instead of pumpAndSettle because Flame keeps ticking.
+  await _pumpFor(tester, const Duration(seconds: 6));
 
-    final playButton = find.textContaining('Play Level');
-    expect(playButton, findsOneWidget);
+  final playButton = find.textContaining('Play Level');
+  expect(playButton, findsOneWidget);
 
-    final rootContainer = ProviderScope.containerOf(tester.element(playButton));
-    await rootContainer.read(themeModeProvider.notifier).setThemeMode(themeMode);
-    await _pumpFor(tester, const Duration(seconds: 1));
+  final rootContainer = ProviderScope.containerOf(tester.element(playButton));
+  await rootContainer.read(themeModeProvider.notifier).setThemeMode(themeMode);
+  await _pumpFor(tester, const Duration(seconds: 1));
 
-    await _takeScreenshot('01_home_$suffix');
+  await _takeScreenshot('01_home_$suffix');
 
-    await tester.tap(playButton);
-    await tester.pump();
-    await _pumpFor(tester, const Duration(seconds: 4));
+  await tester.tap(playButton);
+  await tester.pump();
+  await _pumpFor(tester, const Duration(seconds: 4));
 
-    await _prepareZoomedOutGameplayShot(tester);
+  await _prepareZoomedOutGameplayShot(tester);
 
-    await _takeScreenshot('02_gameplay_$suffix');
+  await _takeScreenshot('02_gameplay_$suffix');
 
-    // Trigger level-complete overlay directly for deterministic win capture.
-    final gameScreen = find.byType(GameScreen);
-    expect(gameScreen, findsOneWidget);
+  // Trigger level-complete overlay directly for deterministic win capture.
+  final gameScreen = find.byType(GameScreen);
+  expect(gameScreen, findsOneWidget);
 
-    final container = ProviderScope.containerOf(tester.element(gameScreen));
-    _clearAllVines(container);
-    container.read(levelCompleteProvider.notifier).setComplete(true);
+  final container = ProviderScope.containerOf(tester.element(gameScreen));
+  _clearAllVines(container);
+  container.read(levelCompleteProvider.notifier).setComplete(true);
 
-    await _pumpFor(tester, const Duration(milliseconds: 600));
-    expect(find.text('Level Complete'), findsOneWidget);
-    expect(find.byIcon(Icons.celebration), findsOneWidget);
-    await _takeScreenshot('03_win_$suffix');
+  await _pumpFor(tester, const Duration(milliseconds: 600));
+  expect(find.text('Level Complete'), findsOneWidget);
+  expect(find.byIcon(Icons.celebration), findsOneWidget);
+  await _takeScreenshot('03_win_$suffix');
 
-    // Allow overlay flow to complete and return to home before journal capture.
-    await _pumpFor(tester, const Duration(seconds: 5));
+  // Allow overlay flow to complete and return to home before journal capture.
+  await _pumpFor(tester, const Duration(seconds: 5));
 
-    final journalButton = find.text('Journal');
-    expect(journalButton, findsOneWidget);
+  final journalButton = find.text('Journal');
+  expect(journalButton, findsOneWidget);
 
-    await tester.tap(journalButton);
-    await tester.pump();
-    await _pumpFor(tester, const Duration(seconds: 3));
+  await tester.tap(journalButton);
+  await tester.pump();
+  await _pumpFor(tester, const Duration(seconds: 3));
 
-    expect(find.text('The Sower and the Seed'), findsOneWidget);
+  expect(find.text('The Sower and the Seed'), findsOneWidget);
 
-    await _takeScreenshot('04_journal_$suffix');
+  await _takeScreenshot('04_journal_$suffix');
 }
 
 Future<void> _takeScreenshot(String name) async {
@@ -102,7 +101,8 @@ Future<void> _pumpFor(WidgetTester tester, Duration duration) async {
 }
 
 void _clearAllVines(ProviderContainer container) {
-  final vineIds = container.read(vineStatesProvider).keys.toList(growable: false);
+  final vineIds =
+      container.read(vineStatesProvider).keys.toList(growable: false);
   final notifier = container.read(vineStatesProvider.notifier);
   for (final vineId in vineIds) {
     notifier.clearVine(vineId);
