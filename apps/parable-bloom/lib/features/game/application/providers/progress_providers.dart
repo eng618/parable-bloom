@@ -96,10 +96,22 @@ class GameProgressNotifier extends Notifier<GameProgress> {
 
     final totalTaps = ref.read(levelTotalTapsProvider);
     final wrongTaps = ref.read(levelWrongTapsProvider);
+    final attempts = ref.read(levelAttemptCountProvider);
+    final startMs = ref.read(levelStartTimestampProvider);
+    final elapsedSeconds = startMs != null
+        ? DateTime.now()
+            .difference(DateTime.fromMillisecondsSinceEpoch(startMs))
+            .inSeconds
+        : -1;
+
     unawaited(
-      ref
-          .read(analyticsServiceProvider)
-          .logLevelComplete(levelNumber, totalTaps, wrongTaps),
+      ref.read(analyticsServiceProvider).logLevelComplete(
+            levelNumber,
+            totalTaps,
+            wrongTaps,
+            attempts: attempts,
+            elapsedSeconds: elapsedSeconds,
+          ),
     );
   }
 

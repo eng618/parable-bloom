@@ -94,4 +94,64 @@ void main() {
       expect(container.read(levelWrongTapsProvider), 1);
     });
   });
+
+  group('LevelAttemptCountNotifier', () {
+    test('should initialize with 0', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(container.read(levelAttemptCountProvider), 0);
+    });
+
+    test('should increment attempt count', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(levelAttemptCountProvider.notifier);
+
+      notifier.increment();
+      expect(container.read(levelAttemptCountProvider), 1);
+
+      notifier.increment();
+      expect(container.read(levelAttemptCountProvider), 2);
+    });
+
+    test('should reset attempt count to 0', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(levelAttemptCountProvider.notifier);
+
+      notifier.increment();
+      notifier.increment();
+      expect(container.read(levelAttemptCountProvider), 2);
+
+      notifier.reset();
+      expect(container.read(levelAttemptCountProvider), 0);
+    });
+  });
+
+  group('LevelStartTimestampNotifier', () {
+    test('should initialize with null', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(container.read(levelStartTimestampProvider), isNull);
+    });
+
+    test('should set and reset timestamp', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(levelStartTimestampProvider.notifier);
+      final now = DateTime.now();
+
+      notifier.set(now);
+      expect(container.read(levelStartTimestampProvider),
+          now.millisecondsSinceEpoch);
+
+      notifier.reset();
+      expect(container.read(levelStartTimestampProvider), isNull);
+    });
+  });
 }

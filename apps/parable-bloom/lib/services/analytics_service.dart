@@ -55,7 +55,13 @@ class AnalyticsService {
     );
   }
 
-  Future<void> logLevelComplete(int levelId, int taps, int wrongTaps) async {
+  Future<void> logLevelComplete(
+    int levelId,
+    int taps,
+    int wrongTaps, {
+    int attempts = 1,
+    int elapsedSeconds = -1,
+  }) async {
     final firebase = _firebase;
     if (firebase != null) {
       await firebase.logEvent(
@@ -64,8 +70,9 @@ class AnalyticsService {
           'level_id': levelId,
           'taps_total': taps,
           'wrong_taps': wrongTaps,
-          'perfect':
-              wrongTaps == 0 ? 1 : 0, // Firebase requires num/string, not bool
+          'perfect': wrongTaps == 0 ? 1 : 0,
+          'attempts': attempts,
+          'elapsed_seconds': elapsedSeconds,
         },
       );
     }
@@ -76,6 +83,28 @@ class AnalyticsService {
         'taps_total': taps,
         'wrong_taps': wrongTaps,
         'perfect': wrongTaps == 0 ? 1 : 0,
+        'attempts': attempts,
+        'elapsed_seconds': elapsedSeconds,
+      },
+    );
+  }
+
+  Future<void> logLevelRestart(int levelId, int attempts) async {
+    final firebase = _firebase;
+    if (firebase != null) {
+      await firebase.logEvent(
+        name: 'level_restart',
+        parameters: {
+          'level_id': levelId,
+          'attempts': attempts,
+        },
+      );
+    }
+    await _trackPlausible(
+      eventName: 'level_restart',
+      properties: {
+        'level_id': levelId,
+        'attempts': attempts,
       },
     );
   }

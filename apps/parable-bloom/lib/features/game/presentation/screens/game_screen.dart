@@ -8,6 +8,7 @@ import '../../../../core/app_theme.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../providers/service_providers.dart';
 import '../../application/providers/camera_providers.dart';
+import '../../application/providers/counter_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
 import '../../application/providers/module_providers.dart';
 import '../../application/providers/progress_providers.dart';
@@ -566,9 +567,23 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _restartLevel() {
+    final currentLevel = ref.read(currentLevelProvider);
+    if (currentLevel != null) {
+      final attemptsNotifier = ref.read(levelAttemptCountProvider.notifier);
+      attemptsNotifier.increment();
+      final attempts = ref.read(levelAttemptCountProvider);
+
+      ref
+          .read(analyticsServiceProvider)
+          .logLevelRestart(currentLevel.id, attempts);
+
+      ref.read(levelStartTimestampProvider.notifier).set(DateTime.now());
+    }
+
     ref.read(levelCompleteProvider.notifier).setComplete(false);
     ref.read(gameOverProvider.notifier).setGameOver(false);
     ref.read(gameInstanceProvider.notifier).resetGrace();
+
     _game?.reloadLevel();
     ScaffoldMessenger.of(
       context,

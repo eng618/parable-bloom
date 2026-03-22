@@ -362,6 +362,8 @@ class GardenGame extends FlameGame with TapCallbacks {
         tag: 'GardenGame',
       );
 
+      final previousLevelId = ref.read(currentLevelProvider)?.id;
+
       // Update providers
       ref.read(currentLevelProvider.notifier).setLevel(_currentLevelData);
 
@@ -371,6 +373,15 @@ class GardenGame extends FlameGame with TapCallbacks {
       // Reset tap counters for new level
       ref.read(levelTotalTapsProvider.notifier).reset();
       ref.read(levelWrongTapsProvider.notifier).reset();
+
+      // Reset or increment attempt count for current level
+      final attemptNotifier = ref.read(levelAttemptCountProvider.notifier);
+      if (previousLevelId != _currentLevelData!.id) {
+        attemptNotifier.set(1);
+      }
+
+      // Track level start time
+      ref.read(levelStartTimestampProvider.notifier).set(DateTime.now());
 
       // Log level start analytics (skip for debug play sessions)
       if (!ref.read(debugPlayModeProvider)) {
