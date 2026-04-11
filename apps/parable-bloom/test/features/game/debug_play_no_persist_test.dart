@@ -75,7 +75,13 @@ class FakeAnalytics extends AnalyticsService {
   Future<void> logLevelStart(int levelId) async {}
 
   @override
-  Future<void> logLevelComplete(int levelId, int taps, int wrongTaps) async {}
+  Future<void> logLevelComplete(
+    int levelId,
+    int taps,
+    int wrongTaps, {
+    int attempts = 1,
+    int elapsedSeconds = -1,
+  }) async {}
 
   @override
   Future<void> logWrongTap(int levelId, int remainingLives) async {}
