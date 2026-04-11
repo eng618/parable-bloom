@@ -6,6 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../services/logger_service.dart';
 import '../../domain/entities/level_data.dart';
 
+class ModuleLoadException implements Exception {
+  final String message;
+
+  const ModuleLoadException(this.message);
+
+  @override
+  String toString() => 'ModuleLoadException: $message';
+}
+
 final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
   try {
     final jsonString = await rootBundle.loadString(
@@ -21,6 +30,6 @@ final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
   } catch (e, stack) {
     LoggerService.error('Error loading modules.json',
         error: e, stackTrace: stack, tag: 'modulesProvider');
-    return [];
+    throw ModuleLoadException('Failed to load module metadata.');
   }
 });

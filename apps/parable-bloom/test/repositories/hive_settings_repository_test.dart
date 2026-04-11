@@ -59,5 +59,33 @@ void main() {
 
       expect(themeMode, 'light');
     });
+
+    test('should fall back to default theme mode for invalid stored type',
+        () async {
+      await box.put('themeMode', true);
+
+      final themeMode = await repository.getThemeMode();
+
+      expect(themeMode, 'system');
+    });
+
+    test(
+        'should fall back to default background audio setting for invalid stored type',
+        () async {
+      await box.put('backgroundAudioEnabled', 'yes');
+
+      final enabled = await repository.getBackgroundAudioEnabled();
+
+      expect(enabled, isTrue);
+    });
+
+    test('should fall back to default board zoom scale for invalid stored type',
+        () async {
+      await box.put('boardZoomScale', 'zoomed');
+
+      final scale = await repository.getBoardZoomScale();
+
+      expect(scale, 1.0);
+    });
   });
 }

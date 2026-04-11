@@ -725,10 +725,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
       onTap: () async {
-        final modules = await ref.read(modulesProvider.future);
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          _showDebugLevelPickerDialog(context, ref, modules);
-        });
+        try {
+          final modules = await ref.read(modulesProvider.future);
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            _showDebugLevelPickerDialog(context, ref, modules);
+          });
+        } catch (error, stackTrace) {
+          LoggerService.error(
+            'Unable to open debug level picker due to module load failure',
+            tag: 'SettingsScreen',
+            error: error,
+            stackTrace: stackTrace,
+          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to load levels. Please try again.'),
+              ),
+            );
+          }
+        }
       },
     );
   }

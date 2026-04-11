@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -23,6 +25,8 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
   // Document path
   static const String _progressDoc = 'progress';
+  static const Duration _cloudReadTimeout = Duration(seconds: 8);
+  static const Duration _cloudWriteTimeout = Duration(seconds: 8);
 
   FirebaseGameProgressRepository(this._localBox, this._firestore, this._auth);
 
@@ -184,7 +188,18 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
   }
 
   Future<GameProgress?> _getCloudProgress(String userId) async {
-    final cloudDoc = await _progressRef(userId).get();
+    DocumentSnapshot<Map<String, dynamic>> cloudDoc;
+    try {
+      cloudDoc = await _progressRef(userId).get().timeout(_cloudReadTimeout);
+    } on TimeoutException catch (error, stack) {
+      LoggerService.warn('Cloud progress read timed out',
+          error: error,
+          stackTrace: stack,
+          tag: 'FirebaseGameProgressRepository',
+          metadata: {'timeout_ms': _cloudReadTimeout.inMilliseconds});
+      return null;
+    }
+
     if (!cloudDoc.exists) {
       return null;
     }
@@ -211,11 +226,13 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
   Future<void> _saveCloudProgress(String userId, GameProgress progress) async {
     final now = DateTime.now();
-    await _progressRef(userId).set({
-      ...progress.toJson(),
-      'lastUpdated': now.toIso8601String(),
-      'syncTimestamp': now.millisecondsSinceEpoch,
-    });
+    await _progressRef(userId)
+        .set({
+          ...progress.toJson(),
+          'lastUpdated': now.toIso8601String(),
+          'syncTimestamp': now.millisecondsSinceEpoch,
+        })
+        .timeout(_cloudWriteTimeout);
     await _localBox.put(
       GameProgressStorageKeys.lastSyncTime,
       now.millisecondsSinceEpoch,
