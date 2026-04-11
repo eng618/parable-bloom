@@ -26,7 +26,7 @@
   "devDependencies": {
     "@eng618/prettier-config": "^2.10.0",
     "@gv-tech/eslint-config": "^0.1.14",
-    "@next/eslint-plugin-next": "^16.1.6",
+    "@next/eslint-plugin-next": "^16.2.3",
     "@types/node": "24.7.2",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
