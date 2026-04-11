@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
@@ -88,6 +89,7 @@ void main() {
   late FirebaseGameProgressRepository repository;
   late Directory tempDir;
   late MockDocumentSnapshot mockSnapshot;
+  late MockDocumentReference mockSubDoc;
 
   setUpAll(() async {
     // Create a temporary directory for testing
@@ -115,7 +117,7 @@ void main() {
     final mockCollection = MockCollectionReference();
     final mockDoc = MockDocumentReference();
     final mockSubCollection = MockCollectionReference();
-    final mockSubDoc = MockDocumentReference();
+    mockSubDoc = MockDocumentReference();
     mockSnapshot = MockDocumentSnapshot();
 
     // Stub chain: firestore -> collection -> doc -> collection -> doc
@@ -256,6 +258,48 @@ void main() {
 
       // Sync should not throw (even if Firestore is mocked)
       await expectLater(repository.syncToCloud(), completes);
+    });
+
+    test('should handle cloud read timeout without throwing', () async {
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudReadTimeout: const Duration(milliseconds: 10),
+      );
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        return mockSnapshot;
+      });
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+
+      await repository.setCloudSyncEnabled(true);
+
+      await expectLater(repository.syncToCloud(), completes);
+    });
+
+    test('should handle cloud write timeout without updating last sync time',
+        () async {
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudWriteTimeout: const Duration(milliseconds: 10),
+      );
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      await expectLater(repository.syncToCloud(), completes);
+      expect(await repository.getLastSyncTime(), isNull);
     });
 
     test('inspectSyncConflict returns cloudAhead when cloud dominates',

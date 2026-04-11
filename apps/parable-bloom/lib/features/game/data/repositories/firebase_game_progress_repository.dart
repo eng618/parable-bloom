@@ -22,13 +22,22 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
   final Box _localBox;
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  final Duration _cloudReadTimeout;
+  final Duration _cloudWriteTimeout;
 
   // Document path
   static const String _progressDoc = 'progress';
-  static const Duration _cloudReadTimeout = Duration(seconds: 8);
-  static const Duration _cloudWriteTimeout = Duration(seconds: 8);
+  static const Duration _defaultCloudReadTimeout = Duration(seconds: 8);
+  static const Duration _defaultCloudWriteTimeout = Duration(seconds: 8);
 
-  FirebaseGameProgressRepository(this._localBox, this._firestore, this._auth);
+  FirebaseGameProgressRepository(
+    this._localBox,
+    this._firestore,
+    this._auth, {
+    Duration cloudReadTimeout = _defaultCloudReadTimeout,
+    Duration cloudWriteTimeout = _defaultCloudWriteTimeout,
+  })  : _cloudReadTimeout = cloudReadTimeout,
+        _cloudWriteTimeout = cloudWriteTimeout;
 
   /// Returns the Firestore collection name for the current environment.
   static String get _collectionName =>
