@@ -29,6 +29,8 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
   static const String _progressDoc = 'progress';
   static const Duration _defaultCloudReadTimeout = Duration(seconds: 8);
   static const Duration _defaultCloudWriteTimeout = Duration(seconds: 8);
+  static const int _cloudSyncMaxRetries = 3;
+  static const Duration _cloudSyncBaseRetryDelay = Duration(milliseconds: 200);
 
   FirebaseGameProgressRepository(
     this._localBox,
@@ -163,7 +165,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
         }
       }
 
-      await _saveCloudProgress(userId, localProgress);
+        await _saveCloudProgressWithRetry(userId, localProgress);
       LoggerService.info('Sync to cloud successful',
           tag: 'FirebaseGameProgressRepository');
     } catch (e, stack) {
@@ -246,6 +248,54 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
       GameProgressStorageKeys.lastSyncTime,
       now.millisecondsSinceEpoch,
     );
+  }
+
+  Future<void> _saveCloudProgressWithRetry(
+    String userId,
+    GameProgress progress,
+  ) async {
+    for (int attempt = 1; attempt <= _cloudSyncMaxRetries; attempt++) {
+      try {
+        await _saveCloudProgress(userId, progress);
+        return;
+      } catch (error, stackTrace) {
+        final isLastAttempt = attempt == _cloudSyncMaxRetries;
+        if (!_shouldRetryCloudWrite(error) || isLastAttempt) {
+          rethrow;
+        }
+
+        final backoff = Duration(
+          milliseconds:
+              _cloudSyncBaseRetryDelay.inMilliseconds * (1 << (attempt - 1)),
+        );
+        LoggerService.warn(
+          'Cloud sync write failed, retrying',
+          tag: 'FirebaseGameProgressRepository',
+          error: error,
+          stackTrace: stackTrace,
+          metadata: {
+            'attempt': attempt,
+            'max_retries': _cloudSyncMaxRetries,
+            'backoff_ms': backoff.inMilliseconds,
+          },
+        );
+        await Future<void>.delayed(backoff);
+      }
+    }
+  }
+
+  bool _shouldRetryCloudWrite(Object error) {
+    if (error is TimeoutException) {
+      return true;
+    }
+    if (error is FirebaseException) {
+      return error.code == 'unavailable' ||
+          error.code == 'deadline-exceeded' ||
+          error.code == 'aborted' ||
+          error.code == 'internal' ||
+          error.code == 'resource-exhausted';
+    }
+    return false;
   }
 
   SyncConflictType _compareProgress(GameProgress local, GameProgress cloud) {

@@ -302,6 +302,26 @@ void main() {
       expect(await repository.getLastSyncTime(), isNull);
     });
 
+    test('should retry cloud write and succeed after transient failures',
+        () async {
+      int writeAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+        if (writeAttempts < 3) {
+          throw TimeoutException('transient timeout');
+        }
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      expect(writeAttempts, 3);
+      expect(await repository.getLastSyncTime(), isNotNull);
+    });
+
     test('inspectSyncConflict returns cloudAhead when cloud dominates',
         () async {
       final local = GameProgress.initial().copyWith(
