@@ -110,10 +110,6 @@ tools/level-builder/validation.log
 # Level dumps from failing level generations
 tools/level-builder/assets/
 
-# Hugo generated site
-apps/hugo-site/public/
-# apps/hugo-site/resources/
-
 # Level dumps from failing level generations
 logs/
 

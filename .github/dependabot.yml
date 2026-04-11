@@ -24,11 +24,6 @@ updates:
       interval: 'monthly'
 
   - package-ecosystem: 'bun'
-    directory: '/apps/hugo-site'
-    schedule:
-      interval: 'monthly'
-
-  - package-ecosystem: 'bun'
     directory: '/apps/parable-bloom'
     schedule:
       interval: 'monthly'

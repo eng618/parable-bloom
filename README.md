@@ -109,8 +109,7 @@ parable-bloom/
 │   │   ├── assets/         # Game assets & levels
 │   │   ├── test/           # Platform tests
 │   │   └── android/ios/... # Platform-specific code
-│   ├── hugo-site/          # Legacy Hugo marketing/docs site source
-│   └── parable-bloom-site/ # New Next.js marketing site (migration target)
+│   └── parable-bloom-site/ # Next.js marketing and policy site
 ├── tools/
 │   └── level-builder/     # Go-based level generation tools
 ├── scripts/               # Workspace-wide utility scripts
@@ -140,7 +139,7 @@ task release:ios
 **Single Component Builds (with caching):**
 
 ```bash
-task build:all   # Builds Flutter web, Level Builder, and Hugo
+task build:all   # Builds Flutter web, Level Builder, and Next.js site
 ```
 
 ## 📚 Documentation

@@ -440,7 +440,7 @@ Version format in `pubspec.yaml`: `MAJOR.MINOR.PATCH+BUILD_NUMBER`
 The project uses **Nx Release** organized into three project-specific groups:
 
 1. **`parable-bloom`**: Game app. Tags: `v*`. The release workflow automatically runs `scripts/bump_version.dart` after versioning to sync the version to `pubspec.yaml`.
-2. **`hugo-site`**: Documentation site. Tags: `hugo-site-v*`.
+2. **`parable-bloom-site`**: Next.js marketing and policy site. Tags: `parable-bloom-site-v*`.
 3. **`level-builder`**: Go CLI tool. Tags: `level-builder-v*`.
 
 Usage:
@@ -667,7 +667,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    1. Calculates new versions based on Conventional Commits.
    2. Updates `package.json` files and syncs to `pubspec.yaml` via hooks (game only).
    3. Generates the `CHANGELOG.md` for each project.
-   4. Creates a single git commit and project-specific tags (e.g., `v1.3.1`, `hugo-site-v1.0.1`).
+   4. Creates a single git commit and project-specific tags (e.g., `v1.3.1`, `parable-bloom-site-v1.0.1`).
 
 4. **Push to GitHub**:
 

@@ -14,7 +14,7 @@
   - **Android**: API 21+
 - **Development Tools**:
   - Level Builder CLI (`tools/level-builder/`) - Level generation, validation, debugging
-  - Hugo Static Site Generator (`tools/hugo-site/`) - Documentation hosting
+  - Next.js marketing site (`apps/parable-bloom-site/`) - Public web pages, policy pages, and static export hosting
 
 ---
 
@@ -207,7 +207,7 @@ apps/
 │   ├── assets/         # game assets (levels, lessons, art, data)
 │   ├── test/           # platform tests
 │   └── android/ios/... # platform-specific code
-└── hugo-site/         # Documentation Site Source
+└── parable-bloom-site/ # Marketing and policy site source
 
 tools/
 └── level-builder/     # Go CLI tool for level generation & validation
@@ -568,7 +568,7 @@ The project utilizes Nx's task caching to accelerate repetitive tasks like build
 
 - **Cached Targets**: `build`, `test`, `lint`, `validate`, `deploy`.
 - **Global Dependencies**: Changes to `Taskfile.yml`, `nx.json`, or any files in `.taskfiles/` will invalidate the cache for all projects.
-- **Outputs**: Build artifacts such as `apps/parable-bloom/build/web`, `apps/hugo-site/public`, and the `level-builder` binary are cached and restored by Nx.
+- **Outputs**: Build artifacts such as `apps/parable-bloom/build/web`, `apps/parable-bloom-site/build`, and the `level-builder` binary are cached and restored by Nx.
 - **CI Performance**: GitHub Actions workflows are configured to cache the `.nx/cache` directory, significantly reducing PR validation times.
 
 ---
