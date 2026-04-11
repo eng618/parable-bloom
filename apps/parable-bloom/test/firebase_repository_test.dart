@@ -322,6 +322,51 @@ void main() {
       expect(await repository.getLastSyncTime(), isNotNull);
     });
 
+    test('should retry cloud write for transient Firebase errors', () async {
+      int writeAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+        if (writeAttempts < 3) {
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            code: 'unavailable',
+            message: 'transient unavailable',
+          );
+        }
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      expect(writeAttempts, 3);
+      expect(await repository.getLastSyncTime(), isNotNull);
+    });
+
+    test('should not retry cloud write for permanent Firebase errors',
+        () async {
+      int writeAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'permission-denied',
+          message: 'permanent permission error',
+        );
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      expect(writeAttempts, 1);
+      expect(await repository.getLastSyncTime(), isNull);
+    });
+
     test('inspectSyncConflict returns cloudAhead when cloud dominates',
         () async {
       final local = GameProgress.initial().copyWith(
