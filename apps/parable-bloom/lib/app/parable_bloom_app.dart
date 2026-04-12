@@ -14,6 +14,7 @@ import '../features/home/presentation/screens/home_screen.dart';
 import '../features/journal/presentation/screens/journal_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
 import '../features/tutorial/presentation/screens/tutorial_flow_screen.dart';
+import '../providers/infrastructure_providers.dart';
 import '../providers/settings_providers.dart';
 import '../services/logger_service.dart';
 
@@ -71,7 +72,7 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
       );
     }
 
-    _connectivitySubscription = connectivity.onConnectivityChanged.listen(
+    _connectivitySubscription = ref.read(connectivityStreamProvider).listen(
       (event) {
         final isOnline = _isOnline(event);
         if (!_wasOnline && isOnline) {
