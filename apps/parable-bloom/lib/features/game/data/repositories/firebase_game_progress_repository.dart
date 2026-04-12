@@ -169,7 +169,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
         }
       }
 
-        await _saveCloudProgressWithRetry(userId, localProgress);
+      await _saveCloudProgressWithRetry(userId, localProgress);
       LoggerService.info('Sync to cloud successful',
           tag: 'FirebaseGameProgressRepository');
     } catch (e, stack) {
@@ -207,20 +207,47 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
       try {
         final cloudDoc =
             await _progressRef(userId).get().timeout(_cloudReadTimeout);
+        if (attempt > 1) {
+          LoggerService.info(
+            'Cloud progress read recovered after retry',
+            tag: 'FirebaseGameProgressRepository',
+            metadata: {
+              'attempts_used': attempt,
+              'max_retries': _cloudSyncMaxRetries,
+            },
+          );
+        }
         if (!cloudDoc.exists) return null;
         final cloudData = cloudDoc.data();
         if (cloudData == null) return null;
         return GameProgress.fromJson(cloudData);
       } catch (error, stackTrace) {
+        final isRetryable = _isTransientCloudError(error);
         final isLastAttempt = attempt == _cloudSyncMaxRetries;
-        if (!_isTransientCloudError(error) || isLastAttempt) {
+        if (!isRetryable) {
           LoggerService.warn(
-            'Cloud progress read failed',
+            'Cloud progress read failed without retry',
             error: error,
             stackTrace: stackTrace,
             tag: 'FirebaseGameProgressRepository',
             metadata: {
               'attempt': attempt,
+              'retryable': false,
+              'timeout_ms': _cloudReadTimeout.inMilliseconds,
+            },
+          );
+          return null;
+        }
+        if (isLastAttempt) {
+          LoggerService.warn(
+            'Cloud progress read retries exhausted',
+            error: error,
+            stackTrace: stackTrace,
+            tag: 'FirebaseGameProgressRepository',
+            metadata: {
+              'attempt': attempt,
+              'max_retries': _cloudSyncMaxRetries,
+              'retryable': true,
               'timeout_ms': _cloudReadTimeout.inMilliseconds,
             },
           );
@@ -261,13 +288,11 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
 
   Future<void> _saveCloudProgress(String userId, GameProgress progress) async {
     final now = DateTime.now();
-    await _progressRef(userId)
-        .set({
-          ...progress.toJson(),
-          'lastUpdated': now.toIso8601String(),
-          'syncTimestamp': now.millisecondsSinceEpoch,
-        })
-        .timeout(_cloudWriteTimeout);
+    await _progressRef(userId).set({
+      ...progress.toJson(),
+      'lastUpdated': now.toIso8601String(),
+      'syncTimestamp': now.millisecondsSinceEpoch,
+    }).timeout(_cloudWriteTimeout);
     await _localBox.put(
       GameProgressStorageKeys.lastSyncTime,
       now.millisecondsSinceEpoch,
@@ -281,10 +306,45 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     for (int attempt = 1; attempt <= _cloudSyncMaxRetries; attempt++) {
       try {
         await _saveCloudProgress(userId, progress);
+        if (attempt > 1) {
+          LoggerService.info(
+            'Cloud sync write recovered after retry',
+            tag: 'FirebaseGameProgressRepository',
+            metadata: {
+              'attempts_used': attempt,
+              'max_retries': _cloudSyncMaxRetries,
+            },
+          );
+        }
         return;
       } catch (error, stackTrace) {
+        final isRetryable = _isTransientCloudError(error);
         final isLastAttempt = attempt == _cloudSyncMaxRetries;
-        if (!_isTransientCloudError(error) || isLastAttempt) {
+        if (!isRetryable) {
+          LoggerService.warn(
+            'Cloud sync write failed without retry',
+            tag: 'FirebaseGameProgressRepository',
+            error: error,
+            stackTrace: stackTrace,
+            metadata: {
+              'attempt': attempt,
+              'retryable': false,
+            },
+          );
+          rethrow;
+        }
+        if (isLastAttempt) {
+          LoggerService.warn(
+            'Cloud sync write retries exhausted',
+            tag: 'FirebaseGameProgressRepository',
+            error: error,
+            stackTrace: stackTrace,
+            metadata: {
+              'attempt': attempt,
+              'max_retries': _cloudSyncMaxRetries,
+              'retryable': true,
+            },
+          );
           rethrow;
         }
 
