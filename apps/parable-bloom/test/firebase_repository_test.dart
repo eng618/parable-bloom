@@ -266,6 +266,7 @@ void main() {
         mockFirestore,
         mockAuth,
         cloudReadTimeout: const Duration(milliseconds: 10),
+        cloudRetryDelay: Duration.zero,
       );
 
       when(mockSubDoc.get(any)).thenAnswer((_) async {
@@ -287,6 +288,7 @@ void main() {
         mockFirestore,
         mockAuth,
         cloudWriteTimeout: const Duration(milliseconds: 10),
+        cloudRetryDelay: Duration.zero,
       );
 
       when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
@@ -365,6 +367,93 @@ void main() {
 
       expect(writeAttempts, 1);
       expect(await repository.getLastSyncTime(), isNull);
+    });
+
+    test('should retry cloud read and succeed after transient failures',
+        () async {
+      int readAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async {
+        readAttempts += 1;
+        if (readAttempts < 3) {
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            code: 'unavailable',
+            message: 'transient unavailable',
+          );
+        }
+        return mockSnapshot;
+      });
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(
+        GameProgress.initial()
+            .copyWith(currentLevel: 5, completedLevels: {1, 2, 3, 4}).toJson(),
+      );
+
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudRetryDelay: Duration.zero,
+      );
+
+      final conflict = await repository.inspectSyncConflict();
+
+      expect(readAttempts, 3);
+      expect(conflict.cloudProgress, isNotNull);
+      expect(conflict.cloudProgress!.currentLevel, 5);
+    });
+
+    test('should return null cloud progress after exhausting read retries',
+        () async {
+      int readAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async {
+        readAttempts += 1;
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'unavailable',
+          message: 'service unavailable',
+        );
+      });
+
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudRetryDelay: Duration.zero,
+      );
+
+      final conflict = await repository.inspectSyncConflict();
+
+      expect(readAttempts, 3);
+      expect(conflict.cloudProgress, isNull);
+      expect(conflict.type, SyncConflictType.none);
+    });
+
+    test('should not retry cloud read for permanent Firebase errors', () async {
+      int readAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async {
+        readAttempts += 1;
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'permission-denied',
+          message: 'permanent read error',
+        );
+      });
+
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudRetryDelay: Duration.zero,
+      );
+
+      final conflict = await repository.inspectSyncConflict();
+
+      expect(readAttempts, 1);
+      expect(conflict.cloudProgress, isNull);
     });
 
     test('inspectSyncConflict returns cloudAhead when cloud dominates',

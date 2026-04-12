@@ -24,13 +24,15 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
   final FirebaseAuth _auth;
   final Duration _cloudReadTimeout;
   final Duration _cloudWriteTimeout;
+  final Duration _cloudSyncBaseRetryDelay;
 
   // Document path
   static const String _progressDoc = 'progress';
   static const Duration _defaultCloudReadTimeout = Duration(seconds: 8);
   static const Duration _defaultCloudWriteTimeout = Duration(seconds: 8);
   static const int _cloudSyncMaxRetries = 3;
-  static const Duration _cloudSyncBaseRetryDelay = Duration(milliseconds: 200);
+  static const Duration _defaultCloudSyncBaseRetryDelay =
+      Duration(milliseconds: 200);
 
   FirebaseGameProgressRepository(
     this._localBox,
@@ -38,8 +40,10 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     this._auth, {
     Duration cloudReadTimeout = _defaultCloudReadTimeout,
     Duration cloudWriteTimeout = _defaultCloudWriteTimeout,
+    Duration cloudRetryDelay = _defaultCloudSyncBaseRetryDelay,
   })  : _cloudReadTimeout = cloudReadTimeout,
-        _cloudWriteTimeout = cloudWriteTimeout;
+        _cloudWriteTimeout = cloudWriteTimeout,
+        _cloudSyncBaseRetryDelay = cloudRetryDelay;
 
   /// Returns the Firestore collection name for the current environment.
   static String get _collectionName =>
@@ -199,28 +203,48 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
   }
 
   Future<GameProgress?> _getCloudProgress(String userId) async {
-    DocumentSnapshot<Map<String, dynamic>> cloudDoc;
-    try {
-      cloudDoc = await _progressRef(userId).get().timeout(_cloudReadTimeout);
-    } on TimeoutException catch (error, stack) {
-      LoggerService.warn('Cloud progress read timed out',
+    for (int attempt = 1; attempt <= _cloudSyncMaxRetries; attempt++) {
+      try {
+        final cloudDoc =
+            await _progressRef(userId).get().timeout(_cloudReadTimeout);
+        if (!cloudDoc.exists) return null;
+        final cloudData = cloudDoc.data();
+        if (cloudData == null) return null;
+        return GameProgress.fromJson(cloudData);
+      } catch (error, stackTrace) {
+        final isLastAttempt = attempt == _cloudSyncMaxRetries;
+        if (!_isTransientCloudError(error) || isLastAttempt) {
+          LoggerService.warn(
+            'Cloud progress read failed',
+            error: error,
+            stackTrace: stackTrace,
+            tag: 'FirebaseGameProgressRepository',
+            metadata: {
+              'attempt': attempt,
+              'timeout_ms': _cloudReadTimeout.inMilliseconds,
+            },
+          );
+          return null;
+        }
+        final backoff = Duration(
+          milliseconds:
+              _cloudSyncBaseRetryDelay.inMilliseconds * (1 << (attempt - 1)),
+        );
+        LoggerService.warn(
+          'Cloud sync read failed, retrying',
           error: error,
-          stackTrace: stack,
+          stackTrace: stackTrace,
           tag: 'FirebaseGameProgressRepository',
-          metadata: {'timeout_ms': _cloudReadTimeout.inMilliseconds});
-      return null;
+          metadata: {
+            'attempt': attempt,
+            'max_retries': _cloudSyncMaxRetries,
+            'backoff_ms': backoff.inMilliseconds,
+          },
+        );
+        await Future<void>.delayed(backoff);
+      }
     }
-
-    if (!cloudDoc.exists) {
-      return null;
-    }
-
-    final cloudData = cloudDoc.data();
-    if (cloudData == null) {
-      return null;
-    }
-
-    return GameProgress.fromJson(cloudData);
+    return null;
   }
 
   Future<void> _saveLocalProgress(
@@ -260,7 +284,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
         return;
       } catch (error, stackTrace) {
         final isLastAttempt = attempt == _cloudSyncMaxRetries;
-        if (!_shouldRetryCloudWrite(error) || isLastAttempt) {
+        if (!_isTransientCloudError(error) || isLastAttempt) {
           rethrow;
         }
 
@@ -284,7 +308,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     }
   }
 
-  bool _shouldRetryCloudWrite(Object error) {
+  bool _isTransientCloudError(Object error) {
     if (error is TimeoutException) {
       return true;
     }
