@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +29,8 @@ class ParableBloomApp extends ConsumerStatefulWidget {
 class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     with WidgetsBindingObserver {
   bool _didReceiveInteraction = false;
+  bool _wasOnline = true;
+  StreamSubscription<dynamic>? _connectivitySubscription;
 
   void _onPointerDown(PointerDownEvent _) {
     if (_didReceiveInteraction) return;
@@ -37,6 +42,9 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (!_isScreenshotMode) {
+      unawaited(_initializeConnectivitySync());
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(gameProgressProvider.notifier).initialize();
     });
@@ -44,8 +52,56 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
 
   @override
   void dispose() {
+    unawaited(_connectivitySubscription?.cancel());
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  Future<void> _initializeConnectivitySync() async {
+    final connectivity = Connectivity();
+    try {
+      final current = await connectivity.checkConnectivity();
+      _wasOnline = _isOnline(current);
+    } catch (e, stack) {
+      LoggerService.warn(
+        'Failed to read initial connectivity state',
+        error: e,
+        stackTrace: stack,
+        tag: 'App',
+      );
+    }
+
+    _connectivitySubscription = connectivity.onConnectivityChanged.listen(
+      (event) {
+        final isOnline = _isOnline(event);
+        if (!_wasOnline && isOnline) {
+          LoggerService.info(
+            'Connectivity restored. Triggering sync...',
+            tag: 'App',
+          );
+          unawaited(ref.read(gameProgressProvider.notifier).syncOnReconnect());
+        }
+        _wasOnline = isOnline;
+      },
+      onError: (Object e, StackTrace stack) {
+        LoggerService.warn(
+          'Connectivity stream error',
+          error: e,
+          stackTrace: stack,
+          tag: 'App',
+        );
+      },
+    );
+  }
+
+  bool _isOnline(dynamic connectivityEvent) {
+    if (connectivityEvent is ConnectivityResult) {
+      return connectivityEvent != ConnectivityResult.none;
+    }
+    if (connectivityEvent is List<ConnectivityResult>) {
+      return connectivityEvent.any((result) => result != ConnectivityResult.none);
+    }
+    return true;
   }
 
   @override
