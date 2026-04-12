@@ -335,6 +335,56 @@ void main() {
       await expectLater(repository.syncToCloud(), completes);
     });
 
+    test('syncToCloud skips push when local data is already synced', () async {
+      final progress = GameProgress.initial().copyWith(
+        currentLevel: 4,
+        completedLevels: {1, 2, 3},
+      );
+      await repository.saveProgress(progress);
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await box.put('cloud_sync_enabled', true);
+      await box.put('last_local_update', now - 1000);
+      await box.put('last_sync_time', now);
+
+      int writeAttempts = 0;
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+      });
+
+      await repository.syncToCloud();
+
+      expect(writeAttempts, 0);
+    });
+
+    test('syncToCloud pushes when local data is newer than last sync',
+        () async {
+      final progress = GameProgress.initial().copyWith(
+        currentLevel: 4,
+        completedLevels: {1, 2, 3},
+      );
+      await repository.saveProgress(progress);
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await box.put('cloud_sync_enabled', true);
+      await box.put('last_local_update', now);
+      await box.put('last_sync_time', now - 1000);
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+
+      int writeAttempts = 0;
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+      });
+
+      await repository.syncToCloud();
+
+      expect(writeAttempts, 1);
+      expect(await repository.getLastSyncTime(), isNotNull);
+    });
+
     test('should handle cloud read timeout without throwing', () async {
       repository = FirebaseGameProgressRepository(
         box,
