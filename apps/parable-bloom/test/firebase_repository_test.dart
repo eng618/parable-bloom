@@ -206,6 +206,81 @@ void main() {
       expect(await repository.isCloudSyncEnabled(), isFalse);
     });
 
+    test('enabling sync applies cloud data when cloud is ahead', () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 2,
+        completedLevels: {1},
+      );
+      await repository.saveProgress(local);
+
+      final cloud = GameProgress.initial().copyWith(
+        currentLevel: 6,
+        completedLevels: {1, 2, 3, 4, 5},
+      );
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(cloud.toJson());
+
+      await repository.setCloudSyncEnabled(true);
+
+      final resolved = await repository.getProgress();
+      expect(resolved.currentLevel, 6);
+      expect(resolved.completedLevels, {1, 2, 3, 4, 5});
+      expect(await repository.getLastSyncTime(), isNotNull);
+    });
+
+    test('enabling sync does not auto-push when local is ahead', () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 7,
+        completedLevels: {1, 2, 3, 4, 5, 6},
+      );
+      await repository.saveProgress(local);
+
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(
+        GameProgress.initial().copyWith(
+          currentLevel: 3,
+          completedLevels: {1, 2},
+        ).toJson(),
+      );
+
+      int writeAttempts = 0;
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      expect(writeAttempts, 0);
+      expect(await repository.getLastSyncTime(), isNull);
+    });
+
+    test('enabling sync does not auto-push when conflict is divergent',
+        () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 6,
+        completedLevels: {1, 2, 3, 6},
+      );
+      await repository.saveProgress(local);
+
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(
+        GameProgress.initial().copyWith(
+          currentLevel: 6,
+          completedLevels: {1, 2, 4, 5},
+        ).toJson(),
+      );
+
+      int writeAttempts = 0;
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      expect(writeAttempts, 0);
+      expect(await repository.getLastSyncTime(), isNull);
+    });
+
     test('should detect cloud sync availability', () async {
       // With mocked signed-in user, should be available
       final available = await repository.isCloudSyncAvailable();
@@ -476,6 +551,45 @@ void main() {
       expect(conflict.cloudProgress!.currentLevel, 6);
     });
 
+    test('inspectSyncConflict returns none when local and cloud are equal',
+        () async {
+      final shared = GameProgress.initial().copyWith(
+        currentLevel: 4,
+        completedLevels: {1, 2, 3},
+      );
+      await repository.saveProgress(shared);
+
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(shared.toJson());
+
+      final conflict = await repository.inspectSyncConflict();
+
+      expect(conflict.type, SyncConflictType.none);
+      expect(conflict.cloudProgress, isNotNull);
+      expect(conflict.localProgress.currentLevel, 4);
+    });
+
+    test('inspectSyncConflict returns divergent for partial overlap', () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 6,
+        completedLevels: {1, 2, 3, 6},
+      );
+      await repository.saveProgress(local);
+
+      final cloud = GameProgress.initial().copyWith(
+        currentLevel: 6,
+        completedLevels: {1, 2, 4, 5},
+      );
+
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(cloud.toJson());
+
+      final conflict = await repository.inspectSyncConflict();
+
+      expect(conflict.type, SyncConflictType.divergent);
+      expect(conflict.requiresUserDecision, isTrue);
+    });
+
     test('resolveSyncConflict keepCloud replaces local state', () async {
       final local = GameProgress.initial().copyWith(
         currentLevel: 2,
@@ -517,6 +631,28 @@ void main() {
       final resolved = await repository.getProgress();
       expect(resolved.currentLevel, 7);
       expect(resolved.completedLevels, {1, 2, 3, 4, 5, 6});
+      expect(await repository.getLastSyncTime(), isNotNull);
+    });
+
+    test('resolveSyncConflict keepLocal pushes local when cloud has no data',
+        () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 5,
+        completedLevels: {1, 2, 3, 4},
+      );
+      await repository.saveProgress(local);
+
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+
+      int writeAttempts = 0;
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+      });
+
+      await repository.resolveSyncConflict(SyncConflictResolution.keepLocal);
+
+      expect(writeAttempts, 1);
       expect(await repository.getLastSyncTime(), isNotNull);
     });
   });
