@@ -51,7 +51,7 @@ dependencies:
   http: ^1.2.2
 
   vector_math: any
-  firebase_crashlytics: ^5.0.7
+  firebase_crashlytics: ^5.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
