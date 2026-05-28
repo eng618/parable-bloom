@@ -100,7 +100,8 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
       return connectivityEvent != ConnectivityResult.none;
     }
     if (connectivityEvent is List<ConnectivityResult>) {
-      return connectivityEvent.any((result) => result != ConnectivityResult.none);
+      return connectivityEvent
+          .any((result) => result != ConnectivityResult.none);
     }
     return true;
   }
