@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../../../services/logger_service.dart';
 import '../../domain/repositories/settings_repository.dart';
 
 /// Hive-based implementation of SettingsRepository.
@@ -18,15 +19,35 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _useSimpleVinesKey = 'useSimpleVines';
   static const bool _defaultUseSimpleVines = false;
 
+  static const String _vineStyleKey = 'vineStyle';
+  static const String _defaultVineStyle = 'classic';
+
   static const String _boardZoomScaleKey = 'boardZoomScale';
   static const double _defaultBoardZoomScale = 1.0;
 
   HiveSettingsRepository(this.hiveBox);
 
+  T _readTypedValue<T>(String key, T defaultValue) {
+    final value = hiveBox.get(key, defaultValue: defaultValue);
+    if (value is T) {
+      return value;
+    }
+
+    LoggerService.warn(
+      'Invalid settings value type. Falling back to default.',
+      tag: 'HiveSettingsRepository',
+      metadata: {
+        'key': key,
+        'expected_type': '$T',
+        'actual_type': value.runtimeType.toString(),
+      },
+    );
+    return defaultValue;
+  }
+
   @override
   Future<String> getThemeMode() async {
-    return hiveBox.get(_themeModeKey, defaultValue: _defaultThemeMode)
-        as String;
+    return _readTypedValue<String>(_themeModeKey, _defaultThemeMode);
   }
 
   @override
@@ -36,10 +57,10 @@ class HiveSettingsRepository implements SettingsRepository {
 
   @override
   Future<bool> getBackgroundAudioEnabled() async {
-    return hiveBox.get(
+    return _readTypedValue<bool>(
       _backgroundAudioEnabledKey,
-      defaultValue: _defaultBackgroundAudioEnabled,
-    ) as bool;
+      _defaultBackgroundAudioEnabled,
+    );
   }
 
   @override
@@ -49,8 +70,7 @@ class HiveSettingsRepository implements SettingsRepository {
 
   @override
   Future<bool> getHapticsEnabled() async {
-    return hiveBox.get(_hapticsEnabledKey, defaultValue: _defaultHapticsEnabled)
-        as bool;
+    return _readTypedValue<bool>(_hapticsEnabledKey, _defaultHapticsEnabled);
   }
 
   @override
@@ -60,19 +80,35 @@ class HiveSettingsRepository implements SettingsRepository {
 
   @override
   Future<bool> getUseSimpleVines() async {
-    return hiveBox.get(_useSimpleVinesKey, defaultValue: _defaultUseSimpleVines)
-        as bool;
+    final style = await getVineStyle();
+    return style == 'simple';
   }
 
   @override
   Future<void> setUseSimpleVines(bool enabled) async {
-    await hiveBox.put(_useSimpleVinesKey, enabled);
+    await setVineStyle(enabled ? 'simple' : 'classic');
+  }
+
+  @override
+  Future<String> getVineStyle() async {
+    final oldVal = hiveBox.get(_useSimpleVinesKey);
+    if (oldVal != null) {
+      final styleName = oldVal as bool ? 'simple' : 'classic';
+      await hiveBox.put(_vineStyleKey, styleName);
+      await hiveBox.delete(_useSimpleVinesKey);
+      return styleName;
+    }
+    return _readTypedValue<String>(_vineStyleKey, _defaultVineStyle);
+  }
+
+  @override
+  Future<void> setVineStyle(String style) async {
+    await hiveBox.put(_vineStyleKey, style);
   }
 
   @override
   Future<double> getBoardZoomScale() async {
-    return hiveBox.get(_boardZoomScaleKey, defaultValue: _defaultBoardZoomScale)
-        as double;
+    return _readTypedValue<double>(_boardZoomScaleKey, _defaultBoardZoomScale);
   }
 
   @override

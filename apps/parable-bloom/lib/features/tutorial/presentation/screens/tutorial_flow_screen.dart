@@ -12,7 +12,7 @@ import '../../application/providers/tutorial_providers.dart';
 import '../../../game/presentation/widgets/garden_game.dart';
 import '../../../game/presentation/widgets/game_header.dart';
 import '../../../game/presentation/widgets/pause_menu_dialog.dart';
-import '../widgets/tutorial_overlay.dart';
+import '../widgets/tutorial_guide_overlay.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
 /// Shows the game with GameHeader (pause, grace) and a simple instruction overlay.
@@ -25,7 +25,6 @@ class TutorialFlowScreen extends ConsumerStatefulWidget {
 
 class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   GardenGame? _game;
-  bool _showInstructionOverlay = true;
   bool _isLevelCompleteOverlayVisible = false;
   String _currentCongratulationMessage = '';
 
@@ -125,8 +124,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
             // Create or recreate game when lesson changes
             if (_game == null || _game!.currentLessonId != lesson.id) {
               _game = GardenGame.fromLesson(lesson, ref: ref);
-              // Show instruction overlay for new lesson
-              _showInstructionOverlay = true;
             }
 
             return Scaffold(
@@ -156,16 +153,8 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                     ),
                   ),
 
-                  // Tutorial instruction overlay
-                  if (_showInstructionOverlay)
-                    TutorialOverlay(
-                      instruction: lesson.objective,
-                      onDismiss: () {
-                        if (mounted) {
-                          setState(() => _showInstructionOverlay = false);
-                        }
-                      },
-                    ),
+                  // Redesigned progressive tap-based tutorial overlay
+                  const TutorialGuideOverlay(),
 
                   // Level complete overlay
                   if (_isLevelCompleteOverlayVisible)
@@ -394,7 +383,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     ref.read(gameInstanceProvider.notifier).resetGrace();
     _game?.reloadLevel();
     setState(() {
-      _showInstructionOverlay = true;
       _isLevelCompleteOverlayVisible = false;
     });
     ScaffoldMessenger.of(context).showSnackBar(
@@ -440,7 +428,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       // Reset for new lesson
       setState(() {
         _game = null; // Will be recreated in build
-        _showInstructionOverlay = true;
       });
     }
   }

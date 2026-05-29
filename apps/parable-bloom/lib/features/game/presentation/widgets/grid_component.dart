@@ -11,6 +11,7 @@ import '../../../../services/logger_service.dart';
 import '../../application/providers/gameplay_state_providers.dart';
 import '../../application/providers/solver_providers.dart';
 import '../../../game/domain/services/level_solver_service.dart';
+import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import 'garden_game.dart';
 import 'vine_component.dart';
 
@@ -231,11 +232,42 @@ class GridComponent extends PositionComponent
 
     if (clickedVine == null) return;
 
+    // Gesture restrictions for progressive tutorial
+    if (level.difficulty == 'tutorial') {
+      if (level.id == 1) {
+        // Lesson 1: Only allow tapping vine_1's head at (3, 1)
+        if (clickedVine.id != 'vine_1' || col != 3 || row != 1) {
+          return;
+        }
+      }
+    }
+
     final state = _vineStates[clickedVine.id];
     if (state == null || state.isCleared) return;
 
     final comp = _vineComponents[clickedVine.id];
     if (comp == null) return;
+
+    // If vine is blocked, calculate screenspace offsets for visual collision feedback
+    if (state.isBlocked) {
+      final head = clickedVine.orderedPath.first;
+      final dir = clickedVine.headDirection;
+      int nextX = head['x']!;
+      int nextY = head['y']!;
+      if (dir == 'right') nextX++;
+      if (dir == 'left') nextX--;
+      if (dir == 'up') nextY++;
+      if (dir == 'down') nextY--;
+
+      final headOffset = parent.getCellScreenPosition(head['x']!, head['y']!);
+      final blockerOffset = parent.getCellScreenPosition(nextX, nextY);
+
+      parent.ref.read(blockedTapProvider.notifier).setBlockedTap(BlockedTapState(
+        headPosition: headOffset,
+        blockerPosition: blockerOffset,
+        timestamp: DateTime.now(),
+      ));
+    }
 
     // Notify that a vine was tapped
     onVineTap?.call(clickedVine.id);

@@ -48,17 +48,17 @@ The game scales difficulty through grid size, vine count, and blocking complexit
 | **Flourishing**  | 12×16 to 16×20 | 36-50      | 3-5        | Deep blocking    | 3-4            |
 | **Transcendent** | 16×24+         | 60+        | 2-4        | Cascading locks  | 4+             |
 
-### Tutorial Strategy (Pre-Level)
+### Tutorial Strategy (Pre-Level Redesign)
 
-Tutorials run once at game start, separate from main levels. They introduce progressive blocking mechanics with in-game guidance.
+Tutorials run once at game start, separate from main levels. They introduce progressive blocking mechanics through hands-on, tap-driven active learning, fully eliminating word-heavy toast notifications in favor of visual cues.
 
-1. **Tutorial 1 (Basic Movement)**: 3×9 grid with 3 vertical arrows covering the entire grid. Shows easy clicking to clear vines.
-2. **Tutorial 2 (Single Blocking)**: Demonstrates one level of blocking.
-3. **Tutorial 3 (Multiple Blocking)**: Demonstrates multiple levels of blocking.
-4. **Tutorial 4**: Further progression.
-5. **Tutorial 5**: Capstone tutorial.
+1. **Lesson 1: Clear the Vine (Basic Movement)**: Shows easy clicking to clear a single horizontal vine. The target head is highlighted with a moss green pulsing circle and a `"Tap head to slide"` micro-prompt; other cell taps are restricted.
+2. **Lesson 2: Clear Multiple Vines (Independence)**: Introduces multiple parallel vines that can be cleared in any order. Gentle shimmer pulses appear on all heads with a `"Clear the garden"` guide.
+3. **Lesson 3: Blocking Mechanics (Obstruction & Priority)**: Teaches blocked path relationships. Tapping a blocked vine wiggles and shows a glowing red dashed **Collision Path** leading to the blocker cell with a floating alert: `"Blocked! Blocker first"`, guiding the user to clear the blocker first.
+4. **Lesson 4: Complex Blocking Chains (Sequence Logic)**: Teaches sequential multi-blocking loops. A thin flowing line traces dependencies on load, guiding the user to start at the free starter vine.
+5. **Lesson 5: Comprehensive Challenge (Capstone)**: Synthesizes all mechanics in a free-play challenge. No instructions are shown on screen, but incorrect blocked taps display the safe collision line and hearts wobble to indicate risk in main levels.
 
-Tutorials include animated arrows and text hints guiding the player through correct taps.
+Interactive elements are highlighted dynamically using global screen coordinate projections from the Flame canvas, with context-sensitive floating glassmorphic prompts anchoring near cells.
 
 ### Modules & Narrative
 
@@ -73,10 +73,12 @@ Tutorials include animated arrows and text hints guiding the player through corr
 - **Style**: Minimalist, organic, watercolor.
 - **Atmosphere**: Calming, serene, "Zen Garden."
 - **Backgrounds**: Dynamic vertical (9:16) backgrounds. Day features a bright sky and green grass, fading into `#F8F5EF`. Night features a dark sky and dark grass, fading into `#1A2E3F`. Both utilize a bare wood trellis pattern.
-- **Vines**: Two visual styles are available to players:
-  - **Classic (Premium)**: Features 128x128 watercolor-style vines wrapping around thin wooden dowels (~22px thick). Designed for maximum immersion and "Zen Garden" aesthetics. Asset: `vines_classic_spritesheet.png`.
-  - **Simple (Accessibility)**: Minimalist arrow-based vines designed for high contrast and clarity. This mode allows logic-based dynamic color-tinting. Asset: `vine_simple_spritesheet.png`.
-  - Managed by `useSimpleVinesProvider` and toggled via the Settings screen.
+- **Vines**: Four visual styles are available to players, built on a unified, high-performance dynamic vector path renderer:
+  - **Classic (Premium)**: A beautiful, organic watercolor oak branch with leafy green ivy foliage growing organically along the branch nodes. Utilizes high-resolution seamless generated textures mapped dynamically.
+  - **Cherry Blossom**: Delicate pink-watercolor wooden paths adorned with gorgeous programmatically rendered pink cherry blossoms and yellow centers.
+  - **Ethereal**: Dark cosmic obsidian wood paths with luminous glowing cyan veins, neon leaves, and a soft cyan outer neon-glow halo underneath.
+  - **Simple (Accessibility)**: Clean, sleek solid geometric vector paths with sharp triangular chevron heads and rounded caps, matching modern abstract maze puzzles.
+  - Managed by `vineStyleProvider` and toggled via the Settings screen and the Pause Menu.
 - **Board Default Zoom**: A user-configurable setting (0.5x to 2.0x) that adjusts how close the camera starts to the board, improving visibility for different screen sizes and accessibility needs.
 - **Modes**: Adaptive Light and Dark themes that sync with the background imagery.
 

@@ -53,7 +53,7 @@ tasks:
   validate:
     desc: Validate code quality across all modules (analysis, format, tests, and builds)
     cmds:
-      - bunx nx run-many -t lint test build
+      - bunx nx run-many -t lint test build --parallel=false
 
   fix:
     desc: Fix code quality and linting issues across all modules
@@ -89,17 +89,17 @@ tasks:
   build:all:
     desc: Build all project components (Flutter web, Level Builder, and Next.js site)
     cmds:
-      - bunx nx run-many -t build
+      - bunx nx run-many -t build --parallel=false
 
   test:all:
     desc: Run tests for all modules (Flutter and Level Builder)
     cmds:
-      - bunx nx run-many -t test
+      - bunx nx run-many -t test --parallel=false
 
   analyze:all:
     desc: Run static analysis for all modules (Flutter analyze and Level Builder lint)
     cmds:
-      - bunx nx run-many -t lint
+      - bunx nx run-many -t lint --parallel=false
 
   format:all:
     desc: Format code across all modules (Flutter, Level Builder, Next.js)
@@ -111,12 +111,12 @@ tasks:
   format:check:all:
     desc: Check if code is formatted across all modules
     cmds:
-      - bunx nx run-many -t lint
+      - bunx nx run-many -t lint --parallel=false
 
   lint:fix:all:
     desc: Fix linting issues across all modules
     cmds:
-      - bunx nx run-many -t lint --fix
+      - bunx nx run-many -t lint --fix --parallel=false
 
   lint:all:
     desc: Run linting for all modules (Flutter, Next.js)

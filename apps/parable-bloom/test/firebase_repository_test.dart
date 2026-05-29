@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
@@ -88,6 +89,7 @@ void main() {
   late FirebaseGameProgressRepository repository;
   late Directory tempDir;
   late MockDocumentSnapshot mockSnapshot;
+  late MockDocumentReference mockSubDoc;
 
   setUpAll(() async {
     // Create a temporary directory for testing
@@ -115,7 +117,7 @@ void main() {
     final mockCollection = MockCollectionReference();
     final mockDoc = MockDocumentReference();
     final mockSubCollection = MockCollectionReference();
-    final mockSubDoc = MockDocumentReference();
+    mockSubDoc = MockDocumentReference();
     mockSnapshot = MockDocumentSnapshot();
 
     // Stub chain: firestore -> collection -> doc -> collection -> doc
@@ -204,6 +206,81 @@ void main() {
       expect(await repository.isCloudSyncEnabled(), isFalse);
     });
 
+    test('enabling sync applies cloud data when cloud is ahead', () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 2,
+        completedLevels: {1},
+      );
+      await repository.saveProgress(local);
+
+      final cloud = GameProgress.initial().copyWith(
+        currentLevel: 6,
+        completedLevels: {1, 2, 3, 4, 5},
+      );
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(cloud.toJson());
+
+      await repository.setCloudSyncEnabled(true);
+
+      final resolved = await repository.getProgress();
+      expect(resolved.currentLevel, 6);
+      expect(resolved.completedLevels, {1, 2, 3, 4, 5});
+      expect(await repository.getLastSyncTime(), isNotNull);
+    });
+
+    test('enabling sync does not auto-push when local is ahead', () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 7,
+        completedLevels: {1, 2, 3, 4, 5, 6},
+      );
+      await repository.saveProgress(local);
+
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(
+        GameProgress.initial().copyWith(
+          currentLevel: 3,
+          completedLevels: {1, 2},
+        ).toJson(),
+      );
+
+      int writeAttempts = 0;
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      expect(writeAttempts, 0);
+      expect(await repository.getLastSyncTime(), isNull);
+    });
+
+    test('enabling sync does not auto-push when conflict is divergent',
+        () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 6,
+        completedLevels: {1, 2, 3, 6},
+      );
+      await repository.saveProgress(local);
+
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(
+        GameProgress.initial().copyWith(
+          currentLevel: 6,
+          completedLevels: {1, 2, 4, 5},
+        ).toJson(),
+      );
+
+      int writeAttempts = 0;
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      expect(writeAttempts, 0);
+      expect(await repository.getLastSyncTime(), isNull);
+    });
+
     test('should detect cloud sync availability', () async {
       // With mocked signed-in user, should be available
       final available = await repository.isCloudSyncAvailable();
@@ -258,6 +335,252 @@ void main() {
       await expectLater(repository.syncToCloud(), completes);
     });
 
+    test('syncToCloud skips push when local data is already synced', () async {
+      final progress = GameProgress.initial().copyWith(
+        currentLevel: 4,
+        completedLevels: {1, 2, 3},
+      );
+      await repository.saveProgress(progress);
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await box.put('cloud_sync_enabled', true);
+      await box.put('last_local_update', now - 1000);
+      await box.put('last_sync_time', now);
+
+      int writeAttempts = 0;
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+      });
+
+      await repository.syncToCloud();
+
+      expect(writeAttempts, 0);
+    });
+
+    test('syncToCloud pushes when local data is newer than last sync',
+        () async {
+      final progress = GameProgress.initial().copyWith(
+        currentLevel: 4,
+        completedLevels: {1, 2, 3},
+      );
+      await repository.saveProgress(progress);
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await box.put('cloud_sync_enabled', true);
+      await box.put('last_local_update', now);
+      await box.put('last_sync_time', now - 1000);
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+
+      int writeAttempts = 0;
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+      });
+
+      await repository.syncToCloud();
+
+      expect(writeAttempts, 1);
+      expect(await repository.getLastSyncTime(), isNotNull);
+    });
+
+    test('should handle cloud read timeout without throwing', () async {
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudReadTimeout: const Duration(milliseconds: 10),
+        cloudRetryDelay: Duration.zero,
+      );
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        return mockSnapshot;
+      });
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+
+      await repository.setCloudSyncEnabled(true);
+
+      await expectLater(repository.syncToCloud(), completes);
+    });
+
+    test('should handle cloud write timeout without updating last sync time',
+        () async {
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudWriteTimeout: const Duration(milliseconds: 10),
+        cloudRetryDelay: Duration.zero,
+      );
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      await expectLater(repository.syncToCloud(), completes);
+      expect(await repository.getLastSyncTime(), isNull);
+    });
+
+    test('should retry cloud write and succeed after transient failures',
+        () async {
+      int writeAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+        if (writeAttempts < 3) {
+          throw TimeoutException('transient timeout');
+        }
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      expect(writeAttempts, 3);
+      expect(await repository.getLastSyncTime(), isNotNull);
+    });
+
+    test('should retry cloud write for transient Firebase errors', () async {
+      int writeAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+        if (writeAttempts < 3) {
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            code: 'unavailable',
+            message: 'transient unavailable',
+          );
+        }
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      expect(writeAttempts, 3);
+      expect(await repository.getLastSyncTime(), isNotNull);
+    });
+
+    test('should not retry cloud write for permanent Firebase errors',
+        () async {
+      int writeAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'permission-denied',
+          message: 'permanent permission error',
+        );
+      });
+
+      await repository.setCloudSyncEnabled(true);
+
+      expect(writeAttempts, 1);
+      expect(await repository.getLastSyncTime(), isNull);
+    });
+
+    test('should retry cloud read and succeed after transient failures',
+        () async {
+      int readAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async {
+        readAttempts += 1;
+        if (readAttempts < 3) {
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            code: 'unavailable',
+            message: 'transient unavailable',
+          );
+        }
+        return mockSnapshot;
+      });
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(
+        GameProgress.initial()
+            .copyWith(currentLevel: 5, completedLevels: {1, 2, 3, 4}).toJson(),
+      );
+
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudRetryDelay: Duration.zero,
+      );
+
+      final conflict = await repository.inspectSyncConflict();
+
+      expect(readAttempts, 3);
+      expect(conflict.cloudProgress, isNotNull);
+      expect(conflict.cloudProgress!.currentLevel, 5);
+    });
+
+    test('should return null cloud progress after exhausting read retries',
+        () async {
+      int readAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async {
+        readAttempts += 1;
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'unavailable',
+          message: 'service unavailable',
+        );
+      });
+
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudRetryDelay: Duration.zero,
+      );
+
+      final conflict = await repository.inspectSyncConflict();
+
+      expect(readAttempts, 3);
+      expect(conflict.cloudProgress, isNull);
+      expect(conflict.type, SyncConflictType.none);
+    });
+
+    test('should not retry cloud read for permanent Firebase errors', () async {
+      int readAttempts = 0;
+
+      when(mockSubDoc.get(any)).thenAnswer((_) async {
+        readAttempts += 1;
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'permission-denied',
+          message: 'permanent read error',
+        );
+      });
+
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudRetryDelay: Duration.zero,
+      );
+
+      final conflict = await repository.inspectSyncConflict();
+
+      expect(readAttempts, 1);
+      expect(conflict.cloudProgress, isNull);
+    });
+
     test('inspectSyncConflict returns cloudAhead when cloud dominates',
         () async {
       final local = GameProgress.initial().copyWith(
@@ -276,6 +599,45 @@ void main() {
       expect(conflict.type, SyncConflictType.cloudAhead);
       expect(conflict.cloudProgress, isNotNull);
       expect(conflict.cloudProgress!.currentLevel, 6);
+    });
+
+    test('inspectSyncConflict returns none when local and cloud are equal',
+        () async {
+      final shared = GameProgress.initial().copyWith(
+        currentLevel: 4,
+        completedLevels: {1, 2, 3},
+      );
+      await repository.saveProgress(shared);
+
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(shared.toJson());
+
+      final conflict = await repository.inspectSyncConflict();
+
+      expect(conflict.type, SyncConflictType.none);
+      expect(conflict.cloudProgress, isNotNull);
+      expect(conflict.localProgress.currentLevel, 4);
+    });
+
+    test('inspectSyncConflict returns divergent for partial overlap', () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 6,
+        completedLevels: {1, 2, 3, 6},
+      );
+      await repository.saveProgress(local);
+
+      final cloud = GameProgress.initial().copyWith(
+        currentLevel: 6,
+        completedLevels: {1, 2, 4, 5},
+      );
+
+      when(mockSnapshot.exists).thenReturn(true);
+      when(mockSnapshot.data()).thenReturn(cloud.toJson());
+
+      final conflict = await repository.inspectSyncConflict();
+
+      expect(conflict.type, SyncConflictType.divergent);
+      expect(conflict.requiresUserDecision, isTrue);
     });
 
     test('resolveSyncConflict keepCloud replaces local state', () async {
@@ -319,6 +681,28 @@ void main() {
       final resolved = await repository.getProgress();
       expect(resolved.currentLevel, 7);
       expect(resolved.completedLevels, {1, 2, 3, 4, 5, 6});
+      expect(await repository.getLastSyncTime(), isNotNull);
+    });
+
+    test('resolveSyncConflict keepLocal pushes local when cloud has no data',
+        () async {
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 5,
+        completedLevels: {1, 2, 3, 4},
+      );
+      await repository.saveProgress(local);
+
+      when(mockSnapshot.exists).thenReturn(false);
+      when(mockSnapshot.data()).thenReturn(null);
+
+      int writeAttempts = 0;
+      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+        writeAttempts += 1;
+      });
+
+      await repository.resolveSyncConflict(SyncConflictResolution.keepLocal);
+
+      expect(writeAttempts, 1);
       expect(await repository.getLastSyncTime(), isNotNull);
     });
   });

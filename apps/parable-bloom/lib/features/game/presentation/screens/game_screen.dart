@@ -423,12 +423,22 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final currentLevel = ref.read(currentLevelProvider);
     ModuleData? completedModule;
     if (currentLevel != null) {
-      final modules = await ref.read(modulesProvider.future);
-      for (final m in modules) {
-        if (m.endLevel == currentLevel.id) {
-          completedModule = m;
-          break;
+      try {
+        final modules = await ref.read(modulesProvider.future);
+        for (final m in modules) {
+          if (m.endLevel == currentLevel.id) {
+            completedModule = m;
+            break;
+          }
         }
+      } catch (error, stackTrace) {
+        LoggerService.warn(
+          'Skipping module completion lookup due to module load failure',
+          tag: 'GameScreen',
+          error: error,
+          stackTrace: stackTrace,
+          metadata: {'level_id': currentLevel.id},
+        );
       }
 
       final isDebugPlay = ref.read(debugPlayModeProvider);

@@ -86,10 +86,15 @@ The game implements several high-performance visual systems within the Flame `Po
 - **Tap Feedback**: `TapEffectComponent` handles the visual pulse and particle effects on user interaction.
 - **Particle System**: `TapEffectComponent` and `VineComponent` (bloom) utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
 - **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input.
-- **Vine Styles**: `VineComponent` supports dynamic switching between **Classic** and **Simple** styles.
-  - **Classic Mode**: Uses the fully assembled `vines_classic_spritesheet.png` and disables `BlendMode.modulate` to preserve generated watercolor colors.
-  - **Simple Mode**: Uses the high-contrast `vine_simple_spritesheet.png` and colorizes them dynamically with `BlendMode.modulate`.)` for theme-based coloring.
-  - Managed by `useSimpleVinesProvider` and toggled via the Settings screen.
+- **Vine Styles (Overhaul & Over-proportioned Dynamic Paths)**: `VineComponent` implements a high-end vector path shader pipeline (Strategy A) drawing smooth, continuous rounded paths directly on the Flutter canvas with customized details:
+  - **Grid Compaction**: Visual layout is compacted (52px cells with 42px spacing) to reduce white space and create a dense, satisfying board.
+  - **Sleek Thinner Profile**: Sleek, uniform stroke widths (14px for Simple, 16px for Premium) with smooth rounded caps and `StrokeJoin.round` bends.
+  - **Dynamic Shaders**: Classic, Cherry Blossom, and Ethereal themes load generated high-resolution seamless textures (`classic_vine_texture.png`, etc.) as dynamic `ImageShader` strokes tinted with the vine's group colors, keeping assets extremely lightweight.
+  - **Organic Node Details**:
+    - **Classic**: Watercolor green ivy leaves growing organically at alternating 45-degree angles along the branch segments.
+    - **Cherry Blossom**: Beautiful programmatically-rendered pink cherry blossoms with bright yellow centers at the segment joints.
+    - **Ethereal**: Glowing bioluminescent cyber-cyan leaves alongside a soft cyan neon outer-glow blur path drawn underneath the obsidian branch.
+    - **Simple**: Sleek solid vector paths with sharp triangular chevron heads and rounded tail caps, matching the clean maze aesthetic.
 
 ---
 
@@ -98,7 +103,7 @@ The game implements several high-performance visual systems within the Flame `Po
 We use **Hive** for immediate, offline-capable storage. Key persisted settings include:
 
 - **Theme Mode**: System, Light, or Dark.
-- **Vines Style**: Classic or Simple.
+- **Vines Style**: Classic, Cherry Blossom, Ethereal, or Simple.
 - **Board Zoom Scale**: The default camera zoom level for the board.
 - **Audio/Haptics**: Individual toggles for sound and vibration.
 
@@ -217,8 +222,9 @@ tools/
 
 scripts/               # Workspace-wide utility scripts
 ├── bump_version.dart          # Versioning logic (synced with Nx Release)
-├── build_vine_spritesheet.py   # Automates generation of classic spritesheets from vine asset segments (includes rotting wood effect for withered vines)
-├── rebuild_simple_vines.py     # Generates the geometric/simple spritesheet with consistent thickness
+├── build_vine_spritesheet.py   # Compiles high-precision spritesheets for all themed segments (Classic, Blossom, Ethereal) with mathematically perfect white-to-alpha background extraction, premultiplied alpha resizing, and 8px cell padding.
+├── generate_themed_vines.py     # Programmatically generates themed segments (Cherry Blossom foliage/flowers and Ethereal obsidian/neon-cyan bioluminescent vines) with exact geometric alignment from classic segments.
+├── rebuild_simple_vines.py     # Generates the geometric/simple spritesheet with consistent thickness and matching 8px cell padding.
 └── ...
 
 documentation/         # Design & architecture docs
