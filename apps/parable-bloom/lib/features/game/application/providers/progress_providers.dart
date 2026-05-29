@@ -8,6 +8,7 @@ import '../../../../services/logger_service.dart';
 import '../../data/repositories/firebase_game_progress_repository.dart';
 import '../../domain/entities/cloud_sync_state.dart';
 import '../../domain/entities/game_progress.dart';
+import '../../../auth/application/providers/auth_providers.dart';
 import 'counter_providers.dart';
 
 final gameProgressProvider =
@@ -16,22 +17,26 @@ final gameProgressProvider =
 );
 
 final cloudSyncEnabledProvider = FutureProvider<bool>((ref) async {
+  ref.watch(authUserProvider);
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.isCloudSyncEnabled();
 });
 
 final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
+  ref.watch(authUserProvider);
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.isCloudSyncAvailable();
 });
 
 final cloudSyncAvailabilityProvider =
     FutureProvider<CloudSyncAvailability>((ref) async {
+  ref.watch(authUserProvider);
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.getCloudSyncAvailability();
 });
 
 final lastSyncTimeProvider = FutureProvider<DateTime?>((ref) async {
+  ref.watch(authUserProvider);
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.getLastSyncTime();
 });
