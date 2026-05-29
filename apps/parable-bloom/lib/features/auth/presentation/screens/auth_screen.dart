@@ -82,17 +82,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             );
       }
 
-      if (conflict.type == SyncConflictType.cloudAhead) {
-        await progressNotifier.resolveSyncConflict(
-          SyncConflictResolution.keepCloud,
-        );
-        await ref.read(analyticsServiceProvider).logSyncConflictResolved(
-              source: 'auth',
-              conflictType: conflict.type.name,
-              resolution: SyncConflictResolution.keepCloud.name,
-              automatic: true,
-            );
-      } else if (conflict.requiresUserDecision && mounted) {
+      if (conflict.requiresUserDecision && mounted) {
         final resolution = await _showSyncConflictDialog(conflict);
         if (resolution == null) {
           return;

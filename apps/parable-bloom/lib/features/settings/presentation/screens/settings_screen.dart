@@ -13,6 +13,7 @@ import '../../../auth/application/providers/auth_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
 import '../../../auth/presentation/screens/auth_screen.dart';
 import '../../../game/domain/entities/cloud_sync_state.dart';
+import '../../../game/domain/entities/game_progress.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../home/presentation/screens/home_screen.dart';
@@ -389,6 +390,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 if (value) {
                   await notifier.enableCloudSync();
+                  if (context.mounted) {
+                    final conflict = await notifier.inspectSyncConflict();
+                    if (conflict.requiresUserDecision && context.mounted) {
+                      final resolution = await _showSyncConflictDialog(
+                        context,
+                        conflict,
+                      );
+                      if (resolution != null) {
+                        await notifier.resolveSyncConflict(resolution);
+                      }
+                    }
+                  }
                 } else {
                   await notifier.disableCloudSync();
                 }
@@ -577,6 +590,63 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         MaterialPageRoute(builder: (context) => const AuthScreen()),
       );
     }
+  }
+
+  String _progressSummary(GameProgress progress) {
+    return 'Level ${progress.currentLevel} • ${progress.completedLevels.length} levels completed';
+  }
+
+  Future<SyncConflictResolution?> _showSyncConflictDialog(
+    BuildContext context,
+    SyncConflictState conflict,
+  ) async {
+    final cloudProgress = conflict.cloudProgress;
+    if (cloudProgress == null) {
+      return SyncConflictResolution.keepLocal;
+    }
+
+    return showDialog<SyncConflictResolution>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final localSummary = _progressSummary(conflict.localProgress);
+        final cloudSummary = _progressSummary(cloudProgress);
+        final title = conflict.type == SyncConflictType.localAhead
+            ? 'Progress Found on This Device'
+            : 'Choose Progress to Keep';
+
+        return AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'We found different progress locally and in the cloud. Choose which one should be kept and synced to all devices.',
+              ),
+              const SizedBox(height: 16),
+              Text('This device: $localSummary'),
+              const SizedBox(height: 8),
+              Text('Cloud save: $cloudSummary'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(
+                SyncConflictResolution.keepCloud,
+              ),
+              child: const Text('Use Cloud Save'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(
+                SyncConflictResolution.keepLocal,
+              ),
+              child: const Text('Keep This Device'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   String _getTimeAgo(DateTime dateTime) {

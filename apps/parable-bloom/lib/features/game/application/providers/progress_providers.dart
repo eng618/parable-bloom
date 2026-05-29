@@ -203,6 +203,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     if (repository is FirebaseGameProgressRepository) {
       await repository.setCloudSyncEnabled(true);
     }
+    await initialize();
   }
 
   Future<void> disableCloudSync() async {
@@ -210,6 +211,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     if (repository is FirebaseGameProgressRepository) {
       await repository.setCloudSyncEnabled(false);
     }
+    await initialize();
   }
 
   Future<bool> isCloudSyncEnabled() async {

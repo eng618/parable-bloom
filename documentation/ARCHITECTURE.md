@@ -141,6 +141,19 @@ To prevent stale caching and out-of-sync UI states when users log in or out, we 
 
 These providers dynamically re-evaluate the moment a user transitions from signed out to signed in (or vice versa), ensuring the UI automatically updates without manual screen refreshes or invalidation boilerplate.
 
+**Sync Conflicts & Interactive Discrepancy Resolution**:
+To ensure players never lose their progress across multiple devices and always stay in control of their save data, we implement a secure sync conflict detection and interactive merge strategy:
+
+- **Discrepancy Identification**: Any mismatch between local progress and cloud save (whether local is ahead, cloud is ahead, or they are divergent) is evaluated as a conflict type:
+  - `localAhead`: Local device has strictly more completed levels/lessons than the cloud.
+  - `cloudAhead`: Cloud save has strictly more completed levels/lessons than the local device.
+  - `divergent`: Local device and cloud save have different/partial level completion overlaps.
+- **Interactive Choice Dialog**: Rather than silently overriding a player's save, the app requires a user decision (`requiresUserDecision`) for all non-none conflict types. Upon signing in or toggling Cloud Sync in Settings with mismatching saves, a custom prompt presents both saves:
+  - **This Device**: Displays current local level and completed levels.
+  - **Cloud Save**: Displays remote level and completed levels.
+  The player can explicitly choose **"Use Cloud Save"** or **"Keep This Device"**.
+- **Notifier State Synchronization**: Once a conflict is resolved, the `GameProgressNotifier` triggers the repository resolution and reactively calls `initialize()` to reload the new progress directly into the in-memory state. This ensures that the game board, levels list, and settings UI update instantly and synchronously.
+
 ### 4.3 Telemetry & Analytics (Firebase + Plausible)
 
 The application implements a multi-channel, privacy-focused telemetry strategy designed to respect player privacy while offering critical insight into game stability and levels completion rates.
