@@ -82,7 +82,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
 
     final game = ref.watch(gameInstanceProvider);
 
-    if (currentLevel == null || game == null || !game.grid.isMounted) {
+    if (currentLevel == null || game == null || !game.isGridInitialized || !game.grid.isMounted) {
       return const SizedBox.shrink();
     }
 

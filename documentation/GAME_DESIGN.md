@@ -73,10 +73,12 @@ Interactive elements are highlighted dynamically using global screen coordinate 
 - **Style**: Minimalist, organic, watercolor.
 - **Atmosphere**: Calming, serene, "Zen Garden."
 - **Backgrounds**: Dynamic vertical (9:16) backgrounds. Day features a bright sky and green grass, fading into `#F8F5EF`. Night features a dark sky and dark grass, fading into `#1A2E3F`. Both utilize a bare wood trellis pattern.
-- **Vines**: Two visual styles are available to players:
-  - **Classic (Premium)**: Features 128x128 watercolor-style vines wrapping around thin wooden dowels (~22px thick). Designed for maximum immersion and "Zen Garden" aesthetics. Asset: `vines_classic_spritesheet.png`.
-  - **Simple (Accessibility)**: Minimalist arrow-based vines designed for high contrast and clarity. This mode allows logic-based dynamic color-tinting. Asset: `vine_simple_spritesheet.png`.
-  - Managed by `useSimpleVinesProvider` and toggled via the Settings screen.
+- **Vines**: Four visual styles are available to players, built on a unified, high-performance dynamic vector path renderer:
+  - **Classic (Premium)**: A beautiful, organic watercolor oak branch with leafy green ivy foliage growing organically along the branch nodes. Utilizes high-resolution seamless generated textures mapped dynamically.
+  - **Cherry Blossom**: Delicate pink-watercolor wooden paths adorned with gorgeous programmatically rendered pink cherry blossoms and yellow centers.
+  - **Ethereal**: Dark cosmic obsidian wood paths with luminous glowing cyan veins, neon leaves, and a soft cyan outer neon-glow halo underneath.
+  - **Simple (Accessibility)**: Clean, sleek solid geometric vector paths with sharp triangular chevron heads and rounded caps, matching modern abstract maze puzzles.
+  - Managed by `vineStyleProvider` and toggled via the Settings screen and the Pause Menu.
 - **Board Default Zoom**: A user-configurable setting (0.5x to 2.0x) that adjusts how close the camera starts to the board, improving visibility for different screen sizes and accessibility needs.
 - **Modes**: Adaptive Light and Dark themes that sync with the background imagery.
 

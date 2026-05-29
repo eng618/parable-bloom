@@ -18,7 +18,7 @@ class PauseMenuDialog extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final audioEnabled = ref.watch(backgroundAudioEnabledProvider);
     final hapticsEnabled = ref.watch(hapticsEnabledProvider);
-    final useSimpleVines = ref.watch(useSimpleVinesProvider);
+    final vineStyle = ref.watch(vineStyleProvider);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -55,16 +55,52 @@ class PauseMenuDialog extends ConsumerWidget {
               onChanged: (val) =>
                   ref.read(hapticsEnabledProvider.notifier).setEnabled(val),
             ),
-            const SizedBox(height: 12),
-            _buildSettingRow(
-              context,
-              icon: Icons.auto_awesome_mosaic_outlined,
-              label: 'Simple Visuals',
-              value: useSimpleVines,
-              onChanged: (val) =>
-                  ref.read(useSimpleVinesProvider.notifier).setEnabled(val),
+            const SizedBox(height: 16),
+            Text(
+              'Vine Style',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.secondary,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<VineStyle>(
+                segments: const [
+                  ButtonSegment(
+                    value: VineStyle.classic,
+                    icon: Icon(Icons.park_outlined),
+                    tooltip: 'Classic Style',
+                  ),
+                  ButtonSegment(
+                    value: VineStyle.blossom,
+                    icon: Icon(Icons.local_florist_outlined),
+                    tooltip: 'Cherry Blossom',
+                  ),
+                  ButtonSegment(
+                    value: VineStyle.ethereal,
+                    icon: Icon(Icons.star_outline),
+                    tooltip: 'Ethereal Magic',
+                  ),
+                  ButtonSegment(
+                    value: VineStyle.simple,
+                    icon: Icon(Icons.grid_view_outlined),
+                    tooltip: 'Simple Shapes',
+                  ),
+                ],
+                selected: {vineStyle},
+                onSelectionChanged: (Set<VineStyle> newSelection) {
+                  ref
+                      .read(vineStyleProvider.notifier)
+                      .setStyle(newSelection.first);
+                },
+                showSelectedIcon: false,
+                style: SegmentedButton.styleFrom(
+                  visualDensity: VisualDensity.comfortable,
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
             Text(
               'Theme',

@@ -31,7 +31,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final themeMode = ref.watch(themeModeProvider);
     final backgroundAudioEnabled = ref.watch(backgroundAudioEnabledProvider);
     final hapticsEnabled = ref.watch(hapticsEnabledProvider);
-    final useSimpleVines = ref.watch(useSimpleVinesProvider);
+    final vineStyle = ref.watch(vineStyleProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -47,23 +47,77 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _buildSectionHeader(context, 'Appearance'),
           _buildThemeTile(context, ref, themeMode),
           _buildBoardZoomTile(context, ref),
-          SwitchListTile(
-            secondary: Icon(
-              useSimpleVines ? Icons.grid_view : Icons.park,
-              color: useSimpleVines
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      _getVineStyleIcon(vineStyle),
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Vine Style',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          Text(
+                            _getVineStyleSubtitle(vineStyle),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.6),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<VineStyle>(
+                    showSelectedIcon: false,
+                    segments: const <ButtonSegment<VineStyle>>[
+                      ButtonSegment<VineStyle>(
+                        value: VineStyle.classic,
+                        icon: Icon(Icons.park),
+                        label: Text('Classic'),
+                      ),
+                      ButtonSegment<VineStyle>(
+                        value: VineStyle.blossom,
+                        icon: Icon(Icons.local_florist),
+                        label: Text('Blossom'),
+                      ),
+                      ButtonSegment<VineStyle>(
+                        value: VineStyle.ethereal,
+                        icon: Icon(Icons.star),
+                        label: Text('Ethereal'),
+                      ),
+                      ButtonSegment<VineStyle>(
+                        value: VineStyle.simple,
+                        icon: Icon(Icons.grid_view),
+                        label: Text('Simple'),
+                      ),
+                    ],
+                    selected: <VineStyle>{vineStyle},
+                    onSelectionChanged: (Set<VineStyle> newSelection) async {
+                      await ref
+                          .read(vineStyleProvider.notifier)
+                          .setStyle(newSelection.first);
+                    },
+                  ),
+                ),
+              ],
             ),
-            title: const Text('Classic Vines'),
-            subtitle:
-                const Text('Use simple vine assets (visually impaired mode)'),
-            value: useSimpleVines,
-            onChanged: (value) async {
-              await ref.read(useSimpleVinesProvider.notifier).setEnabled(value);
-            },
           ),
           const Divider(),
           _buildSectionHeader(context, 'Audio & Haptics'),
@@ -1157,5 +1211,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  IconData _getVineStyleIcon(VineStyle style) {
+    switch (style) {
+      case VineStyle.classic:
+        return Icons.park;
+      case VineStyle.blossom:
+        return Icons.local_florist;
+      case VineStyle.ethereal:
+        return Icons.star;
+      case VineStyle.simple:
+        return Icons.grid_view;
+    }
+  }
+
+  String _getVineStyleSubtitle(VineStyle style) {
+    switch (style) {
+      case VineStyle.classic:
+        return 'Detailed wood branches with green leaves';
+      case VineStyle.blossom:
+        return 'Cherry blossom branches with pink flowers';
+      case VineStyle.ethereal:
+        return 'Glowing bioluminescent purple-blue magic vines';
+      case VineStyle.simple:
+        return 'High-contrast geometric shapes (accessibility)';
+    }
   }
 }

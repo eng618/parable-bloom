@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
+import 'dart:typed_data';
 
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -18,8 +20,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final VineData vineData;
   final double cellSize;
 
-  static SpriteSheet? _classicSpriteSheet;
-  static SpriteSheet? _simpleSpriteSheet;
+  static ui.Image? _classicTextureImage;
+  static ui.Image? _blossomTextureImage;
+  static ui.Image? _etherealTextureImage;
 
   bool _isAnimating = false;
   bool _willClearAfterAnimation =
@@ -63,20 +66,15 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     size = parent.size;
 
     final game = parent.parent;
-    if (_classicSpriteSheet == null) {
-      final image = await game.images.load('vines_classic_spritesheet.png');
-      _classicSpriteSheet = SpriteSheet(
-        image: image,
-        srcSize: Vector2(128, 128),
-      );
-    }
 
-    if (_simpleSpriteSheet == null) {
-      final image = await game.images.load('vine_simple_spritesheet.png');
-      _simpleSpriteSheet = SpriteSheet(
-        image: image,
-        srcSize: Vector2(128, 128),
-      );
+    if (_classicTextureImage == null) {
+      _classicTextureImage = await game.images.load('classic_vine_texture.png');
+    }
+    if (_blossomTextureImage == null) {
+      _blossomTextureImage = await game.images.load('blossom_vine_texture.png');
+    }
+    if (_etherealTextureImage == null) {
+      _etherealTextureImage = await game.images.load('ethereal_vine_texture.png');
     }
 
     // Visual positions are already initialized in constructor
@@ -105,8 +103,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final level = parent.getCurrentLevelData();
     if (level == null) return;
 
-    final isAttempted = vineState.hasBeenAttempted;
+    if (_currentVisualPositions.isEmpty) return;
 
+    final isAttempted = vineState.hasBeenAttempted;
     final seedColor = VineColorPalette.resolve(vineData.vineColor);
     final calmColor = _deriveCalmVariant(seedColor, vineData.id);
     final baseColor = VineComponent.computeRenderColor(
@@ -115,175 +114,238 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       parent.parent.vineAttemptedColor,
     );
 
-    final useWithered = vineState.isWithered;
     final visualHeight = level.gridHeight;
+    final game = parent.parent;
+    final vineStyle = game.ref.read(vineStyleProvider);
+    final useSimpleVines = vineStyle == VineStyle.simple;
 
-    for (int i = 0; i < _currentVisualPositions.length; i++) {
-      final cell = _currentVisualPositions[i];
+    // Swap live and blocked appearance for premium/stylized vines:
+    // Live state modulates with the bright/white attempted color, and blocked state modulates with calmColor.
+    Color drawColor = baseColor;
+    if (!useSimpleVines) {
+      drawColor = isAttempted ? calmColor : parent.parent.vineAttemptedColor;
+    }
+
+    // Build lists of segment centers
+    final List<Offset> points = [];
+    for (final cell in _currentVisualPositions) {
       final x = cell['x'] as int;
       final y = cell['y'] as int;
-
       final visualY = visualHeight - 1 - y;
-
-      final center = Offset(
+      points.add(Offset(
         GameBoardLayout.cellCenterX(x),
         GameBoardLayout.cellCenterY(visualY),
-      );
-
-      _drawSegmentSprite(canvas, i, center, baseColor, useWithered);
+      ));
     }
+
+    // Set line thickness (sleek thinner profile)
+    final double strokeWidth = useSimpleVines ? 14.0 : 16.0;
+
+    // Create continuous path from tail to head
+    final path = Path();
+    path.moveTo(points.last.dx, points.last.dy);
+    for (int i = points.length - 2; i >= 0; i--) {
+      path.lineTo(points[i].dx, points[i].dy);
+    }
+
+    // Setup base Paint
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    // Get texture image for shaders
+    ui.Image? texture;
+    if (vineStyle == VineStyle.classic) {
+      texture = _classicTextureImage;
+    } else if (vineStyle == VineStyle.blossom) {
+      texture = _blossomTextureImage;
+    } else if (vineStyle == VineStyle.ethereal) {
+      texture = _etherealTextureImage;
+    }
+
+    if (useSimpleVines || texture == null) {
+      paint.color = drawColor;
+    } else {
+      // Identity 4x4 matrix for ImageShader
+      final matrix = Float64List(16)..[0] = 1.0..[5] = 1.0..[10] = 1.0..[15] = 1.0;
+      // High-resolution texture scale mapping
+      const double textureScale = 0.25;
+      matrix[0] = textureScale;
+      matrix[5] = textureScale;
+
+      paint.shader = ImageShader(
+        texture,
+        TileMode.repeated,
+        TileMode.repeated,
+        matrix,
+      );
+      paint.colorFilter = ColorFilter.mode(
+        drawColor,
+        BlendMode.modulate,
+      );
+    }
+
+    // 1. Draw outer glow for Ethereal Bioluminescent
+    if (vineStyle == VineStyle.ethereal) {
+      final glowPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth + 6.0
+        ..color = const Color(0xFF00E5FF).withValues(alpha: 0.35) // Cyber cyan glow
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
+      canvas.drawPath(path, glowPaint);
+    }
+
+    // 2. Draw main branch/arrow path
+    canvas.drawPath(path, paint);
+
+    // 3. Draw Organic Foliage & Details (Classic, Blossom, Ethereal)
+    if (!useSimpleVines) {
+      for (int i = 0; i < points.length; i++) {
+        // Skip details directly on head
+        if (i == 0) continue;
+
+        // Calculate direction along the branch segment to grow foliage organically
+        final nextPoint = points[i - 1];
+        final dx = nextPoint.dx - points[i].dx;
+        final dy = nextPoint.dy - points[i].dy;
+        final double baseAngle = math.atan2(dy, dx);
+
+        if (vineStyle == VineStyle.classic) {
+          final leafPaint = Paint()
+            ..style = PaintingStyle.fill
+            ..color = drawColor;
+          if (texture != null) {
+            leafPaint.shader = paint.shader;
+            leafPaint.colorFilter = paint.colorFilter;
+          }
+
+          final double leafSize = strokeWidth * 0.95;
+
+          // Draw left leaf
+          canvas.save();
+          canvas.translate(points[i].dx, points[i].dy);
+          canvas.rotate(baseAngle + math.pi / 4.0);
+          canvas.drawPath(_createLeafPath(leafSize), leafPaint);
+          canvas.restore();
+
+          // Draw right leaf
+          canvas.save();
+          canvas.translate(points[i].dx, points[i].dy);
+          canvas.rotate(baseAngle - math.pi / 4.0);
+          canvas.drawPath(_createLeafPath(leafSize), leafPaint);
+          canvas.restore();
+        } else if (vineStyle == VineStyle.blossom) {
+          _drawCherryBlossom(canvas, points[i], strokeWidth * 1.15, drawColor);
+        } else if (vineStyle == VineStyle.ethereal) {
+          final leafPaint = Paint()
+            ..style = PaintingStyle.fill
+            ..color = const Color(0xFF00E5FF)
+            ..colorFilter = ColorFilter.mode(drawColor, BlendMode.modulate);
+          
+          final leafGlow = Paint()
+            ..style = PaintingStyle.fill
+            ..color = const Color(0xFF00E5FF).withValues(alpha: 0.4)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+
+          final double leafSize = strokeWidth * 0.95;
+
+          // Draw glowing left leaf
+          canvas.save();
+          canvas.translate(points[i].dx, points[i].dy);
+          canvas.rotate(baseAngle + math.pi / 4.0);
+          canvas.drawPath(_createLeafPath(leafSize), leafGlow);
+          canvas.drawPath(_createLeafPath(leafSize), leafPaint);
+          canvas.restore();
+
+          // Draw glowing right leaf
+          canvas.save();
+          canvas.translate(points[i].dx, points[i].dy);
+          canvas.rotate(baseAngle - math.pi / 4.0);
+          canvas.drawPath(_createLeafPath(leafSize), leafGlow);
+          canvas.drawPath(_createLeafPath(leafSize), leafPaint);
+          canvas.restore();
+        }
+      }
+    }
+
+    // 4. Draw sleek, rounded Arrow Head at the very tip (points.first)
+    final head = points.first;
+    final String dir = _calculateVineDirection() ?? 'up';
+    final double arrowSize = strokeWidth * 1.45;
+    final headPath = Path();
+
+    if (dir == 'up') {
+      headPath.moveTo(head.dx, head.dy - arrowSize * 0.85);
+      headPath.lineTo(head.dx - arrowSize * 0.72, head.dy + arrowSize * 0.22);
+      headPath.lineTo(head.dx + arrowSize * 0.72, head.dy + arrowSize * 0.22);
+      headPath.close();
+    } else if (dir == 'down') {
+      headPath.moveTo(head.dx, head.dy + arrowSize * 0.85);
+      headPath.lineTo(head.dx - arrowSize * 0.72, head.dy - arrowSize * 0.22);
+      headPath.lineTo(head.dx + arrowSize * 0.72, head.dy - arrowSize * 0.22);
+      headPath.close();
+    } else if (dir == 'left') {
+      headPath.moveTo(head.dx - arrowSize * 0.85, head.dy);
+      headPath.lineTo(head.dx + arrowSize * 0.22, head.dy - arrowSize * 0.72);
+      headPath.lineTo(head.dx + arrowSize * 0.22, head.dy + arrowSize * 0.72);
+      headPath.close();
+    } else if (dir == 'right') {
+      headPath.moveTo(head.dx + arrowSize * 0.85, head.dy);
+      headPath.lineTo(head.dx - arrowSize * 0.22, head.dy - arrowSize * 0.72);
+      headPath.lineTo(head.dx - arrowSize * 0.22, head.dy + arrowSize * 0.72);
+      headPath.close();
+    }
+
+    final headPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = drawColor;
+    
+    if (useSimpleVines || texture == null) {
+      headPaint.color = drawColor;
+    } else {
+      headPaint.shader = paint.shader;
+      headPaint.colorFilter = paint.colorFilter;
+    }
+    
+    canvas.drawPath(headPath, headPaint);
 
     if (_isShowingBloomEffect && _bloomEffectPosition != null) {
       _drawBloomEffect(canvas);
     }
   }
 
-  void _drawSegmentSprite(
-    Canvas canvas,
-    int index,
-    Offset center,
-    Color tintColor,
-    bool isWithered,
-  ) {
-    if (_currentVisualPositions.isEmpty) return;
+  Path _createLeafPath(double size) {
+    final path = Path();
+    path.moveTo(0, 0);
+    path.quadraticBezierTo(size * 0.5, -size * 0.32, size, 0);
+    path.quadraticBezierTo(size * 0.5, size * 0.32, 0, 0);
+    path.close();
+    return path;
+  }
 
-    final isHead = index == 0;
-    final isTail = index == _currentVisualPositions.length - 1;
+  void _drawCherryBlossom(Canvas canvas, Offset center, double size, Color baseColor) {
+    final petalPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFFFFC2D8); // Soft pink petals
+    final centerPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFFFFDB4D); // Bright yellow center
 
-    final game = parent.parent;
-    final useSimpleVines = game.useSimpleVines;
-    final row = isWithered ? 1 : 0;
-    int col = 0;
-    double rotation = 0;
+    petalPaint.colorFilter = ColorFilter.mode(baseColor, BlendMode.modulate);
+    centerPaint.colorFilter = ColorFilter.mode(baseColor, BlendMode.modulate);
 
-    if (isHead) {
-      final String dir = _calculateVineDirection() ?? 'up';
-      if (useSimpleVines) {
-        switch (dir) {
-          case 'up':
-            rotation = 0;
-            col = 0;
-            break;
-          case 'down':
-            rotation = math.pi;
-            col = 0;
-            break;
-          case 'left':
-            rotation = -math.pi / 2;
-            col = 0;
-            break;
-          case 'right':
-            rotation = math.pi / 2;
-            col = 0;
-            break;
-        }
-      } else {
-        rotation = 0; // Use the pre-rotated sprite
-        switch (dir) {
-          case 'up':
-            col = 0;
-            break;
-          case 'down':
-            col = 1;
-            break;
-          case 'left':
-            col = 2;
-            break;
-          case 'right':
-            col = 3;
-            break;
-        }
-      }
-    } else if (isTail && index > 0) {
-      col = 6;
-      final prevCell = _currentVisualPositions[index - 1];
-      final cell = _currentVisualPositions[index];
-      final dx = cell['x']! - prevCell['x']!;
-      final dy = cell['y']! - prevCell['y']!; // Movement vector to tail
-
-      if (dx > 0) {
-        rotation =
-            -math.pi / 2; // Tail is to the right of prev, so points right
-      } else if (dx < 0) {
-        rotation = math.pi / 2; // Points left
-      } else if (dy > 0) {
-        rotation = math.pi; // Points down
-      } else if (dy < 0) {
-        rotation = 0; // Points up
-      }
-    } else if (index > 0 && index < _currentVisualPositions.length - 1) {
-      final prevCell = _currentVisualPositions[index - 1];
-      final cell = _currentVisualPositions[index];
-      final nextCell = _currentVisualPositions[index + 1];
-
-      final dx1 = prevCell['x']! - cell['x']!;
-      final dy1 = prevCell['y']! - cell['y']!;
-      final dx2 = nextCell['x']! - cell['x']!;
-      final dy2 = nextCell['y']! - cell['y']!;
-
-      if (dx1 == -dx2 && dy1 == -dy2) {
-        // Straight component
-        col = 4;
-        if (dx1 != 0) {
-          rotation = math.pi / 2;
-        } else {
-          rotation = 0;
-        }
-      } else {
-        // Corner component
-        col = 5;
-        // dy > 0 is UP in grid coords (y increases going up)
-        final hasUp = (dy1 > 0 || dy2 > 0);
-        final hasDown = (dy1 < 0 || dy2 < 0);
-        final hasLeft = (dx1 < 0 || dx2 < 0);
-        final hasRight = (dx1 > 0 || dx2 > 0);
-
-        if (hasUp && hasRight) {
-          rotation = 0;
-        } else if (hasRight && hasDown) {
-          rotation = math.pi / 2;
-        } else if (hasDown && hasLeft) {
-          rotation = math.pi;
-        } else if (hasLeft && hasUp) {
-          rotation = -math.pi / 2;
-        }
-      }
-    } else {
-      // Single cell vine or fallback
-      col = 0;
+    final double petalRadius = size * 0.44;
+    for (int i = 0; i < 5; i++) {
+      final double angle = i * 2 * math.pi / 5;
+      final px = center.dx + petalRadius * math.cos(angle);
+      final py = center.dy + petalRadius * math.sin(angle);
+      canvas.drawCircle(Offset(px, py), size * 0.34, petalPaint);
     }
-
-    Sprite? sprite;
-    if (useSimpleVines) {
-      if (_simpleSpriteSheet == null) return;
-      sprite = _simpleSpriteSheet!.getSprite(row, col);
-    } else {
-      if (_classicSpriteSheet == null) return;
-      sprite = _classicSpriteSheet!.getSprite(row, col);
-    }
-
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(rotation);
-
-    // Apply color tint ONLY to simple vine sprites
-    final paint = useSimpleVines
-        ? (Paint()
-          ..colorFilter = ColorFilter.mode(tintColor, BlendMode.modulate))
-        : Paint();
-
-    // Provide scaled size to fill cell
-    // Depending on the tile margin, might need scale factor
-    final scaleFactor = 1.0;
-    sprite.render(
-      canvas,
-      size: Vector2(cellSize * scaleFactor, cellSize * scaleFactor),
-      position:
-          Vector2(-cellSize * scaleFactor / 2, -cellSize * scaleFactor / 2),
-      overridePaint: paint,
-    );
-
-    canvas.restore();
+    canvas.drawCircle(center, size * 0.22, centerPaint);
   }
 
   String? _calculateVineDirection() {
@@ -759,11 +821,19 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     // Respect the render color (including blocked/attempted state) for bloom visuals
     final vineState = parent.getCurrentVineState(vineData.id);
-    final renderColor = VineComponent.computeRenderColor(
+    final isAttempted = vineState?.hasBeenAttempted ?? false;
+    final baseColor = VineComponent.computeRenderColor(
       calmColor,
-      vineState?.hasBeenAttempted ?? false,
+      isAttempted,
       (parent.parent).vineAttemptedColor,
     );
+
+    Color renderColor = baseColor;
+    final vineStyle = parent.parent.ref.read(vineStyleProvider);
+    final useSimpleVines = vineStyle == VineStyle.simple;
+    if (!useSimpleVines) {
+      renderColor = isAttempted ? calmColor : (parent.parent).vineAttemptedColor;
+    }
 
     // Create expanding sparkle rings
     final sparkleColors = [

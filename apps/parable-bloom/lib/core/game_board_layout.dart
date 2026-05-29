@@ -2,15 +2,15 @@ class GameBoardLayout {
   const GameBoardLayout._();
 
   // Distance between adjacent grid points and vine anchors.
-  static const double pointSpacing = 55.0;
+  static const double pointSpacing = 42.0;
 
   // Visual size of vines and the board's outer bounds.
-  static const double cellSize = 72.0;
+  static const double cellSize = 52.0;
 
   // Interactive cell size. Keeping this tied to spacing avoids overlap.
   static const double tapTargetSize = pointSpacing;
 
-  static const double gridDotRadius = 3.0;
+  static const double gridDotRadius = 2.5;
 
   static double get cellInset => (cellSize - tapTargetSize) / 2;
 
