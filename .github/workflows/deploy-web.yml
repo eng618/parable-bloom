@@ -145,7 +145,7 @@ jobs:
 
       - name: Comment PR with Preview URL
         if: env.SKIP_DEPLOY != 'true' && github.event_name == 'pull_request' && env.DEPLOY_SKIPPED != 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const prNumber = context.issue.number;
