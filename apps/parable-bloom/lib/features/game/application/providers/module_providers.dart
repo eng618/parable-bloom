@@ -33,3 +33,18 @@ final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
     throw ModuleLoadException('Failed to load module metadata.');
   }
 });
+
+final levelMappingsProvider = FutureProvider<Map<String, String>>((ref) async {
+  try {
+    final jsonString = await rootBundle.loadString(
+      'assets/data/modules.json',
+    );
+    final jsonMap = json.decode(jsonString);
+    final mappings = Map<String, String>.from(jsonMap['level_mappings'] ?? {});
+    return mappings;
+  } catch (e, stack) {
+    LoggerService.error('Error loading level mappings from modules.json',
+        error: e, stackTrace: stack, tag: 'levelMappingsProvider');
+    return {};
+  }
+});

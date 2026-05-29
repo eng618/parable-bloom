@@ -103,14 +103,14 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     String promptText = '';
     Color highlightColor = const Color(0xFF6B8E23); // Moss Green default
 
-    if (lessonId == 1) {
+    if (lessonId == '1') {
       // Lesson 1: Highlight head of vine_1 at (3,1)
       final vineState = vineStates['vine_1'];
       if (vineState != null && !vineState.isCleared) {
         highlightPosition = game.getCellScreenPosition(3, 1);
         promptText = "Tap head to slide";
       }
-    } else if (lessonId == 2) {
+    } else if (lessonId == '2') {
       // Lesson 2: Multiple free-choice heads highlighted
       // Find first non-cleared vine
       final activeVineId = vineStates.entries
@@ -124,7 +124,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
         highlightPosition = game.getCellScreenPosition(head['x']!, head['y']!);
         promptText = "Clear the garden";
       }
-    } else if (lessonId == 3) {
+    } else if (lessonId == '3') {
       // Lesson 3: Blocker is vine_2 (4,0), blocked is vine_1 (3,1)
       final blockerState = vineStates['vine_2'];
       final blockedState = vineStates['vine_1'];
@@ -137,7 +137,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
         highlightPosition = game.getCellScreenPosition(3, 1);
         promptText = "Now clear!";
       }
-    } else if (lessonId == 4) {
+    } else if (lessonId == '4') {
       // Lesson 4: Highlight the starting vine which can clear completely
       final activeVineIds = vineStates.entries
           .where((e) => !e.value.isCleared)
@@ -159,7 +159,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
         highlightPosition = game.getCellScreenPosition(head['x']!, head['y']!);
         promptText = "Start the chain";
       }
-    } else if (lessonId == 5) {
+    } else if (lessonId == '5') {
       // Lesson 5: Capstone challenge, minimal text
       promptText = "Untangle the vines";
     }

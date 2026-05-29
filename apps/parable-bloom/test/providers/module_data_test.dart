@@ -24,13 +24,13 @@ void main() {
     print('Levels: ${firstModule.levels}');
 
     expect(firstModule.name, 'Seedling');
-    expect(firstModule.startLevel, 1, reason: 'Start level should be 1');
-    expect(firstModule.endLevel, 21,
-        reason: 'End level should be 21 (max from levels array)');
-    expect(firstModule.levelCount, 21, reason: 'Should have 21 levels (1-21)');
-    expect(firstModule.containsLevel(1), true);
-    expect(firstModule.containsLevel(21), true);
-    expect(firstModule.containsLevel(0), false);
-    expect(firstModule.containsLevel(22), false);
+    expect(firstModule.startLevel, 'lvl_seed_01', reason: 'Start level should be lvl_seed_01');
+    expect(firstModule.endLevel, 'lvl_seed_challenge',
+        reason: 'End level should be lvl_seed_challenge');
+    expect(firstModule.levelCount, 21, reason: 'Should have 21 levels');
+    expect(firstModule.containsLevel('lvl_seed_01'), true);
+    expect(firstModule.containsLevel('lvl_seed_challenge'), true);
+    expect(firstModule.containsLevel('lesson_1'), false);
+    expect(firstModule.containsLevel('lvl_sprout_01'), false);
   });
 }

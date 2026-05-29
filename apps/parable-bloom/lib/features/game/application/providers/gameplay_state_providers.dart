@@ -109,15 +109,15 @@ class GameInstanceNotifier extends Notifier<GardenGame?> {
   }
 }
 
-class DebugSelectedLevelNotifier extends Notifier<int?> {
+class DebugSelectedLevelNotifier extends Notifier<String?> {
   @override
-  int? build() => null;
+  String? build() => null;
 
-  void setLevel(int? level) => state = level;
+  void setLevel(String? level) => state = level;
 }
 
 final debugSelectedLevelProvider =
-    NotifierProvider<DebugSelectedLevelNotifier, int?>(
+    NotifierProvider<DebugSelectedLevelNotifier, String?>(
   DebugSelectedLevelNotifier.new,
 );
 

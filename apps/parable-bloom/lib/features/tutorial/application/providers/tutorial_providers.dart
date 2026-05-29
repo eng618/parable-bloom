@@ -55,9 +55,21 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
   @override
   TutorialProgress build() {
     final gameProgress = ref.read(gameProgressProvider);
+    
+    int currentLessonInt = 1;
+    if (gameProgress.currentLesson != null) {
+      final numStr = gameProgress.currentLesson!.replaceAll('lesson_', '');
+      currentLessonInt = int.tryParse(numStr) ?? 1;
+    }
+
+    final completedLessonsInt = gameProgress.completedLessons.map((e) {
+      final numStr = e.replaceAll('lesson_', '');
+      return int.tryParse(numStr) ?? 1;
+    }).toSet();
+
     return TutorialProgress(
-      currentLesson: gameProgress.currentLesson ?? 1,
-      completedLessons: gameProgress.completedLessons,
+      currentLesson: currentLessonInt,
+      completedLessons: completedLessonsInt,
       allLessonsCompleted: gameProgress.lessonCompleted,
     );
   }
@@ -71,9 +83,12 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
     final allComplete = newCompleted.length == 5;
     final nextLesson = allComplete ? null : lessonId + 1;
 
+    final lessonIdStr = 'lesson_$lessonId';
+    final nextLessonStr = allComplete ? null : 'lesson_${lessonId + 1}';
+
     await ref.read(gameProgressProvider.notifier).completeLesson(
-          lessonId: lessonId,
-          nextLesson: nextLesson,
+          lessonId: lessonIdStr,
+          nextLesson: nextLessonStr,
           allLessonsCompleted: allComplete,
         );
 

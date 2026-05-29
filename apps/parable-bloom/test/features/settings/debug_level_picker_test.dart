@@ -37,8 +37,8 @@ void main() {
           id: 1,
           name: 'Module 1',
           themeSeed: 'forest',
-          levels: [1, 2],
-          challengeLevel: 0,
+          levels: ['lvl_seed_01', 'lvl_seed_02'],
+          challengeLevel: '',
           parable: {},
           unlockMessage: '',
         ),
@@ -86,8 +86,8 @@ void main() {
           id: 1,
           name: 'Module 1',
           themeSeed: 'forest',
-          levels: [1, 2],
-          challengeLevel: 0,
+          levels: ['lvl_seed_01', 'lvl_seed_02'],
+          challengeLevel: '',
           parable: {},
           unlockMessage: '',
         ),
@@ -122,7 +122,7 @@ void main() {
         expect(find.byType(AlertDialog), findsWidgets);
 
         // Verify we can interact with the dropdown
-        final dropdownFinder = find.byType(DropdownButtonFormField<int>);
+        final dropdownFinder = find.byType(DropdownButtonFormField<String>);
         expect(dropdownFinder.evaluate().isNotEmpty, isTrue);
       }
     });

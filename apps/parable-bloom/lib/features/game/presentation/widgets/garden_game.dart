@@ -345,7 +345,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     final debugSelected = ref.read(debugSelectedLevelProvider);
     final gameProgress = ref.read(gameProgressProvider);
-    final levelNumber = debugSelected ?? gameProgress.currentLevel;
+    final levelId = debugSelected ?? gameProgress.currentLevel;
 
     if (debugSelected != null) {
       LoggerService.debug(
@@ -354,14 +354,22 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
 
     LoggerService.info(
-      'Attempting to load level $levelNumber',
+      'Attempting to load level $levelId',
       tag: 'GardenGame',
     );
     LoggerService.debug('Game progress: $gameProgress', tag: 'GardenGame');
 
     try {
-      // Load level data directly by level number
-      final assetPath = 'assets/levels/level_$levelNumber.json';
+      final mappings = await ref.read(levelMappingsProvider.future);
+      if (!mappings.containsKey(levelId)) {
+        LoggerService.info('All levels completed! Setting game as completed.',
+            tag: 'GardenGame');
+        ref.read(gameCompletedProvider.notifier).setCompleted(true);
+        return;
+      }
+
+      final file = mappings[levelId]!;
+      final assetPath = 'assets/$file';
       LoggerService.debug('Loading asset: $assetPath', tag: 'GardenGame');
 
       final levelJson = await rootBundle.loadString(assetPath);
@@ -406,41 +414,13 @@ class GardenGame extends FlameGame with TapCallbacks {
       }
 
       LoggerService.info(
-          'Loaded level $levelNumber: ${_currentLevelData!.name}',
+          'Loaded level $levelId: ${_currentLevelData!.name}',
           tag: 'GardenGame');
     } catch (e, stackTrace) {
-      LoggerService.error('Error loading level $levelNumber',
+      LoggerService.error('Error loading level $levelId',
           error: e, stackTrace: stackTrace, tag: 'GardenGame');
 
-      // Determine if this error indicates all levels are completed
-      final modulesAsync = ref.read(modulesProvider);
-      final modules = modulesAsync.maybeWhen(
-        data: (data) => data,
-        orElse: () => <ModuleData>[],
-      );
-
-      final totalLevels = modules.fold<int>(
-        0,
-        (maxEnd, module) => module.endLevel > maxEnd ? module.endLevel : maxEnd,
-      );
-
-      LoggerService.warn(
-        'Level $levelNumber failed to load. Total levels: $totalLevels',
-        tag: 'GardenGame',
-      );
-
-      if (levelNumber > totalLevels) {
-        LoggerService.info('All levels completed! Setting game as completed.',
-            tag: 'GardenGame');
-        ref.read(gameCompletedProvider.notifier).setCompleted(true);
-      } else {
-        // Level should exist but failed to load - critical error
-        LoggerService.error(
-          'CRITICAL ERROR - Level $levelNumber should exist but failed to load!',
-          tag: 'GardenGame',
-        );
-        ref.read(gameOverProvider.notifier).setGameOver(true);
-      }
+      ref.read(gameOverProvider.notifier).setGameOver(true);
       return;
     }
   }
@@ -458,7 +438,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     // Create level data from lesson
     _currentLevelData = LevelData(
-      id: lesson.id,
+      id: lesson.id.toString(),
       name: 'Lesson ${lesson.id}',
       difficulty: 'tutorial',
       gridWidth: lesson.gridWidth,

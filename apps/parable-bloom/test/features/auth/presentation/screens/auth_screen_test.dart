@@ -57,11 +57,11 @@ class FakeAnalyticsService extends AnalyticsService {
   Future<void> logParableViewed(String parableId) async {}
 
   @override
-  Future<void> logLevelStart(int levelId) async {}
+  Future<void> logLevelStart(dynamic levelId) async {}
 
   @override
   Future<void> logLevelComplete(
-    int levelId,
+    dynamic levelId,
     int taps,
     int wrongTaps, {
     int attempts = 1,
@@ -69,17 +69,17 @@ class FakeAnalyticsService extends AnalyticsService {
   }) async {}
 
   @override
-  Future<void> logWrongTap(int levelId, int remainingLives) async {}
+  Future<void> logWrongTap(dynamic levelId, int remainingLives) async {}
 
   @override
-  Future<void> logGameOver(int levelId) async {}
+  Future<void> logGameOver(dynamic levelId) async {}
 
   @override
   Future<void> logSyncConflictDetected({
     required String source,
     required String conflictType,
-    required int localLevel,
-    int? cloudLevel,
+    required dynamic localLevel,
+    dynamic cloudLevel,
   }) async {}
 
   @override
@@ -245,9 +245,9 @@ void main() {
       testGameProgressNotifier.nextConflictState = SyncConflictState(
         type: SyncConflictType.divergent,
         localProgress: GameProgress.initial()
-            .copyWith(currentLevel: 6, completedLevels: {1, 2, 3, 4, 5}),
+            .copyWith(currentLevel: 'lvl_seed_06', completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05'}),
         cloudProgress: GameProgress.initial()
-            .copyWith(currentLevel: 4, completedLevels: {1, 2, 3}),
+            .copyWith(currentLevel: 'lvl_seed_04', completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'}),
       );
 
       await tester.pumpWidget(createAuthScreen());

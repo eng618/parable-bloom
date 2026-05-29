@@ -20,18 +20,17 @@ Key concepts:
 
 ## 2. File Structure
 
-```text
 apps/parable-bloom/assets/
 ├── data/
-│   └── modules.json        # Registry of modules, progression, and parables
-├── tutorials/              # Separate tutorial component
-│   ├── tutorial_1.json
+│   └── modules.json        # Registry of modules, logical-to-physical mappings, progression
+├── lessons/                 # Hand-crafted instructional tutorial lessons
+│   ├── lesson_1.json
 │   └── ...
-└── levels/                 # Standard gameplay levels
-    ├── level_11.json       # Start at 11 (1-10 reserved/skipped for clarity)
-    ├── level_12.json
+└── levels/                 # Standard gameplay levels (physical sequential integers)
+    ├── level_1.json
+    ├── level_2.json
     ├── ...
-    └── level_100.json
+    └── level_105.json
 ```
 
 ## 3. JSON Schemas
@@ -49,7 +48,7 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
     // --- Tier A: Runtime-Critical ---
     "id": {
       "type": "integer",
-      "description": "Unique Level ID. Tutorials: 1-10, Levels: 11+",
+      "description": "Physical sequential level identifier (converted to String at runtime: id.toString())",
       "minimum": 1
     },
     "grid_size": {
@@ -166,7 +165,9 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
 
 ### 3.2 Module Registry Schema (`modules.json`)
 
-Modules dictate the player's journey. Use a `theme_seed` to generate consistent aesthetics.
+Modules dictate the player's journey. Logical level keys (e.g. `'lvl_seed_01'`) decouple the progression graph and level sequencing from physical filenames (`level_1.json`). 
+
+A global `level_mappings` object maps logical gameplay IDs to physical assets.
 
 ```json
 {
@@ -175,8 +176,13 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
     "version": { "type": "string" },
     "tutorials": {
       "type": "array",
-      "description": "List of tutorial level IDs",
-      "items": { "type": "integer" }
+      "description": "List of logical tutorial lesson IDs",
+      "items": { "type": "string" }
+    },
+    "level_mappings": {
+      "type": "object",
+      "description": "Global registry mapping logical keys to asset paths",
+      "additionalProperties": { "type": "string" }
     },
     "modules": {
       "type": "array",
@@ -191,12 +197,12 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
           },
           "levels": {
             "type": "array",
-            "description": "Sequence of standard 'Lesson' levels",
-            "items": { "type": "integer" }
+            "description": "Sequence of logical standard 'Lesson' level string keys",
+            "items": { "type": "string" }
           },
           "challenge_level": {
-            "type": "integer",
-            "description": "The final level of the module. Tougher difficulty."
+            "type": "string",
+            "description": "The logical challenge level string key ending the module"
           },
           "parable": {
             "type": "object",
@@ -222,7 +228,7 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
       }
     }
   },
-  "required": ["version", "tutorials", "modules"]
+  "required": ["version", "tutorials", "level_mappings", "modules"]
 }
 ```
 

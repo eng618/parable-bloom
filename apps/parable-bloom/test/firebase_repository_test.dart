@@ -160,28 +160,28 @@ void main() {
     test('should return initial progress when no data exists', () async {
       final progress = await repository.getProgress();
 
-      expect(progress.currentLevel, equals(1));
+      expect(progress.currentLevel, equals('lvl_seed_01'));
       expect(progress.completedLevels, isEmpty);
     });
 
     test('should save and retrieve progress correctly', () async {
       final originalProgress = GameProgress.initial().copyWith(
-        currentLevel: 3,
-        completedLevels: {1, 2},
+        currentLevel: 'lvl_seed_03',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02'},
         tutorialCompleted: false,
       );
 
       await repository.saveProgress(originalProgress);
       final retrievedProgress = await repository.getProgress();
 
-      expect(retrievedProgress.currentLevel, equals(3));
-      expect(retrievedProgress.completedLevels, equals({1, 2}));
+      expect(retrievedProgress.currentLevel, equals('lvl_seed_03'));
+      expect(retrievedProgress.completedLevels, equals({'lvl_seed_01', 'lvl_seed_02'}));
     });
 
     test('should reset progress correctly', () async {
       final progress = GameProgress.initial().copyWith(
-        currentLevel: 5,
-        completedLevels: {1, 2, 3, 4},
+        currentLevel: 'lvl_seed_05',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'},
         tutorialCompleted: false,
       );
 
@@ -189,7 +189,7 @@ void main() {
       await repository.resetProgress();
 
       final resetProgress = await repository.getProgress();
-      expect(resetProgress.currentLevel, equals(1));
+      expect(resetProgress.currentLevel, equals('lvl_seed_01'));
       expect(resetProgress.completedLevels, isEmpty);
     });
 
@@ -208,14 +208,14 @@ void main() {
 
     test('enabling sync applies cloud data when cloud is ahead', () async {
       final local = GameProgress.initial().copyWith(
-        currentLevel: 2,
-        completedLevels: {1},
+        currentLevel: 'lvl_seed_02',
+        completedLevels: {'lvl_seed_01'},
       );
       await repository.saveProgress(local);
 
       final cloud = GameProgress.initial().copyWith(
-        currentLevel: 6,
-        completedLevels: {1, 2, 3, 4, 5},
+        currentLevel: 'lvl_seed_06',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05'},
       );
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(cloud.toJson());
@@ -223,23 +223,23 @@ void main() {
       await repository.setCloudSyncEnabled(true);
 
       final resolved = await repository.getProgress();
-      expect(resolved.currentLevel, 6);
-      expect(resolved.completedLevels, {1, 2, 3, 4, 5});
+      expect(resolved.currentLevel, 'lvl_seed_06');
+      expect(resolved.completedLevels, {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05'});
       expect(await repository.getLastSyncTime(), isNotNull);
     });
 
     test('enabling sync does not auto-push when local is ahead', () async {
       final local = GameProgress.initial().copyWith(
-        currentLevel: 7,
-        completedLevels: {1, 2, 3, 4, 5, 6},
+        currentLevel: 'lvl_seed_07',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05', 'lvl_seed_06'},
       );
       await repository.saveProgress(local);
 
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
-          currentLevel: 3,
-          completedLevels: {1, 2},
+          currentLevel: 'lvl_seed_03',
+          completedLevels: {'lvl_seed_01', 'lvl_seed_02'},
         ).toJson(),
       );
 
@@ -257,16 +257,16 @@ void main() {
     test('enabling sync does not auto-push when conflict is divergent',
         () async {
       final local = GameProgress.initial().copyWith(
-        currentLevel: 6,
-        completedLevels: {1, 2, 3, 6},
+        currentLevel: 'lvl_seed_06',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_06'},
       );
       await repository.saveProgress(local);
 
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
-          currentLevel: 6,
-          completedLevels: {1, 2, 4, 5},
+          currentLevel: 'lvl_seed_06',
+          completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_04', 'lvl_seed_05'},
         ).toJson(),
       );
 
@@ -324,8 +324,8 @@ void main() {
       // This test verifies the sync method doesn't crash
       // In a real scenario, we'd mock Firestore responses
       final progress = GameProgress.initial().copyWith(
-        currentLevel: 2,
-        completedLevels: {1},
+        currentLevel: 'lvl_seed_02',
+        completedLevels: {'lvl_seed_01'},
         tutorialCompleted: false,
       );
 
@@ -337,8 +337,8 @@ void main() {
 
     test('syncToCloud skips push when local data is already synced', () async {
       final progress = GameProgress.initial().copyWith(
-        currentLevel: 4,
-        completedLevels: {1, 2, 3},
+        currentLevel: 'lvl_seed_04',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'},
       );
       await repository.saveProgress(progress);
 
@@ -360,8 +360,8 @@ void main() {
     test('syncToCloud pushes when local data is newer than last sync',
         () async {
       final progress = GameProgress.initial().copyWith(
-        currentLevel: 4,
-        completedLevels: {1, 2, 3},
+        currentLevel: 'lvl_seed_04',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'},
       );
       await repository.saveProgress(progress);
 
@@ -512,7 +512,7 @@ void main() {
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(
         GameProgress.initial()
-            .copyWith(currentLevel: 5, completedLevels: {1, 2, 3, 4}).toJson(),
+            .copyWith(currentLevel: 'lvl_seed_05', completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'}).toJson(),
       );
 
       repository = FirebaseGameProgressRepository(
@@ -526,7 +526,7 @@ void main() {
 
       expect(readAttempts, 3);
       expect(conflict.cloudProgress, isNotNull);
-      expect(conflict.cloudProgress!.currentLevel, 5);
+      expect(conflict.cloudProgress!.currentLevel, 'lvl_seed_05');
     });
 
     test('should return null cloud progress after exhausting read retries',
@@ -584,28 +584,28 @@ void main() {
     test('inspectSyncConflict returns cloudAhead when cloud dominates',
         () async {
       final local = GameProgress.initial().copyWith(
-        currentLevel: 2,
-        completedLevels: {1},
+        currentLevel: 'lvl_seed_02',
+        completedLevels: {'lvl_seed_01'},
       );
       await repository.saveProgress(local);
 
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
-            currentLevel: 6, completedLevels: {1, 2, 3, 4, 5}).toJson(),
+            currentLevel: 'lvl_seed_06', completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05'}).toJson(),
       );
 
       final conflict = await repository.inspectSyncConflict();
       expect(conflict.type, SyncConflictType.cloudAhead);
       expect(conflict.cloudProgress, isNotNull);
-      expect(conflict.cloudProgress!.currentLevel, 6);
+      expect(conflict.cloudProgress!.currentLevel, 'lvl_seed_06');
     });
 
     test('inspectSyncConflict returns none when local and cloud are equal',
         () async {
       final shared = GameProgress.initial().copyWith(
-        currentLevel: 4,
-        completedLevels: {1, 2, 3},
+        currentLevel: 'lvl_seed_04',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'},
       );
       await repository.saveProgress(shared);
 
@@ -616,19 +616,19 @@ void main() {
 
       expect(conflict.type, SyncConflictType.none);
       expect(conflict.cloudProgress, isNotNull);
-      expect(conflict.localProgress.currentLevel, 4);
+      expect(conflict.localProgress.currentLevel, 'lvl_seed_04');
     });
 
     test('inspectSyncConflict returns divergent for partial overlap', () async {
       final local = GameProgress.initial().copyWith(
-        currentLevel: 6,
-        completedLevels: {1, 2, 3, 6},
+        currentLevel: 'lvl_seed_06',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_06'},
       );
       await repository.saveProgress(local);
 
       final cloud = GameProgress.initial().copyWith(
-        currentLevel: 6,
-        completedLevels: {1, 2, 4, 5},
+        currentLevel: 'lvl_seed_06',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_04', 'lvl_seed_05'},
       );
 
       when(mockSnapshot.exists).thenReturn(true);
@@ -642,14 +642,14 @@ void main() {
 
     test('resolveSyncConflict keepCloud replaces local state', () async {
       final local = GameProgress.initial().copyWith(
-        currentLevel: 2,
-        completedLevels: {1},
+        currentLevel: 'lvl_seed_02',
+        completedLevels: {'lvl_seed_01'},
       );
       await repository.saveProgress(local);
 
       final cloud = GameProgress.initial().copyWith(
-        currentLevel: 8,
-        completedLevels: {1, 2, 3, 4, 5, 6, 7},
+        currentLevel: 'lvl_seed_08',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05', 'lvl_seed_06', 'lvl_seed_07'},
       );
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(cloud.toJson());
@@ -657,38 +657,38 @@ void main() {
       await repository.resolveSyncConflict(SyncConflictResolution.keepCloud);
 
       final resolved = await repository.getProgress();
-      expect(resolved.currentLevel, 8);
-      expect(resolved.completedLevels, {1, 2, 3, 4, 5, 6, 7});
+      expect(resolved.currentLevel, 'lvl_seed_08');
+      expect(resolved.completedLevels, {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05', 'lvl_seed_06', 'lvl_seed_07'});
     });
 
     test('resolveSyncConflict keepLocal pushes local state to cloud', () async {
       final local = GameProgress.initial().copyWith(
-        currentLevel: 7,
-        completedLevels: {1, 2, 3, 4, 5, 6},
+        currentLevel: 'lvl_seed_07',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05', 'lvl_seed_06'},
       );
       await repository.saveProgress(local);
 
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
-          currentLevel: 3,
-          completedLevels: {1, 2},
+          currentLevel: 'lvl_seed_03',
+          completedLevels: {'lvl_seed_01', 'lvl_seed_02'},
         ).toJson(),
       );
 
       await repository.resolveSyncConflict(SyncConflictResolution.keepLocal);
 
       final resolved = await repository.getProgress();
-      expect(resolved.currentLevel, 7);
-      expect(resolved.completedLevels, {1, 2, 3, 4, 5, 6});
+      expect(resolved.currentLevel, 'lvl_seed_07');
+      expect(resolved.completedLevels, {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05', 'lvl_seed_06'});
       expect(await repository.getLastSyncTime(), isNotNull);
     });
 
     test('resolveSyncConflict keepLocal pushes local when cloud has no data',
         () async {
       final local = GameProgress.initial().copyWith(
-        currentLevel: 5,
-        completedLevels: {1, 2, 3, 4},
+        currentLevel: 'lvl_seed_05',
+        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'},
       );
       await repository.saveProgress(local);
 

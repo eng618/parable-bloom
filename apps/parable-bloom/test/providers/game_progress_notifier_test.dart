@@ -32,13 +32,13 @@ class TrackingFirebaseGameProgressRepository
   @override
   Future<void> syncToCloud() async {
     calls.add("syncToCloud");
-    _stored = _stored.copyWith(currentLevel: 2, completedLevels: {1});
+    _stored = _stored.copyWith(currentLevel: 'lvl_seed_02', completedLevels: {'lvl_seed_01'});
   }
 
   @override
   Future<void> syncFromCloud() async {
     calls.add("syncFromCloud");
-    _stored = _stored.copyWith(currentLevel: 5, completedLevels: {1, 2, 3, 4});
+    _stored = _stored.copyWith(currentLevel: 'lvl_seed_05', completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'});
   }
 
   @override
@@ -149,8 +149,8 @@ void main() {
     expect(repository.calls,
         <String>["syncToCloud", "syncFromCloud", "getProgress"]);
     final state = container.read(gameProgressProvider);
-    expect(state.currentLevel, 5);
-    expect(state.completedLevels, <int>{1, 2, 3, 4});
+    expect(state.currentLevel, 'lvl_seed_05');
+    expect(state.completedLevels, <String>{'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'});
   });
 
   test("syncOnReconnect is a no-op for non-firebase repository", () async {

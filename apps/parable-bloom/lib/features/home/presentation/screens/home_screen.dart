@@ -57,13 +57,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 48),
               modulesAsync.when(
                 data: (modules) {
-                  final totalLevels = modules.fold<int>(
-                    0,
-                    (sum, module) =>
-                        sum + (module.endLevel - module.startLevel + 1),
-                  );
-                  final allLevelsCompleted =
-                      gameProgress.currentLevel > totalLevels;
+                  final playlist = modules.expand((m) => m.allLevels).toList();
+                  final allLevelsCompleted = playlist.every(gameProgress.completedLevels.contains);
+                  final nextLevelIdx = playlist.indexOf(gameProgress.currentLevel);
+                  final levelDisplayNumber = nextLevelIdx != -1 ? nextLevelIdx + 1 : 1;
 
                   if (allLevelsCompleted) {
                     return Column(
@@ -123,7 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     child: Text(
                       gameProgress.tutorialCompleted
-                          ? 'Play Level ${gameProgress.currentLevel}'
+                          ? 'Play Level $levelDisplayNumber'
                           : 'Start Tutorial',
                       style: const TextStyle(
                         fontSize: 18,

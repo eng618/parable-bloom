@@ -6,8 +6,8 @@ class ModuleData {
   final int id;
   final String name;
   final String themeSeed;
-  final List<int> levels;
-  final int challengeLevel;
+  final List<String> levels;
+  final String challengeLevel;
   final Map<String, dynamic> parable;
   final String unlockMessage;
 
@@ -21,30 +21,22 @@ class ModuleData {
     required this.unlockMessage,
   });
 
-  // Computed properties for backward compatibility and convenience
-  int get startLevel => levels.isNotEmpty
-      ? levels.reduce((curr, next) => curr < next ? curr : next)
-      : challengeLevel;
-  int get endLevel {
-    if (levels.isEmpty) return challengeLevel;
-    final maxLevel = levels.reduce((curr, next) => curr > next ? curr : next);
-    return challengeLevel > 0
-        ? (challengeLevel > maxLevel ? challengeLevel : maxLevel)
-        : maxLevel;
-  }
+  // Computed properties for manifest-driven sequence mapping
+  String get startLevel => levels.isNotEmpty ? levels.first : challengeLevel;
+  String get endLevel => challengeLevel.isNotEmpty ? challengeLevel : (levels.isNotEmpty ? levels.last : '');
 
-  int get levelCount => challengeLevel > 0 ? levels.length + 1 : levels.length;
-  List<int> get allLevels {
+  int get levelCount => challengeLevel.isNotEmpty ? levels.length + 1 : levels.length;
+  List<String> get allLevels {
     final result = [...levels];
-    if (challengeLevel > 0 && !result.contains(challengeLevel)) {
+    if (challengeLevel.isNotEmpty && !result.contains(challengeLevel)) {
       result.add(challengeLevel);
     }
-    return result..sort();
+    return result;
   }
 
-  bool containsLevel(int levelId) {
+  bool containsLevel(String levelId) {
     return levels.contains(levelId) ||
-        (challengeLevel > 0 && levelId == challengeLevel);
+        (challengeLevel.isNotEmpty && levelId == challengeLevel);
   }
 
   factory ModuleData.fromJson(Map<String, dynamic> json) {
@@ -52,10 +44,8 @@ class ModuleData {
       id: json['id'] as int,
       name: json['name'] as String,
       themeSeed: (json['theme_seed'] as String?) ?? 'forest',
-      levels:
-          (json['levels'] as List<dynamic>?)?.map((e) => e as int).toList() ??
-              [],
-      challengeLevel: (json['challenge_level'] as int?) ?? 0,
+      levels: (json['levels'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      challengeLevel: (json['challenge_level'] ?? '').toString(),
       parable: json['parable'] as Map<String, dynamic>,
       unlockMessage: (json['unlock_message'] as String?) ?? '',
     );
@@ -126,7 +116,7 @@ class VineData {
 }
 
 class LevelData {
-  final int id; // Global level ID (1, 2, 3...)
+  final String id; // Global level ID (represented as String)
   final String name;
   final String difficulty;
 
@@ -207,7 +197,7 @@ class LevelData {
     }
 
     return LevelData(
-      id: json['id'],
+      id: json['id'].toString(),
       name: json['name'],
       difficulty: json['difficulty'],
       gridWidth: gridWidth,

@@ -81,11 +81,11 @@ class FakeAnalytics extends AnalyticsService {
   Future<void> logParableViewed(String parableId) async {}
 
   @override
-  Future<void> logLevelStart(int levelId) async {}
+  Future<void> logLevelStart(dynamic levelId) async {}
 
   @override
   Future<void> logLevelComplete(
-    int levelId,
+    dynamic levelId,
     int taps,
     int wrongTaps, {
     int attempts = 1,
@@ -93,10 +93,10 @@ class FakeAnalytics extends AnalyticsService {
   }) async {}
 
   @override
-  Future<void> logWrongTap(int levelId, int remainingLives) async {}
+  Future<void> logWrongTap(dynamic levelId, int remainingLives) async {}
 
   @override
-  Future<void> logGameOver(int levelId) async {}
+  Future<void> logGameOver(dynamic levelId) async {}
 }
 
 class FakeBox implements Box<dynamic> {
@@ -125,7 +125,7 @@ void main() {
       expect(container.read(debugPlayModeProvider), isFalse);
 
       // Set a debug level
-      container.read(debugSelectedLevelProvider.notifier).setLevel(5);
+      container.read(debugSelectedLevelProvider.notifier).setLevel('lvl_seed_05');
 
       // Now debug play mode should be true
       expect(container.read(debugPlayModeProvider), isTrue);
@@ -156,12 +156,12 @@ void main() {
       expect(container.read(debugPlayModeProvider), isFalse);
 
       // Try a normal (non-debug) completion
-      container.read(gameProgressProvider.notifier).completeLevel(1);
+      container.read(gameProgressProvider.notifier).completeLevel('lvl_seed_01');
       expect(fakeRepo.saveCalled, isTrue);
 
       // Reset and test debug mode
       fakeRepo.saveCalled = false;
-      container.read(debugSelectedLevelProvider.notifier).setLevel(1);
+      container.read(debugSelectedLevelProvider.notifier).setLevel('lvl_seed_01');
 
       // Verify debug play mode is now active
       expect(container.read(debugPlayModeProvider), isTrue);

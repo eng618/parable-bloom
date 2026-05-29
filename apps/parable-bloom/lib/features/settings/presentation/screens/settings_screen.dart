@@ -14,6 +14,7 @@ import '../../../game/application/providers/module_providers.dart';
 import '../../../auth/presentation/screens/auth_screen.dart';
 import '../../../game/domain/entities/cloud_sync_state.dart';
 import '../../../game/domain/entities/game_progress.dart';
+import '../../../game/domain/entities/level_data.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../home/presentation/screens/home_screen.dart';
@@ -866,7 +867,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildDebugLevelPickerTile(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(debugSelectedLevelProvider);
     final subtitle =
-        selected == null ? 'No level selected' : 'Selected: Level $selected';
+        selected == null ? 'No level selected' : 'Selected: $selected';
 
     return ListTile(
       leading: Icon(
@@ -902,15 +903,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showDebugLevelPickerDialog(
-      BuildContext context, WidgetRef ref, List<dynamic> modules) {
+      BuildContext context, WidgetRef ref, List<ModuleData> modules) {
     final safeContext = context;
 
     // Fetch modules and build level list
-    final levels = <int>[];
+    final levels = <String>[];
     for (final m in modules) {
-      for (int i = m.startLevel; i <= m.endLevel; i++) {
-        levels.add(i);
-      }
+      levels.addAll(m.allLevels);
     }
 
     if (levels.isEmpty) {
@@ -920,13 +919,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       return;
     }
 
-    int? selected = ref.read(debugSelectedLevelProvider);
+    String? selected = ref.read(debugSelectedLevelProvider);
 
     showDialog(
       context: safeContext,
       builder: (dialogContext) {
-        return FutureBuilder<Map<int, String>>(
-          future: _loadLabels(levels),
+        return FutureBuilder<Map<String, String>>(
+          future: _loadLabels(levels, ref),
           builder: (ctx, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return AlertDialog(
@@ -947,13 +946,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    DropdownButtonFormField<int>(
+                    DropdownButtonFormField<String>(
                       isDense: true,
                       initialValue: selected,
                       items: levels
-                          .map((lvl) => DropdownMenuItem<int>(
+                          .map((lvl) => DropdownMenuItem<String>(
                                 value: lvl,
-                                child: Text(labels[lvl] ?? 'Level $lvl'),
+                                child: Text(labels[lvl] ?? lvl),
                               ))
                           .toList(),
                       onChanged: (value) {
@@ -1006,17 +1005,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<Map<int, String>> _loadLabels(List<int> levels) async {
-    final labels = <int, String>{};
+  Future<Map<String, String>> _loadLabels(List<String> levels, WidgetRef ref) async {
+    final labels = <String, String>{};
+    final mappings = await ref.read(levelMappingsProvider.future);
     for (final lvl in levels) {
       try {
-        final jsonStr =
-            await rootBundle.loadString('assets/levels/level_$lvl.json');
+        final file = mappings[lvl];
+        if (file == null) {
+          labels[lvl] = lvl;
+          continue;
+        }
+        final jsonStr = await rootBundle.loadString('assets/$file');
         final jsonMap = jsonDecode(jsonStr) as Map<String, dynamic>;
         final difficulty = (jsonMap['difficulty'] ?? 'Unknown').toString();
-        labels[lvl] = 'Level $lvl — $difficulty';
+        final index = levels.indexOf(lvl) + 1;
+        labels[lvl] = 'Level $index ($lvl) — $difficulty';
       } catch (_) {
-        labels[lvl] = 'Level $lvl';
+        labels[lvl] = lvl;
       }
     }
     return labels;

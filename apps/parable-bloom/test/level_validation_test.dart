@@ -125,7 +125,7 @@ LevelData _lessonToLevel(LessonData lesson) {
       .toList();
 
   return LevelData(
-    id: lesson.id,
+    id: lesson.id.toString(),
     name: 'Lesson ${lesson.id}',
     difficulty: 'tutorial',
     gridWidth: lesson.gridWidth,
