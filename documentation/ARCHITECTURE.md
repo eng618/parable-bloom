@@ -131,6 +131,16 @@ abstract class ProgressRepository {
 **Auto-Sync Behavior**:
 When a user explicitly creates an account, links an anonymous account to an email/password, or signs into an existing account, **Cloud Sync** is automatically enabled for their local device. This ensures their progres is synchronized seamlessly without requiring manual opt-in from the settings menu.
 
+**Reactive Cloud Sync Providers**:
+To prevent stale caching and out-of-sync UI states when users log in or out, we expose several reactive Riverpod providers:
+
+- `cloudSyncAvailabilityProvider`: Reactively watches `authUserProvider` to dynamically evaluate and output the current user's sync availability status (`available`, `signedOut`, or `anonymousAccount`).
+- `cloudSyncAvailableProvider`: Reactively watches the availability future to determine if sync is possible.
+- `cloudSyncEnabledProvider`: Reactively watches availability and reads the Hive box to report if sync is currently enabled on the device.
+- `lastSyncTimeProvider`: Reactively watches availability and reads the Hive box to report the last sync date.
+
+These providers dynamically re-evaluate the moment a user transitions from signed out to signed in (or vice versa), ensuring the UI automatically updates without manual screen refreshes or invalidation boilerplate.
+
 ### 4.3 Telemetry & Analytics (Firebase + Plausible)
 
 The application implements a multi-channel, privacy-focused telemetry strategy designed to respect player privacy while offering critical insight into game stability and levels completion rates.

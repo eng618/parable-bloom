@@ -16,27 +16,52 @@ final gameProgressProvider =
   GameProgressNotifier.new,
 );
 
+final cloudSyncAvailabilityProvider =
+    FutureProvider<CloudSyncAvailability>((ref) async {
+  final userAsync = ref.watch(authUserProvider);
+  return userAsync.when(
+    data: (user) {
+      if (user == null) {
+        return const CloudSyncAvailability(
+          isAvailable: false,
+          reason: CloudSyncAvailabilityReason.signedOut,
+        );
+      }
+      if (user.isAnonymous) {
+        return const CloudSyncAvailability(
+          isAvailable: false,
+          reason: CloudSyncAvailabilityReason.anonymousAccount,
+        );
+      }
+      return const CloudSyncAvailability(
+        isAvailable: true,
+        reason: CloudSyncAvailabilityReason.available,
+      );
+    },
+    loading: () => const CloudSyncAvailability(
+      isAvailable: false,
+      reason: CloudSyncAvailabilityReason.signedOut,
+    ),
+    error: (_, __) => const CloudSyncAvailability(
+      isAvailable: false,
+      reason: CloudSyncAvailabilityReason.signedOut,
+    ),
+  );
+});
+
+final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
+  final availability = await ref.watch(cloudSyncAvailabilityProvider.future);
+  return availability.isAvailable;
+});
+
 final cloudSyncEnabledProvider = FutureProvider<bool>((ref) async {
-  ref.watch(authUserProvider);
+  ref.watch(cloudSyncAvailabilityProvider);
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.isCloudSyncEnabled();
 });
 
-final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
-  ref.watch(authUserProvider);
-  final notifier = ref.watch(gameProgressProvider.notifier);
-  return notifier.isCloudSyncAvailable();
-});
-
-final cloudSyncAvailabilityProvider =
-    FutureProvider<CloudSyncAvailability>((ref) async {
-  ref.watch(authUserProvider);
-  final notifier = ref.watch(gameProgressProvider.notifier);
-  return notifier.getCloudSyncAvailability();
-});
-
 final lastSyncTimeProvider = FutureProvider<DateTime?>((ref) async {
-  ref.watch(authUserProvider);
+  ref.watch(cloudSyncAvailabilityProvider);
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.getLastSyncTime();
 });
