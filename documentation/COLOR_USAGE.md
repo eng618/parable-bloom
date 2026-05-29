@@ -118,7 +118,7 @@ final attempted = extension.vineAttempted; // Automatically theme-aware
 ### Premium/Stylized Themes Color Behavior
 
 For premium themes (Classic, Cherry Blossom, Ethereal) that map custom watercolor or bioluminescent textures onto vector paths:
-- **Default/Active State**: To present extremely vibrant, bright, and lush visuals, the active state modulates with the bright/white attempted color (`parent.parent.vineAttemptedColor`, which defaults to pure white `0xFFFFFFFF`), rendering the rich watercolor texture in its full original brightness.
+- **Default/Active State**: To present extremely vibrant, bright, and lush visuals, the active state modulates with pure white (`0xFFFFFFFF`), rendering the rich watercolor texture in its full original brightness in both light and dark modes (avoiding theme-aware color conversions that would otherwise darken the texture).
 - **Dead/Attempted (Blocked) State**: The dead/attempted state modulates with the colored `calmColor` (e.g. moss green, sunset orange, etc.), which naturally acts as a deeper color filter, dimming and fading the texture beautifully without modifying the hue values.
 - **Simple Theme Contrast**: Simple vector arrows maintain their standard theme-aware contrast compatibility (using standard high-contrast white in dark mode or black in light mode as calculated by `computeRenderColor`).
 

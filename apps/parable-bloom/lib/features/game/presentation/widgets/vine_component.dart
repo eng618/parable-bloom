@@ -120,10 +120,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final useSimpleVines = vineStyle == VineStyle.simple;
 
     // Swap live and blocked appearance for premium/stylized vines:
-    // Live state modulates with the bright/white attempted color, and blocked state modulates with calmColor.
+    // Live state modulates with pure white (fully bright and vibrant in both light/dark modes), 
+    // and blocked state modulates with calmColor.
     Color drawColor = baseColor;
     if (!useSimpleVines) {
-      drawColor = isAttempted ? calmColor : parent.parent.vineAttemptedColor;
+      drawColor = isAttempted ? calmColor : const Color(0xFFFFFFFF);
     }
 
     // Build lists of segment centers
@@ -832,7 +833,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final vineStyle = parent.parent.ref.read(vineStyleProvider);
     final useSimpleVines = vineStyle == VineStyle.simple;
     if (!useSimpleVines) {
-      renderColor = isAttempted ? calmColor : (parent.parent).vineAttemptedColor;
+      renderColor = isAttempted ? calmColor : const Color(0xFFFFFFFF);
     }
 
     // Create expanding sparkle rings
