@@ -52,6 +52,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         tag: 'GameScreen', metadata: {'game_is_null': _game == null});
     _isLevelCompleteOverlayVisible = false;
     _currentCongratulationMessage = '';
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(analyticsServiceProvider).logScreenView('Gameplay');
+    });
   }
 
   @override
@@ -485,6 +489,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Future<void> _showParableUnlockedDialog(ModuleData module) async {
     if (!mounted) return;
+
+    ref.read(analyticsServiceProvider).logParableViewed(module.id.toString());
 
     final parable = module.parable;
     final title = (parable['title'] as String?)?.trim();

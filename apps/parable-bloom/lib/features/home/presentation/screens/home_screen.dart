@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../game/application/providers/module_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
+import '../../../../providers/service_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -12,6 +13,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(analyticsServiceProvider).logScreenView('Home');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final gameProgress = ref.watch(gameProgressProvider);

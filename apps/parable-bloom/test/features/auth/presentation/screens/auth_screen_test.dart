@@ -45,7 +45,16 @@ class TestGameProgressNotifier extends GameProgressNotifier {
 
 class FakeAnalyticsService extends AnalyticsService {
   @override
-  Future<void> init() async {}
+  Future<void> init({bool enabled = true}) async {}
+
+  @override
+  Future<void> setCollectionEnabled(bool enabled) async {}
+
+  @override
+  Future<void> logScreenView(String screenName) async {}
+
+  @override
+  Future<void> logParableViewed(String parableId) async {}
 
   @override
   Future<void> logLevelStart(int levelId) async {}

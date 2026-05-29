@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/background_audio_controller.dart';
 import 'infrastructure_providers.dart';
+import 'service_providers.dart';
 
 enum AppThemeMode { light, dark, system }
 
@@ -200,5 +201,27 @@ class DebugVineAnimationLoggingNotifier extends Notifier<bool> {
     state = enabled;
     final box = ref.read(hiveBoxProvider);
     await box.put('debugVineAnimationLogging', enabled);
+  }
+}
+
+final analyticsEnabledProvider = NotifierProvider<AnalyticsEnabledNotifier, bool>(
+  AnalyticsEnabledNotifier.new,
+);
+
+class AnalyticsEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final box = ref.watch(hiveBoxProvider);
+    final isIgnored = box.get('plausible_ignore', defaultValue: false) as bool;
+    return !isIgnored;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final box = ref.read(hiveBoxProvider);
+    await box.put('plausible_ignore', !enabled);
+
+    final analyticsService = ref.read(analyticsServiceProvider);
+    await analyticsService.setCollectionEnabled(enabled);
   }
 }

@@ -31,12 +31,12 @@ class AnalyticsService {
   }
 
   // Enable debug view locally if needed
-  Future<void> init() async {
+  Future<void> init({bool enabled = true}) async {
     final firebase = _firebase;
     if (firebase == null) {
       return;
     }
-    await firebase.setAnalyticsCollectionEnabled(true);
+    await firebase.setAnalyticsCollectionEnabled(enabled);
     // Optional: Debug mode for local testing
     // await _analytics.setCurrentScreen(screenName: 'Home');
   }
@@ -235,5 +235,40 @@ class AnalyticsService {
     );
   }
 
-  // Add more as needed: hint_used, mercy_purchase, parable_viewed
+  Future<void> setCollectionEnabled(bool enabled) async {
+    final firebase = _firebase;
+    if (firebase == null) {
+      return;
+    }
+    await firebase.setAnalyticsCollectionEnabled(enabled);
+  }
+
+  Future<void> logScreenView(String screenName) async {
+    final firebase = _firebase;
+    if (firebase != null) {
+      await firebase.logScreenView(
+        screenName: screenName,
+      );
+    }
+    await _trackPlausible(
+      eventName: 'screen_view',
+      properties: {
+        'screen_name': screenName,
+      },
+    );
+  }
+
+  Future<void> logParableViewed(String parableId) async {
+    final firebase = _firebase;
+    if (firebase != null) {
+      await firebase.logEvent(
+        name: 'parable_viewed',
+        parameters: {'parable_id': parableId},
+      );
+    }
+    await _trackPlausible(
+      eventName: 'parable_viewed',
+      properties: {'parable_id': parableId},
+    );
+  }
 }

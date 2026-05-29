@@ -27,6 +27,14 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(analyticsServiceProvider).logScreenView('Settings');
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final backgroundAudioEnabled = ref.watch(backgroundAudioEnabledProvider);
@@ -158,6 +166,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           _buildSectionHeader(context, 'Data & Sync'),
           _buildCloudSyncTile(context, ref),
+          _buildTelemetryTile(context, ref),
           _buildRedoTutorialTile(context, ref),
           const Divider(),
           _buildSectionHeader(context, 'About'),
@@ -493,6 +502,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           error: (error, stack) => const SizedBox.shrink(),
         ),
       ],
+    );
+  }
+
+  Widget _buildTelemetryTile(BuildContext context, WidgetRef ref) {
+    final telemetryEnabled = ref.watch(analyticsEnabledProvider);
+
+    return SwitchListTile(
+      secondary: Icon(
+        telemetryEnabled ? Icons.analytics : Icons.analytics_outlined,
+        color: telemetryEnabled
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+      ),
+      title: const Text('Anonymized Telemetry'),
+      subtitle: const Text('Help us improve gameplay by sharing anonymous usage statistics'),
+      value: telemetryEnabled,
+      onChanged: (value) async {
+        await ref.read(analyticsEnabledProvider.notifier).setEnabled(value);
+      },
     );
   }
 

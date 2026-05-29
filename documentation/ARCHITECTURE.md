@@ -131,6 +131,40 @@ abstract class ProgressRepository {
 **Auto-Sync Behavior**:
 When a user explicitly creates an account, links an anonymous account to an email/password, or signs into an existing account, **Cloud Sync** is automatically enabled for their local device. This ensures their progres is synchronized seamlessly without requiring manual opt-in from the settings menu.
 
+### 4.3 Telemetry & Analytics (Firebase + Plausible)
+
+The application implements a multi-channel, privacy-focused telemetry strategy designed to respect player privacy while offering critical insight into game stability and levels completion rates.
+
+#### Unified Service Layer
+
+All telemetry events are dispatched through `AnalyticsService`, which coordinates data collection across:
+
+- **Firebase Analytics**: Standard client-side SDK. Used for general usage statistics, game lifecycle, and crash correlation.
+- **Plausible Analytics (Self-Hosted)**: Lightweight, cookie-less, GDPR-compliant event engine. Events are submitted via direct API calls (`PlausibleAnalyticsClient`) using a privacy-focused endpoint.
+
+#### Privacy Control & Opt-out Toggle
+
+Players have complete control over their data sharing via the **Anonymized Telemetry** toggle in the Settings screen:
+
+- **State Persistence**: The opt-out status is stored locally in the Hive settings box under `'plausible_ignore'`.
+- **Dynamic Firebase Disable**: Toggling telemetry off calls `firebase.setAnalyticsCollectionEnabled(false)`, instructing the Firebase SDK to immediately cease all analytics collection and network dispatch.
+- **Plausible Filtering**: Plausible event submissions are skipped locally on device when the opt-out is active.
+
+#### Core Tracked Events
+
+1. **Gameplay Flow**:
+   - `level_start`: Fired when a level is loaded.
+   - `level_complete`: Tracked on level completion with metrics: `taps_total`, `wrong_taps`, `perfect`, `attempts`, `elapsed_seconds`.
+   - `level_restart`: Logged when retrying a level with the current attempt count.
+   - `wrong_tap`: Tracks when a wrong tile is tapped, with remaining lives.
+   - `game_over`: Logged when the player runs out of grace/lives.
+2. **Screen Views**:
+   - `screen_view`: Captured on screen load for `'Home'`, `'Settings'`, `'Journal'`, `'Gameplay'`, and `'Authentication'`.
+3. **Parable Reads**:
+   - `parable_viewed`: Logged when a player unlocks a module/parable or reads it.
+4. **Cloud Sync & Conflicts**:
+   - `sync_conflict_detected`, `sync_conflict_resolved`, and `cloud_sync_unavailable`.
+
 ---
 
 ---

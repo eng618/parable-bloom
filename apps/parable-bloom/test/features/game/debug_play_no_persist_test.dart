@@ -69,7 +69,16 @@ class FakeRepo implements GameProgressRepository {
 // Minimal fake analytics to avoid needing Firebase in tests
 class FakeAnalytics extends AnalyticsService {
   @override
-  Future<void> init() async {}
+  Future<void> init({bool enabled = true}) async {}
+
+  @override
+  Future<void> setCollectionEnabled(bool enabled) async {}
+
+  @override
+  Future<void> logScreenView(String screenName) async {}
+
+  @override
+  Future<void> logParableViewed(String parableId) async {}
 
   @override
   Future<void> logLevelStart(int levelId) async {}

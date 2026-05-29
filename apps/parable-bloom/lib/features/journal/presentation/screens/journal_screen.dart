@@ -3,12 +3,26 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../../game/application/providers/module_providers.dart";
 import "../../../game/application/providers/progress_providers.dart";
+import "../../../../providers/service_providers.dart";
 
-class JournalScreen extends ConsumerWidget {
+class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<JournalScreen> createState() => _JournalScreenState();
+}
+
+class _JournalScreenState extends ConsumerState<JournalScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(analyticsServiceProvider).logScreenView('Journal');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final modulesAsync = ref.watch(modulesProvider);
     final progress = ref.watch(gameProgressProvider);
 

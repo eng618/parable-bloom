@@ -81,12 +81,13 @@ void main() async {
   if (_isScreenshotMode) {
     analyticsService = AnalyticsService();
   } else {
+    final isOptedOut = hiveBox.get('plausible_ignore', defaultValue: false) as bool;
     final plausibleClient = PlausibleAnalyticsClient.fromEnvironment(
       isOptedOut: () =>
           hiveBox.get('plausible_ignore', defaultValue: false) as bool,
     );
     analyticsService = AnalyticsService(plausibleClient: plausibleClient);
-    await analyticsService.init();
+    await analyticsService.init(enabled: !isOptedOut);
   }
 
   runApp(
