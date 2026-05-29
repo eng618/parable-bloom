@@ -27,6 +27,12 @@ abstract class SettingsRepository {
   /// Enable/disable simple/trellis vines.
   Future<void> setUseSimpleVines(bool enabled);
 
+  /// Get the current vine style.
+  Future<String> getVineStyle();
+
+  /// Set the vine style.
+  Future<void> setVineStyle(String style);
+
   /// Get the user's preferred board zoom scale (Default 1.0).
   Future<double> getBoardZoomScale();
 

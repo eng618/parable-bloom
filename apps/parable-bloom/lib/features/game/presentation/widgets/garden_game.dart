@@ -27,6 +27,8 @@ class GardenGame extends FlameGame with TapCallbacks {
   late GridComponent grid;
   late ProjectionLinesComponent projectionLines;
   final WidgetRef ref;
+  bool _isGridInitialized = false;
+  bool get isGridInitialized => _isGridInitialized;
   LevelData? _currentLevelData;
   LessonData? _currentLessonData;
   SpriteComponent? _gameBackground;
@@ -137,8 +139,17 @@ class GardenGame extends FlameGame with TapCallbacks {
     images.prefix = 'assets/art/';
     await super.onLoad();
 
-    // Reset grace for new level
-    ref.read(gameInstanceProvider.notifier).resetGrace();
+    // Reset grace for new level and set game instance asynchronously to avoid modifying providers during build phases
+    Future.microtask(() {
+      try {
+        if (ref.read(gameInstanceProvider) != this) {
+          ref.read(gameInstanceProvider.notifier).resetGrace();
+          ref.read(gameInstanceProvider.notifier).setGame(this);
+        }
+      } catch (_) {
+        // Safe to ignore if ref is already disposed/unmounted
+      }
+    });
 
     // Load current level first
     await _loadCurrentLevel();
@@ -173,16 +184,19 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     // Listen to vine state changes (blocking/clearing updates)
     ref.listenManual(vineStatesProvider, (previous, next) {
-      if (_currentLevelData != null) {
+      if (_currentLevelData != null && _isGridInitialized) {
         grid.setLevelData(_currentLevelData!, next);
         // Force projection lines to redraw when vine states change
-        projectionLines.update(0);
+        if (projectionLines.isMounted) {
+          projectionLines.update(0);
+        }
       }
     });
 
-    // Listen to simple vines toggle changes to update background opacity dynamically
-    ref.listenManual(useSimpleVinesProvider, (previous, next) {
-      _updateBackgroundOpacity(next);
+    // Listen to vine style changes to update background opacity and redraw vines dynamically
+    ref.listenManual(vineStyleProvider, (previous, next) {
+      _updateBackgroundOpacity(next == VineStyle.simple);
+      reloadLevel();
     });
 
     // Listen to projection lines visibility and animation state
@@ -230,7 +244,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   void _applyCameraTransform(CameraState cameraState) {
     // Apply zoom and pan to grid
-    if (grid.isMounted) {
+    if (_isGridInitialized && grid.isMounted) {
       grid.applyCameraTransform(
         zoom: cameraState.zoom,
         panOffset: Vector2(cameraState.panOffset.x, cameraState.panOffset.y),
@@ -240,7 +254,7 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
 
     // Apply to projection lines
-    if (projectionLines.isMounted) {
+    if (_isGridInitialized && projectionLines.isMounted) {
       projectionLines.applyCameraTransform(
         zoom: cameraState.zoom,
         panOffset: Vector2(cameraState.panOffset.x, cameraState.panOffset.y),
@@ -261,7 +275,9 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
 
     // Hide projection lines when any vine is animating
-    projectionLines.setVisible(shouldShow && !isAnimating);
+    if (_isGridInitialized && projectionLines.isMounted) {
+      projectionLines.setVisible(shouldShow && !isAnimating);
+    }
   }
 
   void _createLevelComponents() {
@@ -315,6 +331,7 @@ class GardenGame extends FlameGame with TapCallbacks {
     if (_currentLevelData != null) {
       projectionLines.setLevelData(_currentLevelData!);
     }
+    _isGridInitialized = true;
   }
 
   Future<void> _loadCurrentLevel() async {
@@ -481,9 +498,36 @@ class GardenGame extends FlameGame with TapCallbacks {
   @override
   Color backgroundColor() => _backgroundColor;
 
+  /// Converts a grid coordinate (x, y) to global screenspace position.
+  /// y=0 is at the bottom of the grid.
+  Offset getCellScreenPosition(int x, int y) {
+    if (_currentLevelData == null || !_isGridInitialized || !grid.isMounted) return Offset.zero;
+    final rows = _currentLevelData!.gridHeight;
+    final visualRow = rows - 1 - y;
+    final localX = GameBoardLayout.cellCenterX(x);
+    final localY = GameBoardLayout.cellCenterY(visualRow);
+    
+    final zoom = grid.scale.x;
+    final gridPos = grid.position;
+    
+    return Offset(
+      gridPos.x + (localX * zoom),
+      gridPos.y + (localY * zoom),
+    );
+  }
+
   @override
   void onRemove() {
     // No need to dispose ref or container
+    Future.microtask(() {
+      try {
+        if (ref.read(gameInstanceProvider) == this) {
+          ref.read(gameInstanceProvider.notifier).setGame(null);
+        }
+      } catch (_) {
+        // Safe to ignore if ref is already disposed/unmounted
+      }
+    });
     super.onRemove();
   }
 
@@ -521,8 +565,9 @@ class GardenGame extends FlameGame with TapCallbacks {
   Future<void> reloadLevel() async {
     // Check if grid is initialized and mounted before removing
     try {
-      if (grid.isMounted) remove(grid);
-      if (projectionLines.isMounted) remove(projectionLines);
+      if (_isGridInitialized && grid.isMounted) remove(grid);
+      if (_isGridInitialized && projectionLines.isMounted) remove(projectionLines);
+      _isGridInitialized = false;
     } catch (e) {
       // Ignore if grid/projectionLines weren't initialized
     }

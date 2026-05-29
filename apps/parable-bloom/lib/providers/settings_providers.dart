@@ -71,6 +71,45 @@ class BackgroundAudioEnabledNotifier extends Notifier<bool> {
   }
 }
 
+enum VineStyle {
+  classic,
+  blossom,
+  ethereal,
+  simple,
+}
+
+final vineStyleProvider = NotifierProvider<VineStyleNotifier, VineStyle>(
+  VineStyleNotifier.new,
+);
+
+class VineStyleNotifier extends Notifier<VineStyle> {
+  @override
+  VineStyle build() {
+    final box = ref.watch(hiveBoxProvider);
+    
+    // Support migration from old boolean 'useSimpleVines'
+    final oldUseSimpleVines = box.get('useSimpleVines');
+    if (oldUseSimpleVines != null) {
+      final style = (oldUseSimpleVines as bool) ? VineStyle.simple : VineStyle.classic;
+      box.put('vineStyle', style.name);
+      box.delete('useSimpleVines');
+      return style;
+    }
+
+    final value = box.get('vineStyle', defaultValue: 'classic') as String;
+    return VineStyle.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => VineStyle.classic,
+    );
+  }
+
+  Future<void> setStyle(VineStyle style) async {
+    state = style;
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setVineStyle(style.name);
+  }
+}
+
 final useSimpleVinesProvider = NotifierProvider<UseSimpleVinesNotifier, bool>(
   UseSimpleVinesNotifier.new,
 );
@@ -78,14 +117,13 @@ final useSimpleVinesProvider = NotifierProvider<UseSimpleVinesNotifier, bool>(
 class UseSimpleVinesNotifier extends Notifier<bool> {
   @override
   bool build() {
-    final box = ref.watch(hiveBoxProvider);
-    return box.get('useSimpleVines', defaultValue: false) as bool;
+    final style = ref.watch(vineStyleProvider);
+    return style == VineStyle.simple;
   }
 
   Future<void> setEnabled(bool enabled) async {
-    state = enabled;
-    final repository = ref.read(settingsRepositoryProvider);
-    await repository.setUseSimpleVines(enabled);
+    final style = enabled ? VineStyle.simple : VineStyle.classic;
+    await ref.read(vineStyleProvider.notifier).setStyle(style);
   }
 }
 
