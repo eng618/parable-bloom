@@ -1,4 +1,4 @@
-## 1.5.0 (2026-05-29)
+## 0.2.0 (2026-05-29)
 
 ### 🚀 Features
 
@@ -7,6 +7,7 @@
 - revamp the vine aesthetics ([9386d16](https://github.com/eng618/parable-bloom/commit/9386d16))
 - implement interactive tutorial guide overlay with coordinate-based highlights and collision feedback ([3046c16](https://github.com/eng618/parable-bloom/commit/3046c16))
 - add automated iOS screenshot capture and upload via Fastlane Snapshot ([917387e](https://github.com/eng618/parable-bloom/commit/917387e))
+- Integrate Plausible Analytics client and update AnalyticsService for dual tracking ([34f928e](https://github.com/eng618/parable-bloom/commit/34f928e))
 - add module providers and integrate into game and home screens ([167fef0](https://github.com/eng618/parable-bloom/commit/167fef0))
 - implement ParableBloomApp and HomeScreen, restructure app folder organization ([3c1eea2](https://github.com/eng618/parable-bloom/commit/3c1eea2))
 - refactor game progress storage keys and improve animation timing constants ([5eca57a](https://github.com/eng618/parable-bloom/commit/5eca57a))
@@ -14,54 +15,18 @@
 - add FlutterFire CLI installation and authentication checks to Firebase tasks ([fc968f4](https://github.com/eng618/parable-bloom/commit/fc968f4))
 - **parable-bloom-site:** modernize site with Tailwind CSS v4, full GV Tech UI adoption, and Support FAB ([#44](https://github.com/eng618/parable-bloom/pull/44))
 - add validation script and update configurations for improved development workflow ([04fc77f](https://github.com/eng618/parable-bloom/commit/04fc77f))
+- replace PlausibleAnalytics with PlausibleProvider for improved event tracking ([6947ba4](https://github.com/eng618/parable-bloom/commit/6947ba4))
+- integrate Plausible Analytics for event tracking ([bdf99ec](https://github.com/eng618/parable-bloom/commit/bdf99ec))
+- update TypeScript configuration and paths for build output ([cca1abf](https://github.com/eng618/parable-bloom/commit/cca1abf))
+- enhance site content and structure with updated metadata, improved accessibility, and refined UI components ([dc08cbe](https://github.com/eng618/parable-bloom/commit/dc08cbe))
 - add initial components and configuration for Parable Bloom site ([f4e551b](https://github.com/eng618/parable-bloom/commit/f4e551b))
 - **logging:** Introduce LoggerService for centralized logging and error reporting ([1c4e5eb](https://github.com/eng618/parable-bloom/commit/1c4e5eb))
-
-### 🩹 Fixes
-
-- update dependencies for github.com/fatih/color and golang.org/x/sys/term ([2b92d64](https://github.com/eng618/parable-bloom/commit/2b92d64))
-- add missing directory ([1028fbf](https://github.com/eng618/parable-bloom/commit/1028fbf))
-- revert bun version to 1.3.9 ([68e5e72](https://github.com/eng618/parable-bloom/commit/68e5e72))
-
-### ❤️ Thank You
-
-- Copilot @Copilot
-- eng618 @eng618
-- Eric N. Garcia @eng618
-
-## 1.4.2 (2026-02-26)
-
-### 🚀 Features
-
 - Implement user account deletion, integrate Firebase Crashlytics. ([3e6d0e9](https://github.com/eng618/parable-bloom/commit/3e6d0e9))
-
-### ❤️ Thank You
-
-- Eric N. Garcia @eng618
-
-## 1.4.1 (2026-02-26)
-
-This was a version bump only for level-builder to align it with other projects, there were no code changes.
-
-## 1.4.0 (2026-02-25)
-
-### 🚀 Features
-
 - Introduce new withered vine assets with a rotting wood effect, update the classic spritesheet, and adjust the `tapEffectLight` theme color. ([f3cb392](https://github.com/eng618/parable-bloom/commit/f3cb392))
 - Dynamically fetch and increment Android build number from Google Play's internal track. ([9c437ef](https://github.com/eng618/parable-bloom/commit/9c437ef))
-
-### ❤️ Thank You
-
-- Eric N. Garcia @eng618
-
-## 1.3.2 (2026-02-25)
-
-### 🚀 Features
-
 - Initialize Flutter workspace and integrate dependency management into the release workflow. ([78e4e03](https://github.com/eng618/parable-bloom/commit/78e4e03))
 - Integrate Nx Release for automated versioning, updating release process documentation and `nx.json` configuration. ([cf98382](https://github.com/eng618/parable-bloom/commit/cf98382))
 - Introduce 'build' version specifier in the release workflow, enhancing the version script to always increment build numbers and improve version string parsing. ([bebfd99](https://github.com/eng618/parable-bloom/commit/bebfd99))
-- Add large vine head assets and update spritesheet generation to include separation and correct joint alignment for heads and tails. ([6321d05](https://github.com/eng618/parable-bloom/commit/6321d05))
 - Add user-configurable board zoom setting with persistence and camera integration. ([ce4767f](https://github.com/eng618/parable-bloom/commit/ce4767f))
 - Conditionally skip Firebase deployment steps if the `FIREBASE_SERVICE_ACCOUNT_KEY` secret is missing. ([2d96517](https://github.com/eng618/parable-bloom/commit/2d96517))
 - Automatically enable cloud sync on user authentication, improve AuthScreen error handling, and add comprehensive auth tests and documentation. ([34507c1](https://github.com/eng618/parable-bloom/commit/34507c1))
@@ -79,8 +44,6 @@ This was a version bump only for level-builder to align it with other projects, 
 - Update Flutter SDK to 3.41.1, enhance Firebase repository testing mocks, add `syncFromCloud` stubs to fake repositories, and introduce a documentation agent rule. ([f722dae](https://github.com/eng618/parable-bloom/commit/f722dae))
 - add documentation agent rule; refactor level builder tests by consolidating regression tests and simplifying task execution. ([9cf6544](https://github.com/eng618/parable-bloom/commit/9cf6544))
 - Add self-blocking vine validation, enhance test tasks with coverage and gotestsum, and update documentation formatting and difficulty values. ([8d3395c](https://github.com/eng618/parable-bloom/commit/8d3395c))
-- Revise multiple game levels and enhance the level-builder tool with a new UI spinner and batch processing improvements. ([dff55aa](https://github.com/eng618/parable-bloom/commit/dff55aa))
-- Implement level generation metrics, refactor generator components, and update level definitions. ([8c566bb](https://github.com/eng618/parable-bloom/commit/8c566bb))
 - **gen2:** updates ([b636f5f](https://github.com/eng618/parable-bloom/commit/b636f5f))
 - Implement Firebase authentication with sign-in/up, anonymous access, and integrate cloud game progress synchronization on user login. ([f526856](https://github.com/eng618/parable-bloom/commit/f526856))
 - Add `DEPLOY_SKIPPED` and `APP_ENV` environment variables and update `if` expression syntax in the web deploy workflow. ([ac62fcb](https://github.com/eng618/parable-bloom/commit/ac62fcb))
@@ -93,16 +56,9 @@ This was a version bump only for level-builder to align it with other projects, 
 - Introduce GitHub Actions workflows for game and level builder releases, adjust Hugo's publish directory, and update gitignore. ([3ded465](https://github.com/eng618/parable-bloom/commit/3ded465))
 - **level-generator:** create gen2 for better coverage, and efficient generation ([#24](https://github.com/eng618/parable-bloom/pull/24))
 - Implement batch level generation and logging enhancements ([8616c80](https://github.com/eng618/parable-bloom/commit/8616c80))
-- **gen2:** Implement CenterOutPlacer for LIFO vine placement strategy ([a334cf2](https://github.com/eng618/parable-bloom/commit/a334cf2))
 - Implement direction-based growth strategy for vine placement ([3e3a6a0](https://github.com/eng618/parable-bloom/commit/3e3a6a0))
 - Introduce generator presets and difficulty configurations ([66b8c3f](https://github.com/eng618/parable-bloom/commit/66b8c3f))
-- **generator:** Enhance vine generation with improved exit direction logic ([44b7094](https://github.com/eng618/parable-bloom/commit/44b7094))
 - **level-builder:** Add benchmarks for structural validation and solvability checks ([d89d652](https://github.com/eng618/parable-bloom/commit/d89d652))
-- **level-builder:** Comprehensive structural validation (Step 5) ([fc563a1](https://github.com/eng618/parable-bloom/commit/fc563a1))
-- **level-builder:** Port render and repair commands (Step 4) ([1594049](https://github.com/eng618/parable-bloom/commit/1594049))
-- **level-builder:** Complete Step 3 Part 2 - Advanced generation system ([597afb5](https://github.com/eng618/parable-bloom/commit/597afb5))
-- **level-builder:** Add advanced generation algorithms (Step 3 Part 1) ([a626e59](https://github.com/eng618/parable-bloom/commit/a626e59))
-- **level-builder:** Port common infrastructure from eng CLI ([7202e34](https://github.com/eng618/parable-bloom/commit/7202e34))
 - **level-builder:** add validation stats upload to workflows and update .gitignore ([7c6d643](https://github.com/eng618/parable-bloom/commit/7c6d643))
 - **tutorial:** Implement lesson providers and progress tracking ([78ac82f](https://github.com/eng618/parable-bloom/commit/78ac82f))
 - **hugo:** integrate Hugo site with configuration, content, and deployment setup ([36b4128](https://github.com/eng618/parable-bloom/commit/36b4128))
@@ -125,16 +81,17 @@ This was a version bump only for level-builder to align it with other projects, 
 - add iOS and macOS build configurations with CocoaPods ([a7441a7](https://github.com/eng618/parable-bloom/commit/a7441a7))
 - add confetti celebration for level completion ([7eda4a3](https://github.com/eng618/parable-bloom/commit/7eda4a3))
 - Add initial game assets, levels, extensive design documentation, and update core game logic and dependencies. ([3c45e49](https://github.com/eng618/parable-bloom/commit/3c45e49))
-- add Codacy CLI v2 installation script ([f48ad96](https://github.com/eng618/parable-bloom/commit/f48ad96))
 - initialize Flutter game project with build tasks and components ([4bc8b1b](https://github.com/eng618/parable-bloom/commit/4bc8b1b))
 
 ### 🩹 Fixes
 
+- add missing directory ([1028fbf](https://github.com/eng618/parable-bloom/commit/1028fbf))
+- revert bun version to 1.3.9 ([68e5e72](https://github.com/eng618/parable-bloom/commit/68e5e72))
+- update creatorId in SupportFab component for consistency ([73a2696](https://github.com/eng618/parable-bloom/commit/73a2696))
+- create static export ([7150248](https://github.com/eng618/parable-bloom/commit/7150248))
 - **ci:** explicitly pass project to firebase deploy commands ([b949957](https://github.com/eng618/parable-bloom/commit/b949957))
-- **ci:** restore build-hugo.yml ([2f3466f](https://github.com/eng618/parable-bloom/commit/2f3466f))
 - **ci:** ensure flutter dependencies are fetched before flutterfire configure ([6e6d737](https://github.com/eng618/parable-bloom/commit/6e6d737))
 - **gen:** correct validation flag and regenerate modules ([cf4ea89](https://github.com/eng618/parable-bloom/commit/cf4ea89))
-- **validator:** prioritize greedy solver check ([8c237b3](https://github.com/eng618/parable-bloom/commit/8c237b3))
 - Ensure Firebase CI token is present in GitHub Actions workflows to prevent failures. ([c3883e3](https://github.com/eng618/parable-bloom/commit/c3883e3))
 - **ci:** Change golangci-lint installation method to use go install ([4e8945a](https://github.com/eng618/parable-bloom/commit/4e8945a))
 - **release:** correct paths for packaging Linux, Windows, and macOS builds ([1003794](https://github.com/eng618/parable-bloom/commit/1003794))
@@ -143,5 +100,7 @@ This was a version bump only for level-builder to align it with other projects, 
 
 ### ❤️ Thank You
 
+- Copilot @Copilot
+- eng618 @eng618
 - Eric Garcia @eng618
 - Eric N. Garcia @eng618
