@@ -48,17 +48,17 @@ The game scales difficulty through grid size, vine count, and blocking complexit
 | **Flourishing**  | 12×16 to 16×20 | 36-50      | 3-5        | Deep blocking    | 3-4            |
 | **Transcendent** | 16×24+         | 60+        | 2-4        | Cascading locks  | 4+             |
 
-### Tutorial Strategy (Pre-Level)
+### Tutorial Strategy (Pre-Level Redesign)
 
-Tutorials run once at game start, separate from main levels. They introduce progressive blocking mechanics with in-game guidance.
+Tutorials run once at game start, separate from main levels. They introduce progressive blocking mechanics through hands-on, tap-driven active learning, fully eliminating word-heavy toast notifications in favor of visual cues.
 
-1. **Tutorial 1 (Basic Movement)**: 3×9 grid with 3 vertical arrows covering the entire grid. Shows easy clicking to clear vines.
-2. **Tutorial 2 (Single Blocking)**: Demonstrates one level of blocking.
-3. **Tutorial 3 (Multiple Blocking)**: Demonstrates multiple levels of blocking.
-4. **Tutorial 4**: Further progression.
-5. **Tutorial 5**: Capstone tutorial.
+1. **Lesson 1: Clear the Vine (Basic Movement)**: Shows easy clicking to clear a single horizontal vine. The target head is highlighted with a moss green pulsing circle and a `"Tap head to slide"` micro-prompt; other cell taps are restricted.
+2. **Lesson 2: Clear Multiple Vines (Independence)**: Introduces multiple parallel vines that can be cleared in any order. Gentle shimmer pulses appear on all heads with a `"Clear the garden"` guide.
+3. **Lesson 3: Blocking Mechanics (Obstruction & Priority)**: Teaches blocked path relationships. Tapping a blocked vine wiggles and shows a glowing red dashed **Collision Path** leading to the blocker cell with a floating alert: `"Blocked! Blocker first"`, guiding the user to clear the blocker first.
+4. **Lesson 4: Complex Blocking Chains (Sequence Logic)**: Teaches sequential multi-blocking loops. A thin flowing line traces dependencies on load, guiding the user to start at the free starter vine.
+5. **Lesson 5: Comprehensive Challenge (Capstone)**: Synthesizes all mechanics in a free-play challenge. No instructions are shown on screen, but incorrect blocked taps display the safe collision line and hearts wobble to indicate risk in main levels.
 
-Tutorials include animated arrows and text hints guiding the player through correct taps.
+Interactive elements are highlighted dynamically using global screen coordinate projections from the Flame canvas, with context-sensitive floating glassmorphic prompts anchoring near cells.
 
 ### Modules & Narrative
 

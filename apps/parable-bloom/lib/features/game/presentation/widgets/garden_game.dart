@@ -139,6 +139,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     // Reset grace for new level
     ref.read(gameInstanceProvider.notifier).resetGrace();
+    ref.read(gameInstanceProvider.notifier).setGame(this);
 
     // Load current level first
     await _loadCurrentLevel();
@@ -481,9 +482,30 @@ class GardenGame extends FlameGame with TapCallbacks {
   @override
   Color backgroundColor() => _backgroundColor;
 
+  /// Converts a grid coordinate (x, y) to global screenspace position.
+  /// y=0 is at the bottom of the grid.
+  Offset getCellScreenPosition(int x, int y) {
+    if (_currentLevelData == null || !grid.isMounted) return Offset.zero;
+    final rows = _currentLevelData!.gridHeight;
+    final visualRow = rows - 1 - y;
+    final localX = GameBoardLayout.cellCenterX(x);
+    final localY = GameBoardLayout.cellCenterY(visualRow);
+    
+    final zoom = grid.scale.x;
+    final gridPos = grid.position;
+    
+    return Offset(
+      gridPos.x + (localX * zoom),
+      gridPos.y + (localY * zoom),
+    );
+  }
+
   @override
   void onRemove() {
     // No need to dispose ref or container
+    if (ref.read(gameInstanceProvider) == this) {
+      ref.read(gameInstanceProvider.notifier).setGame(null);
+    }
     super.onRemove();
   }
 
