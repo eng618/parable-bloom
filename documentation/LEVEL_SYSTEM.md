@@ -236,7 +236,8 @@ All levels must pass the strict validator in `tools/level-builder`.
 4. **No Overlaps**: No two vine segments may share a coordinate.
 5. **Minimum Length**: All vines must have at least 2 cells.
 6. **No Coverage Gaps**: While 100% occupancy is not required, any cells not occupied by vines must be explicitly masked out. The validator issues a **warning** for uncovered, unmasked cells.
-7. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
+7. **Incremental Caching**: To scale validations to thousands of levels, the tool maintains a `validation_cache.json` containing SHA-256 hashes of level contents and their validated solvability status under a specific `SolverVersion` constant. Matches bypass the expensive A* solver, reducing hot runs to milliseconds.
+8. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
 
 ## 5. Level Generation (gen2)
 
@@ -300,13 +301,13 @@ The Go-based toolchain located in `tools/level-builder` handles all operations.
   task levels:gen -- LEVEL_ID=101 DIFFICULTY=Seedling
   ```
 
-- **validate**: Check all assets against schema and logic
+- **validate**: Check all assets against schema and logic. Solvability checks are cached in `validation_cache.json` and executed concurrently (bounded by `runtime.NumCPU`).
 
   ```bash
   task levels:validate
   ```
 
-  _Outputs results to `logs/validation_stats.json`._
+  _Outputs results to `logs/validation_stats.json` and caches results under `apps/parable-bloom/assets/data/validation_cache.json`._
 
 - **render**: Visualize levels in terminal
 
