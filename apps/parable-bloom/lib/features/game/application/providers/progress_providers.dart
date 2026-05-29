@@ -210,6 +210,15 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     }
   }
 
+  Future<void> syncOnReconnect() async {
+    final repository = ref.read(gameProgressRepositoryProvider);
+    if (repository is FirebaseGameProgressRepository) {
+      await repository.syncToCloud();
+      await repository.syncFromCloud();
+      await initialize();
+    }
+  }
+
   Future<SyncConflictState> inspectSyncConflict() async {
     final repository = ref.read(gameProgressRepositoryProvider);
     return await repository.inspectSyncConflict();

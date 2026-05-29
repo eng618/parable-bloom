@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -109,4 +110,9 @@ final gameProgressRepositoryProvider = Provider<GameProgressRepository>((ref) {
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   final box = ref.watch(hiveBoxProvider);
   return HiveSettingsRepository(box);
+});
+
+final connectivityStreamProvider =
+    Provider<Stream<List<ConnectivityResult>>>((ref) {
+  return Connectivity().onConnectivityChanged;
 });

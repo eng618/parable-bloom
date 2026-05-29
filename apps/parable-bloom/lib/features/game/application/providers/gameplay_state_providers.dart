@@ -80,7 +80,7 @@ class GameInstanceNotifier extends Notifier<GardenGame?> {
   @override
   GardenGame? build() => null;
 
-  void setGame(GardenGame game) {
+  void setGame(GardenGame? game) {
     state = game;
   }
 
@@ -92,9 +92,18 @@ class GameInstanceNotifier extends Notifier<GardenGame?> {
   void decrementGrace() {
     final currentGrace = ref.read(graceProvider);
     if (currentGrace > 0) {
-      ref.read(graceProvider.notifier).setGrace(currentGrace - 1);
-      if (currentGrace - 1 == 0) {
-        ref.read(gameOverProvider.notifier).setGameOver(true);
+      final currentLevel = ref.read(currentLevelProvider);
+      final isTutorial = currentLevel?.difficulty == 'tutorial';
+      
+      if (isTutorial) {
+        if (currentGrace > 1) {
+          ref.read(graceProvider.notifier).setGrace(currentGrace - 1);
+        }
+      } else {
+        ref.read(graceProvider.notifier).setGrace(currentGrace - 1);
+        if (currentGrace - 1 == 0) {
+          ref.read(gameOverProvider.notifier).setGameOver(true);
+        }
       }
     }
   }

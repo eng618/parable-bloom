@@ -49,6 +49,7 @@ dependencies:
   firebase_analytics: ^12.1.2
   package_info_plus: ^9.0.0
   http: ^1.2.2
+  connectivity_plus: ^6.1.4
 
   vector_math: any
   firebase_crashlytics: ^5.0.7

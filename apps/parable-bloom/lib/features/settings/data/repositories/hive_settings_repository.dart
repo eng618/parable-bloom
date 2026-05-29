@@ -19,6 +19,9 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _useSimpleVinesKey = 'useSimpleVines';
   static const bool _defaultUseSimpleVines = false;
 
+  static const String _vineStyleKey = 'vineStyle';
+  static const String _defaultVineStyle = 'classic';
+
   static const String _boardZoomScaleKey = 'boardZoomScale';
   static const double _defaultBoardZoomScale = 1.0;
 
@@ -77,12 +80,30 @@ class HiveSettingsRepository implements SettingsRepository {
 
   @override
   Future<bool> getUseSimpleVines() async {
-    return _readTypedValue<bool>(_useSimpleVinesKey, _defaultUseSimpleVines);
+    final style = await getVineStyle();
+    return style == 'simple';
   }
 
   @override
   Future<void> setUseSimpleVines(bool enabled) async {
-    await hiveBox.put(_useSimpleVinesKey, enabled);
+    await setVineStyle(enabled ? 'simple' : 'classic');
+  }
+
+  @override
+  Future<String> getVineStyle() async {
+    final oldVal = hiveBox.get(_useSimpleVinesKey);
+    if (oldVal != null) {
+      final styleName = oldVal as bool ? 'simple' : 'classic';
+      await hiveBox.put(_vineStyleKey, styleName);
+      await hiveBox.delete(_useSimpleVinesKey);
+      return styleName;
+    }
+    return _readTypedValue<String>(_vineStyleKey, _defaultVineStyle);
+  }
+
+  @override
+  Future<void> setVineStyle(String style) async {
+    await hiveBox.put(_vineStyleKey, style);
   }
 
   @override
