@@ -148,7 +148,7 @@ class LevelData {
     required this.mask,
   });
 
-  factory LevelData.fromJson(Map<String, dynamic> json) {
+  factory LevelData.fromJson(Map<String, dynamic> json, {String? idOverride}) {
     final gridSize = json['grid_size'];
     if (gridSize is! List || gridSize.length < 2) {
       throw const FormatException(
@@ -197,7 +197,7 @@ class LevelData {
     }
 
     return LevelData(
-      id: json['id'].toString(),
+      id: idOverride ?? json['id'].toString(),
       name: json['name'],
       difficulty: json['difficulty'],
       gridWidth: gridWidth,

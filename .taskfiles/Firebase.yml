@@ -55,6 +55,14 @@ tasks:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
 
+  levels:upload:
+    desc: "Upload generated levels to Cloud Firestore (usage: task firebase:levels:upload ENV=dev)"
+    vars:
+      ENV: '{{.ENV | default "dev"}}'
+    cmds:
+      - bun install firebase-admin
+      - node scripts/firebase/upload_levels.js "{{.ENV}}"
+
   storage:rules:deploy:
     desc: Deploy Cloud Storage security rules
     dir: apps/parable-bloom

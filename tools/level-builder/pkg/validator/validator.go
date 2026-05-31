@@ -266,16 +266,16 @@ func validateModules() error {
 	}
 
 	// Check for duplicates
-	seen := make(map[int]bool)
+	seen := make(map[string]bool)
 	for _, m := range reg.Modules {
 		for _, lid := range m.Levels {
 			if seen[lid] {
-				return fmt.Errorf("level %d appears in multiple modules", lid)
+				return fmt.Errorf("level %s appears in multiple modules", lid)
 			}
 			seen[lid] = true
 		}
 		if seen[m.ChallengeLevel] {
-			return fmt.Errorf("level %d appears in multiple modules", m.ChallengeLevel)
+			return fmt.Errorf("level %s appears in multiple modules", m.ChallengeLevel)
 		}
 		seen[m.ChallengeLevel] = true
 

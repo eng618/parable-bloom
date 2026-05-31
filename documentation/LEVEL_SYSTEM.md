@@ -31,6 +31,7 @@ apps/parable-bloom/assets/
     ├── level_2.json
     ├── ...
     └── level_105.json
+
 ```
 
 ## 3. JSON Schemas
@@ -165,7 +166,7 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
 
 ### 3.2 Module Registry Schema (`modules.json`)
 
-Modules dictate the player's journey. Logical level keys (e.g. `'lvl_seed_01'`) decouple the progression graph and level sequencing from physical filenames (`level_1.json`). 
+Modules dictate the player's journey. Logical level keys (e.g. `'lvl_seed_01'`) decouple the progression graph and level sequencing from physical filenames (`level_1.json`).
 
 A global `level_mappings` object maps logical gameplay IDs to physical assets.
 
@@ -330,3 +331,85 @@ The Go-based toolchain located in `tools/level-builder` handles all operations.
 ### 6.2 Deprecated Commands
 
 - **generate**: Original generation command (deprecated due to infinite loop issues with 100% coverage + solvability tension). Use `gen2` instead.
+
+---
+
+## 7. Over-the-Air (OTA) Level Delivery & Firebase Integration
+
+To support thousands of levels and dynamic season/daily challenge expansions without bloating the local application binary, Parable Bloom uses a high-performance, offline-first Over-the-Air (OTA) level load chain.
+
+### 7.1 The Level Load Chain
+
+When loading any level by logical ID, the `DynamicLevelRepository` follows a structured fallback mechanism:
+
+```mermaid
+graph TD
+    UI[garden_game.dart] -->|Watches| Provider[levelDataProvider]
+    Provider -->|Calls| Repo[DynamicLevelRepository]
+    Repo -->|1. Check Assets| Asset[Asset Bundle / modules.json]
+    Repo -->|2. Check Cache| Hive[Local Hive Cache Box]
+    Repo -->|3. Fetch Remote| Firestore[Cloud Firestore levels_{env}]
+    Firestore -->|Stores in cache| Hive
+```
+
+1. **Asset Bundle Check**: If the logical key exists in `modules.json`'s `level_mappings` and is bundled inside the assets, it is loaded instantly from `rootBundle`.
+2. **Local Hive Cache Check**: If not bundled, the repository checks the local Hive box under the key `'cached_level_${levelId}'`.
+3. **Cloud Firestore Fetch**: If there is a cache miss, it queries the `levels_{env}` collection on Firestore (where `{env}` is dynamically resolved to `dev`, `preview`, or `prod` depending on the running target). Upon a successful download, the level JSON is immediately mirrored into the local Hive box to support subsequent offline play.
+
+### 7.2 Database Schema & Environments
+
+OTA level files are uploaded directly to specific environmental collections colocated with progress sync tables:
+
+- **Collections**: `levels_dev`, `levels_preview`, and `levels_prod`.
+- **Document IDs**: The logical key of the level (e.g., `lvl_seed_01`, `lvl_seed_106`).
+- **Fields**: The complete level JSON attributes, including the logical `id` attribute embedded inside the document.
+
+### 7.3 Security Rules
+
+Public read access is granted globally to allow players to stream levels on first launch, while all write access is blocked from client SDKs to maintain database integrity:
+
+```javascript
+match /levels_dev/{levelId} {
+  allow read: if true;
+  allow write: if false;
+}
+match /levels_preview/{levelId} {
+  allow read: if true;
+  allow write: if false;
+}
+match /levels_prod/{levelId} {
+  allow read: if true;
+  allow write: if false;
+}
+```
+
+### 7.4 Batch Uploading Tool
+
+Developers can batch-upload newly generated levels from `apps/parable-bloom/assets/levels` directly to any environmental collection in Firestore using the task runner:
+
+```bash
+# Upload to dev (default)
+task firebase:levels:upload ENV=dev
+
+# Upload to preview
+task firebase:levels:upload ENV=preview
+
+# Upload to prod
+task firebase:levels:upload ENV=prod
+```
+
+For local integration testing, the script automatically routes all upload operations to a running local Firestore emulator if `FIRESTORE_EMULATOR_HOST` is present in the environment:
+
+```bash
+FIRESTORE_EMULATOR_HOST="localhost:8080" task firebase:levels:upload ENV=dev
+```
+
+### 7.5 Logical to Physical Key Alignment at Runtime
+
+To keep the game progression logic robust and consistent throughout the application, the `LevelData` entity's `id` property is matched to its logical key (e.g. `'lvl_seed_01'`) rather than the raw integer physical ID (e.g. `1`) encoded within the JSON files.
+
+During loading:
+
+1. `LevelData.fromJson(..., {String? idOverride})` supports an optional `idOverride` parameter.
+2. `DynamicLevelRepository.getLevel(String levelId)` passes the logical `levelId` as `idOverride` when parsing the JSON from local assets, local Hive cache, or remote Firestore collections.
+3. This guarantees that `currentLevel.id` in `GameScreen` matches the logical playlist string key, allowing standard level progression and save state synchronization to execute cleanly.

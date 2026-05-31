@@ -10,6 +10,9 @@ import 'package:parable_bloom/features/game/application/providers/gameplay_state
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
 import 'package:parable_bloom/providers/infrastructure_providers.dart';
 import 'package:parable_bloom/providers/service_providers.dart';
+import 'package:parable_bloom/providers/settings_providers.dart';
+import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
+import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 
 class FakeRepo implements GameProgressRepository {
   bool saveCalled = false;
@@ -138,7 +141,7 @@ void main() {
     });
 
     test('Game progress notifier does not save when debug play mode is active',
-        () {
+        () async {
       final fakeRepo = FakeRepo();
       final fakeAnalytics = FakeAnalytics();
       final fakeBox = FakeBox();
@@ -148,6 +151,17 @@ void main() {
           gameProgressRepositoryProvider.overrideWithValue(fakeRepo),
           hiveBoxProvider.overrideWithValue(fakeBox as Box),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+          modulesProvider.overrideWithValue(AsyncValue.data([
+            ModuleData(
+              id: 1,
+              name: 'Seedling',
+              themeSeed: 'forest',
+              levels: ['lvl_seed_01', 'lvl_seed_02'],
+              challengeLevel: 'lvl_seed_challenge',
+              parable: const {},
+              unlockMessage: '',
+            ),
+          ])),
         ],
       );
 
@@ -156,7 +170,7 @@ void main() {
       expect(container.read(debugPlayModeProvider), isFalse);
 
       // Try a normal (non-debug) completion
-      container.read(gameProgressProvider.notifier).completeLevel('lvl_seed_01');
+      await container.read(gameProgressProvider.notifier).completeLevel('lvl_seed_01');
       expect(fakeRepo.saveCalled, isTrue);
 
       // Reset and test debug mode

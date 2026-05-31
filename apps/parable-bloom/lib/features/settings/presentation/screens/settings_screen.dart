@@ -1007,17 +1007,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<Map<String, String>> _loadLabels(List<String> levels, WidgetRef ref) async {
     final labels = <String, String>{};
-    final mappings = await ref.read(levelMappingsProvider.future);
     for (final lvl in levels) {
       try {
-        final file = mappings[lvl];
-        if (file == null) {
-          labels[lvl] = lvl;
-          continue;
-        }
-        final jsonStr = await rootBundle.loadString('assets/$file');
-        final jsonMap = jsonDecode(jsonStr) as Map<String, dynamic>;
-        final difficulty = (jsonMap['difficulty'] ?? 'Unknown').toString();
+        final levelData = await ref.read(levelDataProvider(lvl).future);
+        final difficulty = levelData.difficulty;
         final index = levels.indexOf(lvl) + 1;
         labels[lvl] = 'Level $index ($lvl) — $difficulty';
       } catch (_) {

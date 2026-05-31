@@ -283,8 +283,8 @@ func updateModuleRegistry(moduleID int, startID int) error {
 	} else {
 		// Initialize new registry
 		registry = model.ModuleRegistry{
-			Version:   "2.0",
-			Tutorials: []int{1, 2, 3},
+			Version:   "3.0",
+			Tutorials: []string{"lesson_1", "lesson_2", "lesson_3"},
 			Modules:   []model.Module{},
 		}
 	}
@@ -294,13 +294,13 @@ func updateModuleRegistry(moduleID int, startID int) error {
 		ID:             moduleID,
 		Name:           fmt.Sprintf("Module %d", moduleID),
 		ThemeSeed:      getThemeSeed(moduleID),
-		Levels:         []int{},
-		ChallengeLevel: startID + 20, // 21st level is Transcendent boss
+		Levels:         []string{},
+		ChallengeLevel: common.LogicalLevelID(startID + 20), // 21st level is Transcendent boss
 	}
 
 	// Add the 20 regular levels
 	for i := 0; i < 20; i++ {
-		moduleEntry.Levels = append(moduleEntry.Levels, startID+i)
+		moduleEntry.Levels = append(moduleEntry.Levels, common.LogicalLevelID(startID+i))
 	}
 
 	// Update or append module

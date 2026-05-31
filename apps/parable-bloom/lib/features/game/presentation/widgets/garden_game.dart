@@ -369,21 +369,12 @@ class GardenGame extends FlameGame with TapCallbacks {
       }
 
       final file = mappings[levelId]!;
-      final assetPath = 'assets/$file';
-      LoggerService.debug('Loading asset: $assetPath', tag: 'GardenGame');
+      LoggerService.debug('Loading level $levelId via levelDataProvider', tag: 'GardenGame');
 
-      final levelJson = await rootBundle.loadString(assetPath);
+      final levelData = await ref.read(levelDataProvider(levelId).future);
+      _currentLevelData = levelData;
       LoggerService.debug(
-        'Successfully loaded JSON string, length: ${levelJson.length}',
-        tag: 'GardenGame',
-      );
-
-      final jsonMap = json.decode(levelJson);
-      LoggerService.debug('Successfully parsed JSON', tag: 'GardenGame');
-
-      _currentLevelData = LevelData.fromJson(jsonMap);
-      LoggerService.debug(
-        'Successfully created LevelData: ${_currentLevelData!.name}',
+        'Successfully retrieved LevelData: ${_currentLevelData!.name}',
         tag: 'GardenGame',
       );
 

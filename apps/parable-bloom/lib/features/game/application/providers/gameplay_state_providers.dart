@@ -266,6 +266,7 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
     }
 
     state = _calculateVineStates(_levelData, mapWithCleared);
+    _checkLevelComplete();
   }
 
   void markAttempted(String vineId) {
@@ -333,7 +334,8 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
 
     state = _calculateVineStates(_levelData, state);
 
-    if (animationState == VineAnimationState.animatingClear) {
+    if (animationState == VineAnimationState.animatingClear ||
+        animationState == VineAnimationState.cleared) {
       _checkLevelComplete();
     }
   }

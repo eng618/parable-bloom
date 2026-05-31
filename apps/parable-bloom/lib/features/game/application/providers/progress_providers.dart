@@ -92,7 +92,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       tag: 'GameProgressNotifier',
     );
 
-    final modulesList = ref.read(modulesProvider).value ?? <ModuleData>[];
+    final modulesList = await ref.read(modulesProvider.future);
     final playlist = modulesList.expand((m) => m.allLevels).toList();
     final newProgress = state.completeLevel(levelId, playlist);
 

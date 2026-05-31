@@ -12,6 +12,8 @@ import "package:parable_bloom/features/game/domain/entities/cloud_sync_state.dar
 import "package:parable_bloom/features/game/domain/entities/game_progress.dart";
 import "package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart";
 import "package:parable_bloom/providers/infrastructure_providers.dart";
+import "package:parable_bloom/features/game/application/providers/module_providers.dart";
+import "package:parable_bloom/features/game/domain/entities/level_data.dart";
 
 class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
 
@@ -165,5 +167,47 @@ void main() {
     await container.read(gameProgressProvider.notifier).syncOnReconnect();
 
     expect(container.read(gameProgressProvider), GameProgress.initial());
+  });
+
+  test("completeLevel successfully updates progress to next level using manifest playlist", () async {
+    final modules = [
+      ModuleData(
+        id: 1,
+        name: 'Seedling',
+        themeSeed: 'forest',
+        levels: ['lvl_seed_01', 'lvl_seed_02'],
+        challengeLevel: 'lvl_seed_challenge',
+        parable: const {},
+        unlockMessage: '',
+      ),
+    ];
+
+    final container = ProviderContainer(
+      overrides: [
+        gameProgressRepositoryProvider.overrideWithValue(FakeLocalOnlyRepository()),
+        modulesProvider.overrideWithValue(AsyncValue.data(modules)),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // Initial level is lvl_seed_01
+    final notifier = container.read(gameProgressProvider.notifier);
+    expect(container.read(gameProgressProvider).currentLevel, 'lvl_seed_01');
+
+    // Complete level 1
+    await notifier.completeLevel('lvl_seed_01');
+
+    // Progress should now be updated to lvl_seed_02
+    final updatedState = container.read(gameProgressProvider);
+    expect(updatedState.currentLevel, 'lvl_seed_02');
+    expect(updatedState.completedLevels, {'lvl_seed_01'});
+
+    // Complete level 2
+    await notifier.completeLevel('lvl_seed_02');
+
+    // Progress should now be updated to lvl_seed_challenge
+    final challengeState = container.read(gameProgressProvider);
+    expect(challengeState.currentLevel, 'lvl_seed_challenge');
+    expect(challengeState.completedLevels, {'lvl_seed_01', 'lvl_seed_02'});
   });
 }
