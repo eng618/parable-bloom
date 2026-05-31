@@ -1,3 +1,16 @@
+## 1.6.0 (2026-05-31)
+
+### 🚀 Features
+
+- implement OTA dynamic levels registry & deploy to local emulator ([47bb2e7](https://github.com/eng618/parable-bloom/commit/47bb2e7))
+- **game:** decouple logical level keys and manifest progression graph, resolve all test files ([5c3d9d3](https://github.com/eng618/parable-bloom/commit/5c3d9d3))
+- **tooling:** implement validation caching and concurrent level generation ([d8c6633](https://github.com/eng618/parable-bloom/commit/d8c6633))
+- implement interactive cloud sync conflict resolution and update sync state management ([36a4fb0](https://github.com/eng618/parable-bloom/commit/36a4fb0))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.5.0 (2026-05-29)
 
 ### 🚀 Features
