@@ -163,6 +163,9 @@ class VineState {
   final bool isWithered;
   final VineAnimationState animationState;
 
+  /// Returns true if the vine is already fully cleared or is currently in the process of clearing.
+  bool get isClearedOrClearing => isCleared || animationState == VineAnimationState.animatingClear;
+
   VineState({
     required this.id,
     required this.isBlocked,

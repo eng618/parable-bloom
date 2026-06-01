@@ -106,7 +106,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     if (lessonId == '1') {
       // Lesson 1: Highlight head of vine_1 at (3,1)
       final vineState = vineStates['vine_1'];
-      if (vineState != null && !vineState.isCleared) {
+      if (vineState != null && !vineState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(3, 1);
         promptText = "Tap head to slide";
       }
@@ -114,7 +114,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
       // Lesson 2: Multiple free-choice heads highlighted
       // Find first non-cleared vine
       final activeVineId = vineStates.entries
-          .where((e) => !e.value.isCleared)
+          .where((e) => !e.value.isClearedOrClearing)
           .map((e) => e.key)
           .firstOrNull;
 
@@ -129,18 +129,18 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
       final blockerState = vineStates['vine_2'];
       final blockedState = vineStates['vine_1'];
 
-      if (blockerState != null && !blockerState.isCleared) {
+      if (blockerState != null && !blockerState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(4, 0);
         promptText = "Clear blocker first";
         highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
-      } else if (blockedState != null && !blockedState.isCleared) {
+      } else if (blockedState != null && !blockedState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(3, 1);
         promptText = "Now clear!";
       }
     } else if (lessonId == '4') {
       // Lesson 4: Highlight the starting vine which can clear completely
       final activeVineIds = vineStates.entries
-          .where((e) => !e.value.isCleared)
+          .where((e) => !e.value.isClearedOrClearing)
           .map((e) => e.key)
           .toList();
 

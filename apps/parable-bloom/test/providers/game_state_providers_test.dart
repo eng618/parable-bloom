@@ -61,4 +61,40 @@ void main() {
     // Note: Full integration tests with GardenGame would require
     // mocking Flame game engine components
   });
+
+  group('VineState', () {
+    test('isClearedOrClearing returns correct states', () {
+      final stateNormal = VineState(
+        id: 'v1',
+        isBlocked: false,
+        isCleared: false,
+        animationState: VineAnimationState.normal,
+      );
+      expect(stateNormal.isClearedOrClearing, false);
+
+      final stateAnimatingClear = VineState(
+        id: 'v1',
+        isBlocked: false,
+        isCleared: false,
+        animationState: VineAnimationState.animatingClear,
+      );
+      expect(stateAnimatingClear.isClearedOrClearing, true);
+
+      final stateAnimatingBlocked = VineState(
+        id: 'v1',
+        isBlocked: false,
+        isCleared: false,
+        animationState: VineAnimationState.animatingBlocked,
+      );
+      expect(stateAnimatingBlocked.isClearedOrClearing, false);
+
+      final stateCleared = VineState(
+        id: 'v1',
+        isBlocked: false,
+        isCleared: true,
+        animationState: VineAnimationState.cleared,
+      );
+      expect(stateCleared.isClearedOrClearing, true);
+    });
+  });
 }
