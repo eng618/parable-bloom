@@ -10,6 +10,11 @@ service cloud.firestore {
       match /modules/{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Allow access to the data subcollection
+      match /data/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Preview environment - game progress data
@@ -21,6 +26,11 @@ service cloud.firestore {
       match /modules/{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Allow access to the data subcollection
+      match /data/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Production environment - game progress data
@@ -30,6 +40,11 @@ service cloud.firestore {
 
       // Allow access to the modules subcollection
       match /modules/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Allow access to the data subcollection
+      match /data/{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }

@@ -126,7 +126,10 @@ abstract class ProgressRepository {
 **Implementations**:
 
 - `HiveProgressRepository`: Local storage (Default).
-- `FirebaseProgressRepository`: Cloud storage (Syncs when online).
+- `FirebaseGameProgressRepository`: Cloud storage with offline-first support.
+  - **Local Persistence**: Saves state to Hive immediately.
+  - **Cloud Sync**: When online, authenticated, and Cloud Sync is enabled, synchronization pushes/pulls to and from Firestore under the `/game_progress_{env}/{userId}/data/progress` document.
+  - **Security Rules**: The subcollection `/data/{document=**}` is protected with rules that restrict access to the authenticated owner (where `request.auth.uid == userId`), ensuring identity-level isolation across all environments (`dev`, `preview`, `prod`).
 
 **Auto-Sync Behavior**:
 When a user explicitly creates an account, links an anonymous account to an email/password, or signs into an existing account, **Cloud Sync** is automatically enabled for their local device. This ensures their progres is synchronized seamlessly without requiring manual opt-in from the settings menu.
