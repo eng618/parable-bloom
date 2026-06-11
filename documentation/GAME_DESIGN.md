@@ -80,6 +80,7 @@ Interactive elements are highlighted dynamically using global screen coordinate 
   - **Simple (Accessibility)**: Clean, sleek solid geometric vector paths with sharp triangular chevron heads and rounded caps, matching modern abstract maze puzzles.
   - Managed by `vineStyleProvider` and toggled via the Settings screen and the Pause Menu.
 - **Board Default Zoom**: A user-configurable setting (0.5x to 2.0x) that adjusts how close the camera starts to the board, improving visibility for different screen sizes and accessibility needs.
+- **Trackpad Panning**: Native support for two-finger swipe/scroll gestures on trackpads (and mouse scroll wheels) to smoothly pan the game board, eliminating the need to click and drag.
 - **Modes**: Adaptive Light and Dark themes that sync with the background imagery.
 
 ### Color Palette & Meaning

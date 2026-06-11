@@ -1,5 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
@@ -144,22 +145,45 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Widget _buildGameWidgetWithGestures() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return GestureDetector(
-          onScaleStart: _handleScaleStart,
-          onScaleUpdate: (details) => _handleScaleUpdate(
-            details,
-            constraints.maxWidth,
-            constraints.maxHeight,
-          ),
-          onScaleEnd: _handleScaleEnd,
-          child: GameWidget<GardenGame>(
-            game: _game ??= () {
-              LoggerService.debug('Creating new GardenGame instance',
-                  tag: 'GameScreen');
-              return GardenGame(ref: ref);
-            }(),
-            loadingBuilder: (_) =>
-                const Center(child: CircularProgressIndicator()),
+        return Listener(
+          onPointerSignal: (pointerSignal) {
+            if (pointerSignal is PointerScrollEvent) {
+              final cameraNotifier = ref.read(cameraStateProvider.notifier);
+              final cameraState = ref.read(cameraStateProvider);
+              final currentLevel = ref.read(currentLevelProvider);
+              if (currentLevel == null) return;
+
+              final newOffset = cameraState.panOffset - vm.Vector2(
+                pointerSignal.scrollDelta.dx,
+                pointerSignal.scrollDelta.dy,
+              );
+
+              cameraNotifier.updatePanOffset(
+                newOffset,
+                screenWidth: constraints.maxWidth,
+                screenHeight: constraints.maxHeight,
+                gridCols: currentLevel.gridWidth,
+                gridRows: currentLevel.gridHeight,
+              );
+            }
+          },
+          child: GestureDetector(
+            onScaleStart: _handleScaleStart,
+            onScaleUpdate: (details) => _handleScaleUpdate(
+              details,
+              constraints.maxWidth,
+              constraints.maxHeight,
+            ),
+            onScaleEnd: _handleScaleEnd,
+            child: GameWidget<GardenGame>(
+              game: _game ??= () {
+                LoggerService.debug('Creating new GardenGame instance',
+                    tag: 'GameScreen');
+                return GardenGame(ref: ref);
+              }(),
+              loadingBuilder: (_) =>
+                  const Center(child: CircularProgressIndicator()),
+            ),
           ),
         );
       },
@@ -374,6 +398,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _showLevelCompleteOverlay() async {
+    if (_isLevelCompleteOverlayVisible) return;
+
     // Select a random congratulatory message
     final randomIndex =
         DateTime.now().millisecondsSinceEpoch % _congratulationMessages.length;
@@ -455,7 +481,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             tag: 'GameScreen', metadata: {'level_id': currentLevel.id});
       }
     }
-    ref.read(levelCompleteProvider.notifier).setComplete(false);
 
     // Reset grace for the next level
     ref.read(gameInstanceProvider.notifier).resetGrace();
@@ -464,6 +489,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
+
+    // Reset completion flag
+    ref.read(levelCompleteProvider.notifier).setComplete(false);
 
     setState(() {
       _isLevelCompleteOverlayVisible = false;
