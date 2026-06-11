@@ -196,7 +196,6 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Listen to vine style changes to update background opacity and redraw vines dynamically
     ref.listenManual(vineStyleProvider, (previous, next) {
       _updateBackgroundOpacity(next == VineStyle.simple);
-      reloadLevel();
     });
 
     // Listen to projection lines visibility and animation state

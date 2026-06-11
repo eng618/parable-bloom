@@ -158,10 +158,17 @@ class PauseMenuDialog extends ConsumerWidget {
                 ),
                 _buildActionButton(
                   context,
+                  icon: Icons.play_arrow_rounded,
+                  label: 'Resume',
+                  onTap: () => Navigator.of(context).pop(),
+                  isPrimary: true,
+                ),
+                _buildActionButton(
+                  context,
                   icon: Icons.replay_rounded,
                   label: 'Restart',
                   onTap: onRestart,
-                  isPrimary: true,
+                  isPrimary: false,
                 ),
               ],
             ),
