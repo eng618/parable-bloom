@@ -35,15 +35,20 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   // List of congratulatory messages
   static const List<String> _congratulationMessages = [
     'Well done, good and faithful servant!',
-    'Blessed are you!',
-    'Your faith has made you well!',
-    'The Lord is with you!',
+    'Blessed are you in Christ!',
+    'Your faith is bearing fruit!',
+    'The Lord is with you always!',
     'Rejoice in the Lord!',
     'Grace upon grace!',
-    'In His strength!',
-    'Abundant life!',
-    'Fruitful harvest!',
-    'Seeds of faith!',
+    'In His strength alone!',
+    'Abundant life in Christ!',
+    'A fruitful harvest awaits!',
+    'Seeds of faith growing deep!',
+    'Abide in His love!',
+    'He makes your path straight!',
+    'The joy of the Lord is your strength!',
+    'Walk by faith, not by sight!',
+    'Rooted and built up in Him!',
   ];
 
   @override
@@ -337,6 +342,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   // Confetti implementation removed; celebration handled via in-game ripple effect.
 
   Widget _buildLevelCompleteOverlay() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeColor = isDark ? AppTheme.secondarySeed : AppTheme.primarySeed;
+
     return Stack(
       children: [
         // Content only (no rigid colored box), with subtle text shadow
@@ -350,7 +358,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 Text(
                   'Level Complete',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
+                        color: themeColor,
                         fontWeight: FontWeight.w900,
                       ),
                   textAlign: TextAlign.center,
@@ -360,7 +368,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   _currentCongratulationMessage,
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: themeColor,
                     shadows: [
                       Shadow(
                         blurRadius: 10.0,
@@ -377,7 +385,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 const SizedBox(height: 16),
                 Icon(
                   Icons.celebration,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: themeColor,
                   size: 72,
                   shadows: [
                     Shadow(
@@ -413,7 +421,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Add subtle pond ripple effect to the game scene
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_game != null) {
-        final cs = Theme.of(context).colorScheme;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final animationColors = isDark ? [AppTheme.secondarySeed] : [AppTheme.primarySeed];
         final center = Vector2(_game!.size.x / 2, _game!.size.y / 2);
         final effect = ref.read(celebrationEffectProvider);
         switch (effect) {
@@ -424,7 +433,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 maxRadius: (_game!.size.y * 0.45),
                 ringCount: 4,
                 duration: 2.0,
-                colors: [cs.primary, cs.secondary],
+                colors: animationColors,
               ),
             );
             break;
@@ -435,7 +444,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 duration: 2.0,
                 minRippleRadius: 30,
                 maxRippleRadius: 64,
-                colors: [cs.primary, cs.secondary],
+                colors: animationColors,
                 paddingRatio: 0.12,
               ),
             );

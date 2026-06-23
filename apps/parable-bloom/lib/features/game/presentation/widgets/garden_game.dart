@@ -468,8 +468,9 @@ class GardenGame extends FlameGame with TapCallbacks {
   /// Converts a grid coordinate (x, y) to global screenspace position.
   /// y=0 is at the bottom of the grid.
   Offset getCellScreenPosition(int x, int y) {
-    if (_currentLevelData == null || !_isGridInitialized || !grid.isMounted)
+    if (_currentLevelData == null || !_isGridInitialized || !grid.isMounted) {
       return Offset.zero;
+    }
     final rows = _currentLevelData!.gridHeight;
     final visualRow = rows - 1 - y;
     final localX = GameBoardLayout.cellCenterX(x);
@@ -533,9 +534,12 @@ class GardenGame extends FlameGame with TapCallbacks {
   Future<void> reloadLevel() async {
     // Check if grid is initialized and mounted before removing
     try {
-      if (_isGridInitialized && grid.isMounted) remove(grid);
-      if (_isGridInitialized && projectionLines.isMounted)
+      if (_isGridInitialized && grid.isMounted) {
+        remove(grid);
+      }
+      if (_isGridInitialized && projectionLines.isMounted) {
         remove(projectionLines);
+      }
       _isGridInitialized = false;
     } catch (e) {
       // Ignore if grid/projectionLines weren't initialized

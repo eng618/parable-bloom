@@ -35,11 +35,8 @@ class AppTheme {
   /// Color for active/unblocked vines (uses secondary for bracelet tie-in)
   static const Color vineGreen = secondarySeed;
 
-  /// Theme-aware color for attempted/failed vines.
-  /// On light theme this is black; on dark theme this is white. Use
-  /// `AppTheme.getVineAttemptedColor(brightness)` to pick the correct variant.
   static const Color vineAttemptedLight =
-      Color(0xFF000000); // black for light theme
+      primarySeed; // soft blue for light theme (replaces jet black)
   static const Color vineAttemptedDark =
       Color(0xFFFFFFFF); // white for dark theme
 
