@@ -42,6 +42,12 @@ Checklist and guidelines for App Store and Google Play Console release preparati
 
 Credits and licenses for third-party assets.
 
+### 7. [Launch Readiness Audit (LAUNCH_READINESS_AUDIT.md)](LAUNCH_READINESS_AUDIT.md)
+
+Comprehensive pre-launch audit covering 37 findings across bug review, code readiness, UI/UX, documentation, website alignment, and launch requirements.
+
+- **Key Topics**: Critical blockers, app ID consistency, store assets, attributions, prioritized launch checklist.
+
 ---
 
 ## 🚀 Quick Start
