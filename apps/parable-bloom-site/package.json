@@ -35,7 +35,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.3.3",
     "prettier": "^3.8.1",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "private": true,
   "lint-staged": {

@@ -26,7 +26,7 @@
         "husky": "^9.1.7",
         "lint-staged": "^16.3.3",
         "prettier": "^3.8.1",
-        "typescript": "^5.9.3",
+        "typescript": "^6.0.2",
       },
     },
   },
@@ -1191,7 +1191,7 @@
 
     "typed-event-target": ["typed-event-target@4.2.0", "", { "dependencies": { "@augment-vir/assert": "^31.67.1", "@augment-vir/common": "^31.67.1", "@augment-vir/core": "^31.67.1" } }, "sha512-sTukDWMyhcHUuBBUN8xRQOTl13bjss0dqa2OQrUGM+1RHuxDftpbXx48aEgbjNFWi4+PtTP0M4TSgCJXxDt9GA=="],
 
-    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+    "typescript": ["typescript@6.0.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ=="],
 
     "typescript-eslint": ["typescript-eslint@8.56.1", "", { "dependencies": { "@typescript-eslint/eslint-plugin": "8.56.1", "@typescript-eslint/parser": "8.56.1", "@typescript-eslint/typescript-estree": "8.56.1", "@typescript-eslint/utils": "8.56.1" }, "peerDependencies": { "eslint": "^8.57.0 || ^9.0.0 || ^10.0.0", "typescript": ">=4.8.4 <6.0.0" } }, "sha512-U4lM6pjmBX7J5wk4szltF7I1cGBHXZopnAXCMXb3+fZ3B/0Z3hq3wS/CCUB2NZBNAExK92mCU2tEohWuwVMsDQ=="],
 
