@@ -139,6 +139,7 @@ class AnalyticsService {
       properties: {'level_id': levelId},
     );
   }
+
   Future<void> logSyncConflictDetected({
     required String source,
     required String conflictType,
@@ -167,7 +168,6 @@ class AnalyticsService {
       },
     );
   }
-
 
   Future<void> logSyncConflictResolved({
     required String source,

@@ -153,10 +153,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               final currentLevel = ref.read(currentLevelProvider);
               if (currentLevel == null) return;
 
-              final newOffset = cameraState.panOffset - vm.Vector2(
-                pointerSignal.scrollDelta.dx,
-                pointerSignal.scrollDelta.dy,
-              );
+              final newOffset = cameraState.panOffset -
+                  vm.Vector2(
+                    pointerSignal.scrollDelta.dx,
+                    pointerSignal.scrollDelta.dy,
+                  );
 
               cameraNotifier.updatePanOffset(
                 newOffset,

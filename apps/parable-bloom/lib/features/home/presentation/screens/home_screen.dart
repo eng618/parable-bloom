@@ -58,9 +58,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               modulesAsync.when(
                 data: (modules) {
                   final playlist = modules.expand((m) => m.allLevels).toList();
-                  final allLevelsCompleted = playlist.every(gameProgress.completedLevels.contains);
-                  final nextLevelIdx = playlist.indexOf(gameProgress.currentLevel);
-                  final levelDisplayNumber = nextLevelIdx != -1 ? nextLevelIdx + 1 : 1;
+                  final allLevelsCompleted =
+                      playlist.every(gameProgress.completedLevels.contains);
+                  final nextLevelIdx =
+                      playlist.indexOf(gameProgress.currentLevel);
+                  final levelDisplayNumber =
+                      nextLevelIdx != -1 ? nextLevelIdx + 1 : 1;
 
                   if (allLevelsCompleted) {
                     return Column(

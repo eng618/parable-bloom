@@ -77,12 +77,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                           Text(
                             _getVineStyleSubtitle(vineStyle),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withValues(alpha: 0.6),
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
                           ),
                         ],
                       ),
@@ -528,7 +529,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
       ),
       title: const Text('Anonymized Telemetry'),
-      subtitle: const Text('Help us improve gameplay by sharing anonymous usage statistics'),
+      subtitle: const Text(
+          'Help us improve gameplay by sharing anonymous usage statistics'),
       value: telemetryEnabled,
       onChanged: (value) async {
         await ref.read(analyticsEnabledProvider.notifier).setEnabled(value);
@@ -1003,7 +1005,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<Map<String, String>> _loadLabels(List<String> levels, WidgetRef ref) async {
+  Future<Map<String, String>> _loadLabels(
+      List<String> levels, WidgetRef ref) async {
     final labels = <String, String>{};
     for (final lvl in levels) {
       try {

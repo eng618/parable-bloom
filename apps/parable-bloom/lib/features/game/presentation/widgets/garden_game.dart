@@ -1,4 +1,3 @@
-
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -366,7 +365,8 @@ class GardenGame extends FlameGame with TapCallbacks {
         return;
       }
 
-      LoggerService.debug('Loading level $levelId via levelDataProvider', tag: 'GardenGame');
+      LoggerService.debug('Loading level $levelId via levelDataProvider',
+          tag: 'GardenGame');
 
       final levelData = await ref.read(levelDataProvider(levelId).future);
       _currentLevelData = levelData;
@@ -401,8 +401,7 @@ class GardenGame extends FlameGame with TapCallbacks {
         ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
       }
 
-      LoggerService.info(
-          'Loaded level $levelId: ${_currentLevelData!.name}',
+      LoggerService.info('Loaded level $levelId: ${_currentLevelData!.name}',
           tag: 'GardenGame');
     } catch (e, stackTrace) {
       LoggerService.error('Error loading level $levelId',
@@ -469,15 +468,16 @@ class GardenGame extends FlameGame with TapCallbacks {
   /// Converts a grid coordinate (x, y) to global screenspace position.
   /// y=0 is at the bottom of the grid.
   Offset getCellScreenPosition(int x, int y) {
-    if (_currentLevelData == null || !_isGridInitialized || !grid.isMounted) return Offset.zero;
+    if (_currentLevelData == null || !_isGridInitialized || !grid.isMounted)
+      return Offset.zero;
     final rows = _currentLevelData!.gridHeight;
     final visualRow = rows - 1 - y;
     final localX = GameBoardLayout.cellCenterX(x);
     final localY = GameBoardLayout.cellCenterY(visualRow);
-    
+
     final zoom = grid.scale.x;
     final gridPos = grid.position;
-    
+
     return Offset(
       gridPos.x + (localX * zoom),
       gridPos.y + (localY * zoom),
@@ -534,7 +534,8 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Check if grid is initialized and mounted before removing
     try {
       if (_isGridInitialized && grid.isMounted) remove(grid);
-      if (_isGridInitialized && projectionLines.isMounted) remove(projectionLines);
+      if (_isGridInitialized && projectionLines.isMounted)
+        remove(projectionLines);
       _isGridInitialized = false;
     } catch (e) {
       // Ignore if grid/projectionLines weren't initialized

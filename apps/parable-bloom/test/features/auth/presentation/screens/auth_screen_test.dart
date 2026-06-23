@@ -244,10 +244,18 @@ void main() {
         (WidgetTester tester) async {
       testGameProgressNotifier.nextConflictState = SyncConflictState(
         type: SyncConflictType.divergent,
-        localProgress: GameProgress.initial()
-            .copyWith(currentLevel: 'lvl_seed_06', completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05'}),
-        cloudProgress: GameProgress.initial()
-            .copyWith(currentLevel: 'lvl_seed_04', completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'}),
+        localProgress: GameProgress.initial().copyWith(
+            currentLevel: 'lvl_seed_06',
+            completedLevels: {
+              'lvl_seed_01',
+              'lvl_seed_02',
+              'lvl_seed_03',
+              'lvl_seed_04',
+              'lvl_seed_05'
+            }),
+        cloudProgress: GameProgress.initial().copyWith(
+            currentLevel: 'lvl_seed_04',
+            completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'}),
       );
 
       await tester.pumpWidget(createAuthScreen());

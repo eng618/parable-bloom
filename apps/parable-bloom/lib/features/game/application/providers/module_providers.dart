@@ -22,7 +22,8 @@ class ModuleLoadException implements Exception {
 
 /// Provides the raw modules registry JSON map.
 /// Tries Firestore (configs_{env}/modules), falling back to Hive cache, and finally bundled assets.
-final modulesRegistryProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final modulesRegistryProvider =
+    FutureProvider<Map<String, dynamic>>((ref) async {
   final firestore = ref.watch(firestoreProvider);
   final box = ref.watch(hiveBoxProvider);
   final configsCollection = EnvironmentConfig.getConfigsCollection();
@@ -131,7 +132,8 @@ final levelRepositoryProvider = Provider<LevelRepository>((ref) {
 });
 
 /// Asynchronously provides [LevelData] for a specific logical level ID.
-final levelDataProvider = FutureProvider.family<LevelData, String>((ref, levelId) async {
+final levelDataProvider =
+    FutureProvider.family<LevelData, String>((ref, levelId) async {
   final repo = ref.watch(levelRepositoryProvider);
   return repo.getLevel(levelId);
 });

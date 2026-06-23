@@ -55,7 +55,7 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
   @override
   TutorialProgress build() {
     final gameProgress = ref.read(gameProgressProvider);
-    
+
     int currentLessonInt = 1;
     if (gameProgress.currentLesson != null) {
       final numStr = gameProgress.currentLesson!.replaceAll('lesson_', '');

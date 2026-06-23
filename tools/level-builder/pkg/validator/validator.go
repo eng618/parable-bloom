@@ -17,7 +17,6 @@ import (
 // causing a complete cache invalidation of all levels.
 const SolverVersion = 2
 
-
 // Path resolution functions - use common.LevelsDir() and common.ModulesFile() instead of hardcoded paths
 
 // OccupancyTolerance is the allowed margin for vine occupancy.

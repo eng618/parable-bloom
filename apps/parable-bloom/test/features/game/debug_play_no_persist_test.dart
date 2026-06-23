@@ -128,7 +128,9 @@ void main() {
       expect(container.read(debugPlayModeProvider), isFalse);
 
       // Set a debug level
-      container.read(debugSelectedLevelProvider.notifier).setLevel('lvl_seed_05');
+      container
+          .read(debugSelectedLevelProvider.notifier)
+          .setLevel('lvl_seed_05');
 
       // Now debug play mode should be true
       expect(container.read(debugPlayModeProvider), isTrue);
@@ -170,12 +172,16 @@ void main() {
       expect(container.read(debugPlayModeProvider), isFalse);
 
       // Try a normal (non-debug) completion
-      await container.read(gameProgressProvider.notifier).completeLevel('lvl_seed_01');
+      await container
+          .read(gameProgressProvider.notifier)
+          .completeLevel('lvl_seed_01');
       expect(fakeRepo.saveCalled, isTrue);
 
       // Reset and test debug mode
       fakeRepo.saveCalled = false;
-      container.read(debugSelectedLevelProvider.notifier).setLevel('lvl_seed_01');
+      container
+          .read(debugSelectedLevelProvider.notifier)
+          .setLevel('lvl_seed_01');
 
       // Verify debug play mode is now active
       expect(container.read(debugPlayModeProvider), isTrue);

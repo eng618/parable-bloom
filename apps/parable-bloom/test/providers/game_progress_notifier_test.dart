@@ -34,13 +34,19 @@ class TrackingFirebaseGameProgressRepository
   @override
   Future<void> syncToCloud() async {
     calls.add("syncToCloud");
-    _stored = _stored.copyWith(currentLevel: 'lvl_seed_02', completedLevels: {'lvl_seed_01'});
+    _stored = _stored.copyWith(
+        currentLevel: 'lvl_seed_02', completedLevels: {'lvl_seed_01'});
   }
 
   @override
   Future<void> syncFromCloud() async {
     calls.add("syncFromCloud");
-    _stored = _stored.copyWith(currentLevel: 'lvl_seed_05', completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'});
+    _stored = _stored.copyWith(currentLevel: 'lvl_seed_05', completedLevels: {
+      'lvl_seed_01',
+      'lvl_seed_02',
+      'lvl_seed_03',
+      'lvl_seed_04'
+    });
   }
 
   @override
@@ -152,7 +158,8 @@ void main() {
         <String>["syncToCloud", "syncFromCloud", "getProgress"]);
     final state = container.read(gameProgressProvider);
     expect(state.currentLevel, 'lvl_seed_05');
-    expect(state.completedLevels, <String>{'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'});
+    expect(state.completedLevels,
+        <String>{'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'});
   });
 
   test("syncOnReconnect is a no-op for non-firebase repository", () async {
@@ -169,7 +176,9 @@ void main() {
     expect(container.read(gameProgressProvider), GameProgress.initial());
   });
 
-  test("completeLevel successfully updates progress to next level using manifest playlist", () async {
+  test(
+      "completeLevel successfully updates progress to next level using manifest playlist",
+      () async {
     final modules = [
       ModuleData(
         id: 1,
@@ -184,7 +193,8 @@ void main() {
 
     final container = ProviderContainer(
       overrides: [
-        gameProgressRepositoryProvider.overrideWithValue(FakeLocalOnlyRepository()),
+        gameProgressRepositoryProvider
+            .overrideWithValue(FakeLocalOnlyRepository()),
         modulesProvider.overrideWithValue(AsyncValue.data(modules)),
       ],
     );

@@ -175,13 +175,19 @@ void main() {
       final retrievedProgress = await repository.getProgress();
 
       expect(retrievedProgress.currentLevel, equals('lvl_seed_03'));
-      expect(retrievedProgress.completedLevels, equals({'lvl_seed_01', 'lvl_seed_02'}));
+      expect(retrievedProgress.completedLevels,
+          equals({'lvl_seed_01', 'lvl_seed_02'}));
     });
 
     test('should reset progress correctly', () async {
       final progress = GameProgress.initial().copyWith(
         currentLevel: 'lvl_seed_05',
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'},
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_03',
+          'lvl_seed_04'
+        },
         tutorialCompleted: false,
       );
 
@@ -215,7 +221,13 @@ void main() {
 
       final cloud = GameProgress.initial().copyWith(
         currentLevel: 'lvl_seed_06',
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05'},
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_03',
+          'lvl_seed_04',
+          'lvl_seed_05'
+        },
       );
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(cloud.toJson());
@@ -224,14 +236,27 @@ void main() {
 
       final resolved = await repository.getProgress();
       expect(resolved.currentLevel, 'lvl_seed_06');
-      expect(resolved.completedLevels, {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05'});
+      expect(resolved.completedLevels, {
+        'lvl_seed_01',
+        'lvl_seed_02',
+        'lvl_seed_03',
+        'lvl_seed_04',
+        'lvl_seed_05'
+      });
       expect(await repository.getLastSyncTime(), isNotNull);
     });
 
     test('enabling sync does not auto-push when local is ahead', () async {
       final local = GameProgress.initial().copyWith(
         currentLevel: 'lvl_seed_07',
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05', 'lvl_seed_06'},
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_03',
+          'lvl_seed_04',
+          'lvl_seed_05',
+          'lvl_seed_06'
+        },
       );
       await repository.saveProgress(local);
 
@@ -258,7 +283,12 @@ void main() {
         () async {
       final local = GameProgress.initial().copyWith(
         currentLevel: 'lvl_seed_06',
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_06'},
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_03',
+          'lvl_seed_06'
+        },
       );
       await repository.saveProgress(local);
 
@@ -266,7 +296,12 @@ void main() {
       when(mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
           currentLevel: 'lvl_seed_06',
-          completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_04', 'lvl_seed_05'},
+          completedLevels: {
+            'lvl_seed_01',
+            'lvl_seed_02',
+            'lvl_seed_04',
+            'lvl_seed_05'
+          },
         ).toJson(),
       );
 
@@ -511,8 +546,14 @@ void main() {
       });
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(
-        GameProgress.initial()
-            .copyWith(currentLevel: 'lvl_seed_05', completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'}).toJson(),
+        GameProgress.initial().copyWith(
+            currentLevel: 'lvl_seed_05',
+            completedLevels: {
+              'lvl_seed_01',
+              'lvl_seed_02',
+              'lvl_seed_03',
+              'lvl_seed_04'
+            }).toJson(),
       );
 
       repository = FirebaseGameProgressRepository(
@@ -592,7 +633,14 @@ void main() {
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
-            currentLevel: 'lvl_seed_06', completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05'}).toJson(),
+            currentLevel: 'lvl_seed_06',
+            completedLevels: {
+              'lvl_seed_01',
+              'lvl_seed_02',
+              'lvl_seed_03',
+              'lvl_seed_04',
+              'lvl_seed_05'
+            }).toJson(),
       );
 
       final conflict = await repository.inspectSyncConflict();
@@ -622,13 +670,23 @@ void main() {
     test('inspectSyncConflict returns divergent for partial overlap', () async {
       final local = GameProgress.initial().copyWith(
         currentLevel: 'lvl_seed_06',
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_06'},
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_03',
+          'lvl_seed_06'
+        },
       );
       await repository.saveProgress(local);
 
       final cloud = GameProgress.initial().copyWith(
         currentLevel: 'lvl_seed_06',
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_04', 'lvl_seed_05'},
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_04',
+          'lvl_seed_05'
+        },
       );
 
       when(mockSnapshot.exists).thenReturn(true);
@@ -649,7 +707,15 @@ void main() {
 
       final cloud = GameProgress.initial().copyWith(
         currentLevel: 'lvl_seed_08',
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05', 'lvl_seed_06', 'lvl_seed_07'},
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_03',
+          'lvl_seed_04',
+          'lvl_seed_05',
+          'lvl_seed_06',
+          'lvl_seed_07'
+        },
       );
       when(mockSnapshot.exists).thenReturn(true);
       when(mockSnapshot.data()).thenReturn(cloud.toJson());
@@ -658,13 +724,28 @@ void main() {
 
       final resolved = await repository.getProgress();
       expect(resolved.currentLevel, 'lvl_seed_08');
-      expect(resolved.completedLevels, {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05', 'lvl_seed_06', 'lvl_seed_07'});
+      expect(resolved.completedLevels, {
+        'lvl_seed_01',
+        'lvl_seed_02',
+        'lvl_seed_03',
+        'lvl_seed_04',
+        'lvl_seed_05',
+        'lvl_seed_06',
+        'lvl_seed_07'
+      });
     });
 
     test('resolveSyncConflict keepLocal pushes local state to cloud', () async {
       final local = GameProgress.initial().copyWith(
         currentLevel: 'lvl_seed_07',
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05', 'lvl_seed_06'},
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_03',
+          'lvl_seed_04',
+          'lvl_seed_05',
+          'lvl_seed_06'
+        },
       );
       await repository.saveProgress(local);
 
@@ -680,7 +761,14 @@ void main() {
 
       final resolved = await repository.getProgress();
       expect(resolved.currentLevel, 'lvl_seed_07');
-      expect(resolved.completedLevels, {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05', 'lvl_seed_06'});
+      expect(resolved.completedLevels, {
+        'lvl_seed_01',
+        'lvl_seed_02',
+        'lvl_seed_03',
+        'lvl_seed_04',
+        'lvl_seed_05',
+        'lvl_seed_06'
+      });
       expect(await repository.getLastSyncTime(), isNotNull);
     });
 
@@ -688,7 +776,12 @@ void main() {
         () async {
       final local = GameProgress.initial().copyWith(
         currentLevel: 'lvl_seed_05',
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'},
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_03',
+          'lvl_seed_04'
+        },
       );
       await repository.saveProgress(local);
 

@@ -94,7 +94,7 @@ class GameInstanceNotifier extends Notifier<GardenGame?> {
     if (currentGrace > 0) {
       final currentLevel = ref.read(currentLevelProvider);
       final isTutorial = currentLevel?.difficulty == 'tutorial';
-      
+
       if (isTutorial) {
         if (currentGrace > 1) {
           ref.read(graceProvider.notifier).setGrace(currentGrace - 1);
@@ -164,7 +164,8 @@ class VineState {
   final VineAnimationState animationState;
 
   /// Returns true if the vine is already fully cleared or is currently in the process of clearing.
-  bool get isClearedOrClearing => isCleared || animationState == VineAnimationState.animatingClear;
+  bool get isClearedOrClearing =>
+      isCleared || animationState == VineAnimationState.animatingClear;
 
   VineState({
     required this.id,

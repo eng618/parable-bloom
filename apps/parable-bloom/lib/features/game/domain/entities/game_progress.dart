@@ -1,6 +1,7 @@
 class GameProgress {
   // Lesson tracking (separate from levels)
-  final String? currentLesson; // e.g. "lesson_1" if in tutorial, null if tutorial complete
+  final String?
+      currentLesson; // e.g. "lesson_1" if in tutorial, null if tutorial complete
   final Set<String> completedLessons; // Which lessons have been completed
   final bool lessonCompleted; // True after all 5 lessons done
 
@@ -8,7 +9,8 @@ class GameProgress {
   final String currentLevel; // Current main game level ID (e.g. "lvl_seed_01")
   final Set<String> completedLevels; // Main game level IDs completed
   final bool tutorialCompleted; // Legacy field - true when lessons complete
-  final String? savedMainGameLevel; // Level ID to return to after tutorial replay
+  final String?
+      savedMainGameLevel; // Level ID to return to after tutorial replay
 
   GameProgress({
     this.currentLesson,
@@ -112,7 +114,9 @@ class GameProgress {
     final rawCurrentLesson = json['currentLesson'];
     String? currentLessonStr;
     if (rawCurrentLesson != null) {
-      currentLessonStr = rawCurrentLesson is int ? 'lesson_$rawCurrentLesson' : rawCurrentLesson.toString();
+      currentLessonStr = rawCurrentLesson is int
+          ? 'lesson_$rawCurrentLesson'
+          : rawCurrentLesson.toString();
     }
 
     final rawCurrentLevel = json['currentLevel'] ?? 'lvl_seed_01';
@@ -137,7 +141,9 @@ class GameProgress {
     final rawSavedLevel = json['savedMainGameLevel'];
     String? savedLevelStr;
     if (rawSavedLevel != null) {
-      savedLevelStr = rawSavedLevel is int ? _mapLegacyLevelId(rawSavedLevel) : rawSavedLevel.toString();
+      savedLevelStr = rawSavedLevel is int
+          ? _mapLegacyLevelId(rawSavedLevel)
+          : rawSavedLevel.toString();
     }
 
     return GameProgress(

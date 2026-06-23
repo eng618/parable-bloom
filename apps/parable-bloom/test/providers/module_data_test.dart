@@ -24,7 +24,8 @@ void main() {
     print('Levels: ${firstModule.levels}');
 
     expect(firstModule.name, 'Seedling');
-    expect(firstModule.startLevel, 'lvl_seed_01', reason: 'Start level should be lvl_seed_01');
+    expect(firstModule.startLevel, 'lvl_seed_01',
+        reason: 'Start level should be lvl_seed_01');
     expect(firstModule.endLevel, 'lvl_seed_challenge',
         reason: 'End level should be lvl_seed_challenge');
     expect(firstModule.levelCount, 21, reason: 'Should have 21 levels');

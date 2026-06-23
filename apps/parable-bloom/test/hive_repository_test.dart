@@ -60,13 +60,19 @@ void main() {
       final retrievedProgress = await repository.getProgress();
 
       expect(retrievedProgress.currentLevel, equals('lvl_seed_03'));
-      expect(retrievedProgress.completedLevels, equals({'lvl_seed_01', 'lvl_seed_02'}));
+      expect(retrievedProgress.completedLevels,
+          equals({'lvl_seed_01', 'lvl_seed_02'}));
     });
 
     test('should reset progress correctly', () async {
       final progress = GameProgress.initial().copyWith(
         currentLevel: 'lvl_seed_05',
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'},
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_03',
+          'lvl_seed_04'
+        },
         tutorialCompleted: false,
       );
 
@@ -106,7 +112,8 @@ void main() {
       final retrievedProgress = await repository2.getProgress();
 
       expect(retrievedProgress.currentLevel, equals('lvl_seed_04'));
-      expect(retrievedProgress.completedLevels, equals({'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'}));
+      expect(retrievedProgress.completedLevels,
+          equals({'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'}));
     });
   });
 }

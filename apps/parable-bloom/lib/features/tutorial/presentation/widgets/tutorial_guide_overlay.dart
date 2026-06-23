@@ -30,7 +30,8 @@ class BlockedTapNotifier extends Notifier<BlockedTapState?> {
   }
 }
 
-final blockedTapProvider = NotifierProvider<BlockedTapNotifier, BlockedTapState?>(
+final blockedTapProvider =
+    NotifierProvider<BlockedTapNotifier, BlockedTapState?>(
   BlockedTapNotifier.new,
 );
 
@@ -41,7 +42,8 @@ class TutorialGuideOverlay extends ConsumerStatefulWidget {
   const TutorialGuideOverlay({super.key});
 
   @override
-  ConsumerState<TutorialGuideOverlay> createState() => _TutorialGuideOverlayState();
+  ConsumerState<TutorialGuideOverlay> createState() =>
+      _TutorialGuideOverlayState();
 }
 
 class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
@@ -82,7 +84,10 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
 
     final game = ref.watch(gameInstanceProvider);
 
-    if (currentLevel == null || game == null || !game.isGridInitialized || !game.grid.isMounted) {
+    if (currentLevel == null ||
+        game == null ||
+        !game.isGridInitialized ||
+        !game.grid.isMounted) {
       return const SizedBox.shrink();
     }
 
@@ -147,7 +152,8 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
       final solver = ref.read(levelSolverServiceProvider);
       String? freeVineId;
       for (final vineId in activeVineIds) {
-        if (solver.getDistanceToBlocker(currentLevel, vineId, activeVineIds) > 0) {
+        if (solver.getDistanceToBlocker(currentLevel, vineId, activeVineIds) >
+            0) {
           freeVineId = vineId;
           break;
         }
@@ -242,7 +248,10 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
                 color: Theme.of(context).colorScheme.primary,
                 size: 28,
                 shadows: const [
-                  Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(1, 1)),
+                  Shadow(
+                      color: Colors.black45,
+                      blurRadius: 4,
+                      offset: Offset(1, 1)),
                 ],
               ),
             ),
@@ -362,7 +371,8 @@ class CollisionPathPainter extends CustomPainter {
     while (progress < distance) {
       final double startFraction = progress / distance;
       progress += dashWidth;
-      final double endFraction = (progress > distance ? distance : progress) / distance;
+      final double endFraction =
+          (progress > distance ? distance : progress) / distance;
 
       canvas.drawLine(
         Offset(from.dx + dx * startFraction, from.dy + dy * startFraction),

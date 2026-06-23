@@ -87,11 +87,12 @@ class VineStyleNotifier extends Notifier<VineStyle> {
   @override
   VineStyle build() {
     final box = ref.watch(hiveBoxProvider);
-    
+
     // Support migration from old boolean 'useSimpleVines'
     final oldUseSimpleVines = box.get('useSimpleVines');
     if (oldUseSimpleVines != null) {
-      final style = (oldUseSimpleVines as bool) ? VineStyle.simple : VineStyle.classic;
+      final style =
+          (oldUseSimpleVines as bool) ? VineStyle.simple : VineStyle.classic;
       box.put('vineStyle', style.name);
       box.delete('useSimpleVines');
       return style;
@@ -204,7 +205,8 @@ class DebugVineAnimationLoggingNotifier extends Notifier<bool> {
   }
 }
 
-final analyticsEnabledProvider = NotifierProvider<AnalyticsEnabledNotifier, bool>(
+final analyticsEnabledProvider =
+    NotifierProvider<AnalyticsEnabledNotifier, bool>(
   AnalyticsEnabledNotifier.new,
 );
 

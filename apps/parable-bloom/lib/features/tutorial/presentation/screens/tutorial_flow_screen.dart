@@ -196,10 +196,11 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
               final cameraNotifier = ref.read(cameraStateProvider.notifier);
               final cameraState = ref.read(cameraStateProvider);
 
-              final newOffset = cameraState.panOffset - vm.Vector2(
-                pointerSignal.scrollDelta.dx,
-                pointerSignal.scrollDelta.dy,
-              );
+              final newOffset = cameraState.panOffset -
+                  vm.Vector2(
+                    pointerSignal.scrollDelta.dx,
+                    pointerSignal.scrollDelta.dy,
+                  );
 
               cameraNotifier.updatePanOffset(
                 newOffset,

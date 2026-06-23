@@ -23,9 +23,12 @@ class ModuleData {
 
   // Computed properties for manifest-driven sequence mapping
   String get startLevel => levels.isNotEmpty ? levels.first : challengeLevel;
-  String get endLevel => challengeLevel.isNotEmpty ? challengeLevel : (levels.isNotEmpty ? levels.last : '');
+  String get endLevel => challengeLevel.isNotEmpty
+      ? challengeLevel
+      : (levels.isNotEmpty ? levels.last : '');
 
-  int get levelCount => challengeLevel.isNotEmpty ? levels.length + 1 : levels.length;
+  int get levelCount =>
+      challengeLevel.isNotEmpty ? levels.length + 1 : levels.length;
   List<String> get allLevels {
     final result = [...levels];
     if (challengeLevel.isNotEmpty && !result.contains(challengeLevel)) {
@@ -44,7 +47,10 @@ class ModuleData {
       id: json['id'] as int,
       name: json['name'] as String,
       themeSeed: (json['theme_seed'] as String?) ?? 'forest',
-      levels: (json['levels'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      levels: (json['levels'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       challengeLevel: (json['challenge_level'] ?? '').toString(),
       parable: json['parable'] as Map<String, dynamic>,
       unlockMessage: (json['unlock_message'] as String?) ?? '',

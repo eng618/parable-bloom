@@ -340,7 +340,7 @@ tasks:
     desc: Format the Flutter code
     dir: apps/parable-bloom
     cmds:
-      - dart format .
+      - dart format lib test integration_test test_driver
 
   format:check:
     desc: Check if Flutter code is formatted

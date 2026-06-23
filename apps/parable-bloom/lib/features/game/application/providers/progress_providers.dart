@@ -131,7 +131,8 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   Future<void> resetTutorial() async {
     final newProgress = state.copyWith(
       tutorialCompleted: false,
-      currentLevel: state.currentLevel.isEmpty ? 'lvl_seed_01' : state.currentLevel,
+      currentLevel:
+          state.currentLevel.isEmpty ? 'lvl_seed_01' : state.currentLevel,
     );
 
     await _saveProgress(newProgress);

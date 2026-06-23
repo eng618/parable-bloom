@@ -81,7 +81,8 @@ void main() async {
   if (_isScreenshotMode) {
     analyticsService = AnalyticsService();
   } else {
-    final isOptedOut = hiveBox.get('plausible_ignore', defaultValue: false) as bool;
+    final isOptedOut =
+        hiveBox.get('plausible_ignore', defaultValue: false) as bool;
     final plausibleClient = PlausibleAnalyticsClient.fromEnvironment(
       isOptedOut: () =>
           hiveBox.get('plausible_ignore', defaultValue: false) as bool,
@@ -118,7 +119,13 @@ Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
 
   final seededProgress = GameProgress(
     currentLesson: null,
-    completedLessons: {'lesson_1', 'lesson_2', 'lesson_3', 'lesson_4', 'lesson_5'},
+    completedLessons: {
+      'lesson_1',
+      'lesson_2',
+      'lesson_3',
+      'lesson_4',
+      'lesson_5'
+    },
     lessonCompleted: true,
     currentLevel: 'lvl_blossom_01',
     completedLevels: Set<String>.from(completedLevelsList),

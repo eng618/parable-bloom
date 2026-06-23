@@ -26,8 +26,8 @@ export default function AboutPage() {
       <section className="mb-6">
         <h2 className="font-display text-text-primary mb-3 text-xl font-semibold">Overview</h2>
         <Text variant="body" className="text-text-secondary">
-          Parable Bloom is a Christ-centered arrow puzzle game. Guide vines through gardens of grace while uncovering the
-          parables of Jesus.
+          Parable Bloom is a Christ-centered arrow puzzle game. Guide vines through gardens of grace while uncovering
+          the parables of Jesus.
         </Text>
       </section>
 

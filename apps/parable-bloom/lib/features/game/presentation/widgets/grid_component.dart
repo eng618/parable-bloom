@@ -262,11 +262,13 @@ class GridComponent extends PositionComponent
       final headOffset = parent.getCellScreenPosition(head['x']!, head['y']!);
       final blockerOffset = parent.getCellScreenPosition(nextX, nextY);
 
-      parent.ref.read(blockedTapProvider.notifier).setBlockedTap(BlockedTapState(
-        headPosition: headOffset,
-        blockerPosition: blockerOffset,
-        timestamp: DateTime.now(),
-      ));
+      parent.ref
+          .read(blockedTapProvider.notifier)
+          .setBlockedTap(BlockedTapState(
+            headPosition: headOffset,
+            blockerPosition: blockerOffset,
+            timestamp: DateTime.now(),
+          ));
     }
 
     // Notify that a vine was tapped
