@@ -14,6 +14,8 @@ import '../../../game/presentation/widgets/garden_game.dart';
 import '../../../game/presentation/widgets/game_header.dart';
 import '../../../game/presentation/widgets/pause_menu_dialog.dart';
 import '../widgets/tutorial_guide_overlay.dart';
+import '../../../game/presentation/widgets/pond_ripple_effect_component.dart';
+import '../../../game/presentation/widgets/ripple_fireworks_component.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
 /// Shows the game with GameHeader (pause, grace) and a simple instruction overlay.
@@ -36,15 +38,20 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   // Congratulatory messages (same as GameScreen)
   static const List<String> _congratulationMessages = [
     'Well done, good and faithful servant!',
-    'Blessed are you!',
-    'Your faith has made you well!',
-    'The Lord is with you!',
+    'Blessed are you in Christ!',
+    'Your faith is bearing fruit!',
+    'The Lord is with you always!',
     'Rejoice in the Lord!',
     'Grace upon grace!',
-    'In His strength!',
-    'Abundant life!',
-    'Fruitful harvest!',
-    'Seeds of faith!',
+    'In His strength alone!',
+    'Abundant life in Christ!',
+    'A fruitful harvest awaits!',
+    'Seeds of faith growing deep!',
+    'Abide in His love!',
+    'He makes your path straight!',
+    'The joy of the Lord is your strength!',
+    'Walk by faith, not by sight!',
+    'Rooted and built up in Him!',
   ];
 
   @override
@@ -432,6 +439,45 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       _isLevelCompleteOverlayVisible = true;
     });
 
+    // Add subtle pond ripple effect to the game scene
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_game != null) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final animationColors = isDark ? [AppTheme.secondarySeed] : [AppTheme.primarySeed];
+        final center = Vector2(_game!.size.x / 2, _game!.size.y / 2);
+        final effect = ref.read(celebrationEffectProvider);
+        switch (effect) {
+          case CelebrationEffect.pondRipples:
+            _game!.add(
+              PondRippleEffectComponent(
+                center: center,
+                maxRadius: (_game!.size.y * 0.45),
+                ringCount: 4,
+                duration: 2.0,
+                colors: animationColors,
+              ),
+            );
+            break;
+          case CelebrationEffect.rippleFireworks:
+            _game!.add(
+              RippleFireworksComponent(
+                count: 8,
+                duration: 2.0,
+                minRippleRadius: 30,
+                maxRippleRadius: 64,
+                colors: animationColors,
+                paddingRatio: 0.12,
+              ),
+            );
+            break;
+          case CelebrationEffect.leafPetals:
+            break;
+          case CelebrationEffect.confetti:
+            break;
+        }
+      }
+    });
+
     // Wait for 2 seconds then advance to next lesson
     await Future.delayed(const Duration(seconds: 2));
 
@@ -465,6 +511,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   }
 
   Widget _buildLevelCompleteOverlay() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeColor = isDark ? AppTheme.secondarySeed : AppTheme.primarySeed;
+
     return Stack(
       children: [
         Center(
@@ -478,6 +527,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                   _currentCongratulationMessage,
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: themeColor,
                     shadows: [
                       Shadow(
                         blurRadius: 10.0,
@@ -494,7 +544,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                 const SizedBox(height: 16),
                 Icon(
                   Icons.celebration,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: themeColor,
                   size: 72,
                   shadows: [
                     Shadow(

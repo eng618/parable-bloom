@@ -89,7 +89,7 @@ final tapEffect = extension.tapEffect;
 
 To make blocked/failed vines visually unambiguous across themes, the app reserves the **attempted/failed** color in `AppTheme` and exposes it to renderers via `GardenGame`:
 
-- `AppTheme.vineAttemptedLight` — reserved attempted/error color for **light** theme (black)
+- `AppTheme.vineAttemptedLight` — reserved attempted/error color for **light** theme (soft primary brand blue)
 - `AppTheme.vineAttemptedDark` — reserved attempted/error color for **dark** theme (white)
 - `AppTheme.getVineAttemptedColor(Brightness)` — helper to pick the correct variant
 - `AppThemeExtension.vineAttempted` — theme extension property for attempted color
@@ -106,16 +106,18 @@ Rationale:
 
 - A distinct, reserved blocked color improves clarity when a vine is blocked so players can immediately recognize the error state regardless of the selected vine color or theme.
 
-Example usage (rendering code should use `GardenGame.vineAttemptedColor` which is populated from the theme extension):
+---
 
-```dart
-final extension = Theme.of(context).extension<AppThemeExtension>()!;
-final attempted = extension.vineAttempted; // Automatically theme-aware
-// Use `attempted` only for attempted/failed vine heads; renderers should read
-// `GardenGame.vineAttemptedColor` instead of calling AppTheme directly.
-```
+## Level Completion & Ending Animations
 
-### Premium/Stylized Themes Color Behavior
+When a level or tutorial lesson is completed, the app displays a level complete overlay and plays a Flame animation (Pond Ripples or Ripple Fireworks) that utilizes theme-specific coloring:
+
+- **Light Screens**: Renders animations, overlay text ("Level Complete"), congratulations messages, and celebration icons in the soft primary brand blue (`AppTheme.primarySeed`).
+- **Dark Screens**: Renders animations, overlay text, congratulations messages, and celebration icons in the brand green accent color (`AppTheme.secondarySeed`) instead of stark white for a softer, integrated aesthetic.
+
+---
+
+## Premium/Stylized Themes Color Behavior
 
 For premium themes (Classic, Cherry Blossom, Ethereal) that map custom watercolor or bioluminescent textures onto vector paths:
 - **Default/Active State**: To present extremely vibrant, bright, and lush visuals, the active state modulates with pure white (`0xFFFFFFFF`), rendering the rich watercolor texture in its full original brightness in both light and dark modes (avoiding theme-aware color conversions that would otherwise darken the texture).
