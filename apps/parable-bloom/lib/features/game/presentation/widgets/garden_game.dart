@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -367,7 +366,6 @@ class GardenGame extends FlameGame with TapCallbacks {
         return;
       }
 
-      final file = mappings[levelId]!;
       LoggerService.debug('Loading level $levelId via levelDataProvider', tag: 'GardenGame');
 
       final levelData = await ref.read(levelDataProvider(levelId).future);

@@ -11,7 +11,6 @@ import '../../domain/entities/game_progress.dart';
 import '../../../auth/application/providers/auth_providers.dart';
 import 'counter_providers.dart';
 import 'module_providers.dart';
-import '../../domain/entities/level_data.dart';
 
 final gameProgressProvider =
     NotifierProvider<GameProgressNotifier, GameProgress>(

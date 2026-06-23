@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
-import 'package:flame/sprite.dart';
 
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/game_board_layout.dart';
@@ -67,15 +66,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     final game = parent.parent;
 
-    if (_classicTextureImage == null) {
-      _classicTextureImage = await game.images.load('classic_vine_texture.png');
-    }
-    if (_blossomTextureImage == null) {
-      _blossomTextureImage = await game.images.load('blossom_vine_texture.png');
-    }
-    if (_etherealTextureImage == null) {
-      _etherealTextureImage = await game.images.load('ethereal_vine_texture.png');
-    }
+    _classicTextureImage ??= await game.images.load('classic_vine_texture.png');
+    _blossomTextureImage ??= await game.images.load('blossom_vine_texture.png');
+    _etherealTextureImage ??= await game.images.load('ethereal_vine_texture.png');
 
     // Visual positions are already initialized in constructor
     // This is just for logging

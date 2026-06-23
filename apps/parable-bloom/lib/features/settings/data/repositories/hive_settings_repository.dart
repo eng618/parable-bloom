@@ -17,7 +17,6 @@ class HiveSettingsRepository implements SettingsRepository {
   static const bool _defaultHapticsEnabled = true;
 
   static const String _useSimpleVinesKey = 'useSimpleVines';
-  static const bool _defaultUseSimpleVines = false;
 
   static const String _vineStyleKey = 'vineStyle';
   static const String _defaultVineStyle = 'classic';
