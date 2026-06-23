@@ -3,6 +3,8 @@ import { Badge, Separator, Text } from '@gv-tech/ui-web';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+const Empty = () => null;
+
 export const metadata: Metadata = {
   title: 'Parable Bloom',
   description: 'A zen hyper-casual arrow puzzle game with faith-based themes.',
@@ -21,7 +23,7 @@ const platforms = [
     marker: '🤖',
     title: 'Android',
     body: 'Download from Google Play and enjoy the full mobile experience.',
-    href: 'https://play.google.com/store/apps/details?id=com.eng618.parablebloom',
+    href: 'https://play.google.com/store/apps/details?id=com.garciaericn.parable_bloom',
     ctaLabel: 'Get on Google Play',
     badge: 'Coming Soon',
   },
@@ -29,7 +31,7 @@ const platforms = [
     marker: '🍏',
     title: 'iOS',
     body: 'Download on the App Store for iPhone and iPad.',
-    href: 'https://apps.apple.com/app/parable-bloom/id1234567890',
+    href: undefined, // Omit href for coming soon to render disabled button
     ctaLabel: 'Download on App Store',
     badge: 'Coming Soon',
   },
@@ -94,21 +96,15 @@ export default function HomePage() {
               🌐 Play on Web
             </Link>
             <Link
-              href="https://play.google.com/store/apps/details?id=com.eng618.parablebloom"
+              href="https://play.google.com/store/apps/details?id=com.garciaericn.parable_bloom"
               target="_blank"
               rel="noopener noreferrer"
               className="border-border text-text-primary hover:border-brand/40 hover:bg-surface-alt inline-flex items-center gap-2 rounded-full border bg-white px-6 py-2.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
             >
               🤖 Google Play
             </Link>
-            <Link
-              href="https://apps.apple.com/app/parable-bloom/id1234567890"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border-border text-text-primary hover:border-brand/40 hover:bg-surface-alt inline-flex items-center gap-2 rounded-full border bg-white px-6 py-2.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-            >
-              🍏 App Store
-            </Link>
+            {/* iOS is coming soon, show nothing in Hero using Empty component */}
+            <Empty />
           </div>
         </div>
       </section>

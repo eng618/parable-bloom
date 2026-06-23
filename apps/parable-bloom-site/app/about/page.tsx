@@ -1,6 +1,8 @@
 import { Badge, Separator, Text } from '@gv-tech/ui-web';
 import type { Metadata } from 'next';
 
+const Empty = () => null;
+
 export const metadata: Metadata = {
   title: 'About',
   description: 'Learn more about Parable Bloom, a zen hyper-casual arrow puzzle game with faith-based themes.',
@@ -39,23 +41,13 @@ export default function AboutPage() {
       <section className="mb-6">
         <h2 className="font-display text-text-primary mb-3 text-xl font-semibold">Download</h2>
         <ul className="space-y-2">
-          <li className="flex items-center gap-2">
-            <span className="text-lg">🍏</span>
-            <Text variant="body">
-              <a
-                href="https://apps.apple.com/app/parable-bloom"
-                className="text-brand decoration-brand/40 hover:decoration-brand underline underline-offset-2 transition-colors"
-              >
-                Download on the App Store
-              </a>{' '}
-              <span className="text-text-secondary">(Coming Soon)</span>
-            </Text>
-          </li>
+          {/* iOS is coming soon, render nothing using Empty component */}
+          <Empty />
           <li className="flex items-center gap-2">
             <span className="text-lg">🤖</span>
             <Text variant="body">
               <a
-                href="https://play.google.com/store/apps/details?id=com.garciaericn.parablebloom"
+                href="https://play.google.com/store/apps/details?id=com.garciaericn.parable_bloom"
                 className="text-brand decoration-brand/40 hover:decoration-brand underline underline-offset-2 transition-colors"
               >
                 Get it on Google Play
