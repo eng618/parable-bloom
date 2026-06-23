@@ -11,8 +11,8 @@ export const metadata: Metadata = {
     default: 'Parable Bloom',
     template: '%s | Parable Bloom',
   },
-  description: 'A zen hyper-casual arrow puzzle game with faith-based themes.',
-  keywords: ['puzzle game', 'zen', 'faith', 'mobile game', 'parable bloom'],
+  description: 'A Christ-centered arrow puzzle game of faith, scripture, and prayer.',
+  keywords: ['puzzle game', 'christ-centered', 'faith', 'scripture', 'mobile game', 'parable bloom'],
   icons: {
     icon: [
       { url: '/favicon.ico' },
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Parable Bloom',
-    description: 'A zen hyper-casual arrow puzzle game with faith-based themes.',
+    description: 'A Christ-centered arrow puzzle game of faith, scripture, and prayer.',
     url: 'https://parable-bloom.pages.dev',
     siteName: 'Parable Bloom',
     images: [
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Parable Bloom - A Zen Puzzle Journey',
+        alt: 'Parable Bloom - A Serene Faith Journey',
       },
     ],
     locale: 'en_US',
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Parable Bloom',
-    description: 'A zen hyper-casual arrow puzzle game with faith-based themes.',
+    description: 'A Christ-centered arrow puzzle game of faith, scripture, and prayer.',
     images: ['/og-image.png'],
   },
 };

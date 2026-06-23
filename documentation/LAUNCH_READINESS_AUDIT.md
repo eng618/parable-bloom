@@ -82,7 +82,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
   - [manifest.json](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/web/manifest.json#L6-L7): `background_color: #0175C2`, `theme_color: #0175C2`
   - [index.html](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/web/index.html) — no `<meta name="theme-color">` set
 - **Description:** The PWA manifest uses Flutter's default blue (`#0175C2`) instead of the app's brand green (`#177245` as used on the marketing site). The web index.html also lacks a theme-color meta tag.
-- **Impact:** The PWA install screen, browser address bar, and task switcher will show Flutter's blue instead of the app's zen green branding. Inconsistent brand experience.
+- **Impact:** The PWA install screen, browser address bar, and task switcher will show Flutter's blue instead of the app's grace green branding. Inconsistent brand experience.
 - **Action:** Update `manifest.json` theme/background colors to match the app's brand color. Add `<meta name="theme-color" content="#177245">` to `index.html`.
 - **Effort:** 15 minutes
 

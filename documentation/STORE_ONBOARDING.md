@@ -45,7 +45,7 @@ Status: **8 of 11 complete** (as of initial setup)
   - **Status**: Pending
   - **Assets Needed**:
     - **App Name**: Parable Bloom
-    - **Short Description**: A zen hyper-casual arrow puzzle game with faith-based themes. (Max 80 chars)
+    - **Short Description**: A Christ-centered arrow puzzle game of faith, scripture, and prayer. (Max 80 chars)
     - **Full Description**: Create a compelling description of the game, features, mechanics, and story. Focus on the relaxing nature of the puzzles.
     - **App Icon**: 512x512 PNG/JPEG.
     - **Feature Graphic**: 1024x500 PNG/JPEG. (Required for featuring).
@@ -67,5 +67,5 @@ _(To be completed once Apple Developer account is active)_
   - Screenshots (Required: 6.5" and 5.5" displays minimum).
   - Promotional Text (Max 170 chars).
   - Description.
-  - Keywords (e.g., puzzle, zen, relaxing, faith, snake, slide).
+  - Keywords (e.g., puzzle, prayerful, scripture, faith, snake, slide).
   - Support URL.

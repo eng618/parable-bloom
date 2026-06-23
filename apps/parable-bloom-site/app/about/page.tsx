@@ -5,7 +5,7 @@ const Empty = () => null;
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'Learn more about Parable Bloom, a zen hyper-casual arrow puzzle game with faith-based themes.',
+  description: 'Learn more about Parable Bloom, a Christ-centered arrow puzzle game of faith, scripture, and prayer.',
 };
 
 export default function AboutPage() {
@@ -26,8 +26,8 @@ export default function AboutPage() {
       <section className="mb-6">
         <h2 className="font-display text-text-primary mb-3 text-xl font-semibold">Overview</h2>
         <Text variant="body" className="text-text-secondary">
-          Parable Bloom is a zen hyper-casual arrow puzzle game with faith-based themes. Guide vines through gardens
-          while uncovering spiritual parables.
+          Parable Bloom is a Christ-centered arrow puzzle game. Guide vines through gardens of grace while uncovering the
+          parables of Jesus.
         </Text>
       </section>
 

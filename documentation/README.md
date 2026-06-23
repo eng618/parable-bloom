@@ -2,7 +2,7 @@
 
 ## 🌿 Welcome to Parable Bloom
 
-**Parable Bloom** is a **zen hyper-casual arrow puzzle game** with faith-based themes, where players tap directional vines to slide them off a grid in the direction of their head, mimicking Snake's movement.
+**Parable Bloom** is a **Christ-centered arrow puzzle game** with faith-based themes, where players tap directional vines to slide them off a grid in the direction of their head, mimicking Snake's movement.
 
 ---
 

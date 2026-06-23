@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/eng618/parable-bloom/actions/workflows/ci.yml/badge.svg)](https://github.com/eng618/parable-bloom/actions/workflows/ci.yml)
 
-**A zen hyper-casual arrow puzzle game** with faith-based themes, where players tap directional vines to slide them off a grid in Snake-like movement. Body segments follow as a queue, and blocked vines animate back with spiritual messaging.
+**A Christ-centered arrow puzzle game** with faith-based themes, where players tap directional vines to slide them off a grid in Snake-like movement. Body segments follow as a queue, and blocked vines animate back with scriptural encouragement.
 
 > _"God's grace is endless—try again!"_
 
@@ -14,8 +14,8 @@
 
 - **🐍 Snake-Like Movement**: Vines slide in head direction with body segments following as queue
 - **🙏 Grace System**: 3 Grace per level (4 for Transcendent) with faith-based messaging
-- **📚 Module Structure**: 5 modules with 15 levels each, unlocking spiritual parables
-- **🎨 Adaptive Themes**: Light/dark mode with watercolor zen garden aesthetics
+- **📚 Module Structure**: 5 modules with 15 levels each, unlocking the parables of Jesus
+- **🎨 Adaptive Themes**: Light/dark mode with watercolor faith garden aesthetics
 - **🎯 Strategic Depth**: Dynamic blocking where clearing one vine unblocks others
 - **📱 Cross-Platform**: iOS & Android support with 60 FPS performance
 
@@ -88,7 +88,7 @@ flutter doctor --android-licenses
 1. **Tap** directional vines on the grid
 2. **Slide** in head direction with body following as queue
 3. **Clear** all vines to "bloom" the level
-4. **Progress** through modules unlocking spiritual parables
+4. **Progress** through modules unlocking the parables of Jesus
 
 **Difficulty Tiers:**
 
@@ -180,7 +180,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - **Flutter & Flame**: Amazing open-source frameworks powering this game
-- **Faith Community**: For inspiration and spiritual guidance
+- **Faith Community**: For inspiration and devotional guidance
 - **Game Dev Community**: For sharing knowledge and best practices
 
 ## 📞 Support
