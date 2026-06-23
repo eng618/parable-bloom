@@ -1,3 +1,20 @@
+## 1.7.0 (2026-06-23)
+
+### 🚀 Features
+
+- update application icons across all platforms and add new mustard tree icon asset ([0b6a0cb](https://github.com/eng618/parable-bloom/commit/0b6a0cb))
+- update social metadata, correct Google Play URLs, hide iOS links, and add font/asset attributions ([ba45777](https://github.com/eng618/parable-bloom/commit/ba45777))
+- add trackpad scroll support for camera panning, fix overlay logic, and ignore GitNexus cache ([1ef75ba](https://github.com/eng618/parable-bloom/commit/1ef75ba))
+- implement FirebaseGameProgressRepository and restrict access to data subcollections via security rules ([e47b70c](https://github.com/eng618/parable-bloom/commit/e47b70c))
+
+### 🩹 Fixes
+
+- immediately advance tutorial highlights on vine clearing tap ([347e701](https://github.com/eng618/parable-bloom/commit/347e701))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.6.0 (2026-05-31)
 
 ### 🚀 Features
