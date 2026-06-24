@@ -48,6 +48,10 @@ Comprehensive pre-launch audit covering 37 findings across bug review, code read
 
 - **Key Topics**: Critical blockers, app ID consistency, store assets, attributions, prioritized launch checklist.
 
+### 8. [Scripture Licensing & Compliance (SCRIPTURE_LICENSING.md)](SCRIPTURE_LICENSING.md)
+
+Licensing requirements, approved attribution framework, and technical compliance safeguards for Bible translations.
+
 ---
 
 ## 🚀 Quick Start
