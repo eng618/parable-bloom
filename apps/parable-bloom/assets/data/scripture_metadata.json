@@ -1,0 +1,88 @@
+{
+  "translations": [
+    {
+      "id": "web",
+      "name": "World English Bible",
+      "abbreviation": "WEB",
+      "publisher": "Public Domain",
+      "licenseType": "public_domain",
+      "copyrightNotice": "Scripture quotations marked (WEB) are from the World English Bible, which is in the public domain.",
+      "infoUrl": "https://worldenglish.bible",
+      "localDbAllowed": true,
+      "requiresOnline": false,
+      "status": "active"
+    },
+    {
+      "id": "kjv",
+      "name": "King James Version",
+      "abbreviation": "KJV",
+      "publisher": "Public Domain (Crown Copyright in the UK)",
+      "licenseType": "public_domain",
+      "copyrightNotice": "Scripture quotations are from the King James Version (KJV) Bible. Public domain (subject to Crown copyright in the United Kingdom).",
+      "infoUrl": "https://www.cambridge.org/bibles/about/rights-and-permissions",
+      "localDbAllowed": true,
+      "requiresOnline": false,
+      "status": "active"
+    },
+    {
+      "id": "net",
+      "name": "NET Bible",
+      "abbreviation": "NET",
+      "publisher": "Biblical Studies Press, L.L.C.",
+      "licenseType": "gratis_api",
+      "copyrightNotice": "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved.",
+      "infoUrl": "http://netbible.com/net-bible-copyright",
+      "localDbAllowed": true,
+      "requiresOnline": false,
+      "status": "active"
+    },
+    {
+      "id": "esv",
+      "name": "English Standard Version",
+      "abbreviation": "ESV",
+      "publisher": "Crossway (Good News Publishers)",
+      "licenseType": "gratis_api",
+      "copyrightNotice": "Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. ESV Text Edition: 2025. Used by permission. All rights reserved.",
+      "infoUrl": "https://www.crossway.org/permissions",
+      "localDbAllowed": false,
+      "requiresOnline": true,
+      "status": "active"
+    },
+    {
+      "id": "csb",
+      "name": "Christian Standard Bible",
+      "abbreviation": "CSB",
+      "publisher": "Holman Bible Publishers",
+      "licenseType": "gratis_api",
+      "copyrightNotice": "Scripture quotations marked CSB have been taken from the Christian Standard Bible®, Copyright © 2017 by Holman Bible Publishers. Used by permission. Christian Standard Bible® and CSB® are federally registered trademarks of Holman Bible Publishers.",
+      "infoUrl": "https://www.csbible.com/permissions",
+      "localDbAllowed": false,
+      "requiresOnline": true,
+      "status": "active"
+    },
+    {
+      "id": "nlt",
+      "name": "New Living Translation",
+      "abbreviation": "NLT",
+      "publisher": "Tyndale House Publishers",
+      "licenseType": "custom_license",
+      "copyrightNotice": "Scripture quotations marked (NLT) are taken from the Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers, Inc., Carol Stream, Illinois 60188. All rights reserved.",
+      "infoUrl": "https://www.tyndale.com/permissions",
+      "localDbAllowed": false,
+      "requiresOnline": true,
+      "status": "pending_commercial_license"
+    },
+    {
+      "id": "niv",
+      "name": "New International Version",
+      "abbreviation": "NIV",
+      "publisher": "Biblica, Inc. (HarperCollins Christian Publishing / Zondervan)",
+      "licenseType": "custom_license",
+      "copyrightNotice": "Scripture quotations taken from The Holy Bible, New International Version®, NIV®. Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.™ Used by permission. All rights reserved worldwide.",
+      "infoUrl": "https://www.biblica.com/permissions",
+      "localDbAllowed": false,
+      "requiresOnline": true,
+      "status": "pending_commercial_license"
+    }
+  ]
+}

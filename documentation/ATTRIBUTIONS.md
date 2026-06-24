@@ -24,3 +24,10 @@ All in-game and website visual assets, including:
 
 Are custom creations designed specifically for Parable Bloom.
 **Copyright © 2026 Eric Garcia (GVTech). All rights reserved.**
+
+## Scripture Translations
+
+Scripture quotations in Parable Bloom are sourced from various translations under public domain permissions, gratis licensing, or official online APIs (ESV, NET, CSB, KJV, WEB). Highly restricted versions (NIV, NLT) are marked as pending commercial licenses.
+
+For the exact copyright notices, permissions limits, API configurations, and compliance safeguards, please refer to the detailed [Scripture Licensing Guide (SCRIPTURE_LICENSING.md)](file:///Users/engarcia/Development/parable-bloom/documentation/SCRIPTURE_LICENSING.md).
+
