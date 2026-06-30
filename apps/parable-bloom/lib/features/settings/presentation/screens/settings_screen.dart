@@ -1008,15 +1008,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<Map<String, String>> _loadLabels(
       List<String> levels, WidgetRef ref) async {
     final labels = <String, String>{};
-    for (final lvl in levels) {
+    final futures = levels.asMap().entries.map((entry) async {
+      final index = entry.key + 1;
+      final lvl = entry.value;
       try {
         final levelData = await ref.read(levelDataProvider(lvl).future);
         final difficulty = levelData.difficulty;
-        final index = levels.indexOf(lvl) + 1;
-        labels[lvl] = 'Level $index ($lvl) — $difficulty';
+        return MapEntry(lvl, 'Level $index ($lvl) — $difficulty');
       } catch (_) {
-        labels[lvl] = lvl;
+        return MapEntry(lvl, lvl);
       }
+    });
+
+    final results = await Future.wait(futures);
+    for (final result in results) {
+      labels[result.key] = result.value;
     }
     return labels;
   }
