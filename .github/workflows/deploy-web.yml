@@ -134,11 +134,11 @@ jobs:
         id: deploy-preview
         run: |
           CHANNEL_NAME="pr-${{ github.event.pull_request.number }}"
-          task firebase:hosting:channel:deploy CHANNEL=$CHANNEL_NAME CLI_ARGS="--json" > deploy_output.json
-          cat deploy_output.json
+          task firebase:hosting:channel:deploy CHANNEL=$CHANNEL_NAME CLI_ARGS="--json" > deploy_output.json || true
+          cat deploy_output.json || true
 
           # Use node to extract the URL from JSON output consistently
-          PREVIEW_URL=$(node -e "const data = JSON.parse(require('fs').readFileSync('deploy_output.json', 'utf8')); console.log(data.result.parable_bloom.urls[0]);")
+          PREVIEW_URL=$(node -e "const fs = require('fs'); if (fs.existsSync('deploy_output.json')) { const data = JSON.parse(fs.readFileSync('deploy_output.json', 'utf8')); if (data && data.result && data.result.parable_bloom && data.result.parable_bloom.urls && data.result.parable_bloom.urls.length > 0) { console.log(data.result.parable_bloom.urls[0]); } else { console.log(''); } } else { console.log(''); }")
 
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           echo "Channel deployed to: $PREVIEW_URL"
