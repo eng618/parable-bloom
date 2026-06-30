@@ -64,6 +64,8 @@ jobs:
 
       - name: Install Task
         uses: arduino/setup-task@v2
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}

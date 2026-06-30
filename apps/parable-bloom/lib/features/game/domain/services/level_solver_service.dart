@@ -450,8 +450,7 @@ class LevelSolverService {
     String vineId,
     List<String> activeVineIds,
   ) {
-    final vineMap = {for (final v in level.vines) v.id: v};
-    final vine = vineMap[vineId]!;
+    final vine = level.vines.firstWhere((v) => v.id == vineId);
 
     if (vine.orderedPath.isEmpty) return false;
 
@@ -463,7 +462,7 @@ class LevelSolverService {
       for (final otherId in activeVineIds) {
         if (otherId == vineId) continue;
 
-        final otherVine = vineMap[otherId]!;
+        final otherVine = level.vines.firstWhere((v) => v.id == otherId);
         for (final cell in otherVine.orderedPath) {
           if (cell['x'] == newPos['x'] && cell['y'] == newPos['y']) {
             return true; // Blocked by another vine
@@ -483,8 +482,7 @@ class LevelSolverService {
     String vineId,
     List<String> activeVineIds,
   ) {
-    final vineMap = {for (final v in level.vines) v.id: v};
-    final vine = vineMap[vineId]!;
+    final vine = level.vines.firstWhere((v) => v.id == vineId);
 
     if (vine.orderedPath.isEmpty) return 0;
 
@@ -509,7 +507,7 @@ class LevelSolverService {
         for (final otherId in activeVineIds) {
           if (otherId == vineId) continue;
 
-          final otherVine = vineMap[otherId]!;
+          final otherVine = level.vines.firstWhere((v) => v.id == otherId);
           for (final cell in otherVine.orderedPath) {
             if (cell['x'] == newPos['x'] && cell['y'] == newPos['y']) {
               return -(distance +
