@@ -134,14 +134,20 @@ jobs:
         id: deploy-preview
         run: |
           CHANNEL_NAME="pr-${{ github.event.pull_request.number }}"
-          task firebase:hosting:channel:deploy CHANNEL=$CHANNEL_NAME CLI_ARGS="--json" > deploy_output.json
-          cat deploy_output.json
+          EXIT_CODE=0
+          task firebase:hosting:channel:deploy CHANNEL=$CHANNEL_NAME CLI_ARGS="--json" > deploy_output.json || EXIT_CODE=$?
+          cat deploy_output.json || true
 
           # Use node to extract the URL from JSON output consistently
-          PREVIEW_URL=$(node -e "const data = JSON.parse(require('fs').readFileSync('deploy_output.json', 'utf8')); const resultObj = data.result ? Object.values(data.result)[0] : null; if(resultObj && resultObj.urls) console.log(resultObj.urls[0]);")
+          PREVIEW_URL=$(node -e "const str = require('fs').readFileSync('deploy_output.json', 'utf8'); const match = str.match(/\{.*\}/s); const data = match ? JSON.parse(match[0]) : {}; const resultObj = data.result ? Object.values(data.result)[0] : null; if(resultObj && resultObj.urls) console.log(resultObj.urls[0]);")
 
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           echo "Channel deployed to: $PREVIEW_URL"
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "Deploy failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
 
       - name: Comment PR with Preview URL
         if: env.SKIP_DEPLOY != 'true' && github.event_name == 'pull_request' && env.DEPLOY_SKIPPED != 'true'
