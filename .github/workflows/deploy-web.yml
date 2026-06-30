@@ -145,8 +145,14 @@ jobs:
           echo "Channel deployed to: $PREVIEW_URL"
 
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "Deploy failed with exit code $EXIT_CODE"
-            exit $EXIT_CODE
+            IS_ALREADY_ACTIVE=$(node -e "const fs = require('fs'); try { const data = fs.readFileSync('deploy_output.json', 'utf8'); if (data.includes('is the current active version')) { console.log('true'); } else { console.log('false'); } } catch (e) { console.log('false'); }")
+            if [ "$IS_ALREADY_ACTIVE" = "true" ]; then
+              echo "Deploy skipped: Version is identical to the current active version."
+              # Since it's identical, we continue.
+            else
+              echo "Deploy failed with exit code $EXIT_CODE"
+              exit $EXIT_CODE
+            fi
           fi
 
       - name: Comment PR with Preview URL
