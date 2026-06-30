@@ -457,12 +457,15 @@ class LevelSolverService {
     // Simulate snake-like movement: calculate where each segment would be after one move
     final newPositions = _simulateVineMovement(vine);
 
+    // Create a map for O(1) vine lookup instead of iterating level.vines repeatedly
+    final vineMap = {for (final v in level.vines) v.id: v};
+
     // Check if any of the new positions would be occupied by other active vines
     for (final newPos in newPositions) {
       for (final otherId in activeVineIds) {
         if (otherId == vineId) continue;
 
-        final otherVine = level.vines.firstWhere((v) => v.id == otherId);
+        final otherVine = vineMap[otherId]!;
         for (final cell in otherVine.orderedPath) {
           if (cell['x'] == newPos['x'] && cell['y'] == newPos['y']) {
             return true; // Blocked by another vine
@@ -495,6 +498,9 @@ class LevelSolverService {
         (level.gridWidth + level.gridHeight + vine.orderedPath.length + 10)
             .clamp(50, 300);
 
+    // Create a map for O(1) vine lookup instead of iterating level.vines repeatedly
+    final vineMap = {for (final v in level.vines) v.id: v};
+
     for (int step = 0; step < maxCheckDistance; step++) {
       // Simulate one step of movement
       final newPositions = _simulateVineMovementFromPositions(
@@ -507,7 +513,7 @@ class LevelSolverService {
         for (final otherId in activeVineIds) {
           if (otherId == vineId) continue;
 
-          final otherVine = level.vines.firstWhere((v) => v.id == otherId);
+          final otherVine = vineMap[otherId]!;
           for (final cell in otherVine.orderedPath) {
             if (cell['x'] == newPos['x'] && cell['y'] == newPos['y']) {
               return -(distance +
