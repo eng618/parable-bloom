@@ -107,21 +107,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       }
     });
 
-    // If all lessons completed, navigate to main game
-    if (tutorialProgress.allLessonsCompleted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          LoggerService.info('All lessons completed - returning to home',
-              tag: 'TutorialFlowScreen');
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
-      });
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+
 
     // Validate lesson number
     if (currentLesson < 1 || currentLesson > 5) {
@@ -535,10 +521,19 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       return;
     }
 
-    // Check if we advanced to a new lesson
+    // If no scripture is unlocked, but we completed all lessons, pop now!
     final after = ref.read(tutorialProgressProvider);
+    if (after.allLessonsCompleted) {
+      if (mounted) {
+        LoggerService.info('All lessons completed - returning to home',
+            tag: 'TutorialFlowScreen');
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+      return;
+    }
 
-    if (!after.allLessonsCompleted && after.currentLesson != beforeLesson) {
+    // Check if we advanced to a new lesson
+    if (after.currentLesson != beforeLesson) {
       // Reset for new lesson
       setState(() {
         _game = null; // Will be recreated in build
