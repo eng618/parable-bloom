@@ -131,6 +131,7 @@ Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
     completedLevels: Set<String>.from(completedLevelsList),
     tutorialCompleted: true,
     savedMainGameLevel: null,
+    unlockedTranslations: {},
   );
 
   await hiveBox.put(GameProgressStorageKeys.progress, seededProgress.toJson());

@@ -54,8 +54,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
               final title = (parable["title"] as String?)?.trim();
               final scripture = (parable["scripture"] as String?)?.trim();
-              final content = (parable["content"] as String?)?.trim();
               final reflection = (parable["reflection"] as String?)?.trim();
+              final savedTranslationId = progress.unlockedTranslations[module.id.toString()];
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
@@ -70,20 +70,46 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                             : "Module ${module.id}",
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      if (scripture?.isNotEmpty == true) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          scripture!,
-                          style: Theme.of(context).textTheme.labelLarge,
+                      if (scripture?.isNotEmpty == true)
+                        FutureBuilder<Map<String, String>>(
+                          future: ref.read(scriptureServiceProvider).loadScripture(
+                            scripture!,
+                            translationId: savedTranslationId,
+                          ),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12.0),
+                                child: SizedBox(
+                                  height: 2,
+                                  child: LinearProgressIndicator(),
+                                ),
+                              );
+                            }
+                            
+                            final data = snapshot.data;
+                            final text = data?['text'] ?? (parable['content'] as String?)?.trim() ?? '';
+                            final translation = data?['translation'] ?? 'KJV';
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(
+                                  '$scripture ($translation)',
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
+                                if (text.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    text,
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                ],
+                              ],
+                            );
+                          },
                         ),
-                      ],
-                      if (content?.isNotEmpty == true) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          content!,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
                       if (reflection?.isNotEmpty == true) ...[
                         const SizedBox(height: 12),
                         Text(

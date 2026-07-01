@@ -37,7 +37,7 @@ Deploy to App Store
 [bundle exec] fastlane ios screenshots
 ```
 
-Capture localized App Store screenshots using snapshot
+Capture local App Store screenshots using Flutter integration tests
 
 ### ios upload_screenshots
 
