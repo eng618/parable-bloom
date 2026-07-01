@@ -43,7 +43,7 @@ jobs:
           bun-version: latest
 
       - name: Cache Bun
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb', '**/bun.lock') }}
@@ -51,7 +51,7 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Cache Nx
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .nx/cache
           key: ${{ runner.os }}-nx-${{ hashFiles('bun.lockb', 'bun.lock', 'nx.json') }}-${{ github.run_id }}
