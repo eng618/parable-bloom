@@ -216,7 +216,22 @@ A global `level_mappings` object maps logical gameplay IDs to physical assets.
             },
             "required": ["title", "scripture"]
           },
-          "unlock_message": { "type": "string" }
+          "unlock_message": { "type": "string" },
+          "scriptures": {
+            "type": "array",
+            "description": "Sequence of micro-scripture and starter scripture triggers in this module",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "trigger_level": { "type": "string", "description": "Level or lesson ID (e.g. lvl_seed_01, lesson_5) that unlocks this scripture" },
+                "reference": { "type": "string", "description": "Scripture reference (e.g. Luke 8:11)" },
+                "title": { "type": "string", "description": "Clean title of the scripture" },
+                "type": { "type": "string", "description": "Type of unlock ('starter', 'micro', or 'full')" }
+              },
+              "required": ["id", "trigger_level", "reference", "title", "type"]
+            }
+          }
         },
         "required": [
           "id",

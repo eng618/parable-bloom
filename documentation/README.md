@@ -52,9 +52,9 @@ Comprehensive pre-launch audit covering 37 findings across bug review, code read
 
 Licensing requirements, approved attribution framework, and technical compliance safeguards for Bible translations.
 
-### 9. [Scripture Library Integration Roadmap (SCRIPTURE_LIBRARY_TEMP_PLAN.md)](SCRIPTURE_LIBRARY_TEMP_PLAN.md)
+### 9. [Scripture Library & Reward System (SCRIPTURE_LIBRARY.md)](SCRIPTURE_LIBRARY.md)
 
-Temporary design and implementation roadmap for building the scripture library, featuring randomized translation unlocks, journal persistence, and KJV offline fallbacks.
+Comprehensive overview of the scripture reward progression model, database schemas, fallback rules, and UI integrations.
 
 ---
 

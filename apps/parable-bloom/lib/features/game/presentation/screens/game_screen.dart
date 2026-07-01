@@ -422,7 +422,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_game != null) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final animationColors = isDark ? [AppTheme.secondarySeed] : [AppTheme.primarySeed];
+        final animationColors =
+            isDark ? [AppTheme.secondarySeed] : [AppTheme.primarySeed];
         final center = Vector2(_game!.size.x / 2, _game!.size.y / 2);
         final effect = ref.read(celebrationEffectProvider);
         switch (effect) {
@@ -462,9 +463,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Advance to next level
     final currentLevel = ref.read(currentLevelProvider);
     ModuleData? completedModule;
+    ModuleScripture? newlyUnlockedScripture;
+
     if (currentLevel != null) {
+      List<ModuleData> modules = [];
       try {
-        final modules = await ref.read(modulesProvider.future);
+        modules = await ref.read(modulesProvider.future);
         for (final m in modules) {
           if (m.endLevel == currentLevel.id) {
             completedModule = m;
@@ -481,6 +485,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         );
       }
 
+      final prevUnlockedScriptures =
+          ref.read(gameProgressProvider).unlockedScriptureIds;
+
       final isDebugPlay = ref.read(debugPlayModeProvider);
       if (!isDebugPlay) {
         await ref
@@ -490,12 +497,26 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         LoggerService.debug('Debug play — skipping persistence',
             tag: 'GameScreen', metadata: {'level_id': currentLevel.id});
       }
+
+      final postProgress = ref.read(gameProgressProvider);
+      if (modules.isNotEmpty) {
+        for (final m in modules) {
+          for (final s in m.scriptures) {
+            if (!prevUnlockedScriptures.contains(s.id) &&
+                postProgress.unlockedScriptureIds.contains(s.id)) {
+              newlyUnlockedScripture = s;
+              completedModule = m; // Associate for the dialog
+              break;
+            }
+          }
+        }
+      }
     }
 
     // Reset grace for the next level
     ref.read(gameInstanceProvider.notifier).resetGrace();
 
-    // Wait for 2 seconds then navigate back to home OR show parable unlock.
+    // Wait for 2 seconds then navigate back to home OR show parable/scripture unlock.
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
@@ -506,6 +527,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     setState(() {
       _isLevelCompleteOverlayVisible = false;
     });
+
+    if (newlyUnlockedScripture != null && completedModule != null) {
+      if (ref.read(debugPlayModeProvider)) {
+        ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
+      }
+      await _showScriptureUnlockedDialog(
+          newlyUnlockedScripture, completedModule);
+      return;
+    }
 
     if (completedModule != null) {
       // Clear debug selection if active
@@ -525,6 +555,142 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
+  Future<void> _showScriptureUnlockedDialog(
+    ModuleScripture scripture,
+    ModuleData module,
+  ) async {
+    if (!mounted) return;
+
+    ref.read(analyticsServiceProvider).logParableViewed(scripture.id);
+
+    final progress = ref.read(gameProgressProvider);
+    final savedTranslationId = progress.unlockedTranslations[scripture.id];
+
+    String resolvedText = '';
+    String displayCitation = scripture.reference;
+
+    try {
+      final result = await ref.read(scriptureServiceProvider).loadScripture(
+            scripture.reference,
+            translationId: savedTranslationId,
+          );
+
+      resolvedText = result['text'] ?? '';
+      final translationCode = result['translation'] ?? 'KJV';
+      displayCitation = '${scripture.reference} ($translationCode)';
+    } catch (e, stack) {
+      LoggerService.error(
+        'Error loading scripture for unlocked dialog',
+        error: e,
+        stackTrace: stack,
+        tag: 'GameScreen',
+      );
+    }
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final cs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: cs.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.spa, color: cs.primary, size: 28),
+              const SizedBox(width: 8),
+              Text(
+                scripture.type == 'starter'
+                    ? 'Starter Scripture!'
+                    : 'Scripture Collected!',
+                style: TextStyle(
+                  color: cs.primary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  scripture.title,
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                if (resolvedText.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cs.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: cs.outlineVariant),
+                    ),
+                    child: Text(
+                      resolvedText,
+                      style: TextStyle(
+                        color: cs.onSurface,
+                        fontSize: 15,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Text(
+                  displayCitation,
+                  style: TextStyle(
+                    color: cs.onSurfaceVariant,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Added to your Journal under the ${module.name} set.',
+                  style: TextStyle(
+                    color: cs.primary,
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).pop(); // pop game screen to home
+                Navigator.of(context).pushNamed('/journal');
+              },
+              child: const Text('VIEW JOURNAL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              child: const Text('CONTINUE'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _showParableUnlockedDialog(ModuleData module) async {
     if (!mounted) return;
 
@@ -541,12 +707,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (scripture != null && scripture.isNotEmpty) {
       try {
         final progress = ref.read(gameProgressProvider);
-        final savedTranslationId = progress.unlockedTranslations[module.id.toString()];
+        final savedTranslationId =
+            progress.unlockedTranslations[module.id.toString()];
 
         final result = await ref.read(scriptureServiceProvider).loadScripture(
-          scripture,
-          translationId: savedTranslationId,
-        );
+              scripture,
+              translationId: savedTranslationId,
+            );
 
         resolvedText = result['text'] ?? resolvedText;
         final translationCode = result['translation'] ?? 'KJV';
@@ -554,9 +721,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
         if (savedTranslationId == null) {
           await ref.read(gameProgressProvider.notifier).saveUnlockedTranslation(
-            module.id.toString(),
-            translationCode.toLowerCase(),
-          );
+                module.id.toString(),
+                translationCode.toLowerCase(),
+              );
         }
       } catch (e, stack) {
         LoggerService.error(

@@ -13,7 +13,10 @@ class GameProgress {
       savedMainGameLevel; // Level ID to return to after tutorial replay
 
   // Scripture tracking (unlocked translations per module)
-  final Map<String, String> unlockedTranslations; // maps moduleId to translationId
+  final Map<String, String>
+      unlockedTranslations; // maps moduleId or scriptureId to translationId
+  final Set<String>
+      unlockedScriptureIds; // individual unlocked micro-verse or starter scripture IDs
 
   GameProgress({
     this.currentLesson,
@@ -24,6 +27,7 @@ class GameProgress {
     required this.tutorialCompleted,
     this.savedMainGameLevel,
     required this.unlockedTranslations,
+    required this.unlockedScriptureIds,
   });
 
   GameProgress copyWith({
@@ -35,6 +39,7 @@ class GameProgress {
     bool? tutorialCompleted,
     String? savedMainGameLevel,
     Map<String, String>? unlockedTranslations,
+    Set<String>? unlockedScriptureIds,
   }) {
     return GameProgress(
       currentLesson: currentLesson ?? this.currentLesson,
@@ -45,6 +50,7 @@ class GameProgress {
       tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
       savedMainGameLevel: savedMainGameLevel ?? this.savedMainGameLevel,
       unlockedTranslations: unlockedTranslations ?? this.unlockedTranslations,
+      unlockedScriptureIds: unlockedScriptureIds ?? this.unlockedScriptureIds,
     );
   }
 
@@ -58,6 +64,7 @@ class GameProgress {
       tutorialCompleted: false,
       savedMainGameLevel: null,
       unlockedTranslations: {},
+      unlockedScriptureIds: {},
     );
   }
 
@@ -115,6 +122,7 @@ class GameProgress {
       'tutorialCompleted': tutorialCompleted,
       'savedMainGameLevel': savedMainGameLevel,
       'unlockedTranslations': unlockedTranslations,
+      'unlockedScriptureIds': unlockedScriptureIds.toList(),
     };
   }
 
@@ -154,9 +162,16 @@ class GameProgress {
           : rawSavedLevel.toString();
     }
 
-    final unlockedTranslationsMap = (json['unlockedTranslations'] as Map<dynamic, dynamic>?)
-            ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
-        <String, String>{};
+    final unlockedTranslationsMap =
+        (json['unlockedTranslations'] as Map<dynamic, dynamic>?)
+                ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
+            <String, String>{};
+
+    final unlockedScriptureIdsList =
+        (json['unlockedScriptureIds'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
 
     return GameProgress(
       currentLesson: currentLessonStr,
@@ -167,6 +182,7 @@ class GameProgress {
       tutorialCompleted: json['tutorialCompleted'] ?? false,
       savedMainGameLevel: savedLevelStr,
       unlockedTranslations: unlockedTranslationsMap,
+      unlockedScriptureIds: Set<String>.from(unlockedScriptureIdsList),
     );
   }
 
@@ -226,7 +242,8 @@ class GameProgress {
           _setEquals(completedLevels, other.completedLevels) &&
           tutorialCompleted == other.tutorialCompleted &&
           savedMainGameLevel == other.savedMainGameLevel &&
-          _mapEquals(unlockedTranslations, other.unlockedTranslations);
+          _mapEquals(unlockedTranslations, other.unlockedTranslations) &&
+          _setEquals(unlockedScriptureIds, other.unlockedScriptureIds);
 
   @override
   int get hashCode =>
@@ -237,7 +254,8 @@ class GameProgress {
       completedLevels.hashCode ^
       tutorialCompleted.hashCode ^
       savedMainGameLevel.hashCode ^
-      unlockedTranslations.hashCode;
+      unlockedTranslations.hashCode ^
+      unlockedScriptureIds.hashCode;
 
   bool _setEquals(Set<String> a, Set<String> b) {
     return a.length == b.length && a.every(b.contains);
@@ -253,5 +271,5 @@ class GameProgress {
 
   @override
   String toString() =>
-      'GameProgress(currentLesson: $currentLesson, lessonCompleted: $lessonCompleted, currentLevel: $currentLevel, tutorialCompleted: $tutorialCompleted, unlockedTranslationsCount: ${unlockedTranslations.length})';
+      'GameProgress(currentLesson: $currentLesson, lessonCompleted: $lessonCompleted, currentLevel: $currentLevel, tutorialCompleted: $tutorialCompleted, unlockedTranslationsCount: ${unlockedTranslations.length}, unlockedScripturesCount: ${unlockedScriptureIds.length})';
 }

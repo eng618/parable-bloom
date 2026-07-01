@@ -49,6 +49,7 @@ void main() {
         tutorialCompleted: false,
         savedMainGameLevel: null,
         unlockedTranslations: {},
+        unlockedScriptureIds: {},
       );
       final p2 = GameProgress(
         currentLesson: 'lesson_2',
@@ -59,6 +60,7 @@ void main() {
         tutorialCompleted: false,
         savedMainGameLevel: null,
         unlockedTranslations: {},
+        unlockedScriptureIds: {},
       );
       expect(p1, equals(p2));
     });

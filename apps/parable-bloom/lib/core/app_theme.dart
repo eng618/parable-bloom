@@ -36,7 +36,7 @@ class AppTheme {
   static const Color vineGreen = secondarySeed;
 
   static const Color vineAttemptedLight =
-      primarySeed; // soft blue for light theme (replaces jet black)
+      Color(0xFF2E638C); // soft dark-blue for light theme (replaces jet black)
   static const Color vineAttemptedDark =
       Color(0xFFFFFFFF); // white for dark theme
 
