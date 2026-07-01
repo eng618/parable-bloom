@@ -2,12 +2,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../services/analytics_service.dart';
+import '../services/scripture_service.dart';
 
 final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
   return AnalyticsService();
 });
 
+final scriptureServiceProvider = Provider<ScriptureService>((ref) {
+  return ScriptureService();
+});
+
 final appVersionProvider = FutureProvider<String>((ref) async {
+
   final packageInfo = await PackageInfo.fromPlatform();
   return '${packageInfo.version}+${packageInfo.buildNumber}';
 });

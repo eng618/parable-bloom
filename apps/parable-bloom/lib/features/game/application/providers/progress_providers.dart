@@ -176,6 +176,13 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     state = GameProgress.initial();
   }
 
+  Future<void> saveUnlockedTranslation(String moduleId, String translationId) async {
+    final updatedTranslations = Map<String, String>.from(state.unlockedTranslations)
+      ..[moduleId] = translationId;
+    final newProgress = state.copyWith(unlockedTranslations: updatedTranslations);
+    await _saveProgress(newProgress);
+  }
+
   Future<void> _saveProgress(GameProgress progress) async {
     final repository = ref.read(gameProgressRepositoryProvider);
     await repository.saveProgress(progress);

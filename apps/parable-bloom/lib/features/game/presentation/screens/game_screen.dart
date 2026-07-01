@@ -533,8 +533,42 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final parable = module.parable;
     final title = (parable['title'] as String?)?.trim();
     final scripture = (parable['scripture'] as String?)?.trim();
-    final content = (parable['content'] as String?)?.trim();
     final reflection = (parable['reflection'] as String?)?.trim();
+
+    String resolvedText = (parable['content'] as String?)?.trim() ?? '';
+    String displayCitation = scripture ?? '';
+
+    if (scripture != null && scripture.isNotEmpty) {
+      try {
+        final progress = ref.read(gameProgressProvider);
+        final savedTranslationId = progress.unlockedTranslations[module.id.toString()];
+
+        final result = await ref.read(scriptureServiceProvider).loadScripture(
+          scripture,
+          translationId: savedTranslationId,
+        );
+
+        resolvedText = result['text'] ?? resolvedText;
+        final translationCode = result['translation'] ?? 'KJV';
+        displayCitation = '$scripture ($translationCode)';
+
+        if (savedTranslationId == null) {
+          await ref.read(gameProgressProvider.notifier).saveUnlockedTranslation(
+            module.id.toString(),
+            translationCode.toLowerCase(),
+          );
+        }
+      } catch (e, stack) {
+        LoggerService.error(
+          'Error loading scripture for unlocked parable dialog',
+          error: e,
+          stackTrace: stack,
+          tag: 'GameScreen',
+        );
+      }
+    }
+
+    if (!mounted) return;
 
     await showDialog<void>(
       context: context,
@@ -567,10 +601,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
-                if (scripture?.isNotEmpty == true) ...[
+                if (displayCitation.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
-                    scripture!,
+                    displayCitation,
                     style: TextStyle(
                       color: cs.onSurface,
                       fontSize: 14,
@@ -579,10 +613,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     textAlign: TextAlign.center,
                   ),
                 ],
-                if (content?.isNotEmpty == true) ...[
+                if (resolvedText.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
-                    content!,
+                    resolvedText,
                     style: TextStyle(color: cs.onSurface, fontSize: 14),
                     textAlign: TextAlign.left,
                   ),
