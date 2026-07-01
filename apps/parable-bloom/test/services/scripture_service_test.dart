@@ -15,26 +15,49 @@ void main() {
       await service.initialize();
 
       // Test loading Matthew 13:31-32
-      final result1 = await service.loadScripture('Matthew 13:31-32', translationId: 'kjv');
+      final result1 =
+          await service.loadScripture('Matthew 13:31-32', translationId: 'kjv');
       expect(result1['translation'], 'KJV');
       expect(result1['text']!.contains('mustard seed'), true);
 
       // Test loading Matthew 9:37-38
-      final result2 = await service.loadScripture('Matthew 9:37-38', translationId: 'kjv');
+      final result2 =
+          await service.loadScripture('Matthew 9:37-38', translationId: 'kjv');
       expect(result2['translation'], 'KJV');
       expect(result2['text']!.contains('harvest'), true);
       expect(result2['text']!.contains('labourers'), true);
     });
 
-    test('Gracefully falls back to KJV for unknown translation or invalid online fetch', () async {
+    test('Loads KJV micro-verses correctly from local database', () async {
+      await service.initialize();
+
+      final result1 =
+          await service.loadScripture('Luke 8:11', translationId: 'kjv');
+      expect(result1['text']!.contains('seed is the word'), true);
+
+      final result2 =
+          await service.loadScripture('Luke 17:6', translationId: 'kjv');
+      expect(result2['text']!.contains('mustard seed'), true);
+
+      final result3 =
+          await service.loadScripture('Galatians 6:9', translationId: 'kjv');
+      expect(result3['text']!.contains('due season'), true);
+    });
+
+    test(
+        'Gracefully falls back to KJV for unknown translation or invalid online fetch',
+        () async {
       // If we pass 'invalid_id', it should fall back to KJV
-      final result = await service.loadScripture('Mark 4:26-29', translationId: 'invalid_id');
+      final result = await service.loadScripture('Mark 4:26-29',
+          translationId: 'invalid_id');
       expect(result['translation'], 'KJV');
       expect(result['text']!.contains('kingdom of God'), true);
     });
 
-    test('Returns warning message for completely missing scripture references', () async {
-      final result = await service.loadScripture('Genesis 1:1', translationId: 'kjv');
+    test('Returns warning message for completely missing scripture references',
+        () async {
+      final result =
+          await service.loadScripture('Genesis 1:1', translationId: 'kjv');
       expect(result['text']!.contains('not found in offline library'), true);
     });
 
@@ -43,7 +66,9 @@ void main() {
       expect(translationId.isNotEmpty, true);
       // Valid active translations from metadata config: web, kjv, net, esv, csb (subject to connectivity)
       final validActive = {'web', 'kjv', 'net', 'esv', 'csb'};
-      expect(validActive.contains(translationId), true, reason: 'Picked translation "$translationId" should be in active list');
+      expect(validActive.contains(translationId), true,
+          reason:
+              'Picked translation "$translationId" should be in active list');
     });
   });
 }

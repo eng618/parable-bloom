@@ -1,6 +1,32 @@
 import '../../../../core/vine_color_palette.dart';
 import '../../../../services/logger_service.dart';
 
+class ModuleScripture {
+  final String id;
+  final String triggerLevel;
+  final String reference;
+  final String title;
+  final String type; // 'starter' or 'supporting'
+
+  ModuleScripture({
+    required this.id,
+    required this.triggerLevel,
+    required this.reference,
+    required this.title,
+    required this.type,
+  });
+
+  factory ModuleScripture.fromJson(Map<String, dynamic> json) {
+    return ModuleScripture(
+      id: json['id'] as String,
+      triggerLevel: json['trigger_level'] as String,
+      reference: json['reference'] as String,
+      title: json['title'] as String,
+      type: json['type'] as String,
+    );
+  }
+}
+
 // Module data model
 class ModuleData {
   final int id;
@@ -10,6 +36,7 @@ class ModuleData {
   final String challengeLevel;
   final Map<String, dynamic> parable;
   final String unlockMessage;
+  final List<ModuleScripture> scriptures;
 
   ModuleData({
     required this.id,
@@ -19,6 +46,7 @@ class ModuleData {
     required this.challengeLevel,
     required this.parable,
     required this.unlockMessage,
+    required this.scriptures,
   });
 
   // Computed properties for manifest-driven sequence mapping
@@ -54,6 +82,10 @@ class ModuleData {
       challengeLevel: (json['challenge_level'] ?? '').toString(),
       parable: json['parable'] as Map<String, dynamic>,
       unlockMessage: (json['unlock_message'] as String?) ?? '',
+      scriptures: (json['scriptures'] as List<dynamic>?)
+              ?.map((e) => ModuleScripture.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 }

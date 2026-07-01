@@ -154,7 +154,37 @@
         "reflection": "Where does the seed of God's word fall in your life?",
         "background_image": ""
       },
-      "unlock_message": "Your journey begins..."
+      "unlock_message": "Your journey begins...",
+      "scriptures": [
+        {
+          "id": "seed_starter",
+          "trigger_level": "lesson_5",
+          "reference": "Luke 8:11",
+          "title": "The Seed is the Word",
+          "type": "starter"
+        },
+        {
+          "id": "seed_micro_1",
+          "trigger_level": "lvl_seed_05",
+          "reference": "Ecclesiastes 11:6",
+          "title": "Sowing the Seed",
+          "type": "supporting"
+        },
+        {
+          "id": "seed_micro_2",
+          "trigger_level": "lvl_seed_10",
+          "reference": "Psalm 126:6",
+          "title": "Sowing in Faith",
+          "type": "supporting"
+        },
+        {
+          "id": "seed_micro_3",
+          "trigger_level": "lvl_seed_15",
+          "reference": "Hosea 10:12",
+          "title": "The Heart's Soil",
+          "type": "supporting"
+        }
+      ]
     },
     {
       "id": 2,
@@ -190,7 +220,30 @@
         "reflection": "How has small faith grown into something greater in your life?",
         "background_image": ""
       },
-      "unlock_message": "Growth takes patience..."
+      "unlock_message": "Growth takes patience...",
+      "scriptures": [
+        {
+          "id": "sprout_micro_1",
+          "trigger_level": "lvl_sprout_05",
+          "reference": "Job 8:7",
+          "title": "Small Beginnings",
+          "type": "supporting"
+        },
+        {
+          "id": "sprout_micro_2",
+          "trigger_level": "lvl_sprout_10",
+          "reference": "Luke 17:6",
+          "title": "Faith Like a Grain",
+          "type": "supporting"
+        },
+        {
+          "id": "sprout_micro_3",
+          "trigger_level": "lvl_sprout_15",
+          "reference": "Ezekiel 17:23",
+          "title": "A Goodly Cedar",
+          "type": "supporting"
+        }
+      ]
     },
     {
       "id": 3,
@@ -226,7 +279,30 @@
         "reflection": "What seeds have you planted that are growing beyond your understanding?",
         "background_image": ""
       },
-      "unlock_message": "Beauty unfolds in time..."
+      "unlock_message": "Beauty unfolds in time...",
+      "scriptures": [
+        {
+          "id": "blossom_micro_1",
+          "trigger_level": "lvl_blossom_05",
+          "reference": "1 Corinthians 3:6",
+          "title": "God Gives the Increase",
+          "type": "supporting"
+        },
+        {
+          "id": "blossom_micro_2",
+          "trigger_level": "lvl_blossom_10",
+          "reference": "James 5:7",
+          "title": "Patience for the Rain",
+          "type": "supporting"
+        },
+        {
+          "id": "blossom_micro_3",
+          "trigger_level": "lvl_blossom_15",
+          "reference": "Ecclesiastes 11:5",
+          "title": "Unseen Works of God",
+          "type": "supporting"
+        }
+      ]
     },
     {
       "id": 4,
@@ -262,7 +338,30 @@
         "reflection": "How do you remain in Christ to bear fruit?",
         "background_image": ""
       },
-      "unlock_message": "Bear fruit in abundance..."
+      "unlock_message": "Bear fruit in abundance...",
+      "scriptures": [
+        {
+          "id": "flourish_micro_1",
+          "trigger_level": "lvl_flourish_05",
+          "reference": "Psalm 80:15",
+          "title": "The Rooted Vine",
+          "type": "supporting"
+        },
+        {
+          "id": "flourish_micro_2",
+          "trigger_level": "lvl_flourish_10",
+          "reference": "Hebrews 12:11",
+          "title": "The Fruit of Pruning",
+          "type": "supporting"
+        },
+        {
+          "id": "flourish_micro_3",
+          "trigger_level": "lvl_flourish_15",
+          "reference": "Colossians 2:7",
+          "title": "Built Up in Him",
+          "type": "supporting"
+        }
+      ]
     },
     {
       "id": 5,
@@ -298,7 +397,30 @@
         "reflection": "How is God calling you to labor in His harvest field?",
         "background_image": ""
       },
-      "unlock_message": "Reap what you have sown..."
+      "unlock_message": "Reap what you have sown...",
+      "scriptures": [
+        {
+          "id": "harvest_micro_1",
+          "trigger_level": "lvl_harvest_05",
+          "reference": "Galatians 6:9",
+          "title": "Reaping in Due Season",
+          "type": "supporting"
+        },
+        {
+          "id": "harvest_micro_2",
+          "trigger_level": "lvl_harvest_10",
+          "reference": "Psalm 126:5",
+          "title": "Reaping in Joy",
+          "type": "supporting"
+        },
+        {
+          "id": "harvest_micro_3",
+          "trigger_level": "lvl_harvest_15",
+          "reference": "John 4:35",
+          "title": "Lift Up Your Eyes",
+          "type": "supporting"
+        }
+      ]
     }
   ]
 }

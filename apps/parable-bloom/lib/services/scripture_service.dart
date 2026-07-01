@@ -15,20 +15,26 @@ class ScriptureService {
   Future<void> initialize() async {
     try {
       if (_translations == null) {
-        final metadataStr = await rootBundle.loadString('assets/data/scripture_metadata.json');
+        final metadataStr =
+            await rootBundle.loadString('assets/data/scripture_metadata.json');
         final metadataJson = json.decode(metadataStr) as Map<String, dynamic>;
         _translations = metadataJson['translations'] as List<dynamic>;
-        LoggerService.info('Initialized scripture metadata with ${_translations?.length} translations.', tag: 'ScriptureService');
+        LoggerService.info(
+            'Initialized scripture metadata with ${_translations?.length} translations.',
+            tag: 'ScriptureService');
       }
 
       if (_scriptureLibrary == null) {
-        final libraryStr = await rootBundle.loadString('assets/data/scripture_library.json');
+        final libraryStr =
+            await rootBundle.loadString('assets/data/scripture_library.json');
         final libraryJson = json.decode(libraryStr) as Map<String, dynamic>;
         _scriptureLibrary = libraryJson['passages'] as Map<String, dynamic>;
-        LoggerService.info('Initialized scripture library database.', tag: 'ScriptureService');
+        LoggerService.info('Initialized scripture library database.',
+            tag: 'ScriptureService');
       }
     } catch (e, stack) {
-      LoggerService.error('Failed to initialize ScriptureService', error: e, stackTrace: stack, tag: 'ScriptureService');
+      LoggerService.error('Failed to initialize ScriptureService',
+          error: e, stackTrace: stack, tag: 'ScriptureService');
     }
   }
 
@@ -61,12 +67,13 @@ class ScriptureService {
 
   /// Fetches a scripture text, falling back to KJV if it is online-only and we are offline, or if retrieval fails.
   /// Returns a map containing the loaded text and the selected translation abbreviation.
-  Future<Map<String, String>> loadScripture(String reference, {String? translationId}) async {
+  Future<Map<String, String>> loadScripture(String reference,
+      {String? translationId}) async {
     await initialize();
-    
+
     // 1. Pick a random translation if none is specified
     final targetId = translationId ?? await pickRandomActiveTranslation();
-    
+
     // 2. Fetch the text
     String text = '';
     String finalId = targetId;
@@ -82,16 +89,22 @@ class ScriptureService {
         // For now we fall back to local KJV (which is what we have for now).
         final localResult = _getLocalTextAndVersion(reference, 'KJV');
         text = localResult['text']!;
-        finalId = 'kjv'; // Fallback to KJV for now since online API isn't built yet
-        LoggerService.info('Fetched scripture $reference in $targetId (simulated online fetch fallback to local KJV)', tag: 'ScriptureService');
+        finalId =
+            'kjv'; // Fallback to KJV for now since online API isn't built yet
+        LoggerService.info(
+            'Fetched scripture $reference in $targetId (simulated online fetch fallback to local KJV)',
+            tag: 'ScriptureService');
       } else {
         // Load local translation
-        final localResult = _getLocalTextAndVersion(reference, targetId.toUpperCase());
+        final localResult =
+            _getLocalTextAndVersion(reference, targetId.toUpperCase());
         text = localResult['text']!;
         finalId = localResult['version']!.toLowerCase();
       }
     } catch (e) {
-      LoggerService.warn('Failed to fetch scripture $reference in $targetId. Falling back to KJV. Error: $e', tag: 'ScriptureService');
+      LoggerService.warn(
+          'Failed to fetch scripture $reference in $targetId. Falling back to KJV. Error: $e',
+          tag: 'ScriptureService');
       final localResult = _getLocalTextAndVersion(reference, 'KJV');
       text = localResult['text']!;
       finalId = 'kjv';
@@ -103,14 +116,15 @@ class ScriptureService {
     };
   }
 
-  Map<String, String> _getLocalTextAndVersion(String reference, String versionKey) {
+  Map<String, String> _getLocalTextAndVersion(
+      String reference, String versionKey) {
     if (_scriptureLibrary == null) {
       return {
         'text': 'Scripture database not loaded.',
         'version': 'KJV',
       };
     }
-    
+
     final passage = _scriptureLibrary![reference] as Map<String, dynamic>?;
     if (passage == null) {
       return {
@@ -118,7 +132,7 @@ class ScriptureService {
         'version': 'KJV',
       };
     }
-    
+
     final text = passage[versionKey] as String?;
     if (text != null && text.isNotEmpty) {
       return {
@@ -145,7 +159,9 @@ class ScriptureService {
   bool _isTranslationOnlineOnly(String translationId) {
     if (_translations == null) return false;
     final trans = _translations!.firstWhere(
-      (element) => (element['id'] as String).toLowerCase() == translationId.toLowerCase(),
+      (element) =>
+          (element['id'] as String).toLowerCase() ==
+          translationId.toLowerCase(),
       orElse: () => null,
     );
     return trans != null ? (trans['requiresOnline'] as bool) : false;

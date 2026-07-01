@@ -11,6 +11,8 @@ import 'package:parable_bloom/features/game/domain/repositories/game_progress_re
 import 'package:parable_bloom/features/tutorial/presentation/screens/tutorial_flow_screen.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/providers/infrastructure_providers.dart';
+import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
+import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 
 class _InMemoryRepo implements GameProgressRepository {
   GameProgress _progress = GameProgress.initial();
@@ -120,10 +122,23 @@ class _FakeBox implements Box<dynamic> {
 void main() {
   testWidgets('Level complete advances to next lesson', (tester) async {
     final repo = _InMemoryRepo();
+    final mockModules = [
+      ModuleData(
+        id: 1,
+        name: 'Seedling',
+        themeSeed: 'forest',
+        levels: const [],
+        challengeLevel: '',
+        parable: const {},
+        unlockMessage: '',
+        scriptures: const [],
+      ),
+    ];
     final overrides = [
       hiveBoxProvider.overrideWithValue(_FakeBox()),
       gameProgressRepositoryProvider.overrideWithValue(repo),
       disableAnimationsProvider.overrideWithValue(true),
+      modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
       lessonProvider(1).overrideWithValue(
         const AsyncValue.data(
           LessonData(
@@ -198,10 +213,23 @@ void main() {
 
   testWidgets('Completing all lessons navigates home', (tester) async {
     final repo = _InMemoryRepo();
+    final mockModules = [
+      ModuleData(
+        id: 1,
+        name: 'Seedling',
+        themeSeed: 'forest',
+        levels: const [],
+        challengeLevel: '',
+        parable: const {},
+        unlockMessage: '',
+        scriptures: const [],
+      ),
+    ];
     final overrides = [
       hiveBoxProvider.overrideWithValue(_FakeBox()),
       gameProgressRepositoryProvider.overrideWithValue(repo),
       disableAnimationsProvider.overrideWithValue(true),
+      modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
       lessonProvider(1).overrideWithValue(const AsyncValue.data(
         LessonData(
           id: 1,
@@ -303,10 +331,23 @@ void main() {
 
   testWidgets('GameHeader pause button shows pause menu', (tester) async {
     final repo = _InMemoryRepo();
+    final mockModules = [
+      ModuleData(
+        id: 1,
+        name: 'Seedling',
+        themeSeed: 'forest',
+        levels: const [],
+        challengeLevel: '',
+        parable: const {},
+        unlockMessage: '',
+        scriptures: const [],
+      ),
+    ];
     final overrides = [
       hiveBoxProvider.overrideWithValue(_FakeBox()),
       gameProgressRepositoryProvider.overrideWithValue(repo),
       disableAnimationsProvider.overrideWithValue(true),
+      modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
       lessonProvider(1).overrideWithValue(
         const AsyncValue.data(
           LessonData(

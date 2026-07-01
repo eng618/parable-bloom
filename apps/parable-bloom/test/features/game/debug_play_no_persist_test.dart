@@ -162,6 +162,7 @@ void main() {
               challengeLevel: 'lvl_seed_challenge',
               parable: const {},
               unlockMessage: '',
+              scriptures: const [],
             ),
           ])),
         ],

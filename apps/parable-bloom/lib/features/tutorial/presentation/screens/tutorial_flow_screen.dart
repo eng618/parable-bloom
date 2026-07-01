@@ -16,6 +16,11 @@ import '../../../game/presentation/widgets/pause_menu_dialog.dart';
 import '../widgets/tutorial_guide_overlay.dart';
 import '../../../game/presentation/widgets/pond_ripple_effect_component.dart';
 import '../../../game/presentation/widgets/ripple_fireworks_component.dart';
+import '../../../game/application/providers/progress_providers.dart';
+import '../../../game/application/providers/module_providers.dart';
+import '../../../../providers/service_providers.dart';
+import '../../../../services/scripture_service.dart';
+import '../../../game/domain/entities/level_data.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
 /// Shows the game with GameHeader (pause, grace) and a simple instruction overlay.
@@ -443,7 +448,8 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_game != null) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final animationColors = isDark ? [AppTheme.secondarySeed] : [AppTheme.primarySeed];
+        final animationColors =
+            isDark ? [AppTheme.secondarySeed] : [AppTheme.primarySeed];
         final center = Vector2(_game!.size.x / 2, _game!.size.y / 2);
         final effect = ref.read(celebrationEffectProvider);
         switch (effect) {
@@ -490,6 +496,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     // Get current lesson before advancing
     final beforeLesson = ref.read(tutorialProgressProvider).currentLesson;
 
+    final prevUnlockedScriptures =
+        ref.read(gameProgressProvider).unlockedScriptureIds;
+
     // Advance to next lesson
     await ref
         .read(tutorialProgressProvider.notifier)
@@ -498,6 +507,33 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     // Reset completion flags
     ref.read(levelCompleteProvider.notifier).setComplete(false);
     ref.read(gameCompletedProvider.notifier).setCompleted(false);
+
+    final postProgress = ref.read(gameProgressProvider);
+    ModuleScripture? unlockedScripture;
+    ModuleData? completedModule;
+
+    try {
+      final modules = await ref.read(modulesProvider.future);
+      for (final m in modules) {
+        for (final s in m.scriptures) {
+          if (!prevUnlockedScriptures.contains(s.id) &&
+              postProgress.unlockedScriptureIds.contains(s.id)) {
+            unlockedScripture = s;
+            completedModule = m;
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      LoggerService.error(
+          'Failed to look up unlocked scripture in tutorial completion',
+          error: e);
+    }
+
+    if (unlockedScripture != null && completedModule != null) {
+      await _showScriptureUnlockedDialog(unlockedScripture, completedModule);
+      return;
+    }
 
     // Check if we advanced to a new lesson
     final after = ref.read(tutorialProgressProvider);
@@ -508,6 +544,140 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         _game = null; // Will be recreated in build
       });
     }
+  }
+
+  Future<void> _showScriptureUnlockedDialog(
+    ModuleScripture scripture,
+    ModuleData module,
+  ) async {
+    if (!mounted) return;
+
+    final progress = ref.read(gameProgressProvider);
+    final savedTranslationId = progress.unlockedTranslations[scripture.id];
+
+    String resolvedText = '';
+    String displayCitation = scripture.reference;
+
+    try {
+      final result = await ref.read(scriptureServiceProvider).loadScripture(
+            scripture.reference,
+            translationId: savedTranslationId,
+          );
+
+      resolvedText = result['text'] ?? '';
+      final translationCode = result['translation'] ?? 'KJV';
+      displayCitation = '${scripture.reference} ($translationCode)';
+    } catch (e, stack) {
+      LoggerService.error(
+        'Error loading scripture for unlocked dialog',
+        error: e,
+        stackTrace: stack,
+        tag: 'TutorialFlowScreen',
+      );
+    }
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final cs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: cs.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.spa, color: cs.primary, size: 28),
+              const SizedBox(width: 8),
+              Text(
+                scripture.type == 'starter'
+                    ? 'Starter Scripture!'
+                    : 'Scripture Collected!',
+                style: TextStyle(
+                  color: cs.primary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  scripture.title,
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                if (resolvedText.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cs.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: cs.outlineVariant),
+                    ),
+                    child: Text(
+                      resolvedText,
+                      style: TextStyle(
+                        color: cs.onSurface,
+                        fontSize: 15,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Text(
+                  displayCitation,
+                  style: TextStyle(
+                    color: cs.onSurfaceVariant,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Added to your Journal under the ${module.name} set.',
+                  style: TextStyle(
+                    color: cs.primary,
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.of(context).pushNamed('/journal');
+              },
+              child: const Text('VIEW JOURNAL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              child: const Text('CONTINUE'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildLevelCompleteOverlay() {

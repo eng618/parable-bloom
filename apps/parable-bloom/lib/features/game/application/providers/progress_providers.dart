@@ -92,15 +92,51 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     );
 
     final modulesList = await ref.read(modulesProvider.future);
+    if (!ref.mounted) return;
     final playlist = modulesList.expand((m) => m.allLevels).toList();
     final newProgress = state.completeLevel(levelId, playlist);
 
+    var updatedProgress = newProgress;
+    try {
+      for (final module in modulesList) {
+        for (final scripture in module.scriptures) {
+          if (scripture.triggerLevel == levelId) {
+            if (!updatedProgress.unlockedScriptureIds.contains(scripture.id)) {
+              final newScriptures =
+                  Set<String>.from(updatedProgress.unlockedScriptureIds)
+                    ..add(scripture.id);
+              final scriptureService = ref.read(scriptureServiceProvider);
+              final translationId =
+                  await scriptureService.pickRandomActiveTranslation();
+              if (!ref.mounted) return;
+              final updatedTranslations =
+                  Map<String, String>.from(updatedProgress.unlockedTranslations)
+                    ..[scripture.id] = translationId;
+
+              updatedProgress = updatedProgress.copyWith(
+                unlockedScriptureIds: newScriptures,
+                unlockedTranslations: updatedTranslations,
+              );
+              LoggerService.info(
+                'Scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $translationId',
+                tag: 'GameProgressNotifier',
+              );
+            }
+          }
+        }
+      }
+    } catch (e, stack) {
+      LoggerService.error('Error checking scripture unlocks in completeLevel',
+          error: e, stackTrace: stack);
+    }
+
     LoggerService.debug(
-      'New progress: $newProgress',
+      'New progress: $updatedProgress',
       tag: 'GameProgressNotifier',
     );
 
-    await _saveProgress(newProgress);
+    if (!ref.mounted) return;
+    await _saveProgress(updatedProgress);
 
     LoggerService.debug(
       'After save, state is: $state',
@@ -146,7 +182,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     final newCompletedLessons = Set<String>.from(state.completedLessons)
       ..add(lessonId);
 
-    final newProgress = state.copyWith(
+    var newProgress = state.copyWith(
       completedLessons: newCompletedLessons,
       currentLesson: nextLesson,
       lessonCompleted: allLessonsCompleted,
@@ -156,6 +192,42 @@ class GameProgressNotifier extends Notifier<GameProgress> {
           : state.currentLevel,
     );
 
+    try {
+      final modulesList = await ref.read(modulesProvider.future);
+      if (!ref.mounted) return;
+      for (final module in modulesList) {
+        for (final scripture in module.scriptures) {
+          if (scripture.triggerLevel == lessonId) {
+            if (!newProgress.unlockedScriptureIds.contains(scripture.id)) {
+              final newScriptures =
+                  Set<String>.from(newProgress.unlockedScriptureIds)
+                    ..add(scripture.id);
+              final scriptureService = ref.read(scriptureServiceProvider);
+              final translationId =
+                  await scriptureService.pickRandomActiveTranslation();
+              if (!ref.mounted) return;
+              final updatedTranslations =
+                  Map<String, String>.from(newProgress.unlockedTranslations)
+                    ..[scripture.id] = translationId;
+
+              newProgress = newProgress.copyWith(
+                unlockedScriptureIds: newScriptures,
+                unlockedTranslations: updatedTranslations,
+              );
+              LoggerService.info(
+                'Lesson Scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $translationId',
+                tag: 'GameProgressNotifier',
+              );
+            }
+          }
+        }
+      }
+    } catch (e, stack) {
+      LoggerService.error('Error checking scripture unlocks in completeLesson',
+          error: e, stackTrace: stack);
+    }
+
+    if (!ref.mounted) return;
     await _saveProgress(newProgress);
   }
 
@@ -176,16 +248,21 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     state = GameProgress.initial();
   }
 
-  Future<void> saveUnlockedTranslation(String moduleId, String translationId) async {
-    final updatedTranslations = Map<String, String>.from(state.unlockedTranslations)
-      ..[moduleId] = translationId;
-    final newProgress = state.copyWith(unlockedTranslations: updatedTranslations);
+  Future<void> saveUnlockedTranslation(
+      String moduleId, String translationId) async {
+    final updatedTranslations =
+        Map<String, String>.from(state.unlockedTranslations)
+          ..[moduleId] = translationId;
+    final newProgress =
+        state.copyWith(unlockedTranslations: updatedTranslations);
     await _saveProgress(newProgress);
   }
 
   Future<void> _saveProgress(GameProgress progress) async {
+    if (!ref.mounted) return;
     final repository = ref.read(gameProgressRepositoryProvider);
     await repository.saveProgress(progress);
+    if (!ref.mounted) return;
     state = progress;
   }
 

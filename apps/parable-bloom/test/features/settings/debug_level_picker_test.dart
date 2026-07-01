@@ -39,8 +39,9 @@ void main() {
           themeSeed: 'forest',
           levels: ['lvl_seed_01', 'lvl_seed_02'],
           challengeLevel: '',
-          parable: {},
+          parable: const {},
           unlockMessage: '',
+          scriptures: const [],
         ),
       ];
 
@@ -88,8 +89,9 @@ void main() {
           themeSeed: 'forest',
           levels: ['lvl_seed_01', 'lvl_seed_02'],
           challengeLevel: '',
-          parable: {},
+          parable: const {},
           unlockMessage: '',
+          scriptures: const [],
         ),
       ];
 

@@ -13,7 +13,6 @@ final scriptureServiceProvider = Provider<ScriptureService>((ref) {
 });
 
 final appVersionProvider = FutureProvider<String>((ref) async {
-
   final packageInfo = await PackageInfo.fromPlatform();
   return '${packageInfo.version}+${packageInfo.buildNumber}';
 });

@@ -4,6 +4,8 @@ import 'package:parable_bloom/features/tutorial/application/providers/tutorial_p
 import 'mock_repository_example_test.dart';
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
 import 'package:parable_bloom/providers/infrastructure_providers.dart';
+import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
+import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -11,9 +13,22 @@ void main() {
   test('TutorialProgressNotifier completes a lesson and updates GameProgress',
       () async {
     final mockRepo = MockGameProgressRepository();
+    final modules = [
+      ModuleData(
+        id: 1,
+        name: 'Seedling',
+        themeSeed: 'forest',
+        levels: const [],
+        challengeLevel: '',
+        parable: const {},
+        unlockMessage: '',
+        scriptures: const [],
+      ),
+    ];
     final container = ProviderContainer(
       overrides: [
         gameProgressRepositoryProvider.overrideWithValue(mockRepo),
+        modulesProvider.overrideWithValue(AsyncValue.data(modules)),
       ],
     );
     addTearDown(container.dispose);
@@ -41,9 +56,30 @@ void main() {
   test('Completing all lessons marks allComplete and sets currentLevel to 1',
       () async {
     final mockRepo = MockGameProgressRepository();
+    final modules = [
+      ModuleData(
+        id: 1,
+        name: 'Seedling',
+        themeSeed: 'forest',
+        levels: const [],
+        challengeLevel: '',
+        parable: const {},
+        unlockMessage: '',
+        scriptures: [
+          ModuleScripture(
+            id: 'seed_starter',
+            triggerLevel: 'lesson_5',
+            reference: 'Luke 8:11',
+            title: 'The Seed is the Word',
+            type: 'starter',
+          ),
+        ],
+      ),
+    ];
     final container = ProviderContainer(
       overrides: [
         gameProgressRepositoryProvider.overrideWithValue(mockRepo),
+        modulesProvider.overrideWithValue(AsyncValue.data(modules)),
       ],
     );
     addTearDown(container.dispose);
