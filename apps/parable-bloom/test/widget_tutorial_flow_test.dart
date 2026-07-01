@@ -13,6 +13,8 @@ import 'package:parable_bloom/features/game/application/providers/gameplay_state
 import 'package:parable_bloom/providers/infrastructure_providers.dart';
 import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
+import 'package:parable_bloom/providers/service_providers.dart';
+import 'package:parable_bloom/services/scripture_service.dart';
 
 class _InMemoryRepo implements GameProgressRepository {
   GameProgress _progress = GameProgress.initial();
@@ -393,4 +395,121 @@ void main() {
     // Drain any pending timers from the game loop
     await tester.pump(const Duration(seconds: 1));
   });
+
+  testWidgets('Completing lesson 5 triggers starter scripture unlock dialog', (tester) async {
+    final repo = _InMemoryRepo();
+    final mockModules = [
+      ModuleData(
+        id: 1,
+        name: 'Seedling',
+        themeSeed: 'forest',
+        levels: const [],
+        challengeLevel: '',
+        parable: const {},
+        unlockMessage: '',
+        scriptures: [
+          ModuleScripture(
+            id: 'seed_starter',
+            triggerLevel: 'lesson_5',
+            reference: 'Luke 8:11',
+            title: 'The Seed is the Word',
+            type: 'starter',
+          ),
+        ],
+      ),
+    ];
+    final overrides = [
+      hiveBoxProvider.overrideWithValue(_FakeBox()),
+      gameProgressRepositoryProvider.overrideWithValue(repo),
+      disableAnimationsProvider.overrideWithValue(true),
+      modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
+      scriptureServiceProvider.overrideWithValue(_FakeScriptureService()),
+      lessonProvider(1).overrideWithValue(const AsyncValue.data(
+        LessonData(id: 1, title: 'L1', objective: 'o', instructions: 'i', learningPoints: ['a'], gridWidth: 3, gridHeight: 3, vines: []),
+      )),
+      lessonProvider(2).overrideWithValue(const AsyncValue.data(
+        LessonData(id: 2, title: 'L2', objective: 'o', instructions: 'i', learningPoints: ['a'], gridWidth: 3, gridHeight: 3, vines: []),
+      )),
+      lessonProvider(3).overrideWithValue(const AsyncValue.data(
+        LessonData(id: 3, title: 'L3', objective: 'o', instructions: 'i', learningPoints: ['a'], gridWidth: 3, gridHeight: 3, vines: []),
+      )),
+      lessonProvider(4).overrideWithValue(const AsyncValue.data(
+        LessonData(id: 4, title: 'L4', objective: 'o', instructions: 'i', learningPoints: ['a'], gridWidth: 3, gridHeight: 3, vines: []),
+      )),
+      lessonProvider(5).overrideWithValue(const AsyncValue.data(
+        LessonData(id: 5, title: 'L5', objective: 'o', instructions: 'i', learningPoints: ['a'], gridWidth: 3, gridHeight: 3, vines: []),
+      )),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: MaterialApp(
+          theme: AppTheme.lightTheme,
+          initialRoute: '/tutorial',
+          routes: {
+            '/': (ctx) => const Scaffold(body: Center(child: Text('Home'))),
+            '/tutorial': (ctx) => const TutorialFlowScreen(),
+          },
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    // Complete lessons 1 to 4
+    for (var i = 1; i <= 4; i++) {
+      final container = ProviderScope.containerOf(
+          tester.element(find.byType(TutorialFlowScreen)));
+      container.read(levelCompleteProvider.notifier).setComplete(true);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 3));
+    }
+
+    // Complete lesson 5
+    final container = ProviderScope.containerOf(
+        tester.element(find.byType(TutorialFlowScreen)));
+    container.read(levelCompleteProvider.notifier).setComplete(true);
+    await tester.pump();
+
+    // Pump past the 2-second overlay animation delay
+    await tester.pump(const Duration(seconds: 3));
+    
+    // We should be showing the Scripture dialog now!
+    // Expect to find 'Starter Scripture!' title
+    expect(find.text('Starter Scripture!'), findsOneWidget);
+    expect(find.text('The Seed is the Word'), findsOneWidget);
+    expect(find.text('Now the parable is this: The seed is the word of God.'), findsOneWidget);
+    expect(find.text('Luke 8:11 (KJV)'), findsOneWidget);
+
+    // Tap CONTINUE button
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    // After popping, we should be navigated back to Home
+    expect(find.text('Home'), findsOneWidget);
+  });
+}
+
+class _FakeScriptureService implements ScriptureService {
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  List<Map<String, dynamic>> get activeTranslations => [];
+
+  @override
+  Future<String> pickRandomActiveTranslation() async => 'kjv';
+
+  @override
+  Future<Map<String, String>> loadScripture(String reference,
+      {String? translationId}) async {
+    return {
+      'text': 'Now the parable is this: The seed is the word of God.',
+      'translation': 'KJV',
+    };
+  }
+
+  @override
+  Map<String, dynamic>? getMetadata(String translationId) => null;
 }
