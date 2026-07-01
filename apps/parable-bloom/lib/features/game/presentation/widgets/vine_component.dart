@@ -423,6 +423,22 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     if (!_isAnimating) return;
 
+    // Update bloom effect continuously on every frame, independent of the grid stepping frequency
+    if (_isShowingBloomEffect) {
+      _updateBloomEffect(dt);
+
+      // Check for completion when fully off-screen
+      final isFullyOffScreen = _isFullyOffScreen();
+      if (isFullyOffScreen && _bloomEffectTimer >= _bloomEffectDuration) {
+        _logDebug(
+          'Fully off-screen and bloom complete: vineId=${vineData.id}, '
+          'calling _finishAnimation()',
+        );
+        _finishAnimation();
+        return; // Don't run stepping code if finished
+      }
+    }
+
     _animationTimer += dt;
 
     if (_animationTimer >= _stepDuration) {
@@ -597,21 +613,12 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           _startBloomEffect();
         }
 
-        // Update bloom effect continuously while vine is animating off-screen
-        if (_isShowingBloomEffect) {
-          _updateBloomEffect(dt);
-
-          // Continue bloom effect while vine animates, but check for completion when fully off-screen
-          if (isFullyOffScreen && _bloomEffectTimer >= _bloomEffectDuration) {
-            // Bloom effect finished and vine is fully off-screen - remove vine
-            _logDebug(
-              'Fully off-screen and bloom complete: vineId=${vineData.id}, '
-              'calling _finishAnimation()',
-            );
-            _finishAnimation();
-          }
-        } else if (_currentAnimationStep >= _totalAnimationSteps) {
+        if (!_isShowingBloomEffect && _currentAnimationStep >= _totalAnimationSteps) {
           // Fallback: if animation times out, still show effect
+          _logDebug(
+            'Animation steps timeout fallback: vineId=${vineData.id}, '
+            'starting bloom effect',
+          );
           _startBloomEffect();
         }
       } else if (!_canClearThisRun) {

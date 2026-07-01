@@ -74,14 +74,88 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   }
 
   Future<void> initialize() async {
+    if (!ref.mounted) return;
     final repository = ref.read(gameProgressRepositoryProvider);
     try {
       final progress = await repository.getProgress();
+      if (!ref.mounted) return;
       state = progress;
+      await _backfillUnlockedScriptures();
     } catch (e, stack) {
+      if (!ref.mounted) return;
       LoggerService.error('Error initializing GameProgress',
           error: e, stackTrace: stack, tag: 'GameProgressNotifier');
       state = GameProgress.initial();
+    }
+  }
+
+  Future<void> _backfillUnlockedScriptures() async {
+    if (!ref.mounted) return;
+    try {
+      final modulesList = await ref.read(modulesProvider.future);
+      if (!ref.mounted) return;
+      final playlist = modulesList.expand((m) => m.allLevels).toList();
+
+      int maxCompletedIndex = -1;
+      for (final lvl in state.completedLevels) {
+        final idx = playlist.indexOf(lvl);
+        if (idx > maxCompletedIndex) {
+          maxCompletedIndex = idx;
+        }
+      }
+
+      var updatedProgress = state;
+      bool changed = false;
+
+      for (final module in modulesList) {
+        for (final scripture in module.scriptures) {
+          final triggerLvl = scripture.triggerLevel;
+
+          final isTriggeredByLevel = state.completedLevels.contains(triggerLvl);
+          final isTriggeredByLesson = state.completedLessons.contains(triggerLvl);
+
+          final triggerIdx = playlist.indexOf(triggerLvl);
+          final isTriggeredByPriorLevel = triggerIdx != -1 &&
+              maxCompletedIndex != -1 &&
+              triggerIdx <= maxCompletedIndex;
+
+          final shouldBeUnlocked = isTriggeredByLevel || isTriggeredByLesson || isTriggeredByPriorLevel;
+
+          if (shouldBeUnlocked) {
+            if (!updatedProgress.unlockedScriptureIds.contains(scripture.id)) {
+              final newScriptures =
+                  Set<String>.from(updatedProgress.unlockedScriptureIds)
+                    ..add(scripture.id);
+
+              final scriptureService = ref.read(scriptureServiceProvider);
+              final translationId =
+                  await scriptureService.pickRandomActiveTranslation();
+              if (!ref.mounted) return;
+
+              final updatedTranslations =
+                  Map<String, String>.from(updatedProgress.unlockedTranslations)
+                    ..[scripture.id] = translationId;
+
+              updatedProgress = updatedProgress.copyWith(
+                unlockedScriptureIds: newScriptures,
+                unlockedTranslations: updatedTranslations,
+              );
+              changed = true;
+              LoggerService.info(
+                'Backfill scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $translationId',
+                tag: 'GameProgressNotifier',
+              );
+            }
+          }
+        }
+      }
+
+      if (changed) {
+        await _saveProgress(updatedProgress);
+      }
+    } catch (e, stack) {
+      LoggerService.error('Error during unlocked scriptures backfill',
+          error: e, stackTrace: stack, tag: 'GameProgressNotifier');
     }
   }
 
