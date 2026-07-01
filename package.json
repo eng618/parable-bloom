@@ -4,6 +4,6 @@
     "@nx/js": "^22.5.4"
   },
   "dependencies": {
-    "firebase-admin": "^13.10.0"
+    "firebase-admin": "^14.1.0"
   }
 }
