@@ -86,15 +86,16 @@ The game implements several high-performance visual systems within the Flame `Po
 - **Tap Feedback**: `TapEffectComponent` handles the visual pulse and particle effects on user interaction.
 - **Particle System**: `TapEffectComponent` and `VineComponent` (bloom) utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
 - **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input.
-- **Vine Styles (Overhaul & Over-proportioned Dynamic Paths)**: `VineComponent` implements a high-end vector path shader pipeline (Strategy A) drawing smooth, continuous rounded paths directly on the Flutter canvas with customized details:
+- **Vine Styles (Overhaul & Over-proportioned Dynamic Paths)**: `VineComponent` implements a high-end vector path shader pipeline drawing smooth, continuous rounded paths directly on the Flutter canvas with customized details:
   - **Grid Compaction**: Visual layout is compacted (52px cells with 42px spacing) to reduce white space and create a dense, satisfying board.
-  - **Sleek Thinner Profile**: Sleek, uniform stroke widths (14px for Simple, 16px for Premium) with smooth rounded caps and `StrokeJoin.round` bends.
+  - **Visual Profiles**: Clean, high-density stroke profiles (26px for Simple, 16px for Premium) with smooth rounded caps and `StrokeJoin.round` bends to optimize for visual continuity.
+  - **Continuous Path Interpolation**: Animation utilizes a track-based linear interpolation system using delta time (`dt`) rather than step jumps. This provides fluid snake-like sliding for all vine styles, where detailed nodes (leaves, blossoms) slide smoothly along the canvas.
   - **Dynamic Shaders**: Classic, Cherry Blossom, and Ethereal themes load generated high-resolution seamless textures (`classic_vine_texture.png`, etc.) as dynamic `ImageShader` strokes tinted with the vine's group colors, keeping assets extremely lightweight.
   - **Organic Node Details**:
     - **Classic**: Watercolor green ivy leaves growing organically at alternating 45-degree angles along the branch segments.
     - **Cherry Blossom**: Beautiful programmatically-rendered pink cherry blossoms with bright yellow centers at the segment joints.
     - **Ethereal**: Glowing bioluminescent cyber-cyan leaves alongside a soft cyan neon outer-glow blur path drawn underneath the obsidian branch.
-    - **Simple**: Sleek solid vector paths with sharp triangular chevron heads and rounded tail caps, matching the clean maze aesthetic.
+    - **Simple**: Sleek solid vector paths with flat-based triangular arrowheads, matching the clean maze aesthetic. Centered visual segments are drawn for single-cell (length-1) arrows.
 
 ---
 

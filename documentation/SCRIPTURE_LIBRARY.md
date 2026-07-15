@@ -32,6 +32,17 @@ graph TD
 * **Trigger**: Unlocked upon completing a module's Challenge Level.
 * **Purpose**: Delivers the complete parable passage, reflection, and journaling options.
 
+### 1.4 Backfill Migration for Existing Users
+
+To support existing users who completed levels before the scripture progression updates, a migration mechanism is integrated directly into the app startup sequence:
+
+* **Trigger**: Automatically runs when the app initializes game progress (inside `GameProgressNotifier.initialize()`), or completes a manual cloud sync/conflict resolution.
+* **Logic**:
+  * Scans the user's completed levels to locate the highest completed level index in the playlist.
+  * Identifies any scriptures whose trigger level falls on or before that highest completed level.
+  * If any eligible scriptures are not present in `unlockedScriptureIds`, they are automatically backfilled and assigned a random translation.
+* **Idempotence**: The process is a no-op if all eligible scriptures are already unlocked, preserving existing journal translation choices and preventing duplicate entries.
+
 ---
 
 ## 2. Core Architecture & Services
