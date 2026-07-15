@@ -1,3 +1,7 @@
+## 0.4.1 (2026-07-15)
+
+This was a version bump only for parable-bloom-site to align it with other projects, there were no code changes.
+
 ## 0.4.0 (2026-06-23)
 
 ### 🚀 Features
