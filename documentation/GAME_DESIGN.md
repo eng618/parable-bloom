@@ -34,6 +34,16 @@ type: "Game Design Document"
   - **Fail State**: If Grace reaches 0, the level ends with a gentle message: _"God's grace is endless—try again!"_
   - **Tutorials**: Levels 1-5 have infinite Grace (999) to allow risk-free learning.
 
+### Hint Systems (Projection Lines)
+
+- **All-Vines Toggle**: Players can tap the FAB / Hint button (tag icon) to toggle the light gray grid line hints for all vines on the grid.
+- **Individual Vine Hinting**: 
+  - **Gesture**: Long-press on any individual vine on the grid.
+  - **Behavior**: Shows only that specific vine's projected/extension line on the screen.
+  - **Persistence**: The individual hint remains visible after releasing the finger.
+  - **Additive Hints**: Long-pressing another vine (while a previous vine is hinted) adds its projection line to the screen, showing both hints together.
+  - **Clearing**: Quick-tapping any vine (including hinted ones) or any other cell/screen area clears all hint lines and reverts to no hints.
+
 ## 3. Progression System
 
 ### Difficulty Tiers

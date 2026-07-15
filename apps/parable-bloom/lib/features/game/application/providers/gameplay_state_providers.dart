@@ -368,6 +368,25 @@ class ProjectionLinesVisibleNotifier extends Notifier<bool> {
   }
 }
 
+final hintedVineIdsProvider =
+    NotifierProvider<HintedVineIdsNotifier, Set<String>>(
+  HintedVineIdsNotifier.new,
+);
+
+class HintedVineIdsNotifier extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => {};
+
+  void add(String vineId) {
+    state = {...state, vineId};
+  }
+
+  void clear() {
+    state = {};
+  }
+}
+
+
 final anyVineAnimatingProvider = Provider<bool>((ref) {
   final vineStates = ref.watch(vineStatesProvider);
   return vineStates.values.any(

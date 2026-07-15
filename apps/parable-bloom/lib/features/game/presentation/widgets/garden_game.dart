@@ -205,6 +205,10 @@ class GardenGame extends FlameGame with TapCallbacks {
       _updateProjectionLinesVisibility();
     });
 
+    ref.listenManual(hintedVineIdsProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
     // Listen to camera state changes and apply transforms
     ref.listenManual(cameraStateProvider, (previous, next) {
       _applyCameraTransform(next);
@@ -263,6 +267,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   void _updateProjectionLinesVisibility() {
     final shouldShow = ref.read(projectionLinesVisibleProvider);
+    final hintedVines = ref.read(hintedVineIdsProvider);
     final isAnimating = ref.read(anyVineAnimatingProvider);
 
     // When animation starts, turn off projection lines visibility
@@ -270,10 +275,14 @@ class GardenGame extends FlameGame with TapCallbacks {
     if (isAnimating && shouldShow) {
       ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
     }
+    // Also clear hinted vines when animation starts
+    if (isAnimating && hintedVines.isNotEmpty) {
+      ref.read(hintedVineIdsProvider.notifier).clear();
+    }
 
     // Hide projection lines when any vine is animating
     if (_isGridInitialized && projectionLines.isMounted) {
-      projectionLines.setVisible(shouldShow && !isAnimating);
+      projectionLines.setVisible((shouldShow || hintedVines.isNotEmpty) && !isAnimating);
     }
   }
 
@@ -519,6 +528,9 @@ class GardenGame extends FlameGame with TapCallbacks {
     final isOutsideGrid = !gridBounds.contains(tapPos.toOffset());
 
     if (isOutsideGrid) {
+      // Clear hints when tapping outside the grid
+      ref.read(hintedVineIdsProvider.notifier).clear();
+
       // Create tap effect at canvas position
       final tapEffect = TapEffectComponent(
         tapPosition: tapPos,

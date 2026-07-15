@@ -318,6 +318,7 @@ class CellComponent extends RectangleComponent
     with TapCallbacks, HasGameReference<GardenGame> {
   final int gridX;
   final int gridY;
+  bool _isLongPressed = false;
 
   CellComponent({
     required this.gridX,
@@ -373,7 +374,42 @@ class CellComponent extends RectangleComponent
   }
 
   @override
+  void onTapDown(TapDownEvent event) {
+    _isLongPressed = false;
+  }
+
+  @override
+  void onTapCancel(TapCancelEvent event) {
+    _isLongPressed = false;
+  }
+
+  @override
+  void onLongTapDown(TapDownEvent event) {
+    _isLongPressed = true;
+    final gridParent = parent as GridComponent;
+    final clickedVine = gridParent._getVineAtCell(gridY, gridX);
+    if (clickedVine != null) {
+      final state = gridParent.getCurrentVineState(clickedVine.id);
+      if (state != null && !state.isCleared) {
+        // Trigger haptic feedback on long press if enabled
+        final hapticsEnabled = game.ref.read(hapticsEnabledProvider);
+        if (hapticsEnabled) {
+          HapticFeedback.mediumImpact();
+        }
+        // Add this vine ID to the hinted set
+        game.ref.read(hintedVineIdsProvider.notifier).add(clickedVine.id);
+      }
+    }
+  }
+
+  @override
   void onTapUp(TapUpEvent event) {
+    if (_isLongPressed) {
+      // Releasing a long press should keep the hint line visible and not trigger normal tap actions
+      _isLongPressed = false;
+      return;
+    }
+
     // Trigger haptic feedback on tap if enabled
     final hapticsEnabled = game.ref.watch(hapticsEnabledProvider);
     if (hapticsEnabled) {
@@ -381,6 +417,9 @@ class CellComponent extends RectangleComponent
     }
 
     final gridParent = parent as GridComponent;
+
+    // Clear hints on tap
+    game.ref.read(hintedVineIdsProvider.notifier).clear();
 
     // Create tap effect at the tap position
     // Convert cell-local position to grid-local position

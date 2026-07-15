@@ -85,6 +85,8 @@ class ProjectionLinesComponent extends PositionComponent
 
     // Get vine states to check which vines are cleared or animating
     final vineStates = parent.ref.read(vineStatesProvider);
+    final hintedVines = parent.ref.read(hintedVineIdsProvider);
+    final showAllVines = parent.ref.read(projectionLinesVisibleProvider);
 
     // Paint for projection lines - semi-transparent gray
     final linePaint = Paint()
@@ -103,6 +105,11 @@ class ProjectionLinesComponent extends PositionComponent
       if (vineState == null ||
           vineState.isCleared ||
           vineState.animationState == VineAnimationState.animatingClear) {
+        continue;
+      }
+
+      // If we are not showing all lines, and this vine is not in the hinted set, skip it
+      if (!showAllVines && !hintedVines.contains(vine.id)) {
         continue;
       }
 
