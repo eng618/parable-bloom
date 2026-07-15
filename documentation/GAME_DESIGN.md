@@ -10,10 +10,10 @@ type: "Game Design Document"
 
 ## 1. Executive Summary
 
-**Parable Bloom** is a **zen hyper-casual puzzle game** that blends snake-like movement mechanics with faith-based themes. Players tap directional vines to slide them off a grid, clearing paths for others to follow. The experience is designed to be meditative yet strategically deep, rewarding patience and foresight.
+**Parable Bloom** is a **Christ-centered puzzle game** that blends snake-like movement mechanics with faith-based themes. Players tap directional vines to slide them off a grid, clearing paths for others to follow. The experience is designed to be contemplative yet strategically deep, rewarding patience and foresight.
 
 **Core Pitch**: "Unblock the garden, reveal the parable."
-**Theme**: A watercolor zen garden where clearing vines symbolizes removing obstacles from one's spiritual path.
+**Theme**: A watercolor garden of faith where clearing vines represents removing obstacles from a believer's walk with God.
 **Platform**: iOS/Android (Flutter + Flame).
 
 ## 2. Core Mechanics
@@ -64,14 +64,14 @@ Interactive elements are highlighted dynamically using global screen coordinate 
 
 - **Structure**: Levels are grouped into **Modules** (typically 15 levels).
 - **Reward**: Completing a module unlocks a **Parable** in the player's Journal.
-- **Content**: Parables are presented as text with watercolor illustrations, offering spiritual reflection.
+- **Content**: Parables are presented as text with watercolor illustrations, offering Christ-centered reflection.
 
 ## 4. Visual & Audio Design
 
 ### Aesthetics
 
 - **Style**: Minimalist, organic, watercolor.
-- **Atmosphere**: Calming, serene, "Zen Garden."
+- **Atmosphere**: Calming, serene, "Grace Garden."
 - **Backgrounds**: Dynamic vertical (9:16) backgrounds. Day features a bright sky and green grass, fading into `#F8F5EF`. Night features a dark sky and dark grass, fading into `#1A2E3F`. Both utilize a bare wood trellis pattern.
 - **Vines**: Four visual styles are available to players, built on a unified, high-performance dynamic vector path renderer:
   - **Classic (Premium)**: A beautiful, organic watercolor oak branch with leafy green ivy foliage growing organically along the branch nodes. Utilizes high-resolution seamless generated textures mapped dynamically.
@@ -80,6 +80,7 @@ Interactive elements are highlighted dynamically using global screen coordinate 
   - **Simple (Accessibility)**: Clean, sleek solid geometric vector paths with sharp triangular chevron heads and rounded caps, matching modern abstract maze puzzles.
   - Managed by `vineStyleProvider` and toggled via the Settings screen and the Pause Menu.
 - **Board Default Zoom**: A user-configurable setting (0.5x to 2.0x) that adjusts how close the camera starts to the board, improving visibility for different screen sizes and accessibility needs.
+- **Trackpad Panning**: Native support for two-finger swipe/scroll gestures on trackpads (and mouse scroll wheels) to smoothly pan the game board, eliminating the need to click and drag.
 - **Modes**: Adaptive Light and Dark themes that sync with the background imagery.
 
 ### Color Palette & Meaning
@@ -104,7 +105,7 @@ Colors are used functionally to indicate vine roles and difficulty.
 
 ### Micro-animations & "Juice" (FEEL)
 
-The game focuses on a "premium zen" feel through subtle visual feedback:
+The game focuses on a serene, Christ-centered feel through subtle visual feedback:
 
 - **Radiating Sparkles**: Tapping any cell triggers a pulse ring with radiating sparkles, providing immediate and satisfying feedback.
 - **Enhanced Bloom particles**: When a vine is cleared, it triggers a multi-layered explosion of color-matched dust and glow particles, celebrating the "unblocking" of the garden.
@@ -128,7 +129,7 @@ The game focuses on a "premium zen" feel through subtle visual feedback:
 
 ### Organic & Fluid Aesthetics
 
-The visual style should evoke the game's "Zen Garden" theme with long, flowing paths:
+The visual style should evoke the game's "Grace Garden" theme with long, flowing paths:
 
 - **Vine Morphology**: Vines should be "windy, fluid, and long", resembling natural growth or flowing water currents.
   - **Maximize Length**: Vines should be as long as possible, snaking through the grid.

@@ -234,7 +234,7 @@ class GridComponent extends PositionComponent
 
     // Gesture restrictions for progressive tutorial
     if (level.difficulty == 'tutorial') {
-      if (level.id == 1) {
+      if (level.id == '1') {
         // Lesson 1: Only allow tapping vine_1's head at (3, 1)
         if (clickedVine.id != 'vine_1' || col != 3 || row != 1) {
           return;
@@ -262,11 +262,13 @@ class GridComponent extends PositionComponent
       final headOffset = parent.getCellScreenPosition(head['x']!, head['y']!);
       final blockerOffset = parent.getCellScreenPosition(nextX, nextY);
 
-      parent.ref.read(blockedTapProvider.notifier).setBlockedTap(BlockedTapState(
-        headPosition: headOffset,
-        blockerPosition: blockerOffset,
-        timestamp: DateTime.now(),
-      ));
+      parent.ref
+          .read(blockedTapProvider.notifier)
+          .setBlockedTap(BlockedTapState(
+            headPosition: headOffset,
+            blockerPosition: blockerOffset,
+            timestamp: DateTime.now(),
+          ));
     }
 
     // Notify that a vine was tapped

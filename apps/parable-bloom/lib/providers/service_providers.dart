@@ -4,7 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../services/analytics_service.dart';
 
 final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
-  throw UnimplementedError('AnalyticsService must be initialized in main');
+  return AnalyticsService();
 });
 
 final appVersionProvider = FutureProvider<String>((ref) async {

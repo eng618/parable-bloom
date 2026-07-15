@@ -94,7 +94,7 @@ class GameInstanceNotifier extends Notifier<GardenGame?> {
     if (currentGrace > 0) {
       final currentLevel = ref.read(currentLevelProvider);
       final isTutorial = currentLevel?.difficulty == 'tutorial';
-      
+
       if (isTutorial) {
         if (currentGrace > 1) {
           ref.read(graceProvider.notifier).setGrace(currentGrace - 1);
@@ -109,15 +109,15 @@ class GameInstanceNotifier extends Notifier<GardenGame?> {
   }
 }
 
-class DebugSelectedLevelNotifier extends Notifier<int?> {
+class DebugSelectedLevelNotifier extends Notifier<String?> {
   @override
-  int? build() => null;
+  String? build() => null;
 
-  void setLevel(int? level) => state = level;
+  void setLevel(String? level) => state = level;
 }
 
 final debugSelectedLevelProvider =
-    NotifierProvider<DebugSelectedLevelNotifier, int?>(
+    NotifierProvider<DebugSelectedLevelNotifier, String?>(
   DebugSelectedLevelNotifier.new,
 );
 
@@ -162,6 +162,10 @@ class VineState {
   final bool hasBeenAttempted;
   final bool isWithered;
   final VineAnimationState animationState;
+
+  /// Returns true if the vine is already fully cleared or is currently in the process of clearing.
+  bool get isClearedOrClearing =>
+      isCleared || animationState == VineAnimationState.animatingClear;
 
   VineState({
     required this.id,
@@ -266,6 +270,7 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
     }
 
     state = _calculateVineStates(_levelData, mapWithCleared);
+    _checkLevelComplete();
   }
 
   void markAttempted(String vineId) {
@@ -333,7 +338,8 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
 
     state = _calculateVineStates(_levelData, state);
 
-    if (animationState == VineAnimationState.animatingClear) {
+    if (animationState == VineAnimationState.animatingClear ||
+        animationState == VineAnimationState.cleared) {
       _checkLevelComplete();
     }
   }

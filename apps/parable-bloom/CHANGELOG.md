@@ -1,3 +1,84 @@
+## 1.7.0 (2026-06-23)
+
+### 🚀 Features
+
+- update application icons across all platforms and add new mustard tree icon asset ([0b6a0cb](https://github.com/eng618/parable-bloom/commit/0b6a0cb))
+- update social metadata, correct Google Play URLs, hide iOS links, and add font/asset attributions ([ba45777](https://github.com/eng618/parable-bloom/commit/ba45777))
+- add trackpad scroll support for camera panning, fix overlay logic, and ignore GitNexus cache ([1ef75ba](https://github.com/eng618/parable-bloom/commit/1ef75ba))
+- implement FirebaseGameProgressRepository and restrict access to data subcollections via security rules ([e47b70c](https://github.com/eng618/parable-bloom/commit/e47b70c))
+
+### 🩹 Fixes
+
+- immediately advance tutorial highlights on vine clearing tap ([347e701](https://github.com/eng618/parable-bloom/commit/347e701))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
+## 1.6.0 (2026-05-31)
+
+### 🚀 Features
+
+- implement OTA dynamic levels registry & deploy to local emulator ([47bb2e7](https://github.com/eng618/parable-bloom/commit/47bb2e7))
+- **game:** decouple logical level keys and manifest progression graph, resolve all test files ([5c3d9d3](https://github.com/eng618/parable-bloom/commit/5c3d9d3))
+- **tooling:** implement validation caching and concurrent level generation ([d8c6633](https://github.com/eng618/parable-bloom/commit/d8c6633))
+- implement interactive cloud sync conflict resolution and update sync state management ([36a4fb0](https://github.com/eng618/parable-bloom/commit/36a4fb0))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
+## 1.5.0 (2026-05-29)
+
+### 🚀 Features
+
+- implement reactive cloud sync state providers and update architecture documentation ([83e7c44](https://github.com/eng618/parable-bloom/commit/83e7c44))
+- implement screen tracking, specific event logging, and user-configurable telemetry opt-out settings ([8a5ec71](https://github.com/eng618/parable-bloom/commit/8a5ec71))
+- revamp the vine aesthetics ([9386d16](https://github.com/eng618/parable-bloom/commit/9386d16))
+- implement interactive tutorial guide overlay with coordinate-based highlights and collision feedback ([3046c16](https://github.com/eng618/parable-bloom/commit/3046c16))
+- add connectivity stream provider and tests for syncOnReconnect behavior ([acb4d75](https://github.com/eng618/parable-bloom/commit/acb4d75))
+- add tests for syncToCloud behavior with local data synchronization ([d81e33b](https://github.com/eng618/parable-bloom/commit/d81e33b))
+- enhance cloud sync error handling with detailed logging and retry recovery ([7798e5b](https://github.com/eng618/parable-bloom/commit/7798e5b))
+- add cloud sync conflict resolution tests in FirebaseGameProgressRepository ([c131043](https://github.com/eng618/parable-bloom/commit/c131043))
+- add connectivity handling and synchronization on reconnect in game progress repository ([d276f0f](https://github.com/eng618/parable-bloom/commit/d276f0f))
+- implement retry mechanism for cloud read operations with exponential backoff in FirebaseGameProgressRepository ([8423e8a](https://github.com/eng618/parable-bloom/commit/8423e8a))
+- add retry logic for transient Firebase write errors in repository tests ([3e1699b](https://github.com/eng618/parable-bloom/commit/3e1699b))
+- implement retry mechanism for cloud write operations in FirebaseGameProgressRepository ([09dc2cb](https://github.com/eng618/parable-bloom/commit/09dc2cb))
+- extend logLevelComplete method in FakeAnalytics and FakeAnalyticsService to include attempts and elapsedSeconds parameters ([a56fec9](https://github.com/eng618/parable-bloom/commit/a56fec9))
+- add configurable cloud read and write timeouts to Firebase game progress repository ([971ca2d](https://github.com/eng618/parable-bloom/commit/971ca2d))
+- enhance error handling and fallback mechanisms in module loading and settings repository ([9b03b1d](https://github.com/eng618/parable-bloom/commit/9b03b1d))
+- add jni to Flutter FFI plugin list for Linux and Windows ([73eea00](https://github.com/eng618/parable-bloom/commit/73eea00))
+- add level attempt count and start timestamp providers with analytics integration ([51c9523](https://github.com/eng618/parable-bloom/commit/51c9523))
+- add automated iOS screenshot capture and upload via Fastlane Snapshot ([917387e](https://github.com/eng618/parable-bloom/commit/917387e))
+- Integrate Plausible Analytics client and update AnalyticsService for dual tracking ([34f928e](https://github.com/eng618/parable-bloom/commit/34f928e))
+- Implement cloud sync functionality with conflict resolution ([11df7ca](https://github.com/eng618/parable-bloom/commit/11df7ca))
+- add module providers and integrate into game and home screens ([167fef0](https://github.com/eng618/parable-bloom/commit/167fef0))
+- implement ParableBloomApp and HomeScreen, restructure app folder organization ([3c1eea2](https://github.com/eng618/parable-bloom/commit/3c1eea2))
+- refactor game progress storage keys and improve animation timing constants ([5eca57a](https://github.com/eng618/parable-bloom/commit/5eca57a))
+- add tests for markAttempted grace decrement and anyVineAnimating reset logic ([642b436](https://github.com/eng618/parable-bloom/commit/642b436))
+- enhance VineComponent animation logic and add test for animatingClear state ([2306983](https://github.com/eng618/parable-bloom/commit/2306983))
+- implement GameBoardLayout for consistent grid and cell management across game components ([7ce5a65](https://github.com/eng618/parable-bloom/commit/7ce5a65))
+- update macOS deployment target to 11.0 and improve pod build settings ([195a47c](https://github.com/eng618/parable-bloom/commit/195a47c))
+- add macOS toolchain checks and doctor command for Flutter development ([28d96b2](https://github.com/eng618/parable-bloom/commit/28d96b2))
+- add FlutterFire CLI installation and authentication checks to Firebase tasks ([fc968f4](https://github.com/eng618/parable-bloom/commit/fc968f4))
+- **parable-bloom-site:** modernize site with Tailwind CSS v4, full GV Tech UI adoption, and Support FAB ([#44](https://github.com/eng618/parable-bloom/pull/44))
+- add validation script and update configurations for improved development workflow ([04fc77f](https://github.com/eng618/parable-bloom/commit/04fc77f))
+- add initial components and configuration for Parable Bloom site ([f4e551b](https://github.com/eng618/parable-bloom/commit/f4e551b))
+- **logger:** improve crashlytics initialization handling and update logging methods ([7349134](https://github.com/eng618/parable-bloom/commit/7349134))
+- **logging:** Introduce LoggerService for centralized logging and error reporting ([1c4e5eb](https://github.com/eng618/parable-bloom/commit/1c4e5eb))
+
+### 🩹 Fixes
+
+- watch authUserProvider in cloud sync status providers to ensure reactive updates on auth changes ([ccafb33](https://github.com/eng618/parable-bloom/commit/ccafb33))
+- add missing directory ([1028fbf](https://github.com/eng618/parable-bloom/commit/1028fbf))
+- revert bun version to 1.3.9 ([68e5e72](https://github.com/eng618/parable-bloom/commit/68e5e72))
+
+### ❤️ Thank You
+
+- Copilot @Copilot
+- eng618 @eng618
+- Eric N. Garcia @eng618
+
 ## 1.4.2 (2026-02-26)
 
 ### 🚀 Features

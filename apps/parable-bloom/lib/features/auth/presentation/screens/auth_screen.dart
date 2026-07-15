@@ -27,6 +27,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   String? _errorMessage;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(analyticsServiceProvider).logScreenView('Authentication');
+    });
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -74,17 +82,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             );
       }
 
-      if (conflict.type == SyncConflictType.cloudAhead) {
-        await progressNotifier.resolveSyncConflict(
-          SyncConflictResolution.keepCloud,
-        );
-        await ref.read(analyticsServiceProvider).logSyncConflictResolved(
-              source: 'auth',
-              conflictType: conflict.type.name,
-              resolution: SyncConflictResolution.keepCloud.name,
-              automatic: true,
-            );
-      } else if (conflict.requiresUserDecision && mounted) {
+      if (conflict.requiresUserDecision && mounted) {
         final resolution = await _showSyncConflictDialog(conflict);
         if (resolution == null) {
           return;

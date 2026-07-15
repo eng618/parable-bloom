@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../services/logger_service.dart';
@@ -13,6 +11,8 @@ import '../../../auth/application/providers/auth_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
 import '../../../auth/presentation/screens/auth_screen.dart';
 import '../../../game/domain/entities/cloud_sync_state.dart';
+import '../../../game/domain/entities/game_progress.dart';
+import '../../../game/domain/entities/level_data.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../home/presentation/screens/home_screen.dart';
@@ -26,6 +26,14 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(analyticsServiceProvider).logScreenView('Settings');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
@@ -69,12 +77,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                           Text(
                             _getVineStyleSubtitle(vineStyle),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withValues(alpha: 0.6),
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
                           ),
                         ],
                       ),
@@ -158,6 +167,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           _buildSectionHeader(context, 'Data & Sync'),
           _buildCloudSyncTile(context, ref),
+          _buildTelemetryTile(context, ref),
           _buildRedoTutorialTile(context, ref),
           const Divider(),
           _buildSectionHeader(context, 'About'),
@@ -380,6 +390,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 if (value) {
                   await notifier.enableCloudSync();
+                  if (context.mounted) {
+                    final conflict = await notifier.inspectSyncConflict();
+                    if (conflict.requiresUserDecision && context.mounted) {
+                      final resolution = await _showSyncConflictDialog(
+                        context,
+                        conflict,
+                      );
+                      if (resolution != null) {
+                        await notifier.resolveSyncConflict(resolution);
+                      }
+                    }
+                  }
                 } else {
                   await notifier.disableCloudSync();
                 }
@@ -496,6 +518,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Widget _buildTelemetryTile(BuildContext context, WidgetRef ref) {
+    final telemetryEnabled = ref.watch(analyticsEnabledProvider);
+
+    return SwitchListTile(
+      secondary: Icon(
+        telemetryEnabled ? Icons.analytics : Icons.analytics_outlined,
+        color: telemetryEnabled
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+      ),
+      title: const Text('Anonymized Telemetry'),
+      subtitle: const Text(
+          'Help us improve gameplay by sharing anonymous usage statistics'),
+      value: telemetryEnabled,
+      onChanged: (value) async {
+        await ref.read(analyticsEnabledProvider.notifier).setEnabled(value);
+      },
+    );
+  }
+
   String _syncSubtitleForAvailability(CloudSyncAvailability availability) {
     switch (availability.reason) {
       case CloudSyncAvailabilityReason.available:
@@ -549,6 +591,63 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         MaterialPageRoute(builder: (context) => const AuthScreen()),
       );
     }
+  }
+
+  String _progressSummary(GameProgress progress) {
+    return 'Level ${progress.currentLevel} • ${progress.completedLevels.length} levels completed';
+  }
+
+  Future<SyncConflictResolution?> _showSyncConflictDialog(
+    BuildContext context,
+    SyncConflictState conflict,
+  ) async {
+    final cloudProgress = conflict.cloudProgress;
+    if (cloudProgress == null) {
+      return SyncConflictResolution.keepLocal;
+    }
+
+    return showDialog<SyncConflictResolution>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final localSummary = _progressSummary(conflict.localProgress);
+        final cloudSummary = _progressSummary(cloudProgress);
+        final title = conflict.type == SyncConflictType.localAhead
+            ? 'Progress Found on This Device'
+            : 'Choose Progress to Keep';
+
+        return AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'We found different progress locally and in the cloud. Choose which one should be kept and synced to all devices.',
+              ),
+              const SizedBox(height: 16),
+              Text('This device: $localSummary'),
+              const SizedBox(height: 8),
+              Text('Cloud save: $cloudSummary'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(
+                SyncConflictResolution.keepCloud,
+              ),
+              child: const Text('Use Cloud Save'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(
+                SyncConflictResolution.keepLocal,
+              ),
+              child: const Text('Keep This Device'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   String _getTimeAgo(DateTime dateTime) {
@@ -768,7 +867,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildDebugLevelPickerTile(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(debugSelectedLevelProvider);
     final subtitle =
-        selected == null ? 'No level selected' : 'Selected: Level $selected';
+        selected == null ? 'No level selected' : 'Selected: $selected';
 
     return ListTile(
       leading: Icon(
@@ -804,15 +903,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showDebugLevelPickerDialog(
-      BuildContext context, WidgetRef ref, List<dynamic> modules) {
+      BuildContext context, WidgetRef ref, List<ModuleData> modules) {
     final safeContext = context;
 
     // Fetch modules and build level list
-    final levels = <int>[];
+    final levels = <String>[];
     for (final m in modules) {
-      for (int i = m.startLevel; i <= m.endLevel; i++) {
-        levels.add(i);
-      }
+      levels.addAll(m.allLevels);
     }
 
     if (levels.isEmpty) {
@@ -822,13 +919,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       return;
     }
 
-    int? selected = ref.read(debugSelectedLevelProvider);
+    String? selected = ref.read(debugSelectedLevelProvider);
 
     showDialog(
       context: safeContext,
       builder: (dialogContext) {
-        return FutureBuilder<Map<int, String>>(
-          future: _loadLabels(levels),
+        return FutureBuilder<Map<String, String>>(
+          future: _loadLabels(levels, ref),
           builder: (ctx, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return AlertDialog(
@@ -849,13 +946,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    DropdownButtonFormField<int>(
+                    DropdownButtonFormField<String>(
                       isDense: true,
                       initialValue: selected,
                       items: levels
-                          .map((lvl) => DropdownMenuItem<int>(
+                          .map((lvl) => DropdownMenuItem<String>(
                                 value: lvl,
-                                child: Text(labels[lvl] ?? 'Level $lvl'),
+                                child: Text(labels[lvl] ?? lvl),
                               ))
                           .toList(),
                       onChanged: (value) {
@@ -908,17 +1005,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<Map<int, String>> _loadLabels(List<int> levels) async {
-    final labels = <int, String>{};
+  Future<Map<String, String>> _loadLabels(
+      List<String> levels, WidgetRef ref) async {
+    final labels = <String, String>{};
     for (final lvl in levels) {
       try {
-        final jsonStr =
-            await rootBundle.loadString('assets/levels/level_$lvl.json');
-        final jsonMap = jsonDecode(jsonStr) as Map<String, dynamic>;
-        final difficulty = (jsonMap['difficulty'] ?? 'Unknown').toString();
-        labels[lvl] = 'Level $lvl — $difficulty';
+        final levelData = await ref.read(levelDataProvider(lvl).future);
+        final difficulty = levelData.difficulty;
+        final index = levels.indexOf(lvl) + 1;
+        labels[lvl] = 'Level $index ($lvl) — $difficulty';
       } catch (_) {
-        labels[lvl] = 'Level $lvl';
+        labels[lvl] = lvl;
       }
     }
     return labels;

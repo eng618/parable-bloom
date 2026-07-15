@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -196,7 +194,6 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Listen to vine style changes to update background opacity and redraw vines dynamically
     ref.listenManual(vineStyleProvider, (previous, next) {
       _updateBackgroundOpacity(next == VineStyle.simple);
-      reloadLevel();
     });
 
     // Listen to projection lines visibility and animation state
@@ -345,7 +342,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     final debugSelected = ref.read(debugSelectedLevelProvider);
     final gameProgress = ref.read(gameProgressProvider);
-    final levelNumber = debugSelected ?? gameProgress.currentLevel;
+    final levelId = debugSelected ?? gameProgress.currentLevel;
 
     if (debugSelected != null) {
       LoggerService.debug(
@@ -354,28 +351,27 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
 
     LoggerService.info(
-      'Attempting to load level $levelNumber',
+      'Attempting to load level $levelId',
       tag: 'GardenGame',
     );
     LoggerService.debug('Game progress: $gameProgress', tag: 'GardenGame');
 
     try {
-      // Load level data directly by level number
-      final assetPath = 'assets/levels/level_$levelNumber.json';
-      LoggerService.debug('Loading asset: $assetPath', tag: 'GardenGame');
+      final mappings = await ref.read(levelMappingsProvider.future);
+      if (!mappings.containsKey(levelId)) {
+        LoggerService.info('All levels completed! Setting game as completed.',
+            tag: 'GardenGame');
+        ref.read(gameCompletedProvider.notifier).setCompleted(true);
+        return;
+      }
 
-      final levelJson = await rootBundle.loadString(assetPath);
+      LoggerService.debug('Loading level $levelId via levelDataProvider',
+          tag: 'GardenGame');
+
+      final levelData = await ref.read(levelDataProvider(levelId).future);
+      _currentLevelData = levelData;
       LoggerService.debug(
-        'Successfully loaded JSON string, length: ${levelJson.length}',
-        tag: 'GardenGame',
-      );
-
-      final jsonMap = json.decode(levelJson);
-      LoggerService.debug('Successfully parsed JSON', tag: 'GardenGame');
-
-      _currentLevelData = LevelData.fromJson(jsonMap);
-      LoggerService.debug(
-        'Successfully created LevelData: ${_currentLevelData!.name}',
+        'Successfully retrieved LevelData: ${_currentLevelData!.name}',
         tag: 'GardenGame',
       );
 
@@ -405,42 +401,13 @@ class GardenGame extends FlameGame with TapCallbacks {
         ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
       }
 
-      LoggerService.info(
-          'Loaded level $levelNumber: ${_currentLevelData!.name}',
+      LoggerService.info('Loaded level $levelId: ${_currentLevelData!.name}',
           tag: 'GardenGame');
     } catch (e, stackTrace) {
-      LoggerService.error('Error loading level $levelNumber',
+      LoggerService.error('Error loading level $levelId',
           error: e, stackTrace: stackTrace, tag: 'GardenGame');
 
-      // Determine if this error indicates all levels are completed
-      final modulesAsync = ref.read(modulesProvider);
-      final modules = modulesAsync.maybeWhen(
-        data: (data) => data,
-        orElse: () => <ModuleData>[],
-      );
-
-      final totalLevels = modules.fold<int>(
-        0,
-        (maxEnd, module) => module.endLevel > maxEnd ? module.endLevel : maxEnd,
-      );
-
-      LoggerService.warn(
-        'Level $levelNumber failed to load. Total levels: $totalLevels',
-        tag: 'GardenGame',
-      );
-
-      if (levelNumber > totalLevels) {
-        LoggerService.info('All levels completed! Setting game as completed.',
-            tag: 'GardenGame');
-        ref.read(gameCompletedProvider.notifier).setCompleted(true);
-      } else {
-        // Level should exist but failed to load - critical error
-        LoggerService.error(
-          'CRITICAL ERROR - Level $levelNumber should exist but failed to load!',
-          tag: 'GardenGame',
-        );
-        ref.read(gameOverProvider.notifier).setGameOver(true);
-      }
+      ref.read(gameOverProvider.notifier).setGameOver(true);
       return;
     }
   }
@@ -458,7 +425,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     // Create level data from lesson
     _currentLevelData = LevelData(
-      id: lesson.id,
+      id: lesson.id.toString(),
       name: 'Lesson ${lesson.id}',
       difficulty: 'tutorial',
       gridWidth: lesson.gridWidth,
@@ -501,15 +468,16 @@ class GardenGame extends FlameGame with TapCallbacks {
   /// Converts a grid coordinate (x, y) to global screenspace position.
   /// y=0 is at the bottom of the grid.
   Offset getCellScreenPosition(int x, int y) {
-    if (_currentLevelData == null || !_isGridInitialized || !grid.isMounted) return Offset.zero;
+    if (_currentLevelData == null || !_isGridInitialized || !grid.isMounted)
+      return Offset.zero;
     final rows = _currentLevelData!.gridHeight;
     final visualRow = rows - 1 - y;
     final localX = GameBoardLayout.cellCenterX(x);
     final localY = GameBoardLayout.cellCenterY(visualRow);
-    
+
     final zoom = grid.scale.x;
     final gridPos = grid.position;
-    
+
     return Offset(
       gridPos.x + (localX * zoom),
       gridPos.y + (localY * zoom),
@@ -566,7 +534,8 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Check if grid is initialized and mounted before removing
     try {
       if (_isGridInitialized && grid.isMounted) remove(grid);
-      if (_isGridInitialized && projectionLines.isMounted) remove(projectionLines);
+      if (_isGridInitialized && projectionLines.isMounted)
+        remove(projectionLines);
       _isGridInitialized = false;
     } catch (e) {
       // Ignore if grid/projectionLines weren't initialized

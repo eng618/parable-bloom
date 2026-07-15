@@ -31,17 +31,17 @@ class AnalyticsService {
   }
 
   // Enable debug view locally if needed
-  Future<void> init() async {
+  Future<void> init({bool enabled = true}) async {
     final firebase = _firebase;
     if (firebase == null) {
       return;
     }
-    await firebase.setAnalyticsCollectionEnabled(true);
+    await firebase.setAnalyticsCollectionEnabled(enabled);
     // Optional: Debug mode for local testing
     // await _analytics.setCurrentScreen(screenName: 'Home');
   }
 
-  Future<void> logLevelStart(int levelId) async {
+  Future<void> logLevelStart(dynamic levelId) async {
     final firebase = _firebase;
     if (firebase != null) {
       await firebase.logEvent(
@@ -56,7 +56,7 @@ class AnalyticsService {
   }
 
   Future<void> logLevelComplete(
-    int levelId,
+    dynamic levelId,
     int taps,
     int wrongTaps, {
     int attempts = 1,
@@ -89,7 +89,7 @@ class AnalyticsService {
     );
   }
 
-  Future<void> logLevelRestart(int levelId, int attempts) async {
+  Future<void> logLevelRestart(dynamic levelId, int attempts) async {
     final firebase = _firebase;
     if (firebase != null) {
       await firebase.logEvent(
@@ -109,7 +109,7 @@ class AnalyticsService {
     );
   }
 
-  Future<void> logWrongTap(int levelId, int remainingLives) async {
+  Future<void> logWrongTap(dynamic levelId, int remainingLives) async {
     final firebase = _firebase;
     if (firebase != null) {
       await firebase.logEvent(
@@ -126,7 +126,7 @@ class AnalyticsService {
     );
   }
 
-  Future<void> logGameOver(int levelId) async {
+  Future<void> logGameOver(dynamic levelId) async {
     final firebase = _firebase;
     if (firebase != null) {
       await firebase.logEvent(
@@ -143,8 +143,8 @@ class AnalyticsService {
   Future<void> logSyncConflictDetected({
     required String source,
     required String conflictType,
-    required int localLevel,
-    int? cloudLevel,
+    required dynamic localLevel,
+    dynamic cloudLevel,
   }) async {
     final firebase = _firebase;
     if (firebase != null) {
@@ -153,8 +153,8 @@ class AnalyticsService {
         parameters: {
           'source': source,
           'conflict_type': conflictType,
-          'local_level': localLevel,
-          'cloud_level': cloudLevel ?? -1,
+          'local_level': localLevel.toString(),
+          'cloud_level': (cloudLevel ?? 'unknown').toString(),
         },
       );
     }
@@ -163,8 +163,8 @@ class AnalyticsService {
       properties: {
         'source': source,
         'conflict_type': conflictType,
-        'local_level': localLevel,
-        'cloud_level': cloudLevel ?? -1,
+        'local_level': localLevel.toString(),
+        'cloud_level': (cloudLevel ?? 'unknown').toString(),
       },
     );
   }
@@ -235,5 +235,40 @@ class AnalyticsService {
     );
   }
 
-  // Add more as needed: hint_used, mercy_purchase, parable_viewed
+  Future<void> setCollectionEnabled(bool enabled) async {
+    final firebase = _firebase;
+    if (firebase == null) {
+      return;
+    }
+    await firebase.setAnalyticsCollectionEnabled(enabled);
+  }
+
+  Future<void> logScreenView(String screenName) async {
+    final firebase = _firebase;
+    if (firebase != null) {
+      await firebase.logScreenView(
+        screenName: screenName,
+      );
+    }
+    await _trackPlausible(
+      eventName: 'screen_view',
+      properties: {
+        'screen_name': screenName,
+      },
+    );
+  }
+
+  Future<void> logParableViewed(String parableId) async {
+    final firebase = _firebase;
+    if (firebase != null) {
+      await firebase.logEvent(
+        name: 'parable_viewed',
+        parameters: {'parable_id': parableId},
+      );
+    }
+    await _trackPlausible(
+      eventName: 'parable_viewed',
+      properties: {'parable_id': parableId},
+    );
+  }
 }

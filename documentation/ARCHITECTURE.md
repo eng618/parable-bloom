@@ -126,10 +126,70 @@ abstract class ProgressRepository {
 **Implementations**:
 
 - `HiveProgressRepository`: Local storage (Default).
-- `FirebaseProgressRepository`: Cloud storage (Syncs when online).
+- `FirebaseGameProgressRepository`: Cloud storage with offline-first support.
+  - **Local Persistence**: Saves state to Hive immediately.
+  - **Cloud Sync**: When online, authenticated, and Cloud Sync is enabled, synchronization pushes/pulls to and from Firestore under the `/game_progress_{env}/{userId}/data/progress` document.
+  - **Security Rules**: The subcollection `/data/{document=**}` is protected with rules that restrict access to the authenticated owner (where `request.auth.uid == userId`), ensuring identity-level isolation across all environments (`dev`, `preview`, `prod`).
 
 **Auto-Sync Behavior**:
 When a user explicitly creates an account, links an anonymous account to an email/password, or signs into an existing account, **Cloud Sync** is automatically enabled for their local device. This ensures their progres is synchronized seamlessly without requiring manual opt-in from the settings menu.
+
+**Reactive Cloud Sync Providers**:
+To prevent stale caching and out-of-sync UI states when users log in or out, we expose several reactive Riverpod providers:
+
+- `cloudSyncAvailabilityProvider`: Reactively watches `authUserProvider` to dynamically evaluate and output the current user's sync availability status (`available`, `signedOut`, or `anonymousAccount`).
+- `cloudSyncAvailableProvider`: Reactively watches the availability future to determine if sync is possible.
+- `cloudSyncEnabledProvider`: Reactively watches availability and reads the Hive box to report if sync is currently enabled on the device.
+- `lastSyncTimeProvider`: Reactively watches availability and reads the Hive box to report the last sync date.
+
+These providers dynamically re-evaluate the moment a user transitions from signed out to signed in (or vice versa), ensuring the UI automatically updates without manual screen refreshes or invalidation boilerplate.
+
+**Sync Conflicts & Interactive Discrepancy Resolution**:
+To ensure players never lose their progress across multiple devices and always stay in control of their save data, we implement a secure sync conflict detection and interactive merge strategy:
+
+- **Discrepancy Identification**: Any mismatch between local progress and cloud save (whether local is ahead, cloud is ahead, or they are divergent) is evaluated as a conflict type:
+  - `localAhead`: Local device has strictly more completed levels/lessons than the cloud.
+  - `cloudAhead`: Cloud save has strictly more completed levels/lessons than the local device.
+  - `divergent`: Local device and cloud save have different/partial level completion overlaps.
+- **Interactive Choice Dialog**: Rather than silently overriding a player's save, the app requires a user decision (`requiresUserDecision`) for all non-none conflict types. Upon signing in or toggling Cloud Sync in Settings with mismatching saves, a custom prompt presents both saves:
+  - **This Device**: Displays current local level and completed levels.
+  - **Cloud Save**: Displays remote level and completed levels.
+  The player can explicitly choose **"Use Cloud Save"** or **"Keep This Device"**.
+- **Notifier State Synchronization**: Once a conflict is resolved, the `GameProgressNotifier` triggers the repository resolution and reactively calls `initialize()` to reload the new progress directly into the in-memory state. This ensures that the game board, levels list, and settings UI update instantly and synchronously.
+
+### 4.3 Telemetry & Analytics (Firebase + Plausible)
+
+The application implements a multi-channel, privacy-focused telemetry strategy designed to respect player privacy while offering critical insight into game stability and levels completion rates.
+
+#### Unified Service Layer
+
+All telemetry events are dispatched through `AnalyticsService`, which coordinates data collection across:
+
+- **Firebase Analytics**: Standard client-side SDK. Used for general usage statistics, game lifecycle, and crash correlation.
+- **Plausible Analytics (Self-Hosted)**: Lightweight, cookie-less, GDPR-compliant event engine. Events are submitted via direct API calls (`PlausibleAnalyticsClient`) using a privacy-focused endpoint.
+
+#### Privacy Control & Opt-out Toggle
+
+Players have complete control over their data sharing via the **Anonymized Telemetry** toggle in the Settings screen:
+
+- **State Persistence**: The opt-out status is stored locally in the Hive settings box under `'plausible_ignore'`.
+- **Dynamic Firebase Disable**: Toggling telemetry off calls `firebase.setAnalyticsCollectionEnabled(false)`, instructing the Firebase SDK to immediately cease all analytics collection and network dispatch.
+- **Plausible Filtering**: Plausible event submissions are skipped locally on device when the opt-out is active.
+
+#### Core Tracked Events
+
+1. **Gameplay Flow**:
+   - `level_start`: Fired when a level is loaded.
+   - `level_complete`: Tracked on level completion with metrics: `taps_total`, `wrong_taps`, `perfect`, `attempts`, `elapsed_seconds`.
+   - `level_restart`: Logged when retrying a level with the current attempt count.
+   - `wrong_tap`: Tracks when a wrong tile is tapped, with remaining lives.
+   - `game_over`: Logged when the player runs out of grace/lives.
+2. **Screen Views**:
+   - `screen_view`: Captured on screen load for `'Home'`, `'Settings'`, `'Journal'`, `'Gameplay'`, and `'Authentication'`.
+3. **Parable Reads**:
+   - `parable_viewed`: Logged when a player unlocks a module/parable or reads it.
+4. **Cloud Sync & Conflicts**:
+   - `sync_conflict_detected`, `sync_conflict_resolved`, and `cloud_sync_unavailable`.
 
 ---
 

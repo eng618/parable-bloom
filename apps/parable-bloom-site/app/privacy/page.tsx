@@ -25,9 +25,9 @@ export default function PrivacyPage() {
         <strong>Parable Bloom</strong>.
       </Text>
       <Text variant="body">
-        Our mission is to provide a peaceful, zen, and faith-based gaming experience. We believe that your digital peace
-        of mind is just as important as your spiritual one. Therefore, we design our services to collect the absolute
-        minimum amount of data necessary to function and improve the game.
+        Our mission is to provide a peaceful, prayerful, and faith-based gaming experience. We believe that your digital
+        peace of mind is just as important as your spiritual growth in Christ. Therefore, we design our services to
+        collect the absolute minimum amount of data necessary to function and improve the game.
       </Text>
 
       <Text variant="h2">2. Information We Collect</Text>

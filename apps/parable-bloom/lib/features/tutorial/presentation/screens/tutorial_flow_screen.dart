@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -182,18 +183,47 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   Widget _buildGameWidgetWithGestures() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return GestureDetector(
-          onScaleStart: _handleScaleStart,
-          onScaleUpdate: (details) => _handleScaleUpdate(
-            details,
-            constraints.maxWidth,
-            constraints.maxHeight,
-          ),
-          onScaleEnd: _handleScaleEnd,
-          child: GameWidget<GardenGame>(
-            game: _game!,
-            loadingBuilder: (_) =>
-                const Center(child: CircularProgressIndicator()),
+        return Listener(
+          onPointerSignal: (pointerSignal) {
+            if (pointerSignal is PointerScrollEvent) {
+              final tutorialProgress = ref.read(tutorialProgressProvider);
+              if (tutorialProgress.allLessonsCompleted) return;
+
+              final lessonNum = tutorialProgress.currentLesson;
+              final lessonData = ref.read(lessonProvider(lessonNum)).value;
+              if (lessonData == null) return;
+
+              final cameraNotifier = ref.read(cameraStateProvider.notifier);
+              final cameraState = ref.read(cameraStateProvider);
+
+              final newOffset = cameraState.panOffset -
+                  vm.Vector2(
+                    pointerSignal.scrollDelta.dx,
+                    pointerSignal.scrollDelta.dy,
+                  );
+
+              cameraNotifier.updatePanOffset(
+                newOffset,
+                screenWidth: constraints.maxWidth,
+                screenHeight: constraints.maxHeight,
+                gridCols: lessonData.gridWidth,
+                gridRows: lessonData.gridHeight,
+              );
+            }
+          },
+          child: GestureDetector(
+            onScaleStart: _handleScaleStart,
+            onScaleUpdate: (details) => _handleScaleUpdate(
+              details,
+              constraints.maxWidth,
+              constraints.maxHeight,
+            ),
+            onScaleEnd: _handleScaleEnd,
+            child: GameWidget<GardenGame>(
+              game: _game!,
+              loadingBuilder: (_) =>
+                  const Center(child: CircularProgressIndicator()),
+            ),
           ),
         );
       },
@@ -391,6 +421,8 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   }
 
   void _showLevelCompleteOverlay() async {
+    if (_isLevelCompleteOverlayVisible) return;
+
     // Select a random congratulatory message
     final randomIndex =
         DateTime.now().millisecondsSinceEpoch % _congratulationMessages.length;

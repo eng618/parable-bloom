@@ -10,6 +10,9 @@ import 'package:parable_bloom/features/game/application/providers/gameplay_state
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
 import 'package:parable_bloom/providers/infrastructure_providers.dart';
 import 'package:parable_bloom/providers/service_providers.dart';
+import 'package:parable_bloom/providers/settings_providers.dart';
+import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
+import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 
 class FakeRepo implements GameProgressRepository {
   bool saveCalled = false;
@@ -69,14 +72,23 @@ class FakeRepo implements GameProgressRepository {
 // Minimal fake analytics to avoid needing Firebase in tests
 class FakeAnalytics extends AnalyticsService {
   @override
-  Future<void> init() async {}
+  Future<void> init({bool enabled = true}) async {}
 
   @override
-  Future<void> logLevelStart(int levelId) async {}
+  Future<void> setCollectionEnabled(bool enabled) async {}
+
+  @override
+  Future<void> logScreenView(String screenName) async {}
+
+  @override
+  Future<void> logParableViewed(String parableId) async {}
+
+  @override
+  Future<void> logLevelStart(dynamic levelId) async {}
 
   @override
   Future<void> logLevelComplete(
-    int levelId,
+    dynamic levelId,
     int taps,
     int wrongTaps, {
     int attempts = 1,
@@ -84,10 +96,10 @@ class FakeAnalytics extends AnalyticsService {
   }) async {}
 
   @override
-  Future<void> logWrongTap(int levelId, int remainingLives) async {}
+  Future<void> logWrongTap(dynamic levelId, int remainingLives) async {}
 
   @override
-  Future<void> logGameOver(int levelId) async {}
+  Future<void> logGameOver(dynamic levelId) async {}
 }
 
 class FakeBox implements Box<dynamic> {
@@ -116,7 +128,9 @@ void main() {
       expect(container.read(debugPlayModeProvider), isFalse);
 
       // Set a debug level
-      container.read(debugSelectedLevelProvider.notifier).setLevel(5);
+      container
+          .read(debugSelectedLevelProvider.notifier)
+          .setLevel('lvl_seed_05');
 
       // Now debug play mode should be true
       expect(container.read(debugPlayModeProvider), isTrue);
@@ -129,7 +143,7 @@ void main() {
     });
 
     test('Game progress notifier does not save when debug play mode is active',
-        () {
+        () async {
       final fakeRepo = FakeRepo();
       final fakeAnalytics = FakeAnalytics();
       final fakeBox = FakeBox();
@@ -139,6 +153,17 @@ void main() {
           gameProgressRepositoryProvider.overrideWithValue(fakeRepo),
           hiveBoxProvider.overrideWithValue(fakeBox as Box),
           analyticsServiceProvider.overrideWithValue(fakeAnalytics),
+          modulesProvider.overrideWithValue(AsyncValue.data([
+            ModuleData(
+              id: 1,
+              name: 'Seedling',
+              themeSeed: 'forest',
+              levels: ['lvl_seed_01', 'lvl_seed_02'],
+              challengeLevel: 'lvl_seed_challenge',
+              parable: const {},
+              unlockMessage: '',
+            ),
+          ])),
         ],
       );
 
@@ -147,12 +172,16 @@ void main() {
       expect(container.read(debugPlayModeProvider), isFalse);
 
       // Try a normal (non-debug) completion
-      container.read(gameProgressProvider.notifier).completeLevel(1);
+      await container
+          .read(gameProgressProvider.notifier)
+          .completeLevel('lvl_seed_01');
       expect(fakeRepo.saveCalled, isTrue);
 
       // Reset and test debug mode
       fakeRepo.saveCalled = false;
-      container.read(debugSelectedLevelProvider.notifier).setLevel(1);
+      container
+          .read(debugSelectedLevelProvider.notifier)
+          .setLevel('lvl_seed_01');
 
       // Verify debug play mode is now active
       expect(container.read(debugPlayModeProvider), isTrue);

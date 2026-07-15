@@ -35,7 +35,7 @@ void main() {
     expect(state.allLessonsCompleted, isFalse);
 
     final saved = await mockRepo.getProgress();
-    expect(saved.completedLessons.contains(1), isTrue);
+    expect(saved.completedLessons.contains('lesson_1'), isTrue);
   });
 
   test('Completing all lessons marks allComplete and sets currentLevel to 1',
@@ -62,6 +62,6 @@ void main() {
 
     final saved = await mockRepo.getProgress();
     expect(saved.lessonCompleted, isTrue);
-    expect(saved.currentLevel, 1);
+    expect(saved.currentLevel, 'lvl_seed_01');
   });
 }

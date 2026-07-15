@@ -40,7 +40,7 @@ export default function DesignSystemCard({
   return (
     <Card
       className={cn(
-        'animate-fade-in-up group border-border/60 hover:border-brand/30 hover:shadow-zen flex flex-col overflow-hidden bg-white/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white/95',
+        'animate-fade-in-up group border-border/60 hover:border-brand/30 hover:shadow-grace flex flex-col overflow-hidden bg-white/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white/95',
       )}
       style={{ animationDelay: `${animationDelay}ms` }}
     >

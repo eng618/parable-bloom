@@ -20,18 +20,18 @@ Key concepts:
 
 ## 2. File Structure
 
-```text
 apps/parable-bloom/assets/
 ├── data/
-│   └── modules.json        # Registry of modules, progression, and parables
-├── tutorials/              # Separate tutorial component
-│   ├── tutorial_1.json
+│   └── modules.json        # Registry of modules, logical-to-physical mappings, progression
+├── lessons/                 # Hand-crafted instructional tutorial lessons
+│   ├── lesson_1.json
 │   └── ...
-└── levels/                 # Standard gameplay levels
-    ├── level_11.json       # Start at 11 (1-10 reserved/skipped for clarity)
-    ├── level_12.json
+└── levels/                 # Standard gameplay levels (physical sequential integers)
+    ├── level_1.json
+    ├── level_2.json
     ├── ...
-    └── level_100.json
+    └── level_105.json
+
 ```
 
 ## 3. JSON Schemas
@@ -49,7 +49,7 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
     // --- Tier A: Runtime-Critical ---
     "id": {
       "type": "integer",
-      "description": "Unique Level ID. Tutorials: 1-10, Levels: 11+",
+      "description": "Physical sequential level identifier (converted to String at runtime: id.toString())",
       "minimum": 1
     },
     "grid_size": {
@@ -166,7 +166,9 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
 
 ### 3.2 Module Registry Schema (`modules.json`)
 
-Modules dictate the player's journey. Use a `theme_seed` to generate consistent aesthetics.
+Modules dictate the player's journey. Logical level keys (e.g. `'lvl_seed_01'`) decouple the progression graph and level sequencing from physical filenames (`level_1.json`).
+
+A global `level_mappings` object maps logical gameplay IDs to physical assets.
 
 ```json
 {
@@ -175,8 +177,13 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
     "version": { "type": "string" },
     "tutorials": {
       "type": "array",
-      "description": "List of tutorial level IDs",
-      "items": { "type": "integer" }
+      "description": "List of logical tutorial lesson IDs",
+      "items": { "type": "string" }
+    },
+    "level_mappings": {
+      "type": "object",
+      "description": "Global registry mapping logical keys to asset paths",
+      "additionalProperties": { "type": "string" }
     },
     "modules": {
       "type": "array",
@@ -191,12 +198,12 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
           },
           "levels": {
             "type": "array",
-            "description": "Sequence of standard 'Lesson' levels",
-            "items": { "type": "integer" }
+            "description": "Sequence of logical standard 'Lesson' level string keys",
+            "items": { "type": "string" }
           },
           "challenge_level": {
-            "type": "integer",
-            "description": "The final level of the module. Tougher difficulty."
+            "type": "string",
+            "description": "The logical challenge level string key ending the module"
           },
           "parable": {
             "type": "object",
@@ -222,7 +229,7 @@ Modules dictate the player's journey. Use a `theme_seed` to generate consistent 
       }
     }
   },
-  "required": ["version", "tutorials", "modules"]
+  "required": ["version", "tutorials", "level_mappings", "modules"]
 }
 ```
 
@@ -236,7 +243,8 @@ All levels must pass the strict validator in `tools/level-builder`.
 4. **No Overlaps**: No two vine segments may share a coordinate.
 5. **Minimum Length**: All vines must have at least 2 cells.
 6. **No Coverage Gaps**: While 100% occupancy is not required, any cells not occupied by vines must be explicitly masked out. The validator issues a **warning** for uncovered, unmasked cells.
-7. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
+7. **Incremental Caching**: To scale validations to thousands of levels, the tool maintains a `validation_cache.json` containing SHA-256 hashes of level contents and their validated solvability status under a specific `SolverVersion` constant. Matches bypass the expensive A* solver, reducing hot runs to milliseconds.
+8. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
 
 ## 5. Level Generation (gen2)
 
@@ -300,13 +308,13 @@ The Go-based toolchain located in `tools/level-builder` handles all operations.
   task levels:gen -- LEVEL_ID=101 DIFFICULTY=Seedling
   ```
 
-- **validate**: Check all assets against schema and logic
+- **validate**: Check all assets against schema and logic. Solvability checks are cached in `validation_cache.json` and executed concurrently (bounded by `runtime.NumCPU`).
 
   ```bash
   task levels:validate
   ```
 
-  _Outputs results to `logs/validation_stats.json`._
+  _Outputs results to `logs/validation_stats.json` and caches results under `apps/parable-bloom/assets/data/validation_cache.json`._
 
 - **render**: Visualize levels in terminal
 
@@ -323,3 +331,85 @@ The Go-based toolchain located in `tools/level-builder` handles all operations.
 ### 6.2 Deprecated Commands
 
 - **generate**: Original generation command (deprecated due to infinite loop issues with 100% coverage + solvability tension). Use `gen2` instead.
+
+---
+
+## 7. Over-the-Air (OTA) Level Delivery & Firebase Integration
+
+To support thousands of levels and dynamic season/daily challenge expansions without bloating the local application binary, Parable Bloom uses a high-performance, offline-first Over-the-Air (OTA) level load chain.
+
+### 7.1 The Level Load Chain
+
+When loading any level by logical ID, the `DynamicLevelRepository` follows a structured fallback mechanism:
+
+```mermaid
+graph TD
+    UI[garden_game.dart] -->|Watches| Provider[levelDataProvider]
+    Provider -->|Calls| Repo[DynamicLevelRepository]
+    Repo -->|1. Check Assets| Asset[Asset Bundle / modules.json]
+    Repo -->|2. Check Cache| Hive[Local Hive Cache Box]
+    Repo -->|3. Fetch Remote| Firestore[Cloud Firestore levels_{env}]
+    Firestore -->|Stores in cache| Hive
+```
+
+1. **Asset Bundle Check**: If the logical key exists in `modules.json`'s `level_mappings` and is bundled inside the assets, it is loaded instantly from `rootBundle`.
+2. **Local Hive Cache Check**: If not bundled, the repository checks the local Hive box under the key `'cached_level_${levelId}'`.
+3. **Cloud Firestore Fetch**: If there is a cache miss, it queries the `levels_{env}` collection on Firestore (where `{env}` is dynamically resolved to `dev`, `preview`, or `prod` depending on the running target). Upon a successful download, the level JSON is immediately mirrored into the local Hive box to support subsequent offline play.
+
+### 7.2 Database Schema & Environments
+
+OTA level files are uploaded directly to specific environmental collections colocated with progress sync tables:
+
+- **Collections**: `levels_dev`, `levels_preview`, and `levels_prod`.
+- **Document IDs**: The logical key of the level (e.g., `lvl_seed_01`, `lvl_seed_106`).
+- **Fields**: The complete level JSON attributes, including the logical `id` attribute embedded inside the document.
+
+### 7.3 Security Rules
+
+Public read access is granted globally to allow players to stream levels on first launch, while all write access is blocked from client SDKs to maintain database integrity:
+
+```javascript
+match /levels_dev/{levelId} {
+  allow read: if true;
+  allow write: if false;
+}
+match /levels_preview/{levelId} {
+  allow read: if true;
+  allow write: if false;
+}
+match /levels_prod/{levelId} {
+  allow read: if true;
+  allow write: if false;
+}
+```
+
+### 7.4 Batch Uploading Tool
+
+Developers can batch-upload newly generated levels from `apps/parable-bloom/assets/levels` directly to any environmental collection in Firestore using the task runner:
+
+```bash
+# Upload to dev (default)
+task firebase:levels:upload ENV=dev
+
+# Upload to preview
+task firebase:levels:upload ENV=preview
+
+# Upload to prod
+task firebase:levels:upload ENV=prod
+```
+
+For local integration testing, the script automatically routes all upload operations to a running local Firestore emulator if `FIRESTORE_EMULATOR_HOST` is present in the environment:
+
+```bash
+FIRESTORE_EMULATOR_HOST="localhost:8080" task firebase:levels:upload ENV=dev
+```
+
+### 7.5 Logical to Physical Key Alignment at Runtime
+
+To keep the game progression logic robust and consistent throughout the application, the `LevelData` entity's `id` property is matched to its logical key (e.g. `'lvl_seed_01'`) rather than the raw integer physical ID (e.g. `1`) encoded within the JSON files.
+
+During loading:
+
+1. `LevelData.fromJson(..., {String? idOverride})` supports an optional `idOverride` parameter.
+2. `DynamicLevelRepository.getLevel(String levelId)` passes the logical `levelId` as `idOverride` when parsing the JSON from local assets, local Hive cache, or remote Firestore collections.
+3. This guarantees that `currentLevel.id` in `GameScreen` matches the logical playlist string key, allowing standard level progression and save state synchronization to execute cleanly.

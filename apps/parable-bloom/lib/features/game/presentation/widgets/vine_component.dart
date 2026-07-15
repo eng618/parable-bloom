@@ -5,8 +5,6 @@ import 'dart:typed_data';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
-import 'package:flame/sprite.dart';
-
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/game_board_layout.dart';
 import '../../../../core/vine_color_palette.dart';
@@ -67,15 +65,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     final game = parent.parent;
 
-    if (_classicTextureImage == null) {
-      _classicTextureImage = await game.images.load('classic_vine_texture.png');
-    }
-    if (_blossomTextureImage == null) {
-      _blossomTextureImage = await game.images.load('blossom_vine_texture.png');
-    }
-    if (_etherealTextureImage == null) {
-      _etherealTextureImage = await game.images.load('ethereal_vine_texture.png');
-    }
+    _classicTextureImage ??= await game.images.load('classic_vine_texture.png');
+    _blossomTextureImage ??= await game.images.load('blossom_vine_texture.png');
+    _etherealTextureImage ??=
+        await game.images.load('ethereal_vine_texture.png');
 
     // Visual positions are already initialized in constructor
     // This is just for logging
@@ -120,7 +113,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final useSimpleVines = vineStyle == VineStyle.simple;
 
     // Swap live and blocked appearance for premium/stylized vines:
-    // Live state modulates with pure white (fully bright and vibrant in both light/dark modes), 
+    // Live state modulates with pure white (fully bright and vibrant in both light/dark modes),
     // and blocked state modulates with calmColor.
     Color drawColor = baseColor;
     if (!useSimpleVines) {
@@ -170,7 +163,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       paint.color = drawColor;
     } else {
       // Identity 4x4 matrix for ImageShader
-      final matrix = Float64List(16)..[0] = 1.0..[5] = 1.0..[10] = 1.0..[15] = 1.0;
+      final matrix = Float64List(16)
+        ..[0] = 1.0
+        ..[5] = 1.0
+        ..[10] = 1.0
+        ..[15] = 1.0;
       // High-resolution texture scale mapping
       const double textureScale = 0.25;
       matrix[0] = textureScale;
@@ -193,7 +190,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       final glowPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth + 6.0
-        ..color = const Color(0xFF00E5FF).withValues(alpha: 0.35) // Cyber cyan glow
+        ..color =
+            const Color(0xFF00E5FF).withValues(alpha: 0.35) // Cyber cyan glow
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
@@ -246,7 +244,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
             ..style = PaintingStyle.fill
             ..color = const Color(0xFF00E5FF)
             ..colorFilter = ColorFilter.mode(drawColor, BlendMode.modulate);
-          
+
           final leafGlow = Paint()
             ..style = PaintingStyle.fill
             ..color = const Color(0xFF00E5FF).withValues(alpha: 0.4)
@@ -304,14 +302,14 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final headPaint = Paint()
       ..style = PaintingStyle.fill
       ..color = drawColor;
-    
+
     if (useSimpleVines || texture == null) {
       headPaint.color = drawColor;
     } else {
       headPaint.shader = paint.shader;
       headPaint.colorFilter = paint.colorFilter;
     }
-    
+
     canvas.drawPath(headPath, headPaint);
 
     if (_isShowingBloomEffect && _bloomEffectPosition != null) {
@@ -328,7 +326,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     return path;
   }
 
-  void _drawCherryBlossom(Canvas canvas, Offset center, double size, Color baseColor) {
+  void _drawCherryBlossom(
+      Canvas canvas, Offset center, double size, Color baseColor) {
     final petalPaint = Paint()
       ..style = PaintingStyle.fill
       ..color = const Color(0xFFFFC2D8); // Soft pink petals

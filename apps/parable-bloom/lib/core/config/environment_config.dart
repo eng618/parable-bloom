@@ -34,6 +34,30 @@ class EnvironmentConfig {
     }
   }
 
+  /// Returns the Firestore collection name for dynamic levels in the current environment.
+  static String getLevelsCollection() {
+    switch (current) {
+      case AppEnvironment.dev:
+        return 'levels_dev';
+      case AppEnvironment.preview:
+        return 'levels_preview';
+      case AppEnvironment.prod:
+        return 'levels_prod';
+    }
+  }
+
+  /// Returns the Firestore collection name for configurations in the current environment.
+  static String getConfigsCollection() {
+    switch (current) {
+      case AppEnvironment.dev:
+        return 'configs_dev';
+      case AppEnvironment.preview:
+        return 'configs_preview';
+      case AppEnvironment.prod:
+        return 'configs_prod';
+    }
+  }
+
   /// Returns a human-readable environment name.
   static String environmentName() {
     switch (current) {

@@ -17,13 +17,13 @@ void main() {
 
     test('changing currentLesson should make objects unequal', () {
       final p1 = GameProgress.initial();
-      final p2 = p1.copyWith(currentLesson: 2);
+      final p2 = p1.copyWith(currentLesson: 'lesson_2');
       expect(p1, isNot(equals(p2)));
     });
 
     test('changing completedLessons should make objects unequal', () {
       final p1 = GameProgress.initial();
-      final p2 = p1.copyWith(completedLessons: {1});
+      final p2 = p1.copyWith(completedLessons: {'lesson_1'});
       expect(p1, isNot(equals(p2)));
     });
 
@@ -35,25 +35,25 @@ void main() {
 
     test('changing savedMainGameLevel should make objects unequal', () {
       final p1 = GameProgress.initial();
-      final p2 = p1.copyWith(savedMainGameLevel: 10);
+      final p2 = p1.copyWith(savedMainGameLevel: 'lvl_seed_05');
       expect(p1, isNot(equals(p2)));
     });
 
     test('Objects with same values should be equal', () {
       final p1 = GameProgress(
-        currentLesson: 2,
-        completedLessons: {1},
+        currentLesson: 'lesson_2',
+        completedLessons: {'lesson_1'},
         lessonCompleted: false,
-        currentLevel: 1,
+        currentLevel: 'lvl_seed_01',
         completedLevels: {},
         tutorialCompleted: false,
         savedMainGameLevel: null,
       );
       final p2 = GameProgress(
-        currentLesson: 2,
-        completedLessons: {1},
+        currentLesson: 'lesson_2',
+        completedLessons: {'lesson_1'},
         lessonCompleted: false,
-        currentLevel: 1,
+        currentLevel: 'lvl_seed_01',
         completedLevels: {},
         tutorialCompleted: false,
         savedMainGameLevel: null,

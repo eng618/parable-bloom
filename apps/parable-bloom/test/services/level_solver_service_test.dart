@@ -17,7 +17,7 @@ void main() {
 
     test('should solve a simple solvable level', () {
       final level = LevelData(
-        id: 1,
+        id: '1',
         name: 'Test Level',
         difficulty: 'easy',
         gridWidth: 5,
@@ -47,7 +47,7 @@ void main() {
 
     test('should detect blocking relationships correctly', () {
       final level = LevelData(
-        id: 2,
+        id: '2',
         name: 'Blocking Test',
         difficulty: 'medium',
         gridWidth: 6,
@@ -85,7 +85,7 @@ void main() {
 
     test('should calculate distance to blocker', () {
       final level = LevelData(
-        id: 3,
+        id: '3',
         name: 'Distance Test',
         difficulty: 'easy',
         gridWidth: 5,
@@ -113,7 +113,7 @@ void main() {
 
     test('should handle empty vine list', () {
       final level = LevelData(
-        id: 4,
+        id: '4',
         name: 'Empty Level',
         difficulty: 'easy',
         gridWidth: 5,

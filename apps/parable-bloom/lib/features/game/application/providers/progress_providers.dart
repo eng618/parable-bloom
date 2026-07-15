@@ -8,30 +8,61 @@ import '../../../../services/logger_service.dart';
 import '../../data/repositories/firebase_game_progress_repository.dart';
 import '../../domain/entities/cloud_sync_state.dart';
 import '../../domain/entities/game_progress.dart';
+import '../../../auth/application/providers/auth_providers.dart';
 import 'counter_providers.dart';
+import 'module_providers.dart';
 
 final gameProgressProvider =
     NotifierProvider<GameProgressNotifier, GameProgress>(
   GameProgressNotifier.new,
 );
 
+final cloudSyncAvailabilityProvider =
+    FutureProvider<CloudSyncAvailability>((ref) async {
+  final userAsync = ref.watch(authUserProvider);
+  return userAsync.when(
+    data: (user) {
+      if (user == null) {
+        return const CloudSyncAvailability(
+          isAvailable: false,
+          reason: CloudSyncAvailabilityReason.signedOut,
+        );
+      }
+      if (user.isAnonymous) {
+        return const CloudSyncAvailability(
+          isAvailable: false,
+          reason: CloudSyncAvailabilityReason.anonymousAccount,
+        );
+      }
+      return const CloudSyncAvailability(
+        isAvailable: true,
+        reason: CloudSyncAvailabilityReason.available,
+      );
+    },
+    loading: () => const CloudSyncAvailability(
+      isAvailable: false,
+      reason: CloudSyncAvailabilityReason.signedOut,
+    ),
+    error: (_, __) => const CloudSyncAvailability(
+      isAvailable: false,
+      reason: CloudSyncAvailabilityReason.signedOut,
+    ),
+  );
+});
+
+final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
+  final availability = await ref.watch(cloudSyncAvailabilityProvider.future);
+  return availability.isAvailable;
+});
+
 final cloudSyncEnabledProvider = FutureProvider<bool>((ref) async {
+  ref.watch(cloudSyncAvailabilityProvider);
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.isCloudSyncEnabled();
 });
 
-final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
-  final notifier = ref.watch(gameProgressProvider.notifier);
-  return notifier.isCloudSyncAvailable();
-});
-
-final cloudSyncAvailabilityProvider =
-    FutureProvider<CloudSyncAvailability>((ref) async {
-  final notifier = ref.watch(gameProgressProvider.notifier);
-  return notifier.getCloudSyncAvailability();
-});
-
 final lastSyncTimeProvider = FutureProvider<DateTime?>((ref) async {
+  ref.watch(cloudSyncAvailabilityProvider);
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.getLastSyncTime();
 });
@@ -54,33 +85,15 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     }
   }
 
-  Future<void> completeLevel(int levelNumber) async {
+  Future<void> completeLevel(String levelId) async {
     LoggerService.debug(
-      'Completing level $levelNumber, current state: $state',
+      'Completing level $levelId, current state: $state',
       tag: 'GameProgressNotifier',
     );
 
-    final newCompletedLevels = Set<int>.from(state.completedLevels)
-      ..add(levelNumber);
-
-    var newTutorialCompleted = state.tutorialCompleted;
-    late final int newCurrentLevel;
-
-    const int firstMainLevel = 1;
-    const int maxTutorialLevel = 5;
-
-    if (levelNumber == maxTutorialLevel && !state.tutorialCompleted) {
-      newTutorialCompleted = true;
-      newCurrentLevel = firstMainLevel;
-    } else {
-      newCurrentLevel = levelNumber + 1;
-    }
-
-    final newProgress = state.copyWith(
-      completedLevels: newCompletedLevels,
-      currentLevel: newCurrentLevel,
-      tutorialCompleted: newTutorialCompleted,
-    );
+    final modulesList = await ref.read(modulesProvider.future);
+    final playlist = modulesList.expand((m) => m.allLevels).toList();
+    final newProgress = state.completeLevel(levelId, playlist);
 
     LoggerService.debug(
       'New progress: $newProgress',
@@ -106,7 +119,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
 
     unawaited(
       ref.read(analyticsServiceProvider).logLevelComplete(
-            levelNumber,
+            levelId,
             totalTaps,
             wrongTaps,
             attempts: attempts,
@@ -118,18 +131,19 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   Future<void> resetTutorial() async {
     final newProgress = state.copyWith(
       tutorialCompleted: false,
-      currentLevel: state.currentLevel < 1 ? 1 : state.currentLevel,
+      currentLevel:
+          state.currentLevel.isEmpty ? 'lvl_seed_01' : state.currentLevel,
     );
 
     await _saveProgress(newProgress);
   }
 
   Future<void> completeLesson({
-    required int lessonId,
-    required int? nextLesson,
+    required String lessonId,
+    required String? nextLesson,
     required bool allLessonsCompleted,
   }) async {
-    final newCompletedLessons = Set<int>.from(state.completedLessons)
+    final newCompletedLessons = Set<String>.from(state.completedLessons)
       ..add(lessonId);
 
     final newProgress = state.copyWith(
@@ -137,8 +151,8 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       currentLesson: nextLesson,
       lessonCompleted: allLessonsCompleted,
       tutorialCompleted: allLessonsCompleted,
-      currentLevel: (allLessonsCompleted && state.currentLevel < 1)
-          ? 1
+      currentLevel: (allLessonsCompleted && state.currentLevel.isEmpty)
+          ? 'lvl_seed_01'
           : state.currentLevel,
     );
 
@@ -147,7 +161,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
 
   Future<void> resetLessons() async {
     final newProgress = state.copyWith(
-      currentLesson: 1,
+      currentLesson: 'lesson_1',
       completedLessons: {},
       lessonCompleted: false,
       tutorialCompleted: false,
@@ -173,6 +187,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     if (repository is FirebaseGameProgressRepository) {
       await repository.setCloudSyncEnabled(true);
     }
+    await initialize();
   }
 
   Future<void> disableCloudSync() async {
@@ -180,6 +195,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     if (repository is FirebaseGameProgressRepository) {
       await repository.setCloudSyncEnabled(false);
     }
+    await initialize();
   }
 
   Future<bool> isCloudSyncEnabled() async {

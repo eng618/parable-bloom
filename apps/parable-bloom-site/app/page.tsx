@@ -3,9 +3,11 @@ import { Badge, Separator, Text } from '@gv-tech/ui-web';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+const Empty = () => null;
+
 export const metadata: Metadata = {
   title: 'Parable Bloom',
-  description: 'A zen hyper-casual arrow puzzle game with faith-based themes.',
+  description: 'A Christ-centered arrow puzzle game of faith, scripture, and prayer.',
 };
 
 const platforms = [
@@ -21,7 +23,7 @@ const platforms = [
     marker: '🤖',
     title: 'Android',
     body: 'Download from Google Play and enjoy the full mobile experience.',
-    href: 'https://play.google.com/store/apps/details?id=com.eng618.parablebloom',
+    href: 'https://play.google.com/store/apps/details?id=com.garciaericn.parable_bloom',
     ctaLabel: 'Get on Google Play',
     badge: 'Coming Soon',
   },
@@ -29,7 +31,7 @@ const platforms = [
     marker: '🍏',
     title: 'iOS',
     body: 'Download on the App Store for iPhone and iPad.',
-    href: 'https://apps.apple.com/app/parable-bloom/id1234567890',
+    href: undefined, // Omit href for coming soon to render disabled button
     ctaLabel: 'Download on App Store',
     badge: 'Coming Soon',
   },
@@ -62,7 +64,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col gap-8 pb-10">
       {/* ── Hero ── */}
-      <section className="animate-fade-in-up border-border/60 to-surface-alt/95 shadow-zen relative overflow-hidden rounded-3xl border bg-gradient-to-br from-white/90 px-6 py-10 sm:px-10 sm:py-14">
+      <section className="animate-fade-in-up border-border/60 to-surface-alt/95 shadow-grace relative overflow-hidden rounded-3xl border bg-gradient-to-br from-white/90 px-6 py-10 sm:px-10 sm:py-14">
         {/* Decorative blobs */}
         <div className="bg-brand-soft/10 pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full blur-3xl" />
         <div className="bg-brand/8 pointer-events-none absolute -bottom-12 -left-12 h-48 w-48 rounded-full blur-2xl" />
@@ -71,7 +73,7 @@ export default function HomePage() {
           <div className="mb-4 flex items-center gap-3">
             <span className="animate-float text-5xl sm:text-6xl">🌿</span>
             <Badge variant="secondary" className="bg-brand/10 text-brand border-brand/20">
-              Zen Puzzle Game
+              Christ-Centered Puzzler
             </Badge>
           </div>
 
@@ -80,8 +82,8 @@ export default function HomePage() {
           </h1>
 
           <Text variant="body" className="text-text-secondary mb-6 max-w-2xl text-base sm:text-lg">
-            A journey of mindfulness, puzzles, and faith. Guide vines through beautiful gardens and uncover timeless
-            parables in this zen puzzler.
+            A journey of prayerful reflection, puzzles, and faith. Guide vines through gardens of grace and uncover the
+            parables of Jesus.
           </Text>
 
           <div className="flex flex-wrap gap-3">
@@ -94,21 +96,15 @@ export default function HomePage() {
               🌐 Play on Web
             </Link>
             <Link
-              href="https://play.google.com/store/apps/details?id=com.eng618.parablebloom"
+              href="https://play.google.com/store/apps/details?id=com.garciaericn.parable_bloom"
               target="_blank"
               rel="noopener noreferrer"
               className="border-border text-text-primary hover:border-brand/40 hover:bg-surface-alt inline-flex items-center gap-2 rounded-full border bg-white px-6 py-2.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
             >
               🤖 Google Play
             </Link>
-            <Link
-              href="https://apps.apple.com/app/parable-bloom/id1234567890"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border-border text-text-primary hover:border-brand/40 hover:bg-surface-alt inline-flex items-center gap-2 rounded-full border bg-white px-6 py-2.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-            >
-              🍏 App Store
-            </Link>
+            {/* iOS is coming soon, show nothing in Hero using Empty component */}
+            <Empty />
           </div>
         </div>
       </section>
@@ -143,14 +139,14 @@ export default function HomePage() {
         </Text>
         <Text variant="body" className="text-text-secondary mb-6 max-w-2xl">
           Parable Bloom isn&apos;t just a game — it&apos;s a moment of calm in your busy day. Immerse yourself in a
-          world where logic meets spiritual reflection.
+          world where logic meets devotional reflection.
         </Text>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {features.map((feature, i) => (
             <div
               key={feature.title}
-              className="animate-fade-in-up group border-border/50 hover:border-brand/30 hover:shadow-zen flex gap-4 rounded-2xl border bg-white/80 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/95"
+              className="animate-fade-in-up group border-border/50 hover:border-brand/30 hover:shadow-grace flex gap-4 rounded-2xl border bg-white/80 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/95"
               style={{ animationDelay: `${i * 80}ms` }}
             >
               <span className="bg-brand/8 mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl transition-transform duration-300 group-hover:scale-110">

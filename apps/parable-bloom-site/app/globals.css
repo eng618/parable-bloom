@@ -42,17 +42,17 @@
   --color-text-primary: hsl(222deg 47% 11%);
   --color-text-secondary: hsl(215deg 16% 47%);
 
-  /* Zen shadow */
-  --shadow-zen: 0 18px 40px hsl(151deg 66% 27% / 15%);
-  --shadow-zen-hover: 0 24px 48px hsl(151deg 66% 27% / 22%);
+  /* Grace shadow */
+  --shadow-grace: 0 18px 40px hsl(151deg 66% 27% / 15%);
+  --shadow-grace-hover: 0 24px 48px hsl(151deg 66% 27% / 22%);
 
   /* Typography */
   --font-display: 'Fraunces', georgia, serif;
   --font-body: 'Alegreya Sans', 'Segoe UI', sans-serif;
 
-  /* Zen transition defaults */
-  --duration-zen: 400ms;
-  --ease-zen: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Grace transition defaults */
+  --duration-grace: 400ms;
+  --ease-grace: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Design-system HSL variable definitions ── */
@@ -110,12 +110,12 @@ body {
 a,
 button {
   transition:
-    color var(--duration-zen) var(--ease-zen),
-    background-color var(--duration-zen) var(--ease-zen),
-    border-color var(--duration-zen) var(--ease-zen),
-    box-shadow var(--duration-zen) var(--ease-zen),
-    transform 200ms var(--ease-zen),
-    opacity 300ms var(--ease-zen);
+    color var(--duration-grace) var(--ease-grace),
+    background-color var(--duration-grace) var(--ease-grace),
+    border-color var(--duration-grace) var(--ease-grace),
+    box-shadow var(--duration-grace) var(--ease-grace),
+    transform 200ms var(--ease-grace),
+    opacity 300ms var(--ease-grace);
 }
 
 a {
@@ -158,11 +158,11 @@ a {
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 600ms var(--ease-zen) both;
+  animation: fade-in-up 600ms var(--ease-grace) both;
 }
 
 .animate-fade-in {
-  animation: fade-in 500ms var(--ease-zen) both;
+  animation: fade-in 500ms var(--ease-grace) both;
 }
 
 .animate-float {

@@ -401,15 +401,63 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     return SyncConflictType.divergent;
   }
 
+  int _levelIndex(String levelId) {
+    if (levelId.startsWith('lesson_')) {
+      final numStr = levelId.replaceAll('lesson_', '');
+      final num = int.tryParse(numStr) ?? 1;
+      return num; // lessons 1 to 5
+    }
+    int base = 0;
+    if (levelId.startsWith('lvl_seed_')) {
+      base = 10;
+      if (levelId == 'lvl_seed_challenge') return base + 21;
+      final numStr = levelId.replaceAll('lvl_seed_', '');
+      final num = int.tryParse(numStr) ?? 1;
+      return base + num;
+    }
+    if (levelId.startsWith('lvl_sprout_')) {
+      base = 40;
+      if (levelId == 'lvl_sprout_challenge') return base + 21;
+      final numStr = levelId.replaceAll('lvl_sprout_', '');
+      final num = int.tryParse(numStr) ?? 1;
+      return base + num;
+    }
+    if (levelId.startsWith('lvl_blossom_')) {
+      base = 70;
+      if (levelId == 'lvl_blossom_challenge') return base + 21;
+      final numStr = levelId.replaceAll('lvl_blossom_', '');
+      final num = int.tryParse(numStr) ?? 1;
+      return base + num;
+    }
+    if (levelId.startsWith('lvl_flourish_')) {
+      base = 100;
+      if (levelId == 'lvl_flourish_challenge') return base + 21;
+      final numStr = levelId.replaceAll('lvl_flourish_', '');
+      final num = int.tryParse(numStr) ?? 1;
+      return base + num;
+    }
+    if (levelId.startsWith('lvl_harvest_')) {
+      base = 130;
+      if (levelId == 'lvl_harvest_challenge') return base + 21;
+      final numStr = levelId.replaceAll('lvl_harvest_', '');
+      final num = int.tryParse(numStr) ?? 1;
+      return base + num;
+    }
+    return 0;
+  }
+
   bool _dominates(GameProgress left, GameProgress right) {
-    final levelCheck = left.currentLevel >= right.currentLevel;
+    final leftIdx = _levelIndex(left.currentLevel);
+    final rightIdx = _levelIndex(right.currentLevel);
+
+    final levelCheck = leftIdx >= rightIdx;
     final levelsCheck = left.completedLevels.containsAll(right.completedLevels);
     final lessonSetCheck =
         left.completedLessons.containsAll(right.completedLessons);
     final lessonCompletedCheck = !right.lessonCompleted || left.lessonCompleted;
     final tutorialCheck = !right.tutorialCompleted || left.tutorialCompleted;
 
-    final strictBetter = left.currentLevel > right.currentLevel ||
+    final strictBetter = leftIdx > rightIdx ||
         left.completedLevels.length > right.completedLevels.length ||
         left.completedLessons.length > right.completedLessons.length ||
         (left.lessonCompleted && !right.lessonCompleted) ||
