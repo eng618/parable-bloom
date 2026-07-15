@@ -1,3 +1,7 @@
+## 1.7.1 (2026-07-15)
+
+This was a version bump only for level-builder to align it with other projects, there were no code changes.
+
 ## 1.7.0 (2026-06-23)
 
 ### 🚀 Features
