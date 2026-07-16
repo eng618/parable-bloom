@@ -7,6 +7,7 @@ import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/game_board_layout.dart';
 import '../../../../providers/settings_providers.dart';
 import '../../../../services/logger_service.dart';
+import '../../domain/entities/level_data.dart';
 import 'gameplay_state_providers.dart';
 
 class CameraState {
@@ -271,6 +272,190 @@ class CameraStateNotifier extends Notifier<CameraState> {
       zoom: 1.0 * boardZoomScale,
       panOffset: vm.Vector2.zero(),
     );
+  }
+
+  Future<void> animateToPosition({
+    required double targetZoom,
+    required vm.Vector2 targetPanOffset,
+  }) {
+    final completer = Completer<void>();
+    _animationStartZoom = state.zoom;
+    _animationTargetZoom = targetZoom.clamp(state.minZoom, state.maxZoom);
+    _animationStartOffset = state.panOffset;
+    _animationTargetOffset = targetPanOffset;
+    _animationProgress = 0.0;
+
+    state = state.copyWith(
+      isAnimating: true,
+    );
+
+    LoggerService.debug(
+      'Starting animation to zoom $targetZoom, offset $targetPanOffset',
+      tag: 'CameraStateNotifier',
+    );
+
+    if (ref.read(disableAnimationsProvider)) {
+      state = state.copyWith(
+        isAnimating: false,
+        zoom: _animationTargetZoom,
+        panOffset: _animationTargetOffset,
+      );
+      completer.complete();
+      return completer.future;
+    }
+
+    _animationTimer?.cancel();
+    final startTime = DateTime.now();
+    _animationTimer = Timer.periodic(
+      const Duration(milliseconds: 16),
+      (timer) {
+        if (ref.read(disableAnimationsProvider)) {
+          timer.cancel();
+          state = state.copyWith(isAnimating: false);
+          completer.complete();
+          return;
+        }
+
+        final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+        _animationProgress =
+            (elapsed / (_animationDurationSeconds * 1000)).clamp(0.0, 1.0);
+
+        final t = _easeInOutCubic(_animationProgress);
+
+        final newZoom = _animationStartZoom +
+            (_animationTargetZoom - _animationStartZoom) * t;
+        final newOffset = vm.Vector2(
+          _animationStartOffset.x +
+              (_animationTargetOffset.x - _animationStartOffset.x) * t,
+          _animationStartOffset.y +
+              (_animationTargetOffset.y - _animationStartOffset.y) * t,
+        );
+
+        state = state.copyWith(
+          zoom: newZoom,
+          panOffset: newOffset,
+        );
+
+        if (_animationProgress >= 1.0) {
+          timer.cancel();
+          state = state.copyWith(isAnimating: false);
+          completer.complete();
+        }
+      },
+    );
+
+    return completer.future;
+  }
+
+  Future<void> ensureVineVisible(VineData vine) async {
+    final game = ref.read(gameInstanceProvider);
+    final level = ref.read(currentLevelProvider);
+    if (game == null || level == null) return;
+
+    final screenWidth = game.size.x;
+    final screenHeight = game.size.y;
+    final gridCols = level.gridWidth;
+    final gridRows = level.gridHeight;
+
+    if (_isVineFullyVisible(
+      vine,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridCols: gridCols,
+      gridRows: gridRows,
+    )) {
+      LoggerService.debug(
+        'Vine ${vine.id} is already fully visible, skipping camera adjustment',
+        tag: 'CameraStateNotifier',
+      );
+      return;
+    }
+
+    final vineCenter = _calculateVineCenter(vine, gridRows);
+    final gridWidth = GameBoardLayout.boardWidth(gridCols);
+    final gridHeight = GameBoardLayout.boardHeight(gridRows);
+
+    final targetZoom = state.zoom;
+
+    final targetPanOffset = vm.Vector2(
+      (gridWidth / 2 - vineCenter.x) * targetZoom,
+      (gridHeight / 2 - vineCenter.y) * targetZoom,
+    );
+
+    final constrainedPanOffset = _constrainPanOffset(
+      targetPanOffset,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridCols: gridCols,
+      gridRows: gridRows,
+    );
+
+    await animateToPosition(
+      targetZoom: targetZoom,
+      targetPanOffset: constrainedPanOffset,
+    );
+  }
+
+  bool _isVineFullyVisible(
+    VineData vine, {
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+  }) {
+    final gridWidth = GameBoardLayout.boardWidth(gridCols) * state.zoom;
+    final gridHeight = GameBoardLayout.boardHeight(gridRows) * state.zoom;
+
+    final centeredX = (screenWidth - gridWidth) / 2;
+    final centeredY = (screenHeight - gridHeight) / 2;
+
+    final gridPosX = centeredX + state.panOffset.x;
+    final gridPosY = centeredY + state.panOffset.y;
+
+    const margin = 40.0; // Margin from screen boundaries
+
+    for (final cell in vine.orderedPath) {
+      final x = cell['x']!;
+      final y = cell['y']!;
+      final visualRow = gridRows - 1 - y;
+
+      final localX = GameBoardLayout.cellCenterX(x);
+      final localY = GameBoardLayout.cellCenterY(visualRow);
+
+      final screenX = gridPosX + localX * state.zoom;
+      final screenY = gridPosY + localY * state.zoom;
+
+      if (screenX < margin ||
+          screenX > screenWidth - margin ||
+          screenY < margin ||
+          screenY > screenHeight - margin) {
+        return false; // Cell is off screen or too close to the edge
+      }
+    }
+    return true;
+  }
+
+  vm.Vector2 _calculateVineCenter(VineData vine, int gridRows) {
+    double minX = double.infinity;
+    double maxX = -double.infinity;
+    double minY = double.infinity;
+    double maxY = -double.infinity;
+
+    for (final cell in vine.orderedPath) {
+      final x = cell['x']!;
+      final y = cell['y']!;
+      final visualRow = gridRows - 1 - y;
+
+      final cx = GameBoardLayout.cellCenterX(x);
+      final cy = GameBoardLayout.cellCenterY(visualRow);
+
+      if (cx < minX) minX = cx;
+      if (cx > maxX) maxX = cx;
+      if (cy < minY) minY = cy;
+      if (cy > maxY) maxY = cy;
+    }
+
+    return vm.Vector2((minX + maxX) / 2, (minY + maxY) / 2);
   }
 
   double _pow(double x, int exp) {

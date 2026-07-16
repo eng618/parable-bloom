@@ -77,7 +77,7 @@ The application uses a reactive architecture where the UI and Game Engine observ
 ### 3.2 Logic & Solvers
 
 - **`LevelSolver`**: A Breadth-First Search (BFS) solver that validates level solvability and determines blocking relationships.
-- **Blocking Logic**: A vine is "blocked" if its path is obstructed by another vine. This is recalculated dynamically after every move.
+- **Blocking Logic**: A vine is "blocked" if its path is obstructed by another vine. This is recalculated dynamically after every move. When a blocked vine is tapped, it registers as a Failed Vine Attempt, which wiggles the vine and queues it. When the blocking obstacles are cleared, the queued vine automatically clears.
 
 ### 3.3 Visual Effects & Animations (Juice)
 
@@ -85,7 +85,7 @@ The game implements several high-performance visual systems within the Flame `Po
 
 - **Tap Feedback**: `TapEffectComponent` handles the visual pulse and particle effects on user interaction.
 - **Particle System**: `TapEffectComponent` and `VineComponent` (bloom) utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
-- **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input.
+- **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input. It supports auto-focusing on specific vines if they are off-screen or near the boundaries during the auto-clearing sequence.
 - **Vine Styles (Overhaul & Over-proportioned Dynamic Paths)**: `VineComponent` implements a high-end vector path shader pipeline drawing smooth, continuous rounded paths directly on the Flutter canvas with customized details:
   - **Grid Compaction**: Visual layout is compacted (52px cells with 42px spacing) to reduce white space and create a dense, satisfying board.
   - **Visual Profiles**: Clean, high-density stroke profiles (26px for Simple, 16px for Premium) with smooth rounded caps and `StrokeJoin.round` bends to optimize for visual continuity.

@@ -450,28 +450,7 @@ class LevelSolverService {
     String vineId,
     List<String> activeVineIds,
   ) {
-    final vine = level.vines.firstWhere((v) => v.id == vineId);
-
-    if (vine.orderedPath.isEmpty) return false;
-
-    // Simulate snake-like movement: calculate where each segment would be after one move
-    final newPositions = _simulateVineMovement(vine);
-
-    // Check if any of the new positions would be occupied by other active vines
-    for (final newPos in newPositions) {
-      for (final otherId in activeVineIds) {
-        if (otherId == vineId) continue;
-
-        final otherVine = level.vines.firstWhere((v) => v.id == otherId);
-        for (final cell in otherVine.orderedPath) {
-          if (cell['x'] == newPos['x'] && cell['y'] == newPos['y']) {
-            return true; // Blocked by another vine
-          }
-        }
-      }
-    }
-
-    return false; // Not blocked
+    return getDistanceToBlocker(level, vineId, activeVineIds) < 0;
   }
 
   /// Calculates how many cells a vine can slide before being blocked.

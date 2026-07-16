@@ -23,7 +23,18 @@ type: "Game Design Document"
 - **Movement**: Vines are directional arrows with a "head" and a trailing "body". When tapped, a vine attempts to move in the direction of its head (Up, Down, Left, Right).
 - **Snake Physics**: Movement is segment-based. The head moves into a new cell, and each subsequent body segment moves into the cell previously occupied by the segment ahead of it.
 - **Clearing**: A vine is "cleared" when its head and all body segments successfully exit the grid boundaries.
-- **Blocking**: If a vine's path is obstructed by another vine, it cannot move. Tapping a blocked vine triggers a "struggle" animation (moves forward slightly, then reverses) and costs **Grace**.
+- **Blocked Vine**: A vine is "blocked" if its simulated movement path in its direction of travel (head direction) intersects with any active cell of another remaining (non-cleared and non-animating-clear) vine on the grid.
+- **Failed Vine Attempt**: An interaction where the user taps a blocked vine. This triggers a "struggle" animation (slides forward slightly to collide, then reverses back to its original position), decrements the player's Grace, and registers a failed attempt on that vine (setting `hasBeenAttempted = true` and `isWithered = true`).
+- **Clear Path to Exit**: A state where a vine's simulated movement in its head direction reaches beyond the grid boundaries without intersecting any active cells of other remaining vines.
+- **Auto-Clearing Sequence**:
+  - Once a vine has a registered *Failed Vine Attempt* and is flagged in state (`hasBeenAttempted == true`), it is queued for automatic clearing.
+  - When the player clears the necessary blocker vines (which could be a chain of 2–3 blocker vines), the queued vine dynamically becomes unblocked.
+  - As soon as the queued vine has a *Clear Path to Exit* (and no other vine is actively animating), the auto-clearing sequence triggers:
+    1. **Camera Repositioning**: The camera checks if all cells of the queued vine are fully visible on screen. If any segment is off-screen or within a 40px margin of the screen edge, the camera smoothly pans/zooms to center the vine.
+    2. **Auto-Clear Delay**: The game pauses for a brief 200ms delay to allow the player to register the camera adjustment.
+    3. **Slide Out**: The vine automatically plays its slide-out/clear animation and exits the board without requiring another tap from the player.
+    4. **Camera State**: The camera remains at its panned position (it does not reset to the default center) unless the entire level board is fully cleared/completed.
+
 
 ### The Grace System
 

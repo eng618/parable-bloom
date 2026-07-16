@@ -8,6 +8,7 @@ import '../../../../core/game_board_layout.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../providers/settings_providers.dart';
 import '../../../../services/logger_service.dart';
+import '../../application/providers/camera_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
 import '../../application/providers/solver_providers.dart';
 import '../../../game/domain/services/level_solver_service.dart';
@@ -45,6 +46,8 @@ class GridComponent extends PositionComponent
 
   // Map to track active vine components
   final Map<String, VineComponent> _vineComponents = {};
+
+  bool _isAutoClearingInProgress = false;
 
   GridComponent({
     required this.cellSize,
@@ -88,6 +91,10 @@ class GridComponent extends PositionComponent
     // For state updates, just update the state without recreating components
 
     update(0); // Force redraw
+
+    if (!isNewLevel) {
+      _processAutoClearing();
+    }
   }
 
   VineState? getCurrentVineState(String vineId) => _vineStates[vineId];
@@ -311,6 +318,64 @@ class GridComponent extends PositionComponent
 
     // Force redraw to show vine removed
     update(0);
+  }
+
+  void _processAutoClearing() async {
+    if (_isAutoClearingInProgress) return;
+
+    final level = _currentLevel;
+    if (level == null) return;
+
+    // Check if any vine is currently animating
+    final isAnyAnimating = parent.ref.read(anyVineAnimatingProvider);
+    if (isAnyAnimating) return;
+
+    // Find first vine that meets the auto-clear criteria
+    String? targetVineId;
+    for (final vine in level.vines) {
+      final state = _vineStates[vine.id];
+      if (state != null &&
+          !state.isCleared &&
+          state.animationState == VineAnimationState.normal &&
+          state.hasBeenAttempted &&
+          !state.isBlocked) {
+        targetVineId = vine.id;
+        break;
+      }
+    }
+
+    if (targetVineId == null) return;
+
+    _isAutoClearingInProgress = true;
+
+    try {
+      final vine = level.vines.firstWhere((v) => v.id == targetVineId);
+      final comp = _vineComponents[targetVineId];
+      if (comp != null) {
+        LoggerService.info(
+          'Auto-clearing vine $targetVineId because it has a clear path',
+          tag: 'GridComponent',
+        );
+
+        // 1. Adjust camera so the vine is visible
+        final cameraNotifier = parent.ref.read(cameraStateProvider.notifier);
+        await cameraNotifier.ensureVineVisible(vine);
+
+        // 2. Add a 200ms delay to allow player to register camera zoom/pan
+        await Future.delayed(const Duration(milliseconds: 200));
+
+        // 3. Automatically clear the blocked vine
+        comp.slideOut();
+      }
+    } catch (e, stack) {
+      LoggerService.error(
+        'Error auto-clearing vine: $e',
+        tag: 'GridComponent',
+        stackTrace: stack,
+      );
+    } finally {
+      _isAutoClearingInProgress = false;
+    }
   }
 }
 
