@@ -112,14 +112,17 @@ class GameProgressNotifier extends Notifier<GameProgress> {
           final triggerLvl = scripture.triggerLevel;
 
           final isTriggeredByLevel = state.completedLevels.contains(triggerLvl);
-          final isTriggeredByLesson = state.completedLessons.contains(triggerLvl);
+          final isTriggeredByLesson =
+              state.completedLessons.contains(triggerLvl);
 
           final triggerIdx = playlist.indexOf(triggerLvl);
           final isTriggeredByPriorLevel = triggerIdx != -1 &&
               maxCompletedIndex != -1 &&
               triggerIdx <= maxCompletedIndex;
 
-          final shouldBeUnlocked = isTriggeredByLevel || isTriggeredByLesson || isTriggeredByPriorLevel;
+          final shouldBeUnlocked = isTriggeredByLevel ||
+              isTriggeredByLesson ||
+              isTriggeredByPriorLevel;
 
           if (shouldBeUnlocked) {
             if (!updatedProgress.unlockedScriptureIds.contains(scripture.id)) {

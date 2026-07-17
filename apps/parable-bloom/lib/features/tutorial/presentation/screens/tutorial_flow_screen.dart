@@ -107,8 +107,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       }
     });
 
-
-
     // Validate lesson number
     if (currentLesson < 1 || currentLesson > 5) {
       return Scaffold(

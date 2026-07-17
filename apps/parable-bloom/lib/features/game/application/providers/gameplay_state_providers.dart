@@ -386,7 +386,6 @@ class HintedVineIdsNotifier extends Notifier<Set<String>> {
   }
 }
 
-
 final anyVineAnimatingProvider = Provider<bool>((ref) {
   final vineStates = ref.watch(vineStatesProvider);
   return vineStates.values.any(

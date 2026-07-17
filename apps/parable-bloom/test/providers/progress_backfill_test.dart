@@ -24,7 +24,13 @@ void main() {
           id: 1,
           name: 'Seedling',
           themeSeed: 'forest',
-          levels: const ['lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04', 'lvl_seed_05'],
+          levels: const [
+            'lvl_seed_01',
+            'lvl_seed_02',
+            'lvl_seed_03',
+            'lvl_seed_04',
+            'lvl_seed_05'
+          ],
           challengeLevel: 'lvl_seed_challenge',
           parable: const {},
           unlockMessage: '',
@@ -55,7 +61,9 @@ void main() {
       ];
     });
 
-    test('New user starts with 0 unlocked scriptures and triggers them normally', () async {
+    test(
+        'New user starts with 0 unlocked scriptures and triggers them normally',
+        () async {
       final container = ProviderContainer(
         overrides: [
           gameProgressRepositoryProvider.overrideWithValue(fakeRepo),
@@ -75,17 +83,19 @@ void main() {
 
       // Complete lesson 1 to trigger starter verse
       await container.read(gameProgressProvider.notifier).completeLesson(
-        lessonId: 'lesson_1',
-        nextLesson: 'lesson_2',
-        allLessonsCompleted: false,
-      );
+            lessonId: 'lesson_1',
+            nextLesson: 'lesson_2',
+            allLessonsCompleted: false,
+          );
 
       progress = container.read(gameProgressProvider);
       expect(progress.unlockedScriptureIds.contains('seed_starter'), isTrue);
       expect(progress.unlockedTranslations['seed_starter'], isNotNull);
     });
 
-    test('Existing user with completed levels gets prior scriptures backfilled on initialization', () async {
+    test(
+        'Existing user with completed levels gets prior scriptures backfilled on initialization',
+        () async {
       // Simulate existing user who completed up to lvl_seed_03 (level 3)
       final existingProgress = GameProgress.initial().copyWith(
         completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'},
@@ -116,12 +126,16 @@ void main() {
       expect(progress.unlockedTranslations['seed_micro_1'], isNotNull);
     });
 
-    test('Re-running initialize / backfill is idempotent and does not overwrite existing translations', () async {
+    test(
+        'Re-running initialize / backfill is idempotent and does not overwrite existing translations',
+        () async {
       // Simulate user already having lvl_seed_02 completed and backfilled
       final existingProgress = GameProgress.initial().copyWith(
         completedLevels: {'lvl_seed_01', 'lvl_seed_02'},
         unlockedScriptureIds: {'seed_micro_1'},
-        unlockedTranslations: {'seed_micro_1': 'web'}, // Pre-selected translation
+        unlockedTranslations: {
+          'seed_micro_1': 'web'
+        }, // Pre-selected translation
         currentLevel: 'lvl_seed_03',
         tutorialCompleted: true,
       );
@@ -158,7 +172,8 @@ class _FakeRepo implements GameProgressRepository {
   @override
   Future<GameProgress> getProgress() async => _progress;
   @override
-  Future<void> saveProgress(GameProgress progress) async => _progress = progress;
+  Future<void> saveProgress(GameProgress progress) async =>
+      _progress = progress;
   @override
   Future<void> resetProgress() async => _progress = GameProgress.initial();
   @override
@@ -169,7 +184,8 @@ class _FakeRepo implements GameProgressRepository {
   Future<bool> isCloudSyncAvailable() async => false;
   @override
   Future<CloudSyncAvailability> getCloudSyncAvailability() async =>
-      const CloudSyncAvailability(isAvailable: false, reason: CloudSyncAvailabilityReason.signedOut);
+      const CloudSyncAvailability(
+          isAvailable: false, reason: CloudSyncAvailabilityReason.signedOut);
   @override
   Future<void> setCloudSyncEnabled(bool enabled) async {}
   @override
@@ -177,8 +193,10 @@ class _FakeRepo implements GameProgressRepository {
   @override
   Future<void> syncFromCloud() async {}
   @override
-  Future<SyncConflictState> inspectSyncConflict() async =>
-      SyncConflictState(type: SyncConflictType.none, localProgress: _progress, cloudProgress: null);
+  Future<SyncConflictState> inspectSyncConflict() async => SyncConflictState(
+      type: SyncConflictType.none,
+      localProgress: _progress,
+      cloudProgress: null);
   @override
   Future<void> resolveSyncConflict(SyncConflictResolution resolution) async {}
 }
@@ -195,7 +213,8 @@ class _FakeAnalytics extends AnalyticsService {
   @override
   Future<void> logLevelStart(dynamic levelId) async {}
   @override
-  Future<void> logLevelComplete(dynamic levelId, int taps, int wrongTaps, {int attempts = 1, int elapsedSeconds = -1}) async {}
+  Future<void> logLevelComplete(dynamic levelId, int taps, int wrongTaps,
+      {int attempts = 1, int elapsedSeconds = -1}) async {}
   @override
   Future<void> logWrongTap(dynamic levelId, int remainingLives) async {}
   @override
@@ -214,6 +233,7 @@ class _FakeBox implements Box<dynamic> {
     _store.clear();
     return 0;
   }
+
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

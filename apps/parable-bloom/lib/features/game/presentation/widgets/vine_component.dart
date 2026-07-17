@@ -613,7 +613,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           _startBloomEffect();
         }
 
-        if (!_isShowingBloomEffect && _currentAnimationStep >= _totalAnimationSteps) {
+        if (!_isShowingBloomEffect &&
+            _currentAnimationStep >= _totalAnimationSteps) {
           // Fallback: if animation times out, still show effect
           _logDebug(
             'Animation steps timeout fallback: vineId=${vineData.id}, '

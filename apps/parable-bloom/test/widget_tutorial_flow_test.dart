@@ -396,7 +396,8 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
-  testWidgets('Completing lesson 5 triggers starter scripture unlock dialog', (tester) async {
+  testWidgets('Completing lesson 5 triggers starter scripture unlock dialog',
+      (tester) async {
     final repo = _InMemoryRepo();
     final mockModules = [
       ModuleData(
@@ -425,19 +426,59 @@ void main() {
       modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
       scriptureServiceProvider.overrideWithValue(_FakeScriptureService()),
       lessonProvider(1).overrideWithValue(const AsyncValue.data(
-        LessonData(id: 1, title: 'L1', objective: 'o', instructions: 'i', learningPoints: ['a'], gridWidth: 3, gridHeight: 3, vines: []),
+        LessonData(
+            id: 1,
+            title: 'L1',
+            objective: 'o',
+            instructions: 'i',
+            learningPoints: ['a'],
+            gridWidth: 3,
+            gridHeight: 3,
+            vines: []),
       )),
       lessonProvider(2).overrideWithValue(const AsyncValue.data(
-        LessonData(id: 2, title: 'L2', objective: 'o', instructions: 'i', learningPoints: ['a'], gridWidth: 3, gridHeight: 3, vines: []),
+        LessonData(
+            id: 2,
+            title: 'L2',
+            objective: 'o',
+            instructions: 'i',
+            learningPoints: ['a'],
+            gridWidth: 3,
+            gridHeight: 3,
+            vines: []),
       )),
       lessonProvider(3).overrideWithValue(const AsyncValue.data(
-        LessonData(id: 3, title: 'L3', objective: 'o', instructions: 'i', learningPoints: ['a'], gridWidth: 3, gridHeight: 3, vines: []),
+        LessonData(
+            id: 3,
+            title: 'L3',
+            objective: 'o',
+            instructions: 'i',
+            learningPoints: ['a'],
+            gridWidth: 3,
+            gridHeight: 3,
+            vines: []),
       )),
       lessonProvider(4).overrideWithValue(const AsyncValue.data(
-        LessonData(id: 4, title: 'L4', objective: 'o', instructions: 'i', learningPoints: ['a'], gridWidth: 3, gridHeight: 3, vines: []),
+        LessonData(
+            id: 4,
+            title: 'L4',
+            objective: 'o',
+            instructions: 'i',
+            learningPoints: ['a'],
+            gridWidth: 3,
+            gridHeight: 3,
+            vines: []),
       )),
       lessonProvider(5).overrideWithValue(const AsyncValue.data(
-        LessonData(id: 5, title: 'L5', objective: 'o', instructions: 'i', learningPoints: ['a'], gridWidth: 3, gridHeight: 3, vines: []),
+        LessonData(
+            id: 5,
+            title: 'L5',
+            objective: 'o',
+            instructions: 'i',
+            learningPoints: ['a'],
+            gridWidth: 3,
+            gridHeight: 3,
+            vines: []),
       )),
     ];
 
@@ -474,12 +515,13 @@ void main() {
 
     // Pump past the 2-second overlay animation delay
     await tester.pump(const Duration(seconds: 3));
-    
+
     // We should be showing the Scripture dialog now!
     // Expect to find 'Starter Scripture!' title
     expect(find.text('Starter Scripture!'), findsOneWidget);
     expect(find.text('The Seed is the Word'), findsOneWidget);
-    expect(find.text('Now the parable is this: The seed is the word of God.'), findsOneWidget);
+    expect(find.text('Now the parable is this: The seed is the word of God.'),
+        findsOneWidget);
     expect(find.text('Luke 8:11 (KJV)'), findsOneWidget);
 
     // Tap CONTINUE button

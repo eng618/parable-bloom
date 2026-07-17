@@ -282,7 +282,8 @@ class GardenGame extends FlameGame with TapCallbacks {
 
     // Hide projection lines when any vine is animating
     if (_isGridInitialized && projectionLines.isMounted) {
-      projectionLines.setVisible((shouldShow || hintedVines.isNotEmpty) && !isAnimating);
+      projectionLines
+          .setVisible((shouldShow || hintedVines.isNotEmpty) && !isAnimating);
     }
   }
 
