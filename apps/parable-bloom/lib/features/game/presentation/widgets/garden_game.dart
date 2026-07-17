@@ -24,7 +24,8 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   late GridComponent grid;
   late ProjectionLinesComponent projectionLines;
-  final WidgetRef ref;
+  final WidgetRef? _ref;
+  WidgetRef get ref => _ref!;
   bool _isGridInitialized = false;
   bool get isGridInitialized => _isGridInitialized;
   LevelData? _currentLevelData;
@@ -38,7 +39,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   late Color _tapEffectColor;
   late Color _vineAttemptedColor;
 
-  GardenGame({required this.ref}) {
+  GardenGame({required WidgetRef? ref}) : _ref = ref {
     LoggerService.debug('Constructor called - creating new instance',
         tag: 'GardenGame');
     // Initialize with default theme colors - will be updated by game screen

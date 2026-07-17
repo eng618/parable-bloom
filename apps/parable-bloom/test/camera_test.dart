@@ -7,32 +7,34 @@ import 'package:parable_bloom/features/game/application/providers/camera_provide
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/garden_game.dart';
 
+import 'package:flame/game.dart' show Vector2;
+
 class MockGardenGame extends GardenGame {
-  final vm.Vector2 mockSize;
-  MockGardenGame(this.mockSize);
+  final Vector2 mockSize;
+  MockGardenGame(this.mockSize) : super(ref: null);
 
   @override
-  vm.Vector2 get size => mockSize;
+  Vector2 get size => mockSize;
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('ensureVineVisible centers an off-screen vine', () async {
-    final game = MockGardenGame(vm.Vector2(800, 600));
+    final game = MockGardenGame(Vector2(800, 600));
     final level = LevelData(
       id: 'test_lvl',
       name: 'Test Level',
       difficulty: 'Seed',
-      gridWidth: 10,
-      gridHeight: 10,
+      gridWidth: 20,
+      gridHeight: 20,
       vines: [
         VineData(
           id: 'v1',
           headDirection: 'right',
           orderedPath: [
-            {'x': 9, 'y': 9},
-            {'x': 8, 'y': 9},
+            {'x': 19, 'y': 19},
+            {'x': 18, 'y': 19},
           ],
         )
       ],
@@ -56,6 +58,14 @@ void main() {
 
     final cameraNotifier = container.read(cameraStateProvider.notifier);
 
+    // Initialize camera zoom bounds for level
+    cameraNotifier.updateZoomBounds(
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 20,
+      gridRows: 20,
+    );
+
     // Set initial centered camera state
     cameraNotifier.resetToCenter();
     expect(container.read(cameraStateProvider).panOffset, vm.Vector2.zero());
@@ -70,7 +80,7 @@ void main() {
   });
 
   test('ensureVineVisible does not pan if vine is already visible', () async {
-    final game = MockGardenGame(vm.Vector2(800, 600));
+    final game = MockGardenGame(Vector2(800, 600));
     final level = LevelData(
       id: 'test_lvl_2',
       name: 'Test Level 2',

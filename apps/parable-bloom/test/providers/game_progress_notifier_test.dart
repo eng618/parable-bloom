@@ -148,6 +148,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         gameProgressRepositoryProvider.overrideWithValue(repository),
+        modulesProvider.overrideWithValue(const AsyncValue.data([])),
       ],
     );
     addTearDown(container.dispose);

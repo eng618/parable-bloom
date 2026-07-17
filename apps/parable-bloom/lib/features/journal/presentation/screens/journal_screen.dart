@@ -242,7 +242,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                       decoration: BoxDecoration(
                         color: cs.primaryContainer.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
+                        border: Border.all(
+                            color: cs.primary.withValues(alpha: 0.2)),
                       ),
                       child: Text(
                         item.reflection!,
@@ -386,7 +387,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(
-                                    color: cs.outlineVariant.withValues(alpha: 0.3)),
+                                    color: cs.outlineVariant
+                                        .withValues(alpha: 0.3)),
                               ),
                               child: ListTile(
                                 leading: CircleAvatar(
@@ -424,12 +426,14 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                             // Locked card placeholder
                             return Card(
                               elevation: 0,
-                              color: cs.surfaceContainerLowest.withValues(alpha: 0.5),
+                              color: cs.surfaceContainerLowest
+                                  .withValues(alpha: 0.5),
                               margin: const EdgeInsets.only(bottom: 8),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(
-                                    color: cs.outlineVariant.withValues(alpha: 0.1)),
+                                    color: cs.outlineVariant
+                                        .withValues(alpha: 0.1)),
                               ),
                               child: ListTile(
                                 enabled: false,
@@ -438,7 +442,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                                       .withValues(alpha: 0.6),
                                   child: Icon(
                                     Icons.lock_outline,
-                                    color: cs.onSurfaceVariant.withValues(alpha: 0.4),
+                                    color: cs.onSurfaceVariant
+                                        .withValues(alpha: 0.4),
                                     size: 18,
                                   ),
                                 ),
@@ -446,13 +451,15 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                                   'Locked Scripture',
                                   style: textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.w500,
-                                    color: cs.onSurfaceVariant.withValues(alpha: 0.4),
+                                    color: cs.onSurfaceVariant
+                                        .withValues(alpha: 0.4),
                                   ),
                                 ),
                                 subtitle: Text(
                                   item.triggerText,
                                   style: textTheme.bodySmall?.copyWith(
-                                    color: cs.onSurfaceVariant.withValues(alpha: 0.3),
+                                    color: cs.onSurfaceVariant
+                                        .withValues(alpha: 0.3),
                                   ),
                                 ),
                               ),
