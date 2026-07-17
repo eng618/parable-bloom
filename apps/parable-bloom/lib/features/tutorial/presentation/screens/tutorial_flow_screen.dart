@@ -19,7 +19,6 @@ import '../../../game/presentation/widgets/ripple_fireworks_component.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
 import '../../../../providers/service_providers.dart';
-import '../../../../services/scripture_service.dart';
 import '../../../game/domain/entities/level_data.dart';
 
 /// Tutorial flow screen that matches the regular game experience.

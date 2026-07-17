@@ -602,7 +602,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         // Use `_hasExitedVisibleGrid()` to detect when the vine head has left
         // the visible grid area so we can start the bloom immediately.
         final isHeadExitedVisibleGrid = _hasExitedVisibleGrid();
-        final isFullyOffScreen = _isFullyOffScreen();
 
         // Start bloom effect as soon as vine head leaves the visible grid
         if (isHeadExitedVisibleGrid && !_isShowingBloomEffect) {
