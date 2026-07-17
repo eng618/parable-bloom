@@ -1,16 +1,9 @@
 'use client';
 
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  cn,
-} from '@gv-tech/ui-web';
+import { cn } from '@/lib/utils';
+import { Badge } from '@gv-tech/ui-web/badge';
+import { Button } from '@gv-tech/ui-web/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@gv-tech/ui-web/card';
 import Link from 'next/link';
 
 type DesignSystemCardProps = {

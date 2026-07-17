@@ -1,6 +1,8 @@
 'use client';
 
-import { SupportFab, Text, cn } from '@gv-tech/ui-web';
+import { cn } from '@/lib/utils';
+import { SupportFab } from '@gv-tech/ui-web/support-fab';
+import { Text } from '@gv-tech/ui-web/text';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';

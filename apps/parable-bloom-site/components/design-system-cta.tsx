@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@gv-tech/ui-web';
+import { Button } from '@gv-tech/ui-web/button';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 

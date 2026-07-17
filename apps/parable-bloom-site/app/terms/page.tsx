@@ -1,4 +1,4 @@
-import { Text } from '@gv-tech/ui-web';
+import { Text } from '@gv-tech/ui-web/text';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
