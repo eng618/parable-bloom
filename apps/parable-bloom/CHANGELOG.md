@@ -1,3 +1,21 @@
+## 1.8.0 (2026-07-17)
+
+### 🚀 Features
+
+- implement automatic clearing for unblocked vines and add camera focus logic for visibility ([bfd1f48](https://github.com/eng618/parable-bloom/commit/bfd1f48))
+- add individual vine hinting system via long-press gestures and state management providers ([46cc092](https://github.com/eng618/parable-bloom/commit/46cc092))
+- implement automatic scripture unlocking based on level and lesson progression milestones ([eaf7a43](https://github.com/eng618/parable-bloom/commit/eaf7a43))
+- implement ScriptureService with dynamic translation support and integrate library tracking into game progress ([efd50e7](https://github.com/eng618/parable-bloom/commit/efd50e7))
+- update primary UI colors, standardize celebration effects, and expand congratulatory messages across game screens. ([3a89727](https://github.com/eng618/parable-bloom/commit/3a89727))
+
+### 🩹 Fixes
+
+- update Flutter version and integrate implicit engine configuration in AppDelegate ([c97c55a](https://github.com/eng618/parable-bloom/commit/c97c55a))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.7.0 (2026-06-23)
 
 ### 🚀 Features
