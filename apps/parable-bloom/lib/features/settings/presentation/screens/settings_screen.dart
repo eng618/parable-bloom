@@ -2,14 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../../services/logger_service.dart';
-import '../../../../providers/infrastructure_providers.dart';
-import '../../../../providers/service_providers.dart';
-import '../../../../providers/settings_providers.dart';
+import '../../../../core/services/logger_service.dart';
+import '../../../../core/providers/infrastructure_providers.dart';
+import '../../../../core/providers/service_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
 import '../../../auth/application/providers/auth_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
-import '../../../auth/presentation/screens/auth_screen.dart';
 import '../../../game/domain/entities/cloud_sync_state.dart';
 import '../../../game/domain/entities/game_progress.dart';
 import '../../../game/domain/entities/level_data.dart';
@@ -229,11 +229,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
           onTap: isAnonymous
               ? () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const AuthScreen(),
-                    ),
-                  );
+                  context.push('/auth');
                 }
               : null, // Disable tap if already signed in, logic is in logout button
         );
@@ -587,9 +583,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
 
     if (shouldOpenAuth == true && context.mounted) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const AuthScreen()),
-      );
+      await context.push('/auth');
     }
   }
 
@@ -796,10 +790,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Account successfully deleted.')),
         );
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const AuthScreen()),
-          (route) => false,
-        );
+        context.go('/auth');
       }
     } catch (e) {
       if (loadingContext != null && loadingContext!.mounted) {
@@ -1118,7 +1109,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _performDataReset(BuildContext context, WidgetRef ref) {
     // Close the confirmation dialog immediately (before any async work)
-    Navigator.of(context).pop();
+    if (context.canPop()) context.pop();
 
     // Store service references before async operations
     final firestore = ref.read(firestoreProvider);
@@ -1248,7 +1239,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _performRedoTutorial(BuildContext context, WidgetRef ref) async {
-    Navigator.of(context).pop(); // Close dialog
+    if (context.canPop()) context.pop(); // Close dialog
 
     // Only reset the in-memory tutorial progress state - don't persist changes
     // This allows replaying the tutorial without affecting main game progress
@@ -1259,8 +1250,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     // Navigate directly to tutorial flow
     if (context.mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      Navigator.of(context).pushNamed('/tutorial');
+      context.go('/tutorial');
     }
   }
 

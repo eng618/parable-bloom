@@ -9,11 +9,11 @@ import 'app/parable_bloom_app.dart';
 import 'features/game/data/constants/game_progress_storage_keys.dart';
 import 'features/game/domain/entities/game_progress.dart';
 import 'firebase_options.dart';
-import 'providers/infrastructure_providers.dart';
-import 'providers/service_providers.dart';
-import 'services/analytics_service.dart';
-import 'services/logger_service.dart';
-import 'services/plausible_analytics_client.dart';
+import 'core/providers/infrastructure_providers.dart';
+import 'core/providers/service_providers.dart';
+import 'core/services/analytics_service.dart';
+import 'core/services/logger_service.dart';
+import 'core/services/plausible_analytics_client.dart';
 
 const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 

@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:parable_bloom/core/app_theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:parable_bloom/features/tutorial/application/providers/tutorial_providers.dart';
+import 'package:parable_bloom/features/tutorial/application/core/providers/tutorial_providers.dart';
 import 'package:parable_bloom/features/tutorial/domain/entities/lesson_data.dart';
 import 'package:hive/hive.dart';
 import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 import 'package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart';
 import 'package:parable_bloom/features/tutorial/presentation/screens/tutorial_flow_screen.dart';
-import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
-import 'package:parable_bloom/providers/infrastructure_providers.dart';
-import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
+import 'package:parable_bloom/features/game/application/core/providers/gameplay_state_providers.dart';
+import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
+import 'package:parable_bloom/features/game/application/core/providers/module_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
-import 'package:parable_bloom/providers/service_providers.dart';
-import 'package:parable_bloom/services/scripture_service.dart';
+import 'package:parable_bloom/core/providers/service_providers.dart';
+import 'package:parable_bloom/core/services/scripture_service.dart';
 
 class _InMemoryRepo implements GameProgressRepository {
   GameProgress _progress = GameProgress.initial();

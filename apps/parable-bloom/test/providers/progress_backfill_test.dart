@@ -6,10 +6,10 @@ import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart';
-import 'package:parable_bloom/services/analytics_service.dart';
-import 'package:parable_bloom/providers/infrastructure_providers.dart';
-import 'package:parable_bloom/providers/service_providers.dart';
-import 'package:parable_bloom/services/scripture_service.dart';
+import 'package:parable_bloom/core/services/analytics_service.dart';
+import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
+import 'package:parable_bloom/core/providers/service_providers.dart';
+import 'package:parable_bloom/core/services/scripture_service.dart';
 import 'package:hive/hive.dart';
 
 void main() {

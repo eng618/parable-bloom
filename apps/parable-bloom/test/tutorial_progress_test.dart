@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parable_bloom/features/tutorial/application/providers/tutorial_providers.dart';
 import 'mock_repository_example_test.dart';
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
-import 'package:parable_bloom/providers/infrastructure_providers.dart';
+import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
 import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 

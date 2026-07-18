@@ -2,15 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import 'package:parable_bloom/services/analytics_service.dart';
+import 'package:parable_bloom/core/services/analytics_service.dart';
 import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 import 'package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
-import 'package:parable_bloom/providers/infrastructure_providers.dart';
-import 'package:parable_bloom/providers/service_providers.dart';
-import 'package:parable_bloom/providers/settings_providers.dart';
+import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
+import 'package:parable_bloom/core/providers/service_providers.dart';
+import 'package:parable_bloom/core/providers/settings_providers.dart';
 import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 

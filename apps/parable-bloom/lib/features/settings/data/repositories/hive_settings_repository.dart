@@ -1,6 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../../../../services/logger_service.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../domain/repositories/settings_repository.dart';
 
 /// Hive-based implementation of SettingsRepository.

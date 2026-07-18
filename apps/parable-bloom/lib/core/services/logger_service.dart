@@ -1,6 +1,6 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
-import '../core/config/environment_config.dart';
+import '../config/environment_config.dart';
 
 /// Centralized logging service for the application.
 ///

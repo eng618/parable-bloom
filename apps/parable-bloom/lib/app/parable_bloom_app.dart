@@ -9,14 +9,12 @@ import '../core/app_theme.dart';
 import '../core/config/environment_config.dart';
 import '../features/auth/application/providers/auth_providers.dart';
 import '../features/game/application/providers/progress_providers.dart';
-import '../features/game/presentation/screens/game_screen.dart';
-import '../features/home/presentation/screens/home_screen.dart';
-import '../features/journal/presentation/screens/journal_screen.dart';
-import '../features/settings/presentation/screens/settings_screen.dart';
-import '../features/tutorial/presentation/screens/tutorial_flow_screen.dart';
-import '../providers/infrastructure_providers.dart';
-import '../providers/settings_providers.dart';
-import '../services/logger_service.dart';
+import '../core/providers/infrastructure_providers.dart';
+import '../core/providers/settings_providers.dart';
+import '../core/routes/app_router.dart';
+import '../core/services/logger_service.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+// TODO: import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
@@ -137,20 +135,26 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
       });
     }
 
-    final app = MaterialApp(
+    final app = MaterialApp.router(
       title: 'Parable Bloom',
       debugShowCheckedModeBanner:
           _isScreenshotMode ? false : !EnvironmentConfig.isProd(),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _convertToThemeMode(themeMode),
-      home: _buildHome(),
-      routes: {
-        '/tutorial': (context) => const TutorialFlowScreen(),
-        '/game': (context) => const GameScreen(),
-        '/journal': (context) => const JournalScreen(),
-        '/settings': (context) => const SettingsScreen(),
+      routerConfig: appRouter,
+      builder: (context, child) {
+        return _buildHomeWrapper(child!);
       },
+      localizationsDelegates: const [
+        // TODO: AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // English
+      ],
     );
     if (kIsWeb) {
       return Listener(
@@ -162,10 +166,10 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     return app;
   }
 
-  Widget _buildHome() {
+  Widget _buildHomeWrapper(Widget child) {
     return Stack(
       children: [
-        const HomeScreen(),
+        child,
         if (!_isScreenshotMode && !EnvironmentConfig.isProd())
           Positioned(
             top: 0,

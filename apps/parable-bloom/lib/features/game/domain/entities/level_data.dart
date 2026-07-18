@@ -1,5 +1,5 @@
 import '../../../../core/vine_color_palette.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/services/logger_service.dart';
 
 class ModuleScripture {
   final String id;

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-import "../services/logger_service.dart";
+import 'logger_service.dart';
 import "package:just_audio/just_audio.dart";
 
 class BackgroundAudioController {

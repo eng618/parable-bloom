@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../../providers/settings_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
 
 class PauseMenuDialog extends ConsumerWidget {
   final VoidCallback onRestart;
@@ -160,7 +161,9 @@ class PauseMenuDialog extends ConsumerWidget {
                   context,
                   icon: Icons.play_arrow_rounded,
                   label: 'Resume',
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: () {
+                    if (context.canPop()) context.pop();
+                  },
                   isPrimary: true,
                 ),
                 _buildActionButton(

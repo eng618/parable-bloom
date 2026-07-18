@@ -3,7 +3,7 @@ import "dart:convert";
 import "package:flutter_test/flutter_test.dart";
 import "package:http/http.dart" as http;
 import "package:http/testing.dart";
-import "package:parable_bloom/services/plausible_analytics_client.dart";
+import "package:parable_bloom/core/services/plausible_analytics_client.dart";
 
 void main() {
   group("PlausibleAnalyticsClient", () {

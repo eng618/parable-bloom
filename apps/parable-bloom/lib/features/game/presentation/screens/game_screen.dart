@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
@@ -7,7 +8,7 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 
 import '../../../../core/app_theme.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
-import '../../../../providers/service_providers.dart';
+import '../../../../core/providers/service_providers.dart';
 import '../../application/providers/camera_providers.dart';
 import '../../application/providers/counter_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
@@ -18,7 +19,7 @@ import '../widgets/garden_game.dart';
 import '../widgets/pause_menu_dialog.dart';
 import '../widgets/pond_ripple_effect_component.dart';
 import '../widgets/ripple_fireworks_component.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/services/logger_service.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -256,12 +257,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       context: context,
       builder: (context) => PauseMenuDialog(
         onRestart: () {
-          Navigator.of(context).pop(); // Close dialog
+          if (context.canPop()) context.pop(); // Close dialog
           _restartLevel();
         },
         onHome: () {
-          Navigator.of(context).pop(); // Close dialog
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          if (context.canPop()) context.pop(); // Close dialog
+          context.go('/');
         },
       ),
     );
@@ -552,7 +553,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
 
     // Navigate back to home screen and clear game screen from stack
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    context.go('/');
   }
 
   Future<void> _showScriptureUnlockedDialog(
@@ -673,15 +674,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                Navigator.of(context).pop(); // pop game screen to home
-                Navigator.of(context).pushNamed('/journal');
+                if (context.canPop()) context.pop(); // pop game screen to home
+                context.push('/journal');
               },
               child: const Text('VIEW JOURNAL'),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                context.go('/');
               },
               child: const Text('CONTINUE'),
             ),
@@ -803,15 +804,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                Navigator.of(context).pop(); // pop game screen to home
-                Navigator.of(context).pushNamed('/journal');
+                if (context.canPop()) context.pop(); // pop game screen to home
+                context.push('/journal');
               },
               child: const Text('GO TO JOURNAL'),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                context.go('/');
               },
               child: const Text('CONTINUE'),
             ),
@@ -893,7 +894,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
                   }
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  context.go('/');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,

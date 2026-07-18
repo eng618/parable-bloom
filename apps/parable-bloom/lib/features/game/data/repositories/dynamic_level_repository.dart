@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 
 import '../../../../core/config/environment_config.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../domain/entities/level_data.dart';
 import '../../domain/repositories/level_repository.dart';
 

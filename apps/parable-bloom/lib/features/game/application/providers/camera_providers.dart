@@ -5,8 +5,8 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/game_board_layout.dart';
-import '../../../../providers/settings_providers.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/providers/settings_providers.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../domain/entities/level_data.dart';
 import 'gameplay_state_providers.dart';
 

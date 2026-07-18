@@ -4,11 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../features/game/data/repositories/firebase_game_progress_repository.dart';
-import '../features/game/data/repositories/hive_game_progress_repository.dart';
-import '../features/game/domain/repositories/game_progress_repository.dart';
-import '../features/settings/data/repositories/hive_settings_repository.dart';
-import '../features/settings/domain/repositories/settings_repository.dart';
+import '../../features/game/data/repositories/firebase_game_progress_repository.dart';
+import '../../features/game/data/repositories/hive_game_progress_repository.dart';
+import '../../features/game/domain/repositories/game_progress_repository.dart';
+import '../../features/settings/data/repositories/hive_settings_repository.dart';
+import '../../features/settings/domain/repositories/settings_repository.dart';
 import '../services/logger_service.dart';
 
 const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');

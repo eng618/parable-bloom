@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/game_board_layout.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
-import '../../../../providers/settings_providers.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/providers/settings_providers.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../application/providers/camera_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
 import '../../application/providers/solver_providers.dart';

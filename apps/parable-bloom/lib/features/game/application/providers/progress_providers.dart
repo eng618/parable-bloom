@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/infrastructure_providers.dart';
-import '../../../../providers/service_providers.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/providers/infrastructure_providers.dart';
+import '../../../../core/providers/service_providers.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../data/repositories/firebase_game_progress_repository.dart';
 import '../../domain/entities/cloud_sync_state.dart';
 import '../../domain/entities/game_progress.dart';

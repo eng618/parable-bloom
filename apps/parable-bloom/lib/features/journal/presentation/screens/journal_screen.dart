@@ -3,7 +3,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../../game/application/providers/module_providers.dart";
 import "../../../game/application/providers/progress_providers.dart";
-import "../../../../providers/service_providers.dart";
+import "../../../../core/providers/service_providers.dart";
 import "../../../game/domain/entities/level_data.dart";
 import "../../../game/domain/entities/game_progress.dart";
 

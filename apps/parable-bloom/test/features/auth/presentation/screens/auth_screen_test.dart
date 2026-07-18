@@ -8,8 +8,8 @@ import 'package:parable_bloom/features/auth/presentation/screens/auth_screen.dar
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
-import 'package:parable_bloom/providers/service_providers.dart';
-import 'package:parable_bloom/services/analytics_service.dart';
+import 'package:parable_bloom/core/providers/service_providers.dart';
+import 'package:parable_bloom/core/services/analytics_service.dart';
 
 class FakeUserCredential implements UserCredential {
   @override

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/service_providers.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/providers/service_providers.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../domain/entities/level_data.dart';
 import '../../domain/services/level_solver_service.dart';
 import '../../presentation/widgets/garden_game.dart';

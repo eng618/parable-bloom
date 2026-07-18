@@ -1,4 +1,4 @@
-import '../../../../services/logger_service.dart';
+import '../../../../core/services/logger_service.dart';
 
 import '../entities/level_data.dart';
 

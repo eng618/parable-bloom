@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/services/logger_service.dart';
 
 /// Service responsible for handling user authentication.
 class AuthService {

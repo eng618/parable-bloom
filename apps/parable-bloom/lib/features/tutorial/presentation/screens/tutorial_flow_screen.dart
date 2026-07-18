@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -6,7 +7,7 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../../game/application/providers/camera_providers.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../application/providers/tutorial_providers.dart';
@@ -18,7 +19,7 @@ import '../../../game/presentation/widgets/pond_ripple_effect_component.dart';
 import '../../../game/presentation/widgets/ripple_fireworks_component.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
-import '../../../../providers/service_providers.dart';
+import '../../../../core/providers/service_providers.dart';
 import '../../../game/domain/entities/level_data.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
@@ -391,12 +392,12 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       context: context,
       builder: (context) => PauseMenuDialog(
         onRestart: () {
-          Navigator.of(context).pop(); // Close dialog
+          if (context.canPop()) context.pop(); // Close dialog
           _restartLesson();
         },
         onHome: () {
-          Navigator.of(context).pop(); // Close dialog
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          if (context.canPop()) context.pop(); // Close dialog
+          context.go('/');
         },
       ),
     );
@@ -524,7 +525,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       if (mounted) {
         LoggerService.info('All lessons completed - returning to home',
             tag: 'TutorialFlowScreen');
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        context.go('/');
       }
       return;
     }
@@ -654,15 +655,15 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                Navigator.of(context).popUntil((route) => route.isFirst);
-                Navigator.of(context).pushNamed('/journal');
+                context.go('/');
+                context.push('/journal');
               },
               child: const Text('VIEW JOURNAL'),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                context.go('/');
               },
               child: const Text('CONTINUE'),
             ),
