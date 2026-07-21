@@ -109,7 +109,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     final visualHeight = level.gridHeight;
     final game = parent.parent;
-    final vineStyle = game.ref.read(vineStyleProvider);
+    final vineStyle = game.vineStyle;
     final useSimpleVines = vineStyle == VineStyle.simple;
 
     // Swap live and blocked appearance for premium/stylized vines:
@@ -808,9 +808,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   /// Helper method for conditional debug logging
   void _logDebug(String message) {
     // Check if debug logging is enabled via the provider
-    final debugEnabled = parent.parent.ref.read(
-      debugVineAnimationLoggingProvider,
-    );
+    final debugEnabled =
+        parent.parent.callbacks.getDebugVineAnimationLogging?.call() ?? false;
     if (debugEnabled) {
       LoggerService.debug(message,
           tag: 'VineComponent', metadata: {'vine_id': vineData.id});
@@ -836,8 +835,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     );
 
     Color renderColor = baseColor;
-    final vineStyle = parent.parent.ref.read(vineStyleProvider);
-    final useSimpleVines = vineStyle == VineStyle.simple;
+    final useSimpleVines = parent.parent.useSimpleVines;
     if (!useSimpleVines) {
       renderColor = isAttempted ? calmColor : const Color(0xFFFFFFFF);
     }

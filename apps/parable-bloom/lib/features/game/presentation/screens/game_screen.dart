@@ -20,6 +20,7 @@ import '../widgets/garden_game.dart';
 import '../widgets/pause_menu_dialog.dart';
 import '../widgets/pond_ripple_effect_component.dart';
 import '../widgets/ripple_fireworks_component.dart';
+import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import '../../../../core/services/logger_service.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -244,8 +245,29 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     onTapOutsideGrid: () {
                       ref.read(hintedVineIdsProvider.notifier).clear();
                     },
+                    onBlockedTap: (state) {
+                      ref
+                          .read(blockedTapProvider.notifier)
+                          .setBlockedTap(state);
+                    },
+                    onEnsureVineVisible: (vine) async {
+                      await ref
+                          .read(cameraStateProvider.notifier)
+                          .ensureVineVisible(vine);
+                    },
+                    onHintVine: (vineId) {
+                      ref.read(hintedVineIdsProvider.notifier).add(vineId);
+                    },
+                    onClearHints: () {
+                      ref.read(hintedVineIdsProvider.notifier).clear();
+                    },
                     getUseSimpleVines: () => ref.read(useSimpleVinesProvider),
                     getHapticsEnabled: () => ref.read(hapticsEnabledProvider),
+                    getIsAnyAnimating: () => ref.read(anyVineAnimatingProvider),
+                    getDebugShowGridCoordinates: () =>
+                        ref.read(debugShowGridCoordinatesProvider),
+                    getDebugVineAnimationLogging: () =>
+                        ref.read(debugVineAnimationLoggingProvider),
                   ),
                 );
               }(),
@@ -1109,13 +1131,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Reset grace and retry the current level
-                  ref.read(gameInstanceProvider.notifier).resetGrace();
-                  ref.read(gameOverProvider.notifier).setGameOver(false);
-                  _game?.reloadLevel();
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
                   }
+                  _restartLevel();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,

@@ -8,7 +8,11 @@ import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/settings_providers.dart' show VineStyle;
 import '../../../../core/services/logger_service.dart';
 import '../../../tutorial/domain/entities/lesson_data.dart';
+import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart'
+    show BlockedTapState;
 import '../../application/providers/camera_providers.dart' show CameraState;
+import '../../application/providers/gameplay_state_providers.dart'
+    show VineState, VineAnimationState;
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
 import 'tap_effect_component.dart';
@@ -22,10 +26,17 @@ class GardenGameCallbacks {
   final void Function(String vineId) onVineAttempted;
   final void Function(int count) onTapIncrement;
   final void Function() onTapOutsideGrid;
+  final void Function(BlockedTapState state)? onBlockedTap;
+  final Future<void> Function(VineData vine)? onEnsureVineVisible;
+  final void Function(String vineId)? onHintVine;
+  final void Function()? onClearHints;
 
   // Settings/State Getters
   final bool Function() getUseSimpleVines;
   final bool Function() getHapticsEnabled;
+  final bool Function()? getIsAnyAnimating;
+  final bool Function()? getDebugShowGridCoordinates;
+  final bool Function()? getDebugVineAnimationLogging;
 
   GardenGameCallbacks({
     required this.onGameLoaded,
@@ -35,8 +46,15 @@ class GardenGameCallbacks {
     required this.onVineAttempted,
     required this.onTapIncrement,
     required this.onTapOutsideGrid,
+    this.onBlockedTap,
+    this.onEnsureVineVisible,
+    this.onHintVine,
+    this.onClearHints,
     required this.getUseSimpleVines,
     required this.getHapticsEnabled,
+    this.getIsAnyAnimating,
+    this.getDebugShowGridCoordinates,
+    this.getDebugVineAnimationLogging,
   });
 }
 
@@ -259,6 +277,15 @@ class GardenGame extends FlameGame with TapCallbacks {
     _updateBackgroundOpacity();
   }
 
+  VineStyle _vineStyle = VineStyle.classic;
+  VineStyle get vineStyle => _vineStyle;
+
+  /// Update vine style dynamically
+  void updateVineStyle(VineStyle style) {
+    _vineStyle = style;
+    _updateBackgroundOpacity(style == VineStyle.simple);
+  }
+
   /// Start or load a lesson with the given lesson data
   void startLesson(LessonData lesson) {
     _currentLessonData = lesson;
@@ -268,9 +295,11 @@ class GardenGame extends FlameGame with TapCallbacks {
     final Map<String, VineState> vineStates = {};
     for (final vine in levelData.vines) {
       vineStates[vine.id] = VineState(
-        isCompleted: false,
-        animationState: VineAnimationState.idle,
-        isAttempted: false,
+        id: vine.id,
+        isBlocked: false,
+        isCleared: false,
+        animationState: VineAnimationState.normal,
+        hasBeenAttempted: false,
       );
     }
 

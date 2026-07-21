@@ -21,6 +21,7 @@ import '../../../game/application/providers/progress_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/providers/settings_providers.dart';
+import '../../../game/application/providers/counter_providers.dart';
 import '../../../game/domain/entities/level_data.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
@@ -193,8 +194,27 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                   onTapOutsideGrid: () {
                     ref.read(hintedVineIdsProvider.notifier).clear();
                   },
+                  onBlockedTap: (state) {
+                    ref.read(blockedTapProvider.notifier).setBlockedTap(state);
+                  },
+                  onEnsureVineVisible: (vine) async {
+                    await ref
+                        .read(cameraStateProvider.notifier)
+                        .ensureVineVisible(vine);
+                  },
+                  onHintVine: (vineId) {
+                    ref.read(hintedVineIdsProvider.notifier).add(vineId);
+                  },
+                  onClearHints: () {
+                    ref.read(hintedVineIdsProvider.notifier).clear();
+                  },
                   getUseSimpleVines: () => ref.read(useSimpleVinesProvider),
                   getHapticsEnabled: () => ref.read(hapticsEnabledProvider),
+                  getIsAnyAnimating: () => ref.read(anyVineAnimatingProvider),
+                  getDebugShowGridCoordinates: () =>
+                      ref.read(debugShowGridCoordinatesProvider),
+                  getDebugVineAnimationLogging: () =>
+                      ref.read(debugVineAnimationLoggingProvider),
                 ),
               );
             }
