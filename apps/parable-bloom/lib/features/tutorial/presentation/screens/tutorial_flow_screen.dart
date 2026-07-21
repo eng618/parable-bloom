@@ -20,6 +20,7 @@ import '../../../game/presentation/widgets/ripple_fireworks_component.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
 import '../../../../core/providers/service_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
 import '../../../game/domain/entities/level_data.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
@@ -107,6 +108,31 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       }
     });
 
+    // Sync state with Flame GardenGame instance
+    ref.listen(cameraStateProvider, (previous, next) {
+      _game?.applyCameraTransform(next);
+    });
+
+    ref.listen(vineStatesProvider, (previous, next) {
+      _game?.updateVineStates(next);
+    });
+
+    ref.listen(vineStyleProvider, (previous, next) {
+      _game?.updateSimpleVines(next == VineStyle.simple);
+    });
+
+    ref.listen(projectionLinesVisibleProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listen(anyVineAnimatingProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listen(hintedVineIdsProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
     // Validate lesson number
     if (currentLesson < 1 || currentLesson > 5) {
       return Scaffold(
@@ -120,7 +146,57 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
           data: (lesson) {
             // Create or recreate game when lesson changes
             if (_game == null || _game!.currentLessonId != lesson.id) {
-              _game = GardenGame.fromLesson(lesson, ref: ref);
+              _game = GardenGame.fromLesson(
+                lesson,
+                callbacks: GardenGameCallbacks(
+                  onGameLoaded: (game) {
+                    ref.read(gameInstanceProvider.notifier).setGame(game);
+                    game.startLesson(lesson);
+
+                    final cameraNotifier =
+                        ref.read(cameraStateProvider.notifier);
+                    cameraNotifier.updateZoomBounds(
+                      screenWidth: game.size.x,
+                      screenHeight: game.size.y,
+                      gridCols: lesson.gridWidth,
+                      gridRows: lesson.gridHeight,
+                    );
+                    cameraNotifier.animateToDefaultZoom(
+                      screenWidth: game.size.x,
+                      screenHeight: game.size.y,
+                      gridCols: lesson.gridWidth,
+                      gridRows: lesson.gridHeight,
+                    );
+                    game.applyCameraTransform(ref.read(cameraStateProvider));
+                  },
+                  onGameRemoved: () {
+                    if (ref.read(gameInstanceProvider) == _game) {
+                      ref.read(gameInstanceProvider.notifier).setGame(null);
+                    }
+                  },
+                  onVineCleared: (vineId) {
+                    ref.read(vineStatesProvider.notifier).clearVine(vineId);
+                  },
+                  onVineAnimationStateChanged: (vineId, animationState) {
+                    ref
+                        .read(vineStatesProvider.notifier)
+                        .setAnimationState(vineId, animationState);
+                  },
+                  onVineAttempted: (vineId) {
+                    ref.read(vineStatesProvider.notifier).markAttempted(vineId);
+                  },
+                  onTapIncrement: (count) {
+                    for (int i = 0; i < count; i++) {
+                      ref.read(levelTotalTapsProvider.notifier).increment();
+                    }
+                  },
+                  onTapOutsideGrid: () {
+                    ref.read(hintedVineIdsProvider.notifier).clear();
+                  },
+                  getUseSimpleVines: () => ref.read(useSimpleVinesProvider),
+                  getHapticsEnabled: () => ref.read(hapticsEnabledProvider),
+                ),
+              );
             }
 
             return Scaffold(
@@ -403,11 +479,46 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     );
   }
 
+  void _updateProjectionLinesVisibility() {
+    if (_game == null) return;
+    final shouldShow = ref.read(projectionLinesVisibleProvider);
+    final hintedVines = ref.read(hintedVineIdsProvider);
+    final isAnimating = ref.read(anyVineAnimatingProvider);
+
+    if (isAnimating && shouldShow) {
+      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+    }
+    if (isAnimating && hintedVines.isNotEmpty) {
+      ref.read(hintedVineIdsProvider.notifier).clear();
+    }
+
+    _game!.updateProjectionLinesVisibility(
+      visible: shouldShow,
+      hintedVines: hintedVines,
+      isAnimating: isAnimating,
+    );
+  }
+
   void _restartLesson() {
     ref.read(levelCompleteProvider.notifier).setComplete(false);
     ref.read(gameCompletedProvider.notifier).setCompleted(false);
     ref.read(gameInstanceProvider.notifier).resetGrace();
-    _game?.reloadLevel();
+
+    final tutorialProgress = ref.read(tutorialProgressProvider);
+    final currentLesson = tutorialProgress.currentLesson;
+    ref.read(lessonProvider(currentLesson)).whenData((lesson) {
+      if (_game != null) {
+        _game!.startLesson(lesson);
+        final cameraNotifier = ref.read(cameraStateProvider.notifier);
+        cameraNotifier.animateToDefaultZoom(
+          screenWidth: _game!.size.x,
+          screenHeight: _game!.size.y,
+          gridCols: lesson.gridWidth,
+          gridRows: lesson.gridHeight,
+        );
+      }
+    });
+
     setState(() {
       _isLevelCompleteOverlayVisible = false;
     });

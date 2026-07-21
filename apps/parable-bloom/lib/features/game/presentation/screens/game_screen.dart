@@ -9,6 +9,7 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 import '../../../../core/app_theme.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/service_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
 import '../../application/providers/camera_providers.dart';
 import '../../application/providers/counter_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
@@ -129,6 +130,31 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       }
     });
 
+    // Sync state with Flame GardenGame instance
+    ref.listen(cameraStateProvider, (previous, next) {
+      _game?.applyCameraTransform(next);
+    });
+
+    ref.listen(vineStatesProvider, (previous, next) {
+      _game?.updateVineStates(next);
+    });
+
+    ref.listen(vineStyleProvider, (previous, next) {
+      _game?.updateSimpleVines(next == VineStyle.simple);
+    });
+
+    ref.listen(projectionLinesVisibleProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listen(anyVineAnimatingProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listen(hintedVineIdsProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
     return Scaffold(
       backgroundColor: colorScheme.surface,
       floatingActionButton: _buildProjectionLinesFAB(),
@@ -186,7 +212,42 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               game: _game ??= () {
                 LoggerService.debug('Creating new GardenGame instance',
                     tag: 'GameScreen');
-                return GardenGame(ref: ref);
+                return GardenGame(
+                  callbacks: GardenGameCallbacks(
+                    onGameLoaded: (game) {
+                      ref.read(gameInstanceProvider.notifier).setGame(game);
+                      _loadLevelForGame(game);
+                    },
+                    onGameRemoved: () {
+                      if (ref.read(gameInstanceProvider) == _game) {
+                        ref.read(gameInstanceProvider.notifier).setGame(null);
+                      }
+                    },
+                    onVineCleared: (vineId) {
+                      ref.read(vineStatesProvider.notifier).clearVine(vineId);
+                    },
+                    onVineAnimationStateChanged: (vineId, animationState) {
+                      ref
+                          .read(vineStatesProvider.notifier)
+                          .setAnimationState(vineId, animationState);
+                    },
+                    onVineAttempted: (vineId) {
+                      ref
+                          .read(vineStatesProvider.notifier)
+                          .markAttempted(vineId);
+                    },
+                    onTapIncrement: (count) {
+                      for (int i = 0; i < count; i++) {
+                        ref.read(levelTotalTapsProvider.notifier).increment();
+                      }
+                    },
+                    onTapOutsideGrid: () {
+                      ref.read(hintedVineIdsProvider.notifier).clear();
+                    },
+                    getUseSimpleVines: () => ref.read(useSimpleVinesProvider),
+                    getHapticsEnabled: () => ref.read(hapticsEnabledProvider),
+                  ),
+                );
               }(),
               loadingBuilder: (_) =>
                   const Center(child: CircularProgressIndicator()),
@@ -822,6 +883,85 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 
+  Future<void> _loadLevelForGame(GardenGame game) async {
+    final debugSelected = ref.read(debugSelectedLevelProvider);
+    final gameProgress = ref.read(gameProgressProvider);
+    final levelId = debugSelected ?? gameProgress.currentLevel;
+
+    try {
+      final mappings = await ref.read(levelMappingsProvider.future);
+      if (!mappings.containsKey(levelId)) {
+        ref.read(gameCompletedProvider.notifier).setCompleted(true);
+        return;
+      }
+
+      final levelData = await ref.read(levelDataProvider(levelId).future);
+
+      ref.read(currentLevelProvider.notifier).setLevel(levelData);
+      ref.read(gameCompletedProvider.notifier).setCompleted(false);
+
+      ref.read(levelTotalTapsProvider.notifier).reset();
+      ref.read(levelWrongTapsProvider.notifier).reset();
+
+      final previousLevelId = ref.read(currentLevelProvider)?.id;
+      final attemptNotifier = ref.read(levelAttemptCountProvider.notifier);
+      if (previousLevelId != levelData.id) {
+        attemptNotifier.set(1);
+      }
+
+      ref.read(levelStartTimestampProvider.notifier).set(DateTime.now());
+
+      if (!ref.read(debugPlayModeProvider)) {
+        ref.read(analyticsServiceProvider).logLevelStart(levelData.id);
+      }
+
+      ref.read(vineStatesProvider.notifier).resetForLevel(levelData);
+
+      final vineStates = ref.read(vineStatesProvider);
+      game.startLevel(levelData, vineStates);
+
+      final cameraNotifier = ref.read(cameraStateProvider.notifier);
+      cameraNotifier.updateZoomBounds(
+        screenWidth: game.size.x,
+        screenHeight: game.size.y,
+        gridCols: levelData.gridWidth,
+        gridRows: levelData.gridHeight,
+      );
+      cameraNotifier.animateToDefaultZoom(
+        screenWidth: game.size.x,
+        screenHeight: game.size.y,
+        gridCols: levelData.gridWidth,
+        gridRows: levelData.gridHeight,
+      );
+
+      game.applyCameraTransform(ref.read(cameraStateProvider));
+    } catch (e, stack) {
+      LoggerService.error('Error loading level $levelId on game screen',
+          error: e, stackTrace: stack, tag: 'GameScreen');
+      ref.read(gameOverProvider.notifier).setGameOver(true);
+    }
+  }
+
+  void _updateProjectionLinesVisibility() {
+    if (_game == null) return;
+    final shouldShow = ref.read(projectionLinesVisibleProvider);
+    final hintedVines = ref.read(hintedVineIdsProvider);
+    final isAnimating = ref.read(anyVineAnimatingProvider);
+
+    if (isAnimating && shouldShow) {
+      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+    }
+    if (isAnimating && hintedVines.isNotEmpty) {
+      ref.read(hintedVineIdsProvider.notifier).clear();
+    }
+
+    _game!.updateProjectionLinesVisibility(
+      visible: shouldShow,
+      hintedVines: hintedVines,
+      isAnimating: isAnimating,
+    );
+  }
+
   void _restartLevel() {
     final currentLevel = ref.read(currentLevelProvider);
     if (currentLevel != null) {
@@ -834,13 +974,25 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           .logLevelRestart(currentLevel.id, attempts);
 
       ref.read(levelStartTimestampProvider.notifier).set(DateTime.now());
+
+      ref.read(vineStatesProvider.notifier).resetForLevel(currentLevel);
+      ref.read(levelCompleteProvider.notifier).setComplete(false);
+      ref.read(gameOverProvider.notifier).setGameOver(false);
+      ref.read(gameInstanceProvider.notifier).resetGrace();
+
+      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+
+      if (_game != null) {
+        _game!.startLevel(currentLevel, ref.read(vineStatesProvider));
+        final cameraNotifier = ref.read(cameraStateProvider.notifier);
+        cameraNotifier.animateToDefaultZoom(
+          screenWidth: _game!.size.x,
+          screenHeight: _game!.size.y,
+          gridCols: currentLevel.gridWidth,
+          gridRows: currentLevel.gridHeight,
+        );
+      }
     }
-
-    ref.read(levelCompleteProvider.notifier).setComplete(false);
-    ref.read(gameOverProvider.notifier).setGameOver(false);
-    ref.read(gameInstanceProvider.notifier).resetGrace();
-
-    _game?.reloadLevel();
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Level restarted')));
