@@ -11,7 +11,20 @@ import 'package:flame/game.dart' show Vector2;
 
 class MockGardenGame extends GardenGame {
   final Vector2 mockSize;
-  MockGardenGame(this.mockSize) : super(ref: null);
+  MockGardenGame(this.mockSize)
+      : super(
+          callbacks: GardenGameCallbacks(
+            onGameLoaded: (_) {},
+            onGameRemoved: () {},
+            onVineCleared: (_) {},
+            onVineAnimationStateChanged: (_, __) {},
+            onVineAttempted: (_) {},
+            onTapIncrement: (_) {},
+            onTapOutsideGrid: () {},
+            getUseSimpleVines: () => false,
+            getHapticsEnabled: () => false,
+          ),
+        );
 
   @override
   Vector2 get size => mockSize;
