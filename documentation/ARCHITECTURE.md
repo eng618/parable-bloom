@@ -71,7 +71,7 @@ The application uses a reactive architecture where the UI and Game Engine observ
 - **`vineStatesProvider`**: Manages the dynamic state of the board. It uses the `LevelSolver` to calculate which vines are blocked or free to move.
 - **`graceProvider`**: Manages the "Grace" (lives) system.
 - **`currentLevelProvider`**: Holds the canonical data for the active level (grid size, vine positions).
-- **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
+- **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance via decoupled `GardenGameCallbacks`.
 - **`boardZoomScaleProvider`**: Manages the user's preferred default board zoom scale (0.5x to 2.0x).
 
 ### 3.2 Logic & Solvers
@@ -84,13 +84,17 @@ The application uses a reactive architecture where the UI and Game Engine observ
 The game implements several high-performance visual systems within the Flame `PositionComponent` hierarchy:
 
 - **Tap Feedback**: `TapEffectComponent` handles the visual pulse and particle effects on user interaction.
-- **Particle System**: `TapEffectComponent` and `VineComponent` (bloom) utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
+- **Particle System & Bloom**: `TapEffectComponent` and `VineBloomRenderer` utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
 - **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input. It supports auto-focusing on specific vines if they are off-screen or near the boundaries during the auto-clearing sequence.
-- **Vine Styles (Overhaul & Over-proportioned Dynamic Paths)**: `VineComponent` implements a high-end vector path shader pipeline drawing smooth, continuous rounded paths directly on the Flutter canvas with customized details:
+- **Vine Subsystem Architecture (`VineComponent`, `VineAnimator`, `VinePathPainter`, `VineBloomRenderer`)**:
+  - `VineComponent` acts as a thin Flame `PositionComponent` shell that delegates path rendering, step-by-step movement, and particle effects.
+  - **`VinePathPainter`**: Handles path vector construction, shader textures (`classic_vine_texture.png`, etc.), directional arrow heads, and foliage (leaves, blossoms, ethereal glow).
+  - **`VineAnimator`**: Controls step-by-step sliding, movement distance calculations via solver, position history for bouncebacks, and grid exit checks.
+  - **`VineBloomRenderer`**: Manages boundary exit sparkle rings, central glows, and dust particles.
   - **Grid Compaction**: Visual layout is compacted (52px cells with 42px spacing) to reduce white space and create a dense, satisfying board.
   - **Visual Profiles**: Clean, high-density stroke profiles (26px for Simple, 16px for Premium) with smooth rounded caps and `StrokeJoin.round` bends to optimize for visual continuity.
   - **Continuous Path Interpolation**: Animation utilizes a track-based linear interpolation system using delta time (`dt`) rather than step jumps. This provides fluid snake-like sliding for all vine styles, where detailed nodes (leaves, blossoms) slide smoothly along the canvas.
-  - **Dynamic Shaders**: Classic, Cherry Blossom, and Ethereal themes load generated high-resolution seamless textures (`classic_vine_texture.png`, etc.) as dynamic `ImageShader` strokes tinted with the vine's group colors, keeping assets extremely lightweight.
+  - **Dynamic Shaders**: Classic, Cherry Blossom, and Ethereal themes load generated high-resolution seamless textures as dynamic `ImageShader` strokes tinted with the vine's group colors, keeping assets extremely lightweight.
   - **Organic Node Details**:
     - **Classic**: Watercolor green ivy leaves growing organically at alternating 45-degree angles along the branch segments.
     - **Cherry Blossom**: Beautiful programmatically-rendered pink cherry blossoms with bright yellow centers at the segment joints.
