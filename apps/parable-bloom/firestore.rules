@@ -82,7 +82,7 @@ service cloud.firestore {
     }
 
     match /configs_prod/{configId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if false;
     }
   }
