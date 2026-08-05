@@ -6,7 +6,7 @@ import 'package:parable_bloom/features/game/application/providers/camera_provide
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/features/game/presentation/screens/game_screen.dart';
 import 'package:parable_bloom/main.dart' as app;
-import 'package:parable_bloom/providers/settings_providers.dart';
+import 'package:parable_bloom/core/providers/settings_providers.dart';
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
