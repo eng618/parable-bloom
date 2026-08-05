@@ -56,33 +56,33 @@ service cloud.firestore {
 
     // Dynamic levels collection
     match /levels_dev/{levelId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if false;
     }
 
     match /levels_preview/{levelId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if false;
     }
 
     match /levels_prod/{levelId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if false;
     }
 
     // Dynamic config rules for OTA updates
     match /configs_dev/{configId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if false;
     }
 
     match /configs_preview/{configId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if false;
     }
 
     match /configs_prod/{configId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if false;
     }
   }
