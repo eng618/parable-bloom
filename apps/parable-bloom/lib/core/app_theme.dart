@@ -213,9 +213,9 @@ class AppTheme {
   /// Returns ratio >= 4.5 for normal text, >= 3.0 for large text
   static double getContrastRatio(Color foreground, Color background) {
     double luminance(Color color) {
-      final r = color.r / 255.0;
-      final g = color.g / 255.0;
-      final b = color.b / 255.0;
+      final r = color.r;
+      final g = color.g;
+      final b = color.b;
       final rsRGB = r <= 0.03928 ? r / 12.92 : pow((r + 0.055) / 1.055, 2.4);
       final gsRGB = g <= 0.03928 ? g / 12.92 : pow((g + 0.055) / 1.055, 2.4);
       final bsRGB = b <= 0.03928 ? b / 12.92 : pow((b + 0.055) / 1.055, 2.4);
