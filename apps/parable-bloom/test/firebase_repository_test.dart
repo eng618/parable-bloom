@@ -436,7 +436,7 @@ void main() {
       when(mockSnapshot.exists).thenReturn(false);
       when(mockSnapshot.data()).thenReturn(null);
 
-      await repository.setCloudSyncEnabled(true);
+      await box.put('cloud_sync_enabled', true);
 
       await expectLater(repository.syncToCloud(), completes);
     });
@@ -458,7 +458,7 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 30));
       });
 
-      await repository.setCloudSyncEnabled(true);
+      await box.put('cloud_sync_enabled', true);
 
       await expectLater(repository.syncToCloud(), completes);
       expect(await repository.getLastSyncTime(), isNull);
@@ -466,6 +466,12 @@ void main() {
 
     test('should retry cloud write and succeed after transient failures',
         () async {
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudRetryDelay: Duration.zero,
+      );
       int writeAttempts = 0;
 
       when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
@@ -485,6 +491,12 @@ void main() {
     });
 
     test('should retry cloud write for transient Firebase errors', () async {
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudRetryDelay: Duration.zero,
+      );
       int writeAttempts = 0;
 
       when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
@@ -509,6 +521,12 @@ void main() {
 
     test('should not retry cloud write for permanent Firebase errors',
         () async {
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudRetryDelay: Duration.zero,
+      );
       int writeAttempts = 0;
 
       when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);

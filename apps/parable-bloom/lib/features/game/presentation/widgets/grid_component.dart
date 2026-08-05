@@ -31,6 +31,9 @@ class GridComponent extends PositionComponent
   // Current level data - will be set by Riverpod
   LevelData? _currentLevel;
 
+  // Pre-computed map from (x, y) coordinates to VineData for fast lookup
+  final Map<(int, int), VineData> _coordinateToVineMap = {};
+
   // Vine states - will be managed by Riverpod
   Map<String, VineState> _vineStates = {};
 
@@ -80,6 +83,18 @@ class GridComponent extends PositionComponent
         comp.removeFromParent();
       }
       _vineComponents.clear();
+
+      // Pre-compute coordinate-to-vine map
+      _coordinateToVineMap.clear();
+      for (final vine in levelData.vines) {
+        for (final cell in vine.orderedPath) {
+          final x = cell['x'];
+          final y = cell['y'];
+          if (x != null && y != null) {
+            _coordinateToVineMap[(x, y)] = vine;
+          }
+        }
+      }
 
       // Add new vine components for each vine in the level
       for (final vine in levelData.vines) {
@@ -293,14 +308,7 @@ class GridComponent extends PositionComponent
     final worldX = col;
     final worldY = row;
 
-    for (final vine in _currentLevel!.vines) {
-      for (final cell in vine.orderedPath) {
-        if (cell['x'] == worldX && cell['y'] == worldY) {
-          return vine;
-        }
-      }
-    }
-    return null;
+    return _coordinateToVineMap[(worldX, worldY)];
   }
 
   void _clearVine(String vineId) {
