@@ -35,6 +35,13 @@ tasks:
     cmds:
       - bun run lint
 
+  test:
+    desc: Run unit tests for the Next.js site
+    dir: apps/parable-bloom-site
+    deps: [get]
+    cmds:
+      - bun run test
+
   validate:
     desc: Run all validation checks for the Next.js site
     dir: apps/parable-bloom-site

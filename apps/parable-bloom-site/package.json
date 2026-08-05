@@ -11,6 +11,7 @@
     "lint:report": "eslint . --cache -o ./eslintReport.html -f html",
     "prepare": "husky",
     "start": "next start --port 4201",
+    "test": "bun test",
     "validate": "node ./scripts/validate.mjs"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "@eng618/prettier-config": "^2.10.1",
     "@gv-tech/eslint-config": "^0.1.14",
     "@next/eslint-plugin-next": "^16.1.6",
+    "@types/bun": "^1.3.14",
     "@types/node": "24.7.2",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
