@@ -11,6 +11,7 @@
     "lint:report": "eslint . --cache -o ./eslintReport.html -f html",
     "prepare": "husky",
     "start": "next start --port 4201",
+    "test": "bun test",
     "validate": "node ./scripts/validate.mjs"
   },
   "dependencies": {
