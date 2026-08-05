@@ -14,7 +14,7 @@ import '../core/providers/settings_providers.dart';
 import '../core/routes/app_router.dart';
 import '../core/services/logger_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-// TODO: import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
@@ -147,7 +147,7 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
         return _buildHomeWrapper(child!);
       },
       localizationsDelegates: const [
-        // TODO: AppLocalizations.delegate,
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
