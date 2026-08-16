@@ -41,9 +41,12 @@ void main() {
       );
       expect(capturedHeaders["openpanel-client-id"], "test-client-id-123");
       expect(capturedHeaders["Content-Type"], contains("application/json"));
-      expect(capturedBody["name"], "level_complete");
+      expect(capturedBody["type"], "track");
 
-      final props = capturedBody["properties"] as Map<String, dynamic>;
+      final payload = capturedBody["payload"] as Map<String, dynamic>;
+      expect(payload["name"], "level_complete");
+
+      final props = payload["properties"] as Map<String, dynamic>;
       expect(props["platform"], "ios");
       expect(props["level_id"], "lvl_sprout_01");
       expect(props["taps_total"], 12);

@@ -3,7 +3,7 @@
 import { OpenPanelComponent } from '@openpanel/nextjs';
 import { useEffect, useState } from 'react';
 
-const openpanelClientId = process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID ?? '57d65b3c-ceae-4dec-a729-8282740ba273';
+const openpanelClientId = process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID ?? 'b4586d53-64e1-483a-b28b-e19916b29c9b';
 const openpanelApiUrl = process.env.NEXT_PUBLIC_OPENPANEL_API_URL ?? 'https://openpanel.gventureshq.com/api';
 
 export default function OpenpanelProvider() {

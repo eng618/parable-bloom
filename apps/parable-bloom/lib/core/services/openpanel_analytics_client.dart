@@ -7,13 +7,13 @@ import "logger_service.dart";
 
 class OpenpanelAnalyticsClient {
   static const String defaultAndroidClientId =
-      "b4586d53-64e1-483a-b28b-e19916b29c9b";
+      "57d65b3c-ceae-4dec-a729-8282740ba273";
   static const String defaultIosClientId =
       "01c5b484-f348-48c5-a67a-16d54a6423e0";
   static const String defaultWebClientId =
       "a6693179-1176-42f8-a1b8-b9a5196ab4e0";
   static const String defaultFallbackClientId =
-      "57d65b3c-ceae-4dec-a729-8282740ba273";
+      "a6693179-1176-42f8-a1b8-b9a5196ab4e0";
 
   static const String defaultApiUrl = "https://openpanel.gventureshq.com/api";
 
@@ -125,8 +125,11 @@ class OpenpanelAnalyticsClient {
     };
 
     final eventPayload = {
-      "name": eventName,
-      "properties": enrichedProps,
+      "type": "track",
+      "payload": {
+        "name": eventName,
+        "properties": enrichedProps,
+      },
     };
 
     try {

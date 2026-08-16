@@ -38,14 +38,17 @@ void main() {
       await service.logTutorialComplete(totalSeconds: 65);
 
       expect(trackedPayloads.length, 3);
-      expect(trackedPayloads[0]["name"], "tutorial_start");
-      expect(trackedPayloads[0]["properties"]["source"], "first_launch");
+      expect(trackedPayloads[0]["type"], "track");
+      expect(trackedPayloads[0]["payload"]["name"], "tutorial_start");
+      expect(trackedPayloads[0]["payload"]["properties"]["source"], "first_launch");
 
-      expect(trackedPayloads[1]["name"], "tutorial_step_complete");
-      expect(trackedPayloads[1]["properties"]["step_number"], 1);
+      expect(trackedPayloads[1]["type"], "track");
+      expect(trackedPayloads[1]["payload"]["name"], "tutorial_step_complete");
+      expect(trackedPayloads[1]["payload"]["properties"]["step_number"], 1);
 
-      expect(trackedPayloads[2]["name"], "tutorial_complete");
-      expect(trackedPayloads[2]["properties"]["total_seconds"], 65);
+      expect(trackedPayloads[2]["type"], "track");
+      expect(trackedPayloads[2]["payload"]["name"], "tutorial_complete");
+      expect(trackedPayloads[2]["payload"]["properties"]["total_seconds"], 65);
     });
 
     test("logs scripture and journal engagement", () async {
@@ -66,10 +69,10 @@ void main() {
       );
 
       expect(trackedPayloads.length, 3);
-      expect(trackedPayloads[0]["name"], "scripture_unlocked");
-      expect(trackedPayloads[1]["name"], "scripture_read");
-      expect(trackedPayloads[1]["properties"]["translation"], "WEB");
-      expect(trackedPayloads[2]["name"], "translation_changed");
+      expect(trackedPayloads[0]["payload"]["name"], "scripture_unlocked");
+      expect(trackedPayloads[1]["payload"]["name"], "scripture_read");
+      expect(trackedPayloads[1]["payload"]["properties"]["translation"], "WEB");
+      expect(trackedPayloads[2]["payload"]["name"], "translation_changed");
     });
 
     test("logs level quit and restart", () async {
@@ -86,12 +89,12 @@ void main() {
       );
 
       expect(trackedPayloads.length, 2);
-      expect(trackedPayloads[0]["name"], "level_quit");
-      expect(trackedPayloads[0]["properties"]["level_id"], "lvl_sprout_05");
-      expect(trackedPayloads[0]["properties"]["remaining_vines"], 3);
+      expect(trackedPayloads[0]["payload"]["name"], "level_quit");
+      expect(trackedPayloads[0]["payload"]["properties"]["level_id"], "lvl_sprout_05");
+      expect(trackedPayloads[0]["payload"]["properties"]["remaining_vines"], 3);
 
-      expect(trackedPayloads[1]["name"], "level_restart");
-      expect(trackedPayloads[1]["properties"]["attempts"], 2);
+      expect(trackedPayloads[1]["payload"]["name"], "level_restart");
+      expect(trackedPayloads[1]["payload"]["properties"]["attempts"], 2);
     });
 
     test("logs auth actions and settings toggles", () async {
@@ -105,10 +108,10 @@ void main() {
       );
 
       expect(trackedPayloads.length, 2);
-      expect(trackedPayloads[0]["name"], "auth_action");
-      expect(trackedPayloads[0]["properties"]["action"], "sign_up");
-      expect(trackedPayloads[1]["name"], "setting_changed");
-      expect(trackedPayloads[1]["properties"]["setting_name"], "haptics");
+      expect(trackedPayloads[0]["payload"]["name"], "auth_action");
+      expect(trackedPayloads[0]["payload"]["properties"]["action"], "sign_up");
+      expect(trackedPayloads[1]["payload"]["name"], "setting_changed");
+      expect(trackedPayloads[1]["payload"]["properties"]["setting_name"], "haptics");
     });
   });
 }
