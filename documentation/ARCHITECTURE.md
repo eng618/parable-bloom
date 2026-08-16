@@ -181,20 +181,40 @@ Players have complete control over their data sharing via the **Anonymized Telem
 - **Dynamic Firebase Disable**: Toggling telemetry off calls `firebase.setAnalyticsCollectionEnabled(false)`, instructing the Firebase SDK to immediately cease all analytics collection and network dispatch.
 - **Openpanel Filtering**: Openpanel event submissions are skipped locally on device when the opt-out is active.
 
-#### Core Tracked Events
+#### Comprehensive Tracked Event Taxonomy
 
-1. **Gameplay Flow**:
-   - `level_start`: Fired when a level is loaded.
-   - `level_complete`: Tracked on level completion with metrics: `taps_total`, `wrong_taps`, `perfect`, `attempts`, `elapsed_seconds`.
-   - `level_restart`: Logged when retrying a level with the current attempt count.
-   - `wrong_tap`: Tracks when a wrong tile is tapped, with remaining lives.
+1. **Onboarding & Tutorial (FTUX)**:
+   - `tutorial_start`: Logged when onboarding begins (`source: 'new_game' | 'settings_replay'`).
+   - `tutorial_step_complete`: Captured on every completed tutorial lesson with `step_number` (1..5), `step_id`, and `elapsed_seconds`.
+   - `tutorial_complete`: Logged upon completing all 5 tutorial lessons.
+   - `tutorial_skip`: Logged if a player skips onboarding.
+
+2. **Core Gameplay & Balancing**:
+   - `level_start`: Fired when a level is loaded with `level_id`, `module_id`, `tier`, `is_challenge`, and `attempts`.
+   - `level_complete`: Tracked on level completion with metrics: `level_id`, `module_id`, `tier`, `taps_total`, `wrong_taps`, `perfect`, `attempts`, `elapsed_seconds`.
+   - `level_restart`: Logged when retrying a level with `attempts` and `elapsed_seconds`.
+   - `level_quit`: Captured when a player exits mid-level, recording `elapsed_seconds`, `taps_before_quit`, and `remaining_vines` to identify difficulty spikes.
+   - `wrong_tap`: Tracks when a wrong tile is tapped, with `remaining_lives`.
    - `game_over`: Logged when the player runs out of grace/lives.
-2. **Screen Views**:
-   - `screen_view`: Captured on screen load for `'Home'`, `'Settings'`, `'Journal'`, `'Gameplay'`, and `'Authentication'`.
-3. **Parable Reads**:
-   - `parable_viewed`: Logged when a player unlocks a module/parable or reads it.
-4. **Cloud Sync & Conflicts**:
+   - `module_completed`: Fired when an entire chapter/module is conquered.
+
+3. **Spiritual Journey & Scripture Library**:
+   - `parable_viewed`: Logged when reading a parable, with `source` (`'game_unlock'` or `'journal_browse'`).
+   - `scripture_unlocked`: Fired when a scripture item is unlocked.
+   - `scripture_read`: Logged when reading scripture details in the Journal with `translation` and reading duration.
+   - `translation_changed`: Logged when changing active translation preferences (`previous_translation`, `new_translation`).
+   - `scripture_shared`: Captured when copying or sharing scripture verses.
+   - `journal_opened`: Fired when visiting the journal with `unlocked_count` and `total_count`.
+
+4. **Garden Metaphor & Visual Feedback**:
+   - `garden_viewed`: Logged with `bloomed_count` and `current_stage`.
+   - `flower_bloomed`: Captured when a flower blooms upon level completion.
+
+5. **Auth, Cloud Sync & Preferences**:
+   - `auth_action`: Tracked on sign-in, signup, or deletion with `action`, `success`, and `error_code`.
    - `sync_conflict_detected`, `sync_conflict_resolved`, and `cloud_sync_unavailable`.
+   - `setting_changed`: Captured when toggling audio, haptics, or accessibility options.
+   - `session_start` and `session_end`: Captures player session duration and retention cohorts.
 
 ---
 

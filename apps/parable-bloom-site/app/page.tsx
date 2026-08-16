@@ -1,11 +1,10 @@
 import DesignSystemCard from '@/components/design-system-card';
+import FeatureCard from '@/components/feature-card';
+import HeroActions from '@/components/hero-actions';
 import { Badge } from '@gv-tech/ui-web/badge';
 import { Separator } from '@gv-tech/ui-web/separator';
 import { Text } from '@gv-tech/ui-web/text';
 import type { Metadata } from 'next';
-import Link from 'next/link';
-
-const Empty = () => null;
 
 export const metadata: Metadata = {
   title: 'Parable Bloom',
@@ -88,26 +87,7 @@ export default function HomePage() {
             parables of Jesus.
           </Text>
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="https://parable-bloom.web.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-brand hover:bg-brand/90 focus-visible:ring-brand/50 inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:outline-none"
-            >
-              🌐 Play on Web
-            </Link>
-            <Link
-              href="https://play.google.com/store/apps/details?id=com.garciaericn.parable_bloom"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border-border text-text-primary hover:border-brand/40 hover:bg-surface-alt inline-flex items-center gap-2 rounded-full border bg-white px-6 py-2.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-            >
-              🤖 Google Play
-            </Link>
-            {/* iOS is coming soon, show nothing in Hero using Empty component */}
-            <Empty />
-          </div>
+          <HeroActions />
         </div>
       </section>
 
@@ -146,19 +126,7 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {features.map((feature, i) => (
-            <div
-              key={feature.title}
-              className="animate-fade-in-up group border-border/50 hover:border-brand/30 hover:shadow-grace flex gap-4 rounded-2xl border bg-white/80 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/95"
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
-              <span className="bg-brand/8 mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl transition-transform duration-300 group-hover:scale-110">
-                {feature.icon}
-              </span>
-              <div>
-                <h3 className="font-display text-text-primary mb-1 font-semibold">{feature.title}</h3>
-                <p className="text-text-secondary text-sm leading-relaxed">{feature.body}</p>
-              </div>
-            </div>
+            <FeatureCard key={feature.title} icon={feature.icon} title={feature.title} body={feature.body} index={i} />
           ))}
         </div>
       </section>

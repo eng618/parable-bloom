@@ -1,5 +1,6 @@
 'use client';
 
+import { trackNavigationClick } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import { SupportFab } from '@gv-tech/ui-web/support-fab';
 import { Text } from '@gv-tech/ui-web/text';
@@ -26,6 +27,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
+      onClick={() => trackNavigationClick(href, 'header', label)}
       className={cn(
         'rounded-full px-3 py-1.5 text-sm font-semibold transition-all duration-300',
         isActive ? 'bg-brand/10 text-brand' : 'text-text-secondary hover:bg-brand-pale hover:text-brand',
@@ -48,6 +50,7 @@ export default function SiteShell({ children }: SiteShellProps) {
           <Link
             href="/"
             aria-label="Parable Bloom home"
+            onClick={() => trackNavigationClick('/', 'header', 'Logo')}
             className="flex shrink-0 items-center gap-2 transition-opacity duration-300 hover:opacity-80"
           >
             <span className="text-2xl">🌿</span>
@@ -73,11 +76,19 @@ export default function SiteShell({ children }: SiteShellProps) {
           © {new Date().getFullYear()} GVTech. All rights reserved.
         </Text>
         <div className="mt-2 flex justify-center gap-4 text-xs text-white/60">
-          <Link href="/privacy" className="transition-colors hover:text-white">
+          <Link
+            href="/privacy"
+            onClick={() => trackNavigationClick('/privacy', 'footer', 'Privacy Policy')}
+            className="transition-colors hover:text-white"
+          >
             Privacy Policy
           </Link>
           <span>·</span>
-          <Link href="/terms" className="transition-colors hover:text-white">
+          <Link
+            href="/terms"
+            onClick={() => trackNavigationClick('/terms', 'footer', 'Terms of Service')}
+            className="transition-colors hover:text-white"
+          >
             Terms of Service
           </Link>
         </div>

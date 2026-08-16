@@ -344,6 +344,27 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           _restartLevel();
         },
         onHome: () {
+          final currentLevel = ref.read(currentLevelProvider);
+          if (currentLevel != null) {
+            final startMs = ref.read(levelStartTimestampProvider);
+            final elapsedSeconds = startMs != null
+                ? ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000)
+                    .round()
+                : -1;
+            final tapCount = ref.read(levelTotalTapsProvider);
+            final remainingVines = ref
+                .read(vineStatesProvider)
+                .values
+                .where((s) => !s.isCleared)
+                .length;
+
+            ref.read(analyticsServiceProvider).logLevelQuit(
+                  levelId: currentLevel.id,
+                  elapsedSeconds: elapsedSeconds,
+                  taps: tapCount,
+                  remainingVines: remainingVines,
+                );
+          }
           if (context.canPop()) context.pop(); // Close dialog
           context.go('/');
         },
@@ -991,9 +1012,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       attemptsNotifier.increment();
       final attempts = ref.read(levelAttemptCountProvider);
 
-      ref
-          .read(analyticsServiceProvider)
-          .logLevelRestart(currentLevel.id, attempts);
+      final startMs = ref.read(levelStartTimestampProvider);
+      final elapsedSeconds = startMs != null
+          ? ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000).round()
+          : -1;
+
+      ref.read(analyticsServiceProvider).logLevelRestart(
+            currentLevel.id,
+            attempts,
+            elapsedSeconds: elapsedSeconds,
+          );
 
       ref.read(levelStartTimestampProvider.notifier).set(DateTime.now());
 
