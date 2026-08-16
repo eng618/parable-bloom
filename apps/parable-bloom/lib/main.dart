@@ -13,7 +13,7 @@ import 'core/providers/infrastructure_providers.dart';
 import 'core/providers/service_providers.dart';
 import 'core/services/analytics_service.dart';
 import 'core/services/logger_service.dart';
-import 'core/services/plausible_analytics_client.dart';
+import 'core/services/openpanel_analytics_client.dart';
 
 const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
@@ -76,18 +76,19 @@ void main() async {
     await _seedScreenshotData(hiveBox);
   }
 
-  // Initialize Analytics (Firebase + Plausible self-hosted)
+  // Initialize Analytics (Firebase + Openpanel self-hosted)
   final AnalyticsService analyticsService;
   if (_isScreenshotMode) {
     analyticsService = AnalyticsService();
   } else {
-    final isOptedOut =
-        hiveBox.get('plausible_ignore', defaultValue: false) as bool;
-    final plausibleClient = PlausibleAnalyticsClient.fromEnvironment(
+    final isOptedOut = (hiveBox.get('openpanel_ignore') ??
+        hiveBox.get('plausible_ignore', defaultValue: false)) as bool;
+    final openpanelClient = OpenpanelAnalyticsClient.fromEnvironment(
       isOptedOut: () =>
-          hiveBox.get('plausible_ignore', defaultValue: false) as bool,
+          (hiveBox.get('openpanel_ignore') ??
+              hiveBox.get('plausible_ignore', defaultValue: false)) as bool,
     );
-    analyticsService = AnalyticsService(plausibleClient: plausibleClient);
+    analyticsService = AnalyticsService(openpanelClient: openpanelClient);
     await analyticsService.init(enabled: !isOptedOut);
   }
 
@@ -104,14 +105,7 @@ void main() async {
 
 Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
   final completedLevelsList = <String>[];
-  // Seedling levels (1 to 20 + challenge)
-  for (int i = 1; i <= 20; i++) {
-    final idxStr = i < 10 ? '0$i' : '$i';
-    completedLevelsList.add('lvl_seed_$idxStr');
-  }
-  completedLevelsList.add('lvl_seed_challenge');
-  // Sprout levels (1 to 20 + challenge)
-  for (int i = 1; i <= 20; i++) {
+  for (var i = 1; i <= 20; i++) {
     final idxStr = i < 10 ? '0$i' : '$i';
     completedLevelsList.add('lvl_sprout_$idxStr');
   }
@@ -137,5 +131,6 @@ Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
 
   await hiveBox.put(GameProgressStorageKeys.progress, seededProgress.toJson());
   await hiveBox.put(GameProgressStorageKeys.cloudSyncEnabled, false);
+  await hiveBox.put('openpanel_ignore', true);
   await hiveBox.put('plausible_ignore', true);
 }

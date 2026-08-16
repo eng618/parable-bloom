@@ -1,4 +1,4 @@
-import PlausibleProvider from '@/components/plausible-provider';
+import OpenpanelProvider from '@/components/openpanel-provider';
 import SiteShell from '@/components/site-shell';
 import UiThemeProvider from '@/components/ui-theme-provider';
 import type { Metadata, Viewport } from 'next';
@@ -61,7 +61,7 @@ export default function RootLayout({
       <body>
         <UiThemeProvider>
           <SiteShell>{children}</SiteShell>
-          <PlausibleProvider />
+          <OpenpanelProvider />
         </UiThemeProvider>
       </body>
     </html>

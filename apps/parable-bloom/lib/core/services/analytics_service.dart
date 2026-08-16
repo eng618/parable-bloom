@@ -1,17 +1,17 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 
 import 'logger_service.dart';
-import 'plausible_analytics_client.dart';
+import 'openpanel_analytics_client.dart';
 
 class AnalyticsService {
   final FirebaseAnalytics? _analytics;
-  final PlausibleAnalyticsClient? _plausible;
+  final OpenpanelAnalyticsClient? _openpanel;
 
   AnalyticsService({
     FirebaseAnalytics? analytics,
-    PlausibleAnalyticsClient? plausibleClient,
+    OpenpanelAnalyticsClient? openpanelClient,
   })  : _analytics = analytics,
-        _plausible = plausibleClient;
+        _openpanel = openpanelClient;
 
   FirebaseAnalytics? get _firebase {
     if (_analytics != null) {
@@ -49,7 +49,7 @@ class AnalyticsService {
         parameters: {'level_id': levelId},
       );
     }
-    await _trackPlausible(
+    await _trackOpenpanel(
       eventName: 'level_start',
       properties: {'level_id': levelId},
     );
@@ -76,7 +76,7 @@ class AnalyticsService {
         },
       );
     }
-    await _trackPlausible(
+    await _trackOpenpanel(
       eventName: 'level_complete',
       properties: {
         'level_id': levelId,
@@ -100,7 +100,7 @@ class AnalyticsService {
         },
       );
     }
-    await _trackPlausible(
+    await _trackOpenpanel(
       eventName: 'level_restart',
       properties: {
         'level_id': levelId,
@@ -117,7 +117,7 @@ class AnalyticsService {
         parameters: {'level_id': levelId, 'remaining_lives': remainingLives},
       );
     }
-    await _trackPlausible(
+    await _trackOpenpanel(
       eventName: 'wrong_tap',
       properties: {
         'level_id': levelId,
@@ -134,7 +134,7 @@ class AnalyticsService {
         parameters: {'level_id': levelId},
       );
     }
-    await _trackPlausible(
+    await _trackOpenpanel(
       eventName: 'game_over',
       properties: {'level_id': levelId},
     );
@@ -158,7 +158,7 @@ class AnalyticsService {
         },
       );
     }
-    await _trackPlausible(
+    await _trackOpenpanel(
       eventName: 'sync_conflict_detected',
       properties: {
         'source': source,
@@ -187,7 +187,7 @@ class AnalyticsService {
         },
       );
     }
-    await _trackPlausible(
+    await _trackOpenpanel(
       eventName: 'sync_conflict_resolved',
       properties: {
         'source': source,
@@ -212,7 +212,7 @@ class AnalyticsService {
         },
       );
     }
-    await _trackPlausible(
+    await _trackOpenpanel(
       eventName: 'cloud_sync_unavailable',
       properties: {
         'source': source,
@@ -221,15 +221,15 @@ class AnalyticsService {
     );
   }
 
-  Future<void> _trackPlausible({
+  Future<void> _trackOpenpanel({
     required String eventName,
     required Map<String, Object?> properties,
   }) async {
-    final plausible = _plausible;
-    if (plausible == null) {
+    final openpanel = _openpanel;
+    if (openpanel == null) {
       return;
     }
-    await plausible.trackEvent(
+    await openpanel.trackEvent(
       eventName: eventName,
       properties: properties,
     );
@@ -250,7 +250,7 @@ class AnalyticsService {
         screenName: screenName,
       );
     }
-    await _trackPlausible(
+    await _trackOpenpanel(
       eventName: 'screen_view',
       properties: {
         'screen_name': screenName,
@@ -266,7 +266,7 @@ class AnalyticsService {
         parameters: {'parable_id': parableId},
       );
     }
-    await _trackPlausible(
+    await _trackOpenpanel(
       eventName: 'parable_viewed',
       properties: {'parable_id': parableId},
     );

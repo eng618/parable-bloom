@@ -37,12 +37,11 @@ export default function PrivacyPage() {
       </Text>
       <Text variant="h3">2.1 Automatically Collected Information (Telemetry & Analytics)</Text>
       <Text variant="body">
-        To help us improve the game's stability and gameplay experience, we use third-party analytics tools
-        (specifically <strong>Google Firebase Analytics</strong> and <strong>Plausible Analytics</strong>) to
-        automatically collect certain anonymous technical information. This data is{' '}
-        <strong>aggregated and anonymized</strong>, meaning it is not linked to your identity. Plausible Analytics is
-        self-hosted by GVTech, so event data never leaves our own infrastructure, uses no cookies, and stores no
-        personal data.
+        To help us improve the game's stability and gameplay experience, we use analytics tools (specifically{' '}
+        <strong>Google Firebase Analytics</strong> and <strong>Openpanel</strong>) to automatically collect certain
+        anonymous technical information. This data is <strong>aggregated and anonymized</strong>, meaning it is not
+        linked to your identity. Openpanel is self-hosted on GVTech infrastructure (openpanel.gventureshq.com), so
+        telemetry remains under our direct control, uses no third-party tracking cookies, and stores no personal data.
       </Text>
       <Text variant="body">This information includes:</Text>
       <ul>
@@ -128,12 +127,12 @@ export default function PrivacyPage() {
         </li>
         <li>
           <Text variant="body">
-            <strong>Plausible Analytics (self-hosted)</strong>: We use a self-hosted instance of Plausible to collect
-            anonymous gameplay event data (e.g., level starts, level completions). No cookies are used, no
-            fingerprinting occurs, and no personal data is stored. All event data is processed on our own servers. You
-            can opt out at any time by setting <code>plausible_ignore</code> to <code>true</code> in your browser&apos;s
-            local storage, or via the Analytics toggle in{' '}
-            <a href="https://plausible.io/data-policy">Plausible Data Policy</a>
+            <strong>Openpanel (self-hosted)</strong>: We use a self-hosted instance of Openpanel
+            (openpanel.gventureshq.com) to collect anonymous gameplay and site event data (e.g., level starts, level
+            completions). No third-party tracking cookies are used, no fingerprinting occurs, and no personal data is
+            stored. All event data is processed on our own servers. You can opt out at any time by setting{' '}
+            <code>openpanel_ignore</code> to <code>true</code> in your browser&apos;s local storage, or via the
+            Analytics toggle in the game settings.
           </Text>
         </li>
       </ul>
