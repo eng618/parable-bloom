@@ -1,3 +1,15 @@
+## 1.8.1 (2026-08-16)
+
+### 🚀 Features
+
+- enable dark mode support and update site components and legal pages ([90e5824](https://github.com/eng618/parable-bloom/commit/90e5824))
+- implement comprehensive analytics tracking for user interactions, navigation, and tutorial progress across web and mobile platforms. ([7350c71](https://github.com/eng618/parable-bloom/commit/7350c71))
+- migrate from Plausible to Openpanel for self-hosted analytics across site and app ([9e56f1e](https://github.com/eng618/parable-bloom/commit/9e56f1e))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.8.0 (2026-07-17)
 
 ### 🚀 Features
