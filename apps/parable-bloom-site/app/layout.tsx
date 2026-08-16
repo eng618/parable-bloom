@@ -57,7 +57,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className="light" style={{ colorScheme: 'light' }} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body>
         <UiThemeProvider>
           <SiteShell>{children}</SiteShell>

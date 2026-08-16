@@ -356,6 +356,19 @@ Not every feature needs every layer on day one, but folder names should reflect 
 
 Tools within the workspace (like the Level Builder) use a smart path resolution strategy to support both standalone and monorepo layouts. They identify the repository root by searching for marker files (`nx.json`, `bun.lock`, `pubspec.yaml`) and then resolve assets relative to the identified root, prioritizing the `apps/parable-bloom/assets` directory in monorepo structures.
 
+### 7.3 Next.js Marketing & Policy Site (`apps/parable-bloom-site`)
+
+The public website and policy host for Parable Bloom is built with Next.js (App Router), Tailwind CSS v4, and the official **GV Tech Design System** (`@gv-tech/ui-web` and `@gv-tech/design-tokens`).
+
+#### Key Architectural Components
+- **Theme Engine & System Default**: Utilizes `ThemeProvider` from `@gv-tech/ui-web/theme-provider` configured with `attribute="class"`, `defaultTheme="system"`, and `enableSystem`. This enables automatic OS theme matching with zero FOUC (flash of unstyled content) and smooth runtime switching between Light, Dark, and System modes.
+- **Ternary Theme Toggle**: Features `ThemeToggle` (`variant="ternary"`) from `@gv-tech/ui-web/theme-toggle` in both desktop header navigation and the mobile slide-over navigation drawer.
+- **Tailwind v4 Token Integration**: Tokens are scanned directly from `@gv-tech/ui-web/dist/**/*.mjs` and mapped in `globals.css` with space-separated HSL values (`@layer base`) for `:root` and `.dark` palettes, supporting precise opacity modifiers (e.g. `bg-primary/80`, `border-border/60`).
+- **Responsive Navigation**:
+  - *Desktop*: Sticky glassmorphic navbar with active route pills, external links, and the ternary theme switcher.
+  - *Mobile*: Collapsible navigation using `Sheet` (`@gv-tech/ui-web/sheet`) slide-over drawer with quick action buttons and theme toggle.
+- **Standardized Design Primitives**: Standardizes on `@gv-tech/ui-web` components including `Button`, `Card`, `Badge`, `Separator`, `Text`, `ScrollToTop`, and `SupportFab`.
+
 ---
 
 ## 8. Level Builder Tool (Go CLI)

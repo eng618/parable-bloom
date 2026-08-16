@@ -18,8 +18,8 @@ type DesignSystemCardProps = {
 };
 
 const badgeStyleMap: Record<string, string> = {
-  Available: 'border-brand/20 bg-brand/10 text-brand text-xs',
-  default: 'border-border bg-surface-alt text-text-secondary text-xs',
+  Available: 'border-brand/20 bg-brand/10 text-brand text-xs dark:bg-brand/20',
+  default: 'border-border bg-muted/60 text-muted-foreground text-xs',
 };
 
 export default function DesignSystemCard({
@@ -34,7 +34,7 @@ export default function DesignSystemCard({
   return (
     <Card
       className={cn(
-        'animate-fade-in-up group border-border/60 hover:border-brand/30 hover:shadow-grace flex flex-col overflow-hidden bg-white/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white/95',
+        'animate-fade-in-up group border-border/60 hover:border-brand/40 hover:shadow-grace bg-card/85 dark:bg-card/75 hover:bg-card/95 dark:hover:bg-card/90 flex flex-col overflow-hidden shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1',
       )}
       style={{ animationDelay: `${animationDelay}ms` }}
     >
@@ -47,18 +47,18 @@ export default function DesignSystemCard({
             </Badge>
           )}
         </div>
-        <CardTitle className="font-display text-text-primary text-lg">{title}</CardTitle>
+        <CardTitle className="font-display text-foreground text-lg">{title}</CardTitle>
       </CardHeader>
 
       <CardContent className="flex-1 pb-4">
-        <CardDescription className="text-text-secondary text-sm leading-relaxed">{body}</CardDescription>
+        <CardDescription className="text-muted-foreground text-sm leading-relaxed">{body}</CardDescription>
       </CardContent>
 
       <CardFooter className="pt-0">
         {href ? (
           <Button
             asChild
-            className="bg-brand hover:bg-brand/90 w-full rounded-full transition-all duration-300 hover:shadow-md"
+            className="bg-brand hover:bg-brand/90 w-full rounded-full text-white transition-all duration-300 hover:shadow-md"
             onClick={() => trackCtaClick(title, 'platform_grid', badge)}
           >
             <Link href={href} target="_blank" rel="noopener noreferrer">
@@ -66,7 +66,7 @@ export default function DesignSystemCard({
             </Link>
           </Button>
         ) : (
-          <Button disabled className="w-full rounded-full opacity-60">
+          <Button variant="outline" disabled className="border-border w-full rounded-full opacity-60">
             {ctaLabel}
           </Button>
         )}

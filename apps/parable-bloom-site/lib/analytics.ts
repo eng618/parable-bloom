@@ -42,7 +42,11 @@ export function trackCtaClick(ctaName: string, location: string, badgeStatus?: s
   });
 }
 
-export function trackNavigationClick(destination: string, location: 'header' | 'footer', label: string): void {
+export function trackNavigationClick(
+  destination: string,
+  location: 'header' | 'footer' | 'mobile_drawer',
+  label: string,
+): void {
   trackEvent('navigation_clicked', {
     destination,
     location,
