@@ -13,7 +13,7 @@ class OpenpanelAnalyticsClient {
   static const String defaultWebClientId =
       "a6693179-1176-42f8-a1b8-b9a5196ab4e0";
   static const String defaultFallbackClientId =
-      "a6693179-1176-42f8-a1b8-b9a5196ab4e0";
+      "f194b3ef-9a0b-4fd3-a3c9-188a49235dca";
 
   static const String defaultApiUrl = "https://openpanel.gventureshq.com/api";
 
