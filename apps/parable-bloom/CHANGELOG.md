@@ -1,3 +1,7 @@
+## 1.8.2 (2026-08-17)
+
+This was a version bump only for parable-bloom to align it with other projects, there were no code changes.
+
 ## 1.8.1 (2026-08-16)
 
 ### 🚀 Features
