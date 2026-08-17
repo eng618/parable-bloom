@@ -289,7 +289,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   /// Start or load a lesson with the given lesson data
   void startLesson(LessonData lesson) {
     _currentLessonData = lesson;
-    final levelData = _convertLessonToLevelData(lesson);
+    final levelData = lesson.toLevelData();
 
     // For lessons, vine states start fresh (all uncompleted)
     final Map<String, VineState> vineStates = {};
@@ -304,31 +304,6 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
 
     startLevel(levelData, vineStates);
-  }
-
-  /// Converts lesson data to level data for rendering
-  LevelData _convertLessonToLevelData(LessonData lesson) {
-    final vines = lesson.vines.map((lessonVine) {
-      return VineData(
-        id: lessonVine.id,
-        headDirection: lessonVine.headDirection,
-        orderedPath: lessonVine.orderedPath,
-      );
-    }).toList();
-
-    return LevelData(
-      id: lesson.id.toString(),
-      name: 'Lesson ${lesson.id}',
-      difficulty: 'tutorial',
-      gridWidth: lesson.gridWidth,
-      gridHeight: lesson.gridHeight,
-      vines: vines,
-      maxMoves: 999,
-      minMoves: 0,
-      complexity: 'tutorial',
-      grace: 3,
-      mask: MaskData(mode: 'show-all', points: []),
-    );
   }
 
   /// Update vine states dynamically when they change in the app state

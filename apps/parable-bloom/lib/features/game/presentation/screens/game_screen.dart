@@ -20,6 +20,7 @@ import '../widgets/garden_game.dart';
 import '../widgets/pause_menu_dialog.dart';
 import '../widgets/pond_ripple_effect_component.dart';
 import '../widgets/ripple_fireworks_component.dart';
+import '../../../journal/application/providers/journal_providers.dart';
 import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import '../../../../core/services/logger_service.dart';
 
@@ -673,16 +674,33 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     String resolvedText = '';
     String displayCitation = scripture.reference;
+    String themeName = module.name;
+    String? reflectionPrompt;
+
+    try {
+      final themes = await ref.read(journalThemesProvider.future);
+      for (final theme in themes) {
+        for (final passage in theme.passages) {
+          if (passage.id == scripture.id ||
+              passage.reference == scripture.reference) {
+            themeName = theme.name;
+            if (passage.reflectionPrompts.isNotEmpty) {
+              reflectionPrompt = passage.reflectionPrompts.first;
+            }
+            break;
+          }
+        }
+      }
+    } catch (_) {}
 
     try {
       final result = await ref.read(scriptureServiceProvider).loadScripture(
             scripture.reference,
-            translationId: savedTranslationId,
+            translationId: savedTranslationId ?? 'kjv',
           );
 
       resolvedText = result['text'] ?? '';
-      final translationCode = result['translation'] ?? 'KJV';
-      displayCitation = '${scripture.reference} ($translationCode)';
+      displayCitation = '${scripture.reference} (KJV)';
     } catch (e, stack) {
       LoggerService.error(
         'Error loading scripture for unlocked dialog',
@@ -762,12 +780,43 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 8),
+                if (reflectionPrompt != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                      border:
+                          Border.all(color: cs.primary.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.help_outline, size: 16, color: cs.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            reflectionPrompt,
+                            style: TextStyle(
+                              color: cs.onPrimaryContainer,
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
                 Text(
-                  'Added to your Journal under the ${module.name} set.',
+                  'Added to your Journal under $themeName.',
                   style: TextStyle(
                     color: cs.primary,
                     fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
                 ),

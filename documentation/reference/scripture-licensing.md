@@ -16,13 +16,16 @@ There are three primary categories of licensing applicable to our project:
 
 ### Translation Registry & Status
 
+> [!NOTE]
+> **Initial Launch Policy**: For the initial release, only the **King James Version (KJV)** is set to `active`. Other translations remain configured in `scripture_metadata.json` under `pending` status and will be activated once attributions and licensing are finalized.
+
 | Translation | Abbr. | Copyright Owner | License Category | Local Storage? | Network Required? | Status in Parable Bloom |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **World English Bible** | WEB | Public Domain | Public Domain | **Yes** | No | **Active** (Local & Offline Default) |
-| **King James Version** | KJV | Public Domain (Crown Copyright in UK) | Public Domain | **Yes** (Non-comm. in UK) | No | **Active** (Local & Offline Fallback) |
-| **NET Bible** | NET | Biblical Studies Press, L.L.C. | Gratis (Ministry First) | **Yes** (Free App Only) | No | **Active** (Local & Offline) |
-| **English Standard Version** | ESV | Crossway | Gratis / Web API | No | **Yes** (Online API) | **Active** (API-driven Online) |
-| **Christian Standard Bible** | CSB | Holman Bible Publishers | Gratis / Web API | No | **Yes** (Online API) | **Active** (API-driven Online) |
+| **King James Version** | KJV | Public Domain (Crown Copyright in UK) | Public Domain | **Yes** (Non-comm. in UK) | No | **Active (Initial Launch Default)** |
+| **World English Bible** | WEB | Public Domain | Public Domain | **Yes** | No | **Pending Activation** |
+| **NET Bible** | NET | Biblical Studies Press, L.L.C. | Gratis (Ministry First) | **Yes** (Free App Only) | No | **Pending Activation** |
+| **English Standard Version** | ESV | Crossway | Gratis / Web API | No | **Yes** (Online API) | **Pending Activation** |
+| **Christian Standard Bible** | CSB | Holman Bible Publishers | Gratis / Web API | No | **Yes** (Online API) | **Pending Activation** |
 | **New Living Translation** | NLT | Tyndale House Publishers | App License Required | No | **Yes** (Online API) | **Pending Commercial License** |
 | **New International Version** | NIV | Biblica / Zondervan / Hodder | App License Required | No | **Yes** (Online API) | **Pending Commercial License** |
 

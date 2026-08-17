@@ -23,6 +23,7 @@ import '../../../../core/providers/service_providers.dart';
 import '../../../../core/providers/settings_providers.dart';
 import '../../../game/application/providers/counter_providers.dart';
 import '../../../game/domain/entities/level_data.dart';
+import '../../../journal/application/providers/journal_providers.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
 /// Shows the game with GameHeader (pause, grace) and a simple instruction overlay.
@@ -147,11 +148,33 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
           data: (lesson) {
             // Create or recreate game when lesson changes
             if (_game == null || _game!.currentLessonId != lesson.id) {
+              final levelData = lesson.toLevelData();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  ref.read(currentLevelProvider.notifier).setLevel(levelData);
+                  ref
+                      .read(vineStatesProvider.notifier)
+                      .resetForLevel(levelData);
+                  ref.read(levelCompleteProvider.notifier).setComplete(false);
+                  ref.read(gameCompletedProvider.notifier).setCompleted(false);
+                }
+              });
+
               _game = GardenGame.fromLesson(
                 lesson,
                 callbacks: GardenGameCallbacks(
                   onGameLoaded: (game) {
                     ref.read(gameInstanceProvider.notifier).setGame(game);
+                    final levelData = lesson.toLevelData();
+                    ref.read(currentLevelProvider.notifier).setLevel(levelData);
+                    ref
+                        .read(vineStatesProvider.notifier)
+                        .resetForLevel(levelData);
+                    ref.read(levelCompleteProvider.notifier).setComplete(false);
+                    ref
+                        .read(gameCompletedProvider.notifier)
+                        .setCompleted(false);
+
                     game.startLesson(lesson);
 
                     final cameraNotifier =
@@ -639,6 +662,35 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
           }
         }
       }
+
+      if (unlockedScripture == null) {
+        final themes = await ref.read(journalThemesProvider.future);
+        for (final theme in themes) {
+          for (final passage in theme.passages) {
+            if (!prevUnlockedScriptures.contains(passage.id) &&
+                postProgress.unlockedScriptureIds.contains(passage.id)) {
+              unlockedScripture = ModuleScripture(
+                id: passage.id,
+                triggerLevel: passage.triggerLevel,
+                reference: passage.reference,
+                title: passage.title,
+                type: passage.type,
+              );
+              completedModule = ModuleData(
+                id: 1,
+                name: theme.name,
+                themeSeed: 'forest',
+                levels: const [],
+                challengeLevel: '',
+                parable: const {},
+                unlockMessage: '',
+                scriptures: const [],
+              );
+              break;
+            }
+          }
+        }
+      }
     } catch (e) {
       LoggerService.error(
           'Failed to look up unlocked scripture in tutorial completion',
@@ -681,16 +733,33 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
     String resolvedText = '';
     String displayCitation = scripture.reference;
+    String themeName = module.name;
+    String? reflectionPrompt;
+
+    try {
+      final themes = await ref.read(journalThemesProvider.future);
+      for (final theme in themes) {
+        for (final passage in theme.passages) {
+          if (passage.id == scripture.id ||
+              passage.reference == scripture.reference) {
+            themeName = theme.name;
+            if (passage.reflectionPrompts.isNotEmpty) {
+              reflectionPrompt = passage.reflectionPrompts.first;
+            }
+            break;
+          }
+        }
+      }
+    } catch (_) {}
 
     try {
       final result = await ref.read(scriptureServiceProvider).loadScripture(
             scripture.reference,
-            translationId: savedTranslationId,
+            translationId: savedTranslationId ?? 'kjv',
           );
 
       resolvedText = result['text'] ?? '';
-      final translationCode = result['translation'] ?? 'KJV';
-      displayCitation = '${scripture.reference} ($translationCode)';
+      displayCitation = '${scripture.reference} (KJV)';
     } catch (e, stack) {
       LoggerService.error(
         'Error loading scripture for unlocked dialog',
@@ -770,12 +839,43 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 8),
+                if (reflectionPrompt != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                      border:
+                          Border.all(color: cs.primary.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.help_outline, size: 16, color: cs.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            reflectionPrompt,
+                            style: TextStyle(
+                              color: cs.onPrimaryContainer,
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
                 Text(
-                  'Added to your Journal under the ${module.name} set.',
+                  'Added to your Journal under $themeName.',
                   style: TextStyle(
                     color: cs.primary,
                     fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
                 ),

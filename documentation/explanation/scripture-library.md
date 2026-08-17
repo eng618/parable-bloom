@@ -1,38 +1,66 @@
-# Scripture Library & Reward System
+# Scripture Library, Biblical Themes & Journal System
 
-This document provides a comprehensive technical overview of the **Scripture Library and Reward System** in Parable Bloom. This system is designed to provide players with frequent, spiritually engaging touchpoints and structured scripture meditation opportunities throughout their gameplay.
+This document provides a comprehensive technical overview of the **Scripture Library, Biblical Themes, and Journal System** in Parable Bloom. This system is designed to provide players with frequent, spiritually engaging touchpoints, rich thematic categorization, guided devotional reflection prompts, and personal journaling capabilities throughout their gameplay.
 
 ---
 
-## 1. Scripture Progression Model
+## 1. Core Concepts & Decoupling
 
-To prevent excessive delays in scripture delivery, the progression model offers three distinct tiers of scripture rewards:
+The journal and scripture rewards architecture is decoupled into two complementary layers:
+
+1. **Gameplay Level Progression Layer**: 105 gameplay levels progressing through flower growth stages (`Seedling` $\rightarrow$ `Sprout` $\rightarrow$ `Blossom` $\rightarrow$ `Flourish` $\rightarrow$ `Harvest`).
+2. **Biblical Themes & Journal Layer**: Spiritual meditation modules organized by biblical concepts (`Spiritual Growth`, `Faith & Trust`, `Patience & Unseen Works`, `Abiding Love`, `Joy & The Harvest`), each containing curated scripture passages, multi-question guided reflection prompts, and personal reflection note taking.
+
+```mermaid
+graph TD
+    subgraph Gameplay Progression
+        L[105 Puzzle Levels: Seedling -> Harvest] -->|Milestones: lesson_5, lvl_seed_05, etc.| GPN[GameProgressNotifier]
+    end
+
+    subgraph Registries
+        BT[assets/data/biblical_themes.json] -->|Themes & Prompts| JTP[journalThemesProvider]
+        SL[assets/data/scripture_library.json] -->|Offline KJV Texts| SS[ScriptureService]
+        SM[assets/data/scripture_metadata.json] -->|Active Translations: KJV Only| SS
+    end
+
+    subgraph Journal Feature
+        JTP --> JS[JournalScreen]
+        GPN -->|unlockedScriptureIds & journalNotes| JS
+        JS -->|Tap Scripture| RDS[Scripture Reflection Details Sheet]
+        RDS -->|Scripture Text| SS
+        RDS -->|Guided Thought Prompts| GP[2-3 Curated Questions]
+        RDS -->|Personal Notes Storage| UN[User Reflection Notes Field]
+    end
+```
+
+---
+
+## 2. Scripture Progression Model & Reward Tiers
+
+To prevent excessive delays in scripture delivery, the progression model offers three distinct tiers of scripture rewards unlocked across gameplay milestones:
 
 ```mermaid
 graph TD
     A[Tutorial Complete / Lesson 5] -->|Immediate Unlock| B[Starter Scripture: 'The Seed is the Word']
-    C[Level Progress: 4, 8, 12, 16] -->|Thematic Unlocks| D[Micro-Verses: Short passages connecting to the theme]
-    E[Module Challenge Level Complete] -->|Ultimate Unlock| F[Full Passage: Complete parable scripture & reflection]
+    C[Level Progress: Checkpoints 5, 10, 15] -->|Thematic Unlocks| D[Micro-Verses: Passages connecting to the theme]
+    E[Module Challenge Level Complete] -->|Ultimate Unlock| F[Full Parable Passage: Complete scripture & guided prompts]
 ```
 
-### 1.1 Starter Scripture
-
+### 2.1 Starter Scripture
 * **Trigger**: Immediately upon completing the tutorial (Lesson 5).
 * **Purpose**: Instantly rewards the player and establishes scripture collection early in the user lifecycle.
 * **First Scripture**: `Luke 8:11` ("The seed is the word of God").
 
-### 1.2 Micro-Verses
-
-* **Trigger**: Unlocked at periodic checkpoints within a module (e.g., after level 4, level 8, level 12, and level 16 of the Seedling module).
+### 2.2 Micro-Verses
+* **Trigger**: Unlocked at periodic checkpoints within gameplay progression (e.g. Level 5, Level 15, Level 26, Level 31, etc.).
 * **Purpose**: Displays shorter, highly focused thematic verses that build anticipation for the final full parable.
-* **Selection**: Set per-module under the `scriptures` list in `modules.json`.
+* **Selection**: Curated under each theme in `biblical_themes.json`.
 
-### 1.3 Full Passage
+### 2.3 Full Parables
+* **Trigger**: Unlocked upon completing a module's Challenge Level (e.g. `lvl_seed_challenge`, `lvl_sprout_challenge`, `lvl_blossom_challenge`, `lvl_flourish_challenge`, `lvl_harvest_challenge`).
+* **Purpose**: Delivers the complete parable passage, rich guided reflection questions, and personal journaling options.
 
-* **Trigger**: Unlocked upon completing a module's Challenge Level.
-* **Purpose**: Delivers the complete parable passage, reflection, and journaling options.
-
-### 1.4 Backfill Migration & Progress Repair for Existing Users
+### 2.4 Backfill Migration & Progress Repair for Existing Users
 
 To support existing users who completed levels in prior versions (including legacy integer-based saves and accounts with progression sequence gaps), an automated repair and backfill mechanism runs during app startup:
 
@@ -47,41 +75,48 @@ To support existing users who completed levels in prior versions (including lega
 * **Progress Gap Healing**:
   * Identifies the user's highest completed level index or current level index in the playlist (`effectiveMaxIndex`).
   * Backfills any missing level IDs from index `0` up to `effectiveMaxIndex` in `completedLevels`, ensuring complete module fulfillment.
-* **Scripture & Parable Backfill**:
+* **Biblical Themes & Scripture Backfill**:
   * Unlocks any eligible micro-verses or starter scriptures in `unlockedScriptureIds` whose trigger levels fall on or before `effectiveMaxIndex`.
   * Checks completed modules (`progress.isModuleCompleted()`) and automatically populates missing parable translations in `unlockedTranslations`.
 * **Idempotence**: Preserves user-customized translations, avoid duplicate entries, and acts as a safe no-op once data is aligned.
 
 ---
 
-## 2. Core Architecture & Services
+## 3. Biblical Themes & Reflection Structure
 
-The scripture feature relies on a decoupled, offline-first service architecture managed by Riverpod.
+### 3.1 Supported Biblical Themes
 
-### 2.1 Scripture Service (`ScriptureService`)
+| Theme ID | Theme Name | Icon | Focus / Description |
+| :--- | :--- | :--- | :--- |
+| `growth` | **Spiritual Growth** | `spa` | Cultivating good soil in our hearts, allowing God's Word to take deep root and bear lasting fruit. |
+| `faith` | **Faith & Trust** | `psychology` | Trusting God from small beginnings, knowing that genuine faith in a great God moves mountains. |
+| `patience` | **Patience & Unseen Works** | `hourglass_empty` | Waiting on the Lord with quiet confidence, trusting in His unseen workings and perfect timing. |
+| `love` | **Abiding Love** | `favorite` | Remaining connected to Christ the true Vine, welcoming His pruning to bear abundant, lasting fruit. |
+| `joy` | **Joy & The Harvest** | `wb_sunny` | Persevering with joyful hope and laboring in the abundant harvest of God's kingdom. |
 
-Located at [`apps/parable-bloom/lib/core/services/scripture_service.dart`](../../apps/parable-bloom/lib/core/services/scripture_service.dart), this service manages all scripture loading, randomization, and fallbacks:
+### 3.2 Guided Reflection Prompts
 
-* **Translation Randomization**: When unlocking a scripture, it randomly selects an active translation ID from the active translations pool.
-* **Offline KJV Fallback**:
-  * For online-only translations (e.g. ESV, CSB, NET), it attempts to fetch the text from the API.
-  * If the API fetch fails, or the device is offline, it automatically retrieves the corresponding KJV text from the local database.
-* **Clean Formatting**: Sanitizes verse texts, strips redundant XML/HTML tags or footnotes, and ensures standardized styling.
+Every passage includes 2–3 curated thought-provoking questions designed to encourage contemplation. Examples:
+* *"What kind of soil (receptive, distracted, or hardened) describes your heart right now?"*
+* *"Where in your life are you striving in self-reliance instead of trusting God to give the increase?"*
+* *"What painful pruning has God used in the past to yield peaceable righteousness?"*
 
-### 2.2 Riverpod Providers
+### 3.3 Personal Reflection Notes
 
-* **`scriptureServiceProvider`**: Provides access to the `ScriptureService` instance.
-* **`unlockedScripturesProvider`**: A future provider listing all scriptures currently unlocked by the player, derived from the saved `GameProgress`.
+Users can record personal reflections, prayers, or applications directly under any scripture:
+* Stored in `GameProgress.journalNotes` (`Map<String, String>` mapping `passageId` $\rightarrow$ user text).
+* Offline-first storage in local Hive database and synchronized to Cloud Firestore when signed in.
 
 ---
 
-## 3. Data Schemas
+## 4. Translation Policy & Initial Launch
 
-### 3.1 Translation Metadata (`scripture_metadata.json`)
+> [!IMPORTANT]
+> **Initial Launch Policy: Strictly KJV**
+> For the initial launch release, all scriptures strictly use the **King James Version (KJV)** (Public Domain).
+> Other translations (`WEB`, `NET`, `ESV`, `CSB`, `NLT`, `NIV`) are maintained in the metadata schema in `pending` status and will be enabled in subsequent updates once formal publisher licensing/attributions are finalized.
 
-Located at [`apps/parable-bloom/assets/data/scripture_metadata.json`](../../apps/parable-bloom/assets/data/scripture_metadata.json), this registry lists all supported translations, their licenses, active statuses, and required attributions.
-
-Example Schema:
+### 4.1 Translation Metadata Schema (`scripture_metadata.json`)
 
 ```json
 {
@@ -90,95 +125,15 @@ Example Schema:
       "id": "kjv",
       "name": "King James Version",
       "abbreviation": "KJV",
-      "active": true,
-      "requires_commercial_license": false,
-      "attribution": "Public Domain.",
-      "url": ""
-    },
-    {
-      "id": "esv",
-      "name": "English Standard Version",
-      "abbreviation": "ESV",
-      "active": true,
-      "requires_commercial_license": true,
-      "attribution": "Scripture quotations are from The ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.",
-      "url": "https://www.crossway.org"
+      "publisher": "Public Domain",
+      "licenseType": "public_domain",
+      "copyrightNotice": "Scripture quotations are from the King James Version (KJV) Bible. Public domain.",
+      "status": "active"
     }
   ]
 }
 ```
 
-### 3.2 Scripture Backups Database (`scripture_library.json`)
+### 4.2 Local Scripture Database (`scripture_library.json`)
 
-Located at [`apps/parable-bloom/assets/data/scripture_library.json`](../../apps/parable-bloom/assets/data/scripture_library.json), this database stores the offline KJV texts for all parables and micro-verses.
-
-Example Schema:
-
-```json
-{
-  "scriptures": {
-    "Luke 8:11": {
-      "reference": "Luke 8:11",
-      "text": "Now the parable is this: The seed is the word of God."
-    },
-    "Matthew 13:1-23": {
-      "reference": "Matthew 13:1-23",
-      "text": "The same day went Jesus out of the house, and sat by the sea side..."
-    }
-  }
-}
-```
-
-### 3.3 Module Registry Integration (`modules.json`)
-
-Located at [`apps/parable-bloom/assets/data/modules.json`](../../apps/parable-bloom/assets/data/modules.json), this registry maps scripture triggers to levels/lessons.
-
-Example:
-
-```json
-{
-  "modules": [
-    {
-      "id": 1,
-      "name": "Seedling",
-      "theme_seed": "forest",
-      "levels": [
-        "lvl_seed_01",
-        "lvl_seed_02"
-      ],
-      "challenge_level": "lvl_seed_challenge",
-      "scriptures": [
-        {
-          "id": "seed_starter",
-          "trigger_level": "lesson_5",
-          "reference": "Luke 8:11",
-          "title": "The Seed is the Word",
-          "type": "starter"
-        },
-        {
-          "id": "seed_micro_1",
-          "trigger_level": "lvl_seed_04",
-          "reference": "Mark 4:14",
-          "title": "Sowing the Word",
-          "type": "micro"
-        }
-      ]
-    }
-  ]
-}
-```
-
----
-
-## 4. UI & Flow Integrations
-
-### 4.1 Unlock Banners & Overlays
-
-* When a level or lesson matching a trigger level is completed, the game shows a beautiful celebration banner:
-  * Plays sound effects and animates a scripture unlock card.
-  * Shows the selected translation name and its required publisher attribution at the bottom of the card.
-
-### 4.2 Journal Persistence
-
-* To maintain consistency, the randomized translation selected at the time of unlock is locked into the user's progress.
-* When opening the **Journal Screen**, the app loads the exact translation that was locked to that entry. If the user is offline and that translation was an online translation, the UI falls back seamlessly to KJV.
+Contains full offline KJV text representations for every reference in the game.
