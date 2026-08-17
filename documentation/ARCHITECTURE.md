@@ -171,7 +171,7 @@ The application implements a multi-channel, privacy-focused telemetry strategy d
 All telemetry events are dispatched through `AnalyticsService`, which coordinates data collection across:
 
 - **Firebase Analytics**: Standard client-side SDK. Used for general usage statistics, game lifecycle, and crash correlation.
-- **Openpanel (Self-Hosted)**: Lightweight, cookie-less, self-hosted analytics engine (`openpanel.gventureshq.com`). Events are submitted via direct API calls (`OpenpanelAnalyticsClient`) using privacy-focused endpoints with platform-specific Client IDs.
+- **Openpanel (Self-Hosted)**: Lightweight, cookie-less, self-hosted analytics engine (`openpanel.gventureshq.com`). Events are submitted via direct API calls (`OpenpanelAnalyticsClient`) using privacy-focused endpoints with platform-specific Client IDs (Android, iOS, Web, macOS, Windows, Linux).
 
 #### Privacy Control & Opt-out Toggle
 

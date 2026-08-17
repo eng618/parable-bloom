@@ -12,6 +12,12 @@ class OpenpanelAnalyticsClient {
       "01c5b484-f348-48c5-a67a-16d54a6423e0";
   static const String defaultWebClientId =
       "a6693179-1176-42f8-a1b8-b9a5196ab4e0";
+  static const String defaultMacosClientId =
+      "746a024a-67d3-4396-a7d8-9f4a6036d879";
+  static const String defaultWindowsClientId =
+      "81c64f66-464c-45bf-ab23-4ddba1cbf97d";
+  static const String defaultLinuxClientId =
+      "f622e38a-dd45-4380-9f5d-0bb9dcfdd1f0";
   static const String defaultFallbackClientId =
       "f194b3ef-9a0b-4fd3-a3c9-188a49235dca";
 
@@ -60,6 +66,12 @@ class OpenpanelAnalyticsClient {
         return defaultIosClientId;
       case "web":
         return defaultWebClientId;
+      case "macos":
+        return defaultMacosClientId;
+      case "windows":
+        return defaultWindowsClientId;
+      case "linux":
+        return defaultLinuxClientId;
       default:
         return defaultFallbackClientId;
     }

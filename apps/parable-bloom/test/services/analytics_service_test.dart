@@ -40,7 +40,8 @@ void main() {
       expect(trackedPayloads.length, 3);
       expect(trackedPayloads[0]["type"], "track");
       expect(trackedPayloads[0]["payload"]["name"], "tutorial_start");
-      expect(trackedPayloads[0]["payload"]["properties"]["source"], "first_launch");
+      expect(trackedPayloads[0]["payload"]["properties"]["source"],
+          "first_launch");
 
       expect(trackedPayloads[1]["type"], "track");
       expect(trackedPayloads[1]["payload"]["name"], "tutorial_step_complete");
@@ -90,7 +91,8 @@ void main() {
 
       expect(trackedPayloads.length, 2);
       expect(trackedPayloads[0]["payload"]["name"], "level_quit");
-      expect(trackedPayloads[0]["payload"]["properties"]["level_id"], "lvl_sprout_05");
+      expect(trackedPayloads[0]["payload"]["properties"]["level_id"],
+          "lvl_sprout_05");
       expect(trackedPayloads[0]["payload"]["properties"]["remaining_vines"], 3);
 
       expect(trackedPayloads[1]["payload"]["name"], "level_restart");
@@ -111,7 +113,8 @@ void main() {
       expect(trackedPayloads[0]["payload"]["name"], "auth_action");
       expect(trackedPayloads[0]["payload"]["properties"]["action"], "sign_up");
       expect(trackedPayloads[1]["payload"]["name"], "setting_changed");
-      expect(trackedPayloads[1]["payload"]["properties"]["setting_name"], "haptics");
+      expect(trackedPayloads[1]["payload"]["properties"]["setting_name"],
+          "haptics");
     });
   });
 }

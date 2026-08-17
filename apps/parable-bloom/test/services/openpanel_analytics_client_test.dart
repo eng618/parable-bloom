@@ -107,6 +107,18 @@ void main() {
       );
       expect(
         OpenpanelAnalyticsClient.resolveDefaultClientId("macos"),
+        OpenpanelAnalyticsClient.defaultMacosClientId,
+      );
+      expect(
+        OpenpanelAnalyticsClient.resolveDefaultClientId("windows"),
+        OpenpanelAnalyticsClient.defaultWindowsClientId,
+      );
+      expect(
+        OpenpanelAnalyticsClient.resolveDefaultClientId("linux"),
+        OpenpanelAnalyticsClient.defaultLinuxClientId,
+      );
+      expect(
+        OpenpanelAnalyticsClient.resolveDefaultClientId("other"),
         OpenpanelAnalyticsClient.defaultFallbackClientId,
       );
     });

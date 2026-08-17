@@ -84,9 +84,8 @@ void main() async {
     final isOptedOut = (hiveBox.get('openpanel_ignore') ??
         hiveBox.get('plausible_ignore', defaultValue: false)) as bool;
     final openpanelClient = OpenpanelAnalyticsClient.fromEnvironment(
-      isOptedOut: () =>
-          (hiveBox.get('openpanel_ignore') ??
-              hiveBox.get('plausible_ignore', defaultValue: false)) as bool,
+      isOptedOut: () => (hiveBox.get('openpanel_ignore') ??
+          hiveBox.get('plausible_ignore', defaultValue: false)) as bool,
     );
     analyticsService = AnalyticsService(openpanelClient: openpanelClient);
     await analyticsService.init(enabled: !isOptedOut);
