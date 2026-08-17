@@ -1,6 +1,6 @@
 # Asset Inventory Checklist
 
-*Use this checklist to ensure all visual assets are generated and correctly sized before starting the submission process.*
+_Use this checklist to ensure all visual assets are generated and correctly sized before starting the submission process._
 
 ## General Assets
 
@@ -14,11 +14,11 @@
   - [ ] Screen 1
   - [ ] Screen 2
   - [ ] Screen 3
-- **5.5-inch Screenshots** (1242 x 2208) *(Required if no 6.5" or supporting older devices)*
+- **5.5-inch Screenshots** (1242 x 2208) _(Required if no 6.5" or supporting older devices)_
   - [ ] Screen 1
   - [ ] Screen 2
   - [ ] Screen 3
-- **12.9-inch iPad Screenshots** (2048 x 2732) *(If iPad supported)*
+- **12.9-inch iPad Screenshots** (2048 x 2732) _(If iPad supported)_
   - [ ] Screen 1
   - [ ] Screen 2
   - [ ] Screen 3
@@ -31,9 +31,9 @@
   - [ ] Screen 1
   - [ ] Screen 2
   - [ ] Screen 3
-- **7-inch Tablet Screenshots** *(If supported)*
+- **7-inch Tablet Screenshots** _(If supported)_
   - [ ] Screen 1
   - [ ] Screen 2
-- **10-inch Tablet Screenshots** *(If supported)*
+- **10-inch Tablet Screenshots** _(If supported)_
   - [ ] Screen 1
   - [ ] Screen 2

@@ -1,9 +1,9 @@
 ---
-title: "Parable Bloom - Level System Reference"
-version: "3.0"
-last_updated: "2026-01-11"
-status: "Active"
-type: "Technical Reference"
+title: 'Parable Bloom - Level System Reference'
+version: '3.0'
+last_updated: '2026-01-11'
+status: 'Active'
+type: 'Technical Reference'
 ---
 
 # Parable Bloom - Level System Reference
@@ -22,17 +22,17 @@ Key concepts:
 
 apps/parable-bloom/assets/
 ├── data/
-│   └── modules.json        # Registry of modules, logical-to-physical mappings, progression
-├── lessons/                 # Hand-crafted instructional tutorial lessons
-│   ├── lesson_1.json
-│   └── ...
-└── levels/                 # Standard gameplay levels (physical sequential integers)
-    ├── level_1.json
-    ├── level_2.json
-    ├── ...
-    └── level_105.json
+│ └── modules.json # Registry of modules, logical-to-physical mappings, progression
+├── lessons/ # Hand-crafted instructional tutorial lessons
+│ ├── lesson_1.json
+│ └── ...
+└── levels/ # Standard gameplay levels (physical sequential integers)
+├── level_1.json
+├── level_2.json
+├── ...
+└── level_105.json
 
-```
+````
 
 ## 3. JSON Schemas
 
@@ -162,7 +162,7 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
     }
   }
 }
-```
+````
 
 ### 3.2 Module Registry Schema (`modules.json`)
 
@@ -224,7 +224,10 @@ A global `level_mappings` object maps logical gameplay IDs to physical assets.
               "type": "object",
               "properties": {
                 "id": { "type": "string" },
-                "trigger_level": { "type": "string", "description": "Level or lesson ID (e.g. lvl_seed_01, lesson_5) that unlocks this scripture" },
+                "trigger_level": {
+                  "type": "string",
+                  "description": "Level or lesson ID (e.g. lvl_seed_01, lesson_5) that unlocks this scripture"
+                },
                 "reference": { "type": "string", "description": "Scripture reference (e.g. Luke 8:11)" },
                 "title": { "type": "string", "description": "Clean title of the scripture" },
                 "type": { "type": "string", "description": "Type of unlock ('starter', 'micro', or 'full')" }

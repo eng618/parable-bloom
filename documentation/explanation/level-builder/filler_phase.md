@@ -12,7 +12,7 @@ Behavior
 
 Filler-aware incremental checks
 
-- When fillers are added during recovery the generator now adds them *incrementally* and runs a cheap incremental solvability check (`IsLikelySolvablePartial`) for each candidate filler.
+- When fillers are added during recovery the generator now adds them _incrementally_ and runs a cheap incremental solvability check (`IsLikelySolvablePartial`) for each candidate filler.
 - Fillers that cause a hopeless or clearly-unsolvable state are skipped, reducing the likelihood of creating irreparable high-coverage dead states.
 
 Testing

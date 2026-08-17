@@ -141,7 +141,7 @@ task release:ios
 **Single Component Builds (with caching):**
 
 ```bash
-task build:all   # Builds Flutter web, Level Builder, and Next.js site
+task build:all # Builds Flutter web, Level Builder, and Next.js site
 ```
 
 ## 📚 Documentation

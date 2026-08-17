@@ -27,7 +27,7 @@ Welcome to the **Parable Bloom** technical and design documentation. This docume
 
 ### 🎓 1. [Tutorials](tutorials/README.md)
 
-*Learning-oriented lessons that take newcomers by the hand to get up and running.*
+_Learning-oriented lessons that take newcomers by the hand to get up and running._
 
 - **[Developer Getting Started](tutorials/getting-started.md)** — Step-by-step setup, running the app, playing the 5 progressive lessons, and running tests.
 
@@ -35,7 +35,7 @@ Welcome to the **Parable Bloom** technical and design documentation. This docume
 
 ### 🛠️ 2. [How-To Guides](how-to/README.md)
 
-*Task-oriented recipes for accomplishing specific real-world tasks.*
+_Task-oriented recipes for accomplishing specific real-world tasks._
 
 - **[Automated Release Process](how-to/release-process.md)** — Conventional Commits, Nx Release, Fastlane, Bitwarden Secrets Manager (`bws`).
 - **[Store Onboarding](how-to/store-onboarding.md)** — App Store Connect and Google Play Console onboarding questions & setup.
@@ -46,7 +46,7 @@ Welcome to the **Parable Bloom** technical and design documentation. This docume
 
 ### 📖 3. [Reference](reference/README.md)
 
-*Information-oriented technical descriptions, data schemas, design tokens, and compliance specifications.*
+_Information-oriented technical descriptions, data schemas, design tokens, and compliance specifications._
 
 - **[Level System Specification](reference/level-system.md)** — JSON data format, coordinate system, occupancy rules, and validation checks.
 - **[Color System & Token Usage](reference/color-usage.md)** — Semantic palettes, dark/light themes, hex codes, and vine color mappings.
@@ -59,7 +59,7 @@ Welcome to the **Parable Bloom** technical and design documentation. This docume
 
 ### 💡 4. [Explanation](explanation/README.md)
 
-*Understanding-oriented discussions, conceptual architecture, and design rationale.*
+_Understanding-oriented discussions, conceptual architecture, and design rationale._
 
 - **[System Architecture](explanation/architecture.md)** — Flame engine integration, Riverpod state management, Hive persistence, Firebase sync strategy, and monorepo structure.
 - **[Game Design Philosophy](explanation/game-design.md)** — Arrow puzzle mechanics, grace system design, and parable progression.
@@ -70,11 +70,11 @@ Welcome to the **Parable Bloom** technical and design documentation. This docume
 
 ## 🚀 Quick Commands
 
-| Task | Command |
-| :--- | :--- |
-| **Run Web Game** | `task run` |
-| **Run All Tests** | `task test:all` |
-| **Run Full Workspace Validation** | `task validate` |
-| **Validate Levels** | `task levels:validate` |
-| **Generate Module Levels** | `task levels:generate:all` |
-| **Bump Version & Tag** | `task release:bump` |
+| Task                              | Command                    |
+| :-------------------------------- | :------------------------- |
+| **Run Web Game**                  | `task run`                 |
+| **Run All Tests**                 | `task test:all`            |
+| **Run Full Workspace Validation** | `task validate`            |
+| **Validate Levels**               | `task levels:validate`     |
+| **Generate Module Levels**        | `task levels:generate:all` |
+| **Bump Version & Tag**            | `task release:bump`        |

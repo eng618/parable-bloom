@@ -6,12 +6,12 @@ Keeping these documents up to date ensures a smooth submission process, high-qua
 
 ## Directory Overview
 
-* **[metadata.md](metadata.md)**: Guidelines for text-based fields like names, subtitles, descriptions, and keywords.
-* **[visual-assets.md](visual-assets.md)**: Specifications and planning for app icons, screenshots, and promo videos.
-* **[compliance.md](compliance.md)**: Checklists and details for Privacy Policies, Terms of Service, Data Safety, and age ratings.
-* **[marketing.md](marketing.md)**: Press kit contents, release notes templates, and launch preparations.
-* **[best-practices.md](best-practices.md)**: ASO recommendations, conversion rate optimization tips, and platform guidelines.
-* **[templates/](templates/)**: Blank templates you can duplicate to prepare submissions for new releases.
+- **[metadata.md](metadata.md)**: Guidelines for text-based fields like names, subtitles, descriptions, and keywords.
+- **[visual-assets.md](visual-assets.md)**: Specifications and planning for app icons, screenshots, and promo videos.
+- **[compliance.md](compliance.md)**: Checklists and details for Privacy Policies, Terms of Service, Data Safety, and age ratings.
+- **[marketing.md](marketing.md)**: Press kit contents, release notes templates, and launch preparations.
+- **[best-practices.md](best-practices.md)**: ASO recommendations, conversion rate optimization tips, and platform guidelines.
+- **[templates/](templates/)**: Blank templates you can duplicate to prepare submissions for new releases.
 
 ## Getting Started
 

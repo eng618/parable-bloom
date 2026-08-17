@@ -10,13 +10,13 @@
 
 Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game that demonstrates strong engineering practices. The codebase is clean, CI/CD is robust, and the Next.js marketing site is functional. However, there are several **critical and high-priority issues** that must be resolved before public release, primarily around **inconsistent app identifiers**, **missing store assets**, **incomplete attributions**, and **web manifest branding**.
 
-| Priority | Count |
-| ---------- | ------- |
-| 🔴 Critical | 4 |
-| 🟠 High | 9 |
-| 🟡 Medium | 14 |
-| 🟢 Low | 10 |
-| **Total** | **37** |
+| Priority    | Count  |
+| ----------- | ------ |
+| 🔴 Critical | 4      |
+| 🟠 High     | 9      |
+| 🟡 Medium   | 14     |
+| 🟢 Low      | 10     |
+| **Total**   | **37** |
 
 ---
 
@@ -196,16 +196,16 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 - **Category:** Code & Release Readiness
 - **Description:** TODOs found across the Flutter codebase:
 
-| File | Line | TODO |
-| ------ | ------ | ------ |
-| [game_screen.dart](../../apps/parable-bloom/lib/features/game/presentation/screens/game_screen.dart) | ~135 | Remove when implementing proper purchase flow |
-| [game_screen.dart](../../apps/parable-bloom/lib/features/game/presentation/screens/game_screen.dart) | ~141 | Debug buttons need recount |
-| [settings_screen.dart](../../apps/parable-bloom/lib/features/settings/presentation/screens/settings_screen.dart) | 13 | Create way to turn off hints/sound |
-| `level_validation_service.dart` | 57 | Check for >4 vines |
-| `theme.dart` | 42 | Commented out for future use |
-| `grid_board_widget.dart` | 158 | Add back vine emoji text |
-| `daily_devotion_service.dart` | 29 | Add more devotions |
-| `audio_service.dart` | ~90 | Make configurable through settings |
+| File                                                                                                             | Line | TODO                                          |
+| ---------------------------------------------------------------------------------------------------------------- | ---- | --------------------------------------------- |
+| [game_screen.dart](../../apps/parable-bloom/lib/features/game/presentation/screens/game_screen.dart)             | ~135 | Remove when implementing proper purchase flow |
+| [game_screen.dart](../../apps/parable-bloom/lib/features/game/presentation/screens/game_screen.dart)             | ~141 | Debug buttons need recount                    |
+| [settings_screen.dart](../../apps/parable-bloom/lib/features/settings/presentation/screens/settings_screen.dart) | 13   | Create way to turn off hints/sound            |
+| `level_validation_service.dart`                                                                                  | 57   | Check for >4 vines                            |
+| `theme.dart`                                                                                                     | 42   | Commented out for future use                  |
+| `grid_board_widget.dart`                                                                                         | 158  | Add back vine emoji text                      |
+| `daily_devotion_service.dart`                                                                                    | 29   | Add more devotions                            |
+| `audio_service.dart`                                                                                             | ~90  | Make configurable through settings            |
 
 - **Impact:** Indicates incomplete features. The debug button TODOs are behind `kDebugMode` gates so they won't appear in release, but should be tracked.
 - **Action:** Triage each TODO: resolve, convert to GitHub Issues for post-launch, or remove if no longer relevant.
@@ -490,23 +490,23 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 
 The following areas demonstrate strong practices that should be maintained:
 
-| Area | Assessment |
-| ------ | ----------- |
-| **Code Architecture** | Clean feature-based architecture with proper separation of concerns |
-| **State Management** | Riverpod with code generation — modern and maintainable |
-| **Firebase Integration** | Crashlytics, Analytics properly configured. Dummy options for CI ✅ |
-| **Firestore Security Rules** | Restrictive rules requiring auth, user-scoped data access ✅ |
-| **CI/CD Pipeline** | Multi-job CI with analyze, test, build. Automated releases ✅ |
-| **Signing Config** | Android signing via environment variables, no hardcoded secrets ✅ |
-| **Level Generation** | Go-based solver ensures all levels are solvable ✅ |
-| **Unit Test Coverage** | Models and services have solid test coverage ✅ |
-| **Integration Tests** | App flow tests and screenshot generation tests exist ✅ |
-| **Nx Monorepo** | Well-configured workspace with caching ✅ |
-| **SEO (Site)** | Sitemap, robots.txt, meta descriptions, semantic HTML ✅ |
-| **Legal Pages** | Privacy policy (with COPPA), Terms of Service, Delete Account page ✅ |
-| **Openpanel Analytics** | Self-hosted, privacy-focused analytics on the site & app ✅ |
-| **Debug Code Gating** | All debug buttons properly behind `kDebugMode` ✅ |
-| **No Hardcoded Secrets** | No API keys, passwords, or credentials in source code ✅ |
+| Area                         | Assessment                                                            |
+| ---------------------------- | --------------------------------------------------------------------- |
+| **Code Architecture**        | Clean feature-based architecture with proper separation of concerns   |
+| **State Management**         | Riverpod with code generation — modern and maintainable               |
+| **Firebase Integration**     | Crashlytics, Analytics properly configured. Dummy options for CI ✅   |
+| **Firestore Security Rules** | Restrictive rules requiring auth, user-scoped data access ✅          |
+| **CI/CD Pipeline**           | Multi-job CI with analyze, test, build. Automated releases ✅         |
+| **Signing Config**           | Android signing via environment variables, no hardcoded secrets ✅    |
+| **Level Generation**         | Go-based solver ensures all levels are solvable ✅                    |
+| **Unit Test Coverage**       | Models and services have solid test coverage ✅                       |
+| **Integration Tests**        | App flow tests and screenshot generation tests exist ✅               |
+| **Nx Monorepo**              | Well-configured workspace with caching ✅                             |
+| **SEO (Site)**               | Sitemap, robots.txt, meta descriptions, semantic HTML ✅              |
+| **Legal Pages**              | Privacy policy (with COPPA), Terms of Service, Delete Account page ✅ |
+| **Openpanel Analytics**      | Self-hosted, privacy-focused analytics on the site & app ✅           |
+| **Debug Code Gating**        | All debug buttons properly behind `kDebugMode` ✅                     |
+| **No Hardcoded Secrets**     | No API keys, passwords, or credentials in source code ✅              |
 
 ---
 

@@ -159,7 +159,7 @@ To ensure players never lose their progress across multiple devices and always s
 - **Interactive Choice Dialog**: Rather than silently overriding a player's save, the app requires a user decision (`requiresUserDecision`) for all non-none conflict types. Upon signing in or toggling Cloud Sync in Settings with mismatching saves, a custom prompt presents both saves:
   - **This Device**: Displays current local level and completed levels.
   - **Cloud Save**: Displays remote level and completed levels.
-  The player can explicitly choose **"Use Cloud Save"** or **"Keep This Device"**.
+    The player can explicitly choose **"Use Cloud Save"** or **"Keep This Device"**.
 - **Notifier State Synchronization**: Once a conflict is resolved, the `GameProgressNotifier` triggers the repository resolution and reactively calls `initialize()` to reload the new progress directly into the in-memory state. This ensures that the game board, levels list, and settings UI update instantly and synchronously.
 
 ### 4.3 Telemetry & Analytics (Firebase + Openpanel)
@@ -361,12 +361,13 @@ Tools within the workspace (like the Level Builder) use a smart path resolution 
 The public website and policy host for Parable Bloom is built with Next.js (App Router), Tailwind CSS v4, and the official **GV Tech Design System** (`@gv-tech/ui-web` and `@gv-tech/design-tokens`).
 
 #### Key Architectural Components
+
 - **Theme Engine & System Default**: Utilizes `ThemeProvider` from `@gv-tech/ui-web/theme-provider` configured with `attribute="class"`, `defaultTheme="system"`, and `enableSystem`. This enables automatic OS theme matching with zero FOUC (flash of unstyled content) and smooth runtime switching between Light, Dark, and System modes.
 - **Ternary Theme Toggle**: Features `ThemeToggle` (`variant="ternary"`) from `@gv-tech/ui-web/theme-toggle` in both desktop header navigation and the mobile slide-over navigation drawer.
 - **Tailwind v4 Token Integration**: Tokens are scanned directly from `@gv-tech/ui-web/dist/**/*.mjs` and mapped in `globals.css` with space-separated HSL values (`@layer base`) for `:root` and `.dark` palettes, supporting precise opacity modifiers (e.g. `bg-primary/80`, `border-border/60`).
 - **Responsive Navigation**:
-  - *Desktop*: Sticky glassmorphic navbar with active route pills, external links, and the ternary theme switcher.
-  - *Mobile*: Collapsible navigation using `Sheet` (`@gv-tech/ui-web/sheet`) slide-over drawer with quick action buttons and theme toggle.
+  - _Desktop_: Sticky glassmorphic navbar with active route pills, external links, and the ternary theme switcher.
+  - _Mobile_: Collapsible navigation using `Sheet` (`@gv-tech/ui-web/sheet`) slide-over drawer with quick action buttons and theme toggle.
 - **Standardized Design Primitives**: Standardizes on `@gv-tech/ui-web` components including `Button`, `Card`, `Badge`, `Separator`, `Text`, `ScrollToTop`, and `SupportFab`.
 
 ---

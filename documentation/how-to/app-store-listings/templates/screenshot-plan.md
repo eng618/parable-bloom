@@ -1,6 +1,6 @@
 # Screenshot Planning Template
 
-*Use this template to storyboard the screenshots before handing off to a designer or generating the final assets.*
+_Use this template to storyboard the screenshots before handing off to a designer or generating the final assets._
 
 **Overall Theme/Style**: [e.g., Dark mode, vibrant gradients, iPhone frames in context]
 
@@ -8,7 +8,7 @@
 
 ### Screenshot 1 (Search Result / Core Value)
 
-*The most important image, often the only one a user sees.*
+_The most important image, often the only one a user sees._
 
 - **Visual Focus**: [What screen or feature is shown?]
 - **Top/Bottom Caption**: [e.g., "The smartest way to bloom."]

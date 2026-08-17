@@ -374,7 +374,7 @@ Fastlane automates store uploads, beta distributions, and metadata management.
    ```bash
    # Get your project ID
    PROJECT_ID=$(bws project list | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
-
+   
    # Create secret
    bws secret create "PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" "$(base64 -i ~/Downloads/service-account.json)" "$PROJECT_ID"
    ```
@@ -535,9 +535,9 @@ You can override scheme/devices/languages without editing files:
 
 ```bash
 SNAPSHOT_SCHEME=RunnerUITests \
-SNAPSHOT_DEVICES="iPhone 6.7 inch,iPhone 6.5 inch" \
-SNAPSHOT_LANGUAGES="en-US,es-ES" \
-task fastlane:ios:screenshots
+  SNAPSHOT_DEVICES="iPhone 6.7 inch,iPhone 6.5 inch" \
+  SNAPSHOT_LANGUAGES="en-US,es-ES" \
+  task fastlane:ios:screenshots
 ```
 
 ### Extending Captured Screens
@@ -658,7 +658,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    ```bash
    # Dry-run to see what will happen
    bunx nx release --dry-run
-
+   
    # Bump version (independent for each project)
    bunx nx release --yes
    ```

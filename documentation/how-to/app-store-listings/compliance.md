@@ -26,7 +26,7 @@ Google requires a similar form in the Play Console. You must accurately declare 
 **Current Status**: Source code analysis indicates that Parable Bloom currently does not request specific restricted device permissions (like Camera, Location, or Contacts) via `AndroidManifest.xml` or `Info.plist`.
 
 > [!WARNING]
-> If future updates add features requiring device permissions (e.g., photo library access, camera access), you **must** include a usage description string in the iOS `Info.plist` (e.g., `NSCameraUsageDescription`) explaining *why* the app needs it. Failing to do so will result in an automatic rejection from Apple.
+> If future updates add features requiring device permissions (e.g., photo library access, camera access), you **must** include a usage description string in the iOS `Info.plist` (e.g., `NSCameraUsageDescription`) explaining _why_ the app needs it. Failing to do so will result in an automatic rejection from Apple.
 
 ## App Tracking Transparency (ATT)
 
