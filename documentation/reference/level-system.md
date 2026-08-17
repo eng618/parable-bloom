@@ -303,13 +303,12 @@ This approach significantly improves generation success rate compared to full re
 
 ### 5.5 Example Levels
 
-Reference examples for each difficulty tier are available in `documentation/example-levels/`:
+Reference levels for each difficulty tier are bundled in [`apps/parable-bloom/assets/levels/`](../../apps/parable-bloom/assets/levels/):
 
-- [seedling_example.json](example-levels/seedling_example.json) - Simple 6×8 grid, 4 vines
-- [sprout_example.json](example-levels/sprout_example.json) - Medium 8×10 grid, 8 vines
-- [nurturing_example.json](example-levels/nurturing_example.json) - 10×18 grid, 10 vines
-- [flourishing_example.json](example-levels/flourishing_example.json) - 14×22 grid, 12 vines
-- [transcendent_example.json](example-levels/transcendent_example.json) - Large 18×30 grid, 15 vines
+- **Seedling (Level 1)**: [`level_1.json`](../../apps/parable-bloom/assets/levels/level_1.json) - Simple 9×9 grid
+- **Nurturing (Level 21)**: [`level_21.json`](../../apps/parable-bloom/assets/levels/level_21.json) - Medium 9×12 grid
+- **Flourishing (Level 42)**: [`level_42.json`](../../apps/parable-bloom/assets/levels/level_42.json) - 12×16 grid
+- **Transcendent (Level 63)**: [`level_63.json`](../../apps/parable-bloom/assets/levels/level_63.json) - Complex 16×20 grid, 4 Grace
 
 ## 6. Tooling
 

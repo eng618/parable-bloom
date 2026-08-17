@@ -960,7 +960,8 @@ parable-bloom/
 │   ├── bump_version.dart                # Version automation hook
 │   └── update_changelog.dart            # Changelog generation backend
 ├── documentation/
-│   └── RELEASE_PROCESS.md               # This file
+│   └── how-to/
+│       └── release-process.md           # This file
 ├── CHANGELOG.md                         # Workspace-wide changelog
 └── Taskfile.yml                         # Root orchestration
 ```
@@ -973,7 +974,7 @@ For issues with the release process:
 
 1. Check [Troubleshooting](#troubleshooting) section
 2. Review workflow logs: <https://github.com/eng618/parable-bloom/actions>
-3. Contact maintainers: [CONTRIBUTING.md](../CONTRIBUTING.md)
+3. Contact maintainers: [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
 For platform-specific issues:
 

@@ -60,7 +60,7 @@ The scripture feature relies on a decoupled, offline-first service architecture 
 
 ### 2.1 Scripture Service (`ScriptureService`)
 
-Located at [`lib/services/scripture_service.dart`](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/services/scripture_service.dart), this service manages all scripture loading, randomization, and fallbacks:
+Located at [`apps/parable-bloom/lib/core/services/scripture_service.dart`](../../apps/parable-bloom/lib/core/services/scripture_service.dart), this service manages all scripture loading, randomization, and fallbacks:
 
 * **Translation Randomization**: When unlocking a scripture, it randomly selects an active translation ID from the active translations pool.
 * **Offline KJV Fallback**:
@@ -79,7 +79,7 @@ Located at [`lib/services/scripture_service.dart`](file:///Users/engarcia/Develo
 
 ### 3.1 Translation Metadata (`scripture_metadata.json`)
 
-Located at [`assets/data/scripture_metadata.json`](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/assets/data/scripture_metadata.json), this registry lists all supported translations, their licenses, active statuses, and required attributions.
+Located at [`apps/parable-bloom/assets/data/scripture_metadata.json`](../../apps/parable-bloom/assets/data/scripture_metadata.json), this registry lists all supported translations, their licenses, active statuses, and required attributions.
 
 Example Schema:
 
@@ -110,7 +110,7 @@ Example Schema:
 
 ### 3.2 Scripture Backups Database (`scripture_library.json`)
 
-Located at [`assets/data/scripture_library.json`](file:///Users/engarcia/Development/parable-bloom/assets/data/scripture_library.json), this database stores the offline KJV texts for all parables and micro-verses.
+Located at [`apps/parable-bloom/assets/data/scripture_library.json`](../../apps/parable-bloom/assets/data/scripture_library.json), this database stores the offline KJV texts for all parables and micro-verses.
 
 Example Schema:
 
@@ -131,7 +131,7 @@ Example Schema:
 
 ### 3.3 Module Registry Integration (`modules.json`)
 
-Located at [`assets/data/modules.json`](file:///Users/engarcia/Development/parable-bloom/assets/data/modules.json), this registry maps scripture triggers to levels/lessons.
+Located at [`apps/parable-bloom/assets/data/modules.json`](../../apps/parable-bloom/assets/data/modules.json), this registry maps scripture triggers to levels/lessons.
 
 Example:
 

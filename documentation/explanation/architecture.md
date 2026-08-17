@@ -515,7 +515,7 @@ The Flutter app performs **lightweight runtime checks** at startup:
 
 **Purpose**: Catch runtime-specific issues, ensure safe game state initialization.
 
-**Location**: [apps/parable-bloom/test/level_validation_test.dart](../apps/parable-bloom/test/level_validation_test.dart)
+**Location**: [apps/parable-bloom/test/level_validation_test.dart](../../apps/parable-bloom/test/level_validation_test.dart)
 
 #### Comprehensive Validation (Go CLI)
 

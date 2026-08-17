@@ -11,7 +11,7 @@
 Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game that demonstrates strong engineering practices. The codebase is clean, CI/CD is robust, and the Next.js marketing site is functional. However, there are several **critical and high-priority issues** that must be resolved before public release, primarily around **inconsistent app identifiers**, **missing store assets**, **incomplete attributions**, and **web manifest branding**.
 
 | Priority | Count |
-|----------|-------|
+| ---------- | ------- |
 | 🔴 Critical | 4 |
 | 🟠 High | 9 |
 | 🟡 Medium | 14 |
@@ -29,7 +29,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
   - [page.tsx](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom-site/app/page.tsx#L24) → `com.eng618.parablebloom`
   - [about/page.tsx](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom-site/app/about/page.tsx#L58) → `com.garciaericn.parablebloom`
   - [build.gradle.kts](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/android/app/build.gradle.kts#L28) → `com.garciaericn.parable_bloom` (actual)
-  - [RELEASE_PROCESS.md](file:///Users/engarcia/Development/parable-bloom/documentation/RELEASE_PROCESS.md) → `com.garciaericn.parablebloom`
+  - [release-process.md](../how-to/release-process.md) → `com.garciaericn.parablebloom`
 - **Description:** The Google Play Store URL references at least **three different app IDs**: `com.eng618.parablebloom`, `com.garciaericn.parablebloom`, and the actual Android applicationId `com.garciaericn.parable_bloom`. None of the website URLs match the actual applicationId.
 - **Impact:** Users clicking "Get on Google Play" will land on a 404 page. Store links will be completely broken.
 - **Action:** Determine the final, correct application ID and update ALL references across the site, documentation, and build config to match exactly.
@@ -65,7 +65,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 ### C-4: Incomplete Asset Attributions — License Compliance Risk
 
 - **Category:** Legal & Compliance
-- **File:** [ATTRIBUTIONS.md](file:///Users/engarcia/Development/parable-bloom/documentation/ATTRIBUTIONS.md)
+- **File:** [attributions.md](attributions.md)
 - **Description:** Only 1 audio file (`background.mp3`) is attributed. The app ships with 4 audio files (`bloom.mp3`, `grace.mp3`, `slide.mp3`, `tap.mp3`), 7+ devotion images, watercolor backgrounds, and the Playfair Display font — none of which are attributed. The Lottie animation (`bloom_complete.json`) also lacks attribution.
 - **Impact:** Potential copyright infringement. App store rejection if a reviewer identifies unlicensed assets. Legal liability.
 - **Action:** Audit every asset in `assets/audio/`, `assets/images/`, `assets/fonts/`, and `assets/lottie/`. Document source, license, and any required attribution for each. Add missing attributions.
@@ -119,8 +119,8 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 
 - **Category:** Launch Readiness
 - **Files:**
-  - [media-assets.md](file:///Users/engarcia/Development/parable-bloom/documentation/app-store-listings/shared/media-assets.md) — lists required screenshot dimensions
-  - [submission-tracker.md](file:///Users/engarcia/Development/parable-bloom/documentation/app-store-listings/submission-tracker.md) — mostly empty
+  - [visual-assets.md](../how-to/app-store-listings/visual-assets.md) — lists required screenshot dimensions
+  - [android-checklist.md](../how-to/app-store-listings/templates/android-checklist.md)
 - **Description:** Both Apple and Google require specific screenshot assets for store listings. The documentation templates reference these but the actual screenshot files have not been created. Integration test `app_screenshots_test.dart` exists for automated screenshot capture, which is good.
 - **Impact:** Cannot submit to app stores without screenshots. Submission will be blocked.
 - **Action:** Run the screenshot integration test to generate base screenshots. Create polished, framed versions at required dimensions (iPhone 6.7", iPad 12.9", Android phone/tablet).
@@ -132,8 +132,8 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 
 - **Category:** Legal & Compliance
 - **Files:**
-  - [privacy/page.tsx](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom-site/app/privacy/page.tsx#L14-L17): Effective Feb 4, 2026 / Last Updated March 13, 2026
-  - [terms/page.tsx](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom-site/app/terms/page.tsx#L14-L17): Effective Feb 4, 2026 / Last Updated Feb 23, 2026
+  - [privacy/page.tsx](../../apps/parable-bloom-site/app/privacy/page.tsx#L14-L17): Effective Feb 4, 2026 / Last Updated March 13, 2026
+  - [terms/page.tsx](../../apps/parable-bloom-site/app/terms/page.tsx#L14-L17): Effective Feb 4, 2026 / Last Updated Feb 23, 2026
 - **Description:** The privacy policy and terms of service have "Last Updated" dates from earlier in 2026. If any changes have been made to data collection, features, or policies since those dates, the documents need updating. The privacy policy mentions account deletion features that should be verified as implemented.
 - **Impact:** Outdated legal documents can create compliance issues and erode user trust.
 - **Action:** Review both documents against current app functionality. Update dates if any content changes are made. Verify all referenced features (e.g., account deletion via Settings) actually work.
@@ -141,10 +141,10 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 
 ---
 
-### H-6: No Widget Tests for UI Layer
+### H-6: Zero Widget Tests in Test Suite
 
 - **Category:** Code & Release Readiness
-- **File:** [test/](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/test) directory
+- **File:** [test/](../../apps/parable-bloom/test) directory
 - **Description:** The `test/` directory contains unit tests for models and services, but there are **zero widget tests** for any screens or UI components. The game screen, settings screen, dashboard, level selection, daily devotion, and help screens are all untested at the widget level.
 - **Impact:** UI regressions cannot be caught automatically. Confidence in UI correctness is low for release.
 - **Action:** Add widget tests for critical screens: game screen, dashboard, settings, and level selection. At minimum, test that screens render without errors and key interactions work.
@@ -181,7 +181,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 ### H-9: Android TODO Comment from Flutter Template
 
 - **Category:** Code & Release Readiness
-- **File:** [build.gradle.kts](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/android/app/build.gradle.kts#L27)
+- **File:** [build.gradle.kts](../../apps/parable-bloom/android/app/build.gradle.kts#L27)
 - **Description:** Line 27 contains the Flutter template TODO: `// TODO: Specify your own unique Application ID`. This is a leftover from project scaffolding and suggests the app ID may not have been intentionally chosen.
 - **Impact:** Minor — cosmetic issue, but signals incomplete setup to reviewers. Should be removed to confirm the app ID is intentional.
 - **Action:** Remove the TODO comment. Verify the applicationId is correct and intentional.
@@ -197,15 +197,15 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 - **Description:** TODOs found across the Flutter codebase:
 
 | File | Line | TODO |
-|------|------|------|
-| [game_screen.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/game/screens/game_screen.dart) | ~135 | Remove when implementing proper purchase flow |
-| [game_screen.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/game/screens/game_screen.dart) | ~141 | Debug buttons need recount |
-| [settings_screen.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/settings/screens/settings_screen.dart) | 13 | Create way to turn off hints/sound |
-| [level_validation_service.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/level/services/level_validation_service.dart) | 57 | Check for >4 vines |
-| [theme.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/app/theme.dart) | 42 | Commented out for future use |
-| [grid_board_widget.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/level/widgets/grid_board_widget.dart) | 158 | Add back vine emoji text |
-| [daily_devotion_service.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/daily_devotion/services/daily_devotion_service.dart) | 29 | Add more devotions |
-| [audio_service.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/services/audio_service.dart) | ~90 | Make configurable through settings |
+| ------ | ------ | ------ |
+| [game_screen.dart](../../apps/parable-bloom/lib/features/game/presentation/screens/game_screen.dart) | ~135 | Remove when implementing proper purchase flow |
+| [game_screen.dart](../../apps/parable-bloom/lib/features/game/presentation/screens/game_screen.dart) | ~141 | Debug buttons need recount |
+| [settings_screen.dart](../../apps/parable-bloom/lib/features/settings/presentation/screens/settings_screen.dart) | 13 | Create way to turn off hints/sound |
+| `level_validation_service.dart` | 57 | Check for >4 vines |
+| `theme.dart` | 42 | Commented out for future use |
+| `grid_board_widget.dart` | 158 | Add back vine emoji text |
+| `daily_devotion_service.dart` | 29 | Add more devotions |
+| `audio_service.dart` | ~90 | Make configurable through settings |
 
 - **Impact:** Indicates incomplete features. The debug button TODOs are behind `kDebugMode` gates so they won't appear in release, but should be tracked.
 - **Action:** Triage each TODO: resolve, convert to GitHub Issues for post-launch, or remove if no longer relevant.
@@ -213,10 +213,10 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 
 ---
 
-### M-2: GAME_DESIGN.md References Unimplemented Features
+### M-2: game-design.md References Unimplemented Features
 
 - **Category:** Documentation
-- **File:** [GAME_DESIGN.md](file:///Users/engarcia/Development/parable-bloom/documentation/GAME_DESIGN.md)
+- **File:** [game-design.md](../explanation/game-design.md)
 - **Description:** References "Power-Up System", "Achievement System", "Marketplace", and "Multiplayer" as planned features without clarity on whether they're for this release or future versions.
 - **Impact:** Internal confusion about release scope. Potential miscommunication with stakeholders.
 - **Action:** Add a "Release Scope" section clearly marking which features are v1.0 and which are future roadmap items.
@@ -224,10 +224,10 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 
 ---
 
-### M-3: ARCHITECTURE.md Has TODO Placeholders and Potentially Outdated Content
+### M-3: architecture.md Has TODO Placeholders and Potentially Outdated Content
 
 - **Category:** Documentation
-- **File:** [ARCHITECTURE.md](file:///Users/engarcia/Development/parable-bloom/documentation/ARCHITECTURE.md)
+- **File:** [architecture.md](../explanation/architecture.md)
 - **Description:** Contains `TODO: Add architectural diagram image` and `TODO: Add metrics dashboard screenshot`. Some sections may reference outdated state management patterns (e.g., `StateNotifier`) while the codebase uses Riverpod code generation (`@riverpod`).
 - **Impact:** Misleading architecture documentation could confuse new contributors.
 - **Action:** Remove or fulfill TODO placeholders. Verify state management descriptions match the current codebase. Add the architectural diagram if available.
@@ -327,7 +327,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 ### M-12: Daily Devotion Content is Limited
 
 - **Category:** UI/UX
-- **File:** [daily_devotion_service.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/daily_devotion/services/daily_devotion_service.dart#L29)
+- **File:** `daily_devotion_service.dart`
 - **Description:** The daily devotion feature has a TODO to "Add more devotions." With only 7 devotion images, the content will repeat weekly. For a feature called "daily devotion," this may disappoint users.
 - **Impact:** Repetitive content reduces long-term engagement. Users may perceive the feature as incomplete.
 - **Action:** Either expand the devotion content library or set expectations appropriately in the UI (e.g., "Weekly Reflection" instead of "Daily Devotion").
@@ -367,7 +367,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 ### L-2: Audio Service Configuration TODO
 
 - **Category:** Code & Release Readiness
-- **File:** [audio_service.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/services/audio_service.dart)
+- **File:** `audio_service.dart` (now `background_audio_controller.dart`)
 - **Description:** Volume and audio settings are not user-configurable. The TODO suggests this was planned.
 - **Action:** Convert to a GitHub Issue for post-launch. The current hardcoded settings work fine for v1.
 - **Effort:** N/A (tracking only)
@@ -375,7 +375,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 ### L-3: No iOS Build in CI Pipeline
 
 - **Category:** Code & Release Readiness
-- **File:** [ci.yml](file:///Users/engarcia/Development/parable-bloom/.github/workflows/ci.yml)
+- **File:** [ci.yml](../../.github/workflows/ci.yml)
 - **Description:** CI builds web and Android but not iOS. This is understandable (macOS runners are expensive), but means iOS-specific issues won't be caught automatically.
 - **Action:** Consider adding an iOS build job that runs on pushes to `main` only (not PRs) to catch platform-specific issues before release.
 - **Effort:** 2-4 hours
@@ -383,7 +383,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 ### L-4: Vine Emoji Text Removed from Grid (TODO)
 
 - **Category:** UI/UX
-- **File:** [grid_board_widget.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/level/widgets/grid_board_widget.dart#L158)
+- **File:** `grid_board_widget.dart`
 - **Description:** Vine emoji text was removed from grid cells with a TODO to add it back. This is a design decision that should be explicitly resolved.
 - **Action:** Decide whether to add the emoji back or remove the TODO. Convert to GitHub Issue if deferring.
 - **Effort:** 30 minutes
@@ -391,7 +391,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 ### L-5: Level Validation Question About >4 Vines
 
 - **Category:** Bug Review
-- **File:** [level_validation_service.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/level/services/level_validation_service.dart#L57)
+- **File:** `level_validation_service.dart`
 - **Description:** Open question about whether to validate for more than 4 vines on a grid.
 - **Action:** Resolve the design question and either add the validation or remove the TODO.
 - **Effort:** 30 minutes
@@ -405,7 +405,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 ### L-7: Theme.dart Has Commented-Out Code
 
 - **Category:** Code & Release Readiness
-- **File:** [theme.dart](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/app/theme.dart#L42)
+- **File:** `theme.dart` (now `lib/core/app_theme.dart`)
 - **Description:** Code commented out "for potential future use." Commented-out code adds noise.
 - **Action:** Remove commented code or extract to a design reference document.
 - **Effort:** 5 minutes
@@ -413,15 +413,15 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 ### L-8: App Store Submission Tracker is Empty Template
 
 - **Category:** Launch Readiness
-- **File:** [submission-tracker.md](file:///Users/engarcia/Development/parable-bloom/documentation/app-store-listings/submission-tracker.md)
+- **File:** [app-store-listings](../how-to/app-store-listings/README.md)
 - **Description:** The submission tracker template exists but hasn't been filled in with actual submission data.
 - **Action:** Begin filling in as submissions are made.
 - **Effort:** Ongoing
 
-### L-9: RELEASE_PROCESS.md Fastlane References
+### L-9: release-process.md Fastlane References
 
 - **Category:** Documentation
-- **File:** [RELEASE_PROCESS.md](file:///Users/engarcia/Development/parable-bloom/documentation/RELEASE_PROCESS.md)
+- **File:** [release-process.md](../how-to/release-process.md)
 - **Description:** Some sections may reference Fastlane for automated deployment, but it's unclear if Fastlane is actually configured in the project. No `Fastfile` or `Appfile` was found.
 - **Action:** Remove Fastlane references if not using it, or set it up if planned.
 - **Effort:** 30 min (doc cleanup) or 4-8 hours (Fastlane setup)
@@ -491,7 +491,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 The following areas demonstrate strong practices that should be maintained:
 
 | Area | Assessment |
-|------|-----------|
+| ------ | ----------- |
 | **Code Architecture** | Clean feature-based architecture with proper separation of concerns |
 | **State Management** | Riverpod with code generation — modern and maintainable |
 | **Firebase Integration** | Crashlytics, Analytics properly configured. Dummy options for CI ✅ |
