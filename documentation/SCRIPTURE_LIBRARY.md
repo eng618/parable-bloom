@@ -32,16 +32,25 @@ graph TD
 * **Trigger**: Unlocked upon completing a module's Challenge Level.
 * **Purpose**: Delivers the complete parable passage, reflection, and journaling options.
 
-### 1.4 Backfill Migration for Existing Users
+### 1.4 Backfill Migration & Progress Repair for Existing Users
 
-To support existing users who completed levels before the scripture progression updates, a migration mechanism is integrated directly into the app startup sequence:
+To support existing users who completed levels in prior versions (including legacy integer-based saves and accounts with progression sequence gaps), an automated repair and backfill mechanism runs during app startup:
 
-* **Trigger**: Automatically runs when the app initializes game progress (inside `GameProgressNotifier.initialize()`), or completes a manual cloud sync/conflict resolution.
-* **Logic**:
-  * Scans the user's completed levels to locate the highest completed level index in the playlist.
-  * Identifies any scriptures whose trigger level falls on or before that highest completed level.
-  * If any eligible scriptures are not present in `unlockedScriptureIds`, they are automatically backfilled and assigned a random translation.
-* **Idempotence**: The process is a no-op if all eligible scriptures are already unlocked, preserving existing journal translation choices and preventing duplicate entries.
+* **Trigger**: Automatically runs when the app initializes game progress (inside [`GameProgressNotifier.initialize()`](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/game/application/providers/progress_providers.dart)), or completes a cloud sync / conflict resolution.
+* **Legacy Level ID Mapping**:
+  * Legacy integer saves (levels 1–105) are accurately mapped in [`GameProgress.fromJson`](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/game/domain/entities/game_progress.dart) to their module logical IDs:
+    * 1–20 $\rightarrow$ `lvl_seed_01`..`lvl_seed_20`, 21 $\rightarrow$ `lvl_seed_challenge`
+    * 22–41 $\rightarrow$ `lvl_sprout_01`..`lvl_sprout_20`, 42 $\rightarrow$ `lvl_sprout_challenge`
+    * 43–62 $\rightarrow$ `lvl_blossom_01`..`lvl_blossom_20`, 63 $\rightarrow$ `lvl_blossom_challenge`
+    * 64–83 $\rightarrow$ `lvl_flourish_01`..`lvl_flourish_20`, 84 $\rightarrow$ `lvl_flourish_challenge`
+    * 85–104 $\rightarrow$ `lvl_harvest_01`..`lvl_harvest_20`, 105 $\rightarrow$ `lvl_harvest_challenge`
+* **Progress Gap Healing**:
+  * Identifies the user's highest completed level index or current level index in the playlist (`effectiveMaxIndex`).
+  * Backfills any missing level IDs from index `0` up to `effectiveMaxIndex` in `completedLevels`, ensuring complete module fulfillment.
+* **Scripture & Parable Backfill**:
+  * Unlocks any eligible micro-verses or starter scriptures in `unlockedScriptureIds` whose trigger levels fall on or before `effectiveMaxIndex`.
+  * Checks completed modules (`progress.isModuleCompleted()`) and automatically populates missing parable translations in `unlockedTranslations`.
+* **Idempotence**: Preserves user-customized translations, avoid duplicate entries, and acts as a safe no-op once data is aligned.
 
 ---
 

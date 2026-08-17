@@ -187,7 +187,6 @@ class GameProgress {
   }
 
   static String _mapLegacyLevelId(int legacyId) {
-    if (legacyId <= 5) return 'lesson_$legacyId';
     // challenge levels
     if (legacyId == 21) return 'lvl_seed_challenge';
     if (legacyId == 42) return 'lvl_sprout_challenge';
@@ -195,11 +194,9 @@ class GameProgress {
     if (legacyId == 84) return 'lvl_flourish_challenge';
     if (legacyId == 105) return 'lvl_harvest_challenge';
 
-    // level 6-20 map to lvl_seed_01-15 (Wait, seedling actually has 20 levels in the new v3 format)
-    // level 6-25 map to lvl_seed_01-20
-    if (legacyId >= 6 && legacyId <= 25) {
-      final idx = legacyId - 5;
-      final idxStr = idx < 10 ? '0$idx' : '$idx';
+    // seedling levels (1 to 20)
+    if (legacyId >= 1 && legacyId <= 20) {
+      final idxStr = legacyId < 10 ? '0$legacyId' : '$legacyId';
       return 'lvl_seed_$idxStr';
     }
     // sprout levels (22 to 41)

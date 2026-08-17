@@ -104,21 +104,47 @@ class GameProgressNotifier extends Notifier<GameProgress> {
         }
       }
 
+      // Also compute effective max index considering currentLevel
+      final currentLevelIdx = playlist.indexOf(state.currentLevel);
+      final effectiveMaxIndex = maxCompletedIndex > (currentLevelIdx - 1)
+          ? maxCompletedIndex
+          : (currentLevelIdx - 1);
+
       var updatedProgress = state;
       bool changed = false;
 
+      // 1. Heal/backfill completedLevels up to effectiveMaxIndex
+      if (effectiveMaxIndex >= 0) {
+        final updatedCompletedLevels =
+            Set<String>.from(updatedProgress.completedLevels);
+        for (int i = 0; i <= effectiveMaxIndex && i < playlist.length; i++) {
+          final levelId = playlist[i];
+          if (!updatedCompletedLevels.contains(levelId)) {
+            updatedCompletedLevels.add(levelId);
+            changed = true;
+          }
+        }
+        if (changed) {
+          updatedProgress = updatedProgress.copyWith(
+            completedLevels: updatedCompletedLevels,
+          );
+        }
+      }
+
+      // 2. Backfill micro-verses and starter scriptures
       for (final module in modulesList) {
         for (final scripture in module.scriptures) {
           final triggerLvl = scripture.triggerLevel;
 
-          final isTriggeredByLevel = state.completedLevels.contains(triggerLvl);
+          final isTriggeredByLevel =
+              updatedProgress.completedLevels.contains(triggerLvl);
           final isTriggeredByLesson =
-              state.completedLessons.contains(triggerLvl);
+              updatedProgress.completedLessons.contains(triggerLvl);
 
           final triggerIdx = playlist.indexOf(triggerLvl);
           final isTriggeredByPriorLevel = triggerIdx != -1 &&
-              maxCompletedIndex != -1 &&
-              triggerIdx <= maxCompletedIndex;
+              effectiveMaxIndex != -1 &&
+              triggerIdx <= effectiveMaxIndex;
 
           final shouldBeUnlocked = isTriggeredByLevel ||
               isTriggeredByLesson ||
@@ -149,6 +175,30 @@ class GameProgressNotifier extends Notifier<GameProgress> {
                 tag: 'GameProgressNotifier',
               );
             }
+          }
+        }
+
+        // 3. Backfill parable translation if module is completed
+        if (updatedProgress.isModuleCompleted(module.id, modulesList)) {
+          if (!updatedProgress.unlockedTranslations
+              .containsKey(module.id.toString())) {
+            final scriptureService = ref.read(scriptureServiceProvider);
+            final translationId =
+                await scriptureService.pickRandomActiveTranslation();
+            if (!ref.mounted) return;
+
+            final updatedTranslations =
+                Map<String, String>.from(updatedProgress.unlockedTranslations)
+                  ..[module.id.toString()] = translationId;
+
+            updatedProgress = updatedProgress.copyWith(
+              unlockedTranslations: updatedTranslations,
+            );
+            changed = true;
+            LoggerService.info(
+              'Backfill parable translation: Module ${module.id} (${module.name}) with translation $translationId',
+              tag: 'GameProgressNotifier',
+            );
           }
         }
       }
