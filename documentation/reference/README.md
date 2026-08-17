@@ -41,6 +41,10 @@ Credits, licenses, and notices for third-party libraries, audio tracks, and grap
 
 Pre-launch audit criteria and technical readiness checklist across code, UX, security, and release assets.
 
+### 6. [Bug & Issue Tracker](known-issues.md)
+
+Actionable, running checklist of known bugs, technical debt, and issues organized by severity with checkable progress marks.
+
 ---
 
 ## Diátaxis Navigation

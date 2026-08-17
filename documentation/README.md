@@ -53,6 +53,7 @@ Welcome to the **Parable Bloom** technical and design documentation. This docume
 - **[Scripture Licensing & Compliance](reference/scripture-licensing.md)** — Legal guidelines, copyright notices, and translation usage limits.
 - **[Third-Party Attributions](reference/attributions.md)** — Software licenses, audio credits, and graphical asset notices.
 - **[Launch Readiness Audit](reference/launch-readiness-audit.md)** — Audit findings catalog and pre-launch verification checklist.
+- **[Bug & Issue Tracker](reference/known-issues.md)** — Actionable running checklist of bugs and tech debt with checkmarks.
 
 ---
 
