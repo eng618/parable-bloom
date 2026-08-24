@@ -37,13 +37,13 @@ Legal parameters and technical safeguards for Bible translations:
 
 Credits, licenses, and notices for third-party libraries, audio tracks, and graphical assets used throughout the project.
 
-### 5. [Launch Readiness Audit](launch-readiness-audit.md)
+### 5. [Launch Readiness Verification](launch-readiness-audit.md)
 
-Pre-launch audit criteria and technical readiness checklist across code, UX, security, and release assets.
+Technical verification gates and release evaluation criteria across code, UX, solvability, and release assets.
 
-### 6. [Bug & Issue Tracker](known-issues.md)
+### 6. [Known Constraints & Platform Compatibility](known-issues.md)
 
-Actionable, running checklist of known bugs, technical debt, and issues organized by severity with checkable progress marks.
+Supported platforms, runtime requirements, viewport scaling behaviors, offline sync handling, and development troubleshooting notes.
 
 ---
 

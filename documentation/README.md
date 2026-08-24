@@ -52,8 +52,8 @@ _Information-oriented technical descriptions, data schemas, design tokens, and c
 - **[Color System & Token Usage](reference/color-usage.md)** — Semantic palettes, dark/light themes, hex codes, and vine color mappings.
 - **[Scripture Licensing & Compliance](reference/scripture-licensing.md)** — Legal guidelines, copyright notices, and translation usage limits.
 - **[Third-Party Attributions](reference/attributions.md)** — Software licenses, audio credits, and graphical asset notices.
-- **[Launch Readiness Audit](reference/launch-readiness-audit.md)** — Audit findings catalog and pre-launch verification checklist.
-- **[Bug & Issue Tracker](reference/known-issues.md)** — Actionable running checklist of bugs and tech debt with checkmarks.
+- **[Launch Readiness Verification](reference/launch-readiness-audit.md)** — Verification gates, release evaluation criteria, and compliance checkpoints.
+- **[Known Constraints & Compatibility](reference/known-issues.md)** — Supported platform matrix, WebGL/runtime requirements, and troubleshooting.
 
 ---
 
