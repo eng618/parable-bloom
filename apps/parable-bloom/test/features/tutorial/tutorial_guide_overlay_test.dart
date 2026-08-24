@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flame/game.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
-import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/tutorial/domain/entities/lesson_data.dart';
 import 'package:parable_bloom/features/tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/garden_game.dart';

@@ -8,11 +8,11 @@ This document serves as the **running, actionable list of known bugs, technical 
 
 | Severity                     | Open   | Resolved | Total  |
 | :--------------------------- | :----- | :------- | :----- |
-| 🔴 **Critical (Blockers)**   | 4      | 0        | 4      |
-| 🟠 **High Priority**         | 9      | 0        | 9      |
-| 🟡 **Medium Priority**       | 14     | 0        | 14     |
+| 🔴 **Critical (Blockers)**   | 0      | 4        | 4      |
+| 🟠 **High Priority**         | 6      | 3        | 9      |
+| 🟡 **Medium Priority**       | 13     | 1        | 14     |
 | 🟢 **Low Priority / Polish** | 10     | 0        | 10     |
-| **Total**                    | **37** | **0**    | **37** |
+| **Total**                    | **29** | **8**    | **37** |
 
 ---
 
@@ -20,34 +20,34 @@ This document serves as the **running, actionable list of known bugs, technical 
 
 Must be resolved prior to public release or store submission.
 
-- [ ] **BUG-C01**: `[Website / Android]` **Inconsistent Google Play Application ID**
+- [x] **BUG-C01**: `[Website / Android]` **Inconsistent Google Play Application ID**
   - **Description**: Google Play links reference mismatched IDs (`com.eng618.parablebloom`, `com.garciaericn.parablebloom`, and actual `com.garciaericn.parable_bloom`).
   - **Affected Files**: [`apps/parable-bloom-site/app/page.tsx`](../../apps/parable-bloom-site/app/page.tsx), [`apps/parable-bloom-site/app/about/page.tsx`](../../apps/parable-bloom-site/app/about/page.tsx), [`apps/parable-bloom/android/app/build.gradle.kts`](../../apps/parable-bloom/android/app/build.gradle.kts)
-  - **Resolution Criteria**: Unify to `com.garciaericn.parable_bloom` across all website links, fastlane, and documentation.
+  - **Resolution Criteria**: Unify to `com.garciaericn.parable_bloom` across all website links, fastlane, and documentation. _(Resolved)_
 
-- [ ] **BUG-C02**: `[Website / iOS]` **App Store URL uses Placeholder ID**
+- [x] **BUG-C02**: `[Website / iOS]` **App Store URL uses Placeholder ID**
   - **Description**: The site links to dummy App Store ID `id1234567890`.
   - **Affected Files**: [`apps/parable-bloom-site/app/page.tsx`](../../apps/parable-bloom-site/app/page.tsx), [`apps/parable-bloom-site/app/about/page.tsx`](../../apps/parable-bloom-site/app/about/page.tsx)
-  - **Resolution Criteria**: Update with real App Store ID or render "Coming Soon" badge until live.
+  - **Resolution Criteria**: Update with real App Store ID or render "Coming Soon" badge until live. _(Resolved)_
 
-- [ ] **BUG-C03**: `[Website / Marketing]` **Missing OpenGraph Social Sharing Image**
+- [x] **BUG-C03**: `[Website / Marketing]` **Missing OpenGraph Social Sharing Image**
   - **Description**: Missing `og-image.png` causing link previews on social platforms to be blank.
   - **Affected Files**: [`apps/parable-bloom-site/app/layout.tsx`](../../apps/parable-bloom-site/app/layout.tsx), [`apps/parable-bloom-site/public/`](../../apps/parable-bloom-site/public/)
-  - **Resolution Criteria**: Add branded 1200×630px `og-image.png` and configure metadata.
+  - **Resolution Criteria**: Add branded 1200×630px `og-image.png` and configure metadata. _(Resolved)_
 
-- [ ] **BUG-C04**: `[Assets / Legal]` **Incomplete Asset Attributions**
+- [x] **BUG-C04**: `[Assets / Legal]` **Incomplete Asset Attributions**
   - **Description**: Only 1 audio file was attributed; remaining sounds, font licenses (Fraunces, Alegreya Sans), and graphics need complete attribution.
   - **Affected Files**: [`documentation/reference/attributions.md`](attributions.md)
-  - **Resolution Criteria**: Complete audit of all audio, fonts, textures, and devotions.
+  - **Resolution Criteria**: Complete audit of all audio, fonts, textures, and devotions. _(Resolved)_
 
 ---
 
 ## 🟠 High Priority Issues
 
-- [ ] **BUG-H01**: `[Flutter Web]` **Web Manifest Uses Template Branding**
+- [x] **BUG-H01**: `[Flutter Web]` **Web Manifest Uses Template Branding**
   - **Description**: `apps/parable-bloom/web/manifest.json` contains generic Flutter description and title.
   - **Affected Files**: `apps/parable-bloom/web/manifest.json`
-  - **Resolution Criteria**: Update name to "Parable Bloom", theme colors, and description.
+  - **Resolution Criteria**: Update name to "Parable Bloom", theme colors, and description. _(Resolved)_
 
 - [ ] **BUG-H02**: `[Repository / Hygiene]` **Tracked Log Files in Repository**
   - **Description**: Root directory contains build, lint, and analyze log files.
@@ -69,10 +69,10 @@ Must be resolved prior to public release or store submission.
   - **Affected Files**: `apps/parable-bloom-site/app/privacy/page.tsx`, `apps/parable-bloom-site/app/terms/page.tsx`
   - **Resolution Criteria**: Update dates and match disclosures to active features.
 
-- [ ] **BUG-H06**: `[Testing / QA]` **Zero Widget Tests for Screen Layer**
+- [x] **BUG-H06**: `[Testing / QA]` **Zero Widget Tests for Screen Layer**
   - **Description**: Screen-level rendering and user interaction flows need automated widget test coverage.
   - **Affected Files**: `apps/parable-bloom/test/`
-  - **Resolution Criteria**: Add widget tests for GameScreen, JournalScreen, and SettingsScreen.
+  - **Resolution Criteria**: Add widget tests for GameScreen, JournalScreen, and SettingsScreen. _(Resolved)_
 
 - [ ] **BUG-H07**: `[Marketing / Support]` **Contact Email Standardization**
   - **Description**: Multiple email formats (`ParableBloom@`, `parablebloom.support@`) across site and app.
@@ -84,10 +84,10 @@ Must be resolved prior to public release or store submission.
   - **Affected Files**: `.gitignore`
   - **Resolution Criteria**: Review tracked directories and ignore local-only artifacts.
 
-- [ ] **BUG-H09**: `[Android]` **Flutter Template Scaffolding Comment in Gradle**
+- [x] **BUG-H09**: `[Android]` **Flutter Template Scaffolding Comment in Gradle**
   - **Description**: Leftover template comment `// TODO: Specify your own unique Application ID`.
   - **Affected Files**: `apps/parable-bloom/android/app/build.gradle.kts`
-  - **Resolution Criteria**: Clean up comment.
+  - **Resolution Criteria**: Clean up comment. _(Resolved)_
 
 ---
 

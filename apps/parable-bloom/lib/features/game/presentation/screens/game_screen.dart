@@ -62,15 +62,76 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         tag: 'GameScreen', metadata: {'game_is_null': _game == null});
     _isLevelCompleteOverlayVisible = false;
     _currentCongratulationMessage = '';
+    _initGame();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(analyticsServiceProvider).logScreenView('Gameplay');
     });
   }
 
+  void _initGame() {
+    LoggerService.debug('Creating new GardenGame instance in initState',
+        tag: 'GameScreen');
+    _game = GardenGame(
+      callbacks: GardenGameCallbacks(
+        onGameLoaded: (game) {
+          ref.read(gameInstanceProvider.notifier).setGame(game);
+          _loadLevelForGame(game);
+        },
+        onGameRemoved: () {
+          if (ref.read(gameInstanceProvider) == _game) {
+            ref.read(gameInstanceProvider.notifier).setGame(null);
+          }
+        },
+        onVineCleared: (vineId) {
+          ref.read(vineStatesProvider.notifier).clearVine(vineId);
+        },
+        onVineAnimationStateChanged: (vineId, animationState) {
+          ref
+              .read(vineStatesProvider.notifier)
+              .setAnimationState(vineId, animationState);
+        },
+        onVineAttempted: (vineId) {
+          ref.read(vineStatesProvider.notifier).markAttempted(vineId);
+        },
+        onTapIncrement: (count) {
+          for (int i = 0; i < count; i++) {
+            ref.read(levelTotalTapsProvider.notifier).increment();
+          }
+        },
+        onTapOutsideGrid: () {
+          ref.read(hintedVineIdsProvider.notifier).clear();
+        },
+        onBlockedTap: (state) {
+          ref.read(blockedTapProvider.notifier).setBlockedTap(state);
+        },
+        onEnsureVineVisible: (vine) async {
+          await ref.read(cameraStateProvider.notifier).ensureVineVisible(vine);
+        },
+        onHintVine: (vineId) {
+          ref.read(hintedVineIdsProvider.notifier).add(vineId);
+        },
+        onClearHints: () {
+          ref.read(hintedVineIdsProvider.notifier).clear();
+        },
+        getUseSimpleVines: () => ref.read(useSimpleVinesProvider),
+        getHapticsEnabled: () => ref.read(hapticsEnabledProvider),
+        getIsAnyAnimating: () => ref.read(anyVineAnimatingProvider),
+        getDebugShowGridCoordinates: () =>
+            ref.read(debugShowGridCoordinatesProvider),
+        getDebugVineAnimationLogging: () =>
+            ref.read(debugVineAnimationLoggingProvider),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     LoggerService.debug('GameScreen dispose', tag: 'GameScreen');
+    if (ref.read(gameInstanceProvider) == _game) {
+      ref.read(gameInstanceProvider.notifier).setGame(null);
+    }
+    _game = null;
     super.dispose();
   }
 
@@ -211,67 +272,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ),
             onScaleEnd: _handleScaleEnd,
             child: GameWidget<GardenGame>(
-              game: _game ??= () {
-                LoggerService.debug('Creating new GardenGame instance',
-                    tag: 'GameScreen');
-                return GardenGame(
-                  callbacks: GardenGameCallbacks(
-                    onGameLoaded: (game) {
-                      ref.read(gameInstanceProvider.notifier).setGame(game);
-                      _loadLevelForGame(game);
-                    },
-                    onGameRemoved: () {
-                      if (ref.read(gameInstanceProvider) == _game) {
-                        ref.read(gameInstanceProvider.notifier).setGame(null);
-                      }
-                    },
-                    onVineCleared: (vineId) {
-                      ref.read(vineStatesProvider.notifier).clearVine(vineId);
-                    },
-                    onVineAnimationStateChanged: (vineId, animationState) {
-                      ref
-                          .read(vineStatesProvider.notifier)
-                          .setAnimationState(vineId, animationState);
-                    },
-                    onVineAttempted: (vineId) {
-                      ref
-                          .read(vineStatesProvider.notifier)
-                          .markAttempted(vineId);
-                    },
-                    onTapIncrement: (count) {
-                      for (int i = 0; i < count; i++) {
-                        ref.read(levelTotalTapsProvider.notifier).increment();
-                      }
-                    },
-                    onTapOutsideGrid: () {
-                      ref.read(hintedVineIdsProvider.notifier).clear();
-                    },
-                    onBlockedTap: (state) {
-                      ref
-                          .read(blockedTapProvider.notifier)
-                          .setBlockedTap(state);
-                    },
-                    onEnsureVineVisible: (vine) async {
-                      await ref
-                          .read(cameraStateProvider.notifier)
-                          .ensureVineVisible(vine);
-                    },
-                    onHintVine: (vineId) {
-                      ref.read(hintedVineIdsProvider.notifier).add(vineId);
-                    },
-                    onClearHints: () {
-                      ref.read(hintedVineIdsProvider.notifier).clear();
-                    },
-                    getUseSimpleVines: () => ref.read(useSimpleVinesProvider),
-                    getHapticsEnabled: () => ref.read(hapticsEnabledProvider),
-                    getIsAnyAnimating: () => ref.read(anyVineAnimatingProvider),
-                    getDebugShowGridCoordinates: () =>
-                        ref.read(debugShowGridCoordinatesProvider),
-                    getDebugVineAnimationLogging: () =>
-                        ref.read(debugVineAnimationLoggingProvider),
-                  ),
-                );
-              }(),
+              game: _game!,
               loadingBuilder: (_) =>
                   const Center(child: CircularProgressIndicator()),
             ),

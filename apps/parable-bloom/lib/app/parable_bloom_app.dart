@@ -144,6 +144,52 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
       themeMode: _convertToThemeMode(themeMode),
       routerConfig: appRouter,
       builder: (context, child) {
+        ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
+          return Material(
+            color: Theme.of(context).colorScheme.surface,
+            child: SafeArea(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.spa_outlined,
+                        size: 56,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Peace Be With You',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'A temporary disruption occurred. Tap below to return to the garden.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () => appRouter.go('/'),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Return to Garden'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        };
         return _buildHomeWrapper(child!);
       },
       localizationsDelegates: const [

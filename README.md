@@ -14,10 +14,10 @@
 
 - **🐍 Snake-Like Movement**: Vines slide in head direction with body segments following as queue
 - **🙏 Grace System**: 3 Grace per level (4 for Transcendent) with faith-based messaging
-- **📚 Module Structure**: 5 modules with 15 levels each, unlocking the parables of Jesus
+- **📚 Module Structure**: 5 modules with 21 levels each (105 total levels), unlocking the parables of Jesus
 - **🎨 Adaptive Themes**: Light/dark mode with watercolor faith garden aesthetics
 - **🎯 Strategic Depth**: Dynamic blocking where clearing one vine unblocks others
-- **📱 Cross-Platform**: iOS & Android support with 60 FPS performance
+- **📱 Cross-Platform**: iOS, Android, and Web PWA support with 60 FPS performance
 
 ## 🚀 Quick Start
 

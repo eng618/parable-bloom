@@ -6,8 +6,8 @@
 - **Game Engine**: Flame (Rendering, Input)
 - **State Management**: Riverpod (Reactive, Decoupled)
 - **Local Persistence**: Hive (Key-Value Store)
-- **Cloud Backend**: Firebase (Firestore, Auth) - _Planned/In-Progress_
-- **Languages**: Dart (App), Go 1.25+ (Level Builder CLI)
+- **Cloud Backend**: Firebase (Cloud Firestore offline-first sync, Firebase Auth with Anonymous, Email/Password, and Google Sign-In)
+- **Languages**: Dart (App), Go 1.26+ (Level Builder CLI)
 - **Minimum OS Targets**:
   - **iOS**: 16.0+
   - **macOS**: 11.0+

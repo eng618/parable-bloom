@@ -786,6 +786,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
 
     try {
+      // 1. Purge cloud progress and local progress while still authenticated
+      await ref.read(gameProgressProvider.notifier).resetProgress();
+
+      // 2. Delete the user account from Firebase Auth
       final authService = ref.read(authServiceProvider);
       await authService.deleteAccount();
 

@@ -1,3 +1,4 @@
+// ignore_for_file: subtype_of_sealed_class, must_be_immutable
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,7 +6,6 @@ import 'package:hive/hive.dart';
 import 'package:mockito/mockito.dart';
 
 import 'package:parable_bloom/features/game/data/repositories/dynamic_level_repository.dart';
-import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 
 // Generate Mocks for Hive Box and Firestore
 class MockBox extends Mock implements Box {
