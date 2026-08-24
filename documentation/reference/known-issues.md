@@ -41,6 +41,11 @@ This document serves as an information-oriented technical reference detailing su
 - **Requirement**: Go `1.26.6` is the canonical version across the entire workspace.
 - **Validation**: Run `task lb:test` or `task lb:build` to verify level generation tools.
 
+### iOS CocoaPods Deployment Target (iOS 16.0)
+
+- **Behavior**: Newer transitive Swift frameworks (e.g. `Promises`, `FirebaseSessions`) specify a minimum deployment target of iOS 16.0.
+- **Configuration**: The `Podfile` automatically forces `IPHONEOS_DEPLOYMENT_TARGET = '16.0'` across all Pod targets in its `post_install` hook to prevent compilation mismatch errors.
+
 ### Headless Test Execution
 
 - **Behavior**: In headless CI environments, Flutter widget tests and Flame component tests operate via automated test bindings without requiring physical GPU context.
