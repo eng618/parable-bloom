@@ -60,11 +60,11 @@ graph LR
 
 ## 🛠️ Automated Verification Commands
 
-| Step | Command | Expected Result |
-| :--- | :--- | :--- |
-| **Monorepo Health** | `task validate` | Exit code 0, all Nx targets green |
-| **Level Solvability** | `task levels:validate-solvable` | Exit code 0, 105/105 levels solvable |
-| **Static Analysis** | `task flutter:analyze` | Exit code 0, "No issues found!" |
-| **Flutter Test Suite** | `task flutter:test` | Exit code 0, all unit/widget tests passing |
-| **Go Level Builder** | `task lb:test` | Exit code 0, all Go package tests passing |
-| **Next.js Web Site** | `nx run parable-bloom-site:build` | Exit code 0, static generation complete |
+| Step                   | Command                           | Expected Result                            |
+| :--------------------- | :-------------------------------- | :----------------------------------------- |
+| **Monorepo Health**    | `task validate`                   | Exit code 0, all Nx targets green          |
+| **Level Solvability**  | `task levels:validate-solvable`   | Exit code 0, 105/105 levels solvable       |
+| **Static Analysis**    | `task flutter:analyze`            | Exit code 0, "No issues found!"            |
+| **Flutter Test Suite** | `task flutter:test`               | Exit code 0, all unit/widget tests passing |
+| **Go Level Builder**   | `task lb:test`                    | Exit code 0, all Go package tests passing  |
+| **Next.js Web Site**   | `nx run parable-bloom-site:build` | Exit code 0, static generation complete    |

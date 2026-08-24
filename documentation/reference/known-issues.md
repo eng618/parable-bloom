@@ -6,12 +6,12 @@ This document serves as an information-oriented technical reference detailing su
 
 ## 📱 Supported Platforms & System Requirements
 
-| Target Platform | Minimum OS / Runtime | Recommended Environment | Notes |
-| :--- | :--- | :--- | :--- |
-| **iOS** | iOS 16.0+ | iPhone 12+ / iPad (10th gen+) | Hardware-accelerated Metal rendering via Flutter Flame engine. |
-| **Android** | Android 5.0 (API 21+) | Android 11+ (API 30+) | Supports ARM64, ARMv7, and x86_64 architectures. |
-| **Web (PWA)** | Evergreen browsers (Chrome 119+, Safari 17+, Firefox 120+, Edge 119+) | Modern desktop/tablet browser | WebGL 2.0 and WebAssembly enabled. |
-| **macOS** | macOS 11.0 (Big Sur)+ | macOS 14 (Sonoma)+ | Apple Silicon & Intel Universal binary. |
+| Target Platform | Minimum OS / Runtime                                                  | Recommended Environment       | Notes                                                          |
+| :-------------- | :-------------------------------------------------------------------- | :---------------------------- | :------------------------------------------------------------- |
+| **iOS**         | iOS 16.0+                                                             | iPhone 12+ / iPad (10th gen+) | Hardware-accelerated Metal rendering via Flutter Flame engine. |
+| **Android**     | Android 5.0 (API 21+)                                                 | Android 11+ (API 30+)         | Supports ARM64, ARMv7, and x86_64 architectures.               |
+| **Web (PWA)**   | Evergreen browsers (Chrome 119+, Safari 17+, Firefox 120+, Edge 119+) | Modern desktop/tablet browser | WebGL 2.0 and WebAssembly enabled.                             |
+| **macOS**       | macOS 11.0 (Big Sur)+                                                 | macOS 14 (Sonoma)+            | Apple Silicon & Intel Universal binary.                        |
 
 ---
 
@@ -24,7 +24,7 @@ This document serves as an information-oriented technical reference detailing su
 
 ### 2. Canvas Scaling & Viewport Adaptability
 
-- **Behavior**: Larger puzzle grids (such as the *Transcendent* tier 16×20 boards) dynamically scale to preserve the playable area on compact mobile displays (e.g., iPhone SE or narrow aspect ratio Android devices).
+- **Behavior**: Larger puzzle grids (such as the _Transcendent_ tier 16×20 boards) dynamically scale to preserve the playable area on compact mobile displays (e.g., iPhone SE or narrow aspect ratio Android devices).
 - **Control**: Users can manually adjust their preferred board zoom scale (0.5× to 2.0×) in the Settings menu at any time.
 
 ### 3. Offline-First Cloud Synchronization
