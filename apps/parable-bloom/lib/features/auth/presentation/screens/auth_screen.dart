@@ -98,10 +98,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       }
 
       // If successful, close the screen
+      ref.read(analyticsServiceProvider).logAuthAction(
+            action: _isLogin ? 'sign_in_email' : 'sign_up',
+            success: true,
+          );
+
       if (mounted) {
         if (context.canPop()) context.pop();
       }
     } on FirebaseAuthException catch (e) {
+      ref.read(analyticsServiceProvider).logAuthAction(
+            action: _isLogin ? 'sign_in_email' : 'sign_up',
+            success: false,
+            errorCode: e.code,
+          );
+
       if (mounted) {
         setState(() {
           switch (e.code) {
@@ -130,6 +141,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         });
       }
     } catch (e) {
+      ref.read(analyticsServiceProvider).logAuthAction(
+            action: _isLogin ? 'sign_in_email' : 'sign_up',
+            success: false,
+            errorCode: 'unknown_error',
+          );
+
       if (mounted) {
         setState(() {
           _errorMessage = e.toString();

@@ -91,7 +91,7 @@ tasks:
     desc: Run level-builder Go module linting using golangci-lint
     dir: tools/level-builder
     cmds:
-      - golangci-lint run ./pkg/... ./cmd/...
+      - unset GOROOT; GOROOT=$(go env GOROOT) golangci-lint run ./pkg/... ./cmd/...
     preconditions:
       - sh: command -v golangci-lint >/dev/null 2>&1
         msg: "golangci-lint is not installed. Please install it to run Go linting."
@@ -100,7 +100,7 @@ tasks:
     desc: Fix level-builder Go module linting issues (where possible)
     dir: tools/level-builder
     cmds:
-      - golangci-lint run --fix ./pkg/... ./cmd/...
+      - unset GOROOT; GOROOT=$(go env GOROOT) golangci-lint run --fix ./pkg/... ./cmd/...
 
   # -----------------------------------------------------------------------------
   # Formatting
@@ -109,13 +109,13 @@ tasks:
     desc: Check level-builder Go module code formatting
     dir: tools/level-builder
     cmds:
-      - golangci-lint fmt --diff-colored
+      - test -z "$(gofmt -l .)"
 
   format:
     desc: Format level-builder Go module code
     dir: tools/level-builder
     cmds:
-      - golangci-lint fmt
+      - gofmt -w .
 
   # -----------------------------------------------------------------------------
   # Build

@@ -116,7 +116,9 @@ tasks:
   lint:fix:all:
     desc: Fix linting issues across all modules
     cmds:
-      - bunx nx run-many -t lint --fix --parallel=false
+      - task: flutter:fix
+      - task: next:format
+      - task: lb:fix
 
   lint:all:
     desc: Run linting for all modules (Flutter, Next.js)
