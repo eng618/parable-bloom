@@ -1,4 +1,0 @@
-#include? "../../Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"
-#include "../../Flutter/Flutter-Profile.xcconfig"
-#include "Warnings.xcconfig"
-#include "AppInfo.xcconfig"

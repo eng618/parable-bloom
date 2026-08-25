@@ -77,28 +77,16 @@ class ProjectionLinesComponent extends PositionComponent
     }
   }
 
-  Set<String> _hintedVineIds = {};
-  bool _showAllVines = false;
-
-  void updateVisibility({
-    required bool visible,
-    required Set<String> hintedVineIds,
-    required bool showAllVines,
-  }) {
-    _isVisible = visible;
-    _hintedVineIds = hintedVineIds;
-    _showAllVines = showAllVines;
-  }
-
   @override
   void render(Canvas canvas) {
     super.render(canvas);
 
     if (!_isVisible || _currentLevel == null) return;
 
-    final vineStates = parent.grid.vineStates;
-    final hintedVines = _hintedVineIds;
-    final showAllVines = _showAllVines;
+    // Get vine states to check which vines are cleared or animating
+    final vineStates = parent.ref.read(vineStatesProvider);
+    final hintedVines = parent.ref.read(hintedVineIdsProvider);
+    final showAllVines = parent.ref.read(projectionLinesVisibleProvider);
 
     // Paint for projection lines - semi-transparent gray
     final linePaint = Paint()

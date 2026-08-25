@@ -537,6 +537,7 @@ class _FakeScriptureService implements ScriptureService {
   @override
   Future<void> initialize() async {}
 
+  @override
   List<Map<String, dynamic>> get activeTranslations => [];
 
   @override
@@ -551,5 +552,6 @@ class _FakeScriptureService implements ScriptureService {
     };
   }
 
+  @override
   Map<String, dynamic>? getMetadata(String translationId) => null;
 }

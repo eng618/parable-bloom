@@ -14,7 +14,6 @@ class DynamicLevelRepository implements LevelRepository {
   final FirebaseFirestore _firestore;
   final Map<String, String> _localMappings;
   final Box _cacheBox;
-  final Map<String, LevelData> _memoryCache = {};
 
   DynamicLevelRepository({
     required FirebaseFirestore firestore,
@@ -26,15 +25,6 @@ class DynamicLevelRepository implements LevelRepository {
 
   @override
   Future<LevelData> getLevel(String levelId) async {
-    // 0. Check in-memory cache first
-    if (_memoryCache.containsKey(levelId)) {
-      LoggerService.debug(
-        'Memory cache hit for $levelId',
-        tag: 'DynamicLevelRepository',
-      );
-      return _memoryCache[levelId]!;
-    }
-
     LoggerService.info(
       'Retrieving level data for $levelId',
       tag: 'DynamicLevelRepository',
@@ -51,9 +41,7 @@ class DynamicLevelRepository implements LevelRepository {
       try {
         final levelJson = await rootBundle.loadString(assetPath);
         final jsonMap = json.decode(levelJson) as Map<String, dynamic>;
-        final levelData = LevelData.fromJson(jsonMap, idOverride: levelId);
-        _memoryCache[levelId] = levelData;
-        return levelData;
+        return LevelData.fromJson(jsonMap, idOverride: levelId);
       } catch (e, stack) {
         LoggerService.error(
           'Failed to load local level asset $assetPath',
@@ -75,9 +63,7 @@ class DynamicLevelRepository implements LevelRepository {
       try {
         final cachedJsonStr = _cacheBox.get(cacheKey) as String;
         final jsonMap = json.decode(cachedJsonStr) as Map<String, dynamic>;
-        final levelData = LevelData.fromJson(jsonMap, idOverride: levelId);
-        _memoryCache[levelId] = levelData;
-        return levelData;
+        return LevelData.fromJson(jsonMap, idOverride: levelId);
       } catch (e, stack) {
         LoggerService.error(
           'Failed to load cached level from Hive box for key $cacheKey',
@@ -124,7 +110,6 @@ class DynamicLevelRepository implements LevelRepository {
         tag: 'DynamicLevelRepository',
       );
 
-      _memoryCache[levelId] = levelData;
       return levelData;
     } catch (e, stack) {
       LoggerService.error(

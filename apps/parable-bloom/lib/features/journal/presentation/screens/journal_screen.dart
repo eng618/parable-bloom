@@ -44,11 +44,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(analyticsServiceProvider).logScreenView('Journal');
-      final progress = ref.read(gameProgressProvider);
-      ref.read(analyticsServiceProvider).logJournalOpened(
-            initialTab: 'All',
-            unlockedCount: progress.unlockedScriptureIds.length,
-          );
     });
   }
 
@@ -107,16 +102,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
   void _showDetailsSheet(
       BuildContext context, JournalItem item, String moduleName) {
-    final analytics = ref.read(analyticsServiceProvider);
-    analytics.logScriptureRead(
-      scriptureId: item.id,
-      reference: item.reference,
-      translation: item.savedTranslationId ?? 'KJV',
-    );
-    if (item.type == 'parable') {
-      analytics.logParableViewed(item.id, source: 'journal_browse');
-    }
-
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
