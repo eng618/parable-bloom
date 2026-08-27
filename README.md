@@ -81,6 +81,19 @@ task setup
 flutter doctor --android-licenses
 ```
 
+**Linux Desktop Development:**
+
+```bash
+# Check toolchain readiness
+task doctor:linux
+
+# Fedora / RHEL
+sudo dnf install clang ninja-build gtk3-devel pkgconf-pkg-config
+
+# Ubuntu / Debian
+sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev
+```
+
 ## 🎮 Gameplay
 
 **Core Loop:**

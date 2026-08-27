@@ -41,6 +41,7 @@ tasks:
     dir: apps/parable-bloom
     platforms: [linux]
     cmds:
+      - task: check:linux:toolchain
       - flutter build linux --release
 
   build:windows:
@@ -98,6 +99,7 @@ tasks:
     dir: apps/parable-bloom
     platforms: [linux]
     cmds:
+      - task: check:linux:toolchain
       - flutter run -d linux
 
   serve:windows:
@@ -183,6 +185,91 @@ tasks:
         echo "  1) Install Xcode from the App Store"
         echo "  2) sudo xcode-select -s /Applications/Xcode.app/Contents/Developer"
         echo "  3) sudo xcodebuild -runFirstLaunch"
+
+  check:linux:toolchain:
+    desc: Verify C/C++, Ninja, and GTK 3 development tooling for Linux desktop builds
+    platforms: [linux]
+    cmds:
+      - pkg-config --exists gtk+-3.0
+    preconditions:
+      - sh: command -v clang++ >/dev/null 2>&1 || command -v g++ >/dev/null 2>&1
+        msg: |
+          C++ compiler (clang++ or g++) is not installed.
+          Install using:
+            Fedora/RHEL: sudo dnf install clang
+            Ubuntu/Debian: sudo apt install clang
+      - sh: command -v ninja >/dev/null 2>&1
+        msg: |
+          Ninja build tool is not installed.
+          Install using:
+            Fedora/RHEL: sudo dnf install ninja-build
+            Ubuntu/Debian: sudo apt install ninja-build
+      - sh: command -v pkg-config >/dev/null 2>&1
+        msg: |
+          pkg-config is not installed.
+          Install using:
+            Fedora/RHEL: sudo dnf install pkgconf-pkg-config
+            Ubuntu/Debian: sudo apt install pkg-config
+      - sh: pkg-config --exists gtk+-3.0 >/dev/null 2>&1
+        msg: |
+          GTK 3.0 development headers are missing.
+          Install using:
+            Fedora/RHEL: sudo dnf install gtk3-devel
+            Ubuntu/Debian: sudo apt install libgtk-3-dev
+
+  doctor:linux:
+    desc: Show Linux development toolchain status for Flutter desktop work
+    platforms: [linux]
+    silent: true
+    cmds:
+      - |
+        echo "== Linux doctor (Flutter + Linux Desktop toolchain) =="
+        echo
+
+        if command -v flutter >/dev/null 2>&1; then
+          echo "[OK] flutter: $(flutter --version | head -n 1)"
+        else
+          echo "[MISSING] flutter"
+        fi
+
+        if command -v clang++ >/dev/null 2>&1; then
+          echo "[OK] clang++: $(clang++ --version | head -n 1)"
+        elif command -v g++ >/dev/null 2>&1; then
+          echo "[OK] g++: $(g++ --version | head -n 1)"
+        else
+          echo "[MISSING] clang++ / g++ (install clang or gcc-c++)"
+        fi
+
+        if command -v cmake >/dev/null 2>&1; then
+          echo "[OK] cmake: $(cmake --version | head -n 1)"
+        else
+          echo "[MISSING] cmake"
+        fi
+
+        if command -v ninja >/dev/null 2>&1; then
+          echo "[OK] ninja: $(ninja --version)"
+        else
+          echo "[MISSING] ninja (install ninja-build)"
+        fi
+
+        if command -v pkg-config >/dev/null 2>&1; then
+          echo "[OK] pkg-config: $(pkg-config --version)"
+        else
+          echo "[MISSING] pkg-config"
+        fi
+
+        if pkg-config --exists gtk+-3.0 >/dev/null 2>&1; then
+          echo "[OK] gtk+-3.0: $(pkg-config --modversion gtk+-3.0)"
+        else
+          echo "[MISSING] gtk+-3.0 development headers (install gtk3-devel or libgtk-3-dev)"
+        fi
+
+        echo
+        echo "To install missing dependencies on Fedora/RHEL:"
+        echo "  sudo dnf install clang ninja-build gtk3-devel pkgconf-pkg-config"
+        echo
+        echo "To install missing dependencies on Ubuntu/Debian:"
+        echo "  sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev"
 
   serve:android:
     desc: Serve the application on Android

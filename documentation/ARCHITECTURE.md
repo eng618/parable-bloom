@@ -688,7 +688,7 @@ If `flutterfire configure` fails with errors like `UnsupportedError: not found i
 3. **Platform Config Files**:
    - **Android**: Ensure `android/app/google-services.json` is present and correct.
    - **iOS/macOS**: Ensure `ios/Runner/GoogleService-Info.plist` and `macos/Runner/GoogleService-Info.plist` are present and correct.
-4. **Windows/Linux**: These platforms typically use a Web configuration. In the Firebase console, register a separate Web app for Windows/Linux and use its credentials in the `windows` section of `DefaultFirebaseOptions`.
+4. **Windows/Linux**: These platforms use Web configuration. `task firebase:configure` automatically runs `scripts/patch_firebase_options_linux.dart` to patch `lib/firebase_options.dart` after FlutterFire CLI generation (as FlutterFire does not natively target Linux).
 
 ### 11.2 Nx & Monorepo
 

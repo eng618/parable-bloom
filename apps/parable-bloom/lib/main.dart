@@ -47,8 +47,12 @@ void main() async {
   }
 
   if (!_isScreenshotMode && !kIsWeb) {
-    // Pass all uncaught "fatal" errors from the framework to Crashlytics.
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    try {
+      // Pass all uncaught "fatal" errors from the framework to Crashlytics.
+      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    } catch (e) {
+      LoggerService.warn('FirebaseCrashlytics not available on this platform: $e');
+    }
   }
 
   // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics

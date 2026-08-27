@@ -140,7 +140,8 @@ tasks:
     desc: Configure Firebase using FlutterFire CLI for local development
     dir: apps/parable-bloom
     cmds:
-      - flutterfire configure --project=parable-bloom --platforms=android,ios,web,linux,macos,windows --yes
+      - flutterfire configure --project=parable-bloom --platforms=android,ios,web,macos,windows --yes
+      - dart run ../../scripts/patch_firebase_options_linux.dart
     preconditions:
       - sh: command -v flutterfire >/dev/null 2>&1
         msg: "FlutterFire CLI is not installed."
@@ -181,10 +182,11 @@ tasks:
         msg: "FlutterFire CLI is not installed."
 
   configure:linux:
-    desc: Configure Firebase for Linux only
+    desc: Configure Firebase for Linux (via Web options fallback)
     dir: apps/parable-bloom
     cmds:
-      - flutterfire configure --project=parable-bloom --platforms=linux --yes
+      - flutterfire configure --project=parable-bloom --platforms=web --yes
+      - dart run ../../scripts/patch_firebase_options_linux.dart
     preconditions:
       - sh: command -v flutterfire >/dev/null 2>&1
         msg: "FlutterFire CLI is not installed."
@@ -229,6 +231,7 @@ tasks:
           --platforms={{.PLATFORMS}} \
           --yes \
           --out=lib/firebase_options.dart
+      - dart run ../../scripts/patch_firebase_options_linux.dart
     preconditions:
       - sh: command -v flutterfire >/dev/null 2>&1
         msg: "FlutterFire CLI is not installed."
