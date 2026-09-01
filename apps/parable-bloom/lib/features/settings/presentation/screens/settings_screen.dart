@@ -146,10 +146,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               await ref
                   .read(backgroundAudioEnabledProvider.notifier)
                   .setEnabled(value);
-              ref.read(analyticsServiceProvider).logSettingChanged(
-                    settingName: 'background_audio',
-                    value: value,
-                  );
             },
           ),
           SwitchListTile(
@@ -166,10 +162,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             value: hapticsEnabled,
             onChanged: (value) async {
               await ref.read(hapticsEnabledProvider.notifier).setEnabled(value);
-              ref.read(analyticsServiceProvider).logSettingChanged(
-                    settingName: 'haptics',
-                    value: value,
-                  );
             },
           ),
           const Divider(),
@@ -1248,10 +1240,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _performRedoTutorial(BuildContext context, WidgetRef ref) async {
     if (context.canPop()) context.pop(); // Close dialog
-
-    ref
-        .read(analyticsServiceProvider)
-        .logTutorialStart(source: 'settings_replay');
 
     // Only reset the in-memory tutorial progress state - don't persist changes
     // This allows replaying the tutorial without affecting main game progress

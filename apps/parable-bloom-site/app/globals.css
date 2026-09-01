@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&family=Alegreya+Sans:wght@400;500;700&display=swap');
 @import 'tailwindcss';
 
-/* Scan @gv-tech/ui-web distributed build per GV Tech installation guide */
-@source '../node_modules/@gv-tech/ui-web/dist/**/*.mjs';
+/* Scan @gv-tech/ui-web source so Tailwind v4 generates its utility classes */
+@source '../node_modules/@gv-tech/ui-web/src';
 
 @theme {
   /* ── Design-system radius tokens ── */
@@ -31,20 +31,20 @@
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
 
-  /* ── Parable Bloom brand palette bridges ── */
-  --color-brand: hsl(var(--brand));
-  --color-brand-soft: hsl(var(--brand-soft));
-  --color-brand-pale: hsl(var(--brand-pale));
-  --color-surface: hsl(var(--card));
-  --color-surface-alt: hsl(var(--muted));
-  --color-bg-top: hsl(var(--bg-top));
-  --color-bg-bottom: hsl(var(--bg-bottom));
-  --color-text-primary: hsl(var(--foreground));
-  --color-text-secondary: hsl(var(--muted-foreground));
+  /* ── Parable Bloom brand palette ── */
+  --color-brand: hsl(151deg 66% 27%);
+  --color-brand-soft: hsl(93deg 28% 54%);
+  --color-brand-pale: hsl(93deg 28% 54% / 12%);
+  --color-surface: hsl(0deg 0% 100%);
+  --color-surface-alt: hsl(0deg 0% 96%);
+  --color-bg-top: hsl(40deg 100% 97%);
+  --color-bg-bottom: hsl(151deg 66% 27%);
+  --color-text-primary: hsl(222deg 47% 11%);
+  --color-text-secondary: hsl(215deg 16% 47%);
 
   /* Grace shadow */
-  --shadow-grace: 0 18px 40px hsl(var(--brand) / 15%);
-  --shadow-grace-hover: 0 24px 48px hsl(var(--brand) / 24%);
+  --shadow-grace: 0 18px 40px hsl(151deg 66% 27% / 15%);
+  --shadow-grace-hover: 0 24px 48px hsl(151deg 66% 27% / 22%);
 
   /* Typography */
   --font-display: 'Fraunces', georgia, serif;
@@ -55,16 +55,16 @@
   --ease-grace: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Design-system HSL variable definitions (space-separated HSL) ── */
+/* ── Design-system HSL variable definitions ── */
 @layer base {
   :root {
     --background: 40 100% 97%;
     --foreground: 222 47% 11%;
     --primary: 151 66% 27%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 93 28% 54%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 93%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 0 0% 92%;
     --muted-foreground: 215 16% 47%;
     --accent: 0 0% 89%;
     --accent-foreground: 222 47% 11%;
@@ -78,43 +78,6 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-
-    /* Brand Variables */
-    --brand: 151 66% 27%;
-    --brand-soft: 93 28% 54%;
-    --brand-pale: 93 28% 54% / 12%;
-    --bg-top: 40 100% 97%;
-    --bg-bottom: 151 66% 27%;
-  }
-
-  .dark {
-    --background: 150 25% 7%;
-    --foreground: 0 0% 98%;
-    --primary: 151 60% 45%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 96 44% 61%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 150 15% 15%;
-    --muted-foreground: 0 0% 70%;
-    --accent: 150 15% 18%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 150 15% 18%;
-    --input: 150 15% 18%;
-    --ring: 151 60% 45%;
-    --radius: 0.5rem;
-    --card: 150 20% 11%;
-    --card-foreground: 0 0% 98%;
-    --popover: 150 20% 10%;
-    --popover-foreground: 0 0% 98%;
-
-    /* Brand Variables (Dark) */
-    --brand: 151 60% 45%;
-    --brand-soft: 96 44% 61%;
-    --brand-pale: 96 44% 61% / 18%;
-    --bg-top: 150 25% 7%;
-    --bg-bottom: 155 35% 4%;
   }
 }
 
@@ -134,18 +97,16 @@ body {
 
 body {
   color: var(--color-text-primary);
-  background-color: var(--color-background);
-  background-image:
-    radial-gradient(circle at 10% 15%, hsl(var(--brand-soft) / 12%), transparent 42%),
-    radial-gradient(circle at 82% 8%, hsl(var(--brand) / 10%), transparent 45%),
+  background:
+    radial-gradient(circle at 10% 15%, hsl(0deg 0% 100% / 88%), transparent 42%),
+    radial-gradient(circle at 82% 8%, hsl(93deg 28% 54% / 14%), transparent 45%),
     linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg-bottom) 100%);
-  background-attachment: fixed;
   font-family: var(--font-body);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Smooth transitions on interactive elements */
+/* Smooth transitions on all interactive elements */
 a,
 button {
   transition:
@@ -223,17 +184,16 @@ a {
 
 /* ── Page article ─────────────────────────────────────────────── */
 .page-article {
-  background-color: hsl(var(--card) / 90%);
-  border: 1px solid hsl(var(--border));
-  border-radius: 1.25rem;
+  background: hsl(40deg 100% 97% / 92%);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
   padding: clamp(1.25rem, 3vw, 2.5rem);
   margin-top: 1rem;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
 }
 
 .page-article h1,
-.page-article h2,
-.page-article h3 {
+.page-article h2 {
   font-family: var(--font-display);
   color: var(--color-text-primary);
 }
@@ -246,7 +206,7 @@ a {
 .page-article a {
   color: var(--color-brand);
   text-decoration: underline;
-  text-decoration-color: hsl(var(--brand) / 40%);
+  text-decoration-color: hsl(151deg 66% 27% / 40%);
   text-underline-offset: 3px;
 }
 

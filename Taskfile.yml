@@ -29,7 +29,6 @@ tasks:
       - task: firebase:check:auth
       - task: firebase:configure
       - task: _setup:darwin:toolchain
-      - task: _setup:linux:toolchain
       - task: _setup:ios:pod-install
       - task: _setup:macos:pod-install
 
@@ -38,12 +37,6 @@ tasks:
     platforms: [darwin]
     cmds:
       - task: flutter:check:macos:toolchain
-
-  _setup:linux:toolchain:
-    internal: true
-    platforms: [linux]
-    cmds:
-      - task: flutter:check:linux:toolchain
 
   _setup:ios:pod-install:
     internal: true
@@ -78,12 +71,6 @@ tasks:
     platforms: [darwin]
     cmds:
       - task: flutter:doctor:macos
-
-  doctor:linux:
-    desc: Check Linux local development toolchain status
-    platforms: [linux]
-    cmds:
-      - task: flutter:doctor:linux
 
   # -----------------------------------------------------------------------------
   # Common Shortcuts (Backwards Compatibility)
@@ -129,9 +116,7 @@ tasks:
   lint:fix:all:
     desc: Fix linting issues across all modules
     cmds:
-      - task: flutter:fix
-      - task: next:format
-      - task: lb:fix
+      - bunx nx run-many -t lint --fix --parallel=false
 
   lint:all:
     desc: Run linting for all modules (Flutter, Next.js)

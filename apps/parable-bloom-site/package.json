@@ -1,6 +1,6 @@
 {
   "name": "parable-bloom-site",
-  "version": "0.5.2",
+  "version": "0.5.0",
   "scripts": {
     "build": "next build",
     "dev": "next dev --port 4201",
@@ -14,29 +14,30 @@
     "validate": "node ./scripts/validate.mjs"
   },
   "dependencies": {
-    "@gv-tech/design-tokens": "^2.28.0",
-    "@gv-tech/ui-web": "2.28.0",
-    "@openpanel/nextjs": "^1.5.1",
-    "@tailwindcss/postcss": "^4.3.3",
+    "@gv-tech/design-tokens": "^2.26.2",
+    "@gv-tech/ui-core": "^2.26.2",
+    "@gv-tech/ui-web": "2.26.2",
+    "@plausible-analytics/tracker": "^0.4.5",
+    "@tailwindcss/postcss": "^4.2.1",
     "clsx": "^2.1.1",
     "next": "16.2.10",
     "next-themes": "^0.4.6",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
-    "@eng618/prettier-config": "^2.10.2",
-    "@gv-tech/eslint-config": "^0.1.15",
-    "@next/eslint-plugin-next": "^16.3.1",
+    "@eng618/prettier-config": "^2.10.1",
+    "@gv-tech/eslint-config": "^0.1.14",
+    "@next/eslint-plugin-next": "^16.1.6",
     "@types/node": "24.7.2",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "eslint": "^10.8.1",
+    "eslint": "^10.7.0",
     "eslint-config-next": "16.2.10",
     "husky": "^9.1.7",
-    "lint-staged": "^17.3.0",
-    "prettier": "^3.9.6",
+    "lint-staged": "^17.0.8",
+    "prettier": "^3.9.5",
     "typescript": "^5.9.3"
   },
   "private": true,

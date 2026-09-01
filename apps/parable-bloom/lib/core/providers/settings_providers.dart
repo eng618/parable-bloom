@@ -214,15 +214,13 @@ class AnalyticsEnabledNotifier extends Notifier<bool> {
   @override
   bool build() {
     final box = ref.watch(hiveBoxProvider);
-    final isIgnored = (box.get('openpanel_ignore') ??
-        box.get('plausible_ignore', defaultValue: false)) as bool;
+    final isIgnored = box.get('plausible_ignore', defaultValue: false) as bool;
     return !isIgnored;
   }
 
   Future<void> setEnabled(bool enabled) async {
     state = enabled;
     final box = ref.read(hiveBoxProvider);
-    await box.put('openpanel_ignore', !enabled);
     await box.put('plausible_ignore', !enabled);
 
     final analyticsService = ref.read(analyticsServiceProvider);
