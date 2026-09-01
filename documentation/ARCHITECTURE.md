@@ -71,7 +71,7 @@ The application uses a reactive architecture where the UI and Game Engine observ
 - **`vineStatesProvider`**: Manages the dynamic state of the board. It uses the `LevelSolver` to calculate which vines are blocked or free to move.
 - **`graceProvider`**: Manages the "Grace" (lives) system.
 - **`currentLevelProvider`**: Holds the canonical data for the active level (grid size, vine positions).
-- **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance via decoupled `GardenGameCallbacks`.
+- **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
 - **`boardZoomScaleProvider`**: Manages the user's preferred default board zoom scale (0.5x to 2.0x).
 
 ### 3.2 Logic & Solvers
@@ -84,17 +84,13 @@ The application uses a reactive architecture where the UI and Game Engine observ
 The game implements several high-performance visual systems within the Flame `PositionComponent` hierarchy:
 
 - **Tap Feedback**: `TapEffectComponent` handles the visual pulse and particle effects on user interaction.
-- **Particle System & Bloom**: `TapEffectComponent` and `VineBloomRenderer` utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
+- **Particle System**: `TapEffectComponent` and `VineComponent` (bloom) utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
 - **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input. It supports auto-focusing on specific vines if they are off-screen or near the boundaries during the auto-clearing sequence.
-- **Vine Subsystem Architecture (`VineComponent`, `VineAnimator`, `VinePathPainter`, `VineBloomRenderer`)**:
-  - `VineComponent` acts as a thin Flame `PositionComponent` shell that delegates path rendering, step-by-step movement, and particle effects.
-  - **`VinePathPainter`**: Handles path vector construction, shader textures (`classic_vine_texture.png`, etc.), directional arrow heads, and foliage (leaves, blossoms, ethereal glow).
-  - **`VineAnimator`**: Controls step-by-step sliding, movement distance calculations via solver, position history for bouncebacks, and grid exit checks.
-  - **`VineBloomRenderer`**: Manages boundary exit sparkle rings, central glows, and dust particles.
+- **Vine Styles (Overhaul & Over-proportioned Dynamic Paths)**: `VineComponent` implements a high-end vector path shader pipeline drawing smooth, continuous rounded paths directly on the Flutter canvas with customized details:
   - **Grid Compaction**: Visual layout is compacted (52px cells with 42px spacing) to reduce white space and create a dense, satisfying board.
   - **Visual Profiles**: Clean, high-density stroke profiles (26px for Simple, 16px for Premium) with smooth rounded caps and `StrokeJoin.round` bends to optimize for visual continuity.
   - **Continuous Path Interpolation**: Animation utilizes a track-based linear interpolation system using delta time (`dt`) rather than step jumps. This provides fluid snake-like sliding for all vine styles, where detailed nodes (leaves, blossoms) slide smoothly along the canvas.
-  - **Dynamic Shaders**: Classic, Cherry Blossom, and Ethereal themes load generated high-resolution seamless textures as dynamic `ImageShader` strokes tinted with the vine's group colors, keeping assets extremely lightweight.
+  - **Dynamic Shaders**: Classic, Cherry Blossom, and Ethereal themes load generated high-resolution seamless textures (`classic_vine_texture.png`, etc.) as dynamic `ImageShader` strokes tinted with the vine's group colors, keeping assets extremely lightweight.
   - **Organic Node Details**:
     - **Classic**: Watercolor green ivy leaves growing organically at alternating 45-degree angles along the branch segments.
     - **Cherry Blossom**: Beautiful programmatically-rendered pink cherry blossoms with bright yellow centers at the segment joints.
@@ -162,7 +158,7 @@ To ensure players never lose their progress across multiple devices and always s
   The player can explicitly choose **"Use Cloud Save"** or **"Keep This Device"**.
 - **Notifier State Synchronization**: Once a conflict is resolved, the `GameProgressNotifier` triggers the repository resolution and reactively calls `initialize()` to reload the new progress directly into the in-memory state. This ensures that the game board, levels list, and settings UI update instantly and synchronously.
 
-### 4.3 Telemetry & Analytics (Firebase + Openpanel)
+### 4.3 Telemetry & Analytics (Firebase + Plausible)
 
 The application implements a multi-channel, privacy-focused telemetry strategy designed to respect player privacy while offering critical insight into game stability and levels completion rates.
 
@@ -171,50 +167,30 @@ The application implements a multi-channel, privacy-focused telemetry strategy d
 All telemetry events are dispatched through `AnalyticsService`, which coordinates data collection across:
 
 - **Firebase Analytics**: Standard client-side SDK. Used for general usage statistics, game lifecycle, and crash correlation.
-- **Openpanel (Self-Hosted)**: Lightweight, cookie-less, self-hosted analytics engine (`openpanel.gventureshq.com`). Events are submitted via direct API calls (`OpenpanelAnalyticsClient`) using privacy-focused endpoints with platform-specific Client IDs.
+- **Plausible Analytics (Self-Hosted)**: Lightweight, cookie-less, GDPR-compliant event engine. Events are submitted via direct API calls (`PlausibleAnalyticsClient`) using a privacy-focused endpoint.
 
 #### Privacy Control & Opt-out Toggle
 
 Players have complete control over their data sharing via the **Anonymized Telemetry** toggle in the Settings screen:
 
-- **State Persistence**: The opt-out status is stored locally in the Hive settings box under `'openpanel_ignore'` (with backward compatibility for legacy `'plausible_ignore'`).
+- **State Persistence**: The opt-out status is stored locally in the Hive settings box under `'plausible_ignore'`.
 - **Dynamic Firebase Disable**: Toggling telemetry off calls `firebase.setAnalyticsCollectionEnabled(false)`, instructing the Firebase SDK to immediately cease all analytics collection and network dispatch.
-- **Openpanel Filtering**: Openpanel event submissions are skipped locally on device when the opt-out is active.
+- **Plausible Filtering**: Plausible event submissions are skipped locally on device when the opt-out is active.
 
-#### Comprehensive Tracked Event Taxonomy
+#### Core Tracked Events
 
-1. **Onboarding & Tutorial (FTUX)**:
-   - `tutorial_start`: Logged when onboarding begins (`source: 'new_game' | 'settings_replay'`).
-   - `tutorial_step_complete`: Captured on every completed tutorial lesson with `step_number` (1..5), `step_id`, and `elapsed_seconds`.
-   - `tutorial_complete`: Logged upon completing all 5 tutorial lessons.
-   - `tutorial_skip`: Logged if a player skips onboarding.
-
-2. **Core Gameplay & Balancing**:
-   - `level_start`: Fired when a level is loaded with `level_id`, `module_id`, `tier`, `is_challenge`, and `attempts`.
-   - `level_complete`: Tracked on level completion with metrics: `level_id`, `module_id`, `tier`, `taps_total`, `wrong_taps`, `perfect`, `attempts`, `elapsed_seconds`.
-   - `level_restart`: Logged when retrying a level with `attempts` and `elapsed_seconds`.
-   - `level_quit`: Captured when a player exits mid-level, recording `elapsed_seconds`, `taps_before_quit`, and `remaining_vines` to identify difficulty spikes.
-   - `wrong_tap`: Tracks when a wrong tile is tapped, with `remaining_lives`.
+1. **Gameplay Flow**:
+   - `level_start`: Fired when a level is loaded.
+   - `level_complete`: Tracked on level completion with metrics: `taps_total`, `wrong_taps`, `perfect`, `attempts`, `elapsed_seconds`.
+   - `level_restart`: Logged when retrying a level with the current attempt count.
+   - `wrong_tap`: Tracks when a wrong tile is tapped, with remaining lives.
    - `game_over`: Logged when the player runs out of grace/lives.
-   - `module_completed`: Fired when an entire chapter/module is conquered.
-
-3. **Spiritual Journey & Scripture Library**:
-   - `parable_viewed`: Logged when reading a parable, with `source` (`'game_unlock'` or `'journal_browse'`).
-   - `scripture_unlocked`: Fired when a scripture item is unlocked.
-   - `scripture_read`: Logged when reading scripture details in the Journal with `translation` and reading duration.
-   - `translation_changed`: Logged when changing active translation preferences (`previous_translation`, `new_translation`).
-   - `scripture_shared`: Captured when copying or sharing scripture verses.
-   - `journal_opened`: Fired when visiting the journal with `unlocked_count` and `total_count`.
-
-4. **Garden Metaphor & Visual Feedback**:
-   - `garden_viewed`: Logged with `bloomed_count` and `current_stage`.
-   - `flower_bloomed`: Captured when a flower blooms upon level completion.
-
-5. **Auth, Cloud Sync & Preferences**:
-   - `auth_action`: Tracked on sign-in, signup, or deletion with `action`, `success`, and `error_code`.
+2. **Screen Views**:
+   - `screen_view`: Captured on screen load for `'Home'`, `'Settings'`, `'Journal'`, `'Gameplay'`, and `'Authentication'`.
+3. **Parable Reads**:
+   - `parable_viewed`: Logged when a player unlocks a module/parable or reads it.
+4. **Cloud Sync & Conflicts**:
    - `sync_conflict_detected`, `sync_conflict_resolved`, and `cloud_sync_unavailable`.
-   - `setting_changed`: Captured when toggling audio, haptics, or accessibility options.
-   - `session_start` and `session_end`: Captures player session duration and retention cohorts.
 
 ---
 
@@ -355,19 +331,6 @@ Not every feature needs every layer on day one, but folder names should reflect 
 ### 7.2 Monorepo Path Resolution
 
 Tools within the workspace (like the Level Builder) use a smart path resolution strategy to support both standalone and monorepo layouts. They identify the repository root by searching for marker files (`nx.json`, `bun.lock`, `pubspec.yaml`) and then resolve assets relative to the identified root, prioritizing the `apps/parable-bloom/assets` directory in monorepo structures.
-
-### 7.3 Next.js Marketing & Policy Site (`apps/parable-bloom-site`)
-
-The public website and policy host for Parable Bloom is built with Next.js (App Router), Tailwind CSS v4, and the official **GV Tech Design System** (`@gv-tech/ui-web` and `@gv-tech/design-tokens`).
-
-#### Key Architectural Components
-- **Theme Engine & System Default**: Utilizes `ThemeProvider` from `@gv-tech/ui-web/theme-provider` configured with `attribute="class"`, `defaultTheme="system"`, and `enableSystem`. This enables automatic OS theme matching with zero FOUC (flash of unstyled content) and smooth runtime switching between Light, Dark, and System modes.
-- **Ternary Theme Toggle**: Features `ThemeToggle` (`variant="ternary"`) from `@gv-tech/ui-web/theme-toggle` in both desktop header navigation and the mobile slide-over navigation drawer.
-- **Tailwind v4 Token Integration**: Tokens are scanned directly from `@gv-tech/ui-web/dist/**/*.mjs` and mapped in `globals.css` with space-separated HSL values (`@layer base`) for `:root` and `.dark` palettes, supporting precise opacity modifiers (e.g. `bg-primary/80`, `border-border/60`).
-- **Responsive Navigation**:
-  - *Desktop*: Sticky glassmorphic navbar with active route pills, external links, and the ternary theme switcher.
-  - *Mobile*: Collapsible navigation using `Sheet` (`@gv-tech/ui-web/sheet`) slide-over drawer with quick action buttons and theme toggle.
-- **Standardized Design Primitives**: Standardizes on `@gv-tech/ui-web` components including `Button`, `Card`, `Badge`, `Separator`, `Text`, `ScrollToTop`, and `SupportFab`.
 
 ---
 
@@ -688,7 +651,7 @@ If `flutterfire configure` fails with errors like `UnsupportedError: not found i
 3. **Platform Config Files**:
    - **Android**: Ensure `android/app/google-services.json` is present and correct.
    - **iOS/macOS**: Ensure `ios/Runner/GoogleService-Info.plist` and `macos/Runner/GoogleService-Info.plist` are present and correct.
-4. **Windows/Linux**: These platforms use Web configuration. `task firebase:configure` automatically runs `scripts/patch_firebase_options_linux.dart` to patch `lib/firebase_options.dart` after FlutterFire CLI generation (as FlutterFire does not natively target Linux).
+4. **Windows/Linux**: These platforms typically use a Web configuration. In the Firebase console, register a separate Web app for Windows/Linux and use its credentials in the `windows` section of `DefaultFirebaseOptions`.
 
 ### 11.2 Nx & Monorepo
 

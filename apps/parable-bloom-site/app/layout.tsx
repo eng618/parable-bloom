@@ -1,4 +1,4 @@
-import OpenpanelProvider from '@/components/openpanel-provider';
+import PlausibleProvider from '@/components/plausible-provider';
 import SiteShell from '@/components/site-shell';
 import UiThemeProvider from '@/components/ui-theme-provider';
 import type { Metadata, Viewport } from 'next';
@@ -57,11 +57,11 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="light" style={{ colorScheme: 'light' }} suppressHydrationWarning>
       <body>
         <UiThemeProvider>
           <SiteShell>{children}</SiteShell>
-          <OpenpanelProvider />
+          <PlausibleProvider />
         </UiThemeProvider>
       </body>
     </html>

@@ -87,6 +87,5 @@
       }
     }
   },
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "analytics": true
+  "$schema": "./node_modules/nx/schemas/nx-schema.json"
 }

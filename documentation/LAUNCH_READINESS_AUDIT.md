@@ -349,7 +349,7 @@ Parable Bloom is a well-architected, thoroughly documented Flutter puzzle game t
 ### M-14: No Analytics Opt-Out in Flutter App
 
 - **Category:** Privacy & Compliance
-- **Description:** The privacy policy mentions Firebase Analytics and references Openpanel opt-out for the website. However, there's no visible opt-out mechanism in the Flutter app's settings for Firebase Analytics. The TODO about configurable settings reinforces this.
+- **Description:** The privacy policy mentions Firebase Analytics and references Plausible Analytics opt-out for the website. However, there's no visible opt-out mechanism in the Flutter app's settings for Firebase Analytics. The TODO about configurable settings reinforces this.
 - **Impact:** May not comply with GDPR/CCPA requirements in all jurisdictions. Users cannot opt out of analytics tracking in the app.
 - **Action:** Add an analytics opt-out toggle in Settings. Implement `FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false)` when toggled off.
 - **Effort:** 2-4 hours
@@ -504,7 +504,7 @@ The following areas demonstrate strong practices that should be maintained:
 | **Nx Monorepo** | Well-configured workspace with caching ✅ |
 | **SEO (Site)** | Sitemap, robots.txt, meta descriptions, semantic HTML ✅ |
 | **Legal Pages** | Privacy policy (with COPPA), Terms of Service, Delete Account page ✅ |
-| **Openpanel Analytics** | Self-hosted, privacy-focused analytics on the site & app ✅ |
+| **Plausible Analytics** | Self-hosted, privacy-focused analytics on the site ✅ |
 | **Debug Code Gating** | All debug buttons properly behind `kDebugMode` ✅ |
 | **No Hardcoded Secrets** | No API keys, passwords, or credentials in source code ✅ |
 
