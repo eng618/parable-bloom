@@ -75,52 +75,63 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     _game = GardenGame(
       callbacks: GardenGameCallbacks(
         onGameLoaded: (game) {
+          if (!mounted) return;
           ref.read(gameInstanceProvider.notifier).setGame(game);
           _loadLevelForGame(game);
         },
         onGameRemoved: () {
+          if (!mounted) return;
           if (ref.read(gameInstanceProvider) == _game) {
             ref.read(gameInstanceProvider.notifier).setGame(null);
           }
         },
         onVineCleared: (vineId) {
+          if (!mounted) return;
           ref.read(vineStatesProvider.notifier).clearVine(vineId);
         },
         onVineAnimationStateChanged: (vineId, animationState) {
+          if (!mounted) return;
           ref
               .read(vineStatesProvider.notifier)
               .setAnimationState(vineId, animationState);
         },
         onVineAttempted: (vineId) {
+          if (!mounted) return;
           ref.read(vineStatesProvider.notifier).markAttempted(vineId);
         },
         onTapIncrement: (count) {
+          if (!mounted) return;
           for (int i = 0; i < count; i++) {
             ref.read(levelTotalTapsProvider.notifier).increment();
           }
         },
         onTapOutsideGrid: () {
+          if (!mounted) return;
           ref.read(hintedVineIdsProvider.notifier).clear();
         },
         onBlockedTap: (state) {
+          if (!mounted) return;
           ref.read(blockedTapProvider.notifier).setBlockedTap(state);
         },
         onEnsureVineVisible: (vine) async {
+          if (!mounted) return;
           await ref.read(cameraStateProvider.notifier).ensureVineVisible(vine);
         },
         onHintVine: (vineId) {
+          if (!mounted) return;
           ref.read(hintedVineIdsProvider.notifier).add(vineId);
         },
         onClearHints: () {
+          if (!mounted) return;
           ref.read(hintedVineIdsProvider.notifier).clear();
         },
-        getUseSimpleVines: () => ref.read(useSimpleVinesProvider),
-        getHapticsEnabled: () => ref.read(hapticsEnabledProvider),
-        getIsAnyAnimating: () => ref.read(anyVineAnimatingProvider),
+        getUseSimpleVines: () => mounted ? ref.read(useSimpleVinesProvider) : false,
+        getHapticsEnabled: () => mounted ? ref.read(hapticsEnabledProvider) : false,
+        getIsAnyAnimating: () => mounted ? ref.read(anyVineAnimatingProvider) : false,
         getDebugShowGridCoordinates: () =>
-            ref.read(debugShowGridCoordinatesProvider),
+            mounted ? ref.read(debugShowGridCoordinatesProvider) : false,
         getDebugVineAnimationLogging: () =>
-            ref.read(debugVineAnimationLoggingProvider),
+            mounted ? ref.read(debugVineAnimationLoggingProvider) : false,
       ),
     );
   }
