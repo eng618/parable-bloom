@@ -150,6 +150,8 @@ class OpenpanelAnalyticsClient {
         headers: {
           "Content-Type": "application/json",
           "openpanel-client-id": clientId,
+          "openpanel-sdk-name": "flutter",
+          "openpanel-sdk-version": "1.0.0",
         },
         body: jsonEncode(eventPayload),
       );
