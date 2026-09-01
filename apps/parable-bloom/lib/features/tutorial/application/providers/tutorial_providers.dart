@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../game/application/providers/progress_providers.dart';
+import '../../../../core/providers/service_providers.dart';
 import '../../domain/entities/lesson_data.dart';
 
 final lessonProvider =
@@ -91,6 +92,15 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
           nextLesson: nextLessonStr,
           allLessonsCompleted: allComplete,
         );
+
+    final analytics = ref.read(analyticsServiceProvider);
+    await analytics.logTutorialStepComplete(
+      stepNumber: lessonId,
+      stepId: lessonIdStr,
+    );
+    if (allComplete) {
+      await analytics.logTutorialComplete();
+    }
 
     state = state.copyWith(
       currentLesson: nextLesson,
