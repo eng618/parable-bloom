@@ -68,7 +68,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   firebase_auth_mocks: ^0.15.1
-  yaml: ^3.1.2 # Required for version bump script
+  yaml: ^3.1.4 # Required for version bump script
   flutter_launcher_icons: ^0.14.1
   integration_test:
     sdk: flutter
