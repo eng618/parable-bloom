@@ -22,6 +22,11 @@ const steps = [
     args: ['tsc', '--noEmit'],
   },
   {
+    name: 'Test',
+    command: 'npm',
+    args: ['run', 'test'],
+  },
+  {
     name: 'Build',
     command: 'npm',
     args: ['run', 'build'],
