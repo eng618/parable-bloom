@@ -367,7 +367,7 @@
 //
 // For more information:
 //   - Project README: parable-bloom/README.md
-//   - Architecture docs: parable-bloom/documentation/explanation/architecture.md
+//   - Architecture docs: parable-bloom/documentation/ARCHITECTURE.md
 //   - Run --help on any command for detailed usage
 //
 // # Version History

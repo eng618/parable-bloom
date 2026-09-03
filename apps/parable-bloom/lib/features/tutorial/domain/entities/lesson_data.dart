@@ -1,5 +1,3 @@
-import '../../../game/domain/entities/level_data.dart';
-
 /// Vine data structure for lessons
 class LessonVineData {
   final String id;
@@ -123,30 +121,6 @@ class LessonData {
       gridWidth: gridCols,
       gridHeight: gridRows,
       vines: vines,
-    );
-  }
-
-  LevelData toLevelData() {
-    final levelVines = vines.map((lessonVine) {
-      return VineData(
-        id: lessonVine.id,
-        headDirection: lessonVine.headDirection,
-        orderedPath: lessonVine.orderedPath,
-      );
-    }).toList();
-
-    return LevelData(
-      id: 'lesson_$id',
-      name: 'Lesson $id',
-      difficulty: 'tutorial',
-      gridWidth: gridWidth,
-      gridHeight: gridHeight,
-      vines: levelVines,
-      maxMoves: 999,
-      minMoves: 0,
-      complexity: 'tutorial',
-      grace: 3,
-      mask: MaskData(mode: 'show-all', points: const []),
     );
   }
 

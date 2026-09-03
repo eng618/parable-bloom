@@ -101,29 +101,17 @@ tasks:
     cmds:
       - bunx nx run-many -t lint --parallel=false
 
-  docs:format:
-    desc: Format documentation files using Prettier and @eng618/prettier-config
-    cmds:
-      - bun run format:docs
-
-  docs:format:check:
-    desc: Check documentation formatting using Prettier
-    cmds:
-      - bun run format:docs:check
-
   format:all:
-    desc: Format code and documentation across all modules (Flutter, Level Builder, Next.js, Docs)
+    desc: Format code across all modules (Flutter, Level Builder, Next.js)
     cmds:
       - task: flutter:format
       - task: lb:format
       - task: next:format
-      - task: docs:format
 
   format:check:all:
     desc: Check if code is formatted across all modules
     cmds:
       - bunx nx run-many -t lint --parallel=false
-      - task: docs:format:check
 
   lint:fix:all:
     desc: Fix linting issues across all modules

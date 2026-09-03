@@ -1,18 +1,6 @@
 {
   "translations": [
     {
-      "id": "kjv",
-      "name": "King James Version",
-      "abbreviation": "KJV",
-      "publisher": "Public Domain (Crown Copyright in the UK)",
-      "licenseType": "public_domain",
-      "copyrightNotice": "Scripture quotations are from the King James Version (KJV) Bible. Public domain.",
-      "infoUrl": "https://www.cambridge.org/bibles/about/rights-and-permissions",
-      "localDbAllowed": true,
-      "requiresOnline": false,
-      "status": "active"
-    },
-    {
       "id": "web",
       "name": "World English Bible",
       "abbreviation": "WEB",
@@ -22,7 +10,19 @@
       "infoUrl": "https://worldenglish.bible",
       "localDbAllowed": true,
       "requiresOnline": false,
-      "status": "pending"
+      "status": "active"
+    },
+    {
+      "id": "kjv",
+      "name": "King James Version",
+      "abbreviation": "KJV",
+      "publisher": "Public Domain (Crown Copyright in the UK)",
+      "licenseType": "public_domain",
+      "copyrightNotice": "Scripture quotations are from the King James Version (KJV) Bible. Public domain (subject to Crown copyright in the United Kingdom).",
+      "infoUrl": "https://www.cambridge.org/bibles/about/rights-and-permissions",
+      "localDbAllowed": true,
+      "requiresOnline": false,
+      "status": "active"
     },
     {
       "id": "net",
@@ -34,7 +34,7 @@
       "infoUrl": "http://netbible.com/net-bible-copyright",
       "localDbAllowed": true,
       "requiresOnline": false,
-      "status": "pending"
+      "status": "active"
     },
     {
       "id": "esv",
@@ -46,7 +46,7 @@
       "infoUrl": "https://www.crossway.org/permissions",
       "localDbAllowed": false,
       "requiresOnline": true,
-      "status": "pending"
+      "status": "active"
     },
     {
       "id": "csb",
@@ -58,7 +58,7 @@
       "infoUrl": "https://www.csbible.com/permissions",
       "localDbAllowed": false,
       "requiresOnline": true,
-      "status": "pending"
+      "status": "active"
     },
     {
       "id": "nlt",

@@ -11,50 +11,6 @@ import '../../features/tutorial/presentation/screens/tutorial_flow_screen.dart';
 /// The global router for the application using go_router.
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
-  errorBuilder: (BuildContext context, GoRouterState state) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.nature_people_outlined,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Garden Path Not Found',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Let us return to the quiet garden of grace.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () => context.go('/'),
-                  icon: const Icon(Icons.home),
-                  label: const Text('Return Home'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  },
   routes: [
     GoRoute(
       path: '/',

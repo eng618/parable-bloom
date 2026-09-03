@@ -6,8 +6,6 @@ import 'package:parable_bloom/features/game/application/providers/progress_provi
 import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
 import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
-import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
-import 'package:parable_bloom/features/tutorial/domain/entities/lesson_data.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -101,44 +99,5 @@ void main() {
     final saved = await mockRepo.getProgress();
     expect(saved.lessonCompleted, isTrue);
     expect(saved.currentLevel, 'lvl_seed_01');
-  });
-
-  test('Clearing tutorial lesson vine properly triggers levelCompleteProvider',
-      () async {
-    const lesson1 = LessonData(
-      id: 1,
-      title: 'Tutorial 1',
-      objective: 'Tap the vine',
-      instructions: 'Tap the vine to clear it',
-      learningPoints: ['Point 1', 'Point 2'],
-      gridWidth: 6,
-      gridHeight: 3,
-      vines: [
-        LessonVineData(
-          id: 'vine_1',
-          headDirection: 'right',
-          orderedPath: [
-            {'x': 0, 'y': 1},
-            {'x': 1, 'y': 1},
-            {'x': 2, 'y': 1},
-          ],
-        ),
-      ],
-    );
-
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    final levelData = lesson1.toLevelData();
-    container.read(currentLevelProvider.notifier).setLevel(levelData);
-    container.read(vineStatesProvider.notifier).resetForLevel(levelData);
-
-    expect(container.read(levelCompleteProvider), isFalse);
-    expect(container.read(vineStatesProvider).containsKey('vine_1'), isTrue);
-
-    // Clear the vine
-    container.read(vineStatesProvider.notifier).clearVine('vine_1');
-
-    expect(container.read(levelCompleteProvider), isTrue);
   });
 }

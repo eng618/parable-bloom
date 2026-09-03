@@ -14,7 +14,7 @@ import '../core/providers/settings_providers.dart';
 import '../core/routes/app_router.dart';
 import '../core/services/logger_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import '../l10n/app_localizations.dart';
+// TODO: import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
@@ -144,56 +144,10 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
       themeMode: _convertToThemeMode(themeMode),
       routerConfig: appRouter,
       builder: (context, child) {
-        ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
-          return Material(
-            color: Theme.of(context).colorScheme.surface,
-            child: SafeArea(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.spa_outlined,
-                        size: 56,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Peace Be With You',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'A temporary disruption occurred. Tap below to return to the garden.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: () => appRouter.go('/'),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Return to Garden'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        };
         return _buildHomeWrapper(child!);
       },
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        // TODO: AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

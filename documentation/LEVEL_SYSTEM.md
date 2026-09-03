@@ -1,0 +1,430 @@
+---
+title: "Parable Bloom - Level System Reference"
+version: "3.0"
+last_updated: "2026-01-11"
+status: "Active"
+type: "Technical Reference"
+---
+
+# Parable Bloom - Level System Reference
+
+## 1. Introduction
+
+Parable Bloom uses a strictly typed, data-driven level system. The system distinguishes between **Tutorials** (hand-crafted instructional content) and **Standard Levels** (procedurally generated or hand-tuned puzzles grouped into Modules).
+
+Key concepts:
+
+- **Strict Schema**: All levels must strictly adhere to the JSON schema.
+- **Modules**: Levels are grouped into modules. Each module consists of a sequence of "Lesson" levels, culminating in a "Challenge" level that unlocks a Parable.
+- **Separation of Concerns**: Visuals (Colors) are deterministically seeded per module but baked into level files for runtime performance.
+
+## 2. File Structure
+
+apps/parable-bloom/assets/
+├── data/
+│   └── modules.json        # Registry of modules, logical-to-physical mappings, progression
+├── lessons/                 # Hand-crafted instructional tutorial lessons
+│   ├── lesson_1.json
+│   └── ...
+└── levels/                 # Standard gameplay levels (physical sequential integers)
+    ├── level_1.json
+    ├── level_2.json
+    ├── ...
+    └── level_105.json
+
+```
+
+## 3. JSON Schemas
+
+### 3.1 Level JSON Schema (`level_N.json`)
+
+Applies to both `assets/levels/` and `assets/tutorials/`.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Parable Bloom Level",
+  "type": "object",
+  "properties": {
+    // --- Tier A: Runtime-Critical ---
+    "id": {
+      "type": "integer",
+      "description": "Physical sequential level identifier (converted to String at runtime: id.toString())",
+      "minimum": 1
+    },
+    "grid_size": {
+      "type": "array",
+      "description": "[width, height]",
+      "items": { "type": "integer", "minimum": 2 },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "vines": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/vine" },
+      "minItems": 1
+    },
+    "max_moves": {
+      "type": "integer",
+      "description": "Strict upper bound for solution",
+      "minimum": 1
+    },
+    "grace": {
+      "type": "integer",
+      "description": "Allowed mistakes",
+      "enum": [3, 4, 999]
+    },
+    "color_scheme": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Hex codes for vine colors. Index corresponds to vine_index if implicit, or by key."
+    },
+
+    // --- Tier B: Design Metadata ---
+    "name": {
+      "type": "string"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "Tutorial",
+        "Seedling",
+        "Sprout",
+        "Nurturing",
+        "Flourishing",
+        "Transcendent"
+      ]
+    },
+    "complexity": {
+      "type": "string",
+      "enum": ["tutorial", "low", "medium", "high", "extreme"]
+    },
+    "min_moves": {
+      "type": "integer",
+      "description": "Optimal solution length (verified by solver)"
+    },
+    "mask": {
+      "type": "object",
+      "description": "Optional mask for non-rectangular grids",
+      "properties": {
+        "mode": { "enum": ["hide", "show", "show-all"] },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": { "type": "integer" },
+              "y": { "type": "integer" }
+            },
+            "required": ["x", "y"]
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "id",
+    "grid_size",
+    "vines",
+    "max_moves",
+    "grace",
+    "color_scheme"
+  ],
+
+  "$defs": {
+    "vine": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "head_direction": {
+          "type": "string",
+          "enum": ["up", "down", "left", "right"]
+        },
+        "ordered_path": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": { "type": "integer" },
+              "y": { "type": "integer" }
+            },
+            "required": ["x", "y"]
+          },
+          "minItems": 2
+        },
+        "color_index": {
+          "type": "integer",
+          "description": "Index into color_scheme array. Defaults to 0."
+        }
+      },
+      "required": ["id", "head_direction", "ordered_path"]
+    }
+  }
+}
+```
+
+### 3.2 Module Registry Schema (`modules.json`)
+
+Modules dictate the player's journey. Logical level keys (e.g. `'lvl_seed_01'`) decouple the progression graph and level sequencing from physical filenames (`level_1.json`).
+
+A global `level_mappings` object maps logical gameplay IDs to physical assets.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "version": { "type": "string" },
+    "tutorials": {
+      "type": "array",
+      "description": "List of logical tutorial lesson IDs",
+      "items": { "type": "string" }
+    },
+    "level_mappings": {
+      "type": "object",
+      "description": "Global registry mapping logical keys to asset paths",
+      "additionalProperties": { "type": "string" }
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "theme_seed": {
+            "type": "string",
+            "description": "e.g., 'forest', 'sunset'"
+          },
+          "levels": {
+            "type": "array",
+            "description": "Sequence of logical standard 'Lesson' level string keys",
+            "items": { "type": "string" }
+          },
+          "challenge_level": {
+            "type": "string",
+            "description": "The logical challenge level string key ending the module"
+          },
+          "parable": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "scripture": { "type": "string" },
+              "content": { "type": "string" },
+              "reflection": { "type": "string" },
+              "background_image": { "type": "string" }
+            },
+            "required": ["title", "scripture"]
+          },
+          "unlock_message": { "type": "string" },
+          "scriptures": {
+            "type": "array",
+            "description": "Sequence of micro-scripture and starter scripture triggers in this module",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "trigger_level": { "type": "string", "description": "Level or lesson ID (e.g. lvl_seed_01, lesson_5) that unlocks this scripture" },
+                "reference": { "type": "string", "description": "Scripture reference (e.g. Luke 8:11)" },
+                "title": { "type": "string", "description": "Clean title of the scripture" },
+                "type": { "type": "string", "description": "Type of unlock ('starter', 'micro', or 'full')" }
+              },
+              "required": ["id", "trigger_level", "reference", "title", "type"]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "levels",
+          "challenge_level",
+          "parable",
+          "theme_seed"
+        ]
+      }
+    }
+  },
+  "required": ["version", "tutorials", "level_mappings", "modules"]
+}
+```
+
+## 4. Validation Rules
+
+All levels must pass the strict validator in `tools/level-builder`.
+
+1. **Coverage**: Difficulty-based coverage targets (see Section 5.1). The validator applies a **40.1% tolerance** (OccupancyTolerance) to account for adaptive generator relaxation and legacy sparse levels.
+2. **Solvability**: The level must be solvable within `max_moves`. The search budget is configurable, defaulting to **2,000,000 states** for robust verification of complex puzzles.
+3. **Connectivity**: All vine segments must be 4-connected (Manhattan distance = 1). `head_direction` must match head-to-neck vector.
+4. **No Overlaps**: No two vine segments may share a coordinate.
+5. **Minimum Length**: All vines must have at least 2 cells.
+6. **No Coverage Gaps**: While 100% occupancy is not required, any cells not occupied by vines must be explicitly masked out. The validator issues a **warning** for uncovered, unmasked cells.
+7. **Incremental Caching**: To scale validations to thousands of levels, the tool maintains a `validation_cache.json` containing SHA-256 hashes of level contents and their validated solvability status under a specific `SolverVersion` constant. Matches bypass the expensive A* solver, reducing hot runs to milliseconds.
+8. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
+
+## 5. Level Generation (gen2)
+
+The `gen2` command in `tools/level-builder` is the primary level generation system. It uses a **direction-first placement algorithm** with **incremental solvability checking** and **backtracking**.
+
+### 5.1 Difficulty Specifications
+
+| Difficulty   | Grid Size Range | Vine Count | Avg Length | Coverage Target | Grace | Complexity |
+| ------------ | --------------- | ---------- | ---------- | --------------- | ----- | ---------- |
+| Seedling     | 6×8 to 9×12     | 3-6        | 3-5        | 85%             | 5     | low        |
+| Sprout       | 9×12 to 12×16   | 5-10       | 4-6        | 80%             | 4     | medium     |
+| Nurturing    | 9×16 to 12×20   | 8-15       | 5-8        | 75%             | 3     | medium     |
+| Flourishing  | 12×20 to 16×24  | 12-20      | 6-10       | 70%             | 2     | high       |
+| Transcendent | 16×28 to 24×40  | 15-25      | 8-12       | 60%             | 1     | very_high  |
+
+### 5.2 Direction-First Placement Algorithm
+
+The algorithm prioritizes **exit path guarantee** by selecting head direction first:
+
+1. **Choose Head Cell**: Select an empty cell, preferably near grid edges.
+2. **Choose Exit Direction**: Pick direction toward the nearest grid edge (guarantees clear path to exit).
+3. **Grow Backward**: Extend the vine body in the opposite direction using random orthogonal turns.
+4. **Extension Pass**: After initial placement, extend existing vines into remaining empty cells to increase coverage.
+5. **Filler Vines**: Create small (2-cell) vines in isolated empty regions that cannot be reached by extension.
+
+### 5.3 Incremental Solvability with Backtracking
+
+Instead of restarting on unsolvable placements, gen2 uses intelligent backtracking:
+
+1. **Check After Placement**: After each vine is placed, verify solvability using the exact A\* solver.
+2. **Backtrack on Failure**: If unsolvable, remove the last 3 vines (configurable) and retry with different random choices.
+3. **Attempt Limit**: Maximum 10 generation attempts before reporting failure.
+
+This approach significantly improves generation success rate compared to full restarts.
+
+### 5.4 Color Assignment
+
+- **Color Palette**: 6 colors shared across all difficulties (gray, green, orange, yellow, purple, blue).
+- **Round-Robin Assignment**: Each vine receives `color_index` based on its position: `(vine_index % 6) + 1`.
+- **Vine IDs**: Format `vine_N` where N is 1-indexed (e.g., `vine_1`, `vine_2`).
+
+### 5.5 Example Levels
+
+Reference examples for each difficulty tier are available in `documentation/example-levels/`:
+
+- [seedling_example.json](example-levels/seedling_example.json) - Simple 6×8 grid, 4 vines
+- [sprout_example.json](example-levels/sprout_example.json) - Medium 8×10 grid, 8 vines
+- [nurturing_example.json](example-levels/nurturing_example.json) - 10×18 grid, 10 vines
+- [flourishing_example.json](example-levels/flourishing_example.json) - 14×22 grid, 12 vines
+- [transcendent_example.json](example-levels/transcendent_example.json) - Large 18×30 grid, 15 vines
+
+## 6. Tooling
+
+The Go-based toolchain located in `tools/level-builder` handles all operations.
+
+### 6.1 Commands
+
+- **gen2**: Primary level generation with direction-first algorithm
+
+  ```bash
+  task levels:gen -- LEVEL_ID=101 DIFFICULTY=Seedling
+  ```
+
+- **validate**: Check all assets against schema and logic. Solvability checks are cached in `validation_cache.json` and executed concurrently (bounded by `runtime.NumCPU`).
+
+  ```bash
+  task levels:validate
+  ```
+
+  _Outputs results to `logs/validation_stats.json` and caches results under `apps/parable-bloom/assets/data/validation_cache.json`._
+
+- **render**: Visualize levels in terminal
+
+  ```bash
+  task levels:render -- ID=1 STYLE=unicode
+  ```
+
+- **tutorials validate**: Validate lesson files
+
+  ```bash
+  task levels:tutorials:validate
+  ```
+
+### 6.2 Deprecated Commands
+
+- **generate**: Original generation command (deprecated due to infinite loop issues with 100% coverage + solvability tension). Use `gen2` instead.
+
+---
+
+## 7. Over-the-Air (OTA) Level Delivery & Firebase Integration
+
+To support thousands of levels and dynamic season/daily challenge expansions without bloating the local application binary, Parable Bloom uses a high-performance, offline-first Over-the-Air (OTA) level load chain.
+
+### 7.1 The Level Load Chain
+
+When loading any level by logical ID, the `DynamicLevelRepository` follows a structured fallback mechanism:
+
+```mermaid
+graph TD
+    UI[garden_game.dart] -->|Watches| Provider[levelDataProvider]
+    Provider -->|Calls| Repo[DynamicLevelRepository]
+    Repo -->|1. Check Assets| Asset[Asset Bundle / modules.json]
+    Repo -->|2. Check Cache| Hive[Local Hive Cache Box]
+    Repo -->|3. Fetch Remote| Firestore[Cloud Firestore levels_{env}]
+    Firestore -->|Stores in cache| Hive
+```
+
+1. **Asset Bundle Check**: If the logical key exists in `modules.json`'s `level_mappings` and is bundled inside the assets, it is loaded instantly from `rootBundle`.
+2. **Local Hive Cache Check**: If not bundled, the repository checks the local Hive box under the key `'cached_level_${levelId}'`.
+3. **Cloud Firestore Fetch**: If there is a cache miss, it queries the `levels_{env}` collection on Firestore (where `{env}` is dynamically resolved to `dev`, `preview`, or `prod` depending on the running target). Upon a successful download, the level JSON is immediately mirrored into the local Hive box to support subsequent offline play.
+
+### 7.2 Database Schema & Environments
+
+OTA level files are uploaded directly to specific environmental collections colocated with progress sync tables:
+
+- **Collections**: `levels_dev`, `levels_preview`, and `levels_prod`.
+- **Document IDs**: The logical key of the level (e.g., `lvl_seed_01`, `lvl_seed_106`).
+- **Fields**: The complete level JSON attributes, including the logical `id` attribute embedded inside the document.
+
+### 7.3 Security Rules
+
+Public read access is granted globally to allow players to stream levels on first launch, while all write access is blocked from client SDKs to maintain database integrity:
+
+```javascript
+match /levels_dev/{levelId} {
+  allow read: if true;
+  allow write: if false;
+}
+match /levels_preview/{levelId} {
+  allow read: if true;
+  allow write: if false;
+}
+match /levels_prod/{levelId} {
+  allow read: if true;
+  allow write: if false;
+}
+```
+
+### 7.4 Batch Uploading Tool
+
+Developers can batch-upload newly generated levels from `apps/parable-bloom/assets/levels` directly to any environmental collection in Firestore using the task runner:
+
+```bash
+# Upload to dev (default)
+task firebase:levels:upload ENV=dev
+
+# Upload to preview
+task firebase:levels:upload ENV=preview
+
+# Upload to prod
+task firebase:levels:upload ENV=prod
+```
+
+For local integration testing, the script automatically routes all upload operations to a running local Firestore emulator if `FIRESTORE_EMULATOR_HOST` is present in the environment:
+
+```bash
+FIRESTORE_EMULATOR_HOST="localhost:8080" task firebase:levels:upload ENV=dev
+```
+
+### 7.5 Logical to Physical Key Alignment at Runtime
+
+To keep the game progression logic robust and consistent throughout the application, the `LevelData` entity's `id` property is matched to its logical key (e.g. `'lvl_seed_01'`) rather than the raw integer physical ID (e.g. `1`) encoded within the JSON files.
+
+During loading:
+
+1. `LevelData.fromJson(..., {String? idOverride})` supports an optional `idOverride` parameter.
+2. `DynamicLevelRepository.getLevel(String levelId)` passes the logical `levelId` as `idOverride` when parsing the JSON from local assets, local Hive cache, or remote Firestore collections.
+3. This guarantees that `currentLevel.id` in `GameScreen` matches the logical playlist string key, allowing standard level progression and save state synchronization to execute cleanly.

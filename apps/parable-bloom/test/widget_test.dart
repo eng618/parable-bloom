@@ -5,17 +5,15 @@ void main() {
   testWidgets('Basic widget test', (WidgetTester tester) async {
     // Simple smoke test - just verify basic Flutter widget rendering works
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(56),
-            child: SizedBox(),
-          ),
-          body: Center(child: Text('Parable Bloom')),
+          appBar: AppBar(title: Text('Test App')),
+          body: Center(child: Text('Hello World')),
         ),
       ),
     );
 
-    expect(find.text('Parable Bloom'), findsOneWidget);
+    expect(find.text('Test App'), findsOneWidget);
+    expect(find.text('Hello World'), findsOneWidget);
   });
 }

@@ -2,69 +2,30 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/game_board_layout.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
-import '../../../../core/providers/settings_providers.dart' show VineStyle;
+import '../../../../core/providers/service_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
 import '../../../../core/services/logger_service.dart';
+import '../../application/providers/camera_providers.dart';
+import '../../application/providers/counter_providers.dart';
+import '../../application/providers/gameplay_state_providers.dart';
+import '../../application/providers/module_providers.dart';
+import '../../application/providers/progress_providers.dart';
 import '../../../tutorial/domain/entities/lesson_data.dart';
-import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart'
-    show BlockedTapState;
-import '../../application/providers/camera_providers.dart' show CameraState;
-import '../../application/providers/gameplay_state_providers.dart'
-    show VineState, VineAnimationState;
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
 import 'tap_effect_component.dart';
-
-class GardenGameCallbacks {
-  final void Function(GardenGame game) onGameLoaded;
-  final void Function() onGameRemoved;
-  final void Function(String vineId) onVineCleared;
-  final void Function(String vineId, VineAnimationState state)
-      onVineAnimationStateChanged;
-  final void Function(String vineId) onVineAttempted;
-  final void Function(int count) onTapIncrement;
-  final void Function() onTapOutsideGrid;
-  final void Function(BlockedTapState state)? onBlockedTap;
-  final Future<void> Function(VineData vine)? onEnsureVineVisible;
-  final void Function(String vineId)? onHintVine;
-  final void Function()? onClearHints;
-
-  // Settings/State Getters
-  final bool Function() getUseSimpleVines;
-  final bool Function() getHapticsEnabled;
-  final bool Function()? getIsAnyAnimating;
-  final bool Function()? getDebugShowGridCoordinates;
-  final bool Function()? getDebugVineAnimationLogging;
-
-  GardenGameCallbacks({
-    required this.onGameLoaded,
-    required this.onGameRemoved,
-    required this.onVineCleared,
-    required this.onVineAnimationStateChanged,
-    required this.onVineAttempted,
-    required this.onTapIncrement,
-    required this.onTapOutsideGrid,
-    this.onBlockedTap,
-    this.onEnsureVineVisible,
-    this.onHintVine,
-    this.onClearHints,
-    required this.getUseSimpleVines,
-    required this.getHapticsEnabled,
-    this.getIsAnyAnimating,
-    this.getDebugShowGridCoordinates,
-    this.getDebugVineAnimationLogging,
-  });
-}
 
 class GardenGame extends FlameGame with TapCallbacks {
   static const double cellSize = GameBoardLayout.cellSize;
 
   late GridComponent grid;
   late ProjectionLinesComponent projectionLines;
-  final GardenGameCallbacks callbacks;
-
+  final WidgetRef? _ref;
+  WidgetRef get ref => _ref!;
   bool _isGridInitialized = false;
   bool get isGridInitialized => _isGridInitialized;
   LevelData? _currentLevelData;
@@ -78,7 +39,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   late Color _tapEffectColor;
   late Color _vineAttemptedColor;
 
-  GardenGame({required this.callbacks}) {
+  GardenGame({required WidgetRef? ref}) : _ref = ref {
     LoggerService.debug('Constructor called - creating new instance',
         tag: 'GardenGame');
     // Initialize with default theme colors - will be updated by game screen
@@ -89,8 +50,8 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   /// Factory constructor for loading a lesson
   factory GardenGame.fromLesson(LessonData lessonData,
-      {required GardenGameCallbacks callbacks}) {
-    final game = GardenGame(callbacks: callbacks);
+      {required WidgetRef ref}) {
+    final game = GardenGame(ref: ref);
     game._currentLessonData = lessonData;
     return game;
   }
@@ -116,7 +77,10 @@ class GardenGame extends FlameGame with TapCallbacks {
     if (vineAttemptedColor != null) {
       _vineAttemptedColor = vineAttemptedColor;
     }
+    // gridColor parameter kept for API compatibility but not currently used
 
+    // Update existing components if they exist - must replace the Paint to trigger redraw
+    // Update background color
     _backgroundColor = backgroundColor;
 
     if (_gameBackground != null) {
@@ -125,6 +89,9 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
 
     _updateBackgroundOpacity();
+
+    // We no longer tint the _gameBackground sprite with a solid color
+    // as it should show the actual artwork.
   }
 
   void _updateBackgroundOpacity([bool? isSimpleVines]) {
@@ -163,13 +130,28 @@ class GardenGame extends FlameGame with TapCallbacks {
   Color get vineAttemptedColor => _vineAttemptedColor;
 
   /// Expose whether simple vines are enabled
-  bool get useSimpleVines => callbacks.getUseSimpleVines();
+  bool get useSimpleVines => ref.read(useSimpleVinesProvider);
 
   @override
   Future<void> onLoad() async {
     LoggerService.debug('onLoad called', tag: 'GardenGame');
     images.prefix = 'assets/art/';
     await super.onLoad();
+
+    // Reset grace for new level and set game instance asynchronously to avoid modifying providers during build phases
+    Future.microtask(() {
+      try {
+        if (ref.read(gameInstanceProvider) != this) {
+          ref.read(gameInstanceProvider.notifier).resetGrace();
+          ref.read(gameInstanceProvider.notifier).setGame(this);
+        }
+      } catch (_) {
+        // Safe to ignore if ref is already disposed/unmounted
+      }
+    });
+
+    // Load current level first
+    await _loadCurrentLevel();
 
     // Load parable background artwork
     try {
@@ -188,19 +170,81 @@ class GardenGame extends FlameGame with TapCallbacks {
     } catch (e, stack) {
       LoggerService.error('Failed to load background sprite',
           error: e, stackTrace: stack, tag: 'GardenGame');
+      // Continue without background or use a fallback color
     }
 
     // Create grid and background components
     _createLevelComponents();
 
+    // Set level data on grid after it's created
+    if (_currentLevelData != null) {
+      await _setLevelDataOnGrid();
+    }
+
+    // Listen to vine state changes (blocking/clearing updates)
+    ref.listenManual(vineStatesProvider, (previous, next) {
+      if (_currentLevelData != null && _isGridInitialized) {
+        grid.setLevelData(_currentLevelData!, next);
+        // Force projection lines to redraw when vine states change
+        if (projectionLines.isMounted) {
+          projectionLines.update(0);
+        }
+      }
+    });
+
+    // Listen to vine style changes to update background opacity and redraw vines dynamically
+    ref.listenManual(vineStyleProvider, (previous, next) {
+      _updateBackgroundOpacity(next == VineStyle.simple);
+    });
+
+    // Listen to projection lines visibility and animation state
+    ref.listenManual(projectionLinesVisibleProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listenManual(anyVineAnimatingProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listenManual(hintedVineIdsProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    // Listen to camera state changes and apply transforms
+    ref.listenManual(cameraStateProvider, (previous, next) {
+      _applyCameraTransform(next);
+    });
+
+    // Initialize camera state for the current level
+    _initializeCameraForLevel();
+
     // Center camera
     camera.viewport.size = size;
-
-    // Trigger game loaded callback to let the Flutter layer initialize the level
-    callbacks.onGameLoaded(this);
   }
 
-  void applyCameraTransform(CameraState cameraState) {
+  void _initializeCameraForLevel() {
+    if (_currentLevelData == null) return;
+
+    final cameraNotifier = ref.read(cameraStateProvider.notifier);
+
+    // Update zoom bounds based on screen and grid size
+    cameraNotifier.updateZoomBounds(
+      screenWidth: size.x,
+      screenHeight: size.y,
+      gridCols: _currentLevelData!.gridWidth,
+      gridRows: _currentLevelData!.gridHeight,
+    );
+
+    // Start animation from full-board view to 1.0x
+    cameraNotifier.animateToDefaultZoom(
+      screenWidth: size.x,
+      screenHeight: size.y,
+      gridCols: _currentLevelData!.gridWidth,
+      gridRows: _currentLevelData!.gridHeight,
+    );
+  }
+
+  void _applyCameraTransform(CameraState cameraState) {
     // Apply zoom and pan to grid
     if (_isGridInitialized && grid.isMounted) {
       grid.applyCameraTransform(
@@ -222,33 +266,64 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
   }
 
-  void updateProjectionLinesVisibility({
-    required bool visible,
-    required Set<String> hintedVines,
-    required bool isAnimating,
-  }) {
+  void _updateProjectionLinesVisibility() {
+    final shouldShow = ref.read(projectionLinesVisibleProvider);
+    final hintedVines = ref.read(hintedVineIdsProvider);
+    final isAnimating = ref.read(anyVineAnimatingProvider);
+
+    // When animation starts, turn off projection lines visibility
+    // so they don't reappear when animation ends
+    if (isAnimating && shouldShow) {
+      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+    }
+    // Also clear hinted vines when animation starts
+    if (isAnimating && hintedVines.isNotEmpty) {
+      ref.read(hintedVineIdsProvider.notifier).clear();
+    }
+
+    // Hide projection lines when any vine is animating
     if (_isGridInitialized && projectionLines.isMounted) {
       projectionLines
-          .setVisible((visible || hintedVines.isNotEmpty) && !isAnimating);
+          .setVisible((shouldShow || hintedVines.isNotEmpty) && !isAnimating);
     }
   }
 
   void _createLevelComponents() {
+    if (_currentLevelData == null) return;
+
     // Interactive grid
     grid = GridComponent(
       cellSize: cellSize,
-      onVineCleared: callbacks.onVineCleared,
+      onVineCleared: (vineId) {
+        // Update the Riverpod provider when a vine is cleared
+        ref.read(vineStatesProvider.notifier).clearVine(vineId);
+      },
       onVineTap: (vineId) {
         // Called when user taps a vine (after checking if it's valid)
+        // No additional action needed here, component handles sliding animation
       },
-      onVineAnimationStateChanged: callbacks.onVineAnimationStateChanged,
-      onVineAttempted: callbacks.onVineAttempted,
-      onTapIncrement: callbacks.onTapIncrement,
+      onVineAnimationStateChanged: (vineId, animationState) {
+        // Update animation state in provider
+        ref
+            .read(vineStatesProvider.notifier)
+            .setAnimationState(vineId, animationState);
+      },
+      onVineAttempted: (vineId) {
+        // Mark vine as attempted in provider
+        ref.read(vineStatesProvider.notifier).markAttempted(vineId);
+      },
+      onTapIncrement: (count) {
+        // Increment tap counter
+        for (int i = 0; i < count; i++) {
+          ref.read(levelTotalTapsProvider.notifier).increment();
+        }
+      },
       onTapEffect: (position) {
+        // Create and add tap effect at the tapped position
         final tapEffect = TapEffectComponent(
           tapPosition: position,
           color: _tapEffectColor,
-          maxRadius: 30.0,
+          maxRadius: 30.0, // Reduced to prevent large effects
           duration: 0.4,
         );
         grid.add(tapEffect);
@@ -260,65 +335,142 @@ class GardenGame extends FlameGame with TapCallbacks {
     projectionLines = ProjectionLinesComponent(cellSize: cellSize);
     add(projectionLines);
 
+    // Set initial level data on projection lines
+    if (_currentLevelData != null) {
+      projectionLines.setLevelData(_currentLevelData!);
+    }
     _isGridInitialized = true;
   }
 
-  /// Start or load a level with the given level data and current states
-  void startLevel(LevelData levelData, Map<String, VineState> vineStates) {
-    _currentLevelData = levelData;
-
-    // Set level data on grid
-    grid.setLevelData(levelData, vineStates);
-
-    // Set level data on projection lines
-    projectionLines.setLevelData(levelData);
-
-    _updateBackgroundSize();
-    _updateBackgroundOpacity();
-  }
-
-  VineStyle _vineStyle = VineStyle.classic;
-  VineStyle get vineStyle => _vineStyle;
-
-  /// Update vine style dynamically
-  void updateVineStyle(VineStyle style) {
-    _vineStyle = style;
-    _updateBackgroundOpacity(style == VineStyle.simple);
-  }
-
-  /// Start or load a lesson with the given lesson data
-  void startLesson(LessonData lesson) {
-    _currentLessonData = lesson;
-    final levelData = lesson.toLevelData();
-
-    // For lessons, vine states start fresh (all uncompleted)
-    final Map<String, VineState> vineStates = {};
-    for (final vine in levelData.vines) {
-      vineStates[vine.id] = VineState(
-        id: vine.id,
-        isBlocked: false,
-        isCleared: false,
-        animationState: VineAnimationState.normal,
-        hasBeenAttempted: false,
-      );
+  Future<void> _loadCurrentLevel() async {
+    // If this is a lesson, use the pre-loaded lesson data
+    if (_currentLessonData != null) {
+      LoggerService.info('Loading lesson ${_currentLessonData!.id}',
+          tag: 'GardenGame');
+      _convertLessonToLevelData(_currentLessonData!);
+      return;
     }
 
-    startLevel(levelData, vineStates);
-  }
+    final debugSelected = ref.read(debugSelectedLevelProvider);
+    final gameProgress = ref.read(gameProgressProvider);
+    final levelId = debugSelected ?? gameProgress.currentLevel;
 
-  /// Update vine states dynamically when they change in the app state
-  void updateVineStates(Map<String, VineState> vineStates) {
-    if (_currentLevelData != null && _isGridInitialized) {
-      grid.setLevelData(_currentLevelData!, vineStates);
-      if (projectionLines.isMounted) {
-        projectionLines.update(0);
+    if (debugSelected != null) {
+      LoggerService.debug(
+          'Debug selected level $debugSelected — loading temporarily without changing saved progress',
+          tag: 'GardenGame');
+    }
+
+    LoggerService.info(
+      'Attempting to load level $levelId',
+      tag: 'GardenGame',
+    );
+    LoggerService.debug('Game progress: $gameProgress', tag: 'GardenGame');
+
+    try {
+      final mappings = await ref.read(levelMappingsProvider.future);
+      if (!mappings.containsKey(levelId)) {
+        LoggerService.info('All levels completed! Setting game as completed.',
+            tag: 'GardenGame');
+        ref.read(gameCompletedProvider.notifier).setCompleted(true);
+        return;
       }
+
+      LoggerService.debug('Loading level $levelId via levelDataProvider',
+          tag: 'GardenGame');
+
+      final levelData = await ref.read(levelDataProvider(levelId).future);
+      _currentLevelData = levelData;
+      LoggerService.debug(
+        'Successfully retrieved LevelData: ${_currentLevelData!.name}',
+        tag: 'GardenGame',
+      );
+
+      final previousLevelId = ref.read(currentLevelProvider)?.id;
+
+      // Update providers
+      ref.read(currentLevelProvider.notifier).setLevel(_currentLevelData);
+
+      // Ensure gameCompleted is false if we found a level
+      ref.read(gameCompletedProvider.notifier).setCompleted(false);
+
+      // Reset tap counters for new level
+      ref.read(levelTotalTapsProvider.notifier).reset();
+      ref.read(levelWrongTapsProvider.notifier).reset();
+
+      // Reset or increment attempt count for current level
+      final attemptNotifier = ref.read(levelAttemptCountProvider.notifier);
+      if (previousLevelId != _currentLevelData!.id) {
+        attemptNotifier.set(1);
+      }
+
+      // Track level start time
+      ref.read(levelStartTimestampProvider.notifier).set(DateTime.now());
+
+      // Log level start analytics (skip for debug play sessions)
+      if (!ref.read(debugPlayModeProvider)) {
+        ref.read(analyticsServiceProvider).logLevelStart(_currentLevelData!.id);
+      }
+
+      LoggerService.info('Loaded level $levelId: ${_currentLevelData!.name}',
+          tag: 'GardenGame');
+    } catch (e, stackTrace) {
+      LoggerService.error('Error loading level $levelId',
+          error: e, stackTrace: stackTrace, tag: 'GardenGame');
+
+      ref.read(gameOverProvider.notifier).setGameOver(true);
+      return;
     }
   }
 
-  /// Update simple vines setting dynamically
-  void updateSimpleVines(bool useSimple) {
-    _updateBackgroundOpacity(useSimple);
+  /// Converts lesson data to level data for rendering
+  void _convertLessonToLevelData(LessonData lesson) {
+    // Convert lesson vines to level vines
+    final vines = lesson.vines.map((lessonVine) {
+      return VineData(
+        id: lessonVine.id,
+        headDirection: lessonVine.headDirection,
+        orderedPath: lessonVine.orderedPath,
+      );
+    }).toList();
+
+    // Create level data from lesson
+    _currentLevelData = LevelData(
+      id: lesson.id.toString(),
+      name: 'Lesson ${lesson.id}',
+      difficulty: 'tutorial',
+      gridWidth: lesson.gridWidth,
+      gridHeight: lesson.gridHeight,
+      vines: vines,
+      maxMoves: 999, // Unlimited moves for lessons
+      minMoves: 0,
+      complexity: 'tutorial',
+      grace: 3, // Use standard grace for tutorial so GameHeader displays hearts
+      mask: MaskData(mode: 'show-all', points: []),
+    );
+
+    // Update providers
+    ref.read(currentLevelProvider.notifier).setLevel(_currentLevelData);
+    ref.read(gameCompletedProvider.notifier).setCompleted(false);
+    ref.read(levelTotalTapsProvider.notifier).reset();
+    ref.read(levelWrongTapsProvider.notifier).reset();
+    ref.read(levelCompleteProvider.notifier).setComplete(false);
+
+    LoggerService.info('Converted lesson ${lesson.id} to level data',
+        tag: 'GardenGame');
+  }
+
+  Future<void> _setLevelDataOnGrid() async {
+    if (_currentLevelData == null) return;
+
+    // Reset vine states for this level to ensure completion detection works
+    ref.read(vineStatesProvider.notifier).resetForLevel(_currentLevelData!);
+
+    // Get current vine states from the provider after reset
+    final vineStates = ref.read(vineStatesProvider);
+
+    // Set data on grid
+    grid.setLevelData(_currentLevelData!, vineStates);
   }
 
   @override
@@ -346,7 +498,16 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   @override
   void onRemove() {
-    callbacks.onGameRemoved();
+    // No need to dispose ref or container
+    Future.microtask(() {
+      try {
+        if (ref.read(gameInstanceProvider) == this) {
+          ref.read(gameInstanceProvider.notifier).setGame(null);
+        }
+      } catch (_) {
+        // Safe to ignore if ref is already disposed/unmounted
+      }
+    });
     super.onRemove();
   }
 
@@ -355,10 +516,13 @@ class GardenGame extends FlameGame with TapCallbacks {
     super.onTapDown(event);
 
     // Trigger haptic feedback on tap if enabled
-    if (callbacks.getHapticsEnabled()) {
+    final hapticsEnabled = ref.watch(hapticsEnabledProvider);
+    if (hapticsEnabled) {
       HapticFeedback.lightImpact();
     }
 
+    // Handle taps outside the grid (for play area but not on grid cells)
+    // Grid and cells handle their own taps, so this only catches taps in empty space
     final tapPos = event.canvasPosition;
 
     // Check if tap is outside the grid bounds
@@ -366,16 +530,52 @@ class GardenGame extends FlameGame with TapCallbacks {
     final isOutsideGrid = !gridBounds.contains(tapPos.toOffset());
 
     if (isOutsideGrid) {
-      callbacks.onTapOutsideGrid();
+      // Clear hints when tapping outside the grid
+      ref.read(hintedVineIdsProvider.notifier).clear();
 
       // Create tap effect at canvas position
       final tapEffect = TapEffectComponent(
         tapPosition: tapPos,
         color: _tapEffectColor,
-        maxRadius: 30.0,
+        maxRadius: 30.0, // Reduced to prevent large effects
         duration: 0.4,
       );
       add(tapEffect);
+    }
+  }
+
+  // Method to reload the current level (called when progress is reset or level completed)
+  Future<void> reloadLevel() async {
+    // Check if grid is initialized and mounted before removing
+    try {
+      if (_isGridInitialized && grid.isMounted) {
+        remove(grid);
+      }
+      if (_isGridInitialized && projectionLines.isMounted) {
+        remove(projectionLines);
+      }
+      _isGridInitialized = false;
+    } catch (e) {
+      // Ignore if grid/projectionLines weren't initialized
+    }
+
+    await _loadCurrentLevel();
+
+    if (_currentLevelData != null) {
+      _createLevelComponents();
+
+      // Reset vine states for the new level
+      ref.read(vineStatesProvider.notifier).resetForLevel(_currentLevelData!);
+      // Reset grace for the new level
+      ref.read(gameInstanceProvider.notifier).resetGrace();
+
+      await _setLevelDataOnGrid();
+
+      // Reset projection lines visibility
+      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+
+      // Re-initialize camera for the new level
+      _initializeCameraForLevel();
     }
   }
 }

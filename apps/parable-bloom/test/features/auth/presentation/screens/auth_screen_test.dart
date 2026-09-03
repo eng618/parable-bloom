@@ -54,8 +54,7 @@ class FakeAnalyticsService extends AnalyticsService {
   Future<void> logScreenView(String screenName) async {}
 
   @override
-  Future<void> logParableViewed(String parableId,
-      {String source = 'game_unlock'}) async {}
+  Future<void> logParableViewed(String parableId) async {}
 
   @override
   Future<void> logLevelStart(dynamic levelId) async {}

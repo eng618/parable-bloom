@@ -89,8 +89,7 @@ class AnalyticsService {
     );
   }
 
-  Future<void> logLevelRestart(dynamic levelId, int attempts,
-      {int elapsedSeconds = -1}) async {
+  Future<void> logLevelRestart(dynamic levelId, int attempts) async {
     final firebase = _firebase;
     if (firebase != null) {
       await firebase.logEvent(
@@ -98,7 +97,6 @@ class AnalyticsService {
         parameters: {
           'level_id': levelId,
           'attempts': attempts,
-          if (elapsedSeconds >= 0) 'elapsed_seconds': elapsedSeconds,
         },
       );
     }
@@ -107,36 +105,6 @@ class AnalyticsService {
       properties: {
         'level_id': levelId,
         'attempts': attempts,
-        if (elapsedSeconds >= 0) 'elapsed_seconds': elapsedSeconds,
-      },
-    );
-  }
-
-  Future<void> logLevelQuit({
-    required dynamic levelId,
-    int elapsedSeconds = -1,
-    int taps = -1,
-    int remainingVines = -1,
-  }) async {
-    final firebase = _firebase;
-    if (firebase != null) {
-      await firebase.logEvent(
-        name: 'level_quit',
-        parameters: {
-          'level_id': levelId.toString(),
-          if (elapsedSeconds >= 0) 'elapsed_seconds': elapsedSeconds,
-          if (taps >= 0) 'taps_before_quit': taps,
-          if (remainingVines >= 0) 'remaining_vines': remainingVines,
-        },
-      );
-    }
-    await _trackPlausible(
-      eventName: 'level_quit',
-      properties: {
-        'level_id': levelId.toString(),
-        if (elapsedSeconds >= 0) 'elapsed_seconds': elapsedSeconds,
-        if (taps >= 0) 'taps_before_quit': taps,
-        if (remainingVines >= 0) 'remaining_vines': remainingVines,
       },
     );
   }
@@ -290,73 +258,17 @@ class AnalyticsService {
     );
   }
 
-  Future<void> logParableViewed(String parableId,
-      {String source = 'game_unlock'}) async {
+  Future<void> logParableViewed(String parableId) async {
     final firebase = _firebase;
     if (firebase != null) {
       await firebase.logEvent(
         name: 'parable_viewed',
-        parameters: {'parable_id': parableId, 'source': source},
+        parameters: {'parable_id': parableId},
       );
     }
     await _trackPlausible(
       eventName: 'parable_viewed',
-      properties: {'parable_id': parableId, 'source': source},
-    );
-  }
-
-  Future<void> logScriptureRead({
-    required String scriptureId,
-    required String reference,
-    required String translation,
-    int durationSeconds = -1,
-  }) async {
-    final firebase = _firebase;
-    if (firebase != null) {
-      await firebase.logEvent(
-        name: 'scripture_read',
-        parameters: {
-          'scripture_id': scriptureId,
-          'reference': reference,
-          'translation': translation,
-          if (durationSeconds >= 0) 'duration_seconds': durationSeconds,
-        },
-      );
-    }
-    await _trackPlausible(
-      eventName: 'scripture_read',
-      properties: {
-        'scripture_id': scriptureId,
-        'reference': reference,
-        'translation': translation,
-        if (durationSeconds >= 0) 'duration_seconds': durationSeconds,
-      },
-    );
-  }
-
-  Future<void> logJournalOpened({
-    required String initialTab,
-    int unlockedCount = 0,
-    int totalCount = 0,
-  }) async {
-    final firebase = _firebase;
-    if (firebase != null) {
-      await firebase.logEvent(
-        name: 'journal_opened',
-        parameters: {
-          'initial_tab': initialTab,
-          'unlocked_count': unlockedCount,
-          'total_count': totalCount,
-        },
-      );
-    }
-    await _trackPlausible(
-      eventName: 'journal_opened',
-      properties: {
-        'initial_tab': initialTab,
-        'unlocked_count': unlockedCount,
-        'total_count': totalCount,
-      },
+      properties: {'parable_id': parableId},
     );
   }
 }
