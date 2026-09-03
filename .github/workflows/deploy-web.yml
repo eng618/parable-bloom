@@ -138,7 +138,7 @@ jobs:
           cat deploy_output.json
 
           # Use node to extract the URL from JSON output consistently
-          PREVIEW_URL=$(node -e "const data = JSON.parse(require('fs').readFileSync('deploy_output.json', 'utf8')); console.log(data.result['parable-bloom']?.url || data.result['parable-bloom']?.urls?.[0]);")
+          PREVIEW_URL=$(node -e "const data = JSON.parse(require('fs').readFileSync('deploy_output.json', 'utf8')); const r = data.result; const siteData = r['parable-bloom'] || r['parable_bloom'] || {}; console.log(siteData.url || (siteData.urls && siteData.urls[0]) || '');")
 
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           echo "Channel deployed to: $PREVIEW_URL"

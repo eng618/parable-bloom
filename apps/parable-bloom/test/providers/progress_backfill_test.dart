@@ -157,12 +157,53 @@ void main() {
       // Pre-selected translation is preserved
       expect(progress.unlockedTranslations['seed_micro_1'], equals('web'));
 
-      // Re-run backfill manually
-      await container.read(gameProgressProvider.notifier).initialize();
-      progress = container.read(gameProgressProvider);
-
       expect(progress.unlockedTranslations['seed_micro_1'], equals('web'));
       expect(progress.unlockedScriptureIds.length, equals(1));
+    });
+
+    test(
+        'Gaps in completedLevels are healed up to highest completed level and completed module parable is unlocked',
+        () async {
+      // Simulate a user who reached lvl_seed_challenge (completed whole seedling module)
+      // but had gaps in completedLevels (e.g. lvl_seed_03 missing due to legacy migration bug)
+      final existingProgress = GameProgress.initial().copyWith(
+        completedLevels: {
+          'lvl_seed_01',
+          'lvl_seed_02',
+          'lvl_seed_04',
+          'lvl_seed_challenge'
+        },
+        currentLevel: 'lvl_seed_challenge',
+        tutorialCompleted: true,
+      );
+      fakeRepo.saveProgress(existingProgress);
+
+      final container = ProviderContainer(
+        overrides: [
+          gameProgressRepositoryProvider.overrideWithValue(fakeRepo),
+          hiveBoxProvider.overrideWithValue(_FakeBox() as Box),
+          analyticsServiceProvider.overrideWithValue(_FakeAnalytics()),
+          modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
+          scriptureServiceProvider.overrideWithValue(_FakeScriptureService()),
+        ],
+      );
+
+      await container.read(gameProgressProvider.notifier).initialize();
+      final progress = container.read(gameProgressProvider);
+
+      // Verify all levels in Seedling module are now in completedLevels
+      expect(progress.completedLevels.contains('lvl_seed_01'), isTrue);
+      expect(progress.completedLevels.contains('lvl_seed_02'), isTrue);
+      expect(progress.completedLevels.contains('lvl_seed_03'), isTrue,
+          reason: 'lvl_seed_03 gap should be healed');
+      expect(progress.completedLevels.contains('lvl_seed_04'), isTrue);
+      expect(progress.completedLevels.contains('lvl_seed_05'), isTrue,
+          reason: 'lvl_seed_05 should be healed prior to challenge level');
+      expect(progress.completedLevels.contains('lvl_seed_challenge'), isTrue);
+
+      // Verify module is now considered completed and parable translation is backfilled
+      expect(progress.isModuleCompleted(1, mockModules), isTrue);
+      expect(progress.unlockedTranslations.containsKey('1'), isTrue);
     });
   });
 }
@@ -209,7 +250,8 @@ class _FakeAnalytics extends AnalyticsService {
   @override
   Future<void> logScreenView(String screenName) async {}
   @override
-  Future<void> logParableViewed(String parableId) async {}
+  Future<void> logParableViewed(String parableId,
+      {String source = 'game_unlock'}) async {}
   @override
   Future<void> logLevelStart(dynamic levelId) async {}
   @override

@@ -17,6 +17,8 @@ class GameProgress {
       unlockedTranslations; // maps moduleId or scriptureId to translationId
   final Set<String>
       unlockedScriptureIds; // individual unlocked micro-verse or starter scripture IDs
+  final Map<String, String>
+      journalNotes; // maps scriptureId to user reflection notes
 
   GameProgress({
     this.currentLesson,
@@ -28,6 +30,7 @@ class GameProgress {
     this.savedMainGameLevel,
     required this.unlockedTranslations,
     required this.unlockedScriptureIds,
+    this.journalNotes = const {},
   });
 
   GameProgress copyWith({
@@ -40,6 +43,7 @@ class GameProgress {
     String? savedMainGameLevel,
     Map<String, String>? unlockedTranslations,
     Set<String>? unlockedScriptureIds,
+    Map<String, String>? journalNotes,
   }) {
     return GameProgress(
       currentLesson: currentLesson ?? this.currentLesson,
@@ -51,6 +55,7 @@ class GameProgress {
       savedMainGameLevel: savedMainGameLevel ?? this.savedMainGameLevel,
       unlockedTranslations: unlockedTranslations ?? this.unlockedTranslations,
       unlockedScriptureIds: unlockedScriptureIds ?? this.unlockedScriptureIds,
+      journalNotes: journalNotes ?? this.journalNotes,
     );
   }
 
@@ -65,6 +70,7 @@ class GameProgress {
       savedMainGameLevel: null,
       unlockedTranslations: {},
       unlockedScriptureIds: {},
+      journalNotes: const {},
     );
   }
 
@@ -123,6 +129,7 @@ class GameProgress {
       'savedMainGameLevel': savedMainGameLevel,
       'unlockedTranslations': unlockedTranslations,
       'unlockedScriptureIds': unlockedScriptureIds.toList(),
+      'journalNotes': journalNotes,
     };
   }
 
@@ -173,6 +180,10 @@ class GameProgress {
                 .toList() ??
             [];
 
+    final journalNotesMap = (json['journalNotes'] as Map<dynamic, dynamic>?)
+            ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
+        <String, String>{};
+
     return GameProgress(
       currentLesson: currentLessonStr,
       completedLessons: Set<String>.from(completedLessonsList),
@@ -183,11 +194,11 @@ class GameProgress {
       savedMainGameLevel: savedLevelStr,
       unlockedTranslations: unlockedTranslationsMap,
       unlockedScriptureIds: Set<String>.from(unlockedScriptureIdsList),
+      journalNotes: journalNotesMap,
     );
   }
 
   static String _mapLegacyLevelId(int legacyId) {
-    if (legacyId <= 5) return 'lesson_$legacyId';
     // challenge levels
     if (legacyId == 21) return 'lvl_seed_challenge';
     if (legacyId == 42) return 'lvl_sprout_challenge';
@@ -195,11 +206,9 @@ class GameProgress {
     if (legacyId == 84) return 'lvl_flourish_challenge';
     if (legacyId == 105) return 'lvl_harvest_challenge';
 
-    // level 6-20 map to lvl_seed_01-15 (Wait, seedling actually has 20 levels in the new v3 format)
-    // level 6-25 map to lvl_seed_01-20
-    if (legacyId >= 6 && legacyId <= 25) {
-      final idx = legacyId - 5;
-      final idxStr = idx < 10 ? '0$idx' : '$idx';
+    // seedling levels (1 to 20)
+    if (legacyId >= 1 && legacyId <= 20) {
+      final idxStr = legacyId < 10 ? '0$legacyId' : '$legacyId';
       return 'lvl_seed_$idxStr';
     }
     // sprout levels (22 to 41)
@@ -243,7 +252,8 @@ class GameProgress {
           tutorialCompleted == other.tutorialCompleted &&
           savedMainGameLevel == other.savedMainGameLevel &&
           _mapEquals(unlockedTranslations, other.unlockedTranslations) &&
-          _setEquals(unlockedScriptureIds, other.unlockedScriptureIds);
+          _setEquals(unlockedScriptureIds, other.unlockedScriptureIds) &&
+          _mapEquals(journalNotes, other.journalNotes);
 
   @override
   int get hashCode =>
@@ -255,7 +265,8 @@ class GameProgress {
       tutorialCompleted.hashCode ^
       savedMainGameLevel.hashCode ^
       unlockedTranslations.hashCode ^
-      unlockedScriptureIds.hashCode;
+      unlockedScriptureIds.hashCode ^
+      journalNotes.hashCode;
 
   bool _setEquals(Set<String> a, Set<String> b) {
     return a.length == b.length && a.every(b.contains);
@@ -271,5 +282,5 @@ class GameProgress {
 
   @override
   String toString() =>
-      'GameProgress(currentLesson: $currentLesson, lessonCompleted: $lessonCompleted, currentLevel: $currentLevel, tutorialCompleted: $tutorialCompleted, unlockedTranslationsCount: ${unlockedTranslations.length}, unlockedScripturesCount: ${unlockedScriptureIds.length})';
+      'GameProgress(currentLesson: $currentLesson, lessonCompleted: $lessonCompleted, currentLevel: $currentLevel, tutorialCompleted: $tutorialCompleted, unlockedTranslationsCount: ${unlockedTranslations.length}, unlockedScripturesCount: ${unlockedScriptureIds.length}, journalNotesCount: ${journalNotes.length})';
 }
