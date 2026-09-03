@@ -37,12 +37,6 @@ class _FakeBox implements Box<dynamic> {
 class _FakeAnalyticsService extends AnalyticsService {
   @override
   Future<void> logScreenView(String screenName) async {}
-
-  @override
-  Future<void> logSettingChanged({
-    required String settingName,
-    required dynamic value,
-  }) async {}
 }
 
 void main() {

@@ -110,31 +110,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       }
     });
 
-    // Sync state with Flame GardenGame instance
-    ref.listen(cameraStateProvider, (previous, next) {
-      _game?.applyCameraTransform(next);
-    });
-
-    ref.listen(vineStatesProvider, (previous, next) {
-      _game?.updateVineStates(next);
-    });
-
-    ref.listen(vineStyleProvider, (previous, next) {
-      _game?.updateSimpleVines(next == VineStyle.simple);
-    });
-
-    ref.listen(projectionLinesVisibleProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
-    });
-
-    ref.listen(anyVineAnimatingProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
-    });
-
-    ref.listen(hintedVineIdsProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
-    });
-
     // Validate lesson number
     if (currentLesson < 1 || currentLesson > 5) {
       return Scaffold(
@@ -530,26 +505,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
           context.go('/');
         },
       ),
-    );
-  }
-
-  void _updateProjectionLinesVisibility() {
-    if (_game == null) return;
-    final shouldShow = ref.read(projectionLinesVisibleProvider);
-    final hintedVines = ref.read(hintedVineIdsProvider);
-    final isAnimating = ref.read(anyVineAnimatingProvider);
-
-    if (isAnimating && shouldShow) {
-      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
-    }
-    if (isAnimating && hintedVines.isNotEmpty) {
-      ref.read(hintedVineIdsProvider.notifier).clear();
-    }
-
-    _game!.updateProjectionLinesVisibility(
-      visible: shouldShow,
-      hintedVines: hintedVines,
-      isAnimating: isAnimating,
     );
   }
 

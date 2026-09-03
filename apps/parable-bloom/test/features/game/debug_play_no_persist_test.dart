@@ -80,17 +80,10 @@ class FakeAnalytics extends AnalyticsService {
   Future<void> logScreenView(String screenName) async {}
 
   @override
-  Future<void> logParableViewed(String parableId,
-      {String source = 'game_unlock'}) async {}
+  Future<void> logParableViewed(String parableId, {String source = 'game_unlock'}) async {}
 
   @override
-  Future<void> logLevelStart(
-    dynamic levelId, {
-    String? moduleId,
-    String? tier,
-    bool? isChallenge,
-    int attempts = 1,
-  }) async {}
+  Future<void> logLevelStart(dynamic levelId) async {}
 
   @override
   Future<void> logLevelComplete(
@@ -99,8 +92,6 @@ class FakeAnalytics extends AnalyticsService {
     int wrongTaps, {
     int attempts = 1,
     int elapsedSeconds = -1,
-    String? moduleId,
-    String? tier,
   }) async {}
 
   @override

@@ -9,7 +9,7 @@ type UiThemeProviderProps = {
 
 export default function UiThemeProvider({ children }: UiThemeProviderProps) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       {children}
     </ThemeProvider>
   );
