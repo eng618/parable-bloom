@@ -14,10 +14,10 @@
 
 - **🐍 Snake-Like Movement**: Vines slide in head direction with body segments following as queue
 - **🙏 Grace System**: 3 Grace per level (4 for Transcendent) with faith-based messaging
-- **📚 Module Structure**: 5 modules with 15 levels each, unlocking the parables of Jesus
+- **📚 Module Structure**: 5 modules with 21 levels each (105 total levels), unlocking the parables of Jesus
 - **🎨 Adaptive Themes**: Light/dark mode with watercolor faith garden aesthetics
 - **🎯 Strategic Depth**: Dynamic blocking where clearing one vine unblocks others
-- **📱 Cross-Platform**: iOS & Android support with 60 FPS performance
+- **📱 Cross-Platform**: iOS, Android, and Web PWA support with 60 FPS performance
 
 ## 🚀 Quick Start
 
@@ -114,8 +114,10 @@ parable-bloom/
 │   └── level-builder/     # Go-based level generation tools
 ├── scripts/               # Workspace-wide utility scripts
 ├── documentation/
-│   ├── GAME_DESIGN.md     # Game design document
-│   └── ARCHITECTURE.md    # Technical architecture
+│   ├── tutorials/         # Learning-oriented lessons (Getting Started)
+│   ├── how-to/            # Task-oriented recipes (Release, Onboarding, Levels)
+│   ├── reference/         # Specs, schemas, tokens, attributions, audits
+│   └── explanation/       # Architecture & game design philosophy
 └── nx.json                # Nx workspace configuration
 ```
 
@@ -139,15 +141,20 @@ task release:ios
 **Single Component Builds (with caching):**
 
 ```bash
-task build:all   # Builds Flutter web, Level Builder, and Next.js site
+task build:all # Builds Flutter web, Level Builder, and Next.js site
 ```
 
 ## 📚 Documentation
 
-- **[🎮 Game Design Document](documentation/GAME_DESIGN.md)** - Complete mechanics, features, and design philosophy
-- **[🏗️ Architecture Guide](documentation/ARCHITECTURE.md)** - State management, persistence, and Firebase roadmap
-- **[📖 API Reference](https://pub.dev/documentation)** - Generated API docs
-- **[🚀 Release Process](documentation/RELEASE_PROCESS.md)** - Automated release and deployment guide
+The documentation follows the **[Diátaxis Technical Documentation Framework](documentation/README.md)**:
+
+- **🎓 [Tutorials: Developer Getting Started](documentation/tutorials/getting-started.md)** - Step-by-step onboarding walkthrough
+- **🛠️ [How-To: Release Process](documentation/how-to/release-process.md)** - Automated release and deployment guide
+- **🛠️ [How-To: Level Generation](documentation/how-to/level-generation.md)** - Level generation, validation, and repair workflows
+- **📖 [Reference: Level System](documentation/reference/level-system.md)** - JSON schemas, coordinate system, and validation rules
+- **📖 [Reference: Color System](documentation/reference/color-usage.md)** - Color palettes, design tokens, and theme mappings
+- **💡 [Explanation: Architecture Guide](documentation/explanation/architecture.md)** - State management, persistence, and Firebase roadmap
+- **💡 [Explanation: Game Design Document](documentation/explanation/game-design.md)** - Complete mechanics, features, and design philosophy
 
 ## 🤝 Contributing
 

@@ -84,14 +84,11 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
 
     final game = ref.watch(gameInstanceProvider);
 
-    if (currentLevel == null ||
-        game == null ||
-        !game.isGridInitialized ||
-        !game.grid.isMounted) {
+    if (currentLevel == null || game == null || !game.isGridInitialized) {
       return const SizedBox.shrink();
     }
 
-    final lessonId = currentLevel.id;
+    final lessonId = currentLevel.id.replaceAll('lesson_', '');
 
     // Reset blocked tap indicator after 1.5 seconds automatically
     if (blockedTap != null) {
@@ -239,21 +236,29 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
               ),
             ),
 
-            // Hand tap indicator
-            Positioned(
-              left: targetPosition.dx - 12,
-              top: targetPosition.dy + 8,
-              child: Icon(
-                Icons.touch_app,
-                color: Theme.of(context).colorScheme.primary,
-                size: 28,
-                shadows: const [
-                  Shadow(
-                      color: Colors.black45,
-                      blurRadius: 4,
-                      offset: Offset(1, 1)),
-                ],
-              ),
+            // Animated Hand tap indicator
+            AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, child) {
+                final bounceOffset =
+                    (1.0 - (_pulseController.value * 2 - 1.0).abs()) * 6.0;
+                return Positioned(
+                  left: targetPosition.dx - 12 - bounceOffset * 0.4,
+                  top: targetPosition.dy + 8 - bounceOffset,
+                  child: Icon(
+                    Icons.touch_app,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 30,
+                    shadows: const [
+                      Shadow(
+                        color: Colors.black45,
+                        blurRadius: 4,
+                        offset: Offset(1, 1),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
 
