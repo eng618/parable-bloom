@@ -49,8 +49,8 @@ jobs:
           # Pinned to the repo toolchain (.tool-versions). See ci.yml.
           bun-version: 1.3.14
 
-      - name: Cache Bun
-        uses: actions/cache@v6
+      - name: Restore Bun cache
+        uses: actions/cache/restore@v6
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-1.3.14-${{ hashFiles('**/bun.lock') }}
@@ -182,3 +182,12 @@ jobs:
                 body: commentBody,
               });
             }
+
+      # Save the bun cache only when everything succeeded, so a failed
+      # run can never poison the cache for subsequent runs. See ci.yml.
+      - name: Save Bun cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-1.3.14-${{ hashFiles('**/bun.lock') }}
