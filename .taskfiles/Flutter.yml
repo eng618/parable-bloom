@@ -1,119 +1,56 @@
-version: '3'
+version: "3"
 
 tasks:
   # -----------------------------------------------------------------------------
-  # Build
+  # Dependencies & Setup
+  # -----------------------------------------------------------------------------
 
-  build:web:
-    desc: Build the Flutter application for Web
+  get:
+    desc: Get Flutter dependencies
+    run: once
     dir: apps/parable-bloom
-    sources:
-      - lib/**/*
-      - assets/**/*
-      - pubspec.yaml
-      - web/**/*
-    generates:
-      - build/web/**/*
     cmds:
-      - flutter build web --release
+      - flutter pub get
     preconditions:
       - sh: command -v flutter >/dev/null 2>&1
-        msg: 'Flutter is not installed.'
+        msg: "Flutter is not installed. Please install Flutter to proceed."
 
-  build:android:
-    desc: Build the Android application
+  upgrade:
+    desc: Upgrade Flutter dependencies
     dir: apps/parable-bloom
     cmds:
-      - |
-        flutter build appbundle --release \
-          {{if .BUILD_NAME}}--build-name "{{.BUILD_NAME}}"{{end}} \
-          {{if .BUILD_NUMBER}}--build-number "{{.BUILD_NUMBER}}"{{end}}
+      - flutter pub upgrade
+    preconditions:
+      - sh: command -v flutter >/dev/null 2>&1
+        msg: "Flutter is not installed."
 
-  build:ios:
-    desc: Build the iOS application
-    dir: apps/parable-bloom
+  ios:pod-install:
+    desc: Run CocoaPods install in ios directory
+    platforms: [darwin]
+    dir: apps/parable-bloom/ios
+    cmds:
+      - pod install
+    run: once
+
+  macos:pod-install:
+    desc: Run CocoaPods install in macos directory
+    platforms: [darwin]
+    dir: apps/parable-bloom/macos
+    cmds:
+      - pod install
+    run: once
+
+  _ensure_ios_sim:
+    internal: true
     platforms: [darwin]
     cmds:
-      - flutter build ios --release
-
-  build:linux:
-    desc: Build the Linux application
-    dir: apps/parable-bloom
-    platforms: [linux]
-    cmds:
-      - flutter build linux --release
-
-  build:windows:
-    desc: Build the Windows application
-    dir: apps/parable-bloom
-    platforms: [windows]
-    cmds:
-      - flutter build windows --release
-
-  build:macos:
-    desc: Build the macOS application
-    dir: apps/parable-bloom
-    platforms: [darwin]
-    cmds:
-      - flutter build macos --release
+      - task: get
+      - task: ios:pod-install
+      - ./scripts/ios/boot_simulator.sh
 
   # -----------------------------------------------------------------------------
-  # Development
-
-  serve:web:
-    desc: Serve the application locally
-    dir: apps/parable-bloom
-    cmds:
-      - flutter run -d chrome
-
-  serve:web:clean:
-    desc: Clean and serve the application
-    cmds:
-      - task: clean
-      - task: get
-      - task: serve:web
-
-  dev:linux:
-    desc: Run the application in dev mode with Chromium
-    dir: apps/parable-bloom
-    platforms: [linux]
-    cmds:
-      - CHROME_EXECUTABLE=/snap/bin/chromium flutter run -d chrome
-
-  dev:darwin:
-    desc: Run the application in dev mode with Chrome
-    dir: apps/parable-bloom
-    platforms: [darwin]
-    cmds:
-      - flutter run -d chrome
-
-  dev:
-    desc: Run the application in dev mode for the current platform
-    cmds:
-      - task: dev:linux
-      - task: dev:darwin
-
-  serve:linux:
-    desc: Serve the application on Linux
-    dir: apps/parable-bloom
-    platforms: [linux]
-    cmds:
-      - flutter run -d linux
-
-  serve:windows:
-    desc: Serve the application on Windows
-    dir: apps/parable-bloom
-    platforms: [windows]
-    cmds:
-      - flutter run -d windows
-
-  serve:macos:
-    desc: Serve the application on macOS
-    dir: apps/parable-bloom
-    platforms: [darwin]
-    cmds:
-      - task: check:macos:toolchain
-      - flutter run -d macos
+  # Toolchain & Diagnostics
+  # -----------------------------------------------------------------------------
 
   check:macos:toolchain:
     desc: Verify Xcode command-line tooling for macOS/iOS builds
@@ -184,11 +121,50 @@ tasks:
         echo "  2) sudo xcode-select -s /Applications/Xcode.app/Contents/Developer"
         echo "  3) sudo xcodebuild -runFirstLaunch"
 
+  # -----------------------------------------------------------------------------
+  # Development & Serving (Local Execution)
+  # -----------------------------------------------------------------------------
+
+  dev:
+    desc: Run the application in dev mode for the current platform
+    cmds:
+      - task: dev:linux
+      - task: dev:darwin
+
+  dev:darwin:
+    desc: Run the application in dev mode with Chrome
+    dir: apps/parable-bloom
+    platforms: [darwin]
+    cmds:
+      - flutter run -d chrome
+
+  dev:linux:
+    desc: Run the application in dev mode with Chromium
+    dir: apps/parable-bloom
+    platforms: [linux]
+    cmds:
+      - CHROME_EXECUTABLE=/snap/bin/chromium flutter run -d chrome
+
+  serve:web:
+    desc: Serve the application locally
+    dir: apps/parable-bloom
+    cmds:
+      - flutter run -d chrome
+
+  serve:web:clean:
+    desc: Clean and serve the application
+    cmds:
+      - task: clean
+      - task: get
+      - task: serve:web
+
   serve:android:
     desc: Serve the application on Android
     dir: apps/parable-bloom
+    vars:
+      DEVICE: '{{.DEVICE | default "SM S901U"}}'
     cmds:
-      - flutter run -d 'SM S901U'
+      - flutter run -d '{{.DEVICE}}'
 
   serve:ios:
     desc: Serve the application on iOS simulator (auto-selects available simulator)
@@ -207,35 +183,31 @@ tasks:
       - task: _ensure_ios_sim
       - flutter run
 
-  _ensure_ios_sim:
-    internal: true
+  serve:macos:
+    desc: Serve the application on macOS
+    dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
-      - task: get
-      - task: ios:pod-install
-      - ./scripts/ios/boot_simulator.sh
+      - task: check:macos:toolchain
+      - flutter run -d macos
+
+  serve:linux:
+    desc: Serve the application on Linux
+    dir: apps/parable-bloom
+    platforms: [linux]
+    cmds:
+      - flutter run -d linux
+
+  serve:windows:
+    desc: Serve the application on Windows
+    dir: apps/parable-bloom
+    platforms: [windows]
+    cmds:
+      - flutter run -d windows
 
   # -----------------------------------------------------------------------------
-  # Platform-Specific Management
-
-  ios:pod-install:
-    desc: Run CocoaPods install in ios directory
-    platforms: [darwin]
-    dir: apps/parable-bloom/ios
-    cmds:
-      - pod install
-    run: once
-
-  macos:pod-install:
-    desc: Run CocoaPods install in macos directory
-    platforms: [darwin]
-    dir: apps/parable-bloom/macos
-    cmds:
-      - pod install
-    run: once
-
+  # Environment-Specific Execution
   # -----------------------------------------------------------------------------
-  # Environment Management
 
   serve:dev:
     desc: Run the application in development environment
@@ -273,23 +245,67 @@ tasks:
     cmds:
       - flutter run -d chrome --dart-define=APP_ENV=prod
 
-  build:web:dev:
-    desc: Build the web application for development environment
-    dir: apps/parable-bloom
-    cmds:
-      - flutter build web --release --dart-define=APP_ENV=dev
+  # -----------------------------------------------------------------------------
+  # Code Quality, Formatting & Linting
+  # -----------------------------------------------------------------------------
 
-  build:web:preview:
-    desc: Build the web application for preview environment
+  analyze:
+    desc: Analyze the Flutter code
     dir: apps/parable-bloom
     cmds:
-      - flutter build web --release --dart-define=APP_ENV=preview
+      - flutter analyze
 
-  build:web:prod:
-    desc: Build the web application for production environment
+  lint:
+    desc: Run Flutter linting
     dir: apps/parable-bloom
     cmds:
-      - flutter build web --release --dart-define=APP_ENV=prod
+      - flutter analyze --no-fatal-infos --no-fatal-warnings
+
+  lint:fix:
+    desc: Fix Flutter linting issues
+    dir: apps/parable-bloom
+    cmds:
+      - dart fix --apply
+
+  format:
+    desc: Format the Flutter code
+    dir: apps/parable-bloom
+    cmds:
+      - dart format lib test integration_test test_driver
+
+  format:check:
+    desc: Check if Flutter code is formatted
+    dir: apps/parable-bloom
+    cmds:
+      - find lib test -name "*.dart" -not -name "firebase_options.dart" -exec dart format --output=none --set-exit-if-changed {} \;
+
+  fix:
+    desc: Fix Flutter code (lints and formatting)
+    cmds:
+      - task: format
+      - task: lint:fix
+
+  # -----------------------------------------------------------------------------
+  # Testing
+  # -----------------------------------------------------------------------------
+
+  test:
+    desc: Run Flutter tests (excludes level solver tests)
+    dir: apps/parable-bloom
+    cmds:
+      - flutter test --coverage --exclude-tags=level-solver
+
+  test:levels:
+    desc: Run level solver tests only (for when adding new levels)
+    dir: apps/parable-bloom
+    cmds:
+      - flutter test test/level_validation_test.dart
+
+  test:all:
+    desc: Run all tests including level solver tests
+    dir: apps/parable-bloom
+    cmds:
+      - flutter test
 
   test:dev:
     desc: Run tests in development environment
@@ -310,64 +326,83 @@ tasks:
       - flutter test --dart-define=APP_ENV=prod
 
   # -----------------------------------------------------------------------------
-  # Standardization and Validation
+  # Builds & Compilation
+  # -----------------------------------------------------------------------------
 
-  analyze:
-    desc: Analyze the Flutter code
+  build:web:
+    desc: Build the Flutter application for Web
+    dir: apps/parable-bloom
+    sources:
+      - lib/**/*
+      - assets/**/*
+      - pubspec.yaml
+      - web/**/*
+    generates:
+      - build/web/**/*
+    cmds:
+      - flutter build web --release
+    preconditions:
+      - sh: command -v flutter >/dev/null 2>&1
+        msg: "Flutter is not installed."
+
+  build:android:
+    desc: Build the Android application
     dir: apps/parable-bloom
     cmds:
-      - flutter analyze
+      - |
+        flutter build appbundle --release \
+          {{if .BUILD_NAME}}--build-name "{{.BUILD_NAME}}"{{end}} \
+          {{if .BUILD_NUMBER}}--build-number "{{.BUILD_NUMBER}}"{{end}}
 
-  test:
-    desc: Run Flutter tests (excludes level solver tests)
+  build:ios:
+    desc: Build the iOS application
+    dir: apps/parable-bloom
+    platforms: [darwin]
+    cmds:
+      - flutter build ios --release
+
+  build:linux:
+    desc: Build the Linux application
+    dir: apps/parable-bloom
+    platforms: [linux]
+    cmds:
+      - flutter build linux --release
+
+  build:windows:
+    desc: Build the Windows application
+    dir: apps/parable-bloom
+    platforms: [windows]
+    cmds:
+      - flutter build windows --release
+
+  build:macos:
+    desc: Build the macOS application
+    dir: apps/parable-bloom
+    platforms: [darwin]
+    cmds:
+      - flutter build macos --release
+
+  build:web:dev:
+    desc: Build the web application for development environment
     dir: apps/parable-bloom
     cmds:
-      - flutter test --coverage --exclude-tags=level-solver
+      - flutter build web --release --dart-define=APP_ENV=dev
 
-  test:levels:
-    desc: Run level solver tests only (for when adding new levels)
+  build:web:preview:
+    desc: Build the web application for preview environment
     dir: apps/parable-bloom
     cmds:
-      - flutter test test/level_validation_test.dart
+      - flutter build web --release --dart-define=APP_ENV=preview
 
-  test:all:
-    desc: Run all tests including level solver tests
+  build:web:prod:
+    desc: Build the web application for production environment
     dir: apps/parable-bloom
     cmds:
-      - flutter test
-
-  format:
-    desc: Format the Flutter code
-    dir: apps/parable-bloom
-    cmds:
-      - dart format lib test integration_test test_driver
-
-  format:check:
-    desc: Check if Flutter code is formatted
-    dir: apps/parable-bloom
-    cmds:
-      - find lib test -name "*.dart" -not -name "firebase_options.dart" -exec dart format --output=none --set-exit-if-changed {} \;
-
-  lint:
-    desc: Run Flutter linting
-    dir: apps/parable-bloom
-    cmds:
-      - flutter analyze --no-fatal-infos --no-fatal-warnings
-
-  lint:fix:
-    desc: Fix Flutter linting issues
-    dir: apps/parable-bloom
-    cmds:
-      - dart fix --apply
-
-  fix:
-    desc: Fix Flutter code (lints and formatting)
-    cmds:
-      - task: format
-      - task: lint:fix
+      - flutter build web --release --dart-define=APP_ENV=prod
 
   # -----------------------------------------------------------------------------
   # Asset Management
+  # -----------------------------------------------------------------------------
 
   generate_icons:
     desc: Generate app icons and favicon for all platforms using flutter_launcher_icons
@@ -382,26 +417,8 @@ tasks:
       - flutter pub run flutter_launcher_icons:main
 
   # -----------------------------------------------------------------------------
-  # Dependency Management
-
-  get:
-    desc: Get Flutter dependencies
-    run: once
-    dir: apps/parable-bloom
-    cmds:
-      - flutter pub get
-    preconditions:
-      - sh: command -v flutter >/dev/null 2>&1
-        msg: 'Flutter is not installed. Please install Flutter to proceed.'
-
-  upgrade:
-    desc: Upgrade Flutter dependencies
-    dir: apps/parable-bloom
-    cmds:
-      - flutter pub upgrade
-
-  # -----------------------------------------------------------------------------
   # Cleanup
+  # -----------------------------------------------------------------------------
 
   clean:
     desc: Clean the Flutter build cache

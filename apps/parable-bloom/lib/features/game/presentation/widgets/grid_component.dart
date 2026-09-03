@@ -6,11 +6,8 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/game_board_layout.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
-import '../../../../core/providers/settings_providers.dart';
 import '../../../../core/services/logger_service.dart';
-import '../../application/providers/camera_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
-import '../../application/providers/solver_providers.dart';
 import '../../../game/domain/services/level_solver_service.dart';
 import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import 'garden_game.dart';
@@ -31,8 +28,9 @@ class GridComponent extends PositionComponent
   // Current level data - will be set by Riverpod
   LevelData? _currentLevel;
 
-  // Vine states - will be managed by Riverpod
+  // Vine states - managed via callbacks
   Map<String, VineState> _vineStates = {};
+  Map<String, VineState> get vineStates => _vineStates;
 
   // Callbacks for decoupled communication with state management
   final VoidCallback? onLevelComplete;
@@ -159,7 +157,7 @@ class GridComponent extends PositionComponent
   LevelData? getCurrentLevelData() => _currentLevel;
 
   LevelSolverService getLevelSolverService() {
-    return parent.ref.read(levelSolverServiceProvider);
+    return LevelSolverService();
   }
 
   @override
@@ -269,13 +267,11 @@ class GridComponent extends PositionComponent
       final headOffset = parent.getCellScreenPosition(head['x']!, head['y']!);
       final blockerOffset = parent.getCellScreenPosition(nextX, nextY);
 
-      parent.ref
-          .read(blockedTapProvider.notifier)
-          .setBlockedTap(BlockedTapState(
-            headPosition: headOffset,
-            blockerPosition: blockerOffset,
-            timestamp: DateTime.now(),
-          ));
+      parent.callbacks.onBlockedTap?.call(BlockedTapState(
+        headPosition: headOffset,
+        blockerPosition: blockerOffset,
+        timestamp: DateTime.now(),
+      ));
     }
 
     // Notify that a vine was tapped
@@ -327,7 +323,7 @@ class GridComponent extends PositionComponent
     if (level == null) return;
 
     // Check if any vine is currently animating
-    final isAnyAnimating = parent.ref.read(anyVineAnimatingProvider);
+    final isAnyAnimating = parent.callbacks.getIsAnyAnimating?.call() ?? false;
     if (isAnyAnimating) return;
 
     // Find first vine that meets the auto-clear criteria
@@ -358,8 +354,7 @@ class GridComponent extends PositionComponent
         );
 
         // 1. Adjust camera so the vine is visible
-        final cameraNotifier = parent.ref.read(cameraStateProvider.notifier);
-        await cameraNotifier.ensureVineVisible(vine);
+        await parent.callbacks.onEnsureVineVisible?.call(vine);
 
         // 2. Add a 200ms delay to allow player to register camera zoom/pan
         await Future.delayed(const Duration(milliseconds: 200));
@@ -420,9 +415,8 @@ class CellComponent extends RectangleComponent
     canvas.drawCircle(center, GameBoardLayout.gridDotRadius, dotPaint);
 
     // Debug: draw x,y labels in corner only if debug mode is enabled
-    final gardenGame = game;
-    final ref = gardenGame.ref;
-    final showCoordinates = ref.read(debugShowGridCoordinatesProvider);
+    final showCoordinates =
+        game.callbacks.getDebugShowGridCoordinates?.call() ?? false;
 
     if (kDebugMode && showCoordinates) {
       final textPainter = TextPainter(textDirection: TextDirection.ltr);
@@ -457,12 +451,12 @@ class CellComponent extends RectangleComponent
       final state = gridParent.getCurrentVineState(clickedVine.id);
       if (state != null && !state.isCleared) {
         // Trigger haptic feedback on long press if enabled
-        final hapticsEnabled = game.ref.read(hapticsEnabledProvider);
+        final hapticsEnabled = game.callbacks.getHapticsEnabled();
         if (hapticsEnabled) {
           HapticFeedback.mediumImpact();
         }
         // Add this vine ID to the hinted set
-        game.ref.read(hintedVineIdsProvider.notifier).add(clickedVine.id);
+        game.callbacks.onHintVine?.call(clickedVine.id);
       }
     }
   }
@@ -476,7 +470,7 @@ class CellComponent extends RectangleComponent
     }
 
     // Trigger haptic feedback on tap if enabled
-    final hapticsEnabled = game.ref.watch(hapticsEnabledProvider);
+    final hapticsEnabled = game.callbacks.getHapticsEnabled();
     if (hapticsEnabled) {
       HapticFeedback.lightImpact();
     }
@@ -484,7 +478,7 @@ class CellComponent extends RectangleComponent
     final gridParent = parent as GridComponent;
 
     // Clear hints on tap
-    game.ref.read(hintedVineIdsProvider.notifier).clear();
+    game.callbacks.onClearHints?.call();
 
     // Create tap effect at the tap position
     // Convert cell-local position to grid-local position

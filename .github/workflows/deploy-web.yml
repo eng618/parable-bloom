@@ -87,10 +87,8 @@ jobs:
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
 
       - name: Check Secrets
-        env:
-          KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
         run: |
-          if [ -z "$KEY" ]; then
+          if [ -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" ]; then
             echo "SKIP_DEPLOY=true" >> $GITHUB_ENV
             echo "FIREBASE_SERVICE_ACCOUNT_KEY is empty. Skipping deployment."
           fi
@@ -140,7 +138,7 @@ jobs:
           cat deploy_output.json
 
           # Use node to extract the URL from JSON output consistently
-          PREVIEW_URL=$(node -e "const data = JSON.parse(require('fs').readFileSync('deploy_output.json', 'utf8')); const res = data.result['parable-bloom'] || Object.values(data.result)[0]; console.log(res.url || (res.urls && res.urls[0]));")
+          PREVIEW_URL=$(node -e "const data = JSON.parse(require('fs').readFileSync('deploy_output.json', 'utf8')); const r = data.result; const siteData = r['parable-bloom'] || r['parable_bloom'] || {}; console.log(siteData.url || (siteData.urls && siteData.urls[0]) || '');")
 
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           echo "Channel deployed to: $PREVIEW_URL"
