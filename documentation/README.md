@@ -1,65 +1,80 @@
-# Master Documentation Index
+# 🌿 Parable Bloom Documentation
 
-## 🌿 Welcome to Parable Bloom
+Welcome to the **Parable Bloom** technical and design documentation. This documentation is organized according to the **[Diátaxis documentation framework](https://diataxis.fr/)**, structuring information across four distinct modes to serve different reader goals.
 
-**Parable Bloom** is a **Christ-centered arrow puzzle game** with faith-based themes, where players tap directional vines to slide them off a grid in the direction of their head, mimicking Snake's movement.
-
----
-
-## 📚 Documentation Index
-
-### 1. [Game Design (GAME_DESIGN.md)](GAME_DESIGN.md)
-
-The creative vision, core mechanics, progression systems, and visual style.
-
-- **Key Topics**: Snake-like movement, Grace system, Difficulty tiers, Color palettes.
-
-### 2. [Architecture (ARCHITECTURE.md)](ARCHITECTURE.md)
-
-The technical foundation, state management, and deployment strategy.
-
-- **Key Topics**: Flutter/Flame, Riverpod providers, feature-first folder structure, app shell boundaries, Hive persistence, Firebase environment strategy.
-
-### 3. [Level System (LEVEL_SYSTEM.md)](LEVEL_SYSTEM.md)
-
-The technical specification for creating and validating levels.
-
-- **Key Topics**: JSON schemas, Coordinate system, Validation rules, Tooling guide.
-
-### 4. [Release Process (RELEASE_PROCESS.md)](RELEASE_PROCESS.md)
-
-Automation for versioning, changelog, and store deployments.
-
-- **Key Topics**: Nx Release, Fastlane, BWS secrets, store uploads.
-
-### 5. [Store Onboarding (STORE_ONBOARDING.md)](STORE_ONBOARDING.md)
-
-Checklist and guidelines for App Store and Google Play Console release preparation and store listing questions.
-
-- **Key Topics**: Data safety, content rating, store assets.
-
-### 6. [Attributions (ATTRIBUTIONS.md)](ATTRIBUTIONS.md)
-
-Credits and licenses for third-party assets.
-
-### 7. [Launch Readiness Audit (LAUNCH_READINESS_AUDIT.md)](LAUNCH_READINESS_AUDIT.md)
-
-Comprehensive pre-launch audit covering 37 findings across bug review, code readiness, UI/UX, documentation, website alignment, and launch requirements.
-
-- **Key Topics**: Critical blockers, app ID consistency, store assets, attributions, prioritized launch checklist.
-
-### 8. [Scripture Licensing & Compliance (SCRIPTURE_LICENSING.md)](SCRIPTURE_LICENSING.md)
-
-Licensing requirements, approved attribution framework, and technical compliance safeguards for Bible translations.
-
-### 9. [Scripture Library & Reward System (SCRIPTURE_LIBRARY.md)](SCRIPTURE_LIBRARY.md)
-
-Comprehensive overview of the scripture reward progression model, database schemas, fallback rules, and UI integrations.
+```
+                   Practical Steps
+                         ▲
+                         │
+        [TUTORIALS]      │      [HOW-TO GUIDES]
+   Learning-oriented     │     Task-oriented
+   Get started & build   │     Solve specific problems
+                         │
+◄────────────────────────┼────────────────────────►
+  Study / Exploration    │     Work / Production
+                         │
+       [EXPLANATION]     │      [REFERENCE]
+  Understanding-oriented │     Information-oriented
+  Concepts & philosophy  │     Specs, schemas, tokens
+                         │
+                         ▼
+                  Theoretical Knowledge
+```
 
 ---
 
-## 🚀 Quick Start
+## 📚 Documentation Quadrants
 
-1. **Run Application**: `task run`
-2. **Validate Workspace**: `task validate`
-3. **Generate Levels**: `task levels:generate:all`
+### 🎓 1. [Tutorials](tutorials/README.md)
+
+_Learning-oriented lessons that take newcomers by the hand to get up and running._
+
+- **[Developer Getting Started](tutorials/getting-started.md)** — Step-by-step setup, running the app, playing the 5 progressive lessons, and running tests.
+
+---
+
+### 🛠️ 2. [How-To Guides](how-to/README.md)
+
+_Task-oriented recipes for accomplishing specific real-world tasks._
+
+- **[Automated Release Process](how-to/release-process.md)** — Conventional Commits, Nx Release, Fastlane, Bitwarden Secrets Manager (`bws`).
+- **[Store Onboarding](how-to/store-onboarding.md)** — App Store Connect and Google Play Console onboarding questions & setup.
+- **[Level Generation & Repair](how-to/level-generation.md)** — Generating, rendering, validating, and repairing levels with Go CLI tooling.
+- **[App Store Listings & ASO](how-to/app-store-listings/README.md)** — Metadata, visual asset guides, marketing copy, and compliance checklists.
+
+---
+
+### 📖 3. [Reference](reference/README.md)
+
+_Information-oriented technical descriptions, data schemas, design tokens, and compliance specifications._
+
+- **[Level System Specification](reference/level-system.md)** — JSON data format, coordinate system, occupancy rules, and validation checks.
+- **[Color System & Token Usage](reference/color-usage.md)** — Semantic palettes, dark/light themes, hex codes, and vine color mappings.
+- **[Scripture Licensing & Compliance](reference/scripture-licensing.md)** — Legal guidelines, copyright notices, and translation usage limits.
+- **[Third-Party Attributions](reference/attributions.md)** — Software licenses, audio credits, and graphical asset notices.
+- **[Launch Readiness Verification](reference/launch-readiness-audit.md)** — Verification gates, release evaluation criteria, and compliance checkpoints.
+- **[Known Constraints & Compatibility](reference/known-issues.md)** — Supported platform matrix, WebGL/runtime requirements, and troubleshooting.
+
+---
+
+### 💡 4. [Explanation](explanation/README.md)
+
+_Understanding-oriented discussions, conceptual architecture, and design rationale._
+
+- **[System Architecture](explanation/architecture.md)** — Flame engine integration, Riverpod state management, Hive persistence, Firebase sync strategy, and monorepo structure.
+- **[Game Design Philosophy](explanation/game-design.md)** — Arrow puzzle mechanics, grace system design, and parable progression.
+- **[Scripture Library & Reward Model](explanation/scripture-library.md)** — Dynamic translation delivery, offline KJV fallback architecture, and journal flow.
+- **[Level Builder Algorithms](explanation/level-builder/)** — In-depth explanations of the solver, backtracking, blocking heuristics, circuit breaker, and filler phases.
+
+---
+
+## 🚀 Quick Commands
+
+| Task                              | Command                    |
+| :-------------------------------- | :------------------------- |
+| **Run Web Game**                  | `task run`                 |
+| **Run All Tests**                 | `task test:all`            |
+| **Run Full Workspace Validation** | `task validate`            |
+| **Validate Levels**               | `task levels:validate`     |
+| **Generate Module Levels**        | `task levels:generate:all` |
+| **Bump Version & Tag**            | `task release:bump`        |

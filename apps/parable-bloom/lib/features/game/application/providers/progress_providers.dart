@@ -9,6 +9,7 @@ import '../../data/repositories/firebase_game_progress_repository.dart';
 import '../../domain/entities/cloud_sync_state.dart';
 import '../../domain/entities/game_progress.dart';
 import '../../../auth/application/providers/auth_providers.dart';
+import '../../../journal/application/providers/journal_providers.dart';
 import 'counter_providers.dart';
 import 'module_providers.dart';
 
@@ -104,21 +105,47 @@ class GameProgressNotifier extends Notifier<GameProgress> {
         }
       }
 
+      // Also compute effective max index considering currentLevel
+      final currentLevelIdx = playlist.indexOf(state.currentLevel);
+      final effectiveMaxIndex = maxCompletedIndex > (currentLevelIdx - 1)
+          ? maxCompletedIndex
+          : (currentLevelIdx - 1);
+
       var updatedProgress = state;
       bool changed = false;
 
+      // 1. Heal/backfill completedLevels up to effectiveMaxIndex
+      if (effectiveMaxIndex >= 0) {
+        final updatedCompletedLevels =
+            Set<String>.from(updatedProgress.completedLevels);
+        for (int i = 0; i <= effectiveMaxIndex && i < playlist.length; i++) {
+          final levelId = playlist[i];
+          if (!updatedCompletedLevels.contains(levelId)) {
+            updatedCompletedLevels.add(levelId);
+            changed = true;
+          }
+        }
+        if (changed) {
+          updatedProgress = updatedProgress.copyWith(
+            completedLevels: updatedCompletedLevels,
+          );
+        }
+      }
+
+      // 2. Backfill micro-verses and starter scriptures from modules
       for (final module in modulesList) {
         for (final scripture in module.scriptures) {
           final triggerLvl = scripture.triggerLevel;
 
-          final isTriggeredByLevel = state.completedLevels.contains(triggerLvl);
+          final isTriggeredByLevel =
+              updatedProgress.completedLevels.contains(triggerLvl);
           final isTriggeredByLesson =
-              state.completedLessons.contains(triggerLvl);
+              updatedProgress.completedLessons.contains(triggerLvl);
 
           final triggerIdx = playlist.indexOf(triggerLvl);
           final isTriggeredByPriorLevel = triggerIdx != -1 &&
-              maxCompletedIndex != -1 &&
-              triggerIdx <= maxCompletedIndex;
+              effectiveMaxIndex != -1 &&
+              triggerIdx <= effectiveMaxIndex;
 
           final shouldBeUnlocked = isTriggeredByLevel ||
               isTriggeredByLesson ||
@@ -151,6 +178,85 @@ class GameProgressNotifier extends Notifier<GameProgress> {
             }
           }
         }
+
+        // 3. Backfill parable translation if module is completed
+        if (updatedProgress.isModuleCompleted(module.id, modulesList)) {
+          if (!updatedProgress.unlockedTranslations
+              .containsKey(module.id.toString())) {
+            final scriptureService = ref.read(scriptureServiceProvider);
+            final translationId =
+                await scriptureService.pickRandomActiveTranslation();
+            if (!ref.mounted) return;
+
+            final updatedTranslations =
+                Map<String, String>.from(updatedProgress.unlockedTranslations)
+                  ..[module.id.toString()] = translationId;
+
+            updatedProgress = updatedProgress.copyWith(
+              unlockedTranslations: updatedTranslations,
+            );
+            changed = true;
+            LoggerService.info(
+              'Backfill parable translation: Module ${module.id} (${module.name}) with translation $translationId',
+              tag: 'GameProgressNotifier',
+            );
+          }
+        }
+      }
+
+      // 4. Backfill passages from biblical themes registry
+      try {
+        final themesList = await ref.read(journalThemesProvider.future);
+        for (final theme in themesList) {
+          for (final passage in theme.passages) {
+            final triggerLvl = passage.triggerLevel;
+            if (triggerLvl.isEmpty) continue;
+
+            final isTriggeredByLevel =
+                updatedProgress.completedLevels.contains(triggerLvl);
+            final isTriggeredByLesson =
+                updatedProgress.completedLessons.contains(triggerLvl);
+
+            final triggerIdx = playlist.indexOf(triggerLvl);
+            final isTriggeredByPriorLevel = triggerIdx != -1 &&
+                effectiveMaxIndex != -1 &&
+                triggerIdx <= effectiveMaxIndex;
+
+            final shouldBeUnlocked = isTriggeredByLevel ||
+                isTriggeredByLesson ||
+                isTriggeredByPriorLevel;
+
+            if (shouldBeUnlocked) {
+              if (!updatedProgress.unlockedScriptureIds.contains(passage.id)) {
+                final newScriptures =
+                    Set<String>.from(updatedProgress.unlockedScriptureIds)
+                      ..add(passage.id);
+
+                final scriptureService = ref.read(scriptureServiceProvider);
+                final translationId =
+                    await scriptureService.pickRandomActiveTranslation();
+                if (!ref.mounted) return;
+
+                final updatedTranslations = Map<String, String>.from(
+                    updatedProgress.unlockedTranslations)
+                  ..[passage.id] = translationId;
+
+                updatedProgress = updatedProgress.copyWith(
+                  unlockedScriptureIds: newScriptures,
+                  unlockedTranslations: updatedTranslations,
+                );
+                changed = true;
+                LoggerService.info(
+                  'Backfill biblical theme scripture unlocked: ${passage.id} (${passage.reference}) with translation $translationId',
+                  tag: 'GameProgressNotifier',
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        LoggerService.warn('Could not backfill biblical themes: $e',
+            tag: 'GameProgressNotifier');
       }
 
       if (changed) {
@@ -201,6 +307,40 @@ class GameProgressNotifier extends Notifier<GameProgress> {
             }
           }
         }
+      }
+
+      // Check biblical themes passages
+      try {
+        final themesList = await ref.read(journalThemesProvider.future);
+        for (final theme in themesList) {
+          for (final passage in theme.passages) {
+            if (passage.triggerLevel == levelId) {
+              if (!updatedProgress.unlockedScriptureIds.contains(passage.id)) {
+                final newScriptures =
+                    Set<String>.from(updatedProgress.unlockedScriptureIds)
+                      ..add(passage.id);
+                final scriptureService = ref.read(scriptureServiceProvider);
+                final translationId =
+                    await scriptureService.pickRandomActiveTranslation();
+                if (!ref.mounted) return;
+                final updatedTranslations = Map<String, String>.from(
+                    updatedProgress.unlockedTranslations)
+                  ..[passage.id] = translationId;
+
+                updatedProgress = updatedProgress.copyWith(
+                  unlockedScriptureIds: newScriptures,
+                  unlockedTranslations: updatedTranslations,
+                );
+                LoggerService.info(
+                  'Biblical theme scripture unlocked: ${passage.id} (${passage.reference}) with translation $translationId',
+                  tag: 'GameProgressNotifier',
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        LoggerService.warn('Error checking theme unlocks in completeLevel: $e');
       }
     } catch (e, stack) {
       LoggerService.error('Error checking scripture unlocks in completeLevel',
@@ -299,12 +439,58 @@ class GameProgressNotifier extends Notifier<GameProgress> {
           }
         }
       }
+
+      // Check biblical themes
+      try {
+        final themesList = await ref.read(journalThemesProvider.future);
+        for (final theme in themesList) {
+          for (final passage in theme.passages) {
+            if (passage.triggerLevel == lessonId) {
+              if (!newProgress.unlockedScriptureIds.contains(passage.id)) {
+                final newScriptures =
+                    Set<String>.from(newProgress.unlockedScriptureIds)
+                      ..add(passage.id);
+                final scriptureService = ref.read(scriptureServiceProvider);
+                final translationId =
+                    await scriptureService.pickRandomActiveTranslation();
+                if (!ref.mounted) return;
+                final updatedTranslations =
+                    Map<String, String>.from(newProgress.unlockedTranslations)
+                      ..[passage.id] = translationId;
+
+                newProgress = newProgress.copyWith(
+                  unlockedScriptureIds: newScriptures,
+                  unlockedTranslations: updatedTranslations,
+                );
+                LoggerService.info(
+                  'Lesson Biblical Theme Scripture unlocked: ${passage.id} (${passage.reference}) with translation $translationId',
+                  tag: 'GameProgressNotifier',
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        LoggerService.warn(
+            'Error checking theme unlocks in completeLesson: $e');
+      }
     } catch (e, stack) {
       LoggerService.error('Error checking scripture unlocks in completeLesson',
           error: e, stackTrace: stack);
     }
 
     if (!ref.mounted) return;
+    await _saveProgress(newProgress);
+  }
+
+  Future<void> saveJournalNote(String scriptureId, String note) async {
+    final updatedNotes = Map<String, String>.from(state.journalNotes);
+    if (note.trim().isEmpty) {
+      updatedNotes.remove(scriptureId);
+    } else {
+      updatedNotes[scriptureId] = note.trim();
+    }
+    final newProgress = state.copyWith(journalNotes: updatedNotes);
     await _saveProgress(newProgress);
   }
 

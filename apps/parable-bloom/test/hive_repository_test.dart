@@ -4,7 +4,6 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:parable_bloom/features/game/data/repositories/hive_game_progress_repository.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
-import 'package:path/path.dart' as path;
 
 void main() {
   late Box box;

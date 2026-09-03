@@ -11,5 +11,6 @@
   "chat.tools.terminal.autoApprove": {
     "hugo": true,
     "./level-builder": true
-  }
+  },
+  "java.configuration.updateBuildConfiguration": "automatic"
 }

@@ -1,3 +1,4 @@
+// ignore_for_file: subtype_of_sealed_class, must_be_immutable, unnecessary_import
 import 'dart:io';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
