@@ -5,7 +5,19 @@ tasks:
     desc: Install dependencies for the Next.js site
     dir: apps/parable-bloom-site
     cmds:
-      - bun install
+      # Serialized: nx runs site targets (lint/test/build) in parallel as
+      # separate `task` processes, and concurrent `bun install`s race on
+      # node_modules and the bun cache (ENOENT copy failures). mkdir is
+      # atomic on POSIX, so this mutex works on Linux and macOS (no flock).
+      # If a killed install leaves the lock behind, delete
+      # /tmp/parable-bloom-site-bun-install.lock and re-run.
+      - |
+        lock="/tmp/parable-bloom-site-bun-install.lock"
+        while ! mkdir "$lock" 2>/dev/null; do sleep 1; done
+        bun install
+        rc=$?
+        rmdir "$lock" 2>/dev/null
+        exit $rc
 
   dev:
     desc: Start Next.js development server for the site
