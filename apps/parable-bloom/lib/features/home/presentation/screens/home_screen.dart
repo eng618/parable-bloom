@@ -1,9 +1,10 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../game/application/providers/module_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
-import '../../../../providers/service_providers.dart';
+import '../../../../core/providers/service_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -217,17 +218,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final gameProgress = ref.read(gameProgressProvider);
 
     if (!gameProgress.tutorialCompleted) {
-      Navigator.of(context).pushNamed('/tutorial');
+      context.go('/tutorial');
     } else {
-      Navigator.of(context).pushNamed('/game');
+      context.go('/game');
     }
   }
 
   void _openSettings() {
-    Navigator.of(context).pushNamed('/settings');
+    context.push('/settings');
   }
 
   void _openJournal() {
-    Navigator.of(context).pushNamed('/journal');
+    context.push('/journal');
   }
 }

@@ -12,7 +12,7 @@ import "package:mockito/mockito.dart";
 import "package:parable_bloom/features/game/application/providers/progress_providers.dart";
 import "package:parable_bloom/features/game/data/repositories/firebase_game_progress_repository.dart";
 import "package:parable_bloom/features/game/domain/entities/game_progress.dart";
-import "package:parable_bloom/providers/infrastructure_providers.dart";
+import "package:parable_bloom/core/providers/infrastructure_providers.dart";
 
 // ---------- Mocks ----------
 

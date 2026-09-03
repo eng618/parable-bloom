@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/service_providers.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/providers/service_providers.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../domain/entities/level_data.dart';
 import '../../domain/services/level_solver_service.dart';
 import '../../presentation/widgets/garden_game.dart';
@@ -365,6 +365,24 @@ class ProjectionLinesVisibleNotifier extends Notifier<bool> {
 
   void setVisible(bool visible) {
     state = visible;
+  }
+}
+
+final hintedVineIdsProvider =
+    NotifierProvider<HintedVineIdsNotifier, Set<String>>(
+  HintedVineIdsNotifier.new,
+);
+
+class HintedVineIdsNotifier extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => {};
+
+  void add(String vineId) {
+    state = {...state, vineId};
+  }
+
+  void clear() {
+    state = {};
   }
 }
 

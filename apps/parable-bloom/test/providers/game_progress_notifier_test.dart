@@ -11,7 +11,7 @@ import "package:parable_bloom/features/game/data/repositories/firebase_game_prog
 import "package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart";
 import "package:parable_bloom/features/game/domain/entities/game_progress.dart";
 import "package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart";
-import "package:parable_bloom/providers/infrastructure_providers.dart";
+import "package:parable_bloom/core/providers/infrastructure_providers.dart";
 import "package:parable_bloom/features/game/application/providers/module_providers.dart";
 import "package:parable_bloom/features/game/domain/entities/level_data.dart";
 
@@ -148,6 +148,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         gameProgressRepositoryProvider.overrideWithValue(repository),
+        modulesProvider.overrideWithValue(const AsyncValue.data([])),
       ],
     );
     addTearDown(container.dispose);
@@ -188,6 +189,7 @@ void main() {
         challengeLevel: 'lvl_seed_challenge',
         parable: const {},
         unlockMessage: '',
+        scriptures: const [],
       ),
     ];
 

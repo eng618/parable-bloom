@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/infrastructure_providers.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/providers/infrastructure_providers.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../data/repositories/dynamic_level_repository.dart';
 import '../../domain/entities/level_data.dart';
 import '../../domain/repositories/level_repository.dart';

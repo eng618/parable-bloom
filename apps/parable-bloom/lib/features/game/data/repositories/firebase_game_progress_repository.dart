@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../../core/config/environment_config.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/services/logger_service.dart';
 import '../constants/game_progress_storage_keys.dart';
 import '../../domain/entities/cloud_sync_state.dart';
 import '../../domain/entities/game_progress.dart';

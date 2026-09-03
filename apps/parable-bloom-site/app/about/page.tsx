@@ -1,4 +1,6 @@
-import { Badge, Separator, Text } from '@gv-tech/ui-web';
+import { Badge } from '@gv-tech/ui-web/badge';
+import { Separator } from '@gv-tech/ui-web/separator';
+import { Text } from '@gv-tech/ui-web/text';
 import type { Metadata } from 'next';
 
 const Empty = () => null;

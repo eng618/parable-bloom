@@ -9,14 +9,12 @@ import '../core/app_theme.dart';
 import '../core/config/environment_config.dart';
 import '../features/auth/application/providers/auth_providers.dart';
 import '../features/game/application/providers/progress_providers.dart';
-import '../features/game/presentation/screens/game_screen.dart';
-import '../features/home/presentation/screens/home_screen.dart';
-import '../features/journal/presentation/screens/journal_screen.dart';
-import '../features/settings/presentation/screens/settings_screen.dart';
-import '../features/tutorial/presentation/screens/tutorial_flow_screen.dart';
-import '../providers/infrastructure_providers.dart';
-import '../providers/settings_providers.dart';
-import '../services/logger_service.dart';
+import '../core/providers/infrastructure_providers.dart';
+import '../core/providers/settings_providers.dart';
+import '../core/routes/app_router.dart';
+import '../core/services/logger_service.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
@@ -137,20 +135,72 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
       });
     }
 
-    final app = MaterialApp(
+    final app = MaterialApp.router(
       title: 'Parable Bloom',
       debugShowCheckedModeBanner:
           _isScreenshotMode ? false : !EnvironmentConfig.isProd(),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _convertToThemeMode(themeMode),
-      home: _buildHome(),
-      routes: {
-        '/tutorial': (context) => const TutorialFlowScreen(),
-        '/game': (context) => const GameScreen(),
-        '/journal': (context) => const JournalScreen(),
-        '/settings': (context) => const SettingsScreen(),
+      routerConfig: appRouter,
+      builder: (context, child) {
+        ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
+          return Material(
+            color: Theme.of(context).colorScheme.surface,
+            child: SafeArea(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.spa_outlined,
+                        size: 56,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Peace Be With You',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'A temporary disruption occurred. Tap below to return to the garden.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () => appRouter.go('/'),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Return to Garden'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        };
+        return _buildHomeWrapper(child!);
       },
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // English
+      ],
     );
     if (kIsWeb) {
       return Listener(
@@ -162,10 +212,10 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     return app;
   }
 
-  Widget _buildHome() {
+  Widget _buildHomeWrapper(Widget child) {
     return Stack(
       children: [
-        const HomeScreen(),
+        child,
         if (!_isScreenshotMode && !EnvironmentConfig.isProd())
           Positioned(
             top: 0,
