@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -10,7 +11,8 @@ import (
 
 // Spinner wraps github.com/briandowns/spinner to provide UX consistent with the level-builder.
 type Spinner struct {
-	s *spinner.Spinner
+	mu sync.Mutex
+	s  *spinner.Spinner
 }
 
 // NewSpinner creates a new spinner with a default configuration.
@@ -23,6 +25,8 @@ func NewSpinner(msg string) *Spinner {
 
 // Start starts the spinner if verbose mode is disabled.
 func (s *Spinner) Start() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if !common.VerboseEnabled {
 		s.s.Start()
 	}
@@ -30,17 +34,23 @@ func (s *Spinner) Start() {
 
 // Stop stops the spinner.
 func (s *Spinner) Stop() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.s.Stop()
 }
 
 // UpdateMessage updates the spinner's suffix message.
 func (s *Spinner) UpdateMessage(format string, args ...interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.s.Suffix = " " + fmt.Sprintf(format, args...)
 }
 
 // LogInfo stops the spinner, prints an info message, and restarts the spinner.
 // This prevents the spinner from "tearing" or leaving artifacts when messages are printed.
 func (s *Spinner) LogInfo(format string, args ...interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	wasRunning := s.s.Active()
 	if wasRunning {
 		s.s.Stop()
@@ -52,7 +62,10 @@ func (s *Spinner) LogInfo(format string, args ...interface{}) {
 }
 
 // LogWarning stops the spinner, prints a warning message, and restarts the spinner.
+// func (s *Spinner) LogWarning(format string, args ...interface{}) {
 func (s *Spinner) LogWarning(format string, args ...interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	wasRunning := s.s.Active()
 	if wasRunning {
 		s.s.Stop()

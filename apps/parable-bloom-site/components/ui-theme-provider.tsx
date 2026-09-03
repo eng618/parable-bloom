@@ -1,6 +1,6 @@
 'use client';
 
-import { ThemeProvider } from '@gv-tech/ui-web';
+import { ThemeProvider } from '@gv-tech/ui-web/theme-provider';
 import type { ReactNode } from 'react';
 
 type UiThemeProviderProps = {

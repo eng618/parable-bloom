@@ -1,8 +1,10 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../game/application/providers/module_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
+import '../../../../core/providers/service_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -12,6 +14,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(analyticsServiceProvider).logScreenView('Home');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final gameProgress = ref.watch(gameProgressProvider);
@@ -48,13 +58,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 48),
               modulesAsync.when(
                 data: (modules) {
-                  final totalLevels = modules.fold<int>(
-                    0,
-                    (sum, module) =>
-                        sum + (module.endLevel - module.startLevel + 1),
-                  );
+                  final playlist = modules.expand((m) => m.allLevels).toList();
                   final allLevelsCompleted =
-                      gameProgress.currentLevel > totalLevels;
+                      playlist.every(gameProgress.completedLevels.contains);
+                  final nextLevelIdx =
+                      playlist.indexOf(gameProgress.currentLevel);
+                  final levelDisplayNumber =
+                      nextLevelIdx != -1 ? nextLevelIdx + 1 : 1;
 
                   if (allLevelsCompleted) {
                     return Column(
@@ -114,7 +124,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     child: Text(
                       gameProgress.tutorialCompleted
-                          ? 'Play Level ${gameProgress.currentLevel}'
+                          ? 'Play Level $levelDisplayNumber'
                           : 'Start Tutorial',
                       style: const TextStyle(
                         fontSize: 18,
@@ -208,17 +218,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final gameProgress = ref.read(gameProgressProvider);
 
     if (!gameProgress.tutorialCompleted) {
-      Navigator.of(context).pushNamed('/tutorial');
+      context.go('/tutorial');
     } else {
-      Navigator.of(context).pushNamed('/game');
+      context.go('/game');
     }
   }
 
   void _openSettings() {
-    Navigator.of(context).pushNamed('/settings');
+    context.push('/settings');
   }
 
   void _openJournal() {
-    Navigator.of(context).pushNamed('/journal');
+    context.push('/journal');
   }
 }

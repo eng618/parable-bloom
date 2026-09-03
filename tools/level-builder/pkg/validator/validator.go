@@ -13,6 +13,10 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
+// SolverVersion is incremented when validator rules or search logic change,
+// causing a complete cache invalidation of all levels.
+const SolverVersion = 2
+
 // Path resolution functions - use common.LevelsDir() and common.ModulesFile() instead of hardcoded paths
 
 // OccupancyTolerance is the allowed margin for vine occupancy.
@@ -97,6 +101,12 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int,
 	}
 
 	// If we reach here, we need to run solvability checks and collect stats.
+	cache, cerr := LoadCache()
+	if cerr != nil {
+		common.Warning("Failed to load validation cache: %v. Continuing without cache.", cerr)
+		cache = NewValidationCache()
+	}
+
 	concurrency := runtime.NumCPU()
 	sem := make(chan struct{}, concurrency)
 	var wg sync.WaitGroup
@@ -115,6 +125,15 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int,
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
+			fileBytes, rerr := os.ReadFile(f)
+			if rerr != nil {
+				errCh <- ValidationError{
+					File:  filepath.Base(f),
+					Error: fmt.Errorf("failed to read file bytes: %w", rerr).Error(),
+				}
+				return
+			}
+
 			lvl, err := readLevelFile(f, ignoreOccupancy)
 			if err != nil {
 				errCh <- ValidationError{
@@ -124,22 +143,41 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int,
 				return
 			}
 
+			// Cache lookup
+			levelKey := filepath.Base(f)
+			if hit, solvable := cache.Lookup(levelKey, fileBytes, SolverVersion); hit {
+				statsCh <- LevelStat{
+					File:           f,
+					LevelID:        lvl.ID,
+					Solvable:       solvable,
+					Solver:         "cached",
+					StatesExplored: 0,
+					MaxStates:      maxStates,
+					TimeMs:         0,
+					GaveUp:         false,
+				}
+				return
+			}
+
 			start := time.Now()
-			ok, stat, cerr := IsSolvableWithStats(lvl, maxStates, useAstar, astarWeight)
+			ok, stat, serr := IsSolvableWithStats(lvl, maxStates, useAstar, astarWeight)
 			dur := time.Since(start)
 			stat.TimeMs = dur.Milliseconds()
 			stat.File = f
 			stat.LevelID = lvl.ID
 			stat.MaxStates = maxStates
 			stat.Solvable = ok
-			if cerr != nil {
-				stat.Error = cerr.Error()
+			if serr != nil {
+				stat.Error = serr.Error()
 			}
 
 			if stat.GaveUp {
 				// mark as not solvable under budget
 				stat.Solvable = false
 			}
+
+			// Update cache
+			cache.Update(levelKey, fileBytes, SolverVersion, stat.Solvable)
 
 			statsCh <- stat
 		}()
@@ -148,6 +186,11 @@ func Validate(checkSolvable bool, maxStates int, useAstar bool, astarWeight int,
 	wg.Wait()
 	close(statsCh)
 	close(errCh)
+
+	// Save cache atomically
+	if serr := cache.SaveCache(); serr != nil {
+		common.Warning("Failed to save validation cache: %v", serr)
+	}
 
 	// Collect validation errors
 	var validationErrors []ValidationError
@@ -222,16 +265,16 @@ func validateModules() error {
 	}
 
 	// Check for duplicates
-	seen := make(map[int]bool)
+	seen := make(map[string]bool)
 	for _, m := range reg.Modules {
 		for _, lid := range m.Levels {
 			if seen[lid] {
-				return fmt.Errorf("level %d appears in multiple modules", lid)
+				return fmt.Errorf("level %s appears in multiple modules", lid)
 			}
 			seen[lid] = true
 		}
 		if seen[m.ChallengeLevel] {
-			return fmt.Errorf("level %d appears in multiple modules", m.ChallengeLevel)
+			return fmt.Errorf("level %s appears in multiple modules", m.ChallengeLevel)
 		}
 		seen[m.ChallengeLevel] = true
 

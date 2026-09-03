@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-This is **Parable Bloom**, a zen hyper-casual arrow puzzle game built with Flutter and Flame. The game features faith-based themes where players tap directional vines to slide them off a grid in Snake-like movement. The game includes:
+This is **Parable Bloom**, a Christ-centered arrow puzzle game built with Flutter and Flame. The game features faith-based themes where players tap directional vines to slide them off a grid in Snake-like movement. The game includes:
 
 - **Snake-like Movement**: Vines slide in head direction with body segments following as a queue
 - **Grace System**: 3 Grace per level (4 for Transcendent) with faith-based messaging
-- **Module Structure**: 5 modules with 15 levels each, unlocking spiritual parables
+- **Module Structure**: 5 modules with 15 levels each, unlocking the parables of Jesus
 - **Cross-Platform**: iOS, Android, and Web support
 - **Offline-First**: Local persistence with Firebase cloud sync planned
 
@@ -192,7 +192,7 @@ flutter build ios --release  # iOS (requires macOS)
 ### Audio Assets
 
 - **Format**: MP3/OGG for background music, WAV for SFX
-- **Categories**: Tap feedback, level complete, vine clearing, ambient zen
+- **Categories**: Tap feedback, level complete, vine clearing, ambient worship
 - **Licensing**: Royalty-free or original compositions
 
 ### Performance Targets

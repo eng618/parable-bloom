@@ -3,9 +3,9 @@
     "short_name": "Parable Bloom",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A zen hyper-casual arrow puzzle game with faith-based themes.",
+    "background_color": "#1A2E3F",
+    "theme_color": "#177245",
+    "description": "A Christ-centered arrow puzzle game of faith, scripture, and prayer.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

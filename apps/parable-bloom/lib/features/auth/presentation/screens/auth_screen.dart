@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,7 +7,7 @@ import '../../application/providers/auth_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../game/domain/entities/cloud_sync_state.dart';
 import '../../../game/domain/entities/game_progress.dart';
-import '../../../../providers/service_providers.dart';
+import '../../../../core/providers/service_providers.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -25,6 +26,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLogin = true;
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(analyticsServiceProvider).logScreenView('Authentication');
+    });
+  }
 
   @override
   void dispose() {
@@ -74,17 +83,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             );
       }
 
-      if (conflict.type == SyncConflictType.cloudAhead) {
-        await progressNotifier.resolveSyncConflict(
-          SyncConflictResolution.keepCloud,
-        );
-        await ref.read(analyticsServiceProvider).logSyncConflictResolved(
-              source: 'auth',
-              conflictType: conflict.type.name,
-              resolution: SyncConflictResolution.keepCloud.name,
-              automatic: true,
-            );
-      } else if (conflict.requiresUserDecision && mounted) {
+      if (conflict.requiresUserDecision && mounted) {
         final resolution = await _showSyncConflictDialog(conflict);
         if (resolution == null) {
           return;
@@ -100,7 +99,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
       // If successful, close the screen
       if (mounted) {
-        Navigator.of(context).pop();
+        if (context.canPop()) context.pop();
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {

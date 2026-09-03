@@ -144,7 +144,7 @@ Releases are handled via GitHub Actions upon pushing a version tag.
 - **Android**: Fastlane uploads the App Bundle to Google Play Console.
 - **iOS**: Fastlane uploads the IPA to TestFlight.
 
-See [RELEASE_PROCESS.md](documentation/RELEASE_PROCESS.md) for full automation details.
+See the [Release Process Guide](documentation/how-to/release-process.md) for full automation details.
 
 ---
 

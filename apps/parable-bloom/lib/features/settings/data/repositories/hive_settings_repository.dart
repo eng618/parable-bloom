@@ -1,6 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../../../../services/logger_service.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../domain/repositories/settings_repository.dart';
 
 /// Hive-based implementation of SettingsRepository.
@@ -17,7 +17,6 @@ class HiveSettingsRepository implements SettingsRepository {
   static const bool _defaultHapticsEnabled = true;
 
   static const String _useSimpleVinesKey = 'useSimpleVines';
-  static const bool _defaultUseSimpleVines = false;
 
   static const String _vineStyleKey = 'vineStyle';
   static const String _defaultVineStyle = 'classic';

@@ -30,7 +30,8 @@ class BlockedTapNotifier extends Notifier<BlockedTapState?> {
   }
 }
 
-final blockedTapProvider = NotifierProvider<BlockedTapNotifier, BlockedTapState?>(
+final blockedTapProvider =
+    NotifierProvider<BlockedTapNotifier, BlockedTapState?>(
   BlockedTapNotifier.new,
 );
 
@@ -41,7 +42,8 @@ class TutorialGuideOverlay extends ConsumerStatefulWidget {
   const TutorialGuideOverlay({super.key});
 
   @override
-  ConsumerState<TutorialGuideOverlay> createState() => _TutorialGuideOverlayState();
+  ConsumerState<TutorialGuideOverlay> createState() =>
+      _TutorialGuideOverlayState();
 }
 
 class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
@@ -82,11 +84,11 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
 
     final game = ref.watch(gameInstanceProvider);
 
-    if (currentLevel == null || game == null || !game.isGridInitialized || !game.grid.isMounted) {
+    if (currentLevel == null || game == null || !game.isGridInitialized) {
       return const SizedBox.shrink();
     }
 
-    final lessonId = currentLevel.id;
+    final lessonId = currentLevel.id.replaceAll('lesson_', '');
 
     // Reset blocked tap indicator after 1.5 seconds automatically
     if (blockedTap != null) {
@@ -103,18 +105,18 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     String promptText = '';
     Color highlightColor = const Color(0xFF6B8E23); // Moss Green default
 
-    if (lessonId == 1) {
+    if (lessonId == '1') {
       // Lesson 1: Highlight head of vine_1 at (3,1)
       final vineState = vineStates['vine_1'];
-      if (vineState != null && !vineState.isCleared) {
+      if (vineState != null && !vineState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(3, 1);
         promptText = "Tap head to slide";
       }
-    } else if (lessonId == 2) {
+    } else if (lessonId == '2') {
       // Lesson 2: Multiple free-choice heads highlighted
       // Find first non-cleared vine
       final activeVineId = vineStates.entries
-          .where((e) => !e.value.isCleared)
+          .where((e) => !e.value.isClearedOrClearing)
           .map((e) => e.key)
           .firstOrNull;
 
@@ -124,30 +126,31 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
         highlightPosition = game.getCellScreenPosition(head['x']!, head['y']!);
         promptText = "Clear the garden";
       }
-    } else if (lessonId == 3) {
+    } else if (lessonId == '3') {
       // Lesson 3: Blocker is vine_2 (4,0), blocked is vine_1 (3,1)
       final blockerState = vineStates['vine_2'];
       final blockedState = vineStates['vine_1'];
 
-      if (blockerState != null && !blockerState.isCleared) {
+      if (blockerState != null && !blockerState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(4, 0);
         promptText = "Clear blocker first";
         highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
-      } else if (blockedState != null && !blockedState.isCleared) {
+      } else if (blockedState != null && !blockedState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(3, 1);
         promptText = "Now clear!";
       }
-    } else if (lessonId == 4) {
+    } else if (lessonId == '4') {
       // Lesson 4: Highlight the starting vine which can clear completely
       final activeVineIds = vineStates.entries
-          .where((e) => !e.value.isCleared)
+          .where((e) => !e.value.isClearedOrClearing)
           .map((e) => e.key)
           .toList();
 
       final solver = ref.read(levelSolverServiceProvider);
       String? freeVineId;
       for (final vineId in activeVineIds) {
-        if (solver.getDistanceToBlocker(currentLevel, vineId, activeVineIds) > 0) {
+        if (solver.getDistanceToBlocker(currentLevel, vineId, activeVineIds) >
+            0) {
           freeVineId = vineId;
           break;
         }
@@ -159,7 +162,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
         highlightPosition = game.getCellScreenPosition(head['x']!, head['y']!);
         promptText = "Start the chain";
       }
-    } else if (lessonId == 5) {
+    } else if (lessonId == '5') {
       // Lesson 5: Capstone challenge, minimal text
       promptText = "Untangle the vines";
     }
@@ -233,18 +236,29 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
               ),
             ),
 
-            // Hand tap indicator
-            Positioned(
-              left: targetPosition.dx - 12,
-              top: targetPosition.dy + 8,
-              child: Icon(
-                Icons.touch_app,
-                color: Theme.of(context).colorScheme.primary,
-                size: 28,
-                shadows: const [
-                  Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(1, 1)),
-                ],
-              ),
+            // Animated Hand tap indicator
+            AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, child) {
+                final bounceOffset =
+                    (1.0 - (_pulseController.value * 2 - 1.0).abs()) * 6.0;
+                return Positioned(
+                  left: targetPosition.dx - 12 - bounceOffset * 0.4,
+                  top: targetPosition.dy + 8 - bounceOffset,
+                  child: Icon(
+                    Icons.touch_app,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 30,
+                    shadows: const [
+                      Shadow(
+                        color: Colors.black45,
+                        blurRadius: 4,
+                        offset: Offset(1, 1),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
 
@@ -362,7 +376,8 @@ class CollisionPathPainter extends CustomPainter {
     while (progress < distance) {
       final double startFraction = progress / distance;
       progress += dashWidth;
-      final double endFraction = (progress > distance ? distance : progress) / distance;
+      final double endFraction =
+          (progress > distance ? distance : progress) / distance;
 
       canvas.drawLine(
         Offset(from.dx + dx * startFraction, from.dy + dy * startFraction),

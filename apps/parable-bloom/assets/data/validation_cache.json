@@ -1,0 +1,529 @@
+{
+  "levels": {
+    "level_1.json": {
+      "content_hash": "2e78b58f174166fa04856affb0389d6c39eb7c9e975615d335ad2462b65c7c4a",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_10.json": {
+      "content_hash": "ca9749534891bf5cf0e8f25e955838ba0ea1f16d62793a58e90e21110d57baeb",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_100.json": {
+      "content_hash": "25950e23959d9188d6f754c23b7d07087a2dfc1a576c79e8c9702e181d688a12",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_101.json": {
+      "content_hash": "6af963be6cd3835de0683def232fd38c48ad92d91e1d44f0feb8007833753c24",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_102.json": {
+      "content_hash": "cb7e3ddc03e8189447f074f06ab3e3e38817d80b04fda41794b4947435c71662",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_103.json": {
+      "content_hash": "bf1e5bfc7211fa2c2e934a3f2879ce69879c6d17408e77816f634514b3015fa4",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_104.json": {
+      "content_hash": "0c3a97dca6c8f09700c97bc15e80e06376169121a64ecc57a2ea8c2f05f07631",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_105.json": {
+      "content_hash": "232cd81a5aff5b8754ff1f8ab1df642032eafbef3579565c080f27c3c4b87b8a",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_11.json": {
+      "content_hash": "66ab93121fd94f4fa5cc5dc77357936719b0d93e44084661d9a1205af1b6fd3a",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_12.json": {
+      "content_hash": "ef0ddbd498b5d5540f46927bd69634301a7617416f7c36202655074225fc69db",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_13.json": {
+      "content_hash": "d11dba89c0509419911b20d245a45e82a7c348f534a59430eb78b5f039fd6aa5",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_14.json": {
+      "content_hash": "a22a39180b9e813b5d745e832a8fe26993dc1829be1da436cdd59574a4631c54",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_15.json": {
+      "content_hash": "6c8e3a19ebdb09ed7d9cfeb461dafaacaabb1dc58634c646d409ea758409349d",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_16.json": {
+      "content_hash": "4b7582de8d4542d8c26d592a5c6a4bc78a91ed327f50e0ed0de0235de7cec7d5",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_17.json": {
+      "content_hash": "dde9715c41ced0f948f4a19d10f9b62a639faa265990f1260522f854ad27c612",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_18.json": {
+      "content_hash": "2cf962d681fffaa7806606ab0ba8c7ffcef3d757956dc25f9704ab06d0af3adb",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_19.json": {
+      "content_hash": "8970c844c708e58d46fef690552500d89a25712674407ee6f4b542518500376a",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_2.json": {
+      "content_hash": "4bb43bf189daa735f2fe3aed7c9997684579075307067b28ad9d41ea859a0fed",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_20.json": {
+      "content_hash": "da78364b315b84f4816da44663e4338cbab3c17d6d89b470e1718762860518b7",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_21.json": {
+      "content_hash": "ad717ab6c712667ec26028246516d7371726b7602954c78796d6c7dc6dfd38eb",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_22.json": {
+      "content_hash": "22ed3e27ababb535b12b672b6359e8f19a14f082c2742cec35434911f5ad171e",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_23.json": {
+      "content_hash": "d487d7783d8ddad823595bfbda3bfad3d23876496dc89a2a84ab82a862108672",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_24.json": {
+      "content_hash": "6031a3c6f38bbea20f61d9b55a871eb9dca8e97527fdc2a7c702a33843a06be5",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_25.json": {
+      "content_hash": "a9182bc277a51e9384f55c5feaec121278912020c85b6f7e8611b7c49a9c6a50",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_26.json": {
+      "content_hash": "1e41852056322bbd0e0d8f2f1b0cf408d6cb7884f641135e4a8aad2b5111f4e2",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_27.json": {
+      "content_hash": "7faaa6466858ff14e69f5ad7d59592f5df3c4c7765b60156d3b527801e44f856",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_28.json": {
+      "content_hash": "8ac629e59fb172f9aab4f8458d49b512339316e1191aec3e66e4a5868268a5de",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_29.json": {
+      "content_hash": "b7a76e3546b262ab65485903b67ac54598d1993ea59dc9d0001b6acbc4b77032",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_3.json": {
+      "content_hash": "5bd123a0d577cb9d3fc717ca1471fd8c24735001d0f59008c7c1efe31e70c896",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_30.json": {
+      "content_hash": "661d572f34a0dcf2f601931ab5602851b69e1c42afe0df61cd0180d8efd95689",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_31.json": {
+      "content_hash": "5453a4fa141177cb90710141837618442d634703f3cb62ccf904dac67afc8f23",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_32.json": {
+      "content_hash": "0730fb3ab928ce88b8c2ddc5f0fcef85c30db18f17c16676be78a4cfefa0f7a7",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_33.json": {
+      "content_hash": "a51355d0d96568cac8b5ab66203ded0462206e517cf7f09716ca76cb915dc591",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_34.json": {
+      "content_hash": "f48a6fb42e729356973d9a505b14cba42e62180af57691a1a1a7a2d791e85a16",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_35.json": {
+      "content_hash": "16b1671b859a7edc412087518bbc44bd18ec595b4bb1e73c2b0404fc78b636bf",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_36.json": {
+      "content_hash": "a6525690ac3f5ccd19331c71e04bee4bdf80e1a0ac2d0e6da8c756970931169e",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_37.json": {
+      "content_hash": "d1396fd8c6c6c42bcd2246fa67b5eea1fb9d2d398b9f1d83e145ae1c4f7f9e0a",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_38.json": {
+      "content_hash": "03394a787e61a1c7fe3636c17d74932ba74931e888a0b37aa07e06ef8946a5c3",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_39.json": {
+      "content_hash": "f7b07416ebb66bcc05749e0fff86b7928f48a3de60fda6faff9a0a67db2b15df",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_4.json": {
+      "content_hash": "13b8aff5ab8260e45e06bf64f76a03bdfee1897efe6e3f179a0515fed42d51f7",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_40.json": {
+      "content_hash": "f66a29c78c8c12a6488621b4d0a617147c75002e1b17d043fb349cd0837ed860",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_41.json": {
+      "content_hash": "62e02d76e5dd02b3f1f5e37e7a9e8acf7551c4fcdf56828ca172a38bc983ec51",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_42.json": {
+      "content_hash": "2c197b5b17b9d7a272b362cfe4f6759ef9b6500fd00cd4ae9d4f6eaa48ba6cb8",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_43.json": {
+      "content_hash": "87f01389e65269da523e52213176e487c86e071d292b7e0b468241fa6276260b",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_44.json": {
+      "content_hash": "23830590d138e23e018a0b5baf5a3fc27b2dd4027b67214455f7051fc00801a2",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_45.json": {
+      "content_hash": "06d5c86c292c74240756ba7c90fe31a71de0ca0c5826bec53efd75374fe88064",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_46.json": {
+      "content_hash": "726e2b0e32b19e6c2ada3b5afb44509e040ddcaedb51f1def3e39df8761b8a8c",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_47.json": {
+      "content_hash": "d5a34bafe2dd9f7b1a6fad53392e9f2c0ee06b644d1ee94c0177dcbf71376ace",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_48.json": {
+      "content_hash": "4c65cb356d9ba751fef2fd718f8e468fe6326339aa876f8917758710c371621c",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_49.json": {
+      "content_hash": "534edf4a030e0994c2724a5a087212ea205726d98b3429a77c667c678e4a003e",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_5.json": {
+      "content_hash": "6fa087c25968828b404a853833f38dde7bbb56c60f32f91a5ba24966ba471e23",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_50.json": {
+      "content_hash": "187e7249a922af0c3e2f627aa01b10fcff491722729d57b9b7b31ef32bbc4fd0",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_51.json": {
+      "content_hash": "20cc60c4912c8b495fbe5eca0e7032f07ca6ec230098dd4f5673e256c71eed86",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_52.json": {
+      "content_hash": "982dbf39da6ecd562463f77776e027b4b2056eaef24a1fa8951c66b724b51133",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_53.json": {
+      "content_hash": "5e4a85426992ab3c0067e15bfe1d083a618f9dcd53ff8821f58f42342ec69359",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_54.json": {
+      "content_hash": "732dbf70cbab5fbe4ba47e40ddf6aa602413d755b759c8bd4bf89f5c35963fd1",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_55.json": {
+      "content_hash": "5089cc9bed6ebacbd10f58bb936836c14c00f03ee2a3d4eb0ec4b3984752116f",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_56.json": {
+      "content_hash": "f10883d3ee8d8d59dc10ec8e0a5e494ef6eac3b2b69c7498b4f8fe2ab82dc745",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_57.json": {
+      "content_hash": "5ca931d10497a2cb018912c58f99d26416d16223fca32410f77709125863cb7d",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_58.json": {
+      "content_hash": "0c8ab3613d14635c6bf045118acf8c19d765d0d4c60f3185ab27cccc5659fcab",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_59.json": {
+      "content_hash": "9ebb0252d44c871e76a515361ec6d7283dbe4dcb7bdc579cb545575a0f11fbe9",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_6.json": {
+      "content_hash": "3e555d956a6e5868f91fd255bc1f0d38167088561c96b46f07156fc52e23e0ec",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_60.json": {
+      "content_hash": "a963028e2b05fb0c8ee2dbf5ebaaa1ff9476de59311e7302e992674992ed1b3d",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_61.json": {
+      "content_hash": "92f6e44dbcfc68b653e214401898a7421f81a33362cd24a25072dddb9b3c077e",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_62.json": {
+      "content_hash": "20681cd90cc0657bf40809c6b792359e5ae5064d981fe1965accc564e4dac8eb",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_63.json": {
+      "content_hash": "2dae82517b5e85f3057ce9f719827cf5ec4dcd806f085b9669d287fa39fe07a3",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_64.json": {
+      "content_hash": "657b6b5662a714f6f46c45ac48f11fec4970825f40213e37c36a86ca9871fb11",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_65.json": {
+      "content_hash": "8101a937e2e8271f9a4c51c031567e62869effb17d2eee3254b082f5e7b64499",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_66.json": {
+      "content_hash": "855db845af40eb93d541c78ba52a977e7014fe6cd162e102e120799cbb68368f",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_67.json": {
+      "content_hash": "0021f05d2048de8de220c590d278e226302ce17f887793e60411041fb2653e1b",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_68.json": {
+      "content_hash": "d28999da8c80d313d52b8485d0da1688043136460dca0119adba8b328c46b1a3",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_69.json": {
+      "content_hash": "5386c8552d9f2f5e6db9739cbe453efc8e21afc75868d9fdcb08d1fcad94ca9e",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_7.json": {
+      "content_hash": "6439b064ada643b828ca1758778deeec2511d880ecc08845ad5bd5c0f0ec1822",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_70.json": {
+      "content_hash": "abb52d4449201b7f31d14d682d3856049c969036832589da55b683730c0ddcd5",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_71.json": {
+      "content_hash": "73c74987dbbf5fccf137ee4b4c2196e616576717fc8e76769eb6d03b405fa736",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_72.json": {
+      "content_hash": "54086dbb7f75f65d932d53087d0fab9f3c05c25a009ff4475bd09428e6f9a2ca",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_73.json": {
+      "content_hash": "f6b6d3749ef40934ed9acc953eceea044a45e313449d086513ad5f6effb2ab32",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_74.json": {
+      "content_hash": "c03d7d360446c1d00f778e8c1bbef3691030581406845f1e799c8aed60496cb8",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_75.json": {
+      "content_hash": "5840bb0114289e8ec6f5b6e823f5a9857118e9722e1b6bee9af1f1b2ab4c4655",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_76.json": {
+      "content_hash": "eb1e595c2dec2403a37d3e577cbbf4f973028f3cf29ddc9f515cde38f16c8eeb",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_77.json": {
+      "content_hash": "d63c90991b2d2a04af0932ea34b3b1c9ed45864b2eadbef4c27ae2e34e371c1f",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_78.json": {
+      "content_hash": "3dd976397d4d7ce66f195041daaaeb1637079a1fa3332aad6e5a823c53377d83",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_79.json": {
+      "content_hash": "7f08bf9efcc410575a65a5faa66a245c807377cd24be377671f31e3491c81340",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_8.json": {
+      "content_hash": "f1a04c5c9a3b208277d9d79df9e3ec37b8b26e0c5b863486d290c53b35feb8e6",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_80.json": {
+      "content_hash": "1a306d8eab6a9b225b6c775c51687c5d1e56ad0ae3bb374a51e22a0c49ca1cd9",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_81.json": {
+      "content_hash": "e8d16a91c5334cd954d1fe628f68335e8f823dc979a5d6269460161786520f08",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_82.json": {
+      "content_hash": "fdc49a52857df03fe1faaee43e426660b7b3745f8b4e4662b58203bfbc43f463",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_83.json": {
+      "content_hash": "6ea005dcb13ed679a1b5612611b945a7cb6e0fa39fdc16b46af6a2d829635601",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_84.json": {
+      "content_hash": "eb2410d5efb56645d1d7b667f2b622180c2e3c12e318625562ad4fdda90d2676",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_85.json": {
+      "content_hash": "f43bc9bb59b87e968b397820708e7fcc769654efc1b86db1ee895e66a7b0b5b1",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_86.json": {
+      "content_hash": "19af987231e416b1c37b8ef071f1d1e5f8f08a29560033bd643b16e47a7822c5",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_87.json": {
+      "content_hash": "855def052ff62cf41531435df7bdb5e77a4bc84577a8c1900882c3ebf3923511",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_88.json": {
+      "content_hash": "bd9e24f16ed75048c2d5a012ced157ca1280573486e5b1fbaf2543d1f963c541",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_89.json": {
+      "content_hash": "74580ec010a18c88971cbbddd81ca696c48f8ff217066799600fa549dc8f8fb9",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_9.json": {
+      "content_hash": "bf042b208f75f0dd98389ff04387ca3c09d235115a97aa83ce3598652c72226d",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_90.json": {
+      "content_hash": "99729beff8b4b5502ab92e53cb5d8e97418e9334351cbea0eb7e04b920692960",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_91.json": {
+      "content_hash": "8026b718235337640dad88d25bbe9bf47a7f9583dbb457152b95f6995a4197f5",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_92.json": {
+      "content_hash": "e96c7acc30aecbc34d4d26723b98124126c8ba71d78b3bb842c491d8163fcb16",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_93.json": {
+      "content_hash": "57de4545a86ceefc1394711b5bd02958bdefb6f9b14e83b00a06fde51e98087a",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_94.json": {
+      "content_hash": "ee1e918b4c605230778afcec8f73505aebeecb1fd24d16884cb032475e791dea",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_95.json": {
+      "content_hash": "9fdb260c25b4ba0ebc3624470921fc2dde290ae48e2d3e738f6b7ca90d71f3c6",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_96.json": {
+      "content_hash": "d976075d50c9b81b73ad6fe7547255964ac9292fe8170c92f10bb18447b95c64",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_97.json": {
+      "content_hash": "8b72940e6c1ba1ad9b1bc3fa95365427b016ff7a8ae1d2de45bf6c39ef21c399",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_98.json": {
+      "content_hash": "2fd781accf6c80234abfa18a6f776e86cd6ee2daa7ed728b154939b0bf429776",
+      "solver_version": 2,
+      "solvable": true
+    },
+    "level_99.json": {
+      "content_hash": "920cf45fc12c5c242e758e8c214bb8500ae75550ac5abba0100753fb65ab280d",
+      "solver_version": 2,
+      "solvable": true
+    }
+  }
+}

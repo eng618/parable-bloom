@@ -211,6 +211,10 @@ func performBackupGuarded(levelIDs []int, cfg batchsvc.Config, doBackup bool, is
 	performBackup(levelIDs, cfg.OutputDir)
 }
 
+func logicalLevelID(levelID int) string {
+	return common.LogicalLevelID(levelID)
+}
+
 func updateModulesRegistry(moduleID int, levelIDs []int) error {
 	modulesPath, err := common.ModulesFile()
 	if err != nil {
@@ -222,13 +226,25 @@ func updateModulesRegistry(moduleID int, levelIDs []int) error {
 		return fmt.Errorf("failed to load modules.json: %w", err)
 	}
 
+	if registry.LevelMappings == nil {
+		registry.LevelMappings = make(map[string]string)
+	}
+
+	logicalKeys := make([]string, len(levelIDs))
+	for i, lid := range levelIDs {
+		key := logicalLevelID(lid)
+		logicalKeys[i] = key
+		// Automatically register mappings
+		registry.LevelMappings[key] = fmt.Sprintf("levels/level_%d.json", lid)
+	}
+
 	found := false
 	for i, mod := range registry.Modules {
 		if mod.ID == moduleID {
 			// First 20 levels are regular progression
-			registry.Modules[i].Levels = levelIDs[:len(levelIDs)-1]
+			registry.Modules[i].Levels = logicalKeys[:len(logicalKeys)-1]
 			// 21st level is the Transcendent challenge
-			registry.Modules[i].ChallengeLevel = levelIDs[len(levelIDs)-1]
+			registry.Modules[i].ChallengeLevel = logicalKeys[len(logicalKeys)-1]
 			found = true
 			break
 		}

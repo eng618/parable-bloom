@@ -152,5 +152,45 @@ void main() {
       final isAnimating = container.read(anyVineAnimatingProvider);
       expect(isAnimating, true);
     });
+
+    test('hintedVineIdsProvider should initialize with an empty set', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final hintedVines = container.read(hintedVineIdsProvider);
+      expect(hintedVines, isEmpty);
+    });
+
+    test('hintedVineIdsProvider should add hinted vine IDs', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      // Initially empty
+      expect(container.read(hintedVineIdsProvider), isEmpty);
+
+      // Add vine_1
+      container.read(hintedVineIdsProvider.notifier).add('vine_1');
+      expect(container.read(hintedVineIdsProvider), contains('vine_1'));
+      expect(container.read(hintedVineIdsProvider).length, 1);
+
+      // Add vine_2
+      container.read(hintedVineIdsProvider.notifier).add('vine_2');
+      expect(container.read(hintedVineIdsProvider), contains('vine_1'));
+      expect(container.read(hintedVineIdsProvider), contains('vine_2'));
+      expect(container.read(hintedVineIdsProvider).length, 2);
+    });
+
+    test('hintedVineIdsProvider should clear hinted vine IDs', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      // Add vine_1
+      container.read(hintedVineIdsProvider.notifier).add('vine_1');
+      expect(container.read(hintedVineIdsProvider), contains('vine_1'));
+
+      // Clear
+      container.read(hintedVineIdsProvider.notifier).clear();
+      expect(container.read(hintedVineIdsProvider), isEmpty);
+    });
   });
 }

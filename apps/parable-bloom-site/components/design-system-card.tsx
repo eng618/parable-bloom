@@ -1,16 +1,9 @@
 'use client';
 
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  cn,
-} from '@gv-tech/ui-web';
+import { cn } from '@/lib/utils';
+import { Badge } from '@gv-tech/ui-web/badge';
+import { Button } from '@gv-tech/ui-web/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@gv-tech/ui-web/card';
 import Link from 'next/link';
 
 type DesignSystemCardProps = {
@@ -40,7 +33,7 @@ export default function DesignSystemCard({
   return (
     <Card
       className={cn(
-        'animate-fade-in-up group border-border/60 hover:border-brand/30 hover:shadow-zen flex flex-col overflow-hidden bg-white/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white/95',
+        'animate-fade-in-up group border-border/60 hover:border-brand/30 hover:shadow-grace flex flex-col overflow-hidden bg-white/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white/95',
       )}
       style={{ animationDelay: `${animationDelay}ms` }}
     >

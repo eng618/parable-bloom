@@ -8,8 +8,8 @@ import 'package:parable_bloom/features/auth/presentation/screens/auth_screen.dar
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
-import 'package:parable_bloom/providers/service_providers.dart';
-import 'package:parable_bloom/services/analytics_service.dart';
+import 'package:parable_bloom/core/providers/service_providers.dart';
+import 'package:parable_bloom/core/services/analytics_service.dart';
 
 class FakeUserCredential implements UserCredential {
   @override
@@ -45,14 +45,24 @@ class TestGameProgressNotifier extends GameProgressNotifier {
 
 class FakeAnalyticsService extends AnalyticsService {
   @override
-  Future<void> init() async {}
+  Future<void> init({bool enabled = true}) async {}
 
   @override
-  Future<void> logLevelStart(int levelId) async {}
+  Future<void> setCollectionEnabled(bool enabled) async {}
+
+  @override
+  Future<void> logScreenView(String screenName) async {}
+
+  @override
+  Future<void> logParableViewed(String parableId,
+      {String source = 'game_unlock'}) async {}
+
+  @override
+  Future<void> logLevelStart(dynamic levelId) async {}
 
   @override
   Future<void> logLevelComplete(
-    int levelId,
+    dynamic levelId,
     int taps,
     int wrongTaps, {
     int attempts = 1,
@@ -60,17 +70,17 @@ class FakeAnalyticsService extends AnalyticsService {
   }) async {}
 
   @override
-  Future<void> logWrongTap(int levelId, int remainingLives) async {}
+  Future<void> logWrongTap(dynamic levelId, int remainingLives) async {}
 
   @override
-  Future<void> logGameOver(int levelId) async {}
+  Future<void> logGameOver(dynamic levelId) async {}
 
   @override
   Future<void> logSyncConflictDetected({
     required String source,
     required String conflictType,
-    required int localLevel,
-    int? cloudLevel,
+    required dynamic localLevel,
+    dynamic cloudLevel,
   }) async {}
 
   @override
@@ -235,10 +245,18 @@ void main() {
         (WidgetTester tester) async {
       testGameProgressNotifier.nextConflictState = SyncConflictState(
         type: SyncConflictType.divergent,
-        localProgress: GameProgress.initial()
-            .copyWith(currentLevel: 6, completedLevels: {1, 2, 3, 4, 5}),
-        cloudProgress: GameProgress.initial()
-            .copyWith(currentLevel: 4, completedLevels: {1, 2, 3}),
+        localProgress: GameProgress.initial().copyWith(
+            currentLevel: 'lvl_seed_06',
+            completedLevels: {
+              'lvl_seed_01',
+              'lvl_seed_02',
+              'lvl_seed_03',
+              'lvl_seed_04',
+              'lvl_seed_05'
+            }),
+        cloudProgress: GameProgress.initial().copyWith(
+            currentLevel: 'lvl_seed_04',
+            completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'}),
       );
 
       await tester.pumpWidget(createAuthScreen());

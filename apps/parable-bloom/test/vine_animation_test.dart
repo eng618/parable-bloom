@@ -83,7 +83,7 @@ void main() {
 
     test('LevelData structure is valid', () {
       final level = LevelData(
-        id: 1,
+        id: '1',
         name: 'Test Level',
         difficulty: 'Seedling',
         gridWidth: 5,
@@ -96,7 +96,7 @@ void main() {
         mask: MaskData(mode: 'show-all', points: const []),
       );
 
-      expect(level.id, 1);
+      expect(level.id, '1');
       expect(level.name, 'Test Level');
       expect(level.difficulty, 'Seedling');
       expect(level.vines, []);
@@ -108,7 +108,7 @@ void main() {
 
     test('Level solving algorithm finds solution for simple level', () {
       final solvableLevel = LevelData(
-        id: 3,
+        id: '3',
         name: 'Solvable Level',
         difficulty: 'Seedling',
         gridWidth: 5,

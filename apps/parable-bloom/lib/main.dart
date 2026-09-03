@@ -9,11 +9,11 @@ import 'app/parable_bloom_app.dart';
 import 'features/game/data/constants/game_progress_storage_keys.dart';
 import 'features/game/domain/entities/game_progress.dart';
 import 'firebase_options.dart';
-import 'providers/infrastructure_providers.dart';
-import 'providers/service_providers.dart';
-import 'services/analytics_service.dart';
-import 'services/logger_service.dart';
-import 'services/plausible_analytics_client.dart';
+import 'core/providers/infrastructure_providers.dart';
+import 'core/providers/service_providers.dart';
+import 'core/services/analytics_service.dart';
+import 'core/services/logger_service.dart';
+import 'core/services/plausible_analytics_client.dart';
 
 const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
@@ -81,12 +81,14 @@ void main() async {
   if (_isScreenshotMode) {
     analyticsService = AnalyticsService();
   } else {
+    final isOptedOut = (hiveBox.get('openpanel_ignore') ??
+        hiveBox.get('plausible_ignore', defaultValue: false)) as bool;
     final plausibleClient = PlausibleAnalyticsClient.fromEnvironment(
-      isOptedOut: () =>
-          hiveBox.get('plausible_ignore', defaultValue: false) as bool,
+      isOptedOut: () => (hiveBox.get('openpanel_ignore') ??
+          hiveBox.get('plausible_ignore', defaultValue: false)) as bool,
     );
     analyticsService = AnalyticsService(plausibleClient: plausibleClient);
-    await analyticsService.init();
+    await analyticsService.init(enabled: !isOptedOut);
   }
 
   runApp(
@@ -101,15 +103,36 @@ void main() async {
 }
 
 Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
+  final completedLevelsList = <String>[];
+  // Seedling levels (1 to 20 + challenge)
+  for (int i = 1; i <= 20; i++) {
+    final idxStr = i < 10 ? '0$i' : '$i';
+    completedLevelsList.add('lvl_seed_$idxStr');
+  }
+  completedLevelsList.add('lvl_seed_challenge');
+  // Sprout levels (1 to 20 + challenge)
+  for (int i = 1; i <= 20; i++) {
+    final idxStr = i < 10 ? '0$i' : '$i';
+    completedLevelsList.add('lvl_sprout_$idxStr');
+  }
+  completedLevelsList.add('lvl_sprout_challenge');
+
   final seededProgress = GameProgress(
     currentLesson: null,
-    completedLessons: {1, 2, 3, 4, 5},
+    completedLessons: {
+      'lesson_1',
+      'lesson_2',
+      'lesson_3',
+      'lesson_4',
+      'lesson_5'
+    },
     lessonCompleted: true,
-    currentLevel: 6,
-    // Seed through level 42 so Journal shows multiple unlocked modules.
-    completedLevels: Set<int>.from(List.generate(42, (index) => index + 1)),
+    currentLevel: 'lvl_blossom_01',
+    completedLevels: Set<String>.from(completedLevelsList),
     tutorialCompleted: true,
     savedMainGameLevel: null,
+    unlockedTranslations: {},
+    unlockedScriptureIds: {},
   );
 
   await hiveBox.put(GameProgressStorageKeys.progress, seededProgress.toJson());

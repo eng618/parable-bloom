@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"runtime"
+	"sync"
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
@@ -67,7 +69,7 @@ func getDifficultyTiers() []difficultyTier {
 	}
 }
 
-// GenerateModule generates all 21 levels for a module (5 per tier + 1 Transcendent).
+// GenerateModule generates all 21 levels for a module (5 per tier + 1 Transcendent) concurrently.
 // Pattern: levels 1-5 (Seedling), 6-10 (Sprout), 11-15 (Nurturing), 16-20 (Flourishing), 21 (Transcendent).
 // For module N, level IDs start at (N-1)*21+1.
 func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
@@ -91,40 +93,83 @@ func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
 	spin.Start()
 	defer spin.Stop()
 
+	// 1. Gather all levels to generate
+	type levelToGen struct {
+		id         int
+		difficulty string
+	}
+	var levelsToGen []levelToGen
+
 	tiers := getDifficultyTiers()
 	for tierIdx, tier := range tiers {
 		for levelInTier := 0; levelInTier < 5; levelInTier++ {
 			levelID := startLevelID + tierIdx*5 + levelInTier
-			spin.UpdateMessage("Generating Level %d/21 (%s)...", (tierIdx*5 + levelInTier + 1), tier.Name)
+			levelsToGen = append(levelsToGen, levelToGen{
+				id:         levelID,
+				difficulty: tier.Name,
+			})
+		}
+	}
+	challengeLevelID := startLevelID + 20
+	levelsToGen = append(levelsToGen, levelToGen{
+		id:         challengeLevelID,
+		difficulty: "Transcendent",
+	})
+
+	// 2. Process levels concurrently using bounded worker pool
+	concurrency := runtime.NumCPU()
+	if concurrency > len(levelsToGen) {
+		concurrency = len(levelsToGen)
+	}
+
+	sem := make(chan struct{}, concurrency)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	resultsMap := make(map[int]Result)
+	completed := 0
+
+	for _, l := range levelsToGen {
+		l := l
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			mu.Lock()
+			spin.UpdateMessage("Generating Level ID %d (%d/21 complete)...", l.id, completed)
+			mu.Unlock()
+
 			result := generateSingleLevel(
-				levelID,
-				tier.Name,
+				l.id,
+				l.difficulty,
 				batchCfg,
 				spin,
 			)
-			batch.Levels = append(batch.Levels, result)
-			if result.Success {
-				batch.SuccessCount++
-			} else {
-				batch.FailureCount++
-			}
-		}
+
+			mu.Lock()
+			resultsMap[l.id] = result
+			completed++
+			spin.UpdateMessage("Completed Level ID %d (%d/21 complete)...", l.id, completed)
+			mu.Unlock()
+		}()
 	}
 
-	// Transcendent challenge level (position 21)
-	challengeLevelID := startLevelID + 20
-	spin.UpdateMessage("Generating Level 21/21 (Transcendent)...")
-	result := generateSingleLevel(
-		challengeLevelID,
-		"Transcendent",
-		batchCfg,
-		spin,
-	)
-	batch.Levels = append(batch.Levels, result)
-	if result.Success {
-		batch.SuccessCount++
-	} else {
-		batch.FailureCount++
+	wg.Wait()
+
+	// 3. Re-order results by Level ID so the batch outputs are perfectly deterministic
+	for i := 0; i < 21; i++ {
+		levelID := startLevelID + i
+		result, found := resultsMap[levelID]
+		if !found {
+			return nil, fmt.Errorf("missing results for level ID %d", levelID)
+		}
+		batch.Levels = append(batch.Levels, result)
+		if result.Success {
+			batch.SuccessCount++
+		} else {
+			batch.FailureCount++
+		}
 	}
 
 	batch.TotalTime = time.Since(startTime)

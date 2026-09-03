@@ -2,36 +2,68 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/infrastructure_providers.dart';
-import '../../../../providers/service_providers.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/providers/infrastructure_providers.dart';
+import '../../../../core/providers/service_providers.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../data/repositories/firebase_game_progress_repository.dart';
 import '../../domain/entities/cloud_sync_state.dart';
 import '../../domain/entities/game_progress.dart';
+import '../../../auth/application/providers/auth_providers.dart';
+import '../../../journal/application/providers/journal_providers.dart';
 import 'counter_providers.dart';
+import 'module_providers.dart';
 
 final gameProgressProvider =
     NotifierProvider<GameProgressNotifier, GameProgress>(
   GameProgressNotifier.new,
 );
 
+final cloudSyncAvailabilityProvider =
+    FutureProvider<CloudSyncAvailability>((ref) async {
+  final userAsync = ref.watch(authUserProvider);
+  return userAsync.when(
+    data: (user) {
+      if (user == null) {
+        return const CloudSyncAvailability(
+          isAvailable: false,
+          reason: CloudSyncAvailabilityReason.signedOut,
+        );
+      }
+      if (user.isAnonymous) {
+        return const CloudSyncAvailability(
+          isAvailable: false,
+          reason: CloudSyncAvailabilityReason.anonymousAccount,
+        );
+      }
+      return const CloudSyncAvailability(
+        isAvailable: true,
+        reason: CloudSyncAvailabilityReason.available,
+      );
+    },
+    loading: () => const CloudSyncAvailability(
+      isAvailable: false,
+      reason: CloudSyncAvailabilityReason.signedOut,
+    ),
+    error: (_, __) => const CloudSyncAvailability(
+      isAvailable: false,
+      reason: CloudSyncAvailabilityReason.signedOut,
+    ),
+  );
+});
+
+final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
+  final availability = await ref.watch(cloudSyncAvailabilityProvider.future);
+  return availability.isAvailable;
+});
+
 final cloudSyncEnabledProvider = FutureProvider<bool>((ref) async {
+  ref.watch(cloudSyncAvailabilityProvider);
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.isCloudSyncEnabled();
 });
 
-final cloudSyncAvailableProvider = FutureProvider<bool>((ref) async {
-  final notifier = ref.watch(gameProgressProvider.notifier);
-  return notifier.isCloudSyncAvailable();
-});
-
-final cloudSyncAvailabilityProvider =
-    FutureProvider<CloudSyncAvailability>((ref) async {
-  final notifier = ref.watch(gameProgressProvider.notifier);
-  return notifier.getCloudSyncAvailability();
-});
-
 final lastSyncTimeProvider = FutureProvider<DateTime?>((ref) async {
+  ref.watch(cloudSyncAvailabilityProvider);
   final notifier = ref.watch(gameProgressProvider.notifier);
   return notifier.getLastSyncTime();
 });
@@ -43,51 +75,285 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   }
 
   Future<void> initialize() async {
+    if (!ref.mounted) return;
     final repository = ref.read(gameProgressRepositoryProvider);
     try {
       final progress = await repository.getProgress();
+      if (!ref.mounted) return;
       state = progress;
+      await _backfillUnlockedScriptures();
     } catch (e, stack) {
+      if (!ref.mounted) return;
       LoggerService.error('Error initializing GameProgress',
           error: e, stackTrace: stack, tag: 'GameProgressNotifier');
       state = GameProgress.initial();
     }
   }
 
-  Future<void> completeLevel(int levelNumber) async {
+  Future<void> _backfillUnlockedScriptures() async {
+    if (!ref.mounted) return;
+    try {
+      final modulesList = await ref.read(modulesProvider.future);
+      if (!ref.mounted) return;
+      final playlist = modulesList.expand((m) => m.allLevels).toList();
+
+      int maxCompletedIndex = -1;
+      for (final lvl in state.completedLevels) {
+        final idx = playlist.indexOf(lvl);
+        if (idx > maxCompletedIndex) {
+          maxCompletedIndex = idx;
+        }
+      }
+
+      // Also compute effective max index considering currentLevel
+      final currentLevelIdx = playlist.indexOf(state.currentLevel);
+      final effectiveMaxIndex = maxCompletedIndex > (currentLevelIdx - 1)
+          ? maxCompletedIndex
+          : (currentLevelIdx - 1);
+
+      var updatedProgress = state;
+      bool changed = false;
+
+      // 1. Heal/backfill completedLevels up to effectiveMaxIndex
+      if (effectiveMaxIndex >= 0) {
+        final updatedCompletedLevels =
+            Set<String>.from(updatedProgress.completedLevels);
+        for (int i = 0; i <= effectiveMaxIndex && i < playlist.length; i++) {
+          final levelId = playlist[i];
+          if (!updatedCompletedLevels.contains(levelId)) {
+            updatedCompletedLevels.add(levelId);
+            changed = true;
+          }
+        }
+        if (changed) {
+          updatedProgress = updatedProgress.copyWith(
+            completedLevels: updatedCompletedLevels,
+          );
+        }
+      }
+
+      // 2. Backfill micro-verses and starter scriptures from modules
+      for (final module in modulesList) {
+        for (final scripture in module.scriptures) {
+          final triggerLvl = scripture.triggerLevel;
+
+          final isTriggeredByLevel =
+              updatedProgress.completedLevels.contains(triggerLvl);
+          final isTriggeredByLesson =
+              updatedProgress.completedLessons.contains(triggerLvl);
+
+          final triggerIdx = playlist.indexOf(triggerLvl);
+          final isTriggeredByPriorLevel = triggerIdx != -1 &&
+              effectiveMaxIndex != -1 &&
+              triggerIdx <= effectiveMaxIndex;
+
+          final shouldBeUnlocked = isTriggeredByLevel ||
+              isTriggeredByLesson ||
+              isTriggeredByPriorLevel;
+
+          if (shouldBeUnlocked) {
+            if (!updatedProgress.unlockedScriptureIds.contains(scripture.id)) {
+              final newScriptures =
+                  Set<String>.from(updatedProgress.unlockedScriptureIds)
+                    ..add(scripture.id);
+
+              final scriptureService = ref.read(scriptureServiceProvider);
+              final translationId =
+                  await scriptureService.pickRandomActiveTranslation();
+              if (!ref.mounted) return;
+
+              final updatedTranslations =
+                  Map<String, String>.from(updatedProgress.unlockedTranslations)
+                    ..[scripture.id] = translationId;
+
+              updatedProgress = updatedProgress.copyWith(
+                unlockedScriptureIds: newScriptures,
+                unlockedTranslations: updatedTranslations,
+              );
+              changed = true;
+              LoggerService.info(
+                'Backfill scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $translationId',
+                tag: 'GameProgressNotifier',
+              );
+            }
+          }
+        }
+
+        // 3. Backfill parable translation if module is completed
+        if (updatedProgress.isModuleCompleted(module.id, modulesList)) {
+          if (!updatedProgress.unlockedTranslations
+              .containsKey(module.id.toString())) {
+            final scriptureService = ref.read(scriptureServiceProvider);
+            final translationId =
+                await scriptureService.pickRandomActiveTranslation();
+            if (!ref.mounted) return;
+
+            final updatedTranslations =
+                Map<String, String>.from(updatedProgress.unlockedTranslations)
+                  ..[module.id.toString()] = translationId;
+
+            updatedProgress = updatedProgress.copyWith(
+              unlockedTranslations: updatedTranslations,
+            );
+            changed = true;
+            LoggerService.info(
+              'Backfill parable translation: Module ${module.id} (${module.name}) with translation $translationId',
+              tag: 'GameProgressNotifier',
+            );
+          }
+        }
+      }
+
+      // 4. Backfill passages from biblical themes registry
+      try {
+        final themesList = await ref.read(journalThemesProvider.future);
+        for (final theme in themesList) {
+          for (final passage in theme.passages) {
+            final triggerLvl = passage.triggerLevel;
+            if (triggerLvl.isEmpty) continue;
+
+            final isTriggeredByLevel =
+                updatedProgress.completedLevels.contains(triggerLvl);
+            final isTriggeredByLesson =
+                updatedProgress.completedLessons.contains(triggerLvl);
+
+            final triggerIdx = playlist.indexOf(triggerLvl);
+            final isTriggeredByPriorLevel = triggerIdx != -1 &&
+                effectiveMaxIndex != -1 &&
+                triggerIdx <= effectiveMaxIndex;
+
+            final shouldBeUnlocked = isTriggeredByLevel ||
+                isTriggeredByLesson ||
+                isTriggeredByPriorLevel;
+
+            if (shouldBeUnlocked) {
+              if (!updatedProgress.unlockedScriptureIds.contains(passage.id)) {
+                final newScriptures =
+                    Set<String>.from(updatedProgress.unlockedScriptureIds)
+                      ..add(passage.id);
+
+                final scriptureService = ref.read(scriptureServiceProvider);
+                final translationId =
+                    await scriptureService.pickRandomActiveTranslation();
+                if (!ref.mounted) return;
+
+                final updatedTranslations = Map<String, String>.from(
+                    updatedProgress.unlockedTranslations)
+                  ..[passage.id] = translationId;
+
+                updatedProgress = updatedProgress.copyWith(
+                  unlockedScriptureIds: newScriptures,
+                  unlockedTranslations: updatedTranslations,
+                );
+                changed = true;
+                LoggerService.info(
+                  'Backfill biblical theme scripture unlocked: ${passage.id} (${passage.reference}) with translation $translationId',
+                  tag: 'GameProgressNotifier',
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        LoggerService.warn('Could not backfill biblical themes: $e',
+            tag: 'GameProgressNotifier');
+      }
+
+      if (changed) {
+        await _saveProgress(updatedProgress);
+      }
+    } catch (e, stack) {
+      LoggerService.error('Error during unlocked scriptures backfill',
+          error: e, stackTrace: stack, tag: 'GameProgressNotifier');
+    }
+  }
+
+  Future<void> completeLevel(String levelId) async {
     LoggerService.debug(
-      'Completing level $levelNumber, current state: $state',
+      'Completing level $levelId, current state: $state',
       tag: 'GameProgressNotifier',
     );
 
-    final newCompletedLevels = Set<int>.from(state.completedLevels)
-      ..add(levelNumber);
+    final modulesList = await ref.read(modulesProvider.future);
+    if (!ref.mounted) return;
+    final playlist = modulesList.expand((m) => m.allLevels).toList();
+    final newProgress = state.completeLevel(levelId, playlist);
 
-    var newTutorialCompleted = state.tutorialCompleted;
-    late final int newCurrentLevel;
+    var updatedProgress = newProgress;
+    try {
+      for (final module in modulesList) {
+        for (final scripture in module.scriptures) {
+          if (scripture.triggerLevel == levelId) {
+            if (!updatedProgress.unlockedScriptureIds.contains(scripture.id)) {
+              final newScriptures =
+                  Set<String>.from(updatedProgress.unlockedScriptureIds)
+                    ..add(scripture.id);
+              final scriptureService = ref.read(scriptureServiceProvider);
+              final translationId =
+                  await scriptureService.pickRandomActiveTranslation();
+              if (!ref.mounted) return;
+              final updatedTranslations =
+                  Map<String, String>.from(updatedProgress.unlockedTranslations)
+                    ..[scripture.id] = translationId;
 
-    const int firstMainLevel = 1;
-    const int maxTutorialLevel = 5;
+              updatedProgress = updatedProgress.copyWith(
+                unlockedScriptureIds: newScriptures,
+                unlockedTranslations: updatedTranslations,
+              );
+              LoggerService.info(
+                'Scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $translationId',
+                tag: 'GameProgressNotifier',
+              );
+            }
+          }
+        }
+      }
 
-    if (levelNumber == maxTutorialLevel && !state.tutorialCompleted) {
-      newTutorialCompleted = true;
-      newCurrentLevel = firstMainLevel;
-    } else {
-      newCurrentLevel = levelNumber + 1;
+      // Check biblical themes passages
+      try {
+        final themesList = await ref.read(journalThemesProvider.future);
+        for (final theme in themesList) {
+          for (final passage in theme.passages) {
+            if (passage.triggerLevel == levelId) {
+              if (!updatedProgress.unlockedScriptureIds.contains(passage.id)) {
+                final newScriptures =
+                    Set<String>.from(updatedProgress.unlockedScriptureIds)
+                      ..add(passage.id);
+                final scriptureService = ref.read(scriptureServiceProvider);
+                final translationId =
+                    await scriptureService.pickRandomActiveTranslation();
+                if (!ref.mounted) return;
+                final updatedTranslations = Map<String, String>.from(
+                    updatedProgress.unlockedTranslations)
+                  ..[passage.id] = translationId;
+
+                updatedProgress = updatedProgress.copyWith(
+                  unlockedScriptureIds: newScriptures,
+                  unlockedTranslations: updatedTranslations,
+                );
+                LoggerService.info(
+                  'Biblical theme scripture unlocked: ${passage.id} (${passage.reference}) with translation $translationId',
+                  tag: 'GameProgressNotifier',
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        LoggerService.warn('Error checking theme unlocks in completeLevel: $e');
+      }
+    } catch (e, stack) {
+      LoggerService.error('Error checking scripture unlocks in completeLevel',
+          error: e, stackTrace: stack);
     }
 
-    final newProgress = state.copyWith(
-      completedLevels: newCompletedLevels,
-      currentLevel: newCurrentLevel,
-      tutorialCompleted: newTutorialCompleted,
-    );
-
     LoggerService.debug(
-      'New progress: $newProgress',
+      'New progress: $updatedProgress',
       tag: 'GameProgressNotifier',
     );
 
-    await _saveProgress(newProgress);
+    if (!ref.mounted) return;
+    await _saveProgress(updatedProgress);
 
     LoggerService.debug(
       'After save, state is: $state',
@@ -106,7 +372,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
 
     unawaited(
       ref.read(analyticsServiceProvider).logLevelComplete(
-            levelNumber,
+            levelId,
             totalTaps,
             wrongTaps,
             attempts: attempts,
@@ -118,36 +384,119 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   Future<void> resetTutorial() async {
     final newProgress = state.copyWith(
       tutorialCompleted: false,
-      currentLevel: state.currentLevel < 1 ? 1 : state.currentLevel,
+      currentLevel:
+          state.currentLevel.isEmpty ? 'lvl_seed_01' : state.currentLevel,
     );
 
     await _saveProgress(newProgress);
   }
 
   Future<void> completeLesson({
-    required int lessonId,
-    required int? nextLesson,
+    required String lessonId,
+    required String? nextLesson,
     required bool allLessonsCompleted,
   }) async {
-    final newCompletedLessons = Set<int>.from(state.completedLessons)
+    final newCompletedLessons = Set<String>.from(state.completedLessons)
       ..add(lessonId);
 
-    final newProgress = state.copyWith(
+    var newProgress = state.copyWith(
       completedLessons: newCompletedLessons,
       currentLesson: nextLesson,
       lessonCompleted: allLessonsCompleted,
       tutorialCompleted: allLessonsCompleted,
-      currentLevel: (allLessonsCompleted && state.currentLevel < 1)
-          ? 1
+      currentLevel: (allLessonsCompleted && state.currentLevel.isEmpty)
+          ? 'lvl_seed_01'
           : state.currentLevel,
     );
 
+    try {
+      final modulesList = await ref.read(modulesProvider.future);
+      if (!ref.mounted) return;
+      for (final module in modulesList) {
+        for (final scripture in module.scriptures) {
+          if (scripture.triggerLevel == lessonId) {
+            if (!newProgress.unlockedScriptureIds.contains(scripture.id)) {
+              final newScriptures =
+                  Set<String>.from(newProgress.unlockedScriptureIds)
+                    ..add(scripture.id);
+              final scriptureService = ref.read(scriptureServiceProvider);
+              final translationId =
+                  await scriptureService.pickRandomActiveTranslation();
+              if (!ref.mounted) return;
+              final updatedTranslations =
+                  Map<String, String>.from(newProgress.unlockedTranslations)
+                    ..[scripture.id] = translationId;
+
+              newProgress = newProgress.copyWith(
+                unlockedScriptureIds: newScriptures,
+                unlockedTranslations: updatedTranslations,
+              );
+              LoggerService.info(
+                'Lesson Scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $translationId',
+                tag: 'GameProgressNotifier',
+              );
+            }
+          }
+        }
+      }
+
+      // Check biblical themes
+      try {
+        final themesList = await ref.read(journalThemesProvider.future);
+        for (final theme in themesList) {
+          for (final passage in theme.passages) {
+            if (passage.triggerLevel == lessonId) {
+              if (!newProgress.unlockedScriptureIds.contains(passage.id)) {
+                final newScriptures =
+                    Set<String>.from(newProgress.unlockedScriptureIds)
+                      ..add(passage.id);
+                final scriptureService = ref.read(scriptureServiceProvider);
+                final translationId =
+                    await scriptureService.pickRandomActiveTranslation();
+                if (!ref.mounted) return;
+                final updatedTranslations =
+                    Map<String, String>.from(newProgress.unlockedTranslations)
+                      ..[passage.id] = translationId;
+
+                newProgress = newProgress.copyWith(
+                  unlockedScriptureIds: newScriptures,
+                  unlockedTranslations: updatedTranslations,
+                );
+                LoggerService.info(
+                  'Lesson Biblical Theme Scripture unlocked: ${passage.id} (${passage.reference}) with translation $translationId',
+                  tag: 'GameProgressNotifier',
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        LoggerService.warn(
+            'Error checking theme unlocks in completeLesson: $e');
+      }
+    } catch (e, stack) {
+      LoggerService.error('Error checking scripture unlocks in completeLesson',
+          error: e, stackTrace: stack);
+    }
+
+    if (!ref.mounted) return;
+    await _saveProgress(newProgress);
+  }
+
+  Future<void> saveJournalNote(String scriptureId, String note) async {
+    final updatedNotes = Map<String, String>.from(state.journalNotes);
+    if (note.trim().isEmpty) {
+      updatedNotes.remove(scriptureId);
+    } else {
+      updatedNotes[scriptureId] = note.trim();
+    }
+    final newProgress = state.copyWith(journalNotes: updatedNotes);
     await _saveProgress(newProgress);
   }
 
   Future<void> resetLessons() async {
     final newProgress = state.copyWith(
-      currentLesson: 1,
+      currentLesson: 'lesson_1',
       completedLessons: {},
       lessonCompleted: false,
       tutorialCompleted: false,
@@ -162,9 +511,21 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     state = GameProgress.initial();
   }
 
+  Future<void> saveUnlockedTranslation(
+      String moduleId, String translationId) async {
+    final updatedTranslations =
+        Map<String, String>.from(state.unlockedTranslations)
+          ..[moduleId] = translationId;
+    final newProgress =
+        state.copyWith(unlockedTranslations: updatedTranslations);
+    await _saveProgress(newProgress);
+  }
+
   Future<void> _saveProgress(GameProgress progress) async {
+    if (!ref.mounted) return;
     final repository = ref.read(gameProgressRepositoryProvider);
     await repository.saveProgress(progress);
+    if (!ref.mounted) return;
     state = progress;
   }
 
@@ -173,6 +534,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     if (repository is FirebaseGameProgressRepository) {
       await repository.setCloudSyncEnabled(true);
     }
+    await initialize();
   }
 
   Future<void> disableCloudSync() async {
@@ -180,6 +542,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     if (repository is FirebaseGameProgressRepository) {
       await repository.setCloudSyncEnabled(false);
     }
+    await initialize();
   }
 
   Future<bool> isCloudSyncEnabled() async {

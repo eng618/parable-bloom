@@ -60,7 +60,7 @@ func SaveModuleRegistry(filePath string, registry *model.ModuleRegistry) error {
 }
 
 // UpdateModuleRegistry updates a module's level array in the registry
-func UpdateModuleRegistry(filePath string, moduleID int, levelIDs []int) error {
+func UpdateModuleRegistry(filePath string, moduleID int, levelIDs []string) error {
 	registry, err := LoadModuleRegistry(filePath)
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func UpdateModuleRegistry(filePath string, moduleID int, levelIDs []int) error {
 }
 
 // GetModuleLevelIDs returns the level IDs for a given module
-func GetModuleLevelIDs(registry *model.ModuleRegistry, moduleID int) ([]int, error) {
+func GetModuleLevelIDs(registry *model.ModuleRegistry, moduleID int) ([]string, error) {
 	for _, mod := range registry.Modules {
 		if mod.ID == moduleID {
 			return mod.Levels, nil
@@ -101,4 +101,44 @@ func GetModuleByID(registry *model.ModuleRegistry, moduleID int) (*model.Module,
 		}
 	}
 	return nil, fmt.Errorf("module %d not found", moduleID)
+}
+
+// LogicalLevelID maps a physical level integer to its logical String ID.
+func LogicalLevelID(levelID int) string {
+	if levelID == 21 {
+		return "lvl_seed_challenge"
+	}
+	if levelID == 42 {
+		return "lvl_sprout_challenge"
+	}
+	if levelID == 63 {
+		return "lvl_blossom_challenge"
+	}
+	if levelID == 84 {
+		return "lvl_flourish_challenge"
+	}
+	if levelID == 105 {
+		return "lvl_harvest_challenge"
+	}
+
+	if levelID >= 1 && levelID <= 20 {
+		return fmt.Sprintf("lvl_seed_%02d", levelID)
+	}
+	if levelID >= 22 && levelID <= 41 {
+		idx := levelID - 21
+		return fmt.Sprintf("lvl_sprout_%02d", idx)
+	}
+	if levelID >= 43 && levelID <= 62 {
+		idx := levelID - 42
+		return fmt.Sprintf("lvl_blossom_%02d", idx)
+	}
+	if levelID >= 64 && levelID <= 83 {
+		idx := levelID - 63
+		return fmt.Sprintf("lvl_flourish_%02d", idx)
+	}
+	if levelID >= 85 && levelID <= 104 {
+		idx := levelID - 84
+		return fmt.Sprintf("lvl_harvest_%02d", idx)
+	}
+	return "lvl_seed_01"
 }

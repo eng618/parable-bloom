@@ -39,8 +39,7 @@ class SyncConflictState {
     required this.cloudProgress,
   });
 
-  bool get requiresUserDecision =>
-      type == SyncConflictType.localAhead || type == SyncConflictType.divergent;
+  bool get requiresUserDecision => type != SyncConflictType.none;
 
   bool get cloudHasData => cloudProgress != null;
 }

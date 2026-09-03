@@ -27,13 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 24
 
@@ -43,7 +43,7 @@ jobs:
           bun-version: latest
 
       - name: Cache Bun
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb', '**/bun.lock') }}
@@ -51,7 +51,7 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Cache Nx
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .nx/cache
           key: ${{ runner.os }}-nx-${{ hashFiles('bun.lockb', 'bun.lock', 'nx.json') }}-${{ github.run_id }}
@@ -63,10 +63,9 @@ jobs:
         run: bun install
 
       - name: Install Task
-        uses: arduino/setup-task@v2
+        uses: go-task/setup-task@v2
         with:
           version: 3.x
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2

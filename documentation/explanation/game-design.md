@@ -1,0 +1,162 @@
+---
+title: 'Parable Bloom – Game Design Document'
+version: '4.0'
+last_updated: '2026-01-03'
+status: 'Active'
+type: 'Game Design Document'
+---
+
+## Parable Bloom – Game Design Document
+
+## 1. Executive Summary
+
+**Parable Bloom** is a **Christ-centered puzzle game** that blends snake-like movement mechanics with faith-based themes. Players tap directional vines to slide them off a grid, clearing paths for others to follow. The experience is designed to be contemplative yet strategically deep, rewarding patience and foresight.
+
+**Core Pitch**: "Unblock the garden, reveal the parable."
+**Theme**: A watercolor garden of faith where clearing vines represents removing obstacles from a believer's walk with God.
+**Platform**: iOS/Android (Flutter + Flame).
+
+## 2. Core Mechanics
+
+### Vine Behavior (Snake Movement)
+
+- **Movement**: Vines are directional arrows with a "head" and a trailing "body". When tapped, a vine attempts to move in the direction of its head (Up, Down, Left, Right).
+- **Snake Physics**: Movement is segment-based. The head moves into a new cell, and each subsequent body segment moves into the cell previously occupied by the segment ahead of it.
+- **Clearing**: A vine is "cleared" when its head and all body segments successfully exit the grid boundaries.
+- **Blocked Vine**: A vine is "blocked" if its simulated movement path in its direction of travel (head direction) intersects with any active cell of another remaining (non-cleared and non-animating-clear) vine on the grid.
+- **Failed Vine Attempt**: An interaction where the user taps a blocked vine. This triggers a "struggle" animation (slides forward slightly to collide, then reverses back to its original position), decrements the player's Grace, and registers a failed attempt on that vine (setting `hasBeenAttempted = true` and `isWithered = true`).
+- **Clear Path to Exit**: A state where a vine's simulated movement in its head direction reaches beyond the grid boundaries without intersecting any active cells of other remaining vines.
+- **Auto-Clearing Sequence**:
+  - Once a vine has a registered _Failed Vine Attempt_ and is flagged in state (`hasBeenAttempted == true`), it is queued for automatic clearing.
+  - When the player clears the necessary blocker vines (which could be a chain of 2–3 blocker vines), the queued vine dynamically becomes unblocked.
+  - As soon as the queued vine has a _Clear Path to Exit_ (and no other vine is actively animating), the auto-clearing sequence triggers:
+    1. **Camera Repositioning**: The camera checks if all cells of the queued vine are fully visible on screen. If any segment is off-screen or within a 40px margin of the screen edge, the camera smoothly pans/zooms to center the vine.
+    2. **Auto-Clear Delay**: The game pauses for a brief 200ms delay to allow the player to register the camera adjustment.
+    3. **Slide Out**: The vine automatically plays its slide-out/clear animation and exits the board without requiring another tap from the player.
+    4. **Camera State**: The camera remains at its panned position (it does not reset to the default center) unless the entire level board is fully cleared/completed.
+
+### The Grace System
+
+- **Concept**: Instead of "lives" or "health," the game uses **Grace**, symbolizing forgiveness and second chances.
+- **Mechanic**:
+  - Players start each level with **3 Grace** (4 in Transcendent difficulty).
+  - Tapping a blocked vine consumes 1 Grace.
+  - **Fail State**: If Grace reaches 0, the level ends with a gentle message: _"God's grace is endless—try again!"_
+  - **Tutorials**: Levels 1-5 have infinite Grace (999) to allow risk-free learning.
+
+### Hint Systems (Projection Lines)
+
+- **All-Vines Toggle**: Players can tap the FAB / Hint button (tag icon) to toggle the light gray grid line hints for all vines on the grid.
+- **Individual Vine Hinting**:
+  - **Gesture**: Long-press on any individual vine on the grid.
+  - **Behavior**: Shows only that specific vine's projected/extension line on the screen.
+  - **Persistence**: The individual hint remains visible after releasing the finger.
+  - **Additive Hints**: Long-pressing another vine (while a previous vine is hinted) adds its projection line to the screen, showing both hints together.
+  - **Clearing**: Quick-tapping any vine (including hinted ones) or any other cell/screen area clears all hint lines and reverts to no hints.
+
+## 3. Progression System
+
+### Difficulty Tiers
+
+The game scales difficulty through grid size, vine count, and blocking complexity.
+
+| Tier             | Grid Size      | Vine Count | Avg Length | Complexity       | Blocking Depth |
+| ---------------- | -------------- | ---------- | ---------- | ---------------- | -------------- |
+| **Seedling**     | 6×8 to 8×10    | 6-8        | 6-8        | Linear, no loops | 0-1            |
+| **Sprout**       | 8×10 to 10×12  | 10-14      | 5-7        | Simple chains    | 1-2            |
+| **Nurturing**    | 10×14 to 12×16 | 18-28      | 4-6        | Multi-chains     | 2-3            |
+| **Flourishing**  | 12×16 to 16×20 | 36-50      | 3-5        | Deep blocking    | 3-4            |
+| **Transcendent** | 16×24+         | 60+        | 2-4        | Cascading locks  | 4+             |
+
+### Tutorial Strategy (Pre-Level Redesign)
+
+Tutorials run once at game start, separate from main levels. They introduce progressive blocking mechanics through hands-on, tap-driven active learning, fully eliminating word-heavy toast notifications in favor of visual cues.
+
+1. **Lesson 1: Clear the Vine (Basic Movement)**: Shows easy clicking to clear a single horizontal vine. The target head is highlighted with a moss green pulsing circle and a `"Tap head to slide"` micro-prompt; other cell taps are restricted.
+2. **Lesson 2: Clear Multiple Vines (Independence)**: Introduces multiple parallel vines that can be cleared in any order. Gentle shimmer pulses appear on all heads with a `"Clear the garden"` guide.
+3. **Lesson 3: Blocking Mechanics (Obstruction & Priority)**: Teaches blocked path relationships. Tapping a blocked vine wiggles and shows a glowing red dashed **Collision Path** leading to the blocker cell with a floating alert: `"Blocked! Blocker first"`, guiding the user to clear the blocker first.
+4. **Lesson 4: Complex Blocking Chains (Sequence Logic)**: Teaches sequential multi-blocking loops. A thin flowing line traces dependencies on load, guiding the user to start at the free starter vine.
+5. **Lesson 5: Comprehensive Challenge (Capstone)**: Synthesizes all mechanics in a free-play challenge. No instructions are shown on screen, but incorrect blocked taps display the safe collision line and hearts wobble to indicate risk in main levels.
+
+Interactive elements are highlighted dynamically using global screen coordinate projections from the Flame canvas, with context-sensitive floating glassmorphic prompts anchoring near cells.
+
+### Modules & Narrative
+
+- **Structure**: Levels are grouped into **Modules** (typically 15 levels).
+- **Reward**: Completing a module unlocks a **Parable** in the player's Journal.
+- **Content**: Parables are presented as text with watercolor illustrations, offering Christ-centered reflection.
+
+## 4. Visual & Audio Design
+
+### Aesthetics
+
+- **Style**: Minimalist, organic, watercolor.
+- **Atmosphere**: Calming, serene, "Grace Garden."
+- **Backgrounds**: Dynamic vertical (9:16) backgrounds. Day features a bright sky and green grass, fading into `#F8F5EF`. Night features a dark sky and dark grass, fading into `#1A2E3F`. Both utilize a bare wood trellis pattern.
+- **Vines**: Four visual styles are available to players, built on a unified, high-performance dynamic vector path renderer:
+  - **Classic (Premium)**: A beautiful, organic watercolor oak branch with leafy green ivy foliage growing organically along the branch nodes. Utilizes high-resolution seamless generated textures mapped dynamically.
+  - **Cherry Blossom**: Delicate pink-watercolor wooden paths adorned with gorgeous programmatically rendered pink cherry blossoms and yellow centers.
+  - **Ethereal**: Dark cosmic obsidian wood paths with luminous glowing cyan veins, neon leaves, and a soft cyan outer neon-glow halo underneath.
+  - **Simple (Accessibility)**: Clean, sleek solid geometric vector paths with sharp triangular chevron heads and rounded caps, matching modern abstract maze puzzles.
+  - Managed by `vineStyleProvider` and toggled via the Settings screen and the Pause Menu.
+- **Board Default Zoom**: A user-configurable setting (0.5x to 2.0x) that adjusts how close the camera starts to the board, improving visibility for different screen sizes and accessibility needs.
+- **Trackpad Panning**: Native support for two-finger swipe/scroll gestures on trackpads (and mouse scroll wheels) to smoothly pan the game board, eliminating the need to click and drag.
+- **Modes**: Adaptive Light and Dark themes that sync with the background imagery.
+
+### Color Palette & Meaning
+
+Colors are used functionally to indicate vine roles and difficulty.
+
+| Color             | Role         | Visual Meaning                                                               |
+| ----------------- | ------------ | ---------------------------------------------------------------------------- |
+| **Moss Green**    | Foundation   | The "standard" vine. Calming, usually the first to move or the base blocker. |
+| **Sunset Orange** | Intermediate | Indicates progress or a secondary layer of blocking.                         |
+| **Golden Yellow** | Quick-Clear  | "Free" vines that can often be cleared immediately to open space.            |
+| **Royal Purple**  | Complex      | Used for deep blocking chains or "boss" vines in harder levels.              |
+| **Sky Blue**      | Alternative  | Suggests alternative paths or strategic options.                             |
+
+### Audio
+
+- **Music**: Ambient wind loops, soft nature sounds.
+- **SFX**:
+  - **Slide**: Gentle rustle (leaves moving).
+  - **Bloom**: Soft chime or bell when a vine exits.
+  - **Blocked**: Dull thud or "wilt" sound.
+
+### Micro-animations & "Juice" (FEEL)
+
+The game focuses on a serene, Christ-centered feel through subtle visual feedback:
+
+- **Radiating Sparkles**: Tapping any cell triggers a pulse ring with radiating sparkles, providing immediate and satisfying feedback.
+- **Enhanced Bloom particles**: When a vine is cleared, it triggers a multi-layered explosion of color-matched dust and glow particles, celebrating the "unblocking" of the garden.
+- **Smooth Camera Transitions**: Level starts and ends feature smooth zoom/pan animations to guide the player's focus.
+
+## 5. Level Design Principles
+
+### Full Coverage Rule (Occupancy)
+
+- **Principle**: Levels should be fully tiled by vines — no empty coordinates in the visible grid.
+- **Rule**: **100%** of visible grid cells should be occupied by vines. If a `mask` hides cells, allow **≥99%** coverage of visible cells to permit a reserved visual cell.
+- **Reasoning**: Full coverage (or 99–100% when masked) maintains consistent visual density and simplifies generation by making the problem a complete-tiling task for the generator.
+
+### Flow & Blocking
+
+- **Blocking Depth**: The number of vines that must move before a specific vine is free.
+  - _Seedling_: Depth 0-1 (Immediate or 1 step).
+  - _Transcendent_: Depth 4+ (Requires unraveling a knot).
+- **Circular Dependencies**: **Strictly Forbidden**. A vine cannot block another vine that eventually blocks the first vine (A blocks B, B blocks A). This creates unsolvable deadlocks.
+- **Directional Balance**: Grids should utilize all four directions (Up, Down, Left, Right) to prevent visual monotony and repetitive gameplay.
+
+### Organic & Fluid Aesthetics
+
+The visual style should evoke the game's "Grace Garden" theme with long, flowing paths:
+
+- **Vine Morphology**: Vines should be "windy, fluid, and long", resembling natural growth or flowing water currents.
+  - **Maximize Length**: Vines should be as long as possible, snaking through the grid.
+  - **Minimize Fragmentation**: Avoid small, disconnected vines. Gaps should be filled by extending existing vines whenever possible.
+  - **Winding Paths**: Prioritize turning and meandering over straight lines.
+  - **Fluidity**: Turns should feel organic, avoiding jagged single-step zig-zags where possible, but favoring frequent direction changes over long straightaways.
+
+- **Visual Density**: The grid should feel packed and interconnected.
+  - High density of long, interwoven vines.
+  - Fewer, but longer, vines are preferred over many short ones.

@@ -47,7 +47,7 @@ void main() {
 
     // Resetting for a new level should clear hasBeenAttempted
     final level = LevelData(
-      id: 1,
+      id: 'lvl_seed_01',
       name: 'L',
       difficulty: 'Seed',
       gridWidth: 2,
@@ -83,7 +83,7 @@ void main() {
       final notifier = container.read(vineStatesProvider.notifier);
 
       final level = LevelData(
-        id: 99,
+        id: 'lvl_seed_99',
         name: 'Race Timing Regression',
         difficulty: 'Seed',
         gridWidth: 4,
@@ -172,7 +172,7 @@ void main() {
 
     final notifier = container.read(vineStatesProvider.notifier);
     final level = LevelData(
-      id: 100,
+      id: 'lvl_seed_100',
       name: 'Animation State Reset',
       difficulty: 'Seed',
       gridWidth: 4,
