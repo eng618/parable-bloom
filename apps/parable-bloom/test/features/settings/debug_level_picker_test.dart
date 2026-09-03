@@ -6,8 +6,8 @@ import 'package:hive/hive.dart';
 import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/settings/presentation/screens/settings_screen.dart';
-import 'package:parable_bloom/providers/infrastructure_providers.dart';
-import 'package:parable_bloom/providers/settings_providers.dart';
+import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
+import 'package:parable_bloom/core/providers/settings_providers.dart';
 
 // Minimal fake Hive box for provider reads in tests.
 class FakeBox implements Box<dynamic> {
@@ -39,8 +39,9 @@ void main() {
           themeSeed: 'forest',
           levels: ['lvl_seed_01', 'lvl_seed_02'],
           challengeLevel: '',
-          parable: {},
+          parable: const {},
           unlockMessage: '',
+          scriptures: const [],
         ),
       ];
 
@@ -88,8 +89,9 @@ void main() {
           themeSeed: 'forest',
           levels: ['lvl_seed_01', 'lvl_seed_02'],
           challengeLevel: '',
-          parable: {},
+          parable: const {},
           unlockMessage: '',
+          scriptures: const [],
         ),
       ];
 

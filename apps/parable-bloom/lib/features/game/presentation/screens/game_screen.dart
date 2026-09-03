@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
@@ -7,7 +8,8 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 
 import '../../../../core/app_theme.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
-import '../../../../providers/service_providers.dart';
+import '../../../../core/providers/service_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
 import '../../application/providers/camera_providers.dart';
 import '../../application/providers/counter_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
@@ -18,7 +20,9 @@ import '../widgets/garden_game.dart';
 import '../widgets/pause_menu_dialog.dart';
 import '../widgets/pond_ripple_effect_component.dart';
 import '../widgets/ripple_fireworks_component.dart';
-import '../../../../services/logger_service.dart';
+import '../../../journal/application/providers/journal_providers.dart';
+import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
+import '../../../../core/services/logger_service.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -35,15 +39,20 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   // List of congratulatory messages
   static const List<String> _congratulationMessages = [
     'Well done, good and faithful servant!',
-    'Blessed are you!',
-    'Your faith has made you well!',
-    'The Lord is with you!',
+    'Blessed are you in Christ!',
+    'Your faith is bearing fruit!',
+    'The Lord is with you always!',
     'Rejoice in the Lord!',
     'Grace upon grace!',
-    'In His strength!',
-    'Abundant life!',
-    'Fruitful harvest!',
-    'Seeds of faith!',
+    'In His strength alone!',
+    'Abundant life in Christ!',
+    'A fruitful harvest awaits!',
+    'Seeds of faith growing deep!',
+    'Abide in His love!',
+    'He makes your path straight!',
+    'The joy of the Lord is your strength!',
+    'Walk by faith, not by sight!',
+    'Rooted and built up in Him!',
   ];
 
   @override
@@ -53,15 +62,90 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         tag: 'GameScreen', metadata: {'game_is_null': _game == null});
     _isLevelCompleteOverlayVisible = false;
     _currentCongratulationMessage = '';
+    _initGame();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(analyticsServiceProvider).logScreenView('Gameplay');
     });
   }
 
+  void _initGame() {
+    LoggerService.debug('Creating new GardenGame instance in initState',
+        tag: 'GameScreen');
+    _game = GardenGame(
+      callbacks: GardenGameCallbacks(
+        onGameLoaded: (game) {
+          if (!mounted) return;
+          ref.read(gameInstanceProvider.notifier).setGame(game);
+          _loadLevelForGame(game);
+        },
+        onGameRemoved: () {
+          if (!mounted) return;
+          if (ref.read(gameInstanceProvider) == _game) {
+            ref.read(gameInstanceProvider.notifier).setGame(null);
+          }
+        },
+        onVineCleared: (vineId) {
+          if (!mounted) return;
+          ref.read(vineStatesProvider.notifier).clearVine(vineId);
+        },
+        onVineAnimationStateChanged: (vineId, animationState) {
+          if (!mounted) return;
+          ref
+              .read(vineStatesProvider.notifier)
+              .setAnimationState(vineId, animationState);
+        },
+        onVineAttempted: (vineId) {
+          if (!mounted) return;
+          ref.read(vineStatesProvider.notifier).markAttempted(vineId);
+        },
+        onTapIncrement: (count) {
+          if (!mounted) return;
+          for (int i = 0; i < count; i++) {
+            ref.read(levelTotalTapsProvider.notifier).increment();
+          }
+        },
+        onTapOutsideGrid: () {
+          if (!mounted) return;
+          ref.read(hintedVineIdsProvider.notifier).clear();
+        },
+        onBlockedTap: (state) {
+          if (!mounted) return;
+          ref.read(blockedTapProvider.notifier).setBlockedTap(state);
+        },
+        onEnsureVineVisible: (vine) async {
+          if (!mounted) return;
+          await ref.read(cameraStateProvider.notifier).ensureVineVisible(vine);
+        },
+        onHintVine: (vineId) {
+          if (!mounted) return;
+          ref.read(hintedVineIdsProvider.notifier).add(vineId);
+        },
+        onClearHints: () {
+          if (!mounted) return;
+          ref.read(hintedVineIdsProvider.notifier).clear();
+        },
+        getUseSimpleVines: () =>
+            mounted ? ref.read(useSimpleVinesProvider) : false,
+        getHapticsEnabled: () =>
+            mounted ? ref.read(hapticsEnabledProvider) : false,
+        getIsAnyAnimating: () =>
+            mounted ? ref.read(anyVineAnimatingProvider) : false,
+        getDebugShowGridCoordinates: () =>
+            mounted ? ref.read(debugShowGridCoordinatesProvider) : false,
+        getDebugVineAnimationLogging: () =>
+            mounted ? ref.read(debugVineAnimationLoggingProvider) : false,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     LoggerService.debug('GameScreen dispose', tag: 'GameScreen');
+    if (ref.read(gameInstanceProvider) == _game) {
+      ref.read(gameInstanceProvider.notifier).setGame(null);
+    }
+    _game = null;
     super.dispose();
   }
 
@@ -123,6 +207,31 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       }
     });
 
+    // Sync state with Flame GardenGame instance
+    ref.listen(cameraStateProvider, (previous, next) {
+      _game?.applyCameraTransform(next);
+    });
+
+    ref.listen(vineStatesProvider, (previous, next) {
+      _game?.updateVineStates(next);
+    });
+
+    ref.listen(vineStyleProvider, (previous, next) {
+      _game?.updateSimpleVines(next == VineStyle.simple);
+    });
+
+    ref.listen(projectionLinesVisibleProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listen(anyVineAnimatingProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listen(hintedVineIdsProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
     return Scaffold(
       backgroundColor: colorScheme.surface,
       floatingActionButton: _buildProjectionLinesFAB(),
@@ -177,11 +286,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ),
             onScaleEnd: _handleScaleEnd,
             child: GameWidget<GardenGame>(
-              game: _game ??= () {
-                LoggerService.debug('Creating new GardenGame instance',
-                    tag: 'GameScreen');
-                return GardenGame(ref: ref);
-              }(),
+              game: _game!,
               loadingBuilder: (_) =>
                   const Center(child: CircularProgressIndicator()),
             ),
@@ -251,12 +356,33 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       context: context,
       builder: (context) => PauseMenuDialog(
         onRestart: () {
-          Navigator.of(context).pop(); // Close dialog
+          if (context.canPop()) context.pop(); // Close dialog
           _restartLevel();
         },
         onHome: () {
-          Navigator.of(context).pop(); // Close dialog
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          final currentLevel = ref.read(currentLevelProvider);
+          if (currentLevel != null) {
+            final startMs = ref.read(levelStartTimestampProvider);
+            final elapsedSeconds = startMs != null
+                ? ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000)
+                    .round()
+                : -1;
+            final tapCount = ref.read(levelTotalTapsProvider);
+            final remainingVines = ref
+                .read(vineStatesProvider)
+                .values
+                .where((s) => !s.isCleared)
+                .length;
+
+            ref.read(analyticsServiceProvider).logLevelQuit(
+                  levelId: currentLevel.id,
+                  elapsedSeconds: elapsedSeconds,
+                  taps: tapCount,
+                  remainingVines: remainingVines,
+                );
+          }
+          if (context.canPop()) context.pop(); // Close dialog
+          context.go('/');
         },
       ),
     );
@@ -337,6 +463,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   // Confetti implementation removed; celebration handled via in-game ripple effect.
 
   Widget _buildLevelCompleteOverlay() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeColor = isDark ? AppTheme.secondarySeed : AppTheme.primarySeed;
+
     return Stack(
       children: [
         // Content only (no rigid colored box), with subtle text shadow
@@ -350,7 +479,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 Text(
                   'Level Complete',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
+                        color: themeColor,
                         fontWeight: FontWeight.w900,
                       ),
                   textAlign: TextAlign.center,
@@ -360,7 +489,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   _currentCongratulationMessage,
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: themeColor,
                     shadows: [
                       Shadow(
                         blurRadius: 10.0,
@@ -377,7 +506,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 const SizedBox(height: 16),
                 Icon(
                   Icons.celebration,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: themeColor,
                   size: 72,
                   shadows: [
                     Shadow(
@@ -413,7 +542,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Add subtle pond ripple effect to the game scene
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_game != null) {
-        final cs = Theme.of(context).colorScheme;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final animationColors =
+            isDark ? [AppTheme.secondarySeed] : [AppTheme.primarySeed];
         final center = Vector2(_game!.size.x / 2, _game!.size.y / 2);
         final effect = ref.read(celebrationEffectProvider);
         switch (effect) {
@@ -424,7 +555,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 maxRadius: (_game!.size.y * 0.45),
                 ringCount: 4,
                 duration: 2.0,
-                colors: [cs.primary, cs.secondary],
+                colors: animationColors,
               ),
             );
             break;
@@ -435,7 +566,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 duration: 2.0,
                 minRippleRadius: 30,
                 maxRippleRadius: 64,
-                colors: [cs.primary, cs.secondary],
+                colors: animationColors,
                 paddingRatio: 0.12,
               ),
             );
@@ -453,9 +584,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Advance to next level
     final currentLevel = ref.read(currentLevelProvider);
     ModuleData? completedModule;
+    ModuleScripture? newlyUnlockedScripture;
+
     if (currentLevel != null) {
+      List<ModuleData> modules = [];
       try {
-        final modules = await ref.read(modulesProvider.future);
+        modules = await ref.read(modulesProvider.future);
         for (final m in modules) {
           if (m.endLevel == currentLevel.id) {
             completedModule = m;
@@ -472,6 +606,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         );
       }
 
+      final prevUnlockedScriptures =
+          ref.read(gameProgressProvider).unlockedScriptureIds;
+
       final isDebugPlay = ref.read(debugPlayModeProvider);
       if (!isDebugPlay) {
         await ref
@@ -481,12 +618,26 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         LoggerService.debug('Debug play — skipping persistence',
             tag: 'GameScreen', metadata: {'level_id': currentLevel.id});
       }
+
+      final postProgress = ref.read(gameProgressProvider);
+      if (modules.isNotEmpty) {
+        for (final m in modules) {
+          for (final s in m.scriptures) {
+            if (!prevUnlockedScriptures.contains(s.id) &&
+                postProgress.unlockedScriptureIds.contains(s.id)) {
+              newlyUnlockedScripture = s;
+              completedModule = m; // Associate for the dialog
+              break;
+            }
+          }
+        }
+      }
     }
 
     // Reset grace for the next level
     ref.read(gameInstanceProvider.notifier).resetGrace();
 
-    // Wait for 2 seconds then navigate back to home OR show parable unlock.
+    // Wait for 2 seconds then navigate back to home OR show parable/scripture unlock.
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
@@ -497,6 +648,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     setState(() {
       _isLevelCompleteOverlayVisible = false;
     });
+
+    if (newlyUnlockedScripture != null && completedModule != null) {
+      if (ref.read(debugPlayModeProvider)) {
+        ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
+      }
+      await _showScriptureUnlockedDialog(
+          newlyUnlockedScripture, completedModule);
+      return;
+    }
 
     if (completedModule != null) {
       // Clear debug selection if active
@@ -513,7 +673,191 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
 
     // Navigate back to home screen and clear game screen from stack
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    context.go('/');
+  }
+
+  Future<void> _showScriptureUnlockedDialog(
+    ModuleScripture scripture,
+    ModuleData module,
+  ) async {
+    if (!mounted) return;
+
+    ref.read(analyticsServiceProvider).logParableViewed(scripture.id);
+
+    final progress = ref.read(gameProgressProvider);
+    final savedTranslationId = progress.unlockedTranslations[scripture.id];
+
+    String resolvedText = '';
+    String displayCitation = scripture.reference;
+    String themeName = module.name;
+    String? reflectionPrompt;
+
+    try {
+      final themes = await ref.read(journalThemesProvider.future);
+      for (final theme in themes) {
+        for (final passage in theme.passages) {
+          if (passage.id == scripture.id ||
+              passage.reference == scripture.reference) {
+            themeName = theme.name;
+            if (passage.reflectionPrompts.isNotEmpty) {
+              reflectionPrompt = passage.reflectionPrompts.first;
+            }
+            break;
+          }
+        }
+      }
+    } catch (_) {}
+
+    try {
+      final result = await ref.read(scriptureServiceProvider).loadScripture(
+            scripture.reference,
+            translationId: savedTranslationId ?? 'kjv',
+          );
+
+      resolvedText = result['text'] ?? '';
+      displayCitation = '${scripture.reference} (KJV)';
+    } catch (e, stack) {
+      LoggerService.error(
+        'Error loading scripture for unlocked dialog',
+        error: e,
+        stackTrace: stack,
+        tag: 'GameScreen',
+      );
+    }
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final cs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: cs.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.spa, color: cs.primary, size: 28),
+              const SizedBox(width: 8),
+              Text(
+                scripture.type == 'starter'
+                    ? 'Starter Scripture!'
+                    : 'Scripture Collected!',
+                style: TextStyle(
+                  color: cs.primary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  scripture.title,
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                if (resolvedText.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cs.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: cs.outlineVariant),
+                    ),
+                    child: Text(
+                      resolvedText,
+                      style: TextStyle(
+                        color: cs.onSurface,
+                        fontSize: 15,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Text(
+                  displayCitation,
+                  style: TextStyle(
+                    color: cs.onSurfaceVariant,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (reflectionPrompt != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                      border:
+                          Border.all(color: cs.primary.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.help_outline, size: 16, color: cs.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            reflectionPrompt,
+                            style: TextStyle(
+                              color: cs.onPrimaryContainer,
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Text(
+                  'Added to your Journal under $themeName.',
+                  style: TextStyle(
+                    color: cs.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                if (context.canPop()) context.pop(); // pop game screen to home
+                context.push('/journal');
+              },
+              child: const Text('VIEW JOURNAL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context.go('/');
+              },
+              child: const Text('CONTINUE'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _showParableUnlockedDialog(ModuleData module) async {
@@ -524,8 +868,43 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final parable = module.parable;
     final title = (parable['title'] as String?)?.trim();
     final scripture = (parable['scripture'] as String?)?.trim();
-    final content = (parable['content'] as String?)?.trim();
     final reflection = (parable['reflection'] as String?)?.trim();
+
+    String resolvedText = (parable['content'] as String?)?.trim() ?? '';
+    String displayCitation = scripture ?? '';
+
+    if (scripture != null && scripture.isNotEmpty) {
+      try {
+        final progress = ref.read(gameProgressProvider);
+        final savedTranslationId =
+            progress.unlockedTranslations[module.id.toString()];
+
+        final result = await ref.read(scriptureServiceProvider).loadScripture(
+              scripture,
+              translationId: savedTranslationId,
+            );
+
+        resolvedText = result['text'] ?? resolvedText;
+        final translationCode = result['translation'] ?? 'KJV';
+        displayCitation = '$scripture ($translationCode)';
+
+        if (savedTranslationId == null) {
+          await ref.read(gameProgressProvider.notifier).saveUnlockedTranslation(
+                module.id.toString(),
+                translationCode.toLowerCase(),
+              );
+        }
+      } catch (e, stack) {
+        LoggerService.error(
+          'Error loading scripture for unlocked parable dialog',
+          error: e,
+          stackTrace: stack,
+          tag: 'GameScreen',
+        );
+      }
+    }
+
+    if (!mounted) return;
 
     await showDialog<void>(
       context: context,
@@ -558,10 +937,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
-                if (scripture?.isNotEmpty == true) ...[
+                if (displayCitation.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
-                    scripture!,
+                    displayCitation,
                     style: TextStyle(
                       color: cs.onSurface,
                       fontSize: 14,
@@ -570,10 +949,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     textAlign: TextAlign.center,
                   ),
                 ],
-                if (content?.isNotEmpty == true) ...[
+                if (resolvedText.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
-                    content!,
+                    resolvedText,
                     style: TextStyle(color: cs.onSurface, fontSize: 14),
                     textAlign: TextAlign.left,
                   ),
@@ -593,21 +972,100 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                Navigator.of(context).pop(); // pop game screen to home
-                Navigator.of(context).pushNamed('/journal');
+                if (context.canPop()) context.pop(); // pop game screen to home
+                context.push('/journal');
               },
               child: const Text('GO TO JOURNAL'),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                context.go('/');
               },
               child: const Text('CONTINUE'),
             ),
           ],
         );
       },
+    );
+  }
+
+  Future<void> _loadLevelForGame(GardenGame game) async {
+    final debugSelected = ref.read(debugSelectedLevelProvider);
+    final gameProgress = ref.read(gameProgressProvider);
+    final levelId = debugSelected ?? gameProgress.currentLevel;
+
+    try {
+      final mappings = await ref.read(levelMappingsProvider.future);
+      if (!mappings.containsKey(levelId)) {
+        ref.read(gameCompletedProvider.notifier).setCompleted(true);
+        return;
+      }
+
+      final levelData = await ref.read(levelDataProvider(levelId).future);
+
+      ref.read(currentLevelProvider.notifier).setLevel(levelData);
+      ref.read(gameCompletedProvider.notifier).setCompleted(false);
+
+      ref.read(levelTotalTapsProvider.notifier).reset();
+      ref.read(levelWrongTapsProvider.notifier).reset();
+
+      final previousLevelId = ref.read(currentLevelProvider)?.id;
+      final attemptNotifier = ref.read(levelAttemptCountProvider.notifier);
+      if (previousLevelId != levelData.id) {
+        attemptNotifier.set(1);
+      }
+
+      ref.read(levelStartTimestampProvider.notifier).set(DateTime.now());
+
+      if (!ref.read(debugPlayModeProvider)) {
+        ref.read(analyticsServiceProvider).logLevelStart(levelData.id);
+      }
+
+      ref.read(vineStatesProvider.notifier).resetForLevel(levelData);
+
+      final vineStates = ref.read(vineStatesProvider);
+      game.startLevel(levelData, vineStates);
+
+      final cameraNotifier = ref.read(cameraStateProvider.notifier);
+      cameraNotifier.updateZoomBounds(
+        screenWidth: game.size.x,
+        screenHeight: game.size.y,
+        gridCols: levelData.gridWidth,
+        gridRows: levelData.gridHeight,
+      );
+      cameraNotifier.animateToDefaultZoom(
+        screenWidth: game.size.x,
+        screenHeight: game.size.y,
+        gridCols: levelData.gridWidth,
+        gridRows: levelData.gridHeight,
+      );
+
+      game.applyCameraTransform(ref.read(cameraStateProvider));
+    } catch (e, stack) {
+      LoggerService.error('Error loading level $levelId on game screen',
+          error: e, stackTrace: stack, tag: 'GameScreen');
+      ref.read(gameOverProvider.notifier).setGameOver(true);
+    }
+  }
+
+  void _updateProjectionLinesVisibility() {
+    if (_game == null) return;
+    final shouldShow = ref.read(projectionLinesVisibleProvider);
+    final hintedVines = ref.read(hintedVineIdsProvider);
+    final isAnimating = ref.read(anyVineAnimatingProvider);
+
+    if (isAnimating && shouldShow) {
+      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+    }
+    if (isAnimating && hintedVines.isNotEmpty) {
+      ref.read(hintedVineIdsProvider.notifier).clear();
+    }
+
+    _game!.updateProjectionLinesVisibility(
+      visible: shouldShow,
+      hintedVines: hintedVines,
+      isAnimating: isAnimating,
     );
   }
 
@@ -618,18 +1076,37 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       attemptsNotifier.increment();
       final attempts = ref.read(levelAttemptCountProvider);
 
-      ref
-          .read(analyticsServiceProvider)
-          .logLevelRestart(currentLevel.id, attempts);
+      final startMs = ref.read(levelStartTimestampProvider);
+      final elapsedSeconds = startMs != null
+          ? ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000).round()
+          : -1;
+
+      ref.read(analyticsServiceProvider).logLevelRestart(
+            currentLevel.id,
+            attempts,
+            elapsedSeconds: elapsedSeconds,
+          );
 
       ref.read(levelStartTimestampProvider.notifier).set(DateTime.now());
+
+      ref.read(vineStatesProvider.notifier).resetForLevel(currentLevel);
+      ref.read(levelCompleteProvider.notifier).setComplete(false);
+      ref.read(gameOverProvider.notifier).setGameOver(false);
+      ref.read(gameInstanceProvider.notifier).resetGrace();
+
+      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+
+      if (_game != null) {
+        _game!.startLevel(currentLevel, ref.read(vineStatesProvider));
+        final cameraNotifier = ref.read(cameraStateProvider.notifier);
+        cameraNotifier.animateToDefaultZoom(
+          screenWidth: _game!.size.x,
+          screenHeight: _game!.size.y,
+          gridCols: currentLevel.gridWidth,
+          gridRows: currentLevel.gridHeight,
+        );
+      }
     }
-
-    ref.read(levelCompleteProvider.notifier).setComplete(false);
-    ref.read(gameOverProvider.notifier).setGameOver(false);
-    ref.read(gameInstanceProvider.notifier).resetGrace();
-
-    _game?.reloadLevel();
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Level restarted')));
@@ -683,7 +1160,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
                   }
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  context.go('/');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
@@ -746,13 +1223,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Reset grace and retry the current level
-                  ref.read(gameInstanceProvider.notifier).resetGrace();
-                  ref.read(gameOverProvider.notifier).setGameOver(false);
-                  _game?.reloadLevel();
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
                   }
+                  _restartLevel();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,

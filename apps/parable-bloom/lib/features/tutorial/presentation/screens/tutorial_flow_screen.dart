@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -6,7 +7,7 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
-import '../../../../services/logger_service.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../../game/application/providers/camera_providers.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../application/providers/tutorial_providers.dart';
@@ -14,6 +15,15 @@ import '../../../game/presentation/widgets/garden_game.dart';
 import '../../../game/presentation/widgets/game_header.dart';
 import '../../../game/presentation/widgets/pause_menu_dialog.dart';
 import '../widgets/tutorial_guide_overlay.dart';
+import '../../../game/presentation/widgets/pond_ripple_effect_component.dart';
+import '../../../game/presentation/widgets/ripple_fireworks_component.dart';
+import '../../../game/application/providers/progress_providers.dart';
+import '../../../game/application/providers/module_providers.dart';
+import '../../../../core/providers/service_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
+import '../../../game/application/providers/counter_providers.dart';
+import '../../../game/domain/entities/level_data.dart';
+import '../../../journal/application/providers/journal_providers.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
 /// Shows the game with GameHeader (pause, grace) and a simple instruction overlay.
@@ -36,15 +46,20 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   // Congratulatory messages (same as GameScreen)
   static const List<String> _congratulationMessages = [
     'Well done, good and faithful servant!',
-    'Blessed are you!',
-    'Your faith has made you well!',
-    'The Lord is with you!',
+    'Blessed are you in Christ!',
+    'Your faith is bearing fruit!',
+    'The Lord is with you always!',
     'Rejoice in the Lord!',
     'Grace upon grace!',
-    'In His strength!',
-    'Abundant life!',
-    'Fruitful harvest!',
-    'Seeds of faith!',
+    'In His strength alone!',
+    'Abundant life in Christ!',
+    'A fruitful harvest awaits!',
+    'Seeds of faith growing deep!',
+    'Abide in His love!',
+    'He makes your path straight!',
+    'The joy of the Lord is your strength!',
+    'Walk by faith, not by sight!',
+    'Rooted and built up in Him!',
   ];
 
   @override
@@ -95,22 +110,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       }
     });
 
-    // If all lessons completed, navigate to main game
-    if (tutorialProgress.allLessonsCompleted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          LoggerService.info('All lessons completed - returning to home',
-              tag: 'TutorialFlowScreen');
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
-      });
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
     // Validate lesson number
     if (currentLesson < 1 || currentLesson > 5) {
       return Scaffold(
@@ -124,7 +123,114 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
           data: (lesson) {
             // Create or recreate game when lesson changes
             if (_game == null || _game!.currentLessonId != lesson.id) {
-              _game = GardenGame.fromLesson(lesson, ref: ref);
+              final levelData = lesson.toLevelData();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  ref.read(currentLevelProvider.notifier).setLevel(levelData);
+                  ref
+                      .read(vineStatesProvider.notifier)
+                      .resetForLevel(levelData);
+                  ref.read(levelCompleteProvider.notifier).setComplete(false);
+                  ref.read(gameCompletedProvider.notifier).setCompleted(false);
+                }
+              });
+
+              _game = GardenGame.fromLesson(
+                lesson,
+                callbacks: GardenGameCallbacks(
+                  onGameLoaded: (game) {
+                    if (!mounted) return;
+                    ref.read(gameInstanceProvider.notifier).setGame(game);
+                    final levelData = lesson.toLevelData();
+                    ref.read(currentLevelProvider.notifier).setLevel(levelData);
+                    ref
+                        .read(vineStatesProvider.notifier)
+                        .resetForLevel(levelData);
+                    ref.read(levelCompleteProvider.notifier).setComplete(false);
+                    ref
+                        .read(gameCompletedProvider.notifier)
+                        .setCompleted(false);
+
+                    game.startLesson(lesson);
+
+                    final cameraNotifier =
+                        ref.read(cameraStateProvider.notifier);
+                    cameraNotifier.updateZoomBounds(
+                      screenWidth: game.size.x,
+                      screenHeight: game.size.y,
+                      gridCols: lesson.gridWidth,
+                      gridRows: lesson.gridHeight,
+                    );
+                    cameraNotifier.animateToDefaultZoom(
+                      screenWidth: game.size.x,
+                      screenHeight: game.size.y,
+                      gridCols: lesson.gridWidth,
+                      gridRows: lesson.gridHeight,
+                    );
+                    game.applyCameraTransform(ref.read(cameraStateProvider));
+                  },
+                  onGameRemoved: () {
+                    if (!mounted) return;
+                    if (ref.read(gameInstanceProvider) == _game) {
+                      ref.read(gameInstanceProvider.notifier).setGame(null);
+                    }
+                  },
+                  onVineCleared: (vineId) {
+                    if (!mounted) return;
+                    ref.read(vineStatesProvider.notifier).clearVine(vineId);
+                  },
+                  onVineAnimationStateChanged: (vineId, animationState) {
+                    if (!mounted) return;
+                    ref
+                        .read(vineStatesProvider.notifier)
+                        .setAnimationState(vineId, animationState);
+                  },
+                  onVineAttempted: (vineId) {
+                    if (!mounted) return;
+                    ref.read(vineStatesProvider.notifier).markAttempted(vineId);
+                  },
+                  onTapIncrement: (count) {
+                    if (!mounted) return;
+                    for (int i = 0; i < count; i++) {
+                      ref.read(levelTotalTapsProvider.notifier).increment();
+                    }
+                  },
+                  onTapOutsideGrid: () {
+                    if (!mounted) return;
+                    ref.read(hintedVineIdsProvider.notifier).clear();
+                  },
+                  onBlockedTap: (state) {
+                    if (!mounted) return;
+                    ref.read(blockedTapProvider.notifier).setBlockedTap(state);
+                  },
+                  onEnsureVineVisible: (vine) async {
+                    if (!mounted) return;
+                    await ref
+                        .read(cameraStateProvider.notifier)
+                        .ensureVineVisible(vine);
+                  },
+                  onHintVine: (vineId) {
+                    if (!mounted) return;
+                    ref.read(hintedVineIdsProvider.notifier).add(vineId);
+                  },
+                  onClearHints: () {
+                    if (!mounted) return;
+                    ref.read(hintedVineIdsProvider.notifier).clear();
+                  },
+                  getUseSimpleVines: () =>
+                      mounted ? ref.read(useSimpleVinesProvider) : false,
+                  getHapticsEnabled: () =>
+                      mounted ? ref.read(hapticsEnabledProvider) : false,
+                  getIsAnyAnimating: () =>
+                      mounted ? ref.read(anyVineAnimatingProvider) : false,
+                  getDebugShowGridCoordinates: () => mounted
+                      ? ref.read(debugShowGridCoordinatesProvider)
+                      : false,
+                  getDebugVineAnimationLogging: () => mounted
+                      ? ref.read(debugVineAnimationLoggingProvider)
+                      : false,
+                ),
+              );
             }
 
             return Scaffold(
@@ -396,12 +502,12 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       context: context,
       builder: (context) => PauseMenuDialog(
         onRestart: () {
-          Navigator.of(context).pop(); // Close dialog
+          if (context.canPop()) context.pop(); // Close dialog
           _restartLesson();
         },
         onHome: () {
-          Navigator.of(context).pop(); // Close dialog
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          if (context.canPop()) context.pop(); // Close dialog
+          context.go('/');
         },
       ),
     );
@@ -411,7 +517,22 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     ref.read(levelCompleteProvider.notifier).setComplete(false);
     ref.read(gameCompletedProvider.notifier).setCompleted(false);
     ref.read(gameInstanceProvider.notifier).resetGrace();
-    _game?.reloadLevel();
+
+    final tutorialProgress = ref.read(tutorialProgressProvider);
+    final currentLesson = tutorialProgress.currentLesson;
+    ref.read(lessonProvider(currentLesson)).whenData((lesson) {
+      if (_game != null) {
+        _game!.startLesson(lesson);
+        final cameraNotifier = ref.read(cameraStateProvider.notifier);
+        cameraNotifier.animateToDefaultZoom(
+          screenWidth: _game!.size.x,
+          screenHeight: _game!.size.y,
+          gridCols: lesson.gridWidth,
+          gridRows: lesson.gridHeight,
+        );
+      }
+    });
+
     setState(() {
       _isLevelCompleteOverlayVisible = false;
     });
@@ -432,6 +553,46 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       _isLevelCompleteOverlayVisible = true;
     });
 
+    // Add subtle pond ripple effect to the game scene
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_game != null) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final animationColors =
+            isDark ? [AppTheme.secondarySeed] : [AppTheme.primarySeed];
+        final center = Vector2(_game!.size.x / 2, _game!.size.y / 2);
+        final effect = ref.read(celebrationEffectProvider);
+        switch (effect) {
+          case CelebrationEffect.pondRipples:
+            _game!.add(
+              PondRippleEffectComponent(
+                center: center,
+                maxRadius: (_game!.size.y * 0.45),
+                ringCount: 4,
+                duration: 2.0,
+                colors: animationColors,
+              ),
+            );
+            break;
+          case CelebrationEffect.rippleFireworks:
+            _game!.add(
+              RippleFireworksComponent(
+                count: 8,
+                duration: 2.0,
+                minRippleRadius: 30,
+                maxRippleRadius: 64,
+                colors: animationColors,
+                paddingRatio: 0.12,
+              ),
+            );
+            break;
+          case CelebrationEffect.leafPetals:
+            break;
+          case CelebrationEffect.confetti:
+            break;
+        }
+      }
+    });
+
     // Wait for 2 seconds then advance to next lesson
     await Future.delayed(const Duration(seconds: 2));
 
@@ -444,6 +605,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     // Get current lesson before advancing
     final beforeLesson = ref.read(tutorialProgressProvider).currentLesson;
 
+    final prevUnlockedScriptures =
+        ref.read(gameProgressProvider).unlockedScriptureIds;
+
     // Advance to next lesson
     await ref
         .read(tutorialProgressProvider.notifier)
@@ -453,10 +617,75 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     ref.read(levelCompleteProvider.notifier).setComplete(false);
     ref.read(gameCompletedProvider.notifier).setCompleted(false);
 
-    // Check if we advanced to a new lesson
-    final after = ref.read(tutorialProgressProvider);
+    final postProgress = ref.read(gameProgressProvider);
+    ModuleScripture? unlockedScripture;
+    ModuleData? completedModule;
 
-    if (!after.allLessonsCompleted && after.currentLesson != beforeLesson) {
+    try {
+      final modules = await ref.read(modulesProvider.future);
+      for (final m in modules) {
+        for (final s in m.scriptures) {
+          if (!prevUnlockedScriptures.contains(s.id) &&
+              postProgress.unlockedScriptureIds.contains(s.id)) {
+            unlockedScripture = s;
+            completedModule = m;
+            break;
+          }
+        }
+      }
+
+      if (unlockedScripture == null) {
+        final themes = await ref.read(journalThemesProvider.future);
+        for (final theme in themes) {
+          for (final passage in theme.passages) {
+            if (!prevUnlockedScriptures.contains(passage.id) &&
+                postProgress.unlockedScriptureIds.contains(passage.id)) {
+              unlockedScripture = ModuleScripture(
+                id: passage.id,
+                triggerLevel: passage.triggerLevel,
+                reference: passage.reference,
+                title: passage.title,
+                type: passage.type,
+              );
+              completedModule = ModuleData(
+                id: 1,
+                name: theme.name,
+                themeSeed: 'forest',
+                levels: const [],
+                challengeLevel: '',
+                parable: const {},
+                unlockMessage: '',
+                scriptures: const [],
+              );
+              break;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      LoggerService.error(
+          'Failed to look up unlocked scripture in tutorial completion',
+          error: e);
+    }
+
+    if (unlockedScripture != null && completedModule != null) {
+      await _showScriptureUnlockedDialog(unlockedScripture, completedModule);
+      return;
+    }
+
+    // If no scripture is unlocked, but we completed all lessons, pop now!
+    final after = ref.read(tutorialProgressProvider);
+    if (after.allLessonsCompleted) {
+      if (mounted) {
+        LoggerService.info('All lessons completed - returning to home',
+            tag: 'TutorialFlowScreen');
+        context.go('/');
+      }
+      return;
+    }
+
+    // Check if we advanced to a new lesson
+    if (after.currentLesson != beforeLesson) {
       // Reset for new lesson
       setState(() {
         _game = null; // Will be recreated in build
@@ -464,7 +693,192 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     }
   }
 
+  Future<void> _showScriptureUnlockedDialog(
+    ModuleScripture scripture,
+    ModuleData module,
+  ) async {
+    if (!mounted) return;
+
+    final progress = ref.read(gameProgressProvider);
+    final savedTranslationId = progress.unlockedTranslations[scripture.id];
+
+    String resolvedText = '';
+    String displayCitation = scripture.reference;
+    String themeName = module.name;
+    String? reflectionPrompt;
+
+    try {
+      final themes = await ref.read(journalThemesProvider.future);
+      for (final theme in themes) {
+        for (final passage in theme.passages) {
+          if (passage.id == scripture.id ||
+              passage.reference == scripture.reference) {
+            themeName = theme.name;
+            if (passage.reflectionPrompts.isNotEmpty) {
+              reflectionPrompt = passage.reflectionPrompts.first;
+            }
+            break;
+          }
+        }
+      }
+    } catch (_) {}
+
+    try {
+      final result = await ref.read(scriptureServiceProvider).loadScripture(
+            scripture.reference,
+            translationId: savedTranslationId ?? 'kjv',
+          );
+
+      resolvedText = result['text'] ?? '';
+      displayCitation = '${scripture.reference} (KJV)';
+    } catch (e, stack) {
+      LoggerService.error(
+        'Error loading scripture for unlocked dialog',
+        error: e,
+        stackTrace: stack,
+        tag: 'TutorialFlowScreen',
+      );
+    }
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final cs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: cs.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.spa, color: cs.primary, size: 28),
+              const SizedBox(width: 8),
+              Text(
+                scripture.type == 'starter'
+                    ? 'Starter Scripture!'
+                    : 'Scripture Collected!',
+                style: TextStyle(
+                  color: cs.primary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  scripture.title,
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                if (resolvedText.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cs.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: cs.outlineVariant),
+                    ),
+                    child: Text(
+                      resolvedText,
+                      style: TextStyle(
+                        color: cs.onSurface,
+                        fontSize: 15,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Text(
+                  displayCitation,
+                  style: TextStyle(
+                    color: cs.onSurfaceVariant,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (reflectionPrompt != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                      border:
+                          Border.all(color: cs.primary.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.help_outline, size: 16, color: cs.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            reflectionPrompt,
+                            style: TextStyle(
+                              color: cs.onPrimaryContainer,
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Text(
+                  'Added to your Journal under $themeName.',
+                  style: TextStyle(
+                    color: cs.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context.go('/');
+                context.push('/journal');
+              },
+              child: const Text('VIEW JOURNAL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context.go('/');
+              },
+              child: const Text('CONTINUE'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildLevelCompleteOverlay() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeColor = isDark ? AppTheme.secondarySeed : AppTheme.primarySeed;
+
     return Stack(
       children: [
         Center(
@@ -478,6 +892,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                   _currentCongratulationMessage,
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: themeColor,
                     shadows: [
                       Shadow(
                         blurRadius: 10.0,
@@ -494,7 +909,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                 const SizedBox(height: 16),
                 Icon(
                   Icons.celebration,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: themeColor,
                   size: 72,
                   shadows: [
                     Shadow(

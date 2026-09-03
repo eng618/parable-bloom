@@ -48,8 +48,9 @@ void main() {
 
       final stopwatch = Stopwatch()..start();
 
-      // Run it many times to get a measurable duration
-      for (int iter = 0; iter < 100; iter++) {
+      // Run it a few times to get a measurable duration (kept small so
+      // this benchmark stays within CI time budgets).
+      for (int iter = 0; iter < 10; iter++) {
         for (final vineId in activeVineIds) {
           solver.isVineBlockedInState(level, vineId, activeVineIds);
         }

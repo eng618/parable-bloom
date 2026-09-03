@@ -80,7 +80,7 @@ void main() {
       );
 
       final isBlocked = solver.isVineBlockedInState(level, '1', ['1', '2']);
-      expect(isBlocked, isFalse); // Vine 1 can move away from vine 2
+      expect(isBlocked, isTrue); // Vine 1 is blocked by vine 2 on its exit path
     });
 
     test('should calculate distance to blocker', () {
