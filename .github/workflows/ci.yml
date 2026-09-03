@@ -31,15 +31,18 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          # Pinned to the repo toolchain (.tool-versions). `latest` floats
+          # across bun releases whose install-cache format may differ,
+          # which corrupted restores and broke `bun install` with ENOENTs.
+          bun-version: 1.3.14
 
       - name: Cache Bun
         uses: actions/cache@v6
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          key: ${{ runner.os }}-bun-1.3.14-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-
+            ${{ runner.os }}-bun-1.3.14-
 
       - name: Cache Nx
         uses: actions/cache@v6
