@@ -33,15 +33,12 @@ jobs:
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-1.3.14-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-1.3.14-
 
       - name: Cache Nx
         uses: actions/cache@v6
         with:
           path: .nx/cache
           key: ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-${{ github.run_id }}
-          restore-keys: |
             ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-
             ${{ runner.os }}-nx-
 
@@ -122,15 +119,12 @@ jobs:
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-1.3.14-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-1.3.14-
 
       - name: Cache Nx
         uses: actions/cache@v6
         with:
           path: .nx/cache
           key: ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-${{ github.run_id }}
-          restore-keys: |
             ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-
             ${{ runner.os }}-nx-
 
