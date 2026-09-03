@@ -10,7 +10,6 @@ import 'package:parable_bloom/features/game/application/providers/gameplay_state
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
 import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
 import 'package:parable_bloom/core/providers/service_providers.dart';
-import 'package:parable_bloom/core/providers/settings_providers.dart';
 import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 
@@ -81,7 +80,8 @@ class FakeAnalytics extends AnalyticsService {
   Future<void> logScreenView(String screenName) async {}
 
   @override
-  Future<void> logParableViewed(String parableId) async {}
+  Future<void> logParableViewed(String parableId,
+      {String source = 'game_unlock'}) async {}
 
   @override
   Future<void> logLevelStart(dynamic levelId) async {}

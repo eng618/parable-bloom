@@ -65,4 +65,63 @@ void main() {
       expect(p1, equals(p2));
     });
   });
+
+  group('GameProgress Legacy Migration', () {
+    test('correctly maps legacy level integers across all modules', () {
+      final legacyJson = {
+        'currentLesson': 1,
+        'completedLessons': [1, 2, 3, 4, 5],
+        'lessonCompleted': true,
+        'currentLevel': 96,
+        'completedLevels': [
+          1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+          21, // Seedling
+          22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+          39, 40, 41, 42, // Sprout
+          43, 63, // Blossom start & challenge
+          64, 84, // Flourish start & challenge
+          85, 96, 105, // Harvest
+        ],
+        'tutorialCompleted': true,
+        'savedMainGameLevel': 22,
+      };
+
+      final progress = GameProgress.fromJson(legacyJson);
+
+      expect(progress.currentLesson, equals('lesson_1'));
+      expect(progress.completedLessons,
+          equals({'lesson_1', 'lesson_2', 'lesson_3', 'lesson_4', 'lesson_5'}));
+      expect(progress.currentLevel, equals('lvl_harvest_12')); // 96 - 84 = 12
+      expect(
+          progress.savedMainGameLevel, equals('lvl_sprout_01')); // 22 - 21 = 1
+
+      // Seedling levels check
+      for (int i = 1; i <= 20; i++) {
+        final idxStr = i < 10 ? '0$i' : '$i';
+        expect(progress.completedLevels.contains('lvl_seed_$idxStr'), isTrue,
+            reason: 'Should contain lvl_seed_$idxStr');
+      }
+      expect(progress.completedLevels.contains('lvl_seed_challenge'), isTrue);
+
+      // Sprout levels check
+      for (int i = 1; i <= 20; i++) {
+        final idxStr = i < 10 ? '0$i' : '$i';
+        expect(progress.completedLevels.contains('lvl_sprout_$idxStr'), isTrue,
+            reason: 'Should contain lvl_sprout_$idxStr');
+      }
+      expect(progress.completedLevels.contains('lvl_sprout_challenge'), isTrue);
+
+      // Blossom, Flourish, Harvest spot checks
+      expect(progress.completedLevels.contains('lvl_blossom_01'), isTrue);
+      expect(
+          progress.completedLevels.contains('lvl_blossom_challenge'), isTrue);
+      expect(progress.completedLevels.contains('lvl_flourish_01'), isTrue);
+      expect(
+          progress.completedLevels.contains('lvl_flourish_challenge'), isTrue);
+      expect(progress.completedLevels.contains('lvl_harvest_01'), isTrue);
+      expect(progress.completedLevels.contains('lvl_harvest_12'), isTrue);
+      expect(
+          progress.completedLevels.contains('lvl_harvest_challenge'), isTrue);
+    });
+  });
 }
