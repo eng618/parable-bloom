@@ -474,6 +474,9 @@ class LevelSolverService {
         (level.gridWidth + level.gridHeight + vine.orderedPath.length + 10)
             .clamp(50, 300);
 
+    // Create a map for O(1) vine lookup instead of iterating level.vines repeatedly
+    final vineMap = {for (final v in level.vines) v.id: v};
+
     for (int step = 0; step < maxCheckDistance; step++) {
       // Simulate one step of movement
       final newPositions = _simulateVineMovementFromPositions(
@@ -486,7 +489,8 @@ class LevelSolverService {
         for (final otherId in activeVineIds) {
           if (otherId == vineId) continue;
 
-          final otherVine = level.vines.firstWhere((v) => v.id == otherId);
+          final otherVine = vineMap[otherId];
+          if (otherVine == null) continue;
           for (final cell in otherVine.orderedPath) {
             if (cell['x'] == newPos['x'] && cell['y'] == newPos['y']) {
               return -(distance +
