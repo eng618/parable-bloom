@@ -125,9 +125,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           if (!mounted) return;
           ref.read(hintedVineIdsProvider.notifier).clear();
         },
-        getUseSimpleVines: () => mounted ? ref.read(useSimpleVinesProvider) : false,
-        getHapticsEnabled: () => mounted ? ref.read(hapticsEnabledProvider) : false,
-        getIsAnyAnimating: () => mounted ? ref.read(anyVineAnimatingProvider) : false,
+        getUseSimpleVines: () =>
+            mounted ? ref.read(useSimpleVinesProvider) : false,
+        getHapticsEnabled: () =>
+            mounted ? ref.read(hapticsEnabledProvider) : false,
+        getIsAnyAnimating: () =>
+            mounted ? ref.read(anyVineAnimatingProvider) : false,
         getDebugShowGridCoordinates: () =>
             mounted ? ref.read(debugShowGridCoordinatesProvider) : false,
         getDebugVineAnimationLogging: () =>
