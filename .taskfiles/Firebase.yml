@@ -63,14 +63,10 @@ tasks:
       - bun install firebase-admin
       - node scripts/firebase/upload_levels.js "{{.ENV}}"
 
-  storage:rules:deploy:
-    desc: Deploy Cloud Storage security rules
-    dir: apps/parable-bloom
-    cmds:
-      - firebase deploy --only storage:rules
-    preconditions:
-      - sh: command -v firebase >/dev/null 2>&1
-        msg: "Firebase CLI is not installed."
+  # NOTE: No `storage:rules:deploy` task exists on purpose — the app does not
+  # use Cloud Storage (no firebase_storage dependency, no storage block in
+  # firebase.json). If Storage is adopted, add the rules file, the
+  # firebase.json block, and a deploy task together.
 
   hosting:deploy:
     desc: Deploy Firebase Hosting
@@ -215,7 +211,7 @@ tasks:
     dir: apps/parable-bloom
     cmds:
       - task: configure:ci
-        vars: {PLATFORMS: "web"}
+        vars: { PLATFORMS: "web" }
 
   configure:ci:
     desc: Configure Firebase for multiple platforms in CI

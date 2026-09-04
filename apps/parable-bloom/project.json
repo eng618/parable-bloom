@@ -23,8 +23,18 @@
     },
     "test": {
       "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/coverage/lcov.info"],
       "options": {
         "command": "task flutter:test",
+        "cwd": "."
+      }
+    },
+    "coverage-check": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["test"],
+      "outputs": ["{projectRoot}/coverage/lcov.info"],
+      "options": {
+        "command": "task flutter:coverage:check",
         "cwd": "."
       }
     },

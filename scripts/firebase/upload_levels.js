@@ -1,18 +1,21 @@
 /**
  * scripts/firebase/upload_levels.js
- * 
+ *
  * Utility script to batch-upload generated level JSON files from local assets
  * to Cloud Firestore levels collections (levels_dev, levels_preview, levels_prod).
- * 
+ *
  * Usage:
  *   node scripts/firebase/upload_levels.js <env>
- * 
+ *
  * Examples:
  *   # Upload to levels_dev
  *   node scripts/firebase/upload_levels.js dev
- * 
+ *
  *   # Upload to levels_dev using local emulator
  *   FIRESTORE_EMULATOR_HOST="localhost:8080" node scripts/firebase/upload_levels.js dev
+ *
+ *   # Upload to levels_prod (requires explicit confirmation)
+ *   CONFIRM_PROD_UPLOAD=yes node scripts/firebase/upload_levels.js prod
  */
 
 const fs = require('fs');
@@ -28,6 +31,16 @@ if (!['dev', 'preview', 'prod'].includes(env)) {
 }
 
 const collectionName = `levels_${env}`;
+
+// Prod guard: writing levels_prod / configs_prod overwrites live game content
+// in the single shared Firebase project. Require explicit confirmation unless
+// talking to the local emulator (tests, dry runs).
+const usingEmulator = Boolean(process.env.FIRESTORE_EMULATOR_HOST);
+if (env === 'prod' && !usingEmulator && process.env.CONFIRM_PROD_UPLOAD !== 'yes') {
+  console.error('Refusing to upload to PROD collections without confirmation.');
+  console.error('Re-run with CONFIRM_PROD_UPLOAD=yes, or set FIRESTORE_EMULATOR_HOST for a dry run.');
+  process.exit(1);
+}
 console.log(`🚀 Starting level upload process...`);
 console.log(`   Environment:   ${env}`);
 console.log(`   Collection:    ${collectionName}`);
@@ -41,7 +54,7 @@ if (process.env.FIRESTORE_EMULATOR_HOST) {
 // admin.initializeApp() will pick up either FIRESTORE_EMULATOR_HOST or GOOGLE_APPLICATION_CREDENTIALS automatically
 try {
   admin.initializeApp({
-    projectId: 'parable-bloom'
+    projectId: 'parable-bloom',
   });
 } catch (e) {
   console.error('Error initializing Firebase Admin SDK:', e.message);
@@ -88,7 +101,7 @@ async function uploadAll() {
     process.exit(1);
   }
 
-  const levelKeys = Object.keys(mappings).filter(key => !key.startsWith('lesson_'));
+  const levelKeys = Object.keys(mappings).filter((key) => !key.startsWith('lesson_'));
   console.log(`📦 Found ${levelKeys.length} gameplay levels to upload.`);
 
   let successCount = 0;
@@ -126,7 +139,7 @@ async function uploadAll() {
   console.log(`\n🎉 Upload process completed!`);
   console.log(`   Successfully uploaded:  ${successCount}`);
   console.log(`   Failed/Skipped:         ${errorCount}`);
-  
+
   if (errorCount > 0) {
     process.exit(1);
   } else {
@@ -134,7 +147,7 @@ async function uploadAll() {
   }
 }
 
-uploadAll().catch(err => {
+uploadAll().catch((err) => {
   console.error('Fatal error during upload:', err);
   process.exit(1);
 });

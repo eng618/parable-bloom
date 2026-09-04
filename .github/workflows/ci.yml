@@ -103,6 +103,9 @@ jobs:
       - name: Validate all projects
         run: bunx nx run-many -t lint test build --parallel=3
 
+      - name: Coverage gate
+        run: bunx nx run-many -t coverage-check
+
       - name: Level Data Validation
         run: |
           bunx nx run level-builder:validate

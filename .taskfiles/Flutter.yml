@@ -256,10 +256,10 @@ tasks:
       - flutter analyze
 
   lint:
-    desc: Run Flutter linting
+    desc: Run Flutter linting (strict — warnings and infos fail the build)
     dir: apps/parable-bloom
     cmds:
-      - flutter analyze --no-fatal-infos --no-fatal-warnings
+      - flutter analyze --fatal-infos --fatal-warnings
 
   lint:fix:
     desc: Fix Flutter linting issues
@@ -306,6 +306,12 @@ tasks:
     dir: apps/parable-bloom
     cmds:
       - flutter test
+
+  coverage:check:
+    desc: Fail if Flutter line coverage drops below threshold (default 50%)
+    dir: apps/parable-bloom
+    cmds:
+      - dart ../../scripts/check_coverage.dart {{.THRESHOLD | default "50"}}
 
   test:dev:
     desc: Run tests in development environment
