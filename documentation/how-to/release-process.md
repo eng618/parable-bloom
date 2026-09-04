@@ -210,29 +210,7 @@ bws secret list
 
 ### Step 4: Update `android/app/build.gradle.kts`
 
-**TODO**: Add release signing configuration that reads from environment variables:
-
-```kotlin
-android {
-    // ... existing config
-
-    signingConfigs {
-        create("release") {
-            storeFile = file(System.getenv("ANDROID_KEYSTORE_PATH") ?: "keystore.jks")
-            storePassword = System.getenv("ANDROID_STORE_PASSWORD")
-            keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-            keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("release")
-            // Remove: signingConfig = signingConfigs.getByName("debug")
-        }
-    }
-}
-```
+> ✅ **Done.** `android/app/build.gradle.kts` reads the release keystore from `ANDROID_KEYSTORE_PATH`, `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`. Release tasks (`bundleRelease`/`assembleRelease`) fail fast with a clear error when credentials are missing — there is intentionally no debug-key fallback for releases. Debug builds are unaffected.
 
 ### Step 5: Test Local Build
 
@@ -332,15 +310,11 @@ bws secret create "PARABLE_BLOOM_APP_STORE_CONNECT_ISSUER_ID" "<issuer-uuid>" "$
 
 ### Step 6: Create ExportOptions.plist
 
-**TODO**: Create `ios/ExportOptions.plist` (will be created by automation script)
+> ✅ **Done.** `ios/ExportOptions.plist` exists. Note it still contains `REPLACE_WITH_TEAM_ID` / `REPLACE_WITH_PROVISIONING_PROFILE_NAME` placeholders — that is intentional: the automated lane (`ios/fastlane/Fastfile` → `_build_ipa`) passes `export_options` (including `provisioningProfiles`) programmatically via `build_app`, so the plist is only a fallback for manual `flutter build ipa --export-options-plist=...` runs, where you must substitute real values first.
 
 ### Step 7: Update Xcode Project for Manual Signing
 
-**TODO**: Modify `ios/Runner.xcodeproj/project.pbxproj`:
-
-- Change `CODE_SIGN_STYLE = Automatic` → `CODE_SIGN_STYLE = Manual`
-- Set `PROVISIONING_PROFILE_SPECIFIER` to profile name
-- Set `DEVELOPMENT_TEAM` to Team ID
+> ✅ **Done.** `ios/Runner.xcodeproj/project.pbxproj` uses `CODE_SIGN_STYLE = Manual` for the Release configuration (Debug/Profile intentionally remain Automatic for day-to-day development). Team and profile specifier are injected at build time from `IOS_PROVISIONING_PROFILE_SPECIFIER` and related env vars (see `ios/fastlane/Fastfile`).
 
 ### Step 8: Test Local Build
 
@@ -393,37 +367,11 @@ All lanes assume the `.aab` is pre-built (e.g., via `flutter build appbundle --r
 
 ### iOS Fastlane Setup
 
-#### Step 1: Initialize Fastlane
-
-**TODO**: Run setup:
-
-```bash
-cd ios
-fastlane init
-
-# Select: 2. Automate beta distribution to TestFlight
-# Enter Apple ID, app identifier, etc.
-```
-
-#### Step 2: Create Fastfile
-
-**TODO**: Create `ios/fastlane/Fastfile` (will be created by automation script)
+> ✅ **Done.** `ios/fastlane/` is initialized (`Fastfile`, `Appfile`, `Snapfile`). Available lanes: `beta` (TestFlight), `release` (App Store), `screenshots`, `build`, `validate`, plus keychain setup/cleanup helpers. They run on macOS only (`task release:ios:*` / `.taskfiles/Fastlane.yml`) and are not wired into Linux CI — see the iOS track notes for what remains (Apple Developer account, screenshots, metadata).
 
 ### Fastlane Plugins
 
-**TODO**: Install required plugins:
-
-```bash
-# Android
-cd android
-fastlane add_plugin increment_version_code
-fastlane add_plugin changelog
-
-# iOS
-cd ios
-fastlane add_plugin increment_build_number
-fastlane add_plugin changelog
-```
+> No third-party plugins required. All lanes use built-in fastlane actions only (`build_app`, `upload_to_testflight`, `upload_to_app_store`, `upload_to_play_store`, `increment_build_number`, `import_certificate`, `setup_ci`). There is intentionally no `Pluginfile`.
 
 ---
 

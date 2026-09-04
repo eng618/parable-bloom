@@ -1,16 +1,29 @@
 # Google Play Store Submission Checklist
 
+> Status for v1.8 (Android + Web launch). Canonical copy: `../app-metadata-v1.8.md`. Fastlane text mirror: `apps/parable-bloom/android/fastlane/metadata/en-US/`.
+
 ## Pre-submission (Development/Android Studio)
 
-- [ ] Ensure `pubspec.yaml` (if Flutter) or `build.gradle` has `versionName` and `versionCode` incremented.
-- [ ] Build the App Bundle (`.aab` file). E.g., `flutter build appbundle`.
+- [x] Ensure `pubspec.yaml` (if Flutter) or `build.gradle` has `versionName` and `versionCode` incremented.
+  - `versionName` comes from `apps/parable-bloom/pubspec.yaml` (currently `1.8.2`); `versionCode` is auto-computed in `publish.yml` as latest Play internal code + 1.
+- [x] Release signing fails fast without credentials (`android/app/build.gradle.kts` throws on `bundleRelease`/`assembleRelease` when `ANDROID_KEYSTORE_*` env is missing — no silent debug-key fallback).
+- [x] `INTERNET` + `ACCESS_NETWORK_STATE` declared in `android/app/src/main/AndroidManifest.xml` (release must not rely on debug/profile manifests).
+- [ ] Build the App Bundle (`.aab` file). E.g., `flutter build appbundle`. _(Runs in `publish.yml` on tag.)_
 
 ## Google Play Console (Store Listing)
 
-- [ ] Navigate to **Main store listing**.
-- [ ] Update **Release Notes** (`<en-US>` tags).
+- [x] Listing copy drafted (`app-metadata-v1.8.md`, all fields within limits; mirrored to fastlane `metadata/en-US/`).
+- [x] Privacy policy URL: `https://parable-bloom.pages.dev/privacy`.
+- [x] Support URL: `https://parable-bloom.pages.dev/support` (dedicated page, in nav + footer + sitemap).
+- [x] Account deletion URL: `https://parable-bloom.pages.dev/delete-account` (in-app Settings > Delete Account + web flow, 30-day SLA).
+- [x] Phone screenshots: 8 PNGs (1080x2424, light+dark × home/gameplay/win/journal) in `android/fastlane/screenshots/en-US/`.
+- [ ] Feature graphic (1024x500 landscape): **missing** — `assets/images/pb-feature.png` is 832x1248 portrait and unusable. Create before production rollout.
+- [ ] Tablet screenshots (7"/10"): **missing** — decided phones-only for v1; declare phone support only, or capture tablet set for the production track.
+- [ ] Navigate to **Main store listing** and paste copy + upload graphics.
+- [ ] Update **Release Notes** (`<en-US>` tags) from `app-metadata-v1.8.md`.
 - [ ] Ensure **Screenshots** and **Feature Graphic** are up to date.
-- [ ] Check **Data safety** to ensure it aligns with any new data collection.
+- [ ] **Data safety** form: declare Firebase Analytics (usage data) + Crashlytics (crash logs), encrypted in transit, deletion via in-app/web flow. Still pending in Console.
+- [ ] **Financial features**: declare "My app doesn't provide any financial features".
 
 ## Release Management
 

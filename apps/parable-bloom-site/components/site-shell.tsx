@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 const navItems = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
+  { href: '/support', label: 'Support' },
   { href: '/privacy', label: 'Privacy' },
   { href: '/terms', label: 'Terms' },
   { href: '/delete-account', label: 'Delete Account' },
@@ -75,6 +76,10 @@ export default function SiteShell({ children }: SiteShellProps) {
         <div className="mt-2 flex justify-center gap-4 text-xs text-white/60">
           <Link href="/privacy" className="transition-colors hover:text-white">
             Privacy Policy
+          </Link>
+          <span>·</span>
+          <Link href="/support" className="transition-colors hover:text-white">
+            Support
           </Link>
           <span>·</span>
           <Link href="/terms" className="transition-colors hover:text-white">

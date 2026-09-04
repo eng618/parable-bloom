@@ -2,14 +2,16 @@
 
 _Use this checklist to ensure all visual assets are generated and correctly sized before starting the submission process._
 
+> Verified 2026-09-04 via `sips`. Source icon: `apps/parable-bloom/assets/art/app_icon_branded.png` (1024x1024).
+
 ## General Assets
 
-- [ ] High-res logo (1024x1024) - For PR / general use
+- [x] High-res logo (1024x1024) - For PR / general use (`app_icon_branded.png`, verified 1024x1024)
 - [ ] Transparent logo - For website/PR
 
-## Apple App Store
+## Apple App Store (deferred — complete when Developer account is active)
 
-- [ ] App Icon (1024x1024 PNG, no transparency)
+- [ ] App Icon (1024x1024 PNG, no transparency) — export from `app_icon_branded.png`, verify alpha removed
 - **6.5-inch Screenshots** (1284 x 2778)
   - [ ] Screen 1
   - [ ] Screen 2
@@ -25,15 +27,16 @@ _Use this checklist to ensure all visual assets are generated and correctly size
 
 ## Google Play Store
 
-- [ ] App Icon (512x512, 32-bit PNG)
-- [ ] Feature Graphic (1024x500 PNG or JPEG)
-- **Phone Screenshots** (e.g., 1080x1920)
+- [x] App Icon (512x512, 32-bit PNG) — export from `app_icon_branded.png` (1024x1024 source verified); confirm export during first Console upload
+- [ ] Feature Graphic (1024x500 PNG or JPEG) — **BLOCKED**: `assets/images/pb-feature.png` is 832x1248 portrait, unusable as-is
+- **Phone Screenshots** (1080x2424, 8 files in `android/fastlane/screenshots/en-US/`)
+  - [x] Home (light + dark: `emulator_5554_01_home_light/dark.png`)
+  - [x] Gameplay (light + dark: `emulator_5554_02_gameplay_light/dark.png`)
+  - [x] Win (light + dark: `emulator_5554_03_win_light/dark.png`)
+  - [x] Journal (light + dark: `emulator_5554_04_journal_light/dark.png`)
+- **7-inch Tablet Screenshots** _(phones-only declared for v1; capture if targeting tablets)_
   - [ ] Screen 1
   - [ ] Screen 2
-  - [ ] Screen 3
-- **7-inch Tablet Screenshots** _(If supported)_
-  - [ ] Screen 1
-  - [ ] Screen 2
-- **10-inch Tablet Screenshots** _(If supported)_
+- **10-inch Tablet Screenshots** _(phones-only declared for v1; capture if targeting tablets)_
   - [ ] Screen 1
   - [ ] Screen 2

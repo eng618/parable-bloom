@@ -43,20 +43,14 @@ To generate a single level with custom dimensions and difficulty:
 
 ### Generating Module Batches
 
-To generate a complete module (15 levels per module):
+To generate a complete module (21 levels per module, 105 total across 5 modules):
 
 ```bash
-# Generate Module 1 (Levels 1-15) with Seedling difficulty
-./tools/level-builder/level-builder generate module \
-  --start 1 \
-  --count 1 \
-  --base-difficulty seedling
+# Canonical flow: generate all 5 modules (Levels 1-105) with the v2 batch generator
+task levels:generate:all
 
-# Generate all 5 standard modules (Levels 1-75)
-./tools/level-builder/level-builder generate module \
-  --start 1 \
-  --count 5 \
-  --base-difficulty seedling
+# Or generate a single module (e.g., Module 1 = Levels 1-21)
+./tools/level-builder/level-builder batch --module 1 --overwrite --verbose
 ```
 
 ---

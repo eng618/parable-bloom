@@ -9,7 +9,8 @@ Status: **8 of 11 complete** (as of initial setup)
 ### Let us know about the content of your app
 
 - [x] **Set privacy policy**
-  - **URL**: `https://parable-bloom.web.app/privacy`
+  - **URL**: `https://parable-bloom.pages.dev/privacy`
+  - _(Legal pages live on the marketing site at `parable-bloom.pages.dev`; the game itself is hosted at `parable-bloom.web.app`.)_
 - [x] **App access**
   - **Status**: All functionality is available without special access.
 - [x] **Ads**
@@ -25,7 +26,7 @@ Status: **8 of 11 complete** (as of initial setup)
   - **Details**:
     - **Data Collection**: The app collects usage data (Firebase Analytics) and crash logs (Firebase Crashlytics). If user accounts are added later, note that.
     - **Data Sharing**: Data is shared with Google (via Firebase) for analytics and crash reporting purposes.
-    - **Data Handling**: Data is encrypted in transit. Note whether users can request data deletion (via Firebase Auth/Functions if applicable).
+    - **Data Handling**: Data is encrypted in transit. Users can request data deletion in-app via Settings > Delete Account, or via the web flow at `https://parable-bloom.pages.dev/delete-account` (requests processed within 30 days).
 - [x] **Government apps**
   - **Status**: No, Parable Bloom is not a government or state-affiliated app.
 - [ ] **Financial features**

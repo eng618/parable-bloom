@@ -9,7 +9,8 @@ Meeting the legal and platform-specific review guidelines is essential to preven
 
 ## Support URL
 
-- **Current Strategy**: While no dedicated support URL exists, a contact form or basic troubleshooting page should be added to the Parable Bloom site if users need help. Apple requires a Support URL for app submission. Using the main site or a dedicated `/support` page is acceptable.
+- **URL**: [https://parable-bloom.pages.dev/support](https://parable-bloom.pages.dev/support)
+- **Status**: Dedicated support page live on the marketing site (contact email, FAQs, links to privacy/terms/account deletion). Use this URL for the Apple Support URL field and Play store listing contact.
 
 ## Data Safety & Privacy Disclosures
 

@@ -44,16 +44,42 @@ android {
 
     buildTypes {
         release {
-            // Use release signing config from environment variables
-            // Falls back to debug if env vars not set (for local development)
-            signingConfig = if (System.getenv("ANDROID_KEYSTORE_PATH") != null) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            // Fail fast: never ship a release signed with debug keys.
+            // CI (publish.yml) provides these via Bitwarden; see
+            // documentation/how-to/release-process.md for local setup.
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
+            )
+        }
+    }
+}
+
+// Fail fast when assembling a release without signing credentials.
+// This check runs only when a release task is actually in the task graph,
+// so debug builds and configuration-time inspection are unaffected.
+gradle.taskGraph.whenReady {
+    val releaseTasks = setOf("bundleRelease", "assembleRelease")
+    if (allTasks.any { it.name in releaseTasks }) {
+        val requiredEnv = listOf(
+            "ANDROID_KEYSTORE_PATH",
+            "ANDROID_STORE_PASSWORD",
+            "ANDROID_KEY_ALIAS",
+            "ANDROID_KEY_PASSWORD"
+        )
+        val missing = requiredEnv.filter { System.getenv(it).isNullOrEmpty() }
+        if (missing.isNotEmpty()) {
+            throw GradleException(
+                "Release signing credentials missing: ${missing.joinToString()}. " +
+                    "Set them in the environment (CI provides them via Bitwarden) — " +
+                    "refusing to build a release that would fall back to debug keys."
+            )
+        }
+        val keystore = file(System.getenv("ANDROID_KEYSTORE_PATH"))
+        if (!keystore.exists()) {
+            throw GradleException(
+                "ANDROID_KEYSTORE_PATH does not exist: ${keystore.path}"
             )
         }
     }
