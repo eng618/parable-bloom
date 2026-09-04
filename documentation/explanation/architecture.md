@@ -158,7 +158,7 @@ To ensure players never lose their progress across multiple devices and always s
     The player can explicitly choose **"Use Cloud Save"** or **"Keep This Device"**.
 - **Notifier State Synchronization**: Once a conflict is resolved, the `GameProgressNotifier` triggers the repository resolution and reactively calls `initialize()` to reload the new progress directly into the in-memory state. This ensures that the game board, levels list, and settings UI update instantly and synchronously.
 
-### 4.3 Telemetry & Analytics (Firebase + Plausible)
+### 4.3 Telemetry & Analytics (Firebase + OpenPanel)
 
 The application implements a multi-channel, privacy-focused telemetry strategy designed to respect player privacy while offering critical insight into game stability and levels completion rates.
 
@@ -173,9 +173,9 @@ All telemetry events are dispatched through `AnalyticsService`, which coordinate
 
 Players have complete control over their data sharing via the **Anonymized Telemetry** toggle in the Settings screen:
 
-- **State Persistence**: The opt-out status is stored locally in the Hive settings box under `'plausible_ignore'`.
+- **State Persistence**: The opt-out status is stored locally in the Hive settings box under `'openpanel_ignore'`.
 - **Dynamic Firebase Disable**: Toggling telemetry off calls `firebase.setAnalyticsCollectionEnabled(false)`, instructing the Firebase SDK to immediately cease all analytics collection and network dispatch.
-- **Plausible Filtering**: Plausible event submissions are skipped locally on device when the opt-out is active.
+- **OpenPanel Filtering**: OpenPanel event submissions are skipped locally on device when the opt-out is active.
 
 #### Core Tracked Events
 

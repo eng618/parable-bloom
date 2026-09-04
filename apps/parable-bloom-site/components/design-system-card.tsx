@@ -1,5 +1,6 @@
 'use client';
 
+import { trackCtaClick } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import { Badge } from '@gv-tech/ui-web/badge';
 import { Button } from '@gv-tech/ui-web/button';
@@ -58,6 +59,7 @@ export default function DesignSystemCard({
           <Button
             asChild
             className="bg-brand hover:bg-brand/90 w-full rounded-full transition-all duration-300 hover:shadow-md"
+            onClick={() => trackCtaClick(title, 'platform_grid', badge)}
           >
             <Link href={href} target="_blank" rel="noopener noreferrer">
               {ctaLabel}

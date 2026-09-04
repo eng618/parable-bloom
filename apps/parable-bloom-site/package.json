@@ -18,7 +18,7 @@
     "@gv-tech/design-tokens": "^2.28.0",
     "@gv-tech/ui-core": "^2.28.0",
     "@gv-tech/ui-web": "2.28.0",
-    "@plausible-analytics/tracker": "^0.4.5",
+    "@openpanel/nextjs": "^1.5.1",
     "@tailwindcss/postcss": "^4.2.1",
     "clsx": "^2.1.1",
     "next": "16.2.11",

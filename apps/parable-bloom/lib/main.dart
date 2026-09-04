@@ -13,7 +13,7 @@ import 'core/providers/infrastructure_providers.dart';
 import 'core/providers/service_providers.dart';
 import 'core/services/analytics_service.dart';
 import 'core/services/logger_service.dart';
-import 'core/services/plausible_analytics_client.dart';
+import 'core/services/openpanel_analytics_client.dart';
 
 const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 
@@ -76,18 +76,18 @@ void main() async {
     await _seedScreenshotData(hiveBox);
   }
 
-  // Initialize Analytics (Firebase + Plausible self-hosted)
+  // Initialize Analytics (Firebase + OpenPanel self-hosted)
   final AnalyticsService analyticsService;
   if (_isScreenshotMode) {
     analyticsService = AnalyticsService();
   } else {
-    final isOptedOut = (hiveBox.get('openpanel_ignore') ??
-        hiveBox.get('plausible_ignore', defaultValue: false)) as bool;
-    final plausibleClient = PlausibleAnalyticsClient.fromEnvironment(
-      isOptedOut: () => (hiveBox.get('openpanel_ignore') ??
-          hiveBox.get('plausible_ignore', defaultValue: false)) as bool,
+    final isOptedOut =
+        hiveBox.get('openpanel_ignore', defaultValue: false) as bool;
+    final openpanelClient = OpenpanelAnalyticsClient.fromEnvironment(
+      isOptedOut: () =>
+          hiveBox.get('openpanel_ignore', defaultValue: false) as bool,
     );
-    analyticsService = AnalyticsService(plausibleClient: plausibleClient);
+    analyticsService = AnalyticsService(openpanelClient: openpanelClient);
     await analyticsService.init(enabled: !isOptedOut);
   }
 
@@ -137,5 +137,5 @@ Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
 
   await hiveBox.put(GameProgressStorageKeys.progress, seededProgress.toJson());
   await hiveBox.put(GameProgressStorageKeys.cloudSyncEnabled, false);
-  await hiveBox.put('plausible_ignore', true);
+  await hiveBox.put('openpanel_ignore', true);
 }
