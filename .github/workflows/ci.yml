@@ -82,6 +82,24 @@ jobs:
       - name: Initialize Nx
         run: bunx nx --version
 
+      - name: Check version consistency
+        # nx release versions via package.json, then syncs pubspec.yaml.
+        # Stale branches can silently revert one side (seen with v1.8.2),
+        # so fail fast when the semver parts disagree.
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('apps/parable-bloom/package.json', 'utf8')).version;
+            const pubspec = fs.readFileSync('apps/parable-bloom/pubspec.yaml', 'utf8');
+            const m = pubspec.match(/^version:\s*([0-9]+\.[0-9]+\.[0-9]+)(?:\+(\d+))?/m);
+            if (!m) { console.error('❌ Could not parse version from apps/parable-bloom/pubspec.yaml'); process.exit(1); }
+            if (m[1] !== pkg) {
+              console.error(\`❌ Version drift: package.json=\${pkg} pubspec.yaml=\${m[1]}. Run: dart run scripts/bump_version.dart --set \${pkg} --no-commit --no-changelog\`);
+              process.exit(1);
+            }
+            console.log(\`✅ Versions in sync: \${pkg}+\${m[2] || '0'}\`);
+          "
+
       - name: Validate all projects
         run: bunx nx run-many -t lint test build --parallel=3
 

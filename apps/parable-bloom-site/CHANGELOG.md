@@ -1,3 +1,19 @@
+## 0.5.2 (2026-08-17)
+
+This was a version bump only for parable-bloom-site to align it with other projects, there were no code changes.
+
+## 0.5.1 (2026-08-16)
+
+### 🚀 Features
+
+- enable dark mode support and update site components and legal pages ([90e5824](https://github.com/eng618/parable-bloom/commit/90e5824))
+- implement comprehensive analytics tracking for user interactions, navigation, and tutorial progress across web and mobile platforms. ([7350c71](https://github.com/eng618/parable-bloom/commit/7350c71))
+- migrate from Plausible to Openpanel for self-hosted analytics across site and app ([9e56f1e](https://github.com/eng618/parable-bloom/commit/9e56f1e))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 0.5.0 (2026-07-17)
 
 ### 🚀 Features
