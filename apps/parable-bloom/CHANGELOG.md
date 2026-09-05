@@ -1,3 +1,7 @@
+## 1.9.3 (2026-09-05)
+
+This was a version bump only for parable-bloom to align it with other projects, there were no code changes.
+
 ## 1.9.2 (2026-09-05)
 
 ### 🩹 Fixes
