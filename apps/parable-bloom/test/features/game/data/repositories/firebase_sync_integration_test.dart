@@ -223,19 +223,19 @@ void main() {
 
   test("new device pulls cloud progress when cloud is ahead", () async {
     final cloudProgress = GameProgress.initial().copyWith(
-      currentLevel: 'lvl_seed_07', // 12
+      currentLevel: 'lvl_m01_07', // 12
       completedLevels: {
         'lesson_1',
         'lesson_2',
         'lesson_3',
         'lesson_4',
         'lesson_5',
-        'lvl_seed_01',
-        'lvl_seed_02',
-        'lvl_seed_03',
-        'lvl_seed_04',
-        'lvl_seed_05',
-        'lvl_seed_06',
+        'lvl_m01_01',
+        'lvl_m01_02',
+        'lvl_m01_03',
+        'lvl_m01_04',
+        'lvl_m01_05',
+        'lvl_m01_06',
       }, // 1..11
       tutorialCompleted: true,
     );
@@ -255,21 +255,21 @@ void main() {
     await deviceBRepo.resolveSyncConflict(SyncConflictResolution.keepCloud);
 
     final resolved = await deviceBRepo.getProgress();
-    expect(resolved.currentLevel, 'lvl_seed_07');
+    expect(resolved.currentLevel, 'lvl_m01_07');
     expect(resolved.completedLevels.length, 11);
   });
 
   test("divergent progress allows explicit keep-local overwrite and resync",
       () async {
     final cloudProgress = GameProgress.initial().copyWith(
-      currentLevel: 'lvl_seed_02', // 7
+      currentLevel: 'lvl_m01_02', // 7
       completedLevels: {
         'lesson_1',
         'lesson_2',
         'lesson_3',
         'lesson_4',
         'lesson_5',
-        'lvl_seed_01',
+        'lvl_m01_01',
       }, // 1..6
       tutorialCompleted: true,
     );
@@ -278,14 +278,14 @@ void main() {
     await deviceARepo.syncToCloud();
 
     final localAheadDifferent = GameProgress.initial().copyWith(
-      currentLevel: 'lvl_seed_02', // 7
+      currentLevel: 'lvl_m01_02', // 7
       completedLevels: {
         'lesson_1',
         'lesson_2',
         'lesson_3',
         'lesson_4',
         'lesson_5',
-        'lvl_seed_15', // 20
+        'lvl_m01_15', // 20
       },
       tutorialCompleted: true,
     );
@@ -301,7 +301,7 @@ void main() {
 
     await deviceARepo.resolveSyncConflict(SyncConflictResolution.keepCloud);
     final onDeviceA = await deviceARepo.getProgress();
-    expect(onDeviceA.completedLevels.contains('lvl_seed_15'), isTrue);
-    expect(onDeviceA.completedLevels.contains('lvl_seed_01'), isFalse);
+    expect(onDeviceA.completedLevels.contains('lvl_m01_15'), isTrue);
+    expect(onDeviceA.completedLevels.contains('lvl_m01_01'), isFalse);
   });
 }

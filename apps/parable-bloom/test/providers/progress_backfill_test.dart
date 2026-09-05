@@ -25,13 +25,13 @@ void main() {
           name: 'Seedling',
           themeSeed: 'forest',
           levels: const [
-            'lvl_seed_01',
-            'lvl_seed_02',
-            'lvl_seed_03',
-            'lvl_seed_04',
-            'lvl_seed_05'
+            'lvl_m01_01',
+            'lvl_m01_02',
+            'lvl_m01_03',
+            'lvl_m01_04',
+            'lvl_m01_05'
           ],
-          challengeLevel: 'lvl_seed_challenge',
+          challengeLevel: 'lvl_m01_challenge',
           parable: const {},
           unlockMessage: '',
           scriptures: [
@@ -44,14 +44,14 @@ void main() {
             ),
             ModuleScripture(
               id: 'seed_micro_1',
-              triggerLevel: 'lvl_seed_02',
+              triggerLevel: 'lvl_m01_02',
               reference: 'Ecclesiastes 11:6',
               title: 'Micro 1',
               type: 'supporting',
             ),
             ModuleScripture(
               id: 'seed_micro_2',
-              triggerLevel: 'lvl_seed_04',
+              triggerLevel: 'lvl_m01_04',
               reference: 'Psalm 126:6',
               title: 'Micro 2',
               type: 'supporting',
@@ -96,10 +96,10 @@ void main() {
     test(
         'Existing user with completed levels gets prior scriptures backfilled on initialization',
         () async {
-      // Simulate existing user who completed up to lvl_seed_03 (level 3)
+      // Simulate existing user who completed up to lvl_m01_03 (level 3)
       final existingProgress = GameProgress.initial().copyWith(
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'},
-        currentLevel: 'lvl_seed_04',
+        completedLevels: {'lvl_m01_01', 'lvl_m01_02', 'lvl_m01_03'},
+        currentLevel: 'lvl_m01_04',
         tutorialCompleted: true,
       );
       fakeRepo.saveProgress(existingProgress);
@@ -119,8 +119,8 @@ void main() {
       final progress = container.read(gameProgressProvider);
 
       // Should automatically unlock:
-      // - seed_micro_1 (because lvl_seed_02 is completed / index 1 <= max index 2)
-      // but NOT seed_micro_2 (lvl_seed_04 has index 3 > max index 2)
+      // - seed_micro_1 (because lvl_m01_02 is completed / index 1 <= max index 2)
+      // but NOT seed_micro_2 (lvl_m01_04 has index 3 > max index 2)
       expect(progress.unlockedScriptureIds.contains('seed_micro_1'), isTrue);
       expect(progress.unlockedScriptureIds.contains('seed_micro_2'), isFalse);
       expect(progress.unlockedTranslations['seed_micro_1'], isNotNull);
@@ -129,14 +129,14 @@ void main() {
     test(
         'Re-running initialize / backfill is idempotent and does not overwrite existing translations',
         () async {
-      // Simulate user already having lvl_seed_02 completed and backfilled
+      // Simulate user already having lvl_m01_02 completed and backfilled
       final existingProgress = GameProgress.initial().copyWith(
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02'},
+        completedLevels: {'lvl_m01_01', 'lvl_m01_02'},
         unlockedScriptureIds: {'seed_micro_1'},
         unlockedTranslations: {
           'seed_micro_1': 'web'
         }, // Pre-selected translation
-        currentLevel: 'lvl_seed_03',
+        currentLevel: 'lvl_m01_03',
         tutorialCompleted: true,
       );
       fakeRepo.saveProgress(existingProgress);
@@ -164,16 +164,16 @@ void main() {
     test(
         'Gaps in completedLevels are healed up to highest completed level and completed module parable is unlocked',
         () async {
-      // Simulate a user who reached lvl_seed_challenge (completed whole seedling module)
-      // but had gaps in completedLevels (e.g. lvl_seed_03 missing due to legacy migration bug)
+      // Simulate a user who reached lvl_m01_challenge (completed whole seedling module)
+      // but had gaps in completedLevels (e.g. lvl_m01_03 missing due to legacy migration bug)
       final existingProgress = GameProgress.initial().copyWith(
         completedLevels: {
-          'lvl_seed_01',
-          'lvl_seed_02',
-          'lvl_seed_04',
-          'lvl_seed_challenge'
+          'lvl_m01_01',
+          'lvl_m01_02',
+          'lvl_m01_04',
+          'lvl_m01_challenge'
         },
-        currentLevel: 'lvl_seed_challenge',
+        currentLevel: 'lvl_m01_challenge',
         tutorialCompleted: true,
       );
       fakeRepo.saveProgress(existingProgress);
@@ -192,14 +192,14 @@ void main() {
       final progress = container.read(gameProgressProvider);
 
       // Verify all levels in Seedling module are now in completedLevels
-      expect(progress.completedLevels.contains('lvl_seed_01'), isTrue);
-      expect(progress.completedLevels.contains('lvl_seed_02'), isTrue);
-      expect(progress.completedLevels.contains('lvl_seed_03'), isTrue,
-          reason: 'lvl_seed_03 gap should be healed');
-      expect(progress.completedLevels.contains('lvl_seed_04'), isTrue);
-      expect(progress.completedLevels.contains('lvl_seed_05'), isTrue,
-          reason: 'lvl_seed_05 should be healed prior to challenge level');
-      expect(progress.completedLevels.contains('lvl_seed_challenge'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m01_01'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m01_02'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m01_03'), isTrue,
+          reason: 'lvl_m01_03 gap should be healed');
+      expect(progress.completedLevels.contains('lvl_m01_04'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m01_05'), isTrue,
+          reason: 'lvl_m01_05 should be healed prior to challenge level');
+      expect(progress.completedLevels.contains('lvl_m01_challenge'), isTrue);
 
       // Verify module is now considered completed and parable translation is backfilled
       expect(progress.isModuleCompleted(1, mockModules), isTrue);

@@ -405,45 +405,16 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     if (levelId.startsWith('lesson_')) {
       final numStr = levelId.replaceAll('lesson_', '');
       final num = int.tryParse(numStr) ?? 1;
-      return num; // lessons 1 to 5
+      return num; // lessons first
     }
-    int base = 0;
-    if (levelId.startsWith('lvl_seed_')) {
-      base = 10;
-      if (levelId == 'lvl_seed_challenge') return base + 21;
-      final numStr = levelId.replaceAll('lvl_seed_', '');
-      final num = int.tryParse(numStr) ?? 1;
-      return base + num;
-    }
-    if (levelId.startsWith('lvl_sprout_')) {
-      base = 40;
-      if (levelId == 'lvl_sprout_challenge') return base + 21;
-      final numStr = levelId.replaceAll('lvl_sprout_', '');
-      final num = int.tryParse(numStr) ?? 1;
-      return base + num;
-    }
-    if (levelId.startsWith('lvl_blossom_')) {
-      base = 70;
-      if (levelId == 'lvl_blossom_challenge') return base + 21;
-      final numStr = levelId.replaceAll('lvl_blossom_', '');
-      final num = int.tryParse(numStr) ?? 1;
-      return base + num;
-    }
-    if (levelId.startsWith('lvl_flourish_')) {
-      base = 100;
-      if (levelId == 'lvl_flourish_challenge') return base + 21;
-      final numStr = levelId.replaceAll('lvl_flourish_', '');
-      final num = int.tryParse(numStr) ?? 1;
-      return base + num;
-    }
-    if (levelId.startsWith('lvl_harvest_')) {
-      base = 130;
-      if (levelId == 'lvl_harvest_challenge') return base + 21;
-      final numStr = levelId.replaceAll('lvl_harvest_', '');
-      final num = int.tryParse(numStr) ?? 1;
-      return base + num;
-    }
-    return 0;
+    // Generic scheme: lvl_mNN_MM (1-20) or lvl_mNN_challenge (21).
+    // Orders by module, then position; unknown IDs sort last-but-one (0).
+    final match = RegExp(r'^lvl_m(\d\d)_(\d\d|challenge)$').firstMatch(levelId);
+    if (match == null) return 0;
+    final module = int.tryParse(match.group(1)!) ?? 0;
+    final rest = match.group(2)!;
+    final position = rest == 'challenge' ? 21 : (int.tryParse(rest) ?? 0);
+    return module * 100 + position;
   }
 
   bool _dominates(GameProgress left, GameProgress right) {

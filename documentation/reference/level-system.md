@@ -166,7 +166,7 @@ Applies to both `assets/levels/` and `assets/tutorials/`.
 
 ### 3.2 Module Registry Schema (`modules.json`)
 
-Modules dictate the player's journey. Logical level keys (e.g. `'lvl_seed_01'`) decouple the progression graph and level sequencing from physical filenames (`level_1.json`).
+Modules dictate the player's journey. Logical level keys (e.g. `'lvl_m01_01'`) decouple the progression graph and level sequencing from physical filenames (`level_1.json`).
 
 A global `level_mappings` object maps logical gameplay IDs to physical assets.
 
@@ -226,7 +226,7 @@ A global `level_mappings` object maps logical gameplay IDs to physical assets.
                 "id": { "type": "string" },
                 "trigger_level": {
                   "type": "string",
-                  "description": "Level or lesson ID (e.g. lvl_seed_01, lesson_5) that unlocks this scripture"
+                  "description": "Level or lesson ID (e.g. lvl_m01_01, lesson_5) that unlocks this scripture"
                 },
                 "reference": { "type": "string", "description": "Scripture reference (e.g. Luke 8:11)" },
                 "title": { "type": "string", "description": "Clean title of the scripture" },
@@ -383,7 +383,7 @@ graph TD
 OTA level files are uploaded directly to specific environmental collections colocated with progress sync tables:
 
 - **Collections**: `levels_dev`, `levels_preview`, and `levels_prod`.
-- **Document IDs**: The logical key of the level (e.g., `lvl_seed_01`, `lvl_seed_106`).
+- **Document IDs**: The logical key of the level (e.g., `lvl_m01_01`, `lvl_m01_106`).
 - **Fields**: The complete level JSON attributes, including the logical `id` attribute embedded inside the document.
 
 ### 7.3 Security Rules
@@ -428,7 +428,7 @@ FIRESTORE_EMULATOR_HOST="localhost:8080" task firebase:levels:upload ENV=dev
 
 ### 7.5 Logical to Physical Key Alignment at Runtime
 
-To keep the game progression logic robust and consistent throughout the application, the `LevelData` entity's `id` property is matched to its logical key (e.g. `'lvl_seed_01'`) rather than the raw integer physical ID (e.g. `1`) encoded within the JSON files.
+To keep the game progression logic robust and consistent throughout the application, the `LevelData` entity's `id` property is matched to its logical key (e.g. `'lvl_m01_01'`) rather than the raw integer physical ID (e.g. `1`) encoded within the JSON files.
 
 During loading:
 

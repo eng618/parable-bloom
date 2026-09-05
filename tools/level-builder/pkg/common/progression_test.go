@@ -12,6 +12,8 @@ func TestExpectedDifficultyPattern(t *testing.T) {
 		22: "Seedling", 42: "Transcendent",
 		43: "Seedling", 63: "Transcendent",
 		105: "Transcendent",
+		106: "Seedling", 126: "Transcendent",
+		484: "Seedling", 503: "Flourishing", 504: "Transcendent",
 	}
 	for id, want := range cases {
 		if got := ExpectedDifficulty(id); got != want {
@@ -27,7 +29,13 @@ func TestModuleMapping(t *testing.T) {
 	if got := ModuleForLevel(22); got != 2 {
 		t.Errorf("ModuleForLevel(22)=%d want 2", got)
 	}
-	if !IsChallengeLevel(21) || !IsChallengeLevel(105) {
+	if got := ModuleForLevel(106); got != 6 {
+		t.Errorf("ModuleForLevel(106)=%d want 6", got)
+	}
+	if got := ModuleForLevel(504); got != 24 {
+		t.Errorf("ModuleForLevel(504)=%d want 24", got)
+	}
+	if !IsChallengeLevel(21) || !IsChallengeLevel(105) || !IsChallengeLevel(504) {
 		t.Errorf("challenge detection failed")
 	}
 	if IsChallengeLevel(20) {

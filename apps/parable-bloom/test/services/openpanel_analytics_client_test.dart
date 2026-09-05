@@ -29,7 +29,7 @@ void main() {
       await openpanel.trackEvent(
         eventName: "level_complete",
         properties: {
-          "level_id": "lvl_sprout_01",
+          "level_id": "lvl_m02_01",
           "taps_total": 12,
           "wrong_taps": 0,
         },
@@ -48,7 +48,7 @@ void main() {
 
       final props = payload["properties"] as Map<String, dynamic>;
       expect(props["platform"], "ios");
-      expect(props["level_id"], "lvl_sprout_01");
+      expect(props["level_id"], "lvl_m02_01");
       expect(props["taps_total"], 12);
       expect(props["wrong_taps"], 0);
     });

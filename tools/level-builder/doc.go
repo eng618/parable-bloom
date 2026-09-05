@@ -32,13 +32,16 @@
 //
 // ## batch
 //
-// Generate all 21 levels for a module with the canonical 5×21 progression
+// Generate all 21 levels for a module with the canonical 21-per-module progression
 // (see pkg/common/progression.go — the single source of truth):
 //
 //	Levels 1-5: Seedling, 6-10: Sprout, 11-15: Nurturing,
 //	16-20: Flourishing, 21: Transcendent (challenge).
 //
-// For module N, level IDs are (N-1)*21+1 through (N-1)*21+21.
+// For module N (1-99), level IDs are (N-1)*21+1 through (N-1)*21+21
+// (modules 1-5 are the shipped set; 6-24 make the 504-level cloud set with
+// generic logical IDs lvl_mNN_MM). New modules are registered in modules.json
+// automatically (stub entry when not yet authored).
 // Generation runs through the robust pipeline (pkg/generator/pipeline.go):
 // registry strategy → primary placement → gap filler → ID sanitize →
 // masking → assembly. Every level is validated (structural + solvable +

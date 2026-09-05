@@ -79,18 +79,18 @@ void main() {
     test('should start with initial progress', () async {
       final progress = await repository.getProgress();
 
-      expect(progress.currentLevel, equals('lvl_seed_01'));
+      expect(progress.currentLevel, equals('lvl_m01_01'));
       expect(progress.completedLevels, isEmpty);
     });
 
     test('should save and retrieve progress', () async {
       final newProgress = GameProgress.initial().copyWith(
-        currentLevel: 'lvl_seed_05',
+        currentLevel: 'lvl_m01_05',
         completedLevels: {
-          'lvl_seed_01',
-          'lvl_seed_02',
-          'lvl_seed_03',
-          'lvl_seed_04'
+          'lvl_m01_01',
+          'lvl_m01_02',
+          'lvl_m01_03',
+          'lvl_m01_04'
         },
         tutorialCompleted: false,
       );
@@ -98,18 +98,18 @@ void main() {
       await repository.saveProgress(newProgress);
       final retrieved = await repository.getProgress();
 
-      expect(retrieved.currentLevel, equals('lvl_seed_05'));
+      expect(retrieved.currentLevel, equals('lvl_m01_05'));
       expect(
           retrieved.completedLevels,
           containsAll(
-              ['lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04']));
+              ['lvl_m01_01', 'lvl_m01_02', 'lvl_m01_03', 'lvl_m01_04']));
     });
 
     test('should reset to initial state', () async {
       await repository.saveProgress(
         GameProgress.initial().copyWith(
-          currentLevel: 'lvl_seed_10',
-          completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03'},
+          currentLevel: 'lvl_m01_10',
+          completedLevels: {'lvl_m01_01', 'lvl_m01_02', 'lvl_m01_03'},
           tutorialCompleted: false,
         ),
       );
@@ -117,7 +117,7 @@ void main() {
       await repository.resetProgress();
       final progress = await repository.getProgress();
 
-      expect(progress.currentLevel, equals('lvl_seed_01'));
+      expect(progress.currentLevel, equals('lvl_m01_01'));
       expect(progress.completedLevels, isEmpty);
     });
 

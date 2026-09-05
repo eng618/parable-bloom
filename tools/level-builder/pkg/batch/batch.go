@@ -51,6 +51,10 @@ type Result struct {
 	VineCount        int     `json:"vine_count,omitempty"`
 }
 
+// MaxModuleID bounds module IDs to two digits, matching the generic logical
+// ID scheme lvl_mNN_MM in common.LogicalLevelID (24 modules = 504 levels).
+const MaxModuleID = 99
+
 // ModuleBatch represents a complete batch of levels for a module.
 type ModuleBatch struct {
 	ModuleID     int
@@ -65,8 +69,8 @@ type ModuleBatch struct {
 // levels 1-5 (Seedling), 6-10 (Sprout), 11-15 (Nurturing), 16-20 (Flourishing), 21 (Transcendent).
 // For module N, level IDs start at (N-1)*21+1.
 func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
-	if batchCfg.ModuleID < 1 || batchCfg.ModuleID > 5 {
-		return nil, fmt.Errorf("invalid module ID: %d (must be 1-5)", batchCfg.ModuleID)
+	if batchCfg.ModuleID < 1 || batchCfg.ModuleID > MaxModuleID {
+		return nil, fmt.Errorf("invalid module ID: %d (must be 1-%d)", batchCfg.ModuleID, MaxModuleID)
 	}
 
 	if batchCfg.OutputDir == "" {
@@ -413,8 +417,12 @@ func determineStrategy(levelID int, difficulty string, batchCfg Config) string {
 		return batchCfg.Strategy
 	}
 
-	// Honor LIFO request (center-out has strongest solvability guarantee)
-	if batchCfg.UseLIFO || difficulty == "Transcendent" {
+	// Honor explicit LIFO requests with center-out (strongest solvability
+	// guarantee). Transcendent intentionally uses legacy-clearable as primary
+	// (center-out fallback still applies): benchmarked Sep 2026, center-out
+	// collapses to ~60% vine occupancy on 20x34 grids (spec: 93%), while
+	// legacy-clearable clears 93.5%+ on attempt 1 with 6-color variety.
+	if batchCfg.UseLIFO {
 		return config.StrategyCenterOut
 	}
 

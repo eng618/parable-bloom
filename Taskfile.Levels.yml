@@ -5,7 +5,7 @@ tasks:
   # Level Generation
 
   generate:all:
-    desc: Generate all 5 modules using the robust v2 batch generator (overwrites existing)
+    desc: Generate modules via generate_all.sh (defaults 1-5; START_MODULE/END_MODULE override, e.g. 6-24 for the cloud set)
     dir: .
     cmds:
       - ./generate_all.sh

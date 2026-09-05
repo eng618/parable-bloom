@@ -103,6 +103,7 @@ void main() {
 
     test('permission-denied prefers Hive cache over bundled assets', () async {
       final cached = {
+        'version': '4.0',
         'modules': [
           {'id': 'cached-module'},
         ],
@@ -122,6 +123,32 @@ void main() {
       expect(registry['modules'], [
         {'id': 'cached-module'},
       ]);
+    });
+
+    test('stale-version Hive cache is discarded in favor of bundled assets',
+        () async {
+      final cached = {
+        'version': '3.0',
+        'modules': [
+          {'id': 'stale-module'},
+        ],
+        'level_mappings': <String, dynamic>{},
+      };
+      final container = ProviderContainer(
+        overrides: [firestoreProvider.overrideWithValue(_DeniedFirestore())],
+      );
+      addTearDown(container.dispose);
+
+      final box = await container.read(hiveBoxProvider);
+      await box.put(
+        'cached_modules_registry',
+        json.encode(cached),
+      );
+
+      final registry = await container.read(modulesRegistryProvider.future);
+      // Bundled assets/data/modules.json: 5 modules + level mappings.
+      expect((registry['modules'] as List), hasLength(5));
+      expect(box.get('cached_modules_registry'), isNull);
     });
 
     test('Firestore success stays primary and refreshes the cache', () async {

@@ -8,3 +8,13 @@ type Parable struct {
 	Reflection      string `json:"reflection"`
 	BackgroundImage string `json:"background_image"`
 }
+
+// ModuleScripture is a scripture unlock trigger attached to a module
+// (starter at the tutorial capstone, supporting micros at *_05/10/15/20).
+type ModuleScripture struct {
+	ID           string `json:"id"`
+	TriggerLevel string `json:"trigger_level"`
+	Reference    string `json:"reference"`
+	Title        string `json:"title"`
+	Type         string `json:"type"`
+}

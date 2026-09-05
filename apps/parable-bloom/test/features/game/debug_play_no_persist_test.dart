@@ -130,7 +130,7 @@ void main() {
       // Set a debug level
       container
           .read(debugSelectedLevelProvider.notifier)
-          .setLevel('lvl_seed_05');
+          .setLevel('lvl_m01_05');
 
       // Now debug play mode should be true
       expect(container.read(debugPlayModeProvider), isTrue);
@@ -158,8 +158,8 @@ void main() {
               id: 1,
               name: 'Seedling',
               themeSeed: 'forest',
-              levels: ['lvl_seed_01', 'lvl_seed_02'],
-              challengeLevel: 'lvl_seed_challenge',
+              levels: ['lvl_m01_01', 'lvl_m01_02'],
+              challengeLevel: 'lvl_m01_challenge',
               parable: const {},
               unlockMessage: '',
               scriptures: const [],
@@ -175,14 +175,14 @@ void main() {
       // Try a normal (non-debug) completion
       await container
           .read(gameProgressProvider.notifier)
-          .completeLevel('lvl_seed_01');
+          .completeLevel('lvl_m01_01');
       expect(fakeRepo.saveCalled, isTrue);
 
       // Reset and test debug mode
       fakeRepo.saveCalled = false;
       container
           .read(debugSelectedLevelProvider.notifier)
-          .setLevel('lvl_seed_01');
+          .setLevel('lvl_m01_01');
 
       // Verify debug play mode is now active
       expect(container.read(debugPlayModeProvider), isTrue);

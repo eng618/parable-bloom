@@ -20,6 +20,11 @@ class ModuleLoadException implements Exception {
   String toString() => 'ModuleLoadException: $message';
 }
 
+/// Expected modules registry schema version (assets/data/modules.json).
+/// Bumped on breaking changes (e.g. the 4.0 unified level-ID migration) so
+/// stale Hive caches from older installs are discarded instead of served.
+const String kModulesRegistryVersion = '4.0';
+
 /// Provides the raw modules registry JSON map.
 /// Tries Firestore (configs_{env}/modules), falling back to Hive cache, and finally bundled assets.
 final modulesRegistryProvider =
@@ -57,11 +62,21 @@ final modulesRegistryProvider =
     final cachedStr = box.get('cached_modules_registry') as String?;
     if (cachedStr != null && cachedStr.isNotEmpty) {
       final data = json.decode(cachedStr) as Map<String, dynamic>;
-      LoggerService.info(
-        'Loaded modules registry from local Hive cache',
-        tag: 'modulesRegistryProvider',
-      );
-      return data;
+      if (data['version']?.toString() != kModulesRegistryVersion) {
+        // Pre-migration cache (old level-ID scheme): drop it and fall
+        // through to bundled assets rather than serving stale IDs.
+        LoggerService.info(
+          'Discarding stale modules registry cache (version ${data['version']}, expected $kModulesRegistryVersion)',
+          tag: 'modulesRegistryProvider',
+        );
+        await box.delete('cached_modules_registry');
+      } else {
+        LoggerService.info(
+          'Loaded modules registry from local Hive cache',
+          tag: 'modulesRegistryProvider',
+        );
+        return data;
+      }
     }
   } catch (e) {
     LoggerService.error(

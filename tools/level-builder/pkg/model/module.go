@@ -2,13 +2,14 @@ package model
 
 // Module represents a group of levels
 type Module struct {
-	ID             int      `json:"id"`
-	Name           string   `json:"name"`
-	ThemeSeed      string   `json:"theme_seed"`
-	Levels         []string `json:"levels"`
-	ChallengeLevel string   `json:"challenge_level"`
-	Parable        Parable  `json:"parable"`
-	UnlockMessage  string   `json:"unlock_message"`
+	ID             int               `json:"id"`
+	Name           string            `json:"name"`
+	ThemeSeed      string            `json:"theme_seed"`
+	Levels         []string          `json:"levels"`
+	ChallengeLevel string            `json:"challenge_level"`
+	Parable        Parable           `json:"parable"`
+	UnlockMessage  string            `json:"unlock_message"`
+	Scriptures     []ModuleScripture `json:"scriptures,omitempty"`
 }
 
 // ModuleRegistry represents the contents of modules.json

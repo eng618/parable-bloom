@@ -23,8 +23,8 @@ void main() {
       id: 1,
       name: 'Seedling',
       themeSeed: 'forest',
-      levels: ['lvl_seed_01', 'lvl_seed_02'],
-      challengeLevel: 'lvl_seed_challenge',
+      levels: ['lvl_m01_01', 'lvl_m01_02'],
+      challengeLevel: 'lvl_m01_challenge',
       parable: const {},
       unlockMessage: 'Unlocked Seedling',
       scriptures: const [],
@@ -75,7 +75,7 @@ void main() {
         (tester) async {
       final progress = GameProgress.initial().copyWith(
         tutorialCompleted: true,
-        currentLevel: 'lvl_seed_01',
+        currentLevel: 'lvl_m01_01',
       );
 
       await tester.pumpWidget(createHomeScreen(progress: progress));
@@ -89,8 +89,8 @@ void main() {
         (tester) async {
       final completedProgress = GameProgress.initial().copyWith(
         tutorialCompleted: true,
-        completedLevels: {'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_challenge'},
-        currentLevel: 'lvl_seed_challenge',
+        completedLevels: {'lvl_m01_01', 'lvl_m01_02', 'lvl_m01_challenge'},
+        currentLevel: 'lvl_m01_challenge',
       );
 
       await tester.pumpWidget(createHomeScreen(progress: completedProgress));
