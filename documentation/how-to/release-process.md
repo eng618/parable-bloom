@@ -730,6 +730,43 @@ bws secret list
 - Verify all signing environment variables set
 - Check keystore password: `keytool -list -v -keystore keystore.jks`
 
+### Android Release Build (R8) Issues
+
+**Problem**: `bundleRelease` fails at `:app:minifyReleaseWithR8` with
+`Missing class com.google.android.play.core.splitcompat.SplitCompatApplication`
+(plus `splitinstall.*` / `tasks.*` referenced from
+`FlutterPlayStoreSplitApplication` and `PlayStoreDeferredComponentManager`).
+
+- Cause: AGP 8.x runs R8 in strict mode. The Flutter engine references Play
+  Core deferred-component classes even when the app does not use deferred
+  components, and no Play Core dependency is on the classpath.
+- Fix: `apps/parable-bloom/android/app/proguard-rules.pro` contains
+  `-dontwarn com.google.android.play.core.**` (matching AGP's suggested
+  `missing_rules.txt`). This keeps R8 shrinking enabled while suppressing the
+  engine-only missing-class errors.
+- Do not use `--android-skip-build-dependency-validation` for this — that flag
+  only silences Gradle/AGP/Kotlin version warnings, not R8 errors.
+- Adding a `com.google.android.play:core` dependency is intentionally avoided:
+  it is a deprecated monolith the app does not need.
+
+### Google Play Upload Issues
+
+**Problem**: `supply` fails with `This release includes the
+com.google.android.gms.permission.AD_ID permission but your declaration on Play
+Console says your app doesn't use advertising ID.`
+
+- Cause: `firebase_analytics` transitively adds `AD_ID` to the merged manifest
+  via `play-services-measurement`, even though the app serves no ads and
+  declares no ad-ID usage in Play Console.
+- Fix: `apps/parable-bloom/android/app/src/main/AndroidManifest.xml` strips it
+  with `<uses-permission android:name="com.google.android.gms.permission.AD_ID"
+  tools:node="remove"/>` (requires `xmlns:tools`). The merged AAB then matches
+  the Play Console data-safety declaration.
+- Alternative (only if the app ever needs the ad ID, e.g. for Analytics
+  demographics): keep the permission and instead update Play Console → App
+  content → Advertising ID declaration to "Yes". While ad-free, stripping is
+  the correct choice.
+
 ### iOS Signing Issues
 
 **Problem**: `Provisioning profile doesn't match`

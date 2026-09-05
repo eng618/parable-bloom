@@ -51,6 +51,16 @@ This document serves as an information-oriented technical reference detailing su
 - **Behavior**: In headless CI environments, Flutter widget tests and Flame component tests operate via automated test bindings without requiring physical GPU context.
 - **Validation**: Execute `task validate` or `task flutter:test` to run the complete automated test suite.
 
+### Android Release Build: R8 Play Core Missing Classes
+
+- **Behavior**: `flutter build appbundle --release` runs `:app:minifyReleaseWithR8`, which fails under AGP 8.x strict mode with `Missing class com.google.android.play.core.*` referenced from the Flutter engine (`FlutterPlayStoreSplitApplication`, `PlayStoreDeferredComponentManager`). The app does not use deferred components.
+- **Configuration**: `android/app/proguard-rules.pro` includes `-dontwarn com.google.android.play.core.**` to suppress these engine-only references while keeping R8 shrinking enabled. Do not add a `play:core` dependency to fix this.
+
+### Android Release: AD_ID Permission vs Play Console Declaration
+
+- **Behavior**: `firebase_analytics` transitively contributes `com.google.android.gms.permission.AD_ID` to the merged manifest. Google Play rejects uploads when the AAB contains this permission but the Play Console advertising-ID declaration says "No".
+- **Configuration**: `android/app/src/main/AndroidManifest.xml` strips it via `tools:node="remove"` (the app serves no ads). If ad-ID usage is ever needed, update the Play Console declaration instead of removing the rule silently.
+
 ---
 
 ## 📬 Reporting Issues
