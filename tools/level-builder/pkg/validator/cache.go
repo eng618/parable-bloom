@@ -33,7 +33,20 @@ func NewValidationCache() *ValidationCache {
 }
 
 // CachePath returns the absolute path to validation_cache.json.
+// Location: <repo>/logs/validation_cache.json (build artifact, gitignored).
+// Previously this lived in assets/data/ (shipped with the app); LoadCache still
+// reads that legacy path as a one-time fallback so existing checkouts migrate
+// silently on the next validating run.
 func CachePath() (string, error) {
+	logsDir, err := common.LogsDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get logs directory: %w", err)
+	}
+	return filepath.Join(logsDir, "validation_cache.json"), nil
+}
+
+// legacyCachePath returns the pre-relocation cache location for migration reads.
+func legacyCachePath() (string, error) {
 	dataDir, err := common.DataDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get data directory: %w", err)
@@ -41,12 +54,22 @@ func CachePath() (string, error) {
 	return filepath.Join(dataDir, "validation_cache.json"), nil
 }
 
-// LoadCache loads the validation cache from assets/data/validation_cache.json.
-// If the file doesn't exist, it returns a new empty cache.
+// LoadCache loads the validation cache from logs/validation_cache.json,
+// falling back to the legacy assets/data/ location once for migration.
+// If neither file exists, it returns a new empty cache.
 func LoadCache() (*ValidationCache, error) {
 	path, err := CachePath()
 	if err != nil {
 		return nil, err
+	}
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if legacy, lerr := legacyCachePath(); lerr == nil {
+			if _, serr := os.Stat(legacy); serr == nil {
+				common.Verbose("Migrating validation cache from legacy path %s", legacy)
+				path = legacy
+			}
+		}
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {

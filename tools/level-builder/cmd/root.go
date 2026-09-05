@@ -57,12 +57,15 @@ It provides commands for:
 		WorkersCount = count
 		common.Verbose("Workers: %d (from flag: %s)", WorkersCount, workers)
 
-		// Handle working directory
+		// Handle working directory. Path resolution (common.LevelsDir etc.)
+		// caches the repo root on first use, so reset it after chdir to avoid
+		// serving stale pre-chdir paths for the rest of the process.
 		if workingDir != "" {
 			common.Verbose("Changing working directory to: %s", workingDir)
 			if err := os.Chdir(workingDir); err != nil {
 				return fmt.Errorf("failed to change working directory: %w", err)
 			}
+			common.ResetPaths()
 		}
 
 		return nil

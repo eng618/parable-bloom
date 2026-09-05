@@ -1,0 +1,89 @@
+{
+    "id": 10,
+    "title": "Lesson 10: Chains and Hints",
+    "objective": "Combine projection, ordering, and planning in one garden",
+    "instructions": "Project each vine, find the key blocker, and plan the full order.",
+    "learning_points": [
+        "Project first, then order",
+        "One key can free two vines"
+    ],
+    "grid_size": [
+        7,
+        7
+    ],
+    "max_moves": 4,
+    "vines": [
+        {
+            "id": "vine_1",
+            "head_direction": "right",
+            "ordered_path": [
+                {
+                    "x": 5,
+                    "y": 5
+                },
+                {
+                    "x": 4,
+                    "y": 5
+                },
+                {
+                    "x": 3,
+                    "y": 5
+                }
+            ]
+        },
+        {
+            "id": "vine_2",
+            "head_direction": "right",
+            "ordered_path": [
+                {
+                    "x": 2,
+                    "y": 5
+                },
+                {
+                    "x": 1,
+                    "y": 5
+                },
+                {
+                    "x": 0,
+                    "y": 5
+                }
+            ]
+        },
+        {
+            "id": "vine_3",
+            "head_direction": "down",
+            "ordered_path": [
+                {
+                    "x": 6,
+                    "y": 1
+                },
+                {
+                    "x": 6,
+                    "y": 2
+                },
+                {
+                    "x": 6,
+                    "y": 3
+                }
+            ]
+        },
+        {
+            "id": "vine_4",
+            "head_direction": "up",
+            "ordered_path": [
+                {
+                    "x": 3,
+                    "y": 0
+                },
+                {
+                    "x": 2,
+                    "y": 0
+                },
+                {
+                    "x": 1,
+                    "y": 0
+                }
+            ]
+        }
+    ]
+}

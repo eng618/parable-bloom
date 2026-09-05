@@ -107,6 +107,9 @@ tools/level-builder/validation_stats.json
 tools/level-builder/validation_stats*
 tools/level-builder/validation.log
 
+# Local validation cache (relocated to logs/; legacy assets copy must stay untracked)
+apps/parable-bloom/assets/data/validation_cache.json
+
 # Level dumps from failing level generations
 tools/level-builder/assets/
 

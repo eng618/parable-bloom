@@ -1,0 +1,61 @@
+{
+    "id": 7,
+    "title": "Lesson 7: Blocker First",
+    "objective": "Learn to clear a blocking vine before the one it traps",
+    "instructions": "Vine 2 is trapped by vine 1. Clear vine 1 first, then vine 2.",
+    "learning_points": [
+        "Blocked! means clear the blocker",
+        "Order matters: blocker first"
+    ],
+    "grid_size": [
+        6,
+        6
+    ],
+    "max_moves": 2,
+    "vines": [
+        {
+            "id": "vine_1",
+            "head_direction": "down",
+            "ordered_path": [
+                {
+                    "x": 3,
+                    "y": 0
+                },
+                {
+                    "x": 3,
+                    "y": 1
+                },
+                {
+                    "x": 3,
+                    "y": 2
+                },
+                {
+                    "x": 3,
+                    "y": 3
+                },
+                {
+                    "x": 3,
+                    "y": 4
+                },
+                {
+                    "x": 3,
+                    "y": 5
+                }
+            ]
+        },
+        {
+            "id": "vine_2",
+            "head_direction": "right",
+            "ordered_path": [
+                {
+                    "x": 1,
+                    "y": 2
+                },
+                {
+                    "x": 0,
+                    "y": 2
+                }
+            ]
+        }
+    ]
+}

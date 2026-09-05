@@ -30,43 +30,44 @@
 //
 // # Commands
 //
-// ## generate
+// ## batch
 //
-// Generate new puzzle levels with intelligent vine placement algorithms.
+// Generate all 21 levels for a module with the canonical 5×21 progression
+// (see pkg/common/progression.go — the single source of truth):
 //
-// The generator uses a tiling algorithm that places vine segments into rectangular
-// regions, then uses solver-aware placement to introduce blocking complexity for
-// higher difficulties. Supports batch generation with module organization.
+//	Levels 1-5: Seedling, 6-10: Sprout, 11-15: Nurturing,
+//	16-20: Flourishing, 21: Transcendent (challenge).
+//
+// For module N, level IDs are (N-1)*21+1 through (N-1)*21+21.
+// Generation runs through the robust pipeline (pkg/generator/pipeline.go):
+// registry strategy → primary placement → gap filler → ID sanitize →
+// masking → assembly. Every level is validated (structural + solvable +
+// playable coverage + quality gates) before it is accepted.
 //
 // Examples:
 //
-//	# Generate a single level
-//	level-builder generate --id 1 --difficulty sapling --grace 3
+//	# Generate module 1 (levels 1-21)
+//	level-builder batch --module 1 --overwrite --verbose
 //
-//	# Generate with specific grid size
-//	level-builder generate --id 42 --width 8 --height 10 --difficulty oak
+//	# Deterministic LIFO run with per-level stats
+//	level-builder batch --module 2 --lifo --overwrite --stats-out ./stats
 //
-//	# Generate module batches (10 levels + 1 challenge)
-//	level-builder generate module --start 1 --count 5 --base-difficulty seedling
-//
-//	# Generate with custom seed for reproducibility
-//	level-builder generate --id 10 --seed 12345
+//	# Preview without writing
+//	level-builder batch --module 3 --dry-run
 //
 // Flags:
 //
-//	--id              Level ID (required)
-//	--difficulty      Difficulty tier (seedling, sapling, oak, redwood)
-//	--width           Grid width (default: varies by difficulty)
-//	--height          Grid height (default: varies by difficulty)
-//	--grace           Lives/mistakes allowed (default: 3)
-//	--seed            Random seed for deterministic generation
-//	--overwrite       Overwrite existing level file
-//
-// Module generation flags:
-//
-//	--start           Starting module number
-//	--count           Number of modules to generate
-//	--base-difficulty Base difficulty for progression
+//	--module           Module ID to generate (1-5, required)
+//	--overwrite        Overwrite existing level files
+//	--lifo             Prefer center-out strategy (strongest solvability guarantee)
+//	--strategy         Force a placement strategy (direction-first, center-out)
+//	--aggressive       Stronger backtracking defaults (window=6, attempts=6)
+//	--min-coverage     Playable-coverage override 0.0-1.0 (default 1.0)
+//	--dump-dir         Failing-generation dumps (default: logs/<timestamp>/failing_dumps)
+//	--stats-out        Per-level stats JSON incl. quality metrics (default: logs/<timestamp>/runs/stats)
+//	--output-dir       Level output dir (default: resolved via common.LevelsDir())
+//	--backup           Backup existing levels before overwriting (default: true)
+//	--dry-run          Preview without writing files
 //
 // ## validate
 //
@@ -74,16 +75,20 @@
 //
 // Performs comprehensive validation including:
 //   - Module and level file parsing
-//   - Grid size and occupancy checks
+//   - ID-filename match and canonical difficulty lock (ExpectedDifficulty)
+//   - Grid size and occupancy checks (spec 0.93, tolerance 0.05)
+//   - Playable coverage: every non-vine cell must be masked
 //   - Color scheme validation
 //   - 4-connectivity checks (segments must be adjacent)
 //   - Head/neck orientation validation
 //   - Circular blocking detection (deadlock prevention)
 //   - Mask validation (vines can't occupy hidden cells)
-//   - Optional solvability checks using BFS or A* algorithms
+//   - Optional solvability checks using greedy / exact BFS / A* / heuristic
 //
-// When --check-solvable is enabled, results are written to validation_stats.json
-// for detailed analysis including solver performance metrics.
+// When --check-solvable is enabled, results are written to
+// logs/validation_stats.json for detailed analysis including solver
+// performance metrics. Results are cached in logs/validation_cache.json
+// (SHA-256 + SolverVersion) to keep hot runs fast.
 //
 // Examples:
 //
@@ -108,7 +113,8 @@
 //
 // Output:
 //   - Console: Per-level validation status with timing
-//   - validation_stats.json: Detailed metrics (when --check-solvable is used)
+//   - logs/validation_stats.json: Detailed metrics (when --check-solvable is used)
+//   - logs/validation_cache.json: Solver cache (SHA-256 + SolverVersion)
 //
 // ## render
 //
@@ -173,25 +179,22 @@
 // Repair process:
 //  1. Scan directory for level_*.json files
 //  2. Attempt to read and parse each file
-//  3. If parsing fails, regenerate using TileGridIntoVines
+//  3. If parsing fails, regenerate using ClearableFirstPlacement
 //  4. Validate solvability before writing
 //  5. Write repaired file with backup of original
 //
 // ## clean
 //
-// Remove generated metadata and temporary files.
-//
-// Cleans up generation metadata files to prepare for fresh generation runs.
-// Useful for testing and ensuring clean state.
+// Remove generated levels and the module registry. Destructive — requires
+// explicit invocation and is never run as part of generation or validation.
 //
 // Examples:
 //
 //	level-builder clean
 //
 // Removes:
-//   - generation_metadata.json (module generation tracking)
-//   - validation_stats.json (validation metrics)
-//   - Temporary files from failed generations
+//   - <assets>/levels/level_*.json
+//   - <assets>/data/modules.json
 //
 // ## tutorials
 //
@@ -206,12 +209,9 @@
 // Examples:
 //
 //	# Validate all lesson files
-//	level-builder tutorials validate
+//	level-builder validate-tutorials
 //
-//	# Validate specific lesson
-//	level-builder tutorials validate --id 1
-//
-// Lesson files location: ../../assets/lessons/lesson_*.json
+// Lesson files location: apps/parable-bloom/assets/lessons/lesson_*.json
 //
 // # Architecture
 //
@@ -220,65 +220,69 @@
 // ## Package Structure
 //
 //	cmd/              - Cobra command implementations
-//	  ├─ generate/    - Level generation commands
+//	  ├─ batch/       - Module batch generation (canonical entry point)
 //	  ├─ validate/    - Validation commands
 //	  ├─ render/      - Rendering commands
 //	  ├─ repair/      - Repair commands
 //	  ├─ clean/       - Cleanup commands
 //	  └─ tutorials/   - Tutorial validation
 //	pkg/
-//	  ├─ common/      - Shared types, utilities, logging
+//	  ├─ common/      - Shared types, utilities, logging, progression, paths
 //	  ├─ generator/   - Level generation algorithms
-//	  │  ├─ tiling.go           - Core tiling algorithm
-//	  │  ├─ solver_aware.go     - Intelligent placement
-//	  │  └─ module_generation.go - Batch generation
+//	  │  ├─ pipeline.go          - Canonical GenerateRobust pipeline
+//	  │  ├─ api.go               - GenerateLevel wrappers + atomic writes
+//	  │  ├─ assembler.go         - Final Level assembly (round-robin colors)
+//	  │  ├─ registry.go          - Strategy registry
+//	  │  ├─ strategies/          - Placement strategies, gap filler, backtracking, analyzer
+//	  │  ├─ utils/              - Presets, direction utils, blocking heuristics
+//	  │  ├─ metrics/            - Coverage, complexity, quality reports
+//	  │  └─ config/             - DifficultySpecs, GridSizeRanges, GenerationConfig
+//	  ├─ batch/       - Concurrent module generation + quality gates
 //	  ├─ validator/   - Validation logic
-//	  │  ├─ validator.go        - Main validation orchestration
-//	  │  ├─ structural.go       - Structural checks
-//	  │  └─ solver.go           - Solvability algorithms
-//	  └─ model/       - Data models (Level, Vine, Module)
+//	  │  ├─ validator.go          - Main validation orchestration + cache
+//	  │  ├─ structural.go         - Structural checks
+//	  │  ├─ solvability.go        - Greedy/exact/A*/heuristic solvers
+//	  │  ├─ astar.go              - A* search
+//	  │  ├─ generation_checks.go  - Design constraints for the generator loop
+//	  │  ├─ cache.go              - Validation cache (logs/)
+//	  │  └─ tutorials_validator.go - Relaxed lesson validation
+//	  └─ model/       - Data models (Level, Vine, Module, Mask, Parable)
 //
 // ## Key Algorithms
 //
-// ### Tiling Algorithm (TileGridIntoVines)
+// ### Robust Pipeline (GenerateRobust)
 //
-// Divides the grid into rectangular regions and fills each with a single vine:
-//  1. Calculate region dimensions using square root heuristics
-//  2. Randomly assign each region to a vine
-//  3. Snake-fill each region with connected segments
-//  4. Assign random head directions
-//  5. Validate and repair disconnections
-//
-// ### Solver-Aware Placement
-//
-// For higher difficulties, introduces controlled blocking:
-//  1. Generate base level with tiling
-//  2. Analyze vine relationships and solver behavior
-//  3. Strategically reposition vines to create blocking chains
-//  4. Predict exit paths to create controlled complexity
-//  5. Validate solvability with configurable search budgets
+//  1. Registry strategy placement (center-out LIFO guarantee, direction-first
+//     organic shapes, or legacy clearable-first for dense coverage)
+//  2. Local backtracking recovery inside the placer
+//  3. Aggressive gap filling for full playable coverage
+//  4. Vine ID sanitization (sequential vine_1..N)
+//  5. Masking of leftover empties (hide mode)
+//  6. Assembly with round-robin color assignment and spec grace
 //
 // ### Validation Pipeline
 //
 //  1. Parse JSON and check schema compliance
-//  2. Verify ID matches filename
+//  2. Verify ID matches filename and difficulty matches canonical progression
 //  3. Validate grid dimensions and color schemes
-//  4. Check 100% occupancy (or proper mask usage)
-//  5. Structural validation (connectivity, orientation, bounds)
-//  6. Circular blocking detection (DFS cycle detection)
-//  7. Optional solvability check (BFS or A* search)
+//  4. Check vine occupancy against spec (0.93, tolerance 0.05)
+//  5. Check 100% playable coverage (occupied OR masked)
+//  6. Structural validation (connectivity, orientation, bounds)
+//  7. Circular blocking detection (DFS cycle detection)
+//  8. Optional solvability check (greedy fast-path, exact/A* ≤24 vines,
+//     heuristic beyond; greedy is complete for current mechanics)
 //
 // # Development Workflow
 //
 // ## Typical Level Generation Flow
 //
-//	# 1. Generate new levels for a module
-//	level-builder generate module --start 5 --count 1 --base-difficulty oak
+//	# 1. Generate a module (canonical progression, validates each level)
+//	level-builder batch --module 1 --overwrite --verbose
 //
-//	# 2. Validate structural integrity
+//	# 2. Validate structural integrity (+ difficulty lock, occupancy, coverage)
 //	level-builder validate
 //
-//	# 3. Check solvability
+//	# 3. Check solvability (greedy fast-path, exact/A* where needed)
 //	level-builder validate --check-solvable
 //
 //	# 4. Visual inspection
@@ -294,7 +298,7 @@
 //	go test ./...
 //
 //	# Run with verbose logging
-//	level-builder generate --id 99 --verbose
+//	level-builder validate --check-solvable --verbose
 //
 //	# Validate with detailed metrics
 //	level-builder validate --check-solvable --verbose
@@ -304,14 +308,11 @@
 //
 // ## Regenerating All Levels
 //
-//	# Backup existing levels
-//	cp -r assets/levels assets/levels_backup
+//	# Backup existing levels (also automatic with batch --overwrite --backup)
+//	cp -r apps/parable-bloom/assets/levels apps/parable-bloom/assets/levels_backup
 //
-//	# Clean state
-//	level-builder clean
-//
-//	# Generate all modules (adjust count as needed)
-//	level-builder generate module --start 1 --count 5 --base-difficulty seedling
+//	# Generate all modules via the repo task (batch --module 1..5 + validate)
+//	task levels:generate:all
 //
 //	# Validate everything
 //	level-builder validate --check-solvable
