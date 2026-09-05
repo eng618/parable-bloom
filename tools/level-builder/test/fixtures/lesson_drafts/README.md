@@ -24,8 +24,8 @@ Covered by `pkg/validator/lesson_drafts_test.go`, which mirrors the Dart
 5. Run `task levels:tutorials:validate` and
    `task levels:tutorials:validate-solvable`.
 
-## Grid-size gotcha (both conventions must hold)
+## Grid-size convention (unified)
 
-`LessonData.fromJson` (Dart) reads `grid_size[0]` as rows and `[1]` as cols,
-while Go levels use `[width, height]`. All drafts use square grids with cells
-inside the shared square so they pass under both interpretations.
+`LessonData.fromJson` (Dart) and Go levels now agree on `grid_size` as
+`[width, height]` (x-extent first). Drafts use square grids regardless, so
+they are robust under either reading.

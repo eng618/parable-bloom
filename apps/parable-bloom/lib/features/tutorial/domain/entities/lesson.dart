@@ -4,7 +4,7 @@ class Lesson {
   final String objective;
   final String instructions;
   final List<String> learningPoints;
-  final List<int> gridSize; // [rows, cols]
+  final List<int> gridSize; // [width, height] (matches Go levels)
   final List<Map<String, dynamic>> vines;
 
   Lesson({

@@ -62,11 +62,13 @@ class LessonData {
 
     final gridSize = json['grid_size'] as List;
     if (gridSize.length < 2) {
-      throw const FormatException('grid_size must have [rows, cols]');
+      throw const FormatException('grid_size must have [width, height]');
     }
 
-    final gridRows = (gridSize[0] as num).toInt();
-    final gridCols = (gridSize[1] as num).toInt();
+    // Convention matches Go levels (model.Level.GridSize): [width, height],
+    // i.e. x-extent first, y-extent second.
+    final gridCols = (gridSize[0] as num).toInt();
+    final gridRows = (gridSize[1] as num).toInt();
 
     final vines = (json['vines'] as List)
         .map((vine) => LessonVineData.fromJson(vine as Map<String, dynamic>))
@@ -79,7 +81,7 @@ class LessonData {
         final y = cell['y']!;
         if (x < 0 || x >= gridCols || y < 0 || y >= gridRows) {
           throw FormatException(
-            'Vine ${vine.id} has cell ($x,$y) outside grid_size [$gridRows,$gridCols]',
+            'Vine ${vine.id} has cell ($x,$y) outside grid_size [$gridCols,$gridRows] (width,height)',
           );
         }
       }
