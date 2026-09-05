@@ -13,6 +13,14 @@ import (
 // up to 24 vines (optionally A*) and a lightweight heuristic for larger levels.
 //
 // SolvabilityStats now contains extra instrumentation useful for experiments and diagnostics.
+//
+// Solver rationale (verified Sep 2026): removing vines only frees cells, so the
+// clearable set grows monotonically and greedy removal is complete for current
+// mechanics — all 105 shipped levels report greedy-fast with 0 search states.
+// Exact/A* /heuristic paths are retained as defense-in-depth for future mechanics
+// (e.g. masks as blockers) and stay covered by TestAstarReducesWork_Level33.
+// DefaultAStarWeight=10 is the standing default (--astar-weight flag overrides;
+// scripts/levels/astar_weight_sweep.sh can re-tune if mechanics change).
 const DefaultAStarWeight = 10
 
 type SolvabilityStats struct {

@@ -11,6 +11,7 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/metrics"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/ui"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
@@ -41,6 +42,13 @@ type Result struct {
 	Coverage      float64
 	BlockingDepth int
 	GenerationMS  int64
+	// Quality instrumentation (populated on success)
+	PlayableCoverage float64 `json:"playable_coverage,omitempty"`
+	ComplexityScore  float64 `json:"complexity_score,omitempty"`
+	AvgVineLength    float64 `json:"avg_vine_length,omitempty"`
+	LengthVariety    int     `json:"length_variety,omitempty"`
+	DistinctColors   int     `json:"distinct_colors,omitempty"`
+	VineCount        int     `json:"vine_count,omitempty"`
 }
 
 // ModuleBatch represents a complete batch of levels for a module.
@@ -52,25 +60,9 @@ type ModuleBatch struct {
 	FailureCount int
 }
 
-// difficultyTier maps a tier index (0-4) to difficulty name and specs.
-type difficultyTier struct {
-	Index int
-	Name  string
-	Specs config.DifficultySpec
-}
-
-// getDifficultyTiers returns the 4 non-transcendent difficulty tiers in order.
-func getDifficultyTiers() []difficultyTier {
-	return []difficultyTier{
-		{Index: 0, Name: "Seedling", Specs: config.DifficultySpecs["Seedling"]},
-		{Index: 1, Name: "Sprout", Specs: config.DifficultySpecs["Sprout"]},
-		{Index: 2, Name: "Nurturing", Specs: config.DifficultySpecs["Nurturing"]},
-		{Index: 3, Name: "Flourishing", Specs: config.DifficultySpecs["Flourishing"]},
-	}
-}
-
 // GenerateModule generates all 21 levels for a module (5 per tier + 1 Transcendent) concurrently.
-// Pattern: levels 1-5 (Seedling), 6-10 (Sprout), 11-15 (Nurturing), 16-20 (Flourishing), 21 (Transcendent).
+// Pattern comes from common.DifficultyForModuleLevel (canonical progression):
+// levels 1-5 (Seedling), 6-10 (Sprout), 11-15 (Nurturing), 16-20 (Flourishing), 21 (Transcendent).
 // For module N, level IDs start at (N-1)*21+1.
 func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
 	if batchCfg.ModuleID < 1 || batchCfg.ModuleID > 5 {
@@ -91,34 +83,30 @@ func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
 		Levels:   []Result{},
 	}
 
-	startLevelID := (batchCfg.ModuleID-1)*21 + 1
+	startLevelID := (batchCfg.ModuleID-1)*common.LevelsPerModule + 1
 
 	spin := ui.NewSpinner(fmt.Sprintf("Generating Module %d...", batchCfg.ModuleID))
 	spin.Start()
 	defer spin.Stop()
 
-	// 1. Gather all levels to generate
+	// 1. Gather all levels to generate using the canonical progression.
+	// Keeps batch locked to modules.json / validator expectations.
 	type levelToGen struct {
 		id         int
 		difficulty string
 	}
 	var levelsToGen []levelToGen
 
-	tiers := getDifficultyTiers()
-	for tierIdx, tier := range tiers {
-		for levelInTier := 0; levelInTier < 5; levelInTier++ {
-			levelID := startLevelID + tierIdx*5 + levelInTier
-			levelsToGen = append(levelsToGen, levelToGen{
-				id:         levelID,
-				difficulty: tier.Name,
-			})
-		}
+	for i := 0; i < common.LevelsPerModule; i++ {
+		levelID := startLevelID + i
+		difficulty := common.DifficultyForModuleLevel(i)
+		// Defensive: difficulty param of GenerateModule is authoritative via
+		// progression.go; fail fast if tiers drift from registry.
+		levelsToGen = append(levelsToGen, levelToGen{
+			id:         levelID,
+			difficulty: difficulty,
+		})
 	}
-	challengeLevelID := startLevelID + 20
-	levelsToGen = append(levelsToGen, levelToGen{
-		id:         challengeLevelID,
-		difficulty: "Transcendent",
-	})
 
 	// 2. Process levels concurrently using bounded worker pool
 	concurrency := runtime.NumCPU()
@@ -162,7 +150,7 @@ func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
 	wg.Wait()
 
 	// 3. Re-order results by Level ID so the batch outputs are perfectly deterministic
-	for i := 0; i < 21; i++ {
+	for i := 0; i < common.LevelsPerModule; i++ {
 		levelID := startLevelID + i
 		result, found := resultsMap[levelID]
 		if !found {
@@ -243,23 +231,35 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config, spin *
 			// Generate
 			level, stats, err = generateLevel(genCfg)
 
-			// Validate (structural + solvable + coverage threshold)
+			// Validate (difficulty lock + structural + solvable + coverage + quality)
 			valid := false
+			var acceptedCoverage float64
+			var acceptedQuality metrics.QualityReport
 			if err == nil {
-				_, valErr := validateGeneratedLevel(level, genCfg.MinCoverage)
-				if valErr == nil {
+				if derr := checkDifficultyLock(levelID, difficulty, level); derr != nil {
+					spin.LogWarning("  Difficulty lock failed for level %d: %v", levelID, derr)
+				} else if cov, q, valErr := validateGeneratedLevel(level, genCfg.MinCoverage); valErr == nil {
 					valid = true
+					acceptedCoverage = cov
+					acceptedQuality = q
 				} else {
 					spin.LogWarning("  Validation failed for level %d (%s): %v", levelID, strat, valErr)
 				}
 			}
 
 			if valid {
-				coverage, _ := validateGeneratedLevel(level, genCfg.MinCoverage)
+				coverage := acceptedCoverage
+				quality := acceptedQuality
 				result.Success = true
 				result.Coverage = coverage
-				result.BlockingDepth = stats.MaxBlockingDepth
+				result.BlockingDepth = quality.BlockingDepth
 				result.GenerationMS = time.Since(startTime).Milliseconds()
+				result.PlayableCoverage = quality.PlayableCoverage * 100.0
+				result.ComplexityScore = quality.ComplexityScore
+				result.AvgVineLength = quality.AvgVineLength
+				result.LengthVariety = quality.LengthVariety
+				result.DistinctColors = quality.DistinctColors
+				result.VineCount = len(level.Vines)
 				spin.LogInfo("  ✓ Level %d generated using %s (Attempt %d)", levelID, strat, retry+1)
 				goto success
 			}
@@ -279,12 +279,22 @@ success:
 		_ = os.MkdirAll(batchCfg.StatsOut, 0o755)
 		statsObj := map[string]interface{}{
 			"level_id":             levelID,
+			"difficulty":           difficulty,
+			"strategy":             genCfg.Strategy,
+			"seed":                 genCfg.Seed,
+			"grid":                 []int{genCfg.GridWidth, genCfg.GridHeight},
 			"coverage":             result.Coverage,
+			"playable_coverage":    result.PlayableCoverage,
+			"complexity_score":     result.ComplexityScore,
+			"avg_vine_length":      result.AvgVineLength,
+			"length_variety":       result.LengthVariety,
+			"distinct_colors":      result.DistinctColors,
+			"vine_count":           result.VineCount,
 			"generation_ms":        result.GenerationMS,
 			"placement_attempts":   stats.PlacementAttempts,
 			"backtracks_attempted": stats.BacktracksAttempted,
 			"dumps_produced":       stats.DumpsProduced,
-			"max_blocking_depth":   stats.MaxBlockingDepth,
+			"max_blocking_depth":   result.BlockingDepth,
 		}
 		if stats.BlockingDepthSamples > 0 {
 			statsObj["avg_blocking_depth"] = float64(stats.TotalBlockingDepth) / float64(stats.BlockingDepthSamples)
@@ -412,60 +422,79 @@ func determineStrategy(levelID int, difficulty string, batchCfg Config) string {
 	return config.StrategyLegacyClearable
 }
 
-func validateGeneratedLevel(level model.Level, minCoverage float64) (float64, error) {
+func validateGeneratedLevel(level model.Level, minCoverage float64) (float64, metrics.QualityReport, error) {
+	var empty metrics.QualityReport
 	structErrors := validator.ValidateStructural(level)
 	if len(structErrors) > 0 {
 		for _, e := range structErrors {
 			common.Warning("  [STRUCTURAL ERROR] Level %d: %v", level.ID, e)
 		}
-		return 0, fmt.Errorf("structural validation failed: %d errors", len(structErrors))
+		return 0, empty, fmt.Errorf("structural validation failed: %d errors", len(structErrors))
 	}
 
 	solvable, _, err := validator.IsSolvable(level, 1000000)
 	if err != nil {
-		return 0, fmt.Errorf("solvability check error: %v", err)
+		return 0, empty, fmt.Errorf("solvability check error: %v", err)
 	}
 
 	if !solvable {
-		return 0, fmt.Errorf("level not solvable")
+		return 0, empty, fmt.Errorf("level not solvable")
 	}
 
+	quality := metrics.AnalyzeQuality(level)
 	coverage := (float64(level.GetOccupiedCells()) / float64(level.GetTotalCells())) * 100.0
 	// Enforce coverage threshold (fraction 0-1).
 	// Semantics: playable coverage (vine cells + masked cells) must reach minCoverage.
 	// Vine occupancy alone may be lower (e.g. 95% vines + 5% mask = 100% playable).
 	if minCoverage > 0 {
-		playable := playableCoverage(level)
-		if playable+1e-9 < minCoverage {
-			return coverage, fmt.Errorf("playable coverage %.1f%% below minimum %.1f%%", playable*100, minCoverage*100)
+		if quality.PlayableCoverage+1e-9 < minCoverage {
+			return coverage, quality, fmt.Errorf("playable coverage %.1f%% below minimum %.1f%%", quality.PlayableCoverage*100, minCoverage*100)
 		}
 		// Full playability: every non-vine cell must be masked.
 		if errs := validator.ValidateDesignConstraints(level); len(errs) > 0 {
-			return coverage, fmt.Errorf("design constraints failed: %v", errs[0])
+			return coverage, quality, fmt.Errorf("design constraints failed: %v", errs[0])
 		}
 	}
-	return coverage, nil
+	if qerr := checkQuality(level, quality); qerr != nil {
+		return coverage, quality, qerr
+	}
+	return coverage, quality, nil
 }
 
-// playableCoverage returns (vine cells + masked cells) / total cells.
-func playableCoverage(level model.Level) float64 {
-	total := level.GetTotalCells()
-	if total == 0 {
-		return 0
+// checkDifficultyLock ensures the generated level's difficulty matches the
+// canonical progression for its ID (prevents tier shuffle in future batches).
+func checkDifficultyLock(levelID int, expectedDifficulty string, level model.Level) error {
+	canonical := common.ExpectedDifficulty(levelID)
+	if expectedDifficulty != canonical {
+		return fmt.Errorf("requested difficulty %s disagrees with canonical %s for level %d", expectedDifficulty, canonical, levelID)
 	}
-	occupied := make(map[string]struct{}, level.GetOccupiedCells())
-	for _, v := range level.Vines {
-		for _, p := range v.OrderedPath {
-			occupied[common.PointKey(p)] = struct{}{}
-		}
+	if level.Difficulty != "" && level.Difficulty != canonical {
+		return fmt.Errorf("generated difficulty %s mismatches canonical %s for level %d", level.Difficulty, canonical, levelID)
 	}
-	masked := 0
-	if level.Mask != nil {
-		for _, p := range level.Mask.Points {
-			if _, ok := occupied[common.PointKey(p)]; !ok {
-				masked++
-			}
-		}
+	return nil
+}
+
+// checkQuality rejects degenerate output: monochrome when multi-color expected,
+// flat vine lengths, or vine counts outside the difficulty spec.
+func checkQuality(level model.Level, q metrics.QualityReport) error {
+	spec, ok := config.DifficultySpecs[level.Difficulty]
+	if !ok {
+		return nil
 	}
-	return float64(len(occupied)+masked) / float64(total)
+	if len(level.Vines) < spec.VineCountRange[0] || len(level.Vines) > spec.VineCountRange[1] {
+		return fmt.Errorf("vine count %d outside spec range %v for %s", len(level.Vines), spec.VineCountRange, level.Difficulty)
+	}
+	if spec.ColorCountRange[1] > 1 && q.DistinctColors < 2 && len(level.Vines) >= 4 {
+		return fmt.Errorf("degenerate palette: only %d distinct color(s) for %s (expected >1)", q.DistinctColors, level.Difficulty)
+	}
+	if len(level.Vines) >= 6 && q.LengthVariety < 2 {
+		return fmt.Errorf("degenerate shapes: length variety %d (min %d, max %d) for %s", q.LengthVariety, q.MinVineLength, q.MaxVineLength, level.Difficulty)
+	}
+	// Note: q.BlockingDepth is recorded as telemetry only (see stats JSON).
+	// First-step blocking chains measure 1-8 on the current 105-level corpus
+	// (Seedling avg ~3.2, Transcendent avg ~5.2) while DifficultySpecs caps read
+	// 0-4 under a different notion of depth, so enforcing spec caps here would
+	// reject healthy generator output. Revisit once solver-search depth (not
+	// first-step chains) is the metric.
+	return nil
 }

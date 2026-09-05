@@ -186,11 +186,9 @@ func ComplexityForDifficulty(difficulty string) string {
 }
 
 // DifficultyForLevel returns the difficulty tier for a given level ID.
-// Levels 1-10: Seedling
-// Levels 11-20: Sprout
-// Levels 21-40: Nurturing
-// Levels 41-70: Flourishing
-// Levels 71+: Transcendent
+// Deprecated: legacy global curve (1-10 Seedling, 11-20 Sprout, 21-40 Nurturing,
+// 41-70 Flourishing, 71+ Transcendent). New code must use ExpectedDifficulty
+// (canonical 5x21 module pattern in progression.go). Retained for backward compat.
 func DifficultyForLevel(levelID int) string {
 	if levelID <= 0 {
 		return "Seedling"

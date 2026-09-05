@@ -15,7 +15,7 @@ import (
 
 // SolverVersion is incremented when validator rules or search logic change,
 // causing a complete cache invalidation of all levels.
-const SolverVersion = 3
+const SolverVersion = 4
 
 // Path resolution functions - use common.LevelsDir() and common.ModulesFile() instead of hardcoded paths
 
@@ -304,6 +304,11 @@ func readLevelFile(path string, ignoreOccupancy bool) (model.Level, error) {
 	expectedName := fmt.Sprintf("level_%d.json", lvl.ID)
 	if base != expectedName {
 		return model.Level{}, fmt.Errorf("filename %s does not match ID %d", base, lvl.ID)
+	}
+
+	// 1b. Difficulty lock: level difficulty must match canonical 5x21 progression.
+	if want := common.ExpectedDifficulty(lvl.ID); lvl.Difficulty != "" && lvl.Difficulty != want {
+		return model.Level{}, fmt.Errorf("difficulty %s mismatches canonical %s for level %d", lvl.Difficulty, want, lvl.ID)
 	}
 
 	// 2. Check Grid Size
