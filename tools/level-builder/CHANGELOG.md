@@ -1,3 +1,7 @@
+## 1.9.4 (2026-09-05)
+
+This was a version bump only for level-builder to align it with other projects, there were no code changes.
+
 ## 1.9.3 (2026-09-05)
 
 This was a version bump only for level-builder to align it with other projects, there were no code changes.
