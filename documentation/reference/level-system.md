@@ -255,28 +255,32 @@ A global `level_mappings` object maps logical gameplay IDs to physical assets.
 
 All levels must pass the strict validator in `tools/level-builder`.
 
-1. **Coverage**: Difficulty-based coverage targets (see Section 5.1). The validator applies a **40.1% tolerance** (OccupancyTolerance) to account for adaptive generator relaxation and legacy sparse levels.
-2. **Solvability**: The level must be solvable within `max_moves`. The search budget is configurable, defaulting to **2,000,000 states** for robust verification of complex puzzles.
-3. **Connectivity**: All vine segments must be 4-connected (Manhattan distance = 1). `head_direction` must match head-to-neck vector.
-4. **No Overlaps**: No two vine segments may share a coordinate.
-5. **Minimum Length**: All vines must have at least 2 cells.
-6. **No Coverage Gaps**: While 100% occupancy is not required, any cells not occupied by vines must be explicitly masked out. The validator issues a **warning** for uncovered, unmasked cells.
-7. **Incremental Caching**: To scale validations to thousands of levels, the tool maintains a `validation_cache.json` containing SHA-256 hashes of level contents and their validated solvability status under a specific `SolverVersion` constant. Matches bypass the expensive A* solver, reducing hot runs to milliseconds.
-8. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
+1. **Coverage**: Vine occupancy must meet the difficulty target (see Section 5.1, unified 0.93 for all standard tiers / 0.30 tutorial) with a **5% tolerance** (OccupancyTolerance). Playable coverage (vine cells + masked cells) must reach 100%.
+2. **Difficulty lock**: Each level's `difficulty` must match the canonical 5×21 progression for its ID (`pkg/common/progression.go`: 5× Seedling, Sprout, Nurturing, Flourishing, then Transcendent challenge per module).
+3. **Solvability**: The level must be solvable within `max_moves`. The validator tries a greedy fast-path first (complete for current mechanics — removing vines only frees cells), then exact BFS/A* (≤24 vines) or heuristic search with a configurable budget (default **2,000,000 states** in `task levels:validate-solvable`).
+4. **Connectivity**: All vine segments must be 4-connected (Manhattan distance = 1). `head_direction` must match head-to-neck vector.
+5. **No Overlaps**: No two vine segments may share a coordinate.
+6. **Minimum Length**: All vines must have at least 2 cells.
+7. **No Coverage Gaps**: While 100% vine occupancy is not required, any cells not occupied by vines must be explicitly masked out. The validator issues a **warning** for uncovered, unmasked cells.
+8. **Incremental Caching**: To scale validations, the tool maintains `logs/validation_cache.json` (gitignored build artifact) containing SHA-256 hashes of level contents and their validated solvability status under a specific `SolverVersion` constant. Matches bypass the expensive solver, reducing hot runs to milliseconds.
+9. **Text Lengths (Tutorials)**: For tutorial lessons, enforce short, readable text: **title ≤ 80 chars**, **objective ≤ 120 chars**, **instructions ≤ 200 chars**, **each learning_point ≤ 80 chars**, and **at least 2 learning_points**. These constraints are validated by `LessonData.fromJson` and covered by unit tests.
 
-## 5. Level Generation (gen2)
+## 5. Level Generation (canonical pipeline)
 
-The `gen2` command in `tools/level-builder` is the primary level generation system. It uses a **direction-first placement algorithm** with **incremental solvability checking** and **backtracking**.
+The `batch` command in `tools/level-builder` is the primary level generation system. It generates 21 levels per module following the canonical 5×21 progression (`pkg/common/progression.go`, the single source of truth shared by generator, batch, and validator): 5× Seedling, Sprout, Nurturing, Flourishing, then a Transcendent challenge. Generation runs through the robust pipeline (`pkg/generator/pipeline.go`): registry strategy placement → gap filling → ID sanitization → masking → assembly, with per-level acceptance gates (structural + solvable + 100% playable coverage + quality: vine-count range, multi-color palette, length variety).
 
 ### 5.1 Difficulty Specifications
 
-| Difficulty   | Grid Size Range | Vine Count | Avg Length | Coverage Target | Grace | Complexity |
-| ------------ | --------------- | ---------- | ---------- | --------------- | ----- | ---------- |
-| Seedling     | 6×8 to 9×12     | 3-6        | 3-5        | 85%             | 5     | low        |
-| Sprout       | 9×12 to 12×16   | 5-10       | 4-6        | 80%             | 4     | medium     |
-| Nurturing    | 9×16 to 12×20   | 8-15       | 5-8        | 75%             | 3     | medium     |
-| Flourishing  | 12×20 to 16×24  | 12-20      | 6-10       | 70%             | 2     | high       |
-| Transcendent | 16×28 to 24×40  | 15-25      | 8-12       | 60%             | 1     | very_high  |
+Source of truth: `pkg/generator/config.DifficultySpecs` + `GridSizeRanges`. Validator enforces the stricter of the spec occupancy and `common.MinCoverageForDifficulty`.
+
+| Difficulty   | Grid Size (W×H)   | Vine Count | Avg Length | Occupancy | Grace | Complexity |
+| ------------ | ----------------- | ---------- | ---------- | --------- | ----- | ---------- |
+| Tutorial     | 5×8 to 9×12       | 3-8        | 6-10       | 30%       | 3     | tutorial   |
+| Seedling     | 6×8 to 9×12       | 4-60       | 8-12       | 93%       | 3     | low        |
+| Sprout       | 9×12 to 12×16     | 8-80       | 8-14       | 93%       | 3     | low        |
+| Nurturing    | 9×16 to 12×20     | 12-100     | 8-14       | 93%       | 3     | medium     |
+| Flourishing  | 12×20 to 16×24    | 15-150     | 10-16      | 93%       | 3     | high       |
+| Transcendent | 16×28 to 24×40    | 15-200     | 12-18      | 93%       | 4     | extreme    |
 
 ### 5.2 Direction-First Placement Algorithm
 
@@ -306,12 +310,13 @@ This approach significantly improves generation success rate compared to full re
 
 ### 5.5 Example Levels
 
-Reference levels for each difficulty tier are bundled in [`apps/parable-bloom/assets/levels/`](../../apps/parable-bloom/assets/levels/):
+Reference levels for each difficulty tier are bundled in [`apps/parable-bloom/assets/levels/`](../../apps/parable-bloom/assets/levels/) (canonical 5×21 layout — module 1 shown):
 
-- **Seedling (Level 1)**: [`level_1.json`](../../apps/parable-bloom/assets/levels/level_1.json) - Simple 9×9 grid
-- **Nurturing (Level 21)**: [`level_21.json`](../../apps/parable-bloom/assets/levels/level_21.json) - Medium 9×12 grid
-- **Flourishing (Level 42)**: [`level_42.json`](../../apps/parable-bloom/assets/levels/level_42.json) - 12×16 grid
-- **Transcendent (Level 63)**: [`level_63.json`](../../apps/parable-bloom/assets/levels/level_63.json) - Complex 16×20 grid, 4 Grace
+- **Seedling (Level 1)**: [`level_1.json`](../../apps/parable-bloom/assets/levels/level_1.json) - 7×10 grid, 12 vines
+- **Sprout (Level 6)**: [`level_6.json`](../../apps/parable-bloom/assets/levels/level_6.json) - 10×14 grid
+- **Nurturing (Level 11)**: [`level_11.json`](../../apps/parable-bloom/assets/levels/level_11.json) - 10×18 grid
+- **Flourishing (Level 16)**: [`level_16.json`](../../apps/parable-bloom/assets/levels/level_16.json) - 14×22 grid
+- **Transcendent challenge (Level 21)**: [`level_21.json`](../../apps/parable-bloom/assets/levels/level_21.json) - 20×34 grid, 4 Grace
 
 ## 6. Tooling
 

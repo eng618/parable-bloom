@@ -13,44 +13,33 @@ The project provides Taskfile shortcuts for standard level operations:
 task levels:validate
 
 # Validate all levels with exact solvability checks (A* / BFS search)
-task levels:validate:solvable
+task levels:validate-solvable
 
 # Generate all module levels
 task levels:generate:all
-
-# Repair corrupted or broken level files
-task levels:repair
 ```
 
 ---
 
 ## 2. Generating Levels
 
-### Generating a Single Level
+### Generating Module Batches (canonical flow)
 
-To generate a single level with custom dimensions and difficulty:
-
-```bash
-# From repository root
-./tools/level-builder/level-builder generate \
-  --id 1 \
-  --difficulty seedling \
-  --width 9 \
-  --height 9 \
-  --grace 3 \
-  --overwrite
-```
-
-### Generating Module Batches
-
-To generate a complete module (21 levels per module, 105 total across 5 modules):
+Levels are generated per module (21 levels each, 105 total across 5 modules)
+following the canonical 5×21 progression (`tools/level-builder/pkg/common/progression.go`):
+5× Seedling, Sprout, Nurturing, Flourishing, then a Transcendent challenge.
+Every level must pass acceptance gates (structural + solvable + 100% playable
+coverage + quality) before it is written.
 
 ```bash
-# Canonical flow: generate all 5 modules (Levels 1-105) with the v2 batch generator
+# Canonical flow: generate all 5 modules (Levels 1-105) with the batch generator
 task levels:generate:all
 
 # Or generate a single module (e.g., Module 1 = Levels 1-21)
 ./tools/level-builder/level-builder batch --module 1 --overwrite --verbose
+
+# Deterministic LIFO run with per-level stats JSON (quality metrics included)
+./tools/level-builder/level-builder batch --module 1 --lifo --overwrite --stats-out ./stats
 ```
 
 ---
@@ -61,7 +50,9 @@ Levels must adhere to structural rules (4-connectivity, head orientation, bounda
 
 ### Structural Validation
 
-Runs fast integrity checks across all level JSON files:
+Runs fast integrity checks across all level JSON files (ID-filename match,
+canonical difficulty lock, occupancy ≥ spec with 5% tolerance, 100% playable
+coverage, colors, structural rules):
 
 ```bash
 ./tools/level-builder/level-builder validate
@@ -69,13 +60,16 @@ Runs fast integrity checks across all level JSON files:
 
 ### Solvability Validation
 
-Performs full A* graph search to prove that a legal clearing sequence exists:
+Proves a legal clearing sequence exists. A greedy fast-path handles the
+common case (complete for current mechanics); exact BFS/A* covers ≤24-vine
+levels and a heuristic covers larger ones:
 
 ```bash
 ./tools/level-builder/level-builder validate --check-solvable --use-astar --verbose
 ```
 
-Validation statistics and any failure reports are output to `logs/validation_stats.json`.
+Validation statistics go to `logs/validation_stats.json`; solver results are
+cached in `logs/validation_cache.json` (SHA-256 + SolverVersion).
 
 ---
 

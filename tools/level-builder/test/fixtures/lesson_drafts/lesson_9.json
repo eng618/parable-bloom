@@ -1,0 +1,89 @@
+{
+    "id": 9,
+    "title": "Lesson 9: Panning the Garden",
+    "objective": "Learn to pan and zoom on larger boards",
+    "instructions": "Vines spread across a wide garden. Drag to pan, pinch to zoom.",
+    "learning_points": [
+        "Drag with one finger to pan",
+        "Pinch to zoom in and out"
+    ],
+    "grid_size": [
+        8,
+        8
+    ],
+    "max_moves": 4,
+    "vines": [
+        {
+            "id": "vine_1",
+            "head_direction": "right",
+            "ordered_path": [
+                {
+                    "x": 6,
+                    "y": 6
+                },
+                {
+                    "x": 5,
+                    "y": 6
+                },
+                {
+                    "x": 4,
+                    "y": 6
+                }
+            ]
+        },
+        {
+            "id": "vine_2",
+            "head_direction": "left",
+            "ordered_path": [
+                {
+                    "x": 1,
+                    "y": 1
+                },
+                {
+                    "x": 2,
+                    "y": 1
+                },
+                {
+                    "x": 3,
+                    "y": 1
+                }
+            ]
+        },
+        {
+            "id": "vine_3",
+            "head_direction": "up",
+            "ordered_path": [
+                {
+                    "x": 0,
+                    "y": 3
+                },
+                {
+                    "x": 0,
+                    "y": 2
+                },
+                {
+                    "x": 0,
+                    "y": 1
+                }
+            ]
+        },
+        {
+            "id": "vine_4",
+            "head_direction": "down",
+            "ordered_path": [
+                {
+                    "x": 7,
+                    "y": 4
+                },
+                {
+                    "x": 7,
+                    "y": 5
+                },
+                {
+                    "x": 7,
+                    "y": 6
+                }
+            ]
+        }
+    ]
+}

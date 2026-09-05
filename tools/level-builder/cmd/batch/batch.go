@@ -171,9 +171,16 @@ func validateModuleID(id int) error {
 }
 
 func buildConfig() batchsvc.Config {
+	// Empty OutputDir resolves via common.LevelsDir() in pkg/batch (absolute,
+	// repo-root aware). Only fall back to the legacy relative path if repo
+	// discovery fails.
 	out := outputDir
 	if out == "" {
-		out = "assets/levels"
+		if levelsDir, err := common.LevelsDir(); err == nil {
+			out = levelsDir
+		} else {
+			out = "assets/levels"
+		}
 	}
 	return batchsvc.Config{
 		ModuleID:    moduleID,
