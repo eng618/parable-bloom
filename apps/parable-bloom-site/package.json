@@ -1,6 +1,6 @@
 {
   "name": "parable-bloom-site",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "scripts": {
     "build": "next build",
     "dev": "next dev --port 4201",
