@@ -1,3 +1,13 @@
+## 1.9.2 (2026-09-05)
+
+### 🩹 Fixes
+
+- **android:** suppress expected error that is not used ([a860a84](https://github.com/eng618/parable-bloom/commit/a860a84))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.9.1 (2026-09-05)
 
 This was a version bump only for parable-bloom to align it with other projects, there were no code changes.
