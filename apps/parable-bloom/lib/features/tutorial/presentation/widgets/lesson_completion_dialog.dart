@@ -56,7 +56,7 @@ class _LessonCompletionDialogState extends State<LessonCompletionDialog>
 
   @override
   Widget build(BuildContext context) {
-    final isLastLesson = widget.lesson.id == 5;
+    final isLastLesson = widget.lesson.id == LessonData.totalLessons;
 
     return ScaleTransition(
       scale: _scaleAnimation,

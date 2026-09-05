@@ -50,7 +50,9 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
   String _formatTriggerText(String triggerLevel) {
     if (triggerLevel.isEmpty) return 'Complete Milestone to Unlock';
-    if (triggerLevel == 'lesson_5' || triggerLevel == 'lesson_1') {
+    if (triggerLevel == 'lesson_10' ||
+        triggerLevel == 'lesson_5' ||
+        triggerLevel == 'lesson_1') {
       return 'Unlocks after Tutorial';
     }
     if (triggerLevel == 'lvl_seed_challenge') {

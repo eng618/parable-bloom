@@ -165,6 +165,63 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     } else if (lessonId == '5') {
       // Lesson 5: Capstone challenge, minimal text
       promptText = "Untangle the vines";
+    } else if (lessonId == '6') {
+      // Lesson 6: Hint projection on vine_1 head at (2,4)
+      final vineState = vineStates['vine_1'];
+      if (vineState != null && !vineState.isClearedOrClearing) {
+        highlightPosition = game.getCellScreenPosition(2, 4);
+        promptText = "Long-press for hint path";
+      }
+    } else if (lessonId == '7') {
+      // Lesson 7: Blocker is vine_1 head at (3,0), blocked is vine_2
+      final blockerState = vineStates['vine_1'];
+      final blockedState = vineStates['vine_2'];
+
+      if (blockerState != null && !blockerState.isClearedOrClearing) {
+        highlightPosition = game.getCellScreenPosition(3, 0);
+        promptText = "Clear blocker first";
+        highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
+      } else if (blockedState != null && !blockedState.isClearedOrClearing) {
+        highlightPosition = game.getCellScreenPosition(1, 2);
+        promptText = "Now clear!";
+      }
+    } else if (lessonId == '8' || lessonId == '9') {
+      // Lessons 8-9: free choice, highlight first non-cleared head
+      final activeVineId = vineStates.entries
+          .where((e) => !e.value.isClearedOrClearing)
+          .map((e) => e.key)
+          .firstOrNull;
+
+      if (activeVineId != null) {
+        final vine = currentLevel.vines.firstWhere((v) => v.id == activeVineId);
+        final head = vine.orderedPath.first;
+        highlightPosition = game.getCellScreenPosition(head['x']!, head['y']!);
+        promptText =
+            lessonId == '8' ? "Plan each move" : "Drag to pan the garden";
+      }
+    } else if (lessonId == '10') {
+      // Lesson 10: Key blocker is vine_1 head at (5,5)
+      final blockerState = vineStates['vine_1'];
+
+      if (blockerState != null && !blockerState.isClearedOrClearing) {
+        highlightPosition = game.getCellScreenPosition(5, 5);
+        promptText = "Free the key first";
+        highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
+      } else {
+        final activeVineId = vineStates.entries
+            .where((e) => !e.value.isClearedOrClearing)
+            .map((e) => e.key)
+            .firstOrNull;
+
+        if (activeVineId != null) {
+          final vine =
+              currentLevel.vines.firstWhere((v) => v.id == activeVineId);
+          final head = vine.orderedPath.first;
+          highlightPosition =
+              game.getCellScreenPosition(head['x']!, head['y']!);
+          promptText = "Project, then order";
+        }
+      }
     }
 
     final targetPosition = highlightPosition;

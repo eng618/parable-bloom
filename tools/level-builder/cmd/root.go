@@ -13,6 +13,7 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/clean"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/render"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/repair"
+	"github.com/eng618/parable-bloom/tools/level-builder/cmd/stats"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/tutorials"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/validate"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
@@ -41,6 +42,7 @@ It provides commands for:
   - Validating level structure and solvability
   - Rendering levels as ASCII/Unicode visualizations
   - Repairing corrupted level files
+  - Summarizing validation and generation stats
   - Managing tutorial/lesson levels`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Set verbose flag in common package
@@ -94,6 +96,7 @@ func init() {
 	rootCmd.AddCommand(repair.RepairCmd)
 	rootCmd.AddCommand(clean.GetCommand())
 	rootCmd.AddCommand(tutorials.GetCommand())
+	rootCmd.AddCommand(stats.GetCommand())
 }
 
 // parseWorkers parses the workers flag value

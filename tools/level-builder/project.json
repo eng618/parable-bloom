@@ -29,6 +29,20 @@
         "cwd": "."
       }
     },
+    "test-race": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "task lb:test:race",
+        "cwd": "."
+      }
+    },
+    "coverage-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "task lb:coverage-check",
+        "cwd": "."
+      }
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {
