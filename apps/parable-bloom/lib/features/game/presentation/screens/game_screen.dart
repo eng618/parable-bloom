@@ -684,11 +684,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     ref.read(analyticsServiceProvider).logParableViewed(scripture.id);
 
-    final progress = ref.read(gameProgressProvider);
-    final savedTranslationId = progress.unlockedTranslations[scripture.id];
+    // Single-version UX: always render the user's preferred translation.
+    final preferred = ref.read(preferredTranslationProvider);
 
     String resolvedText = '';
     String displayCitation = scripture.reference;
+    String translationCode = preferred.toUpperCase();
+    bool didFallback = false;
+    bool requiresDownload = false;
     String themeName = module.name;
     String? reflectionPrompt;
 
@@ -711,11 +714,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     try {
       final result = await ref.read(scriptureServiceProvider).loadScripture(
             scripture.reference,
-            translationId: savedTranslationId ?? 'kjv',
+            preferredTranslationId: preferred,
           );
 
       resolvedText = result['text'] ?? '';
-      displayCitation = '${scripture.reference} (KJV)';
+      translationCode = result['translation'] ?? preferred.toUpperCase();
+      displayCitation = '${scripture.reference} ($translationCode)';
+      didFallback = result['didFallback'] == 'true';
+      requiresDownload = result['requiresDownload'] == 'true';
     } catch (e, stack) {
       LoggerService.error(
         'Error loading scripture for unlocked dialog',
@@ -787,14 +793,33 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     ),
                   ),
                 const SizedBox(height: 12),
-                Text(
-                  displayCitation,
-                  style: TextStyle(
-                    color: cs.onSurfaceVariant,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(dialogContext).pop();
+                    context.push('/settings');
+                  },
+                  child: Text(
+                    displayCitation,
+                    style: TextStyle(
+                      color: cs.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.underline,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
+                if (didFallback && requiresDownload) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Needs internet once to download $translationCode, then works offline. Showing fallback for now.',
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 if (reflectionPrompt != null) ...[
                   const SizedBox(height: 14),
                   Container(
@@ -875,25 +900,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     if (scripture != null && scripture.isNotEmpty) {
       try {
-        final progress = ref.read(gameProgressProvider);
-        final savedTranslationId =
-            progress.unlockedTranslations[module.id.toString()];
+        final preferred = ref.read(preferredTranslationProvider);
 
         final result = await ref.read(scriptureServiceProvider).loadScripture(
               scripture,
-              translationId: savedTranslationId,
+              preferredTranslationId: preferred,
             );
 
         resolvedText = result['text'] ?? resolvedText;
-        final translationCode = result['translation'] ?? 'KJV';
+        final translationCode =
+            result['translation'] ?? preferred.toUpperCase();
         displayCitation = '$scripture ($translationCode)';
-
-        if (savedTranslationId == null) {
-          await ref.read(gameProgressProvider.notifier).saveUnlockedTranslation(
-                module.id.toString(),
-                translationCode.toLowerCase(),
-              );
-        }
       } catch (e, stack) {
         LoggerService.error(
           'Error loading scripture for unlocked parable dialog',

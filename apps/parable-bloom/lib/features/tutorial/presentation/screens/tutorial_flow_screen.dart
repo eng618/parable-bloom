@@ -699,8 +699,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   ) async {
     if (!mounted) return;
 
-    final progress = ref.read(gameProgressProvider);
-    final savedTranslationId = progress.unlockedTranslations[scripture.id];
+    final preferred = ref.read(preferredTranslationProvider);
 
     String resolvedText = '';
     String displayCitation = scripture.reference;
@@ -726,11 +725,12 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     try {
       final result = await ref.read(scriptureServiceProvider).loadScripture(
             scripture.reference,
-            translationId: savedTranslationId ?? 'kjv',
+            preferredTranslationId: preferred,
           );
 
       resolvedText = result['text'] ?? '';
-      displayCitation = '${scripture.reference} (KJV)';
+      final code = result['translation'] ?? preferred.toUpperCase();
+      displayCitation = '${scripture.reference} ($code)';
     } catch (e, stack) {
       LoggerService.error(
         'Error loading scripture for unlocked dialog',

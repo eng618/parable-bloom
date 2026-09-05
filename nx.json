@@ -70,36 +70,42 @@
         "projects": [
           "parable-bloom"
         ],
-        "releaseTagPattern": "v{version}",
         "version": {
           "currentVersionResolver": "disk"
         },
         "changelog": {
           "automaticFromRef": true
+        },
+        "releaseTag": {
+          "pattern": "v{version}"
         }
       },
       "parable-bloom-site": {
         "projects": [
           "parable-bloom-site"
         ],
-        "releaseTagPattern": "parable-bloom-site-v{version}",
         "version": {
           "currentVersionResolver": "disk"
         },
         "changelog": {
           "automaticFromRef": true
+        },
+        "releaseTag": {
+          "pattern": "parable-bloom-site-v{version}"
         }
       },
       "level-builder": {
         "projects": [
           "level-builder"
         ],
-        "releaseTagPattern": "level-builder-v{version}",
         "version": {
           "currentVersionResolver": "disk"
         },
         "changelog": {
           "automaticFromRef": true
+        },
+        "releaseTag": {
+          "pattern": "level-builder-v{version}"
         }
       }
     },

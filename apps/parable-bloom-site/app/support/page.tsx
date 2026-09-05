@@ -21,6 +21,11 @@ const faqs = [
       'No. Gameplay works offline. An internet connection is only needed for account sync, cloud saves, and over-the-air content updates.',
   },
   {
+    question: 'Which Bible translations are supported?',
+    answer:
+      'NET Bible is the default (modern and readable), with WEB, BSB, and KJV available in Settings → Scripture. Your choice applies everywhere instantly. The app ships NET + KJV only; WEB and BSB download once, then work offline. See our attributions page for full license notices.',
+  },
+  {
     question: 'How does the Grace system work?',
     answer:
       'Each level grants 3 Grace (4 on Transcendent difficulty). Blocked vines animate back with encouragement instead of ending your run — tap a vine to try a different path.',

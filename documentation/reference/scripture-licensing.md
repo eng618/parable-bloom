@@ -17,7 +17,7 @@ There are three primary categories of licensing applicable to our project:
 ### Translation Registry & Status
 
 > [!NOTE]
-> **Initial Launch Policy**: For the initial release, only the **King James Version (KJV)** is set to `active`. Other translations remain configured in `scripture_metadata.json` under `pending` status and will be activated once attributions and licensing are finalized.
+> **Current Policy**: **NET Bible is the default** (`isDefault: true`, bundled). **KJV is the bundled fallback** (`isFallback: true`). **WEB and BSB are active on-demand**: fetched once from Firestore `scriptures_{env}` and cached in Hive, then offline. The app bundle ships NET + KJV only to stay small. ESV/CSB/NLT/NIV remain `pending` and are hidden from the picker.
 
 | Translation                   | Abbr. | Copyright Owner                       | License Category        | Local Storage?            | Network Required?    | Status in Parable Bloom             |
 | :---------------------------- | :---- | :------------------------------------ | :---------------------- | :------------------------ | :------------------- | :---------------------------------- |

@@ -58,6 +58,18 @@ class EnvironmentConfig {
     }
   }
 
+  /// Returns the Firestore collection name for on-demand scriptures.
+  static String getScripturesCollection() {
+    switch (current) {
+      case AppEnvironment.dev:
+        return 'scriptures_dev';
+      case AppEnvironment.preview:
+        return 'scriptures_preview';
+      case AppEnvironment.prod:
+        return 'scriptures_prod';
+    }
+  }
+
   /// Returns a human-readable environment name.
   static String environmentName() {
     switch (current) {

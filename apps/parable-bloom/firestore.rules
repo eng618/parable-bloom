@@ -85,5 +85,21 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false;
     }
+    // On-demand scripture texts (public licensed verse texts, no PII).
+    // Seeded via scripts/firebase/upload_scriptures.js (admin SDK bypasses rules).
+    match /scriptures_dev/{refId}/translations/{translationId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /scriptures_preview/{refId}/translations/{translationId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /scriptures_prod/{refId}/translations/{translationId} {
+      allow read: if true;
+      allow write: if false;
+    }
   }
 }

@@ -44,3 +44,7 @@ tools/level-builder/assets/
 .idea/
 .vscode/
 .DS_Store
+
+# nx
+/.nx/cache
+/.nx/workspace-data

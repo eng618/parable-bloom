@@ -1,5 +1,6 @@
 {
   "name": "parable-bloom-site",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/parable-bloom-site",
   "targets": {
@@ -12,7 +13,9 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{projectRoot}/.next"],
+      "outputs": [
+        "{projectRoot}/.next"
+      ],
       "options": {
         "command": "task next:build",
         "cwd": "."

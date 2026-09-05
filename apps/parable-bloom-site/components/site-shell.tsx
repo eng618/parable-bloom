@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 const navItems = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
+  { href: '/attributions', label: 'Attributions' },
   { href: '/support', label: 'Support' },
   { href: '/privacy', label: 'Privacy' },
   { href: '/terms', label: 'Terms' },
@@ -83,6 +84,14 @@ export default function SiteShell({ children }: SiteShellProps) {
             className="transition-colors hover:text-white"
           >
             Privacy Policy
+          </Link>
+          <span>·</span>
+          <Link
+            href="/attributions"
+            onClick={() => trackNavigationClick('/attributions', 'footer', 'Attributions')}
+            className="transition-colors hover:text-white"
+          >
+            Attributions
           </Link>
           <span>·</span>
           <Link

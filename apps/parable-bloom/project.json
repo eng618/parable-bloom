@@ -1,7 +1,16 @@
 {
   "name": "parable-bloom",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/parable-bloom",
+  "release": {
+    "version": {
+      "preserveLocalDependencyProtocols": false,
+      "manifestRootsToUpdate": [
+        "apps/parable-bloom"
+      ]
+    }
+  },
   "targets": {
     "build": {
       "executor": "nx:run-commands",
@@ -23,7 +32,9 @@
     },
     "test": {
       "executor": "nx:run-commands",
-      "outputs": ["{projectRoot}/coverage/lcov.info"],
+      "outputs": [
+        "{projectRoot}/coverage/lcov.info"
+      ],
       "options": {
         "command": "task flutter:test",
         "cwd": "."
@@ -31,8 +42,12 @@
     },
     "coverage-check": {
       "executor": "nx:run-commands",
-      "dependsOn": ["test"],
-      "outputs": ["{projectRoot}/coverage/lcov.info"],
+      "dependsOn": [
+        "test"
+      ],
+      "outputs": [
+        "{projectRoot}/coverage/lcov.info"
+      ],
       "options": {
         "command": "task flutter:coverage:check",
         "cwd": "."
@@ -86,13 +101,6 @@
       "options": {
         "command": "cd apps/parable-bloom/android && bundle exec fastlane deploy",
         "cwd": "."
-      }
-    }
-  },
-  "release": {
-    "version": {
-      "generatorOptions": {
-        "packageRoot": "apps/parable-bloom"
       }
     }
   }

@@ -27,6 +27,8 @@ Are custom creations designed specifically for Parable Bloom.
 
 ## Scripture Translations
 
-Scripture quotations in Parable Bloom are sourced from various translations under public domain permissions, gratis licensing, or official online APIs (ESV, NET, CSB, KJV, WEB). Highly restricted versions (NIV, NLT) are marked as pending commercial licenses.
+Default: **NET Bible** (gratis ministry use in this free app, verse text only). Also supported: **WEB** and **BSB** (public domain, on-demand download then offline), **KJV** (bundled fallback).
+
+App bundle ships NET + KJV only; WEB/BSB are fetched once from Firestore `scriptures_{env}` and cached in Hive. Every citation opens its full notice in-app; the website mirrors all notices at `/attributions`.
 
 For the exact copyright notices, permissions limits, API configurations, and compliance safeguards, please refer to the detailed [Scripture Licensing & Compliance Guide](scripture-licensing.md).

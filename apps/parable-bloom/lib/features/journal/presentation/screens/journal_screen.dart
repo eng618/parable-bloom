@@ -3,6 +3,8 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../../game/application/providers/progress_providers.dart";
 import "../../../../core/providers/service_providers.dart";
+import "../../../../core/providers/settings_providers.dart";
+import "../../../../core/widgets/scripture_citation.dart";
 import "../../domain/entities/journal_theme.dart";
 import "../../application/providers/journal_providers.dart";
 
@@ -102,11 +104,12 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     JournalPassage passage,
     JournalTheme theme,
   ) {
+    final preferred = ref.read(preferredTranslationProvider).toUpperCase();
     final analytics = ref.read(analyticsServiceProvider);
     analytics.logScriptureRead(
       scriptureId: passage.id,
       reference: passage.reference,
-      translation: 'KJV',
+      translation: preferred,
     );
     if (passage.type == 'parable') {
       analytics.logParableViewed(passage.id, source: 'journal_browse');
@@ -131,6 +134,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
   Widget build(BuildContext context) {
     final themesAsync = ref.watch(journalThemesProvider);
     final progress = ref.watch(gameProgressProvider);
+    final preferred = ref.watch(preferredTranslationProvider).toUpperCase();
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -293,7 +297,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                                   ),
                                 ),
                                 subtitle: Text(
-                                  '${passage.reference} (KJV)',
+                                  '${passage.reference} ($preferred)',
                                   style: textTheme.bodySmall?.copyWith(
                                     color: cs.onSurfaceVariant,
                                   ),
@@ -482,7 +486,8 @@ class _ScriptureReflectionSheetState
               FutureBuilder<Map<String, String>>(
                 future: ref.read(scriptureServiceProvider).loadScripture(
                       widget.passage.reference,
-                      translationId: 'kjv',
+                      preferredTranslationId:
+                          ref.read(preferredTranslationProvider),
                     ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -496,39 +501,59 @@ class _ScriptureReflectionSheetState
                   final text = data?['text'] ??
                       widget.passage.defaultContent ??
                       'Scripture text not found.';
+                  final code = data?['translation'] ?? 'NET';
+                  final didFallback = data?['didFallback'] == 'true';
+                  final requiresDownload = data?['requiresDownload'] == 'true';
 
-                  return Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: cs.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: cs.outlineVariant),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          text,
-                          style: textTheme.bodyLarge?.copyWith(
-                            height: 1.6,
-                            fontStyle: FontStyle.italic,
-                            color: cs.onSurface,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (didFallback && requiresDownload)
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: cs.secondaryContainer,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Align(
-                          alignment: Alignment.bottomRight,
                           child: Text(
-                            '— ${widget.passage.reference} (KJV)',
-                            style: textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: cs.primary,
-                            ),
+                            'This translation needs internet once to download, then works offline. Showing $code for now.',
+                            style: textTheme.bodySmall
+                                ?.copyWith(color: cs.onSecondaryContainer),
                           ),
                         ),
-                      ],
-                    ),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: cs.outlineVariant),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              text,
+                              style: textTheme.bodyLarge?.copyWith(
+                                height: 1.6,
+                                fontStyle: FontStyle.italic,
+                                color: cs.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: ScriptureCitation(
+                                reference: widget.passage.reference,
+                                translationCode: code,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),

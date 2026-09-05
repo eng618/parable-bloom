@@ -38,4 +38,10 @@ abstract class SettingsRepository {
 
   /// Set the user's preferred board zoom scale.
   Future<void> setBoardZoomScale(double scale);
+
+  /// Get the user's preferred Bible translation id (Default 'net').
+  Future<String> getPreferredTranslation();
+
+  /// Set the user's preferred Bible translation id.
+  Future<void> setPreferredTranslation(String translationId);
 }

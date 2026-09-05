@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/infrastructure_providers.dart';
 import '../../../../core/providers/service_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../data/repositories/firebase_game_progress_repository.dart';
 import '../../domain/entities/cloud_sync_state.dart';
@@ -82,6 +83,10 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       if (!ref.mounted) return;
       state = progress;
       await _backfillUnlockedScriptures();
+      // Pull preferred translation from cloud (offline-first Hive wins on failure).
+      try {
+        await ref.read(preferredTranslationProvider.notifier).syncFromCloud();
+      } catch (_) {}
     } catch (e, stack) {
       if (!ref.mounted) return;
       LoggerService.error('Error initializing GameProgress',

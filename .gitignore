@@ -139,3 +139,5 @@ apps/parable-bloom-site/.github/instructions/codacy.instructions.md
 
 # GitNexus cache and storage
 .gitnexus/
+
+.claude/worktrees

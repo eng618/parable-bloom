@@ -62,13 +62,37 @@ void main() {
     });
 
     test('Randomly selects an active translation ID', () async {
+      service.connectivityOverride = () async => true;
       final translationId = await service.pickRandomActiveTranslation();
       expect(translationId.isNotEmpty, true);
-      // Valid active translations from metadata config: web, kjv, net, esv, csb (subject to connectivity)
-      final validActive = {'web', 'kjv', 'net', 'esv', 'csb'};
+      // Active translations: net (default), web + bsb (on-demand), kjv (fallback)
+      final validActive = {'web', 'kjv', 'net', 'bsb'};
       expect(validActive.contains(translationId), true,
           reason:
               'Picked translation "$translationId" should be in active list');
+    });
+
+    test('Defaults to NET with KJV fallback flags', () async {
+      await service.initialize();
+      expect(service.getDefaultTranslationId(), 'net');
+      expect(service.getFallbackTranslationId(), 'kjv');
+
+      // NET not yet bundled -> falls back to KJV bundle with flags.
+      service.connectivityOverride = () async => false;
+      final result = await service.loadScripture('Luke 8:11',
+          preferredTranslationId: 'net');
+      expect(result['didFallback'], 'true');
+      expect(result['translation'], 'KJV');
+    });
+
+    test('Returns cached on-demand text without fallback', () async {
+      service.connectivityOverride = () async => true;
+      service.remoteFetcher = (ref, id) async => 'Cached WEB text for $ref';
+      final result =
+          await service.loadScripture('Luke 8:11', translationId: 'web');
+      expect(result['translation'], 'WEB');
+      expect(result['didFallback'], 'false');
+      expect(result['text']!.contains('Cached WEB text'), true);
     });
   });
 }

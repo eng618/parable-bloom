@@ -24,6 +24,9 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _boardZoomScaleKey = 'boardZoomScale';
   static const double _defaultBoardZoomScale = 1.0;
 
+  static const String _preferredTranslationKey = 'preferredTranslationId';
+  static const String _defaultPreferredTranslation = 'net';
+
   HiveSettingsRepository(this.hiveBox);
 
   T _readTypedValue<T>(String key, T defaultValue) {
@@ -113,5 +116,17 @@ class HiveSettingsRepository implements SettingsRepository {
   @override
   Future<void> setBoardZoomScale(double scale) async {
     await hiveBox.put(_boardZoomScaleKey, scale);
+  }
+
+  @override
+  Future<String> getPreferredTranslation() async {
+    return _readTypedValue<String>(
+        _preferredTranslationKey, _defaultPreferredTranslation);
+  }
+
+  @override
+  Future<void> setPreferredTranslation(String translationId) async {
+    await hiveBox.put(
+        _preferredTranslationKey, translationId.toLowerCase());
   }
 }

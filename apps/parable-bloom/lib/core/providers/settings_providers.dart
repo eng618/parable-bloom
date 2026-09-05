@@ -1,10 +1,19 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../config/environment_config.dart';
 import '../services/background_audio_controller.dart';
 import 'infrastructure_providers.dart';
 import 'service_providers.dart';
+
+/// Firestore collection for settings (mirrors game-progress env isolation).
+final settingsCollectionProvider = Provider<String>((ref) {
+  return EnvironmentConfig.getFirestoreCollection();
+});
+
+SetOptions optionsSetMerge() => SetOptions(merge: true);
 
 enum AppThemeMode { light, dark, system }
 
@@ -225,5 +234,80 @@ class AnalyticsEnabledNotifier extends Notifier<bool> {
 
     final analyticsService = ref.read(analyticsServiceProvider);
     await analyticsService.setCollectionEnabled(enabled);
+  }
+}
+
+/// Preferred Bible translation id (e.g. 'net').
+/// Offline-first in Hive; best-effort cloud sync to Firestore settings doc
+/// when a non-anonymous user is signed in.
+final preferredTranslationProvider =
+    NotifierProvider<PreferredTranslationNotifier, String>(
+  PreferredTranslationNotifier.new,
+);
+
+class PreferredTranslationNotifier extends Notifier<String> {
+  static const String _defaultId = 'net';
+
+  @override
+  String build() {
+    final box = ref.watch(hiveBoxProvider);
+    final value =
+        box.get('preferredTranslationId', defaultValue: _defaultId) as String?;
+    return (value ?? _defaultId).toLowerCase();
+  }
+
+  Future<void> setPreferred(String translationId) async {
+    final normalized = translationId.toLowerCase();
+    state = normalized;
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setPreferredTranslation(normalized);
+    // Best-effort cloud sync; never throws to callers.
+    await syncToCloud();
+  }
+
+  Future<void> syncToCloud() async {
+    try {
+      final auth = ref.read(firebaseAuthProvider);
+      final user = auth.currentUser;
+      if (user == null || user.isAnonymous) return;
+      final firestore = ref.read(firestoreProvider);
+      final collection = ref.read(settingsCollectionProvider);
+      await firestore
+          .collection(collection)
+          .doc(user.uid)
+          .collection('data')
+          .doc('settings')
+          .set({
+        'preferredTranslationId': state,
+        'lastUpdated': DateTime.now().toIso8601String(),
+      }, optionsSetMerge());
+    } catch (_) {
+      // Offline or unavailable: local Hive remains source of truth.
+    }
+  }
+
+  Future<void> syncFromCloud() async {
+    try {
+      final auth = ref.read(firebaseAuthProvider);
+      final user = auth.currentUser;
+      if (user == null || user.isAnonymous) return;
+      final firestore = ref.read(firestoreProvider);
+      final collection = ref.read(settingsCollectionProvider);
+      final doc = await firestore
+          .collection(collection)
+          .doc(user.uid)
+          .collection('data')
+          .doc('settings')
+          .get();
+      final remoteId =
+          (doc.data()?['preferredTranslationId'] as String?)?.toLowerCase();
+      if (remoteId != null && remoteId.isNotEmpty && remoteId != state) {
+        state = remoteId;
+        final repository = ref.read(settingsRepositoryProvider);
+        await repository.setPreferredTranslation(remoteId);
+      }
+    } catch (_) {
+      // Keep local value on failure.
+    }
   }
 }
