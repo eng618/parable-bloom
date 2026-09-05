@@ -63,6 +63,28 @@ tasks:
       - bun install firebase-admin
       - node scripts/firebase/upload_levels.js "{{.ENV}}"
 
+  scriptures:upload:
+    desc: "Upload on-demand scripture texts to Cloud Firestore (usage: task firebase:scriptures:upload ENV=dev)"
+    vars:
+      ENV: '{{.ENV | default "dev"}}'
+    cmds:
+      - bun install firebase-admin
+      - node scripts/firebase/upload_scriptures.mjs "{{.ENV}}"
+    preconditions:
+      - sh: command -v node >/dev/null 2>&1
+        msg: "Node.js is not installed."
+
+  scriptures:upload:emulator:
+    desc: "Upload on-demand scripture texts to the Firestore emulator (usage: task firebase:scriptures:upload:emulator ENV=dev)"
+    vars:
+      ENV: '{{.ENV | default "dev"}}'
+    dir: apps/parable-bloom
+    cmds:
+      - firebase emulators:exec --only firestore "node ../../scripts/firebase/upload_scriptures.mjs {{.ENV}}"
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
   # NOTE: No `storage:rules:deploy` task exists on purpose — the app does not
   # use Cloud Storage (no firebase_storage dependency, no storage block in
   # firebase.json). If Storage is adopted, add the rules file, the

@@ -44,13 +44,12 @@ void main() {
       expect(result3['text']!.contains('due season'), true);
     });
 
-    test(
-        'Gracefully falls back to KJV for unknown translation or invalid online fetch',
+    test('Gracefully falls back to default NET for unknown translation',
         () async {
-      // If we pass 'invalid_id', it should fall back to KJV
+      // If we pass 'invalid_id', it should fall back to the default (NET).
       final result = await service.loadScripture('Mark 4:26-29',
           translationId: 'invalid_id');
-      expect(result['translation'], 'KJV');
+      expect(result['translation'], 'NET');
       expect(result['text']!.contains('kingdom of God'), true);
     });
 
@@ -72,17 +71,29 @@ void main() {
               'Picked translation "$translationId" should be in active list');
     });
 
-    test('Defaults to NET with KJV fallback flags', () async {
+    test('Loads bundled NET by default without fallback', () async {
       await service.initialize();
       expect(service.getDefaultTranslationId(), 'net');
       expect(service.getFallbackTranslationId(), 'kjv');
 
-      // NET not yet bundled -> falls back to KJV bundle with flags.
+      // NET ships in the app bundle: no fallback, no download needed.
       service.connectivityOverride = () async => false;
       final result = await service.loadScripture('Luke 8:11',
           preferredTranslationId: 'net');
+      expect(result['didFallback'], 'false');
+      expect(result['translation'], 'NET');
+      expect(result['text']!.contains('seed is the word of God'), true);
+    });
+
+    test('Falls back to bundled KJV when on-demand text is unavailable offline',
+        () async {
+      await service.initialize();
+      service.connectivityOverride = () async => false;
+      final result =
+          await service.loadScripture('Luke 8:11', translationId: 'web');
       expect(result['didFallback'], 'true');
-      expect(result['translation'], 'KJV');
+      expect(result['requiresDownload'], 'true');
+      expect(result['translation'], 'NET');
     });
 
     test('Returns cached on-demand text without fallback', () async {
