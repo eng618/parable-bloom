@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/metrics"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/strategies"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
@@ -19,25 +19,32 @@ import (
 )
 
 var (
-	directoryFlag string
-	overwriteFlag bool
-	dryRunFlag    bool
-	fixDuplicates bool
+	directoryFlag    string
+	overwriteFlag    bool
+	dryRunFlag       bool
+	fixDuplicates    bool
+	checkSolvable    bool
+	maxStates        int
+	aggressiveRepair bool
 )
 
 var levelFileRE = regexp.MustCompile(`^level_(\d+)\.json$`)
 
-// RepairCmd repairs corrupted or truncated level files by regenerating them.
+// RepairCmd repairs corrupted or invalid level files by regenerating them.
 var RepairCmd = &cobra.Command{
 	Use:   "repair",
-	Short: "Repair corrupted level JSON files by regenerating them",
-	Long: `Scan a levels directory and regenerate any files that fail to parse.
-This helps recover from partial writes or corrupted files produced by earlier runs.
+	Short: "Repair corrupted or invalid level JSON files by regenerating them",
+	Long: `Scan a levels directory and regenerate files that fail to parse or,
+with --check-solvable (default), files that fail structural validation or
+solvability checks. Regeneration is deterministic (seed = levelID * 31337)
+and honors the canonical difficulty lock, so repaired levels match what
+batch generation would produce.
 
 Examples:
   level-builder repair
   level-builder repair --directory assets/levels
   level-builder repair --dry-run
+  level-builder repair --check-solvable=false   # parse failures only
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if directoryFlag == "" {
@@ -53,10 +60,13 @@ Examples:
 }
 
 func init() {
-	RepairCmd.Flags().StringVarP(&directoryFlag, "directory", "d", "", "Directory containing level files to repair (default: ../../assets/levels)")
+	RepairCmd.Flags().StringVarP(&directoryFlag, "directory", "d", "", "Directory containing level files to repair (default: resolved assets levels dir)")
 	RepairCmd.Flags().BoolVarP(&overwriteFlag, "overwrite", "o", true, "Overwrite repaired files")
 	RepairCmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "n", false, "Scan and report without writing files")
-	RepairCmd.Flags().BoolVar(&fixDuplicates, "fix-duplicates", false, "Automatically fix duplicate vine IDs and duplicate entries (keeps first occurrence)")
+	RepairCmd.Flags().BoolVar(&fixDuplicates, "fix-duplicates", false, "Automatically fix duplicate vine IDs (keeps first occurrence)")
+	RepairCmd.Flags().BoolVar(&checkSolvable, "check-solvable", true, "Also repair files failing structural validation or solvability checks")
+	RepairCmd.Flags().IntVar(&maxStates, "max-states", 1000000, "Solver state budget for repair solvability checks")
+	RepairCmd.Flags().BoolVar(&aggressiveRepair, "aggressive", false, "Use stronger backtracking settings when regenerating")
 }
 
 func repairDirectory(dir string, overwrite, dryRun bool) error {
@@ -82,44 +92,35 @@ func repairDirectory(dir string, overwrite, dryRun bool) error {
 		path := filepath.Join(dir, name)
 		common.Verbose("Checking %s", path)
 
-		repaired, repairErr := repairFileIfNeeded(path, m[1], overwrite, dryRun)
-		if repaired {
-			if repairErr != nil {
-				failed++
-			} else {
-				fixed++
-			}
-		}
-
-		// If structural issues and user requested fixDuplicates, attempt a sanitize
-		if fixDuplicates {
-			lvl, err := common.ReadLevel(path)
-			if err == nil {
-				if sErrs := validator.ValidateStructural(*lvl); len(sErrs) > 0 {
-					// If structural errors include overlaps, attempt to sanitize duplicate IDs
-					hasOverlap := false
-					for _, se := range sErrs {
-						if strings.Contains(se.Error(), "overlaps") || strings.Contains(se.Error(), "overlap") {
-							hasOverlap = true
-							break
-						}
-					}
-					if hasOverlap {
-						common.Info("Attempting to fix duplicates in %s", path)
-						if dryRun {
-							fixed++
-						} else {
-							if err := sanitizeLevelDuplicateIDs(path); err != nil {
-								common.Warning("Failed to sanitize %s: %v", path, err)
-								failed++
-							} else {
-								fixed++
-							}
-						}
+		id, _ := strconv.Atoi(m[1])
+		reason := assessFile(path, id)
+		if reason == "" {
+			// If structural issues and user requested fixDuplicates, attempt a sanitize
+			if fixDuplicates {
+				if fixedOne, failedOne := maybeSanitizeDuplicates(path, dryRun); fixedOne || failedOne {
+					if failedOne {
+						failed++
+					} else {
+						fixed++
 					}
 				}
 			}
+			continue
 		}
+
+		common.Warning("Level %d needs repair (%s)", id, reason)
+		if dryRun {
+			common.Info("Would regenerate level %d -> %s", id, path)
+			fixed++
+			continue
+		}
+
+		if err := regenerateLevel(path, id, overwrite); err != nil {
+			common.Warning("Failed to repair level %d: %v", id, err)
+			failed++
+			continue
+		}
+		fixed++
 	}
 
 	common.Info("Repair summary: checked=%d repaired=%d failed=%d", checked, fixed, failed)
@@ -129,85 +130,143 @@ func repairDirectory(dir string, overwrite, dryRun bool) error {
 	return nil
 }
 
-// repairFileIfNeeded checks a single file and regenerates if parsing fails.
-func repairFileIfNeeded(path, idStr string, overwrite, dryRun bool) (bool, error) {
-	_, err := common.ReadLevel(path)
-	if err == nil {
-		return false, nil
+// assessFile returns "" when the file is healthy, otherwise a short reason.
+// Parse failures always qualify. Structural/solvability failures qualify only
+// when --check-solvable is enabled.
+func assessFile(path string, id int) string {
+	lvl, err := common.ReadLevel(path)
+	if err != nil {
+		return fmt.Sprintf("parse failure: %v", err)
 	}
+	if lvl.ID != id {
+		return fmt.Sprintf("ID %d mismatches filename", lvl.ID)
+	}
+	if !checkSolvable {
+		return ""
+	}
+	if want := common.ExpectedDifficulty(id); lvl.Difficulty != "" && lvl.Difficulty != want {
+		return fmt.Sprintf("difficulty %s mismatches canonical %s", lvl.Difficulty, want)
+	}
+	if errs := validator.ValidateStructural(*lvl); len(errs) > 0 {
+		return fmt.Sprintf("structural: %v", errs[0])
+	}
+	ok, stats, err := validator.IsSolvable(*lvl, maxStates)
+	if err != nil {
+		return fmt.Sprintf("solvability check error: %v", err)
+	}
+	if !ok || stats.GaveUp {
+		return fmt.Sprintf("not solvable (solver=%s states=%d gave_up=%v)", stats.Solver, stats.StatesExplored, stats.GaveUp)
+	}
+	if errs := validator.ValidateDesignConstraints(*lvl); len(errs) > 0 {
+		return fmt.Sprintf("design constraints: %v", errs[0])
+	}
+	return ""
+}
 
-	common.Warning("Failed to parse %s: %v (scheduling regenerate)", path, err)
-	id, _ := strconv.Atoi(idStr)
-
+// maybeSanitizeDuplicates attempts the cheap duplicate-ID fix. It reports
+// (fixed, failed); files still failing structural checks afterwards fall
+// through to full regeneration by the caller.
+func maybeSanitizeDuplicates(path string, dryRun bool) (bool, bool) {
+	lvl, err := common.ReadLevel(path)
+	if err != nil {
+		return false, false
+	}
+	if sErrs := validator.ValidateStructural(*lvl); len(sErrs) == 0 {
+		return false, false
+	}
+	common.Info("Attempting to fix duplicates in %s", path)
 	if dryRun {
-		common.Info("Would regenerate level %d -> %s", id, path)
-		return true, nil
+		return true, false
 	}
+	if err := sanitizeLevelDuplicateIDs(path); err != nil {
+		common.Warning("Failed to sanitize %s: %v", path, err)
+		return false, true
+	}
+	return true, false
+}
 
-	// Use the generator package to regenerate the level
-	// This ensures consistency with the generation algorithm
-	difficulty := common.DifficultyForLevel(id)
+// regenerateLevel rebuilds a level deterministically through the canonical
+// pipeline inputs (difficulty lock, preset profile) and enforces the same
+// acceptance gates batch generation uses before writing. Placement has
+// inherent variance, so it retries with derived seeds until acceptance
+// passes (mirroring batch retry behavior).
+func regenerateLevel(path string, id int, overwrite bool) error {
+	const maxAttempts = 10
+	baseSeed := int64(id) * 31337
+
+	var lastErr error
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		if err := tryRegenerate(path, id, baseSeed+int64(attempt*12345), overwrite); err != nil {
+			lastErr = err
+			common.Verbose("Repair attempt %d/%d for level %d failed: %v", attempt+1, maxAttempts, id, err)
+			continue
+		}
+		return nil
+	}
+	return fmt.Errorf("failed to regenerate level %d after %d attempts: %w", id, maxAttempts, lastErr)
+}
+
+func tryRegenerate(path string, id int, levelSeed int64, overwrite bool) error {
+	// Canonical difficulty for this ID (matches batch + validator lock).
+	difficulty := common.ExpectedDifficulty(id)
 	gridSize := utils.GridSizeForLevel(id)
-	levelSeed := int64(id) * 31337
 
-	common.Verbose("Regenerating level %d (difficulty: %s, grid: %dx%d)", id, difficulty, gridSize[0], gridSize[1])
+	common.Verbose("Regenerating level %d (difficulty: %s, grid: %dx%d, seed: %d)", id, difficulty, gridSize[0], gridSize[1], levelSeed)
 
-	// Get difficulty spec
 	spec, ok := config.DifficultySpecs[difficulty]
 	if !ok {
-		return true, fmt.Errorf("unknown difficulty: %s", difficulty)
+		return fmt.Errorf("unknown difficulty: %s", difficulty)
 	}
 
-	// Use a deterministic variety profile based on level ID
-	profile := config.VarietyProfile{
-		LengthMix: map[string]float64{
-			"short":  0.3,
-			"medium": 0.5,
-			"long":   0.2,
-		},
-		TurnMix:    0.3,
-		RegionBias: "balanced",
-		DirBalance: map[string]float64{
-			"right": 0.25,
-			"left":  0.25,
-			"up":    0.25,
-			"down":  0.25,
-		},
-	}
-
-	// Generator config
-	cfg := config.GeneratorConfig{
+	profile := utils.GetPresetProfile(difficulty)
+	genCfg := config.GeneratorConfig{
 		MaxSeedRetries:    50,
 		LocalRepairRadius: 3,
 		RepairRetries:     10,
 	}
-
-	// Generate vines using tiling algorithm
-	vines, genErr := strategies.ClearableFirstPlacement(gridSize, spec, profile, cfg, levelSeed, 0.3, common.MinGridCoverage, true)
-	if genErr != nil {
-		return true, fmt.Errorf("failed to generate vines for level %d: %w", id, genErr)
+	if aggressiveRepair {
+		genCfg.MaxSeedRetries = 120
+		genCfg.LocalRepairRadius = 5
+		genCfg.RepairRetries = 12
 	}
 
-	// Calculate empty cells for masking
-	occupied := make(map[string]bool)
+	vines, genErr := strategies.ClearableFirstPlacement(gridSize, spec, profile, genCfg, levelSeed, 0.3, common.MinGridCoverage, true)
+	if genErr != nil {
+		return fmt.Errorf("failed to generate vines for level %d: %w", id, genErr)
+	}
+
+	occupied := make(map[string]struct{}, len(vines)*8)
 	for _, v := range vines {
 		for _, p := range v.OrderedPath {
-			occupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = true
+			occupied[common.PointKey(p)] = struct{}{}
 		}
 	}
 
 	var maskedPoints []model.Point
 	for y := 0; y < gridSize[1]; y++ {
 		for x := 0; x < gridSize[0]; x++ {
-			if !occupied[fmt.Sprintf("%d,%d", x, y)] {
+			if _, ok := occupied[common.PointKey(model.Point{X: x, Y: y})]; !ok {
 				maskedPoints = append(maskedPoints, model.Point{X: x, Y: y})
 			}
 		}
 	}
 
-	mask := &model.Mask{
-		Mode:   "hide",
-		Points: maskedPoints,
+	var mask *model.Mask
+	if len(maskedPoints) > 0 {
+		mask = &model.Mask{Mode: "hide", Points: maskedPoints}
+	}
+
+	// Round-robin color assignment matches the canonical assembler.
+	colorCount := spec.ColorCountRange[1]
+	if colorCount < 1 {
+		colorCount = 5
+	}
+	for i := range vines {
+		vines[i].ColorIndex = i % colorCount
+	}
+	colorScheme := make([]string, 0, colorCount)
+	for i := 0; i < colorCount && i < len(config.ColorPalette); i++ {
+		colorScheme = append(colorScheme, config.ColorPalette[i])
 	}
 
 	level := model.Level{
@@ -216,30 +275,39 @@ func repairFileIfNeeded(path, idStr string, overwrite, dryRun bool) (bool, error
 		Difficulty:  difficulty,
 		GridSize:    gridSize,
 		Vines:       vines,
-		MaxMoves:    10,
-		MinMoves:    1,
-		Complexity:  difficulty,
+		MaxMoves:    len(vines) * 2,
+		MinMoves:    len(vines),
+		Complexity:  common.ComplexityForDifficulty(difficulty),
 		Grace:       utils.GraceForDifficulty(difficulty),
-		ColorScheme: config.ColorPalette,
+		ColorScheme: colorScheme,
 		Mask:        mask,
 	}
 
-	// Validate solvability
-	solver := common.NewSolver(&level)
-	if !solver.IsSolvableGreedy() {
-		return true, fmt.Errorf("generated level %d is not solvable", id)
+	// Same acceptance gates as batch generation.
+	if errs := validator.ValidateStructural(level); len(errs) > 0 {
+		return fmt.Errorf("regenerated level %d failed structural validation: %v", id, errs[0])
 	}
-
-	// Write the repaired level
-	err = common.WriteLevel(path, &level, overwrite)
+	ok, stats, err := validator.IsSolvable(level, maxStates)
 	if err != nil {
+		return fmt.Errorf("regenerated level %d solvability check error: %w", id, err)
+	}
+	if !ok || stats.GaveUp {
+		return fmt.Errorf("regenerated level %d is not solvable (solver=%s states=%d gave_up=%v)", id, stats.Solver, stats.StatesExplored, stats.GaveUp)
+	}
+	if errs := validator.ValidateDesignConstraints(level); len(errs) > 0 {
+		return fmt.Errorf("regenerated level %d failed design constraints: %v", id, errs[0])
+	}
+	quality := metrics.AnalyzeQuality(level)
+	common.Verbose("Regenerated level %d: coverage=%.1f%% vines=%d colors=%d variety=%d",
+		id, quality.PlayableCoverage*100, quality.VineCount, quality.DistinctColors, quality.LengthVariety)
+
+	if err := common.WriteLevel(path, &level, overwrite); err != nil {
 		common.Error("Failed to write regenerated level %d to %s: %v", id, path, err)
-		return true, err
+		return err
 	}
 
 	common.Info("Repaired level %d", id)
-
-	return true, nil
+	return nil
 }
 
 // sanitizeLevelDuplicateIDs removes duplicate vine entries (same ID) keeping the
@@ -251,14 +319,12 @@ func sanitizeLevelDuplicateIDs(path string) error {
 		return err
 	}
 
-	// Determine next available vine index
+	// Determine next available vine index (robust to malformed IDs).
 	maxIdx := 0
 	for _, v := range lvl.Vines {
 		var idx int
-		if n, _ := fmt.Sscanf(v.ID, "vine_%d", &idx); n == 1 {
-			if idx > maxIdx {
-				maxIdx = idx
-			}
+		if n, _ := fmt.Sscanf(v.ID, "vine_%d", &idx); n == 1 && idx > maxIdx {
+			maxIdx = idx
 		}
 	}
 	nextIdx := maxIdx + 1

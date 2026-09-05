@@ -70,7 +70,7 @@ void main() {
         scriptures: [
           ModuleScripture(
             id: 'seed_starter',
-            triggerLevel: 'lesson_5',
+            triggerLevel: 'lesson_10',
             reference: 'Luke 8:11',
             title: 'The Seed is the Word',
             type: 'starter',
@@ -89,14 +89,14 @@ void main() {
     await container.read(gameProgressProvider.notifier).initialize();
     final notifier = container.read(tutorialProgressProvider.notifier);
 
-    for (var i = 1; i <= 5; i++) {
+    for (var i = 1; i <= 10; i++) {
       await notifier.completeLesson(i);
     }
 
     final state = container.read(tutorialProgressProvider);
     expect(state.allLessonsCompleted, isTrue);
-    // currentLesson remains as last played lesson (5), TutorialProgress keeps an int
-    expect(state.currentLesson, equals(5));
+    // currentLesson remains as last played lesson (10), TutorialProgress keeps an int
+    expect(state.currentLesson, equals(10));
 
     final saved = await mockRepo.getProgress();
     expect(saved.lessonCompleted, isTrue);

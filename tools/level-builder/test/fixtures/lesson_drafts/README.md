@@ -1,27 +1,17 @@
 # Lesson Drafts 6–10 (mechanics gap-fill)
 
-Drafts only — inert by design:
+Status: PROMOTED — copies live in `apps/parable-bloom/assets/lessons/lesson_6..10.json`,
+registered in `modules.json` (tutorials + level_mappings), and the app's lesson
+count (`LessonData.totalLessons = 10`) covers them. These fixtures remain as the
+tested source of truth (`pkg/validator/lesson_drafts_test.go`).
 
-- The app hardcodes 5 lessons (`lessonProvider` / `completeLesson` /
-  `setCurrentLesson` guard `1..5`, `allComplete = length == 5`).
-- `validate-tutorials` globs `assets/lessons/lesson_*.json` (this directory
-  is not scanned).
-- These fixtures live under `tools/level-builder/` so they never ship in the
-  Flutter asset bundle (`assets/lessons/` is bundled wholesale).
+Promotion checklist (done):
 
-Covered by `pkg/validator/lesson_drafts_test.go`, which mirrors the Dart
-`LessonData.fromJson` constraints plus structural + greedy-solvability checks.
-
-## Promotion checklist (per lesson)
-
-1. Copy to `apps/parable-bloom/assets/lessons/lesson_N.json`.
-2. Append `"lesson_N"` to `tutorials` in `assets/data/modules.json`.
-3. Widen Dart `1..5` guards to `1..N` in `tutorial_providers.dart`
-   (`lessonProvider`, `completeLesson`, `setCurrentLesson`,
-   `allComplete = newCompleted.length == N`).
-4. Add starter/micro scripture triggers if the lesson should unlock content
-   (`modules.json` scriptures + `biblical_themes.json` passages).
-5. Run `task levels:tutorials:validate` and
+1. [x] Copy to `apps/parable-bloom/assets/lessons/lesson_N.json`.
+2. [x] Append `"lesson_N"` to `tutorials` in `assets/data/modules.json`.
+3. [x] Widen Dart lesson-count guards (now `LessonData.totalLessons`).
+4. [x] Starter scripture trigger moved to the capstone (`lesson_10`).
+5. [x] Run `task levels:tutorials:validate` and
    `task levels:tutorials:validate-solvable`.
 
 ## Grid-size convention (unified)

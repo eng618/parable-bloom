@@ -8,8 +8,9 @@ import '../../domain/entities/lesson_data.dart';
 
 final lessonProvider =
     FutureProvider.family<LessonData, int>((ref, lessonId) async {
-  if (lessonId < 1 || lessonId > 5) {
-    throw ArgumentError('Lesson ID must be between 1 and 5');
+  if (lessonId < 1 || lessonId > LessonData.totalLessons) {
+    throw ArgumentError(
+        'Lesson ID must be between 1 and ${LessonData.totalLessons}');
   }
 
   final json =
@@ -75,12 +76,14 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
   }
 
   Future<void> completeLesson(int lessonId) async {
-    if (lessonId < 1 || lessonId > 5) {
-      throw ArgumentError('Lesson ID must be between 1 and 5');
+    if (lessonId < 1 || lessonId > LessonData.totalLessons) {
+      throw ArgumentError(
+          'Lesson ID must be between 1 and ${LessonData.totalLessons}');
     }
 
     final newCompleted = Set<int>.from(state.completedLessons)..add(lessonId);
-    final allComplete = newCompleted.length == 5;
+    final allComplete =
+        newCompleted.length == LessonData.totalLessons;
     final nextLesson = allComplete ? null : lessonId + 1;
 
     final lessonIdStr = 'lesson_$lessonId';
@@ -110,8 +113,9 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
   }
 
   void setCurrentLesson(int lessonId) {
-    if (lessonId < 1 || lessonId > 5) {
-      throw ArgumentError('Lesson ID must be between 1 and 5');
+    if (lessonId < 1 || lessonId > LessonData.totalLessons) {
+      throw ArgumentError(
+          'Lesson ID must be between 1 and ${LessonData.totalLessons}');
     }
     state = state.copyWith(currentLesson: lessonId);
   }

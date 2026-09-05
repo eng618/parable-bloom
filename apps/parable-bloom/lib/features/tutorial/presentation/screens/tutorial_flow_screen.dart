@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
 import '../../../../core/services/logger_service.dart';
+import '../../domain/entities/lesson_data.dart';
 import '../../../game/application/providers/camera_providers.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../application/providers/tutorial_providers.dart';
@@ -111,7 +112,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     });
 
     // Validate lesson number
-    if (currentLesson < 1 || currentLesson > 5) {
+    if (currentLesson < 1 || currentLesson > LessonData.totalLessons) {
       return Scaffold(
         body: Center(
           child: Text('Invalid lesson: $currentLesson'),
@@ -464,7 +465,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   Widget _buildLessonProgressIndicator(int currentLesson) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(5, (index) {
+      children: List.generate(LessonData.totalLessons, (index) {
         final lessonNum = index + 1;
         final isCompleted = lessonNum < currentLesson;
         final isCurrent = lessonNum == currentLesson;

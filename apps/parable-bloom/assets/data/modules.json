@@ -5,7 +5,12 @@
     "lesson_2",
     "lesson_3",
     "lesson_4",
-    "lesson_5"
+    "lesson_5",
+    "lesson_6",
+    "lesson_7",
+    "lesson_8",
+    "lesson_9",
+    "lesson_10"
   ],
   "level_mappings": {
     "lesson_1": "lessons/lesson_1.json",
@@ -117,7 +122,12 @@
     "lvl_sprout_18": "levels/level_39.json",
     "lvl_sprout_19": "levels/level_40.json",
     "lvl_sprout_20": "levels/level_41.json",
-    "lvl_sprout_challenge": "levels/level_42.json"
+    "lvl_sprout_challenge": "levels/level_42.json",
+    "lesson_6": "lessons/lesson_6.json",
+    "lesson_7": "lessons/lesson_7.json",
+    "lesson_8": "lessons/lesson_8.json",
+    "lesson_9": "lessons/lesson_9.json",
+    "lesson_10": "lessons/lesson_10.json"
   },
   "modules": [
     {
@@ -158,7 +168,7 @@
       "scriptures": [
         {
           "id": "seed_starter",
-          "trigger_level": "lesson_5",
+          "trigger_level": "lesson_10",
           "reference": "Luke 8:11",
           "title": "The Seed is the Word",
           "type": "starter"

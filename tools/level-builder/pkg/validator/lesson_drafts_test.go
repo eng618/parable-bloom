@@ -109,9 +109,12 @@ func TestLessonDrafts(t *testing.T) {
 				ddx, ddy := headDelta(v.HeadDirection)
 				if ddx == 0 && ddy == 0 {
 					t.Errorf("vine %s has invalid head_direction %q", v.ID, v.HeadDirection)
-				} else if neck.X-head.X == ddx && neck.Y-head.Y == ddy {
-					// Head must move away from the body, not into it.
-					t.Errorf("vine %s head points into its own neck", v.ID)
+				} else {
+					// Strict corpus rule (mirrors Dart level_validation_test):
+					// neck -> head vector must equal head_direction.
+					if neck.X-head.X != -ddx || neck.Y-head.Y != -ddy {
+						t.Errorf("vine %s head/neck mismatch for direction %q", v.ID, v.HeadDirection)
+					}
 				}
 			}
 

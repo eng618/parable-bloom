@@ -1,9 +1,11 @@
+import '../../../tutorial/domain/entities/lesson_data.dart';
+
 class GameProgress {
   // Lesson tracking (separate from levels)
   final String?
       currentLesson; // e.g. "lesson_1" if in tutorial, null if tutorial complete
   final Set<String> completedLessons; // Which lessons have been completed
-  final bool lessonCompleted; // True after all 5 lessons done
+  final bool lessonCompleted; // True after all lessons done
 
   // Level tracking (main game)
   final String currentLevel; // Current main game level ID (e.g. "lvl_seed_01")
@@ -78,7 +80,7 @@ class GameProgress {
     final newCompletedLevels = Set<String>.from(completedLevels)..add(levelId);
 
     // If completing the last tutorial lesson
-    if (levelId == 'lesson_5') {
+    if (levelId == 'lesson_${LessonData.totalLessons}') {
       if (savedMainGameLevel != null) {
         // User replayed tutorial from main game - restore their main game level
         return copyWith(

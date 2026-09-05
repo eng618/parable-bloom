@@ -43,16 +43,32 @@ tasks:
   # Testing
 
   test:
-    desc: Run level-builder Go module tests
+    desc: Run level-builder Go module tests (race detector, no cache, coverage profile)
     dir: tools/level-builder
     cmds:
-      - go test ./pkg/... ./cmd/... -short -coverprofile=coverage.out
+      - go test -race ./pkg/... ./cmd/... -short -count=1 -coverprofile=coverage.out
 
   test:quick:
     desc: Run fast level-builder tests (used in validate and CI)
     dir: tools/level-builder
     cmds:
-      - go test ./pkg/... ./cmd/... -short
+      - go test ./pkg/... ./cmd/... -short -count=1
+
+  test:race:
+    desc: Run level-builder tests with the race detector (no cache)
+    dir: tools/level-builder
+    cmds:
+      - go test -race ./pkg/... ./cmd/... -short -count=1
+
+  coverage-check:
+    desc: Enforce Go statement coverage floor (30%; raise as coverage grows)
+    dir: tools/level-builder
+    cmds:
+      - |
+        go test ./pkg/... ./cmd/... -short -count=1 -coverprofile=coverage.out
+        TOTAL=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/, "", $3); print $3}')
+        echo "Total Go coverage: ${TOTAL}% (floor 30%)"
+        awk -v t="$TOTAL" 'BEGIN { exit !(t + 0 >= 30) }' || (echo "❌ Go coverage ${TOTAL}% below 30% floor" && exit 1)
 
   test:cover:
     desc: Generate HTML coverage report
@@ -80,9 +96,9 @@ tasks:
     desc: Run extended level-builder tests (heavy/resilience)
     dir: tools/level-builder
     cmds:
-      - go test ./pkg/generator/strategies -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v
-      - go test ./pkg/generator/strategies -run TestAttemptLocalBacktrackRecovers -v
-      - go test ./pkg/... ./cmd/...
+      - go test ./pkg/generator/strategies -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v -count=1
+      - go test ./pkg/generator/strategies -run TestAttemptLocalBacktrackRecovers -v -count=1
+      - go test ./pkg/... ./cmd/... -count=1
 
   # -----------------------------------------------------------------------------
   # Linting

@@ -116,6 +116,34 @@
 //   - logs/validation_stats.json: Detailed metrics (when --check-solvable is used)
 //   - logs/validation_cache.json: Solver cache (SHA-256 + SolverVersion)
 //
+// ## stats
+//
+// Summarize validation or batch-generation stats JSON files.
+//
+// Aggregates solver distribution, state budgets, timing, coverage, and
+// blocking depth from logs/validation_stats.json (default), tutorial stats,
+// or per-level batch stats directories.
+//
+// Examples:
+//
+//	# Summarize the latest validation run
+//	level-builder stats
+//
+//	# Tutorial stats
+//	level-builder stats --lessons
+//
+//	# Batch run stats directory
+//	level-builder stats --dir logs/<timestamp>/runs/stats
+//
+//	# Compare experiment files (e.g. BFS vs A*)
+//	level-builder stats validation_stats_bfs.json validation_stats_astar.json
+//
+// Flags:
+//
+//	--file            Explicit stats file (default: logs/validation_stats.json)
+//	--dir             Directory of per-level batch stats to aggregate
+//	--lessons         Summarize tutorial stats (validation_stats_lessons.json)
+//
 // ## render
 //
 // Render puzzle levels as ASCII or Unicode visualizations.
@@ -150,38 +178,42 @@
 //
 // ## repair
 //
-// Scan and repair corrupted level files.
+// Scan and repair corrupted or invalid level files.
 //
-// Automatically detects and regenerates level files that fail to parse or
-// validate. Uses deterministic seed-based regeneration (level_id * 31337)
-// to ensure reproducible repairs. Validates solvability before writing.
+// Detects files that fail to parse and — with --check-solvable (default) —
+// files that fail structural validation, the canonical difficulty lock, or
+// solvability checks. Regeneration is deterministic (seed = levelID * 31337)
+// through canonical pipeline inputs and must pass batch acceptance gates
+// (structural + solvable + design constraints) before writing.
 //
 // Examples:
 //
 //	# Dry-run to check which files need repair
 //	level-builder repair --dry-run
 //
-//	# Repair all corrupted files in default directory
-//	level-builder repair
-//
-//	# Repair specific directory
-//	level-builder repair --directory path/to/levels
-//
-//	# Force overwrite without prompting
+//	# Repair files in-place, including unsolvable/structural failures
 //	level-builder repair --overwrite
+//
+//	# Parse failures only (legacy behavior)
+//	level-builder repair --check-solvable=false
 //
 // Flags:
 //
-//	--directory        Directory containing level files (default: ../../assets/levels)
-//	--overwrite        Overwrite files without prompting
+//	--directory        Directory containing level files (default: resolved assets levels dir)
+//	--overwrite        Overwrite files without prompting (default: true)
 //	--dry-run          Show what would be repaired without making changes
+//	--fix-duplicates   Cheap duplicate-vine-ID sanitize before full regeneration
+//	--check-solvable   Also repair structural/solvability failures (default: true)
+//	--max-states       Solver state budget for repair checks (default: 1000000)
+//	--aggressive       Stronger backtracking settings when regenerating
 //
 // Repair process:
 //  1. Scan directory for level_*.json files
-//  2. Attempt to read and parse each file
-//  3. If parsing fails, regenerate using ClearableFirstPlacement
-//  4. Validate solvability before writing
-//  5. Write repaired file with backup of original
+//  2. Assess each file: parse, ID match, difficulty lock, structural,
+//     solvability, design constraints
+//  3. Optionally sanitize duplicate vine IDs (--fix-duplicates)
+//  4. Regenerate failures via ClearableFirstPlacement + masking
+//  5. Validate acceptance gates before writing
 //
 // ## clean
 //

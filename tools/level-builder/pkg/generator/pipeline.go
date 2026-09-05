@@ -180,6 +180,7 @@ func parseVineID(id string) int {
 	}
 	return n
 }
+
 // cryptoSeedInt64 returns a crypto-random int64 seed
 func cryptoSeedInt64() int64 {
 	var b [8]byte

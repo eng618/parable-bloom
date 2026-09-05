@@ -124,7 +124,12 @@ Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
       'lesson_2',
       'lesson_3',
       'lesson_4',
-      'lesson_5'
+      'lesson_5',
+      'lesson_6',
+      'lesson_7',
+      'lesson_8',
+      'lesson_9',
+      'lesson_10'
     },
     lessonCompleted: true,
     currentLevel: 'lvl_blossom_01',
