@@ -14,19 +14,19 @@ import (
 )
 
 // GenerateRobust runs the full robust generation pipeline.
-// 1. Primary Placement (Center-Out LIFO)
-// 2. Recovery (Local Backtracking)
+// Canonical entry point for all generation: batch, CLI, and tests must use
+// this (via GenerateLevel) rather than legacy generator.go paths.
+// 1. Primary Placement (strategy from cfg, default by difficulty)
+// 2. Recovery (Local Backtracking inside placer)
 // 3. Aggressive Gap Filling
 // 4. Mandatory Masking
 func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.GenerationStats, error) {
 	startTime := time.Now()
 	stats := config.GenerationStats{}
 
-	// 1. Setup
-	seed := cfg.Seed
-	if cfg.Randomize {
-		seed = cryptoSeedInt64()
-	}
+	// 1. Setup - deterministic seed resolution.
+	// Randomize=true explicitly opts into non-determinism; otherwise cfg.Seed is used as-is.
+	seed := resolveSeed(cfg)
 	rng := math_rand.New(math_rand.NewSource(seed))
 	common.Verbose("Starting Robust Generation for Level %d (Size: %dx%d, Seed: %d)",
 		cfg.LevelID, cfg.GridWidth, cfg.GridHeight, seed)
@@ -71,23 +71,20 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 
 	// Recover partial success if needed
 	if occupied == nil {
-		occupied = make(map[string]string)
+		occupied = make(map[string]string, len(vines)*8)
 		for _, v := range vines {
 			for _, p := range v.OrderedPath {
-				occupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = v.ID
+				occupied[common.PointKey(p)] = v.ID
 			}
 		}
 	}
 
 	// 3. Aggressive Fill Phase
-	// Identify next available vine ID
+	// Identify next available vine ID (robust to malformed IDs)
 	nextVineID := 1
 	for _, v := range vines {
-		var id int
-		if n, _ := fmt.Sscanf(v.ID, "vine_%d", &id); n == 1 {
-			if id >= nextVineID {
-				nextVineID = id + 1
-			}
+		if id := parseVineID(v.ID); id >= nextVineID {
+			nextVineID = id + 1
 		}
 	}
 
@@ -108,10 +105,10 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 	vines = ensureUniqueVineIDs(vines)
 
 	// Rebuild fully consistent map
-	finalOccupied := make(map[string]string)
+	finalOccupied := make(map[string]string, len(vines)*8)
 	for _, v := range vines {
 		for _, p := range v.OrderedPath {
-			finalOccupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = v.ID
+			finalOccupied[common.PointKey(p)] = v.ID
 		}
 	}
 
@@ -128,7 +125,7 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 	level := assembler.AssembleLevel(cfg, vines, mask, seed)
 
 	stats.GenerationTime = time.Since(startTime)
-	stats.GenerationTime = time.Since(startTime)
+	stats.GridCoverage = float64(len(finalOccupied)) / float64(cfg.GridWidth*cfg.GridHeight)
 
 	return level, stats, nil
 }
@@ -137,7 +134,8 @@ func findEmptyCells(w, h int, occupied map[string]string) []model.Point {
 	var empty []model.Point
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			if _, occ := occupied[fmt.Sprintf("%d,%d", x, y)]; !occ {
+			key := common.PointKey(model.Point{X: x, Y: y})
+			if _, occ := occupied[key]; !occ {
 				empty = append(empty, model.Point{X: x, Y: y})
 			}
 		}
@@ -160,6 +158,28 @@ func ensureUniqueVineIDs(vines []model.Vine) []model.Vine {
 	return cleanVines
 }
 
+// resolveSeed returns the deterministic seed for this generation run.
+// Randomize=true explicitly opts into crypto randomness; otherwise cfg.Seed is used verbatim
+// so batch retries (seed=level*31337+retry*12345) stay reproducible.
+func resolveSeed(cfg config.GenerationConfig) int64 {
+	if cfg.Randomize {
+		return cryptoSeedInt64()
+	}
+	return cfg.Seed
+}
+
+// parseVineID extracts the numeric suffix from IDs like "vine_12".
+// Returns 0 for malformed IDs so callers can safely compute nextVineID.
+func parseVineID(id string) int {
+	var n int
+	if _, err := fmt.Sscanf(id, "vine_%d", &n); err != nil {
+		return 0
+	}
+	if n < 0 {
+		return 0
+	}
+	return n
+}
 // cryptoSeedInt64 returns a crypto-random int64 seed
 func cryptoSeedInt64() int64 {
 	var b [8]byte

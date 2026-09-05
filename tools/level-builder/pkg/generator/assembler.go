@@ -3,22 +3,13 @@ package generator
 import (
 	"fmt"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
-// LevelAssembler implements LevelAssembler for all difficulty tiers
+// LevelAssembler implements Assembler for all difficulty tiers
 type LevelAssembler struct{}
-
-// TODO: does this need to be removed now? There is no actual conversion needed now?
-// convertCommonPointsToModel converts []model.Point to []model.Point
-func convertCommonPointsToModel(commonPoints []model.Point) []model.Point {
-	modelPoints := make([]model.Point, len(commonPoints))
-	for i, p := range commonPoints {
-		modelPoints[i] = model.Point{X: p.X, Y: p.Y}
-	}
-	return modelPoints
-}
 
 // AssembleLevel creates the final level data structure
 func (a *LevelAssembler) AssembleLevel(cfg config.GenerationConfig, vines []model.Vine, mask *model.Mask, seed int64) model.Level {
@@ -40,7 +31,7 @@ func (a *LevelAssembler) AssembleLevel(cfg config.GenerationConfig, vines []mode
 		modelVines[i] = model.Vine{
 			ID:            v.ID,
 			HeadDirection: v.HeadDirection,
-			OrderedPath:   convertCommonPointsToModel(v.OrderedPath),
+			OrderedPath:   append([]model.Point(nil), v.OrderedPath...),
 			ColorIndex:    i % colorCount, // 0-based, round-robin assignment
 		}
 	}
@@ -53,7 +44,7 @@ func (a *LevelAssembler) AssembleLevel(cfg config.GenerationConfig, vines []mode
 	if mask != nil {
 		modelMask = &model.Mask{
 			Mode:   mask.Mode,
-			Points: convertCommonPointsToModel(mask.Points),
+			Points: append([]model.Point(nil), mask.Points...),
 		}
 	}
 
@@ -84,24 +75,11 @@ func (a *LevelAssembler) AssembleLevel(cfg config.GenerationConfig, vines []mode
 	return level
 }
 
-// complexityForDifficulty maps difficulty tier to complexity string
+// complexityForDifficulty maps difficulty tier to complexity string.
+// Canonical mapping lives in common.ComplexityForDifficulty; this delegates to
+// avoid drift between generator and validator paths.
 func (a *LevelAssembler) complexityForDifficulty(difficulty string) string {
-	switch difficulty {
-	case "Tutorial":
-		return "simple"
-	case "Seedling":
-		return "low"
-	case "Sprout":
-		return "medium"
-	case "Nurturing":
-		return "medium"
-	case "Flourishing":
-		return "high"
-	case "Transcendent":
-		return "extreme"
-	default:
-		return "medium"
-	}
+	return common.ComplexityForDifficulty(difficulty)
 }
 
 // generateColorScheme creates a color palette using the shared ColorPalette

@@ -56,7 +56,8 @@ func Clean() error {
 }
 
 // Generate creates count levels with the given configuration.
-// This is the main entry point called from the generate command.
+// Deprecated: use pkg/batch.GenerateModule + GenerateRobust pipeline instead.
+// Retained for backward-compat CLI paths; new code must not call this.
 func Generate(count int, baseSeed int64, useRandomSeed bool, moduleID int, difficulty string, overwrite bool) error {
 	cwd, _ := os.Getwd()
 	common.Verbose("Generating %d levels (CWD: %s)...", count, cwd)
@@ -212,7 +213,8 @@ func generateModule(cfg LegacyBatchConfig) error {
 		} else if cfg.BaseSeed != 0 {
 			levelSeed = cfg.BaseSeed + int64(i)
 		} else {
-			levelSeed = cryptoSeedInt64() + int64(i)
+			// Deterministic default: level-derived seed (legacy batch parity)
+			levelSeed = int64(levelID)*31337 + int64(i)
 		}
 		rng := rand.New(rand.NewSource(levelSeed))
 		var difficultyTier string
@@ -340,6 +342,8 @@ func getThemeSeed(moduleID int) string {
 }
 
 // generateSingleLevel creates a single level with the given parameters.
+// Deprecated: retained only for legacy CLI fallback. Canonical path is
+// GenerateRobust in pipeline.go (strategy registry + gap-fill + assemble).
 // It uses the tiling algorithm and validates solvability.
 func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) (model.Level, error) {
 	const maxAttempts = 10000        // Increased from 1000 (attempts are fast ~0.8ms each)
@@ -490,8 +494,7 @@ func generateSingleLevel(id int, difficulty string, seed int64, rng *rand.Rand) 
 			GenerationAttempts: attempts + 1,
 		}
 
-		modelLevel := convertToModelLevel(level)
-		if constraintErrs := validator.ValidateDesignConstraints(modelLevel); len(constraintErrs) > 0 {
+		if constraintErrs := validator.ValidateDesignConstraints(level); len(constraintErrs) > 0 {
 			constraintFailures++
 			if attempts < 10 || (attempts > 0 && attempts%progressLogInterval == 0) {
 				common.Verbose("Attempt %d: Design constraints failed (%d issues) - %s",
@@ -591,56 +594,10 @@ func calculateLevelScore(level *model.Level, attempts int) float64 {
 }
 
 // assignColorIndices assigns random color indices to vines from the palette.
+// Note: canonical pipeline (assembler) uses round-robin; this random variant
+// is legacy-only for generateSingleLevel fallback.
 func assignColorIndices(vines []model.Vine, paletteSize int, rng *rand.Rand) {
 	for i := range vines {
 		vines[i].ColorIndex = rng.Intn(paletteSize)
 	}
-}
-
-func convertToModelLevel(level model.Level) model.Level {
-	return model.Level{
-		ID:          level.ID,
-		Name:        level.Name,
-		Difficulty:  level.Difficulty,
-		Complexity:  level.Complexity,
-		GridSize:    append([]int(nil), level.GridSize...),
-		Mask:        convertMask(level.Mask),
-		Vines:       convertVines(level.Vines),
-		MaxMoves:    level.MaxMoves,
-		MinMoves:    level.MinMoves,
-		Grace:       level.Grace,
-		ColorScheme: append([]string(nil), level.ColorScheme...),
-	}
-}
-
-func convertMask(mask *model.Mask) *model.Mask {
-	if mask == nil {
-		return nil
-	}
-	points := make([]model.Point, len(mask.Points))
-	for i, p := range mask.Points {
-		points[i] = model.Point{X: p.X, Y: p.Y}
-	}
-	return &model.Mask{Mode: mask.Mode, Points: points}
-}
-
-func convertVines(vines []model.Vine) []model.Vine {
-	out := make([]model.Vine, len(vines))
-	for i, v := range vines {
-		out[i] = model.Vine{
-			ID:            v.ID,
-			HeadDirection: v.HeadDirection,
-			OrderedPath:   convertPoints(v.OrderedPath),
-			ColorIndex:    v.ColorIndex,
-		}
-	}
-	return out
-}
-
-func convertPoints(points []model.Point) []model.Point {
-	out := make([]model.Point, len(points))
-	for i, p := range points {
-		out[i] = model.Point{X: p.X, Y: p.Y}
-	}
-	return out
 }
