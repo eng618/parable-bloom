@@ -76,7 +76,8 @@ func TestLessonDrafts(t *testing.T) {
 				}
 			}
 
-			// Grid valid under BOTH conventions: Go [w,h] and Dart [rows,cols].
+			// Grid uses the unified [width, height] convention (Go model.Level
+			// and Dart LessonData.fromJson agree since the transposition fix).
 			if len(d.GridSize) != 2 || d.GridSize[0] < 2 || d.GridSize[1] < 2 {
 				t.Fatalf("invalid grid size %v", d.GridSize)
 			}
@@ -88,11 +89,7 @@ func TestLessonDrafts(t *testing.T) {
 				}
 				for _, p := range v.OrderedPath {
 					if p.X < 0 || p.X >= w || p.Y < 0 || p.Y >= h {
-						t.Errorf("vine %s cell (%d,%d) out of Go bounds [%d,%d]", v.ID, p.X, p.Y, w, h)
-					}
-					// Dart reads grid_size[0] as rows (y-bound), [1] as cols (x-bound).
-					if p.X < 0 || p.X >= h || p.Y < 0 || p.Y >= w {
-						t.Errorf("vine %s cell (%d,%d) out of Dart bounds rows=%d cols=%d", v.ID, p.X, p.Y, w, h)
+						t.Errorf("vine %s cell (%d,%d) out of bounds [%d,%d]", v.ID, p.X, p.Y, w, h)
 					}
 					key := [2]int{p.X, p.Y}
 					if owner, dup := seen[key]; dup {
