@@ -1,10 +1,16 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Required in release builds: Firebase (auth/firestore/analytics/crashlytics)
          needs INTERNET; connectivity_plus needs ACCESS_NETWORK_STATE.
          Debug/profile manifests declare these separately; release must not rely on
          manifest merging from other source sets. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- firebase_analytics transitively adds com.google.android.gms.permission.AD_ID.
+         This app serves no ads and does not use the advertising ID, so strip it
+         from the merged manifest to match the Play Console data-safety declaration. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove"/>
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"
