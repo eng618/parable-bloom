@@ -35,7 +35,7 @@ void main() {
 
     test('changing savedMainGameLevel should make objects unequal', () {
       final p1 = GameProgress.initial();
-      final p2 = p1.copyWith(savedMainGameLevel: 'lvl_seed_05');
+      final p2 = p1.copyWith(savedMainGameLevel: 'lvl_m01_05');
       expect(p1, isNot(equals(p2)));
     });
 
@@ -44,7 +44,7 @@ void main() {
         currentLesson: 'lesson_2',
         completedLessons: {'lesson_1'},
         lessonCompleted: false,
-        currentLevel: 'lvl_seed_01',
+        currentLevel: 'lvl_m01_01',
         completedLevels: {},
         tutorialCompleted: false,
         savedMainGameLevel: null,
@@ -55,7 +55,7 @@ void main() {
         currentLesson: 'lesson_2',
         completedLessons: {'lesson_1'},
         lessonCompleted: false,
-        currentLevel: 'lvl_seed_01',
+        currentLevel: 'lvl_m01_01',
         completedLevels: {},
         tutorialCompleted: false,
         savedMainGameLevel: null,
@@ -91,37 +91,57 @@ void main() {
       expect(progress.currentLesson, equals('lesson_1'));
       expect(progress.completedLessons,
           equals({'lesson_1', 'lesson_2', 'lesson_3', 'lesson_4', 'lesson_5'}));
-      expect(progress.currentLevel, equals('lvl_harvest_12')); // 96 - 84 = 12
+      expect(progress.currentLevel, equals('lvl_m05_12')); // 96 - 84 = 12
       expect(
-          progress.savedMainGameLevel, equals('lvl_sprout_01')); // 22 - 21 = 1
+          progress.savedMainGameLevel, equals('lvl_m02_01')); // 22 - 21 = 1
 
       // Seedling levels check
       for (int i = 1; i <= 20; i++) {
         final idxStr = i < 10 ? '0$i' : '$i';
-        expect(progress.completedLevels.contains('lvl_seed_$idxStr'), isTrue,
-            reason: 'Should contain lvl_seed_$idxStr');
+        expect(progress.completedLevels.contains('lvl_m01_$idxStr'), isTrue,
+            reason: 'Should contain lvl_m01_$idxStr');
       }
-      expect(progress.completedLevels.contains('lvl_seed_challenge'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m01_challenge'), isTrue);
 
       // Sprout levels check
       for (int i = 1; i <= 20; i++) {
         final idxStr = i < 10 ? '0$i' : '$i';
-        expect(progress.completedLevels.contains('lvl_sprout_$idxStr'), isTrue,
-            reason: 'Should contain lvl_sprout_$idxStr');
+        expect(progress.completedLevels.contains('lvl_m02_$idxStr'), isTrue,
+            reason: 'Should contain lvl_m02_$idxStr');
       }
-      expect(progress.completedLevels.contains('lvl_sprout_challenge'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m02_challenge'), isTrue);
 
       // Blossom, Flourish, Harvest spot checks
-      expect(progress.completedLevels.contains('lvl_blossom_01'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m03_01'), isTrue);
       expect(
-          progress.completedLevels.contains('lvl_blossom_challenge'), isTrue);
-      expect(progress.completedLevels.contains('lvl_flourish_01'), isTrue);
+          progress.completedLevels.contains('lvl_m03_challenge'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m04_01'), isTrue);
       expect(
-          progress.completedLevels.contains('lvl_flourish_challenge'), isTrue);
-      expect(progress.completedLevels.contains('lvl_harvest_01'), isTrue);
-      expect(progress.completedLevels.contains('lvl_harvest_12'), isTrue);
+          progress.completedLevels.contains('lvl_m04_challenge'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m05_01'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m05_12'), isTrue);
       expect(
-          progress.completedLevels.contains('lvl_harvest_challenge'), isTrue);
+          progress.completedLevels.contains('lvl_m05_challenge'), isTrue);
+    });
+
+    test('migrates pre-standardization string IDs to the generic scheme', () {
+      final progress = GameProgress.fromJson({
+        'currentLesson': 'lesson_1',
+        'completedLessons': ['lesson_1'],
+        'lessonCompleted': false,
+        'currentLevel': 'lvl_sprout_05',
+        'completedLevels': ['lvl_seed_01', 'lvl_sprout_challenge', 'lvl_m03_07'],
+        'tutorialCompleted': false,
+        'savedMainGameLevel': 'lvl_harvest_20',
+        'unlockedTranslations': {},
+        'unlockedScriptureIds': [],
+      });
+
+      expect(progress.currentLevel, equals('lvl_m02_05'));
+      expect(
+          progress.completedLevels,
+          equals({'lvl_m01_01', 'lvl_m02_challenge', 'lvl_m03_07'}));
+      expect(progress.savedMainGameLevel, equals('lvl_m05_20'));
     });
   });
 }

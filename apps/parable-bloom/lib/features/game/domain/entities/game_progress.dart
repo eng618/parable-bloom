@@ -8,7 +8,7 @@ class GameProgress {
   final bool lessonCompleted; // True after all lessons done
 
   // Level tracking (main game)
-  final String currentLevel; // Current main game level ID (e.g. "lvl_seed_01")
+  final String currentLevel; // Current main game level ID (e.g. "lvl_m01_01")
   final Set<String> completedLevels; // Main game level IDs completed
   final bool tutorialCompleted; // Legacy field - true when lessons complete
   final String?
@@ -66,7 +66,7 @@ class GameProgress {
       currentLesson: 'lesson_1',
       completedLessons: {},
       lessonCompleted: false,
-      currentLevel: 'lvl_seed_01',
+      currentLevel: 'lvl_m01_01',
       completedLevels: {},
       tutorialCompleted: false,
       savedMainGameLevel: null,
@@ -93,7 +93,7 @@ class GameProgress {
         // User completed tutorial for the first time - move to first standard level
         return copyWith(
           completedLevels: newCompletedLevels,
-          currentLevel: 'lvl_seed_01',
+          currentLevel: 'lvl_m01_01',
           tutorialCompleted: true,
         );
       }
@@ -144,13 +144,13 @@ class GameProgress {
           : rawCurrentLesson.toString();
     }
 
-    final rawCurrentLevel = json['currentLevel'] ?? 'lvl_seed_01';
+    final rawCurrentLevel = json['currentLevel'] ?? 'lvl_m01_01';
     String currentLevelStr;
     if (rawCurrentLevel is int) {
       // Map legacy int save to new String ID
       currentLevelStr = _mapLegacyLevelId(rawCurrentLevel);
     } else {
-      currentLevelStr = rawCurrentLevel.toString();
+      currentLevelStr = _migrateLevelId(rawCurrentLevel.toString());
     }
 
     final completedLessonsList = (json['completedLessons'] as List<dynamic>?)
@@ -159,7 +159,8 @@ class GameProgress {
         [];
 
     final completedLevelsList = (json['completedLevels'] as List<dynamic>?)
-            ?.map((e) => e is int ? _mapLegacyLevelId(e) : e.toString())
+            ?.map((e) =>
+                e is int ? _mapLegacyLevelId(e) : _migrateLevelId(e.toString()))
             .toList() ??
         [];
 
@@ -168,7 +169,7 @@ class GameProgress {
     if (rawSavedLevel != null) {
       savedLevelStr = rawSavedLevel is int
           ? _mapLegacyLevelId(rawSavedLevel)
-          : rawSavedLevel.toString();
+          : _migrateLevelId(rawSavedLevel.toString());
     }
 
     final unlockedTranslationsMap =
@@ -201,44 +202,34 @@ class GameProgress {
   }
 
   static String _mapLegacyLevelId(int legacyId) {
-    // challenge levels
-    if (legacyId == 21) return 'lvl_seed_challenge';
-    if (legacyId == 42) return 'lvl_sprout_challenge';
-    if (legacyId == 63) return 'lvl_blossom_challenge';
-    if (legacyId == 84) return 'lvl_flourish_challenge';
-    if (legacyId == 105) return 'lvl_harvest_challenge';
+    // Maps a physical level number to the unified generic scheme
+    // (lvl_mNN_MM, lvl_mNN_challenge). Level IDs below 1 fall back to the
+    // first level.
+    if (legacyId < 1) return 'lvl_m01_01';
+    final module = (legacyId - 1) ~/ 21 + 1;
+    final index = (legacyId - 1) % 21;
+    final modStr = module < 10 ? '0$module' : '$module';
+    if (index == 20) return 'lvl_m${modStr}_challenge';
+    final lvlStr = index + 1 < 10 ? '0${index + 1}' : '${index + 1}';
+    return 'lvl_m${modStr}_$lvlStr';
+  }
 
-    // seedling levels (1 to 20)
-    if (legacyId >= 1 && legacyId <= 20) {
-      final idxStr = legacyId < 10 ? '0$legacyId' : '$legacyId';
-      return 'lvl_seed_$idxStr';
+  /// Migrates pre-standardization string IDs (lvl_m01_01, …) to the unified
+  /// generic scheme. Unknown values pass through untouched.
+  static String _migrateLevelId(String levelId) {
+    const prefixes = {
+      'lvl_seed_': 'lvl_m01_',
+      'lvl_sprout_': 'lvl_m02_',
+      'lvl_blossom_': 'lvl_m03_',
+      'lvl_flourish_': 'lvl_m04_',
+      'lvl_harvest_': 'lvl_m05_',
+    };
+    for (final entry in prefixes.entries) {
+      if (levelId.startsWith(entry.key)) {
+        return entry.value + levelId.substring(entry.key.length);
+      }
     }
-    // sprout levels (22 to 41)
-    if (legacyId >= 22 && legacyId <= 41) {
-      final idx = legacyId - 21;
-      final idxStr = idx < 10 ? '0$idx' : '$idx';
-      return 'lvl_sprout_$idxStr';
-    }
-    // blossom levels (43 to 62)
-    if (legacyId >= 43 && legacyId <= 62) {
-      final idx = legacyId - 42;
-      final idxStr = idx < 10 ? '0$idx' : '$idx';
-      return 'lvl_blossom_$idxStr';
-    }
-    // flourish levels (64 to 83)
-    if (legacyId >= 64 && legacyId <= 83) {
-      final idx = legacyId - 63;
-      final idxStr = idx < 10 ? '0$idx' : '$idx';
-      return 'lvl_flourish_$idxStr';
-    }
-    // harvest levels (85 to 104)
-    if (legacyId >= 85 && legacyId <= 104) {
-      final idx = legacyId - 84;
-      final idxStr = idx < 10 ? '0$idx' : '$idx';
-      return 'lvl_harvest_$idxStr';
-    }
-
-    return 'lvl_seed_01';
+    return levelId;
   }
 
   @override

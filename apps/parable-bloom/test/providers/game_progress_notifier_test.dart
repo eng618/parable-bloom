@@ -35,17 +35,17 @@ class TrackingFirebaseGameProgressRepository
   Future<void> syncToCloud() async {
     calls.add("syncToCloud");
     _stored = _stored.copyWith(
-        currentLevel: 'lvl_seed_02', completedLevels: {'lvl_seed_01'});
+        currentLevel: 'lvl_m01_02', completedLevels: {'lvl_m01_01'});
   }
 
   @override
   Future<void> syncFromCloud() async {
     calls.add("syncFromCloud");
-    _stored = _stored.copyWith(currentLevel: 'lvl_seed_05', completedLevels: {
-      'lvl_seed_01',
-      'lvl_seed_02',
-      'lvl_seed_03',
-      'lvl_seed_04'
+    _stored = _stored.copyWith(currentLevel: 'lvl_m01_05', completedLevels: {
+      'lvl_m01_01',
+      'lvl_m01_02',
+      'lvl_m01_03',
+      'lvl_m01_04'
     });
   }
 
@@ -158,9 +158,9 @@ void main() {
     expect(repository.calls,
         <String>["syncToCloud", "syncFromCloud", "getProgress"]);
     final state = container.read(gameProgressProvider);
-    expect(state.currentLevel, 'lvl_seed_05');
+    expect(state.currentLevel, 'lvl_m01_05');
     expect(state.completedLevels,
-        <String>{'lvl_seed_01', 'lvl_seed_02', 'lvl_seed_03', 'lvl_seed_04'});
+        <String>{'lvl_m01_01', 'lvl_m01_02', 'lvl_m01_03', 'lvl_m01_04'});
   });
 
   test("syncOnReconnect is a no-op for non-firebase repository", () async {
@@ -185,8 +185,8 @@ void main() {
         id: 1,
         name: 'Seedling',
         themeSeed: 'forest',
-        levels: ['lvl_seed_01', 'lvl_seed_02'],
-        challengeLevel: 'lvl_seed_challenge',
+        levels: ['lvl_m01_01', 'lvl_m01_02'],
+        challengeLevel: 'lvl_m01_challenge',
         parable: const {},
         unlockMessage: '',
         scriptures: const [],
@@ -202,24 +202,24 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    // Initial level is lvl_seed_01
+    // Initial level is lvl_m01_01
     final notifier = container.read(gameProgressProvider.notifier);
-    expect(container.read(gameProgressProvider).currentLevel, 'lvl_seed_01');
+    expect(container.read(gameProgressProvider).currentLevel, 'lvl_m01_01');
 
     // Complete level 1
-    await notifier.completeLevel('lvl_seed_01');
+    await notifier.completeLevel('lvl_m01_01');
 
-    // Progress should now be updated to lvl_seed_02
+    // Progress should now be updated to lvl_m01_02
     final updatedState = container.read(gameProgressProvider);
-    expect(updatedState.currentLevel, 'lvl_seed_02');
-    expect(updatedState.completedLevels, {'lvl_seed_01'});
+    expect(updatedState.currentLevel, 'lvl_m01_02');
+    expect(updatedState.completedLevels, {'lvl_m01_01'});
 
     // Complete level 2
-    await notifier.completeLevel('lvl_seed_02');
+    await notifier.completeLevel('lvl_m01_02');
 
-    // Progress should now be updated to lvl_seed_challenge
+    // Progress should now be updated to lvl_m01_challenge
     final challengeState = container.read(gameProgressProvider);
-    expect(challengeState.currentLevel, 'lvl_seed_challenge');
-    expect(challengeState.completedLevels, {'lvl_seed_01', 'lvl_seed_02'});
+    expect(challengeState.currentLevel, 'lvl_m01_challenge');
+    expect(challengeState.completedLevels, {'lvl_m01_01', 'lvl_m01_02'});
   });
 }

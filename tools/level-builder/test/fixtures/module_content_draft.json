@@ -1,0 +1,745 @@
+{
+  "version": "0.1-draft",
+  "note": "REVIEW DRAFT for modules 6-24 (levels 106-504). NOT wired into the app: modules.json still carries modules 1-5 only, and biblical_themes.json / scripture_library.json are unchanged. Promotion (Phase 2) appends each module entry + theme passages + library texts, then runs validators. Micro IDs use the generic mNN scheme (avoids the old seed_*/growth_* dual-ID confusion). Triggers follow the house cadence: micros at lvl_mNN_05/10/15/20, parable at lvl_mNN_challenge. Library KJV is filled where short and certain; longer parable texts and all NET entries are marked TODO to be lifted from a verified source at implementation (the journal integrity test requires every reference KEY to exist; placeholder text must never ship). This draft supersedes scripture_pack_2_draft.json (its 6 parable candidates are absorbed below).",
+  "modules": [
+    {
+      "id": 6,
+      "name": "Grove",
+      "theme_seed": "grove",
+      "unlock_message": "Walk with your neighbor...",
+      "parable": {
+        "title": "The Good Samaritan",
+        "scripture": "Luke 10:25-37",
+        "content": "A traveler beaten and left for dead is passed by, until a Samaritan stops, binds his wounds, and pays for his care.",
+        "reflection": "Who is your neighbor that God calls you to love with action?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m06_micro_1", "trigger_level": "lvl_m06_05", "reference": "Micah 6:8", "title": "Walk Humbly in Mercy", "type": "supporting"},
+        {"id": "m06_micro_2", "trigger_level": "lvl_m06_10", "reference": "John 13:34", "title": "Love One Another", "type": "supporting"},
+        {"id": "m06_micro_3", "trigger_level": "lvl_m06_15", "reference": "Romans 13:10", "title": "Love Fulfills the Law", "type": "supporting"},
+        {"id": "m06_micro_4", "trigger_level": "lvl_m06_20", "reference": "Luke 6:31", "title": "The Golden Rule", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "mercy",
+        "name": "Mercy & Neighbor Love",
+        "description": "Crossing the road for others, showing the mercy we have received in Christ.",
+        "icon": "favorite",
+        "passages": [
+          {"id": "m06_micro_1", "title": "Walk Humbly in Mercy", "reference": "Micah 6:8", "type": "micro", "trigger_level": "lvl_m06_05", "reflection_prompts": ["What does the Lord require of you in your most difficult relationship right now?", "Where can kindness replace judgment in your week?"]},
+          {"id": "m06_micro_2", "title": "Love One Another", "reference": "John 13:34", "type": "micro", "trigger_level": "lvl_m06_10", "reflection_prompts": ["How does Christ's love set the measure for your love?", "Who would know you follow Jesus by the way you love?"]},
+          {"id": "m06_micro_3", "title": "Love Fulfills the Law", "reference": "Romans 13:10", "type": "micro", "trigger_level": "lvl_m06_15", "reflection_prompts": ["What rule-keeping in you needs to become love-giving?", "Who is hard to love, and what would love do for them today?"]},
+          {"id": "m06_micro_4", "title": "The Golden Rule", "reference": "Luke 6:31", "type": "micro", "trigger_level": "lvl_m06_20", "reflection_prompts": ["What treatment are you longing for that you could give first?", "How would your home change if everyone lived this verse?"]},
+          {"id": "m06_parable", "title": "The Good Samaritan", "reference": "Luke 10:25-37", "type": "parable", "trigger_level": "lvl_m06_challenge", "reflection_prompts": ["Who is easy to overlook that God is placing on your path?", "What practical mercy will cost you time or comfort — and will you give it?"]}
+        ]
+      },
+      "library": {
+        "Micah 6:8": {"KJV": "He hath shewed thee, O man, what is good; and what doth the LORD require of thee, but to do justly, and to love mercy, and to walk humbly with thy God?", "NET": "TODO"},
+        "John 13:34": {"KJV": "A new commandment I give unto you, That ye love one another; as I have loved you, that ye also love one another.", "NET": "TODO"},
+        "Romans 13:10": {"KJV": "Love worketh no ill to his neighbour: therefore love is the fulfilling of the law.", "NET": "TODO"},
+        "Luke 6:31": {"KJV": "And as ye would that men should do to you, do ye also to them likewise.", "NET": "TODO"},
+        "Luke 10:25-37": {"KJV": "TODO (full parable text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 7,
+      "name": "Vineyard",
+      "theme_seed": "vineyard",
+      "unlock_message": "Come home to grace...",
+      "parable": {
+        "title": "The Prodigal Son",
+        "scripture": "Luke 15:11-32",
+        "content": "A son squanders his inheritance and returns in shame, but his father runs to meet him with a robe, a ring, and a feast.",
+        "reflection": "Where is the Father inviting you home — or inviting you to celebrate another's return?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m07_micro_1", "trigger_level": "lvl_m07_05", "reference": "Luke 15:20", "title": "The Father Runs", "type": "supporting"},
+        {"id": "m07_micro_2", "trigger_level": "lvl_m07_10", "reference": "Romans 5:8", "title": "Loved While Lost", "type": "supporting"},
+        {"id": "m07_micro_3", "trigger_level": "lvl_m07_15", "reference": "Ephesians 2:8", "title": "Grace, Not Wages", "type": "supporting"},
+        {"id": "m07_micro_4", "trigger_level": "lvl_m07_20", "reference": "1 John 1:9", "title": "Confess and Be Cleansed", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "grace",
+        "name": "Grace & Return",
+        "description": "The Father's welcome for returning sinners and the older brother's invitation to joy.",
+        "icon": "spa",
+        "passages": [
+          {"id": "m07_micro_1", "title": "The Father Runs", "reference": "Luke 15:20", "type": "micro", "trigger_level": "lvl_m07_05", "reflection_prompts": ["What keeps you from running home to the Father's embrace?", "How does God's eagerness to forgive reshape your repentance?"]},
+          {"id": "m07_micro_2", "title": "Loved While Lost", "reference": "Romans 5:8", "type": "micro", "trigger_level": "lvl_m07_10", "reflection_prompts": ["When did Christ's love find you at your worst?", "Who needs to hear they are loved before they clean up?"]},
+          {"id": "m07_micro_3", "title": "Grace, Not Wages", "reference": "Ephesians 2:8", "type": "micro", "trigger_level": "lvl_m07_15", "reflection_prompts": ["Where are you trying to earn what God gives freely?", "How does grace as gift change your service?"]},
+          {"id": "m07_micro_4", "title": "Confess and Be Cleansed", "reference": "1 John 1:9", "type": "micro", "trigger_level": "lvl_m07_20", "reflection_prompts": ["What unconfessed weight are you carrying today?", "What would full cleansing free you to do?"]},
+          {"id": "m07_parable", "title": "The Prodigal Son", "reference": "Luke 15:11-32", "type": "parable", "trigger_level": "lvl_m07_challenge", "reflection_prompts": ["Are you the younger son, the older brother, or learning to be the father?", "Whose return are you being asked to celebrate?"]}
+        ]
+      },
+      "library": {
+        "Luke 15:20": {"KJV": "And he arose, and came to his father. But when he was yet a great way off, his father saw him, and had compassion, and ran, and fell on his neck, and kissed him.", "NET": "TODO"},
+        "Romans 5:8": {"KJV": "But God commendeth his love toward us, in that, while we were yet sinners, Christ died for us.", "NET": "TODO"},
+        "Ephesians 2:8": {"KJV": "For by grace are ye saved through faith; and that not of yourselves: it is the gift of God.", "NET": "TODO"},
+        "1 John 1:9": {"KJV": "If we confess our sins, he is faithful and just to forgive us our sins, and to cleanse us from all unrighteousness.", "NET": "TODO"},
+        "Luke 15:11-32": {"KJV": "TODO (full parable text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 8,
+      "name": "Pasture",
+      "theme_seed": "pasture",
+      "unlock_message": "Invest what you were given...",
+      "parable": {
+        "title": "The Talents",
+        "scripture": "Matthew 25:14-30",
+        "content": "A master entrusts servants with talents before a journey; the faithful multiply them and hear 'well done,' while fear buries its portion.",
+        "reflection": "What talent has God entrusted to you that He wants multiplied?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m08_micro_1", "trigger_level": "lvl_m08_05", "reference": "Matthew 25:21", "title": "Well Done", "type": "supporting"},
+        {"id": "m08_micro_2", "trigger_level": "lvl_m08_10", "reference": "Colossians 3:23", "title": "Work for the Lord", "type": "supporting"},
+        {"id": "m08_micro_3", "trigger_level": "lvl_m08_15", "reference": "1 Corinthians 4:2", "title": "Faithful Stewards", "type": "supporting"},
+        {"id": "m08_micro_4", "trigger_level": "lvl_m08_20", "reference": "Luke 16:10", "title": "Faithful in Little", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "stewardship",
+        "name": "Stewardship & Diligence",
+        "description": "Multiplying what God entrusts to us instead of burying it in fear.",
+        "icon": "eco",
+        "passages": [
+          {"id": "m08_micro_1", "title": "Well Done", "reference": "Matthew 25:21", "type": "micro", "trigger_level": "lvl_m08_05", "reflection_prompts": ["What would hearing 'well done' require of you this week?", "Whose joy are you invited to enter through faithfulness?"]},
+          {"id": "m08_micro_2", "title": "Work for the Lord", "reference": "Colossians 3:23", "type": "micro", "trigger_level": "lvl_m08_10", "reflection_prompts": ["What task changes when done for Christ rather than people?", "Where has your work become half-hearted?"]},
+          {"id": "m08_micro_3", "title": "Faithful Stewards", "reference": "1 Corinthians 4:2", "type": "micro", "trigger_level": "lvl_m08_15", "reflection_prompts": ["What has God put in your hands to manage?", "How do you measure faithfulness apart from results?"]},
+          {"id": "m08_micro_4", "title": "Faithful in Little", "reference": "Luke 16:10", "type": "micro", "trigger_level": "lvl_m08_20", "reflection_prompts": ["What small trust are you tempted to neglect?", "How might today's small obedience unlock tomorrow's charge?"]},
+          {"id": "m08_parable", "title": "The Talents", "reference": "Matthew 25:14-30", "type": "parable", "trigger_level": "lvl_m08_challenge", "reflection_prompts": ["What fear tempts you to bury what God gave you?", "What faithful small investment can you make this week?"]}
+        ]
+      },
+      "library": {
+        "Matthew 25:21": {"KJV": "His lord said unto him, Well done, thou good and faithful servant: thou hast been faithful over a few things, I will make thee ruler over many things: enter thou into the joy of thy lord.", "NET": "TODO"},
+        "Colossians 3:23": {"KJV": "And whatsoever ye do, do it heartily, as to the Lord, and not unto men.", "NET": "TODO"},
+        "1 Corinthians 4:2": {"KJV": "Moreover it is required in stewards, that a man be found faithful.", "NET": "TODO"},
+        "Luke 16:10": {"KJV": "He that is faithful in that which is least is faithful also in much: and he that is unjust in the least is unjust also in much.", "NET": "TODO"},
+        "Matthew 25:14-30": {"KJV": "TODO (full parable text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 9,
+      "name": "Thicket",
+      "theme_seed": "thicket",
+      "unlock_message": "You are sought and known...",
+      "parable": {
+        "title": "The Lost Sheep",
+        "scripture": "Luke 15:1-7",
+        "content": "A shepherd leaves ninety-nine sheep to search for one that is lost, and heaven rejoices when it is found.",
+        "reflection": "Who is the one God is sending you to seek with patient love?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m09_micro_1", "trigger_level": "lvl_m09_05", "reference": "Luke 15:4", "title": "Go After the One", "type": "supporting"},
+        {"id": "m09_micro_2", "trigger_level": "lvl_m09_10", "reference": "John 10:11", "title": "The Good Shepherd", "type": "supporting"},
+        {"id": "m09_micro_3", "trigger_level": "lvl_m09_15", "reference": "Psalm 23:1", "title": "The Lord My Shepherd", "type": "supporting"},
+        {"id": "m09_micro_4", "trigger_level": "lvl_m09_20", "reference": "Isaiah 40:11", "title": "Gathered in His Arms", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "seeking",
+        "name": "Seeking & Belonging",
+        "description": "The Shepherd who pursues the wandering and carries the weary home.",
+        "icon": "park",
+        "passages": [
+          {"id": "m09_micro_1", "title": "Go After the One", "reference": "Luke 15:4", "type": "micro", "trigger_level": "lvl_m09_05", "reflection_prompts": ["Who in your life feels lost and needs pursuit, not judgment?", "What would leaving the ninety-nine look like for you?"]},
+          {"id": "m09_micro_2", "title": "The Good Shepherd", "reference": "John 10:11", "type": "micro", "trigger_level": "lvl_m09_10", "reflection_prompts": ["How does Christ laying down His life reshape your worth?", "What hired-hand voices are you listening to instead?"]},
+          {"id": "m09_micro_3", "title": "The Lord My Shepherd", "reference": "Psalm 23:1", "type": "micro", "trigger_level": "lvl_m09_15", "reflection_prompts": ["What lack feels most pressing, and what does 'I shall not want' say to it?", "How is the Shepherd providing that you have overlooked?"]},
+          {"id": "m09_micro_4", "title": "Gathered in His Arms", "reference": "Isaiah 40:11", "type": "micro", "trigger_level": "lvl_m09_20", "reflection_prompts": ["Where do you need to be carried rather than driven?", "Who around you needs gentle leading today?"]},
+          {"id": "m09_parable", "title": "The Lost Sheep", "reference": "Luke 15:1-7", "type": "parable", "trigger_level": "lvl_m09_challenge", "reflection_prompts": ["How does heaven's joy over one reshape your priorities?", "Who will you begin praying for and pursuing this week?"]}
+        ]
+      },
+      "library": {
+        "Luke 15:4": {"KJV": "What man of you, having an hundred sheep, if he lose one of them, doth not leave the ninety and nine in the wilderness, and go after that which is lost, until he find it?", "NET": "TODO"},
+        "John 10:11": {"KJV": "I am the good shepherd: the good shepherd giveth his life for the sheep.", "NET": "TODO"},
+        "Psalm 23:1": {"KJV": "The LORD is my shepherd; I shall not want.", "NET": "TODO"},
+        "Isaiah 40:11": {"KJV": "He shall feed his flock like a shepherd: he shall gather the lambs with his arm, and carry them in his bosom, and shall gently lead those that are with young.", "NET": "TODO"},
+        "Luke 15:1-7": {"KJV": "TODO (full parable text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 10,
+      "name": "Glade",
+      "theme_seed": "glade",
+      "unlock_message": "Small faith, wide influence...",
+      "parable": {
+        "title": "The Leaven",
+        "scripture": "Matthew 13:33",
+        "content": "A woman hides a little leaven in a large batch of dough until the whole batch is leavened — so the kingdom quietly spreads.",
+        "reflection": "What small faithful influence is God multiplying through you unseen?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m10_micro_1", "trigger_level": "lvl_m10_05", "reference": "Matthew 5:16", "title": "Let Your Light Shine", "type": "supporting"},
+        {"id": "m10_micro_2", "trigger_level": "lvl_m10_10", "reference": "Matthew 13:33", "title": "Hidden Leaven", "type": "supporting"},
+        {"id": "m10_micro_3", "trigger_level": "lvl_m10_15", "reference": "Galatians 5:9", "title": "A Little Leaven", "type": "supporting"},
+        {"id": "m10_micro_4", "trigger_level": "lvl_m10_20", "reference": "1 Corinthians 15:33", "title": "Choose Your Company", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "influence",
+        "name": "Quiet Influence",
+        "description": "How small, hidden faithfulness leavens homes, workplaces, and communities.",
+        "icon": "landscape",
+        "passages": [
+          {"id": "m10_micro_1", "title": "Let Your Light Shine", "reference": "Matthew 5:16", "type": "micro", "trigger_level": "lvl_m10_05", "reflection_prompts": ["What good work of yours needs to be seen so God is glorified?", "Where are you hiding a light that should shine?"]},
+          {"id": "m10_micro_2", "title": "Hidden Leaven", "reference": "Matthew 13:33", "type": "micro", "trigger_level": "lvl_m10_10", "reflection_prompts": ["What hidden growth are you trusting God with?", "How does the kingdom's quietness encourage your patience?"]},
+          {"id": "m10_micro_3", "title": "A Little Leaven", "reference": "Galatians 5:9", "type": "micro", "trigger_level": "lvl_m10_15", "reflection_prompts": ["What small compromise is spreading further than you admit?", "What small obedience could spread instead?"]},
+          {"id": "m10_micro_4", "title": "Choose Your Company", "reference": "1 Corinthians 15:33", "type": "micro", "trigger_level": "lvl_m10_20", "reflection_prompts": ["Who is shaping your habits without you noticing?", "What friendship needs new boundaries this week?"]},
+          {"id": "m10_parable", "title": "The Leaven", "reference": "Matthew 13:33", "type": "parable", "trigger_level": "lvl_m10_challenge", "reflection_prompts": ["Where can quiet faithfulness leaven your home or work?", "What whole-batch change are you praying for?"]}
+        ]
+      },
+      "library": {
+        "Matthew 5:16": {"KJV": "Let your light so shine before men, that they may see your good works, and glorify your Father which is in heaven.", "NET": "TODO"},
+        "Matthew 13:33": {"KJV": "Another parable spake he unto them; The kingdom of heaven is like unto leaven, which a woman took, and hid in three measures of meal, till the whole was leavened.", "NET": "TODO"},
+        "Galatians 5:9": {"KJV": "A little leaven leaveneth the whole lump.", "NET": "TODO"},
+        "1 Corinthians 15:33": {"KJV": "Be not deceived: evil communications corrupt good manners.", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 11,
+      "name": "Terrace",
+      "theme_seed": "terrace",
+      "unlock_message": "Count the cost with joy...",
+      "parable": {
+        "title": "The Pearl of Great Value",
+        "scripture": "Matthew 13:45-46",
+        "content": "A merchant seeking fine pearls finds one of surpassing worth and sells all he has to possess it.",
+        "reflection": "What is Christ worth to you — what would joyful surrender look like?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m11_micro_1", "trigger_level": "lvl_m11_05", "reference": "Matthew 13:46", "title": "Sold All for Joy", "type": "supporting"},
+        {"id": "m11_micro_2", "trigger_level": "lvl_m11_10", "reference": "Philippians 3:8", "title": "Loss for Christ", "type": "supporting"},
+        {"id": "m11_micro_3", "trigger_level": "lvl_m11_15", "reference": "Matthew 6:21", "title": "Where Your Treasure Is", "type": "supporting"},
+        {"id": "m11_micro_4", "trigger_level": "lvl_m11_20", "reference": "Psalm 73:25", "title": "None Upon Earth", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "worth",
+        "name": "Supreme Worth",
+        "description": "Treasure Christ above all competitors and surrender with joy.",
+        "icon": "landscape",
+        "passages": [
+          {"id": "m11_micro_1", "title": "Sold All for Joy", "reference": "Matthew 13:46", "type": "micro", "trigger_level": "lvl_m11_05", "reflection_prompts": ["What would you joyfully sell to possess Christ more fully?", "Where is surrender still reluctant rather than joyful?"]},
+          {"id": "m11_micro_2", "title": "Loss for Christ", "reference": "Philippians 3:8", "type": "micro", "trigger_level": "lvl_m11_10", "reflection_prompts": ["What former gain do you now count as loss?", "How does knowing Christ surpass your best achievement?"]},
+          {"id": "m11_micro_3", "title": "Where Your Treasure Is", "reference": "Matthew 6:21", "type": "micro", "trigger_level": "lvl_m11_15", "reflection_prompts": ["What does your spending and time reveal about your treasure?", "What one shift would move your heart heavenward?"]},
+          {"id": "m11_micro_4", "title": "None Upon Earth", "reference": "Psalm 73:25", "type": "micro", "trigger_level": "lvl_m11_20", "reflection_prompts": ["Who besides God are you leaning on for ultimate satisfaction?", "How does desiring God first reorder your other desires?"]},
+          {"id": "m11_parable", "title": "The Pearl of Great Value", "reference": "Matthew 13:45-46", "type": "parable", "trigger_level": "lvl_m11_challenge", "reflection_prompts": ["What competes with Christ for supreme value in your life?", "What one act would show you treasure the kingdom above all?"]}
+        ]
+      },
+      "library": {
+        "Matthew 13:46": {"KJV": "Who, when he had found one pearl of great price, went and sold all that he had, and bought it.", "NET": "TODO"},
+        "Philippians 3:8": {"KJV": "Yea doubtless, and I count all things but loss for the excellency of the knowledge of Christ Jesus my Lord.", "NET": "TODO"},
+        "Matthew 6:21": {"KJV": "For where your treasure is, there will your heart be also.", "NET": "TODO"},
+        "Psalm 73:25": {"KJV": "Whom have I in heaven but thee? and there is none upon earth that I desire beside thee.", "NET": "TODO"},
+        "Matthew 13:45-46": {"KJV": "TODO (full parable text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 12,
+      "name": "Nursery",
+      "theme_seed": "nursery",
+      "unlock_message": "Heaven celebrates return...",
+      "parable": {
+        "title": "The Lost Coin",
+        "scripture": "Luke 15:8-10",
+        "content": "A woman loses a precious coin, lights a lamp, sweeps diligently until she finds it, and calls her friends to rejoice.",
+        "reflection": "What lost thing is worth your diligent searching — and who will you invite to rejoice?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m12_micro_1", "trigger_level": "lvl_m12_05", "reference": "Luke 15:10", "title": "Joy Before Angels", "type": "supporting"},
+        {"id": "m12_micro_2", "trigger_level": "lvl_m12_10", "reference": "Zephaniah 3:17", "title": "He Rejoices Over You", "type": "supporting"},
+        {"id": "m12_micro_3", "trigger_level": "lvl_m12_15", "reference": "John 15:11", "title": "Fullness of Joy", "type": "supporting"},
+        {"id": "m12_micro_4", "trigger_level": "lvl_m12_20", "reference": "Nehemiah 8:10", "title": "Joy of the Lord", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "celebration",
+        "name": "Diligence & Celebration",
+        "description": "Searching carefully for what matters and rejoicing loudly when it is found.",
+        "icon": "wb_sunny",
+        "passages": [
+          {"id": "m12_micro_1", "title": "Joy Before Angels", "reference": "Luke 15:10", "type": "micro", "trigger_level": "lvl_m12_05", "reflection_prompts": ["Whose repentance would make you throw a party?", "How does heaven's joy recalibrate your view of one sinner?"]},
+          {"id": "m12_micro_2", "title": "He Rejoices Over You", "reference": "Zephaniah 3:17", "type": "micro", "trigger_level": "lvl_m12_10", "reflection_prompts": ["Can you receive that God sings over you?", "What fear quiets when you hear His rejoicing?"]},
+          {"id": "m12_micro_3", "title": "Fullness of Joy", "reference": "John 15:11", "type": "micro", "trigger_level": "lvl_m12_15", "reflection_prompts": ["What is draining Christ's joy from your heart?", "How does abiding refill joy to fullness?"]},
+          {"id": "m12_micro_4", "title": "Joy of the Lord", "reference": "Nehemiah 8:10", "type": "micro", "trigger_level": "lvl_m12_20", "reflection_prompts": ["Where has grief replaced strength in your life?", "How can joy become your strength this week?"]},
+          {"id": "m12_parable", "title": "The Lost Coin", "reference": "Luke 15:8-10", "type": "parable", "trigger_level": "lvl_m12_challenge", "reflection_prompts": ["What have you stopped searching for that God still values?", "Who will you call to rejoice with you?"]}
+        ]
+      },
+      "library": {
+        "Luke 15:10": {"KJV": "Likewise, I say unto you, there is joy in the presence of the angels of God over one sinner that repenteth.", "NET": "TODO"},
+        "Zephaniah 3:17": {"KJV": "The LORD thy God in the midst of thee is mighty; he will save, he will rejoice over thee with joy; he will rest in his love, he will joy over thee with singing.", "NET": "TODO"},
+        "John 15:11": {"KJV": "These things have I spoken unto you, that my joy might remain in you, and that your joy might be full.", "NET": "TODO"},
+        "Nehemiah 8:10": {"KJV": "The joy of the LORD is your strength.", "NET": "TODO (full verse)"},
+        "Luke 15:8-10": {"KJV": "TODO (full parable text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 13,
+      "name": "Apiary",
+      "theme_seed": "apiary",
+      "unlock_message": "Forgive as you are forgiven...",
+      "parable": {
+        "title": "The Unforgiving Servant",
+        "scripture": "Matthew 18:21-35",
+        "content": "A servant forgiven an unpayable debt refuses to forgive a small one, and learns that forgiven people forgive.",
+        "reflection": "What debt are you holding that grace already cancelled?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m13_micro_1", "trigger_level": "lvl_m13_05", "reference": "Matthew 6:14", "title": "Forgive to Be Forgiven", "type": "supporting"},
+        {"id": "m13_micro_2", "trigger_level": "lvl_m13_10", "reference": "Ephesians 4:32", "title": "Kind and Tenderhearted", "type": "supporting"},
+        {"id": "m13_micro_3", "trigger_level": "lvl_m13_15", "reference": "Colossians 3:13", "title": "Bearing With One Another", "type": "supporting"},
+        {"id": "m13_micro_4", "trigger_level": "lvl_m13_20", "reference": "Matthew 18:22", "title": "Seventy Times Seven", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "forgiveness",
+        "name": "Forgiveness",
+        "description": "Releasing debts because Christ released ours, seventy times seven.",
+        "icon": "spa",
+        "passages": [
+          {"id": "m13_micro_1", "title": "Forgive to Be Forgiven", "reference": "Matthew 6:14", "type": "micro", "trigger_level": "lvl_m13_05", "reflection_prompts": ["Who do you need to forgive so your own heart stays free?", "What happens in you when you refuse?"]},
+          {"id": "m13_micro_2", "title": "Kind and Tenderhearted", "reference": "Ephesians 4:32", "type": "micro", "trigger_level": "lvl_m13_10", "reflection_prompts": ["Where has bitterness hardened your tenderness?", "What would Christlike kindness do in that relationship?"]},
+          {"id": "m13_micro_3", "title": "Bearing With One Another", "reference": "Colossians 3:13", "type": "micro", "trigger_level": "lvl_m13_15", "reflection_prompts": ["What complaint are you nursing that love should cover?", "How does Christ's forgiveness of you set your standard?"]},
+          {"id": "m13_micro_4", "title": "Seventy Times Seven", "reference": "Matthew 18:22", "type": "micro", "trigger_level": "lvl_m13_20", "reflection_prompts": ["Are you counting offenses or cancelling them?", "What would unlimited forgiveness cost you — and free you from?"]},
+          {"id": "m13_parable", "title": "The Unforgiving Servant", "reference": "Matthew 18:21-35", "type": "parable", "trigger_level": "lvl_m13_challenge", "reflection_prompts": ["Compare your debt to God with the debt owed you — what changes?", "Who needs your forgiveness today?"]}
+        ]
+      },
+      "library": {
+        "Matthew 6:14": {"KJV": "For if ye forgive men their trespasses, your heavenly Father will also forgive you.", "NET": "TODO"},
+        "Ephesians 4:32": {"KJV": "And be ye kind one to another, tenderhearted, forgiving one another, even as God for Christ's sake hath forgiven you.", "NET": "TODO"},
+        "Colossians 3:13": {"KJV": "Forbearing one another, and forgiving one another, if any man have a quarrel against any: even as Christ forgave you, so also do ye.", "NET": "TODO"},
+        "Matthew 18:22": {"KJV": "Jesus saith unto him, I say not unto thee, Until seven times: but, Until seventy times seven.", "NET": "TODO"},
+        "Matthew 18:21-35": {"KJV": "TODO (full parable text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 14,
+      "name": "Mill",
+      "theme_seed": "mill",
+      "unlock_message": "Follow the Shepherd's voice...",
+      "parable": {
+        "title": "The Good Shepherd's Fold",
+        "scripture": "John 10:1-18",
+        "content": "The shepherd enters by the door, calls his sheep by name, and lays down his life for them — and they know his voice.",
+        "reflection": "How do you recognize the Shepherd's voice among strangers?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m14_micro_1", "trigger_level": "lvl_m14_05", "reference": "John 10:14", "title": "Known by Name", "type": "supporting"},
+        {"id": "m14_micro_2", "trigger_level": "lvl_m14_10", "reference": "Psalm 23:4", "title": "Valley and Rod", "type": "supporting"},
+        {"id": "m14_micro_3", "trigger_level": "lvl_m14_15", "reference": "Hebrews 13:20", "title": "Great Shepherd", "type": "supporting"},
+        {"id": "m14_micro_4", "trigger_level": "lvl_m14_20", "reference": "1 Peter 5:4", "title": "Unfading Crown", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "guidance",
+        "name": "Guidance & Care",
+        "description": "Knowing the Shepherd's voice and following Him through every valley.",
+        "icon": "explore",
+        "passages": [
+          {"id": "m14_micro_1", "title": "Known by Name", "reference": "John 10:14", "type": "micro", "trigger_level": "lvl_m14_05", "reflection_prompts": ["When has God called you unmistakably by name?", "What strangers' voices compete for your following?"]},
+          {"id": "m14_micro_2", "title": "Valley and Rod", "reference": "Psalm 23:4", "type": "micro", "trigger_level": "lvl_m14_10", "reflection_prompts": ["What valley are you walking that His presence must steady?", "How have His rod and staff comforted you before?"]},
+          {"id": "m14_micro_3", "title": "Great Shepherd", "reference": "Hebrews 13:20", "type": "micro", "trigger_level": "lvl_m14_15", "reflection_prompts": ["What good work is God equipping you for right now?", "How does the blood of the covenant secure your calling?"]},
+          {"id": "m14_micro_4", "title": "Unfading Crown", "reference": "1 Peter 5:4", "type": "micro", "trigger_level": "lvl_m14_20", "reflection_prompts": ["Where are you shepherding others faithfully and unseen?", "How does an unfading crown reframe present obscurity?"]},
+          {"id": "m14_parable", "title": "The Good Shepherd's Fold", "reference": "John 10:1-18", "type": "parable", "trigger_level": "lvl_m14_challenge", "reflection_prompts": ["Do you enter by the door, or climb in another way?", "Who follows you as you follow Christ?"]}
+        ]
+      },
+      "library": {
+        "John 10:14": {"KJV": "I am the good shepherd, and know my sheep, and am known of mine.", "NET": "TODO"},
+        "Psalm 23:4": {"KJV": "Yea, though I walk through the valley of the shadow of death, I will fear no evil: for thou art with me; thy rod and thy staff they comfort me.", "NET": "TODO"},
+        "Hebrews 13:20": {"KJV": "TODO (full verse)", "NET": "TODO"},
+        "1 Peter 5:4": {"KJV": "And when the chief Shepherd shall appear, ye shall receive a crown of glory that fadeth not away.", "NET": "TODO"},
+        "John 10:1-18": {"KJV": "TODO (full teaching text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 15,
+      "name": "Wellspring",
+      "theme_seed": "wellspring",
+      "unlock_message": "Shine where you are...",
+      "parable": {
+        "title": "Salt and Light",
+        "scripture": "Matthew 5:13-16",
+        "content": "Disciples are the salt preserving the earth and the light that cannot be hidden — a city on a hill for all to see.",
+        "reflection": "Where has God placed you to preserve and to shine?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m15_micro_1", "trigger_level": "lvl_m15_05", "reference": "Matthew 5:14", "title": "City on a Hill", "type": "supporting"},
+        {"id": "m15_micro_2", "trigger_level": "lvl_m15_10", "reference": "Acts 1:8", "title": "Witnesses Everywhere", "type": "supporting"},
+        {"id": "m15_micro_3", "trigger_level": "lvl_m15_15", "reference": "2 Corinthians 5:20", "title": "Ambassadors", "type": "supporting"},
+        {"id": "m15_micro_4", "trigger_level": "lvl_m15_20", "reference": "Isaiah 60:1", "title": "Arise and Shine", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "witness",
+        "name": "Witness & Mission",
+        "description": "Preserving like salt and shining like a city on a hill, to the ends of the earth.",
+        "icon": "lightbulb",
+        "passages": [
+          {"id": "m15_micro_1", "title": "City on a Hill", "reference": "Matthew 5:14", "type": "micro", "trigger_level": "lvl_m15_05", "reflection_prompts": ["Who watches your life as their nearest picture of Christ?", "What would make your light unmistakable this week?"]},
+          {"id": "m15_micro_2", "title": "Witnesses Everywhere", "reference": "Acts 1:8", "type": "micro", "trigger_level": "lvl_m15_10", "reflection_prompts": ["What is your Jerusalem, Judea, and ends of the earth?", "How is the Spirit empowering your witness right now?"]},
+          {"id": "m15_micro_3", "title": "Ambassadors", "reference": "2 Corinthians 5:20", "type": "micro", "trigger_level": "lvl_m15_15", "reflection_prompts": ["What message of reconciliation are you carrying?", "Who needs God's appeal through you today?"]},
+          {"id": "m15_micro_4", "title": "Arise and Shine", "reference": "Isaiah 60:1", "type": "micro", "trigger_level": "lvl_m15_20", "reflection_prompts": ["What darkness around you is an invitation to shine?", "How does His glory rising change your posture?"]},
+          {"id": "m15_parable", "title": "Salt and Light", "reference": "Matthew 5:13-16", "type": "parable", "trigger_level": "lvl_m15_challenge", "reflection_prompts": ["Where are you losing saltiness or hiding light?", "What one visible good work points to your Father?"]}
+        ]
+      },
+      "library": {
+        "Matthew 5:14": {"KJV": "Ye are the light of the world. A city that is set on an hill cannot be hid.", "NET": "TODO"},
+        "Acts 1:8": {"KJV": "But ye shall receive power, after that the Holy Ghost is come upon you: and ye shall be witnesses unto me both in Jerusalem, and in all Judaea, and in Samaria, and unto the uttermost part of the earth.", "NET": "TODO"},
+        "2 Corinthians 5:20": {"KJV": "Now then we are ambassadors for Christ, as though God did beseech you by us: we pray you in Christ's stead, be ye reconciled to God.", "NET": "TODO"},
+        "Isaiah 60:1": {"KJV": "Arise, shine; for thy light is come, and the glory of the LORD is risen upon thee.", "NET": "TODO"},
+        "Matthew 5:13-16": {"KJV": "TODO (full teaching text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 16,
+      "name": "Olive",
+      "theme_seed": "olive",
+      "unlock_message": "Bear the Spirit's fruit...",
+      "parable": {
+        "title": "The Fruit of the Spirit",
+        "scripture": "Galatians 5:22-23",
+        "content": "Those who walk by the Spirit bear a ninefold harvest — love, joy, peace, and more — against which there is no law.",
+        "reflection": "Which fruit of the Spirit is ripest in you, and which needs tending?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m16_micro_1", "trigger_level": "lvl_m16_05", "reference": "Galatians 5:22", "title": "Love, Joy, Peace", "type": "supporting"},
+        {"id": "m16_micro_2", "trigger_level": "lvl_m16_10", "reference": "2 Peter 1:5", "title": "Add to Your Faith", "type": "supporting"},
+        {"id": "m16_micro_3", "trigger_level": "lvl_m16_15", "reference": "Matthew 7:20", "title": "Known by Fruit", "type": "supporting"},
+        {"id": "m16_micro_4", "trigger_level": "lvl_m16_20", "reference": "John 15:8", "title": "Fruit That Glorifies", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "character",
+        "name": "Character & Fruitfulness",
+        "description": "Growing the Spirit's ninefold fruit that glorifies the Father.",
+        "icon": "eco",
+        "passages": [
+          {"id": "m16_micro_1", "title": "Love, Joy, Peace", "reference": "Galatians 5:22", "type": "micro", "trigger_level": "lvl_m16_05", "reflection_prompts": ["Which of the nine is flourishing, and which is withering?", "What would walking by the Spirit change tomorrow?"]},
+          {"id": "m16_micro_2", "title": "Add to Your Faith", "reference": "2 Peter 1:5", "type": "micro", "trigger_level": "lvl_m16_10", "reflection_prompts": ["What virtue needs adding to your faith diligence?", "How do you pursue growth without striving in the flesh?"]},
+          {"id": "m16_micro_3", "title": "Known by Fruit", "reference": "Matthew 7:20", "type": "micro", "trigger_level": "lvl_m16_15", "reflection_prompts": ["What fruit do others actually taste from your life?", "Where might thorns be choking your harvest?"]},
+          {"id": "m16_micro_4", "title": "Fruit That Glorifies", "reference": "John 15:8", "type": "micro", "trigger_level": "lvl_m16_20", "reflection_prompts": ["How does much fruit prove your discipleship?", "What pruning would increase your yield?"]},
+          {"id": "m16_parable", "title": "The Fruit of the Spirit", "reference": "Galatians 5:22-23", "type": "parable", "trigger_level": "lvl_m16_challenge", "reflection_prompts": ["Against which fruit is there no law — and why does that free you?", "What harvest is God growing through your current season?"]}
+        ]
+      },
+      "library": {
+        "Galatians 5:22": {"KJV": "But the fruit of the Spirit is love, joy, peace, longsuffering, gentleness, goodness, faith,", "NET": "TODO"},
+        "2 Peter 1:5": {"KJV": "And beside this, giving all diligence, add to your faith virtue; and to virtue knowledge;", "NET": "TODO"},
+        "Matthew 7:20": {"KJV": "Wherefore by their fruits ye shall know them.", "NET": "TODO"},
+        "John 15:8": {"KJV": "Herein is my Father glorified, that ye bear much fruit; so shall ye be my disciples.", "NET": "TODO"},
+        "Galatians 5:22-23": {"KJV": "TODO (full text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 17,
+      "name": "Fig",
+      "theme_seed": "fig",
+      "unlock_message": "Stand strong in battle...",
+      "parable": {
+        "title": "The Armor of God",
+        "scripture": "Ephesians 6:10-18",
+        "content": "Paul arrays believers for spiritual battle — truth, righteousness, peace, faith, salvation, the Word — and prayer on every occasion.",
+        "reflection": "Which piece of armor are you neglecting as you enter today's battle?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m17_micro_1", "trigger_level": "lvl_m17_05", "reference": "Ephesians 6:11", "title": "Put On the Armor", "type": "supporting"},
+        {"id": "m17_micro_2", "trigger_level": "lvl_m17_10", "reference": "Philippians 4:13", "title": "Strength in Christ", "type": "supporting"},
+        {"id": "m17_micro_3", "trigger_level": "lvl_m17_15", "reference": "Isaiah 41:10", "title": "Fear Not", "type": "supporting"},
+        {"id": "m17_micro_4", "trigger_level": "lvl_m17_20", "reference": "Psalm 46:1", "title": "Present Help", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "strength",
+        "name": "Strength & Protection",
+        "description": "Standing firm in God's armor against every scheme of darkness.",
+        "icon": "shield",
+        "passages": [
+          {"id": "m17_micro_1", "title": "Put On the Armor", "reference": "Ephesians 6:11", "type": "micro", "trigger_level": "lvl_m17_05", "reflection_prompts": ["Which scheme of the devil targets you most predictably?", "What does putting on truth look like before breakfast?"]},
+          {"id": "m17_micro_2", "title": "Strength in Christ", "reference": "Philippians 4:13", "type": "micro", "trigger_level": "lvl_m17_10", "reflection_prompts": ["What task feels beyond you that Christ must strengthen?", "How does contentment fuel strength rather than striving?"]},
+          {"id": "m17_micro_3", "title": "Fear Not", "reference": "Isaiah 41:10", "type": "micro", "trigger_level": "lvl_m17_15", "reflection_prompts": ["What fear is God answering with His presence today?", "How does His right hand uphold what your hands cannot?"]},
+          {"id": "m17_micro_4", "title": "Present Help", "reference": "Psalm 46:1", "type": "micro", "trigger_level": "lvl_m17_20", "reflection_prompts": ["Where is trouble pressing that refuge must be found?", "How has God proven present in past troubles?"]},
+          {"id": "m17_parable", "title": "The Armor of God", "reference": "Ephesians 6:10-18", "type": "parable", "trigger_level": "lvl_m17_challenge", "reflection_prompts": ["Which piece fits loosely and needs fastening?", "Who are you praying for with all perseverance?"]}
+        ]
+      },
+      "library": {
+        "Ephesians 6:11": {"KJV": "Put on the whole armour of God, that ye may be able to stand against the wiles of the devil.", "NET": "TODO"},
+        "Philippians 4:13": {"KJV": "I can do all things through Christ which strengtheneth me.", "NET": "TODO"},
+        "Isaiah 41:10": {"KJV": "Fear thou not; for I am with thee: be not dismayed; for I am thy God: I will strengthen thee; yea, I will help thee; yea, I will uphold thee with the right hand of my righteousness.", "NET": "TODO"},
+        "Psalm 46:1": {"KJV": "God is our refuge and strength, a very present help in trouble.", "NET": "TODO"},
+        "Ephesians 6:10-18": {"KJV": "TODO (full teaching text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 18,
+      "name": "Wheat",
+      "theme_seed": "wheat",
+      "unlock_message": "Rest in the Shepherd...",
+      "parable": {
+        "title": "The Shepherd's Psalm",
+        "scripture": "Psalm 23:1-6",
+        "content": "David sings the Shepherd who provides, restores, guides, protects, anoints, and pursues — goodness and mercy all our days.",
+        "reflection": "Which pasture of this psalm does your soul need most today?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m18_micro_1", "trigger_level": "lvl_m18_05", "reference": "Psalm 23:1", "title": "No Want", "type": "supporting"},
+        {"id": "m18_micro_2", "trigger_level": "lvl_m18_10", "reference": "Philippians 4:19", "title": "Every Need Supplied", "type": "supporting"},
+        {"id": "m18_micro_3", "trigger_level": "lvl_m18_15", "reference": "Matthew 6:33", "title": "Seek First", "type": "supporting"},
+        {"id": "m18_micro_4", "trigger_level": "lvl_m18_20", "reference": "Genesis 22:14", "title": "The Lord Provides", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "provision",
+        "name": "Provision & Rest",
+        "description": "Trusting the Shepherd's supply and resting in green pastures.",
+        "icon": "grass",
+        "passages": [
+          {"id": "m18_micro_1", "title": "No Want", "reference": "Psalm 23:1", "type": "micro", "trigger_level": "lvl_m18_05", "reflection_prompts": ["Name your most pressing want before the Shepherd.", "How does His ownership of you settle scarcity?"]},
+          {"id": "m18_micro_2", "title": "Every Need Supplied", "reference": "Philippians 4:19", "type": "micro", "trigger_level": "lvl_m18_10", "reflection_prompts": ["What need feels bigger than His riches?", "How has He supplied before in ways you missed?"]},
+          {"id": "m18_micro_3", "title": "Seek First", "reference": "Matthew 6:33", "type": "micro", "trigger_level": "lvl_m18_15", "reflection_prompts": ["What are you seeking before the kingdom?", "What 'all these things' would follow reordered loves?"]},
+          {"id": "m18_micro_4", "title": "The Lord Provides", "reference": "Genesis 22:14", "type": "micro", "trigger_level": "lvl_m18_20", "reflection_prompts": ["Where do you need Jehovah-Jireh to show up?", "What altar of trust is He asking you to build?"]},
+          {"id": "m18_parable", "title": "The Shepherd's Psalm", "reference": "Psalm 23:1-6", "type": "parable", "trigger_level": "lvl_m18_challenge", "reflection_prompts": ["Which verse of the psalm will you pray all week?", "Who needs to hear of this Shepherd from you?"]}
+        ]
+      },
+      "library": {
+        "Psalm 23:1": {"KJV": "The LORD is my shepherd; I shall not want.", "NET": "TODO"},
+        "Philippians 4:19": {"KJV": "But my God shall supply all your need according to his riches in glory by Christ Jesus.", "NET": "TODO"},
+        "Matthew 6:33": {"KJV": "But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you.", "NET": "TODO"},
+        "Genesis 22:14": {"KJV": "And Abraham called the name of that place Jehovahjireh: as it is said to this day, In the mount of the LORD it shall be seen.", "NET": "TODO"},
+        "Psalm 23:1-6": {"KJV": "TODO (full psalm text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 19,
+      "name": "Barley",
+      "theme_seed": "barley",
+      "unlock_message": "Become new every morning...",
+      "parable": {
+        "title": "The New Creation",
+        "scripture": "2 Corinthians 5:17",
+        "content": "In Christ the old passes away and the new has come — renewed minds, fresh mercies, and a spring in the desert.",
+        "reflection": "What old thing is Christ making new in you right now?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m19_micro_1", "trigger_level": "lvl_m19_05", "reference": "2 Corinthians 5:17", "title": "New Creation", "type": "supporting"},
+        {"id": "m19_micro_2", "trigger_level": "lvl_m19_10", "reference": "Isaiah 43:19", "title": "A New Thing", "type": "supporting"},
+        {"id": "m19_micro_3", "trigger_level": "lvl_m19_15", "reference": "Romans 12:2", "title": "Renewed Mind", "type": "supporting"},
+        {"id": "m19_micro_4", "trigger_level": "lvl_m19_20", "reference": "Lamentations 3:23", "title": "New Every Morning", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "renewal",
+        "name": "Renewal & Transformation",
+        "description": "Old things passing away as Christ makes all things new.",
+        "icon": "wb_sunny",
+        "passages": [
+          {"id": "m19_micro_1", "title": "New Creation", "reference": "2 Corinthians 5:17", "type": "micro", "trigger_level": "lvl_m19_05", "reflection_prompts": ["What old label are you still wearing that Christ removed?", "How does newness change your oldest habit?"]},
+          {"id": "m19_micro_2", "title": "A New Thing", "reference": "Isaiah 43:19", "type": "micro", "trigger_level": "lvl_m19_10", "reflection_prompts": ["Where is God doing a new thing you have been slow to perceive?", "What desert road is He carving for you?"]},
+          {"id": "m19_micro_3", "title": "Renewed Mind", "reference": "Romans 12:2", "type": "micro", "trigger_level": "lvl_m19_15", "reflection_prompts": ["What worldly pattern is pressing you into its mold?", "What truth must renew your thinking this week?"]},
+          {"id": "m19_micro_4", "title": "New Every Morning", "reference": "Lamentations 3:23", "type": "micro", "trigger_level": "lvl_m19_20", "reflection_prompts": ["How does morning mercy change yesterday's failure?", "What does His great faithfulness steady in you?"]},
+          {"id": "m19_parable", "title": "The New Creation", "reference": "2 Corinthians 5:17", "type": "parable", "trigger_level": "lvl_m19_challenge", "reflection_prompts": ["Who needs to meet the new you, not the old?", "What new creation fruit will you show this month?"]}
+        ]
+      },
+      "library": {
+        "2 Corinthians 5:17": {"KJV": "Therefore if any man be in Christ, he is a new creature: old things are passed away; behold, all things are become new.", "NET": "TODO"},
+        "Isaiah 43:19": {"KJV": "Behold, I will do a new thing; now it shall spring forth; shall ye not know it? I will even make a way in the wilderness, and rivers in the desert.", "NET": "TODO"},
+        "Romans 12:2": {"KJV": "And be not conformed to this world: but be ye transformed by the renewing of your mind, that ye may prove what is that good, and acceptable, and perfect, will of God.", "NET": "TODO"},
+        "Lamentations 3:23": {"KJV": "They are new every morning: great is thy faithfulness.", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 20,
+      "name": "Cedar",
+      "theme_seed": "cedar",
+      "unlock_message": "Greatness serves...",
+      "parable": {
+        "title": "The Towel and Basin",
+        "scripture": "John 13:1-17",
+        "content": "On His last night, Jesus wraps a towel around Himself and washes His disciples' feet — the Master as servant.",
+        "reflection": "Whose feet is Christ asking you to wash this week?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m20_micro_1", "trigger_level": "lvl_m20_05", "reference": "John 13:14", "title": "Wash One Another", "type": "supporting"},
+        {"id": "m20_micro_2", "trigger_level": "lvl_m20_10", "reference": "Philippians 2:3", "title": "Count Others First", "type": "supporting"},
+        {"id": "m20_micro_3", "trigger_level": "lvl_m20_15", "reference": "Mark 10:45", "title": "Serve and Give", "type": "supporting"},
+        {"id": "m20_micro_4", "trigger_level": "lvl_m20_20", "reference": "1 Peter 5:6", "title": "Humble and Exalted", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "humility",
+        "name": "Humility & Service",
+        "description": "Greatness through the towel — serving as Christ served.",
+        "icon": "water_drop",
+        "passages": [
+          {"id": "m20_micro_1", "title": "Wash One Another", "reference": "John 13:14", "type": "micro", "trigger_level": "lvl_m20_05", "reflection_prompts": ["What lowly task is beneath you that Christ already did?", "Who would be shocked by your serving them?"]},
+          {"id": "m20_micro_2", "title": "Count Others First", "reference": "Philippians 2:3", "type": "micro", "trigger_level": "lvl_m20_10", "reflection_prompts": ["Where does vain ambition drive your decisions?", "How does esteeming others better reframe your ambition?"]},
+          {"id": "m20_micro_3", "title": "Serve and Give", "reference": "Mark 10:45", "type": "micro", "trigger_level": "lvl_m20_15", "reflection_prompts": ["Are you seeking to be served or to serve?", "What ransom-shaped generosity is yours to give?"]},
+          {"id": "m20_micro_4", "title": "Humble and Exalted", "reference": "1 Peter 5:6", "type": "micro", "trigger_level": "lvl_m20_20", "reflection_prompts": ["Under what mighty hand do you need to humble yourself?", "What exaltation are you trusting His timing for?"]},
+          {"id": "m20_parable", "title": "The Towel and Basin", "reference": "John 13:1-17", "type": "parable", "trigger_level": "lvl_m20_challenge", "reflection_prompts": ["Will you let Jesus wash you before you wash others?", "What basin-and-towel moment awaits you this week?"]}
+        ]
+      },
+      "library": {
+        "John 13:14": {"KJV": "If I then, your Lord and Master, have washed your feet; ye also ought to wash one another's feet.", "NET": "TODO"},
+        "Philippians 2:3": {"KJV": "Let nothing be done through strife or vainglory; but in lowliness of mind let each esteem other better than themselves.", "NET": "TODO"},
+        "Mark 10:45": {"KJV": "For even the Son of man came not to be ministered unto, but to minister, and to give his life a ransom for many.", "NET": "TODO"},
+        "1 Peter 5:6": {"KJV": "Humble yourselves therefore under the mighty hand of God, that he may exalt you in due time.", "NET": "TODO"},
+        "John 13:1-17": {"KJV": "TODO (full teaching text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 21,
+      "name": "Cypress",
+      "theme_seed": "cypress",
+      "unlock_message": "Pray and do not lose heart...",
+      "parable": {
+        "title": "The Persistent Widow",
+        "scripture": "Luke 18:1-8",
+        "content": "A widow's relentless pleas finally move an unjust judge — how much more will the just Father answer His children speedily?",
+        "reflection": "What have you stopped praying for that heaven still invites?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m21_micro_1", "trigger_level": "lvl_m21_05", "reference": "Luke 18:1", "title": "Always Pray", "type": "supporting"},
+        {"id": "m21_micro_2", "trigger_level": "lvl_m21_10", "reference": "1 Thessalonians 5:17", "title": "Without Ceasing", "type": "supporting"},
+        {"id": "m21_micro_3", "trigger_level": "lvl_m21_15", "reference": "Matthew 7:7", "title": "Ask, Seek, Knock", "type": "supporting"},
+        {"id": "m21_micro_4", "trigger_level": "lvl_m21_20", "reference": "Jeremiah 33:3", "title": "Call and Answer", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "prayer",
+        "name": "Persistence in Prayer",
+        "description": "Always praying and never losing heart until heaven answers.",
+        "icon": "hourglass_empty",
+        "passages": [
+          {"id": "m21_micro_1", "title": "Always Pray", "reference": "Luke 18:1", "type": "micro", "trigger_level": "lvl_m21_05", "reflection_prompts": ["Where have you lost heart in prayer?", "What would praying always look like in your routine?"]},
+          {"id": "m21_micro_2", "title": "Without Ceasing", "reference": "1 Thessalonians 5:17", "type": "micro", "trigger_level": "lvl_m21_10", "reflection_prompts": ["How can ordinary moments become unceasing prayer?", "What interrupts your communion most often?"]},
+          {"id": "m21_micro_3", "title": "Ask, Seek, Knock", "reference": "Matthew 7:7", "type": "micro", "trigger_level": "lvl_m21_15", "reflection_prompts": ["Which are you doing least: asking, seeking, or knocking?", "What door needs bolder knocking this week?"]},
+          {"id": "m21_micro_4", "title": "Call and Answer", "reference": "Jeremiah 33:3", "type": "micro", "trigger_level": "lvl_m21_20", "reflection_prompts": ["What great and unsearchable thing are you asking to see?", "How will you record His answers when they come?"]},
+          {"id": "m21_parable", "title": "The Persistent Widow", "reference": "Luke 18:1-8", "type": "parable", "trigger_level": "lvl_m21_challenge", "reflection_prompts": ["If persistence moves the unjust, what does it do with the Father?", "Will He find faith — in you — when He answers?"]}
+        ]
+      },
+      "library": {
+        "Luke 18:1": {"KJV": "And he spake a parable unto them to this end, that men ought always to pray, and not to faint;", "NET": "TODO"},
+        "1 Thessalonians 5:17": {"KJV": "Pray without ceasing.", "NET": "TODO"},
+        "Matthew 7:7": {"KJV": "Ask, and it shall be given you; seek, and ye shall find; knock, and it shall be opened unto you.", "NET": "TODO"},
+        "Jeremiah 33:3": {"KJV": "Call unto me, and I will answer thee, and shew thee great and mighty things, which thou knowest not.", "NET": "TODO"},
+        "Luke 18:1-8": {"KJV": "TODO (full parable text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 22,
+      "name": "Palm",
+      "theme_seed": "palm",
+      "unlock_message": "Build on the rock...",
+      "parable": {
+        "title": "The Two Builders",
+        "scripture": "Matthew 7:24-27",
+        "content": "Two houses face the same storm: one founded on rock stands, one built on sand falls — hearing and doing makes the difference.",
+        "reflection": "What are you building on sand that needs moving to rock?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m22_micro_1", "trigger_level": "lvl_m22_05", "reference": "Matthew 7:25", "title": "The House Stood", "type": "supporting"},
+        {"id": "m22_micro_2", "trigger_level": "lvl_m22_10", "reference": "Psalm 62:6", "title": "Rock and Salvation", "type": "supporting"},
+        {"id": "m22_micro_3", "trigger_level": "lvl_m22_15", "reference": "1 Corinthians 3:11", "title": "No Other Foundation", "type": "supporting"},
+        {"id": "m22_micro_4", "trigger_level": "lvl_m22_20", "reference": "Isaiah 28:16", "title": "Cornerstone", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "foundation",
+        "name": "Foundation & Obedience",
+        "description": "Hearing Christ's words and doing them — building to outlast storms.",
+        "icon": "landscape",
+        "passages": [
+          {"id": "m22_micro_1", "title": "The House Stood", "reference": "Matthew 7:25", "type": "micro", "trigger_level": "lvl_m22_05", "reflection_prompts": ["What storm is testing your foundation right now?", "Which of His sayings are you hearing but not doing?"]},
+          {"id": "m22_micro_2", "title": "Rock and Salvation", "reference": "Psalm 62:6", "type": "micro", "trigger_level": "lvl_m22_10", "reflection_prompts": ["What shakiness in you needs His rock-like defense?", "How does waiting on God steady what striving cannot?"]},
+          {"id": "m22_micro_3", "title": "No Other Foundation", "reference": "1 Corinthians 3:11", "type": "micro", "trigger_level": "lvl_m22_15", "reflection_prompts": ["What alternative foundation are you tempted to build on?", "How does Christ alone bear your life's weight?"]},
+          {"id": "m22_micro_4", "title": "Cornerstone", "reference": "Isaiah 28:16", "type": "micro", "trigger_level": "lvl_m22_20", "reflection_prompts": ["Where do you need to stop hurrying and trust the cornerstone?", "What in your life is aligned — or misaligned — to Him?"]},
+          {"id": "m22_parable", "title": "The Two Builders", "reference": "Matthew 7:24-27", "type": "parable", "trigger_level": "lvl_m22_challenge", "reflection_prompts": ["Which builder describes your last month?", "What one act of obedience lays rock this week?"]}
+        ]
+      },
+      "library": {
+        "Matthew 7:25": {"KJV": "And the rain descended, and the floods came, and the winds blew, and beat upon that house; and it fell not: for it was founded upon a rock.", "NET": "TODO"},
+        "Psalm 62:6": {"KJV": "He only is my rock and my salvation: he is my defence; I shall not be moved.", "NET": "TODO"},
+        "1 Corinthians 3:11": {"KJV": "For other foundation can no man lay than that is laid, which is Jesus Christ.", "NET": "TODO"},
+        "Isaiah 28:16": {"KJV": "TODO (full verse)", "NET": "TODO"},
+        "Matthew 7:24-27": {"KJV": "TODO (full parable text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 23,
+      "name": "Willow",
+      "theme_seed": "willow",
+      "unlock_message": "Go and make disciples...",
+      "parable": {
+        "title": "The Great Commission",
+        "scripture": "Matthew 28:18-20",
+        "content": "The risen Christ claims all authority and sends His disciples to all nations — baptizing, teaching, and never leaving them.",
+        "reflection": "Who is your 'all nations' — and what is your next step of going?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m23_micro_1", "trigger_level": "lvl_m23_05", "reference": "Matthew 28:19", "title": "Go and Teach", "type": "supporting"},
+        {"id": "m23_micro_2", "trigger_level": "lvl_m23_10", "reference": "Mark 16:15", "title": "Preach to Every Creature", "type": "supporting"},
+        {"id": "m23_micro_3", "trigger_level": "lvl_m23_15", "reference": "Romans 10:15", "title": "Beautiful Feet", "type": "supporting"},
+        {"id": "m23_micro_4", "trigger_level": "lvl_m23_20", "reference": "Acts 13:47", "title": "Light to the Gentiles", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "sending",
+        "name": "Going & Sending",
+        "description": "Carrying the gospel to every creature with Christ's own authority.",
+        "icon": "explore",
+        "passages": [
+          {"id": "m23_micro_1", "title": "Go and Teach", "reference": "Matthew 28:19", "type": "micro", "trigger_level": "lvl_m23_05", "reflection_prompts": ["Who are you actively teaching to observe Christ's commands?", "What keeps you from going — comfort, fear, or busyness?"]},
+          {"id": "m23_micro_2", "title": "Preach to Every Creature", "reference": "Mark 16:15", "type": "micro", "trigger_level": "lvl_m23_10", "reflection_prompts": ["Who in your world has never clearly heard the gospel?", "How will you tell them this month?"]},
+          {"id": "m23_micro_3", "title": "Beautiful Feet", "reference": "Romans 10:15", "type": "micro", "trigger_level": "lvl_m23_15", "reflection_prompts": ["Whose beautiful feet brought the gospel to you?", "Who will say that of your feet?"]},
+          {"id": "m23_micro_4", "title": "Light to the Gentiles", "reference": "Acts 13:47", "type": "micro", "trigger_level": "lvl_m23_20", "reflection_prompts": ["Who is far from God that He has placed near you?", "How does being sent reshape your daily plans?"]},
+          {"id": "m23_parable", "title": "The Great Commission", "reference": "Matthew 28:18-20", "type": "parable", "trigger_level": "lvl_m23_challenge", "reflection_prompts": ["How does 'all authority' steady your obedience?", "What does 'I am with you always' change about your fears?"]}
+        ]
+      },
+      "library": {
+        "Matthew 28:19": {"KJV": "Go ye therefore, and teach all nations, baptizing them in the name of the Father, and of the Son, and of the Holy Ghost.", "NET": "TODO"},
+        "Mark 16:15": {"KJV": "And he said unto them, Go ye into all the world, and preach the gospel to every creature.", "NET": "TODO"},
+        "Romans 10:15": {"KJV": "How beautiful are the feet of them that preach the gospel of peace, and bring glad tidings of good things!", "NET": "TODO"},
+        "Acts 13:47": {"KJV": "TODO (full verse)", "NET": "TODO"},
+        "Matthew 28:18-20": {"KJV": "TODO (full teaching text)", "NET": "TODO"}
+      }
+    },
+    {
+      "id": 24,
+      "name": "Brook",
+      "theme_seed": "brook",
+      "unlock_message": "Behold, He makes all things new...",
+      "parable": {
+        "title": "The River of Life",
+        "scripture": "Revelation 21:1-5",
+        "content": "John sees a new heaven and new earth, God dwelling with His people, every tear wiped away — 'Behold, I make all things new.'",
+        "reflection": "How does the promised ending reshape your present persevering?",
+        "background_image": ""
+      },
+      "micros": [
+        {"id": "m24_micro_1", "trigger_level": "lvl_m24_05", "reference": "Revelation 21:4", "title": "No More Tears", "type": "supporting"},
+        {"id": "m24_micro_2", "trigger_level": "lvl_m24_10", "reference": "John 14:3", "title": "I Will Come Again", "type": "supporting"},
+        {"id": "m24_micro_3", "trigger_level": "lvl_m24_15", "reference": "Romans 15:13", "title": "Abound in Hope", "type": "supporting"},
+        {"id": "m24_micro_4", "trigger_level": "lvl_m24_20", "reference": "Titus 2:13", "title": "Blessed Hope", "type": "supporting"}
+      ],
+      "theme": {
+        "id": "hope",
+        "name": "Hope & Consummation",
+        "description": "The blessed hope of Christ's return and the world made new.",
+        "icon": "wb_sunny",
+        "passages": [
+          {"id": "m24_micro_1", "title": "No More Tears", "reference": "Revelation 21:4", "type": "micro", "trigger_level": "lvl_m24_05", "reflection_prompts": ["What tears are you trusting Him to wipe personally?", "How does 'no more death' comfort your grief today?"]},
+          {"id": "m24_micro_2", "title": "I Will Come Again", "reference": "John 14:3", "type": "micro", "trigger_level": "lvl_m24_10", "reflection_prompts": ["How does His promised return steady your troubled heart?", "What would you change if you truly lived expectantly?"]},
+          {"id": "m24_micro_3", "title": "Abound in Hope", "reference": "Romans 15:13", "type": "micro", "trigger_level": "lvl_m24_15", "reflection_prompts": ["Where has hopelessness crept into your prayers?", "How does the Spirit's power refill your hope?"]},
+          {"id": "m24_micro_4", "title": "Blessed Hope", "reference": "Titus 2:13", "type": "micro", "trigger_level": "lvl_m24_20", "reflection_prompts": ["How does looking for His appearing purify daily choices?", "What are you most eager to see when glory appears?"]},
+          {"id": "m24_parable", "title": "The River of Life", "reference": "Revelation 21:1-5", "type": "parable", "trigger_level": "lvl_m24_challenge", "reflection_prompts": ["What 'former things' passing away brings you most relief?", "How will you live this week as a citizen of that city?"]}
+        ]
+      },
+      "library": {
+        "Revelation 21:4": {"KJV": "And God shall wipe away all tears from their eyes; and there shall be no more death, neither sorrow, nor crying, neither shall there be any more pain: for the former things are passed away.", "NET": "TODO"},
+        "John 14:3": {"KJV": "And if I go and prepare a place for you, I will come again, and receive you unto myself; that where I am, there ye may be also.", "NET": "TODO"},
+        "Romans 15:13": {"KJV": "Now the God of hope fill you with all joy and peace in believing, that ye may abound in hope, through the power of the Holy Ghost.", "NET": "TODO"},
+        "Titus 2:13": {"KJV": "Looking for that blessed hope, and the glorious appearing of the great God and our Saviour Jesus Christ.", "NET": "TODO"},
+        "Revelation 21:1-5": {"KJV": "TODO (full vision text)", "NET": "TODO"}
+      }
+    }
+  ]
+}

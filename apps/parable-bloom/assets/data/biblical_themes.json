@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "themes": [
     {
       "id": "growth",
@@ -23,7 +23,7 @@
           "title": "Sowing the Seed",
           "reference": "Ecclesiastes 11:6",
           "type": "micro",
-          "trigger_level": "lvl_seed_05",
+          "trigger_level": "lvl_m01_05",
           "reflection_prompts": [
             "Where is God prompting you to sow seeds of kindness or faith without waiting for perfect conditions?",
             "How does trusting God's timing change the way you invest in others?"
@@ -34,7 +34,7 @@
           "title": "Sowing in Faith",
           "reference": "Psalm 126:6",
           "type": "micro",
-          "trigger_level": "lvl_seed_10",
+          "trigger_level": "lvl_m01_10",
           "reflection_prompts": [
             "What seed are you carrying with tears that God promises to return with joy?",
             "How does weeping with hope differ from despair in your current season?"
@@ -45,7 +45,7 @@
           "title": "The Heart's Soil",
           "reference": "Hosea 10:12",
           "type": "micro",
-          "trigger_level": "lvl_seed_15",
+          "trigger_level": "lvl_m01_15",
           "reflection_prompts": [
             "What 'fallow ground' in your habits or heart is God calling you to break up?",
             "How does intentionally seeking the Lord invite His rain of righteousness upon your life?"
@@ -56,7 +56,7 @@
           "title": "Waiting for the Harvest",
           "reference": "Psalm 126:5",
           "type": "micro",
-          "trigger_level": "lvl_seed_20",
+          "trigger_level": "lvl_m01_20",
           "reflection_prompts": [
             "What tears have you sown that you are trusting God to turn into joy?",
             "How does holding the harvest loosely help you persevere to level 20 and beyond?"
@@ -67,7 +67,7 @@
           "title": "The Sower and the Seed",
           "reference": "Matthew 13:1-23",
           "type": "parable",
-          "trigger_level": "lvl_seed_challenge",
+          "trigger_level": "lvl_m01_challenge",
           "reflection_prompts": [
             "What cares of this world or deceitful distractions compete for your devotion?",
             "How has God produced spiritual fruit in seasons where you least expected it?"
@@ -86,7 +86,7 @@
           "title": "Small Beginnings",
           "reference": "Job 8:7",
           "type": "micro",
-          "trigger_level": "lvl_sprout_05",
+          "trigger_level": "lvl_m02_05",
           "reflection_prompts": [
             "What small, seemingly modest step of obedience is God placing before you?",
             "How have past humble beginnings grown into meaningful blessings in your spiritual journey?"
@@ -97,7 +97,7 @@
           "title": "Faith Like a Grain",
           "reference": "Luke 17:6",
           "type": "micro",
-          "trigger_level": "lvl_sprout_10",
+          "trigger_level": "lvl_m02_10",
           "reflection_prompts": [
             "What obstacle or circumstance in your life needs mustard-seed faith today?",
             "Why is the greatness of our God more vital than the size of our faith?"
@@ -108,7 +108,7 @@
           "title": "A Goodly Cedar",
           "reference": "Ezekiel 17:23",
           "type": "micro",
-          "trigger_level": "lvl_sprout_15",
+          "trigger_level": "lvl_m02_15",
           "reflection_prompts": [
             "How has God provided shelter and spiritual security for you in vulnerable seasons?",
             "How can your faith and testimony serve as a source of shade and refuge for others?"
@@ -119,7 +119,7 @@
           "title": "From Smallest to Greatest",
           "reference": "Matthew 13:32",
           "type": "micro",
-          "trigger_level": "lvl_sprout_20",
+          "trigger_level": "lvl_m02_20",
           "reflection_prompts": [
             "What small growth in you is God magnifying beyond what you planted?",
             "Who finds rest in the shade of your faithfulness right now?"
@@ -130,7 +130,7 @@
           "title": "The Mustard Seed",
           "reference": "Matthew 13:31-32",
           "type": "parable",
-          "trigger_level": "lvl_sprout_challenge",
+          "trigger_level": "lvl_m02_challenge",
           "reflection_prompts": [
             "In what ways have you seen God build great works from humble, quiet beginnings?",
             "Who around you can you encourage to remain steadfast and patient in faith today?"
@@ -149,7 +149,7 @@
           "title": "God Gives the Increase",
           "reference": "1 Corinthians 3:6",
           "type": "micro",
-          "trigger_level": "lvl_blossom_05",
+          "trigger_level": "lvl_m03_05",
           "reflection_prompts": [
             "Where in your life are you striving in self-reliance instead of trusting God to give the increase?",
             "How can you faithfully plant and water while entrusting the ultimate outcome to God?"
@@ -160,7 +160,7 @@
           "title": "Patience for the Rain",
           "reference": "James 5:7",
           "type": "micro",
-          "trigger_level": "lvl_blossom_10",
+          "trigger_level": "lvl_m03_10",
           "reflection_prompts": [
             "What prayer or breakthrough are you currently waiting on with patience?",
             "How does meditating on God's past faithfulness sustain your endurance today?"
@@ -171,7 +171,7 @@
           "title": "Unseen Works of God",
           "reference": "Ecclesiastes 11:5",
           "type": "micro",
-          "trigger_level": "lvl_blossom_15",
+          "trigger_level": "lvl_m03_15",
           "reflection_prompts": [
             "When circumstances are unclear, how does remembering God's mystery and sovereignty bring peace?",
             "What unseen spiritual maturity might God be shaping in your character during this season?"
@@ -182,7 +182,7 @@
           "title": "The Harvest Is Near",
           "reference": "Mark 4:29",
           "type": "micro",
-          "trigger_level": "lvl_blossom_20",
+          "trigger_level": "lvl_m03_20",
           "reflection_prompts": [
             "What ripe fruit in your life is ready for the sickle of obedient action?",
             "How do you discern when waiting ends and harvest begins?"
@@ -193,7 +193,7 @@
           "title": "The Growing Seed",
           "reference": "Mark 4:26-29",
           "type": "parable",
-          "trigger_level": "lvl_blossom_challenge",
+          "trigger_level": "lvl_m03_challenge",
           "reflection_prompts": [
             "What spiritual seeds have you planted that are quietly growing beyond your understanding?",
             "How does resting in God allow you to experience peace while He brings growth?"
@@ -212,7 +212,7 @@
           "title": "The Rooted Vine",
           "reference": "Psalm 80:15",
           "type": "micro",
-          "trigger_level": "lvl_flourish_05",
+          "trigger_level": "lvl_m04_05",
           "reflection_prompts": [
             "What reminds you that your life is planted and protected by God's own right hand?",
             "How can you root yourself more deeply in Christ's unfailing love this week?"
@@ -223,7 +223,7 @@
           "title": "The Fruit of Pruning",
           "reference": "Hebrews 12:11",
           "type": "micro",
-          "trigger_level": "lvl_flourish_10",
+          "trigger_level": "lvl_m04_10",
           "reflection_prompts": [
             "What painful pruning or discipline has God used in the past to yield peaceable righteousness?",
             "How can viewing trials as loving refinement transform your perspective on current struggles?"
@@ -234,7 +234,7 @@
           "title": "Built Up in Him",
           "reference": "Colossians 2:7",
           "type": "micro",
-          "trigger_level": "lvl_flourish_15",
+          "trigger_level": "lvl_m04_15",
           "reflection_prompts": [
             "What spiritual anchors keep you grounded when cultural currents pull in other directions?",
             "What are three specific things you are overflowing with gratitude for today?"
@@ -245,7 +245,7 @@
           "title": "Remain and Bear Much Fruit",
           "reference": "John 15:5",
           "type": "micro",
-          "trigger_level": "lvl_flourish_20",
+          "trigger_level": "lvl_m04_20",
           "reflection_prompts": [
             "What does remaining in Christ look like in your most fruitful area?",
             "What branch needs pruning so you can bear more fruit before the challenge?"
@@ -256,7 +256,7 @@
           "title": "The Vine and the Branches",
           "reference": "John 15:1-8",
           "type": "parable",
-          "trigger_level": "lvl_flourish_challenge",
+          "trigger_level": "lvl_m04_challenge",
           "reflection_prompts": [
             "What does abiding in Christ look like practically during your busiest moments?",
             "How does recognizing that 'apart from Me you can do nothing' reshape your daily dependence on God?"
@@ -275,7 +275,7 @@
           "title": "Reaping in Due Season",
           "reference": "Galatians 6:9",
           "type": "micro",
-          "trigger_level": "lvl_harvest_05",
+          "trigger_level": "lvl_m05_05",
           "reflection_prompts": [
             "Are you feeling weary in well-doing? What biblical promise renews your spiritual strength?",
             "How does God's guarantee that you will reap in due season encourage you to not give up?"
@@ -286,7 +286,7 @@
           "title": "Reaping in Joy",
           "reference": "Psalm 126:5",
           "type": "micro",
-          "trigger_level": "lvl_harvest_10",
+          "trigger_level": "lvl_m05_10",
           "reflection_prompts": [
             "If you have walked through a season of sorrow, what comfort does God's promise of joy bring?",
             "How can you bring encouragement to someone who is currently sowing in tears?"
@@ -297,7 +297,7 @@
           "title": "Lift Up Your Eyes",
           "reference": "John 4:35",
           "type": "micro",
-          "trigger_level": "lvl_harvest_15",
+          "trigger_level": "lvl_m05_15",
           "reflection_prompts": [
             "Who in your community or sphere of influence is ready for a word of hope and truth?",
             "How can you lift up your eyes to perceive God's harvest field around you?"
@@ -308,7 +308,7 @@
           "title": "Sent into the Harvest",
           "reference": "Matthew 9:38",
           "type": "micro",
-          "trigger_level": "lvl_harvest_20",
+          "trigger_level": "lvl_m05_20",
           "reflection_prompts": [
             "Who are you praying for God to send as workers into your field?",
             "What one step of labor can you take this week before the challenge?"
@@ -319,7 +319,7 @@
           "title": "The Plentiful Harvest",
           "reference": "Matthew 9:37-38",
           "type": "parable",
-          "trigger_level": "lvl_harvest_challenge",
+          "trigger_level": "lvl_m05_challenge",
           "reflection_prompts": [
             "How is God prompting you to be an active laborer in His harvest field right where you are?",
             "What is your prayer for more workers to be sent into God's spiritual harvest fields?"

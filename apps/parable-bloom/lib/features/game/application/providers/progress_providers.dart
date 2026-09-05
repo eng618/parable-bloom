@@ -390,7 +390,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     final newProgress = state.copyWith(
       tutorialCompleted: false,
       currentLevel:
-          state.currentLevel.isEmpty ? 'lvl_seed_01' : state.currentLevel,
+          state.currentLevel.isEmpty ? 'lvl_m01_01' : state.currentLevel,
     );
 
     await _saveProgress(newProgress);
@@ -410,7 +410,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       lessonCompleted: allLessonsCompleted,
       tutorialCompleted: allLessonsCompleted,
       currentLevel: (allLessonsCompleted && state.currentLevel.isEmpty)
-          ? 'lvl_seed_01'
+          ? 'lvl_m01_01'
           : state.currentLevel,
     );
 

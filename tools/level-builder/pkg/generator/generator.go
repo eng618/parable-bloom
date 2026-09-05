@@ -320,12 +320,10 @@ func updateModuleRegistry(moduleID int, startID int) error {
 }
 
 // getThemeSeed returns a theme seed name for a module.
+// Delegates to the canonical 24-entry list in common (legacy modules keep
+// their shipped seeds; see common.ModuleThemeSeeds).
 func getThemeSeed(moduleID int) string {
-	themes := []string{"forest", "sunset", "ocean", "volcano", "lavender", "meadow", "twilight", "aurora"}
-	if moduleID > 0 && moduleID <= len(themes) {
-		return themes[moduleID-1]
-	}
-	return "default"
+	return common.ThemeSeedForModule(moduleID)
 }
 
 // generateSingleLevel creates a single level with the given parameters.

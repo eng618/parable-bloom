@@ -50,7 +50,7 @@ void main() {
           title: 'Faith in Action',
           reference: 'Hebrews 11:1',
           type: 'starter',
-          triggerLevel: 'lvl_seed_01',
+          triggerLevel: 'lvl_m01_01',
           reflectionPrompts: ['What does faith mean to you?'],
           defaultContent: 'Understanding faith and trust in God.',
         ),
@@ -93,7 +93,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Locked Scripture'), findsOneWidget);
-      expect(find.text('Unlocks at Level 1'), findsOneWidget);
+      expect(find.text('Unlocks at Level 1 (Module 1)'), findsOneWidget);
     });
 
     testWidgets('Shows unlocked passage when scripture is in unlocked list',

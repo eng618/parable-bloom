@@ -9,9 +9,13 @@ import '../../../../core/providers/infrastructure_providers.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../domain/entities/journal_theme.dart';
 
+/// Expected biblical-themes schema version (assets/data/biblical_themes.json).
+/// Bumped on breaking changes (e.g. the 2.0 unified trigger migration) so
+/// stale Hive caches from older installs are discarded instead of served.
+const String kBiblicalThemesVersion = '2.0';
+
 final biblicalThemesRegistryProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
-  final box = ref.watch(hiveBoxProvider);
+    FutureProvider<Map<String, dynamic>>((ref) async {  final box = ref.watch(hiveBoxProvider);
   final configsCollection = EnvironmentConfig.getConfigsCollection();
 
   // 1. Try Firestore
@@ -44,11 +48,21 @@ final biblicalThemesRegistryProvider =
     final cachedStr = box.get('cached_biblical_themes_registry') as String?;
     if (cachedStr != null && cachedStr.isNotEmpty) {
       final data = json.decode(cachedStr) as Map<String, dynamic>;
-      LoggerService.info(
-        'Loaded biblical themes registry from local Hive cache',
-        tag: 'biblicalThemesRegistryProvider',
-      );
-      return data;
+      if (data['version']?.toString() != kBiblicalThemesVersion) {
+        // Pre-migration cache (old trigger IDs): drop it and fall through
+        // to bundled assets rather than serving stale triggers.
+        LoggerService.info(
+          'Discarding stale biblical themes cache (version ${data['version']}, expected $kBiblicalThemesVersion)',
+          tag: 'biblicalThemesRegistryProvider',
+        );
+        await box.delete('cached_biblical_themes_registry');
+      } else {
+        LoggerService.info(
+          'Loaded biblical themes registry from local Hive cache',
+          tag: 'biblicalThemesRegistryProvider',
+        );
+        return data;
+      }
     }
   } catch (e) {
     LoggerService.error(

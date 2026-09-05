@@ -55,47 +55,17 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
         triggerLevel == 'lesson_1') {
       return 'Unlocks after Tutorial';
     }
-    if (triggerLevel == 'lvl_seed_challenge') {
-      return 'Unlocks at Seedling Challenge';
-    }
-    if (triggerLevel == 'lvl_sprout_challenge') {
-      return 'Unlocks at Sprout Challenge';
-    }
-    if (triggerLevel == 'lvl_blossom_challenge') {
-      return 'Unlocks at Blossom Challenge';
-    }
-    if (triggerLevel == 'lvl_flourish_challenge') {
-      return 'Unlocks at Flourish Challenge';
-    }
-    if (triggerLevel == 'lvl_harvest_challenge') {
-      return 'Unlocks at Harvest Challenge';
-    }
-
-    // Numbered levels
-    if (triggerLevel.startsWith('lvl_seed_')) {
-      final numStr = triggerLevel.replaceAll('lvl_seed_', '');
-      final n = int.tryParse(numStr);
-      if (n != null) return 'Unlocks at Level $n';
-    }
-    if (triggerLevel.startsWith('lvl_sprout_')) {
-      final numStr = triggerLevel.replaceAll('lvl_sprout_', '');
-      final n = int.tryParse(numStr);
-      if (n != null) return 'Unlocks at Level ${n + 21}';
-    }
-    if (triggerLevel.startsWith('lvl_blossom_')) {
-      final numStr = triggerLevel.replaceAll('lvl_blossom_', '');
-      final n = int.tryParse(numStr);
-      if (n != null) return 'Unlocks at Level ${n + 42}';
-    }
-    if (triggerLevel.startsWith('lvl_flourish_')) {
-      final numStr = triggerLevel.replaceAll('lvl_flourish_', '');
-      final n = int.tryParse(numStr);
-      if (n != null) return 'Unlocks at Level ${n + 63}';
-    }
-    if (triggerLevel.startsWith('lvl_harvest_')) {
-      final numStr = triggerLevel.replaceAll('lvl_harvest_', '');
-      final n = int.tryParse(numStr);
-      if (n != null) return 'Unlocks at Level ${n + 84}';
+    // Generic scheme: lvl_mNN_challenge or lvl_mNN_MM.
+    final match =
+        RegExp(r'^lvl_m(\d\d)_(challenge|\d\d)$').firstMatch(triggerLevel);
+    if (match != null) {
+      final module = int.tryParse(match.group(1)!) ?? 0;
+      if (match.group(2) == 'challenge') {
+        return 'Unlocks at Module $module Challenge';
+      }
+      final level = int.tryParse(match.group(2)!) ?? 0;
+      final global = (module - 1) * 21 + level;
+      return 'Unlocks at Level $global (Module $module)';
     }
 
     return 'Unlocks at Level $triggerLevel';

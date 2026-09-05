@@ -103,42 +103,43 @@ func GetModuleByID(registry *model.ModuleRegistry, moduleID int) (*model.Module,
 	return nil, fmt.Errorf("module %d not found", moduleID)
 }
 
-// LogicalLevelID maps a physical level integer to its logical String ID.
-func LogicalLevelID(levelID int) string {
-	if levelID == 21 {
-		return "lvl_seed_challenge"
-	}
-	if levelID == 42 {
-		return "lvl_sprout_challenge"
-	}
-	if levelID == 63 {
-		return "lvl_blossom_challenge"
-	}
-	if levelID == 84 {
-		return "lvl_flourish_challenge"
-	}
-	if levelID == 105 {
-		return "lvl_harvest_challenge"
-	}
+// ModuleThemeSeeds provides a distinct theme seed per module (1-based).
+// Modules 1-5 match the shipped registry; 6+ carry new-garden names for the
+// 504-level expansion. Unknown IDs cycle so generation never blocks.
+var ModuleThemeSeeds = []string{
+	"forest", "meadow", "garden", "orchard", "abundance",
+	"grove", "vineyard", "pasture", "thicket", "glade",
+	"terrace", "nursery", "apiary", "mill", "wellspring",
+	"olive", "fig", "wheat", "barley", "cedar",
+	"cypress", "palm", "willow", "brook",
+}
 
-	if levelID >= 1 && levelID <= 20 {
-		return fmt.Sprintf("lvl_seed_%02d", levelID)
+// ThemeSeedForModule returns the theme seed for a module ID, cycling past
+// the named list so future modules never hit a "default" fallback.
+func ThemeSeedForModule(moduleID int) string {
+	if len(ModuleThemeSeeds) == 0 {
+		return "default"
 	}
-	if levelID >= 22 && levelID <= 41 {
-		idx := levelID - 21
-		return fmt.Sprintf("lvl_sprout_%02d", idx)
+	idx := (moduleID - 1) % len(ModuleThemeSeeds)
+	if idx < 0 {
+		idx = 0
 	}
-	if levelID >= 43 && levelID <= 62 {
-		idx := levelID - 42
-		return fmt.Sprintf("lvl_blossom_%02d", idx)
+	return ModuleThemeSeeds[idx]
+}
+
+// LogicalLevelID maps a physical level integer to its logical String ID.
+//
+// Unified generic scheme for all levels: lvl_mNN_MM (e.g. 1 -> lvl_m01_01,
+// 106 -> lvl_m06_01) and lvl_mNN_challenge for bosses (21 -> lvl_m01_challenge).
+// IDs stay two-digit and Firestore-safe; module/index derive from
+// ModuleForLevel/IndexInModule. Level IDs below 1 fall back to lvl_m01_01.
+func LogicalLevelID(levelID int) string {
+	if levelID < 1 {
+		return "lvl_m01_01"
 	}
-	if levelID >= 64 && levelID <= 83 {
-		idx := levelID - 63
-		return fmt.Sprintf("lvl_flourish_%02d", idx)
+	module := ModuleForLevel(levelID)
+	if IsChallengeLevel(levelID) {
+		return fmt.Sprintf("lvl_m%02d_challenge", module)
 	}
-	if levelID >= 85 && levelID <= 104 {
-		idx := levelID - 84
-		return fmt.Sprintf("lvl_harvest_%02d", idx)
-	}
-	return "lvl_seed_01"
+	return fmt.Sprintf("lvl_m%02d_%02d", module, IndexInModule(levelID)+1)
 }

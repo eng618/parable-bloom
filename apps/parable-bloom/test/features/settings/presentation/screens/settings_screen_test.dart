@@ -47,7 +47,7 @@ void main() {
       id: 1,
       name: 'Seedling',
       themeSeed: 'forest',
-      levels: ['lvl_seed_01'],
+      levels: ['lvl_m01_01'],
       challengeLevel: '',
       parable: const {},
       unlockMessage: '',

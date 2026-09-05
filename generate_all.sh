@@ -4,7 +4,7 @@ set -e
 # Build the latest version of the level-builder tool.
 task lb:build 
 
-echo "Starting sequential generation of Modules 1-5..."
+echo "Starting sequential generation of Modules $START_MODULE-$END_MODULE..."
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
@@ -29,13 +29,18 @@ mkdir -p "$STATS_DIR"
 OUTPUT_DIR="$REPO_ROOT/apps/parable-bloom/assets/levels"
 mkdir -p "$OUTPUT_DIR"
 
+# Module range (inclusive). Defaults preserve the original 1-5 behavior.
+# For the 504-level expansion: START_MODULE=6 END_MODULE=24 ./generate_all.sh
+START_MODULE=${START_MODULE:-1}
+END_MODULE=${END_MODULE:-5}
+
 # Allow optional strategy variable
 STRATEGY=${1:-""}
 
-for i in {1..5}
+for i in $(seq "$START_MODULE" "$END_MODULE")
 do
     echo "----------------------------------------"
-    echo "Generating Module $i (aggressive LIFO)..."
+    echo "Generating Module $i..."
     echo "----------------------------------------"
     
     CMD="./tools/level-builder/level-builder batch --module \"$i\" --overwrite --verbose --dump-dir \"$FAILED_DUMP_DIR\" --stats-out \"$STATS_DIR\" --log-file \"$LOG_DIR/module_$i.log\" --output-dir \"$OUTPUT_DIR\""
@@ -65,5 +70,5 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "========================================"
-echo "🎉 All 5 modules generated and validated successfully!"
+echo "🎉 Modules $START_MODULE-$END_MODULE generated and validated successfully!"
 echo "========================================"

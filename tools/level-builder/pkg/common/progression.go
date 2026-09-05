@@ -1,10 +1,10 @@
 package common
 
-// Canonical 5x21 progression: single source of truth for difficulty locks.
+// Canonical 21-per-module progression: single source of truth for difficulty locks.
 //
 // Each module holds 21 levels: 5 Seedling, 5 Sprout, 5 Nurturing,
 // 5 Flourishing, then 1 Transcendent challenge. For module N,
-// level IDs are (N-1)*21+1 .. (N-1)*21+21.
+// level IDs are (N-1)*21+1 .. (N-1)*21+21 (modules 1-24 = levels 1-504).
 //
 // This must stay in sync with:
 //   - pkg/batch GenerateModule levelsToGen

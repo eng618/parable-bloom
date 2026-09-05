@@ -14,7 +14,7 @@ The journal and scripture rewards architecture is decoupled into two complementa
 ```mermaid
 graph TD
     subgraph Gameplay Progression
-        L[105 Puzzle Levels: Seedling -> Harvest] -->|Milestones: lesson_5, lvl_seed_05, etc.| GPN[GameProgressNotifier]
+        L[105 Puzzle Levels: Seedling -> Harvest] -->|Milestones: lesson_5, lvl_m01_05, etc.| GPN[GameProgressNotifier]
     end
 
     subgraph Registries
@@ -60,7 +60,7 @@ graph TD
 
 ### 2.3 Full Parables
 
-- **Trigger**: Unlocked upon completing a module's Challenge Level (e.g. `lvl_seed_challenge`, `lvl_sprout_challenge`, `lvl_blossom_challenge`, `lvl_flourish_challenge`, `lvl_harvest_challenge`).
+- **Trigger**: Unlocked upon completing a module's Challenge Level (e.g. `lvl_m01_challenge`, `lvl_m02_challenge`, `lvl_m03_challenge`, `lvl_m04_challenge`, `lvl_m05_challenge`).
 - **Purpose**: Delivers the complete parable passage, rich guided reflection questions, and personal journaling options.
 
 ### 2.4 Backfill Migration & Progress Repair for Existing Users
@@ -70,11 +70,11 @@ To support existing users who completed levels in prior versions (including lega
 - **Trigger**: Automatically runs when the app initializes game progress (inside [`GameProgressNotifier.initialize()`](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/game/application/providers/progress_providers.dart)), or completes a cloud sync / conflict resolution.
 - **Legacy Level ID Mapping**:
   - Legacy integer saves (levels 1–105) are accurately mapped in [`GameProgress.fromJson`](file:///Users/engarcia/Development/parable-bloom/apps/parable-bloom/lib/features/game/domain/entities/game_progress.dart) to their module logical IDs:
-    - 1–20 $\rightarrow$ `lvl_seed_01`..`lvl_seed_20`, 21 $\rightarrow$ `lvl_seed_challenge`
-    - 22–41 $\rightarrow$ `lvl_sprout_01`..`lvl_sprout_20`, 42 $\rightarrow$ `lvl_sprout_challenge`
-    - 43–62 $\rightarrow$ `lvl_blossom_01`..`lvl_blossom_20`, 63 $\rightarrow$ `lvl_blossom_challenge`
-    - 64–83 $\rightarrow$ `lvl_flourish_01`..`lvl_flourish_20`, 84 $\rightarrow$ `lvl_flourish_challenge`
-    - 85–104 $\rightarrow$ `lvl_harvest_01`..`lvl_harvest_20`, 105 $\rightarrow$ `lvl_harvest_challenge`
+    - 1–20 $\rightarrow$ `lvl_m01_01`..`lvl_m01_20`, 21 $\rightarrow$ `lvl_m01_challenge`
+    - 22–41 $\rightarrow$ `lvl_m02_01`..`lvl_m02_20`, 42 $\rightarrow$ `lvl_m02_challenge`
+    - 43–62 $\rightarrow$ `lvl_m03_01`..`lvl_m03_20`, 63 $\rightarrow$ `lvl_m03_challenge`
+    - 64–83 $\rightarrow$ `lvl_m04_01`..`lvl_m04_20`, 84 $\rightarrow$ `lvl_m04_challenge`
+    - 85–104 $\rightarrow$ `lvl_m05_01`..`lvl_m05_20`, 105 $\rightarrow$ `lvl_m05_challenge`
 - **Progress Gap Healing**:
   - Identifies the user's highest completed level index or current level index in the playlist (`effectiveMaxIndex`).
   - Backfills any missing level IDs from index `0` up to `effectiveMaxIndex` in `completedLevels`, ensuring complete module fulfillment.

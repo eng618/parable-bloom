@@ -40,6 +40,7 @@ import (
 
 	batchsvc "github.com/eng618/parable-bloom/tools/level-builder/pkg/batch"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
 var (
@@ -83,7 +84,7 @@ Examples:
 }
 
 func init() {
-	batchCmd.Flags().IntVar(&moduleID, "module", 0, "module ID to generate (1-5, required)")
+	batchCmd.Flags().IntVar(&moduleID, "module", 0, "module ID to generate (1-99, required)")
 	batchCmd.Flags().BoolVar(&overwrite, "overwrite", false, "overwrite existing level files")
 	batchCmd.Flags().BoolVar(&useLIFO, "lifo", false, "use LIFO mode for guaranteed solvability and 100% coverage")
 	batchCmd.Flags().BoolVar(&dryRun, "dry-run", false, "preview what would be generated without writing files")
@@ -164,8 +165,8 @@ func runBatch(cmd *cobra.Command, args []string) error {
 }
 
 func validateModuleID(id int) error {
-	if id < 1 || id > 5 {
-		return fmt.Errorf("invalid module ID: %d (must be 1-5)", id)
+	if id < 1 || id > batchsvc.MaxModuleID {
+		return fmt.Errorf("invalid module ID: %d (must be 1-%d)", id, batchsvc.MaxModuleID)
 	}
 	return nil
 }
@@ -222,6 +223,22 @@ func logicalLevelID(levelID int) string {
 	return common.LogicalLevelID(levelID)
 }
 
+// newModuleStub builds a registry entry for a not-yet-authored module.
+// Levels, challenge, and mappings are exact; narrative fields are placeholders
+// for Phase-2 content authoring.
+func newModuleStub(moduleID int, logicalKeys []string) model.Module {
+	return model.Module{
+		ID:             moduleID,
+		Name:           fmt.Sprintf("Module %d", moduleID),
+		ThemeSeed:      common.ThemeSeedForModule(moduleID),
+		Levels:         append([]string(nil), logicalKeys[:len(logicalKeys)-1]...),
+		ChallengeLevel: logicalKeys[len(logicalKeys)-1],
+		Parable:        model.Parable{Title: fmt.Sprintf("Module %d Parable (TODO)", moduleID)},
+		UnlockMessage:  "",
+		Scriptures:     []model.ModuleScripture{},
+	}
+}
+
 func updateModulesRegistry(moduleID int, levelIDs []int) error {
 	modulesPath, err := common.ModulesFile()
 	if err != nil {
@@ -237,6 +254,23 @@ func updateModulesRegistry(moduleID int, levelIDs []int) error {
 		registry.LevelMappings = make(map[string]string)
 	}
 
+	created := applyModuleToRegistry(registry, moduleID, levelIDs)
+
+	if err := common.SaveModuleRegistry(modulesPath, registry); err != nil {
+		return fmt.Errorf("failed to update modules.json: %w", err)
+	}
+
+	if created {
+		common.Warning("Module %d was missing; stub entry created (replace name/parable/scriptures with authored content)", moduleID)
+	}
+	common.Info("Updated modules.json for module %d", moduleID)
+	return nil
+}
+
+// applyModuleToRegistry registers level mappings and patches (or creates)
+// the module entry. Returns true when a stub entry was created. Pure function
+// over the registry for testability; IO stays in updateModulesRegistry.
+func applyModuleToRegistry(registry *model.ModuleRegistry, moduleID int, levelIDs []int) (created bool) {
 	logicalKeys := make([]string, len(levelIDs))
 	for i, lid := range levelIDs {
 		key := logicalLevelID(lid)
@@ -245,28 +279,21 @@ func updateModulesRegistry(moduleID int, levelIDs []int) error {
 		registry.LevelMappings[key] = fmt.Sprintf("levels/level_%d.json", lid)
 	}
 
-	found := false
 	for i, mod := range registry.Modules {
 		if mod.ID == moduleID {
 			// First 20 levels are regular progression
 			registry.Modules[i].Levels = logicalKeys[:len(logicalKeys)-1]
 			// 21st level is the Transcendent challenge
 			registry.Modules[i].ChallengeLevel = logicalKeys[len(logicalKeys)-1]
-			found = true
-			break
+			return false
 		}
 	}
 
-	if !found {
-		return fmt.Errorf("module %d not found in registry", moduleID)
-	}
-
-	if err := common.SaveModuleRegistry(modulesPath, registry); err != nil {
-		return fmt.Errorf("failed to update modules.json: %w", err)
-	}
-
-	common.Info("Updated modules.json for module %d", moduleID)
-	return nil
+	// New modules (6+) get a stub entry carrying levels + mappings so
+	// generation is unblocked; Phase-2 content (name, parable,
+	// scriptures) replaces the stub fields.
+	registry.Modules = append(registry.Modules, newModuleStub(moduleID, logicalKeys))
+	return true
 }
 
 func reportSummary(batchResult *batchsvc.ModuleBatch) error {

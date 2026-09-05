@@ -107,15 +107,15 @@ Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
   // Seedling levels (1 to 20 + challenge)
   for (int i = 1; i <= 20; i++) {
     final idxStr = i < 10 ? '0$i' : '$i';
-    completedLevelsList.add('lvl_seed_$idxStr');
+    completedLevelsList.add('lvl_m01_$idxStr');
   }
-  completedLevelsList.add('lvl_seed_challenge');
+  completedLevelsList.add('lvl_m01_challenge');
   // Sprout levels (1 to 20 + challenge)
   for (int i = 1; i <= 20; i++) {
     final idxStr = i < 10 ? '0$i' : '$i';
-    completedLevelsList.add('lvl_sprout_$idxStr');
+    completedLevelsList.add('lvl_m02_$idxStr');
   }
-  completedLevelsList.add('lvl_sprout_challenge');
+  completedLevelsList.add('lvl_m02_challenge');
 
   final seededProgress = GameProgress(
     currentLesson: null,
@@ -132,7 +132,7 @@ Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
       'lesson_10'
     },
     lessonCompleted: true,
-    currentLevel: 'lvl_blossom_01',
+    currentLevel: 'lvl_m03_01',
     completedLevels: Set<String>.from(completedLevelsList),
     tutorialCompleted: true,
     savedMainGameLevel: null,

@@ -100,7 +100,7 @@ void main() {
 
     final saved = await mockRepo.getProgress();
     expect(saved.lessonCompleted, isTrue);
-    expect(saved.currentLevel, 'lvl_seed_01');
+    expect(saved.currentLevel, 'lvl_m01_01');
   });
 
   test('Clearing tutorial lesson vine properly triggers levelCompleteProvider',
