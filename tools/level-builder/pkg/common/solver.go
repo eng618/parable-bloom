@@ -89,11 +89,17 @@ func (s *Solver) IsSolvableGreedy() bool {
 }
 
 // IsSolvableBFS checks solvability using a thorough BFS algorithm.
+// Bitmask BFS only supports vineCount <= 63; larger levels must use the
+// validator heuristic/A* path. Returns false for oversized inputs instead of
+// overflowing 1<<N.
 func (s *Solver) IsSolvableBFS() bool {
 	vines := s.level.Vines
 	vineCount := len(vines)
 	if vineCount == 0 {
 		return true
+	}
+	if vineCount > 63 {
+		return false
 	}
 
 	w := s.level.GetGridWidth()
@@ -109,13 +115,13 @@ func (s *Solver) IsSolvableBFS() bool {
 		vineIndices[i] = indices
 	}
 
-	initialMask := int64((1 << uint(vineCount)) - 1)
+	initialMask := uint64((uint64(1) << uint(vineCount)) - 1)
 	if vineCount == 64 {
-		initialMask = -1
+		initialMask = ^uint64(0)
 	}
 
-	queue := []int64{initialMask}
-	visited := make(map[int64]bool)
+	queue := []uint64{initialMask}
+	visited := make(map[uint64]bool)
 	visited[initialMask] = true
 
 	occupied := make([]bool, gridArea)
@@ -133,7 +139,7 @@ func (s *Solver) IsSolvableBFS() bool {
 			occupied[i] = false
 		}
 		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint64(i))) != 0 {
+			if (mask & (uint64(1) << uint(i))) != 0 {
 				for _, idx := range vineIndices[i] {
 					occupied[idx] = true
 				}
@@ -142,12 +148,12 @@ func (s *Solver) IsSolvableBFS() bool {
 
 		// Try removing each clearable vine
 		for i := 0; i < vineCount; i++ {
-			if (mask & (1 << uint64(i))) == 0 {
+			if (mask & (uint64(1) << uint(i))) == 0 {
 				continue
 			}
 
 			if s.canVineClearFast(&vines[i], occupied, vineIndices[i], w) {
-				next := mask & ^(1 << uint64(i))
+				next := mask & ^(uint64(1) << uint(i))
 				if !visited[next] {
 					visited[next] = true
 					queue = append(queue, next)

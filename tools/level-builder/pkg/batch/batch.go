@@ -78,7 +78,11 @@ func GenerateModule(batchCfg Config) (*ModuleBatch, error) {
 	}
 
 	if batchCfg.OutputDir == "" {
-		batchCfg.OutputDir = "assets/levels"
+		if levelsDir, err := common.LevelsDir(); err == nil {
+			batchCfg.OutputDir = levelsDir
+		} else {
+			batchCfg.OutputDir = "assets/levels"
+		}
 	}
 
 	startTime := time.Now()
@@ -210,8 +214,13 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config, spin *
 	for _, strat := range strategiesToTry {
 		for retry := 0; retry < maxRetriesPerStrategy; retry++ {
 			var err error
-			// Vary seed for each attempt
-			currentSeed := (int64(levelID) * 31337) + int64(retry*12345) + int64(len(strat))
+			// Deterministic seed chain: BaseSeed override wins, else level-derived.
+			// Includes retry and strategy length so fallbacks diverge reproducibly.
+			baseSeed := int64(levelID) * 31337
+			if batchCfg.BaseSeed != 0 {
+				baseSeed = batchCfg.BaseSeed + int64(levelID)
+			}
+			currentSeed := baseSeed + int64(retry*12345) + int64(len(strat))
 
 			genCfg, err = buildGenerationConfig(levelID, difficulty, batchCfg)
 			if err != nil {
@@ -234,10 +243,10 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config, spin *
 			// Generate
 			level, stats, err = generateLevel(genCfg)
 
-			// Validate
+			// Validate (structural + solvable + coverage threshold)
 			valid := false
 			if err == nil {
-				_, valErr := validateGeneratedLevel(level)
+				_, valErr := validateGeneratedLevel(level, genCfg.MinCoverage)
 				if valErr == nil {
 					valid = true
 				} else {
@@ -246,10 +255,10 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config, spin *
 			}
 
 			if valid {
-				coverage, _ := validateGeneratedLevel(level)
+				coverage, _ := validateGeneratedLevel(level, genCfg.MinCoverage)
 				result.Success = true
 				result.Coverage = coverage
-				result.BlockingDepth = 2 // TODO: calculate actual blocking depth
+				result.BlockingDepth = stats.MaxBlockingDepth
 				result.GenerationMS = time.Since(startTime).Milliseconds()
 				spin.LogInfo("  ✓ Level %d generated using %s (Attempt %d)", levelID, strat, retry+1)
 				goto success
@@ -394,11 +403,16 @@ func determineStrategy(levelID int, difficulty string, batchCfg Config) string {
 		return batchCfg.Strategy
 	}
 
-	// Always use ClearableFirst (optimized) for high coverage >95%
+	// Honor LIFO request (center-out has strongest solvability guarantee)
+	if batchCfg.UseLIFO || difficulty == "Transcendent" {
+		return config.StrategyCenterOut
+	}
+
+	// Default: optimized clearable-first for high coverage >95%
 	return config.StrategyLegacyClearable
 }
 
-func validateGeneratedLevel(level model.Level) (float64, error) {
+func validateGeneratedLevel(level model.Level, minCoverage float64) (float64, error) {
 	structErrors := validator.ValidateStructural(level)
 	if len(structErrors) > 0 {
 		for _, e := range structErrors {
@@ -417,5 +431,41 @@ func validateGeneratedLevel(level model.Level) (float64, error) {
 	}
 
 	coverage := (float64(level.GetOccupiedCells()) / float64(level.GetTotalCells())) * 100.0
+	// Enforce coverage threshold (fraction 0-1).
+	// Semantics: playable coverage (vine cells + masked cells) must reach minCoverage.
+	// Vine occupancy alone may be lower (e.g. 95% vines + 5% mask = 100% playable).
+	if minCoverage > 0 {
+		playable := playableCoverage(level)
+		if playable+1e-9 < minCoverage {
+			return coverage, fmt.Errorf("playable coverage %.1f%% below minimum %.1f%%", playable*100, minCoverage*100)
+		}
+		// Full playability: every non-vine cell must be masked.
+		if errs := validator.ValidateDesignConstraints(level); len(errs) > 0 {
+			return coverage, fmt.Errorf("design constraints failed: %v", errs[0])
+		}
+	}
 	return coverage, nil
+}
+
+// playableCoverage returns (vine cells + masked cells) / total cells.
+func playableCoverage(level model.Level) float64 {
+	total := level.GetTotalCells()
+	if total == 0 {
+		return 0
+	}
+	occupied := make(map[string]struct{}, level.GetOccupiedCells())
+	for _, v := range level.Vines {
+		for _, p := range v.OrderedPath {
+			occupied[common.PointKey(p)] = struct{}{}
+		}
+	}
+	masked := 0
+	if level.Mask != nil {
+		for _, p := range level.Mask.Points {
+			if _, ok := occupied[common.PointKey(p)]; !ok {
+				masked++
+			}
+		}
+	}
+	return float64(len(occupied)+masked) / float64(total)
 }

@@ -30,6 +30,17 @@
           ]
         },
         {
+          "id": "growth_sowing_faith",
+          "title": "Sowing in Faith",
+          "reference": "Psalm 126:6",
+          "type": "micro",
+          "trigger_level": "lvl_seed_10",
+          "reflection_prompts": [
+            "What seed are you carrying with tears that God promises to return with joy?",
+            "How does weeping with hope differ from despair in your current season?"
+          ]
+        },
+        {
           "id": "growth_heart_soil",
           "title": "The Heart's Soil",
           "reference": "Hosea 10:12",
@@ -38,6 +49,17 @@
           "reflection_prompts": [
             "What 'fallow ground' in your habits or heart is God calling you to break up?",
             "How does intentionally seeking the Lord invite His rain of righteousness upon your life?"
+          ]
+        },
+        {
+          "id": "growth_patient_wait",
+          "title": "Waiting for the Harvest",
+          "reference": "Psalm 126:5",
+          "type": "micro",
+          "trigger_level": "lvl_seed_20",
+          "reflection_prompts": [
+            "What tears have you sown that you are trusting God to turn into joy?",
+            "How does holding the harvest loosely help you persevere to level 20 and beyond?"
           ]
         },
         {
@@ -93,6 +115,17 @@
           ]
         },
         {
+          "id": "faith_mustard_growth",
+          "title": "From Smallest to Greatest",
+          "reference": "Matthew 13:32",
+          "type": "micro",
+          "trigger_level": "lvl_sprout_20",
+          "reflection_prompts": [
+            "What small growth in you is God magnifying beyond what you planted?",
+            "Who finds rest in the shade of your faithfulness right now?"
+          ]
+        },
+        {
           "id": "faith_mustard_parable",
           "title": "The Mustard Seed",
           "reference": "Matthew 13:31-32",
@@ -142,6 +175,17 @@
           "reflection_prompts": [
             "When circumstances are unclear, how does remembering God's mystery and sovereignty bring peace?",
             "What unseen spiritual maturity might God be shaping in your character during this season?"
+          ]
+        },
+        {
+          "id": "patience_harvest_near",
+          "title": "The Harvest Is Near",
+          "reference": "Mark 4:29",
+          "type": "micro",
+          "trigger_level": "lvl_blossom_20",
+          "reflection_prompts": [
+            "What ripe fruit in your life is ready for the sickle of obedient action?",
+            "How do you discern when waiting ends and harvest begins?"
           ]
         },
         {
@@ -197,6 +241,17 @@
           ]
         },
         {
+          "id": "love_remain_fruit",
+          "title": "Remain and Bear Much Fruit",
+          "reference": "John 15:5",
+          "type": "micro",
+          "trigger_level": "lvl_flourish_20",
+          "reflection_prompts": [
+            "What does remaining in Christ look like in your most fruitful area?",
+            "What branch needs pruning so you can bear more fruit before the challenge?"
+          ]
+        },
+        {
           "id": "love_vine_branches",
           "title": "The Vine and the Branches",
           "reference": "John 15:1-8",
@@ -246,6 +301,17 @@
           "reflection_prompts": [
             "Who in your community or sphere of influence is ready for a word of hope and truth?",
             "How can you lift up your eyes to perceive God's harvest field around you?"
+          ]
+        },
+        {
+          "id": "joy_send_workers",
+          "title": "Sent into the Harvest",
+          "reference": "Matthew 9:38",
+          "type": "micro",
+          "trigger_level": "lvl_harvest_20",
+          "reflection_prompts": [
+            "Who are you praying for God to send as workers into your field?",
+            "What one step of labor can you take this week before the challenge?"
           ]
         },
         {

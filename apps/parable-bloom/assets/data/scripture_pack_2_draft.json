@@ -1,0 +1,96 @@
+{
+  "version": "0.1-draft",
+  "note": "New parable candidates for next batch / seasonal packs. OTA-ready via configs_{env}/modules,biblical_themes. Full KJV/NET text to be added to scripture_library.json after licensing review. Triggers are placeholders (no level renumbering of 1-105).",
+  "new_parables": [
+    {
+      "id": "good_samaritan",
+      "title": "The Good Samaritan",
+      "reference": "Luke 10:25-37",
+      "theme": "love",
+      "summary": "A traveler shows mercy across boundaries; go and do likewise.",
+      "reflection": "Who is your neighbor that God calls you to love with action?",
+      "reflection_prompts": [
+        "Who is easy to overlook that God is placing on your path this week?",
+        "What practical mercy will cost you time or comfort — and will you give it?"
+      ],
+      "suggested_trigger": "seasonal-pack-1-challenge or lvl_harvest_challenge encore",
+      "background_image": ""
+    },
+    {
+      "id": "prodigal_son",
+      "title": "The Prodigal Son",
+      "reference": "Luke 15:11-32",
+      "theme": "joy",
+      "summary": "The Father runs to welcome the returning son; heaven rejoices over repentance.",
+      "reflection": "Where is the Father inviting you home — or inviting you to celebrate another's return?",
+      "reflection_prompts": [
+        "What keeps you from running home to the Father's embrace?",
+        "Who needs your celebration rather than your judgment?"
+      ],
+      "suggested_trigger": "seasonal-pack-1-challenge",
+      "background_image": ""
+    },
+    {
+      "id": "talents",
+      "title": "The Talents",
+      "reference": "Matthew 25:14-30",
+      "theme": "growth",
+      "summary": "Servants entrusted with talents are called to faithful, fruitful investment.",
+      "reflection": "What talent has God entrusted to you that He wants multiplied?",
+      "reflection_prompts": [
+        "What fear tempts you to bury what God gave you to invest?",
+        "What faithful small investment can you make this week?"
+      ],
+      "suggested_trigger": "module-6-preview or challenge encore",
+      "background_image": ""
+    },
+    {
+      "id": "lost_sheep",
+      "title": "The Lost Sheep",
+      "reference": "Luke 15:1-7",
+      "theme": "joy",
+      "summary": "The shepherd leaves the ninety-nine to seek the one; every return brings joy.",
+      "reflection": "Who is the one God is sending you to seek with patient love?",
+      "reflection_prompts": [
+        "Who in your life feels lost and needs to be pursued, not written off?",
+        "How does heaven's joy over one reshape your priorities?"
+      ],
+      "suggested_trigger": "lvl_sprout_20 encore or seasonal micro",
+      "background_image": ""
+    },
+    {
+      "id": "leaven",
+      "title": "The Leaven",
+      "reference": "Matthew 13:33",
+      "theme": "faith",
+      "summary": "A little leaven works through the whole batch; small kingdom influence spreads.",
+      "reflection": "What small faithful influence is God multiplying through you unseen?",
+      "reflection_prompts": [
+        "Where can quiet faithfulness leaven your home, work, or community?",
+        "What hidden growth are you trusting God with?"
+      ],
+      "suggested_trigger": "seasonal micro set",
+      "background_image": ""
+    },
+    {
+      "id": "pearl",
+      "title": "The Pearl of Great Value",
+      "reference": "Matthew 13:45-46",
+      "theme": "patience",
+      "summary": "The merchant sells all for the pearl of great price; the kingdom is worth everything.",
+      "reflection": "What is God worth to you — what would joyful surrender look like?",
+      "reflection_prompts": [
+        "What competes with Christ for supreme value in your life?",
+        "What one thing would show you treasure the kingdom above all?"
+      ],
+      "suggested_trigger": "seasonal micro set",
+      "background_image": ""
+    }
+  ],
+  "next_steps": [
+    "Add KJV + NET full text for the 6 references above to scripture_library.json (verify against bundled translations).",
+    "Add matching passages to biblical_themes.json under love/joy/growth/faith/patience with trigger_level placeholders.",
+    "Wire OTA configs_{env}/modules,biblical_themes for seasonal preview before bundling.",
+    "Keep 1-105 IDs stable; new packs use levels_dev/preview/prod or encore triggers."
+  ]
+}

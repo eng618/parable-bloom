@@ -183,6 +183,13 @@
           "reference": "Hosea 10:12",
           "title": "The Heart's Soil",
           "type": "supporting"
+        },
+        {
+          "id": "seed_micro_4",
+          "trigger_level": "lvl_seed_20",
+          "reference": "Psalm 126:5",
+          "title": "Waiting for the Harvest",
+          "type": "supporting"
         }
       ]
     },
@@ -241,6 +248,13 @@
           "trigger_level": "lvl_sprout_15",
           "reference": "Ezekiel 17:23",
           "title": "A Goodly Cedar",
+          "type": "supporting"
+        },
+        {
+          "id": "sprout_micro_4",
+          "trigger_level": "lvl_sprout_20",
+          "reference": "Matthew 13:32",
+          "title": "From Smallest to Greatest",
           "type": "supporting"
         }
       ]
@@ -301,6 +315,13 @@
           "reference": "Ecclesiastes 11:5",
           "title": "Unseen Works of God",
           "type": "supporting"
+        },
+        {
+          "id": "blossom_micro_4",
+          "trigger_level": "lvl_blossom_20",
+          "reference": "Mark 4:29",
+          "title": "The Harvest Is Near",
+          "type": "supporting"
         }
       ]
     },
@@ -360,6 +381,13 @@
           "reference": "Colossians 2:7",
           "title": "Built Up in Him",
           "type": "supporting"
+        },
+        {
+          "id": "flourish_micro_4",
+          "trigger_level": "lvl_flourish_20",
+          "reference": "John 15:5",
+          "title": "Remain and Bear Much Fruit",
+          "type": "supporting"
         }
       ]
     },
@@ -418,6 +446,13 @@
           "trigger_level": "lvl_harvest_15",
           "reference": "John 4:35",
           "title": "Lift Up Your Eyes",
+          "type": "supporting"
+        },
+        {
+          "id": "harvest_micro_4",
+          "trigger_level": "lvl_harvest_20",
+          "reference": "Matthew 9:38",
+          "title": "Sent into the Harvest",
           "type": "supporting"
         }
       ]

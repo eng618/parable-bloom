@@ -15,13 +15,16 @@ import (
 
 // SolverVersion is incremented when validator rules or search logic change,
 // causing a complete cache invalidation of all levels.
-const SolverVersion = 2
+const SolverVersion = 3
 
 // Path resolution functions - use common.LevelsDir() and common.ModulesFile() instead of hardcoded paths
 
-// OccupancyTolerance is the allowed margin for vine occupancy.
-// Some levels are generated with adaptive relaxation or are legacy sparse levels (up to 40%).
-const OccupancyTolerance = 0.401
+// OccupancyTolerance is the allowed margin below the difficulty target.
+// Tightened from legacy 0.401 (which admitted up to 40% sparse levels) to 0.05:
+// current 105 levels all sit at >=0.93 occupancy, so 0.05 preserves them while
+// rejecting degenerate generation. Legacy sparse files should be regenerated,
+// not grandfathered.
+const OccupancyTolerance = 0.05
 
 type LevelStat struct {
 	File           string `json:"file"`
@@ -363,8 +366,11 @@ func checkOccupancyAndCoverage(lvl model.Level, ignoreOccupancy bool) error {
 		}
 	}
 
-	// Check 1: Vine occupancy must meet minimum threshold for its difficulty
-	targetOccupancy := common.MinCoverageForDifficulty(lvl.Difficulty)
+	// Check 1: Vine occupancy must meet minimum threshold for its difficulty.
+	// Unified source: max(common.MinCoverageForDifficulty, specMinOccupancy below).
+	// specMinOccupancy mirrors pkg/generator/config.DifficultySpecs (0.93, 0.30 tutorial)
+	// without importing config (would create an import cycle: config -> validator).
+	targetOccupancy := targetOccupancyForDifficulty(lvl.Difficulty)
 	occupancy := float64(vineCount) / float64(gridArea)
 	if occupancy < (targetOccupancy - OccupancyTolerance) {
 		if !ignoreOccupancy {
@@ -410,6 +416,26 @@ func checkOccupancyAndCoverage(lvl model.Level, ignoreOccupancy bool) error {
 	}
 
 	return nil
+}
+
+// targetOccupancyForDifficulty unifies the two occupancy tables:
+// common.MinCoverageForDifficulty and pkg/generator/config.DifficultySpecs.MinGridOccupancy.
+// Returns the stricter of the two so generator and validator agree.
+func targetOccupancyForDifficulty(difficulty string) float64 {
+	base := common.MinCoverageForDifficulty(difficulty)
+	var spec float64
+	switch difficulty {
+	case "Tutorial":
+		spec = 0.30
+	case "Seedling", "Sprout", "Nurturing", "Flourishing", "Transcendent":
+		spec = 0.93
+	default:
+		spec = 0.93
+	}
+	if spec > base {
+		return spec
+	}
+	return base
 }
 
 // isCellMasked returns true if the cell at (x,y) is masked according to the mask mode

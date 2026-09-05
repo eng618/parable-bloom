@@ -1,10 +1,7 @@
 package generator
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
@@ -31,7 +28,8 @@ func GenerateLevelLIFO(cfg config.GenerationConfig) (model.Level, config.Generat
 	return GenerateLevel(cfg) // Both use the robust pipeline now
 }
 
-// writeLevelToFile writes the level to JSON file
+// writeLevelToFile writes the level atomically via common.WriteLevel,
+// which sanitizes runtime-only fields and uses tmp+rename.
 func writeLevelToFile(level model.Level, cfg config.GenerationConfig) error {
 	outputPath := cfg.OutputFile
 	if outputPath == "" {
@@ -42,30 +40,8 @@ func writeLevelToFile(level model.Level, cfg config.GenerationConfig) error {
 		}
 	}
 
-	// Check if file exists and overwrite is not enabled
-	if !cfg.Overwrite {
-		if _, err := os.Stat(outputPath); err == nil {
-			return fmt.Errorf("file already exists: %s (use --overwrite to replace)", outputPath)
-		}
-	}
-
-	// Ensure directory exists
-	dir := filepath.Dir(outputPath)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
-	}
-
-	// Write JSON
-	file, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
-	}
-	defer func() { _ = file.Close() }()
-
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(level); err != nil {
-		return fmt.Errorf("failed to encode JSON: %w", err)
+	if err := common.WriteLevel(outputPath, &level, cfg.Overwrite); err != nil {
+		return err
 	}
 
 	common.Info("Wrote level file: %s", outputPath)
