@@ -1,3 +1,35 @@
+## 1.9.0 (2026-09-05)
+
+### 🚀 Features
+
+- add NET translation for scripture passages and update seed data and tests ([35ba2f8](https://github.com/eng618/parable-bloom/commit/35ba2f8))
+- implement scripture citation system with translation selection, metadata attribution, and cross-app license display ([a415553](https://github.com/eng618/parable-bloom/commit/a415553))
+- migrate analytics provider from Plausible to OpenPanel ([e51308f](https://github.com/eng618/parable-bloom/commit/e51308f))
+- implement coverage threshold enforcement, add prod upload safeguards, tighten linting, and update security policy ([026ad62](https://github.com/eng618/parable-bloom/commit/026ad62))
+- add script to generate branded Google Play feature graphic and update documentation checklists ([2bd3d30](https://github.com/eng618/parable-bloom/commit/2bd3d30))
+- implement Android release signing safeguards, update app store metadata, and add support page to marketing site ([6570acc](https://github.com/eng618/parable-bloom/commit/6570acc))
+- add SDK name and version headers to OpenPanel analytics requests ([bc1577a](https://github.com/eng618/parable-bloom/commit/bc1577a))
+- add Linux desktop development toolchain verification and update firebase configuration ([a892e11](https://github.com/eng618/parable-bloom/commit/a892e11))
+- update app icons, configure Android ProGuard rules, and upgrade Go version in CI ([0178254](https://github.com/eng618/parable-bloom/commit/0178254))
+- add animated pulse effect to tutorial hand indicator and improve conditional rendering logic with new unit tests ([9eb111d](https://github.com/eng618/parable-bloom/commit/9eb111d))
+- implement biblical themes and guided journal system with integrated reflection prompts ([4182dd1](https://github.com/eng618/parable-bloom/commit/4182dd1))
+- add desktop platform support for Openpanel analytics client IDs ([e9ac582](https://github.com/eng618/parable-bloom/commit/e9ac582))
+
+### 🩹 Fixes
+
+- add mounted checks to game callback handlers to prevent state access after widget disposal ([c6307d9](https://github.com/eng618/parable-bloom/commit/c6307d9))
+- rectify legacy level ID mapping and implement automated progress gap healing during initialization ([5352bc1](https://github.com/eng618/parable-bloom/commit/5352bc1))
+- update defaultFallbackClientId for OpenPanel analytics client ([afd840a](https://github.com/eng618/parable-bloom/commit/afd840a))
+
+### 🔥 Performance
+
+- **game:** optimize grid coordinate lookup with precomputed map ([#110](https://github.com/eng618/parable-bloom/pull/110))
+
+### ❤️ Thank You
+
+- Eric Garcia @eng618
+- Eric N. Garcia @eng618
+
 ## 1.8.2 (2026-08-17)
 
 This was a version bump only for parable-bloom to align it with other projects, there were no code changes.

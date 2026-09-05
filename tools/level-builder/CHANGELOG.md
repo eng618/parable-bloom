@@ -1,3 +1,21 @@
+## 1.9.0 (2026-09-05)
+
+### 🚀 Features
+
+- add NET translation for scripture passages and update seed data and tests ([35ba2f8](https://github.com/eng618/parable-bloom/commit/35ba2f8))
+- implement scripture citation system with translation selection, metadata attribution, and cross-app license display ([a415553](https://github.com/eng618/parable-bloom/commit/a415553))
+- migrate analytics provider from Plausible to OpenPanel ([e51308f](https://github.com/eng618/parable-bloom/commit/e51308f))
+- implement coverage threshold enforcement, add prod upload safeguards, tighten linting, and update security policy ([026ad62](https://github.com/eng618/parable-bloom/commit/026ad62))
+- add script to generate branded Google Play feature graphic and update documentation checklists ([2bd3d30](https://github.com/eng618/parable-bloom/commit/2bd3d30))
+- implement Android release signing safeguards, update app store metadata, and add support page to marketing site ([6570acc](https://github.com/eng618/parable-bloom/commit/6570acc))
+- add Linux desktop development toolchain verification and update firebase configuration ([a892e11](https://github.com/eng618/parable-bloom/commit/a892e11))
+- update app icons, configure Android ProGuard rules, and upgrade Go version in CI ([0178254](https://github.com/eng618/parable-bloom/commit/0178254))
+- implement biblical themes and guided journal system with integrated reflection prompts ([4182dd1](https://github.com/eng618/parable-bloom/commit/4182dd1))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.8.2 (2026-08-17)
 
 This was a version bump only for level-builder to align it with other projects, there were no code changes.
