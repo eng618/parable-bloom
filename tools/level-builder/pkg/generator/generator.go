@@ -136,7 +136,8 @@ func generateLevels(cfg LegacyBatchConfig) error {
 		if cfg.Difficulty != "" {
 			difficultyTier = cfg.Difficulty
 		} else {
-			difficultyTier = common.DifficultyForLevel(levelID)
+			// Canonical 5x21 progression (was legacy global curve).
+			difficultyTier = common.ExpectedDifficulty(levelID)
 		}
 		// Per-level retry logic
 		var level model.Level
@@ -177,25 +178,11 @@ func generateLevels(cfg LegacyBatchConfig) error {
 
 // generateModule generates a complete module with balanced difficulty progression.
 // Each module has 21 levels: 20 regular levels (5 each of Seedling, Sprout, Nurturing, Flourishing)
-// plus 1 Transcendent boss level at the end.
+// plus 1 Transcendent boss level at the end. Canonical pattern lives in
+// common.DifficultyForModuleLevel; this legacy path delegates to it.
 func generateModule(cfg LegacyBatchConfig) error {
-	const levelsPerModule = 21
+	const levelsPerModule = common.LevelsPerModule
 	const regularLevels = 20
-
-	// Difficulty progression for regular levels (20 levels)
-	// 5 Seedling, 5 Sprout, 5 Nurturing, 5 Flourishing, then 1 Transcendent
-	difficultyProgression := []string{
-		// Levels 1-5: Seedling
-		"Seedling", "Seedling", "Seedling", "Seedling", "Seedling",
-		// Levels 6-10: Sprout
-		"Sprout", "Sprout", "Sprout", "Sprout", "Sprout",
-		// Levels 11-15: Nurturing
-		"Nurturing", "Nurturing", "Nurturing", "Nurturing", "Nurturing",
-		// Levels 16-20: Flourishing
-		"Flourishing", "Flourishing", "Flourishing", "Flourishing", "Flourishing",
-		// Level 21: Transcendent (boss)
-		"Transcendent",
-	}
 
 	// Calculate starting level ID for this module
 	startID := (cfg.ModuleID-1)*levelsPerModule + 1
@@ -221,7 +208,7 @@ func generateModule(cfg LegacyBatchConfig) error {
 		if cfg.Difficulty != "" {
 			difficultyTier = cfg.Difficulty
 		} else {
-			difficultyTier = difficultyProgression[i]
+			difficultyTier = common.DifficultyForModuleLevel(i)
 		}
 		// Per-level retry logic
 		var level model.Level

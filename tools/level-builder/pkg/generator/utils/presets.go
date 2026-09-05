@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 )
 
@@ -90,20 +91,8 @@ func GridSizeForLevel(levelID int) []int {
 }
 
 // difficultyForLevel returns the difficulty tier for a given level ID.
-// Duplicated from common/utils.go to avoid import cycle.
+// Delegates to common.ExpectedDifficulty (canonical 5x21 progression) to avoid
+// drift between GridSizeForLevel and batch/validator.
 func difficultyForLevel(levelID int) string {
-	switch {
-	case levelID <= 5:
-		return "Tutorial"
-	case levelID <= 15:
-		return "Seedling"
-	case levelID <= 30:
-		return "Sprout"
-	case levelID <= 44:
-		return "Nurturing"
-	case levelID <= 50:
-		return "Flourishing"
-	default:
-		return "Transcendent"
-	}
+	return common.ExpectedDifficulty(levelID)
 }
