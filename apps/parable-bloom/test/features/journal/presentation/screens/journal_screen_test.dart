@@ -22,11 +22,14 @@ class _FakeAnalyticsService extends AnalyticsService {
 class _FakeScriptureService extends ScriptureService {
   @override
   Future<Map<String, String>> loadScripture(String reference,
-      {String? translationId}) async {
+      {String? translationId, String? preferredTranslationId}) async {
     return {
       'text': 'Now faith is the substance of things hoped for.',
       'reference': reference,
       'translation': 'KJV',
+      'didFallback': 'false',
+      'fromCache': 'false',
+      'requiresDownload': 'false',
     };
   }
 }
@@ -103,7 +106,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Faith in Action'), findsOneWidget);
-      expect(find.text('Hebrews 11:1 (KJV)'), findsOneWidget);
+      // List subtitle renders the preferred translation (NET by default).
+      expect(find.text('Hebrews 11:1 (NET)'), findsOneWidget);
       expect(find.text('1 / 1 Collected'), findsOneWidget);
     });
 

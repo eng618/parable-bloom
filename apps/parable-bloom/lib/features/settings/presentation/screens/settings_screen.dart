@@ -379,25 +379,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: const Text('Preferred Translation'),
         content: SizedBox(
           width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: translations.length,
-            itemBuilder: (ctx, i) {
-              final t = translations[i];
-              final id = (t['id'] as String).toLowerCase();
-              final abbr = t['abbreviation'] as String? ?? id.toUpperCase();
-              final name = t['name'] as String? ?? id;
-              final hint = t['readabilityHint'] as String? ?? '';
-              final onDemand = t['onDemand'] == true;
-              return RadioListTile<String>(
-                value: id,
-                groupValue: current,
-                title: Text('$name ($abbr)'),
-                subtitle: Text(
-                    onDemand ? '$hint • downloads once, then offline' : hint),
-                onChanged: (v) => Navigator.of(dialogContext).pop(v),
-              );
-            },
+          child: RadioGroup<String>(
+            groupValue: current,
+            onChanged: (v) => Navigator.of(dialogContext).pop(v),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: translations.length,
+              itemBuilder: (ctx, i) {
+                final t = translations[i];
+                final id = (t['id'] as String).toLowerCase();
+                final abbr = t['abbreviation'] as String? ?? id.toUpperCase();
+                final name = t['name'] as String? ?? id;
+                final hint = t['readabilityHint'] as String? ?? '';
+                final onDemand = t['onDemand'] == true;
+                return RadioListTile<String>(
+                  value: id,
+                  title: Text('$name ($abbr)'),
+                  subtitle: Text(
+                      onDemand ? '$hint • downloads once, then offline' : hint),
+                );
+              },
+            ),
           ),
         ),
         actions: [

@@ -533,23 +533,25 @@ void main() {
   });
 }
 
-class _FakeScriptureService implements ScriptureService {
+class _FakeScriptureService extends ScriptureService {
   @override
   Future<void> initialize() async {}
-
-  List<Map<String, dynamic>> get activeTranslations => [];
 
   @override
   Future<String> pickRandomActiveTranslation() async => 'kjv';
 
   @override
   Future<Map<String, String>> loadScripture(String reference,
-      {String? translationId}) async {
+      {String? translationId, String? preferredTranslationId}) async {
     return {
       'text': 'Now the parable is this: The seed is the word of God.',
       'translation': 'KJV',
+      'didFallback': 'false',
+      'fromCache': 'false',
+      'requiresDownload': 'false',
     };
   }
 
+  @override
   Map<String, dynamic>? getMetadata(String translationId) => null;
 }
