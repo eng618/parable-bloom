@@ -67,6 +67,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 _Add newest entries at top._
 
+- `2026-09-06` — Bugfix (out of band): completed-profile + new cloud levels loaded nothing ("Play Level 1" → false CONGRATULATIONS). Root cause: next level derived solely from stale persisted `currentLevel`, never recomputed when the playlist grows/migrates. Fix: `GameProgress.nextUncompletedLevel()` single source of truth, `GameProgressNotifier.healCurrentLevel()` persists dangling-pointer repair, `_loadLevelForGame` heals before declaring completion and treats empty mappings as load failure (gameOver) not finished, Home displays first-uncompleted number. Plus `level_healing_test.dart` (6 tests). Lint: fixed `await_only_futures` in `modules_registry_fallback_test`. Analyze clean, full suite 735/735.
 - `2026-09-06` — 2.6 landed, PHASE 2 COMPLETE. Full suite 729/729 pass, analyze clean. Pausing before Phase 3 for bug triage.
 - `2026-09-06` — 2.1 landed: `GameEventSink` replaces `GardenGameCallbacks` across engine, both screens, and tests. Full suite 726/726 pass, analyze clean. Remains: 2.6 camera decoupling.
 - `2026-09-06` — 2.3 landed: single-owner vine state, `update(0)` hacks removed, id-based level check. Full suite 726/726 pass, analyze clean. Remain: 2.1 GameEventSink, 2.6 camera decoupling.

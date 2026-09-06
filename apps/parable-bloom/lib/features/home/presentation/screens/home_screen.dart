@@ -59,10 +59,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               modulesAsync.when(
                 data: (modules) {
                   final playlist = modules.expand((m) => m.allLevels).toList();
-                  final allLevelsCompleted =
+                  final allLevelsCompleted = playlist.isNotEmpty &&
                       playlist.every(gameProgress.completedLevels.contains);
-                  final nextLevelIdx =
-                      playlist.indexOf(gameProgress.currentLevel);
+                  // Display the first uncompleted level, not the persisted
+                  // pointer: the pointer goes stale when new cloud levels
+                  // ship (indexOf == -1 wrongly rendered "Play Level 1").
+                  final displayId =
+                      gameProgress.nextUncompletedLevel(playlist) ??
+                          (playlist.contains(gameProgress.currentLevel)
+                              ? gameProgress.currentLevel
+                              : null);
+                  final nextLevelIdx = displayId == null
+                      ? -1
+                      : playlist.indexOf(displayId);
                   final levelDisplayNumber =
                       nextLevelIdx != -1 ? nextLevelIdx + 1 : 1;
 
@@ -214,14 +223,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _playNextLevel() {
+  void _playNextLevel() async {
     final gameProgress = ref.read(gameProgressProvider);
 
     if (!gameProgress.tutorialCompleted) {
       context.go('/tutorial');
-    } else {
-      context.go('/game');
+      return;
     }
+    // Persist any stale-pointer heal before entering the game so the
+    // resolved level survives refreshes even if the load below races it.
+    await ref.read(gameProgressProvider.notifier).healCurrentLevel();
+    if (!mounted) return;
+    context.go('/game');
   }
 
   void _openSettings() {

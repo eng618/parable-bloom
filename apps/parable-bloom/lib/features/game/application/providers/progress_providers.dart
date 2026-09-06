@@ -534,6 +534,42 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     state = progress;
   }
 
+  /// Heals a stale [GameProgress.currentLevel] pointer and returns the level
+  /// ID that should actually load, or null when there is nothing to heal to.
+  ///
+  /// The pointer goes stale when the level playlist grows (new cloud levels
+  /// published after the profile finished everything) or level IDs migrate:
+  /// it then names an ID absent from the playlist, and loaders fall back to
+  /// "Play Level 1" / false "game finished". Healing points it at the first
+  /// uncompleted level and persists, so refreshes stay fixed.
+  Future<String?> healCurrentLevel() async {
+    if (!ref.mounted) return null;
+    List<String> playlist;
+    try {
+      final modulesList = await ref.read(modulesProvider.future);
+      if (!ref.mounted) return null;
+      playlist = modulesList.expand((m) => m.allLevels).toList();
+    } catch (e) {
+      LoggerService.warn('Could not load playlist for level healing: $e',
+          tag: 'GameProgressNotifier');
+      return null;
+    }
+
+    final next = state.nextUncompletedLevel(playlist);
+    if (next == null) return null;
+    if (state.currentLevel == next || playlist.contains(state.currentLevel)) {
+      // Pointer is still valid (points at a real level): leave replay and
+      // in-progress semantics untouched, just report what should load.
+      return state.currentLevel;
+    }
+    LoggerService.info(
+      'Healing stale currentLevel ${state.currentLevel} -> $next',
+      tag: 'GameProgressNotifier',
+    );
+    await _saveProgress(state.copyWith(currentLevel: next));
+    return next;
+  }
+
   Future<void> enableCloudSync() async {
     final repository = ref.read(gameProgressRepositoryProvider);
     if (repository is FirebaseGameProgressRepository) {
