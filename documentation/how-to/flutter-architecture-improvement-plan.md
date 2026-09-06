@@ -7,9 +7,9 @@ Related: [System Architecture](../explanation/architecture.md) · App: `apps/par
 
 ## Status
 
-* Current phase: Phase 2 — bridge/state batch landed; GameEventSink + single-owner state + camera decoupling remain
+* Current phase: Phase 2 — only GameEventSink (2.1) + camera decoupling (2.6) remain
 * Last updated: 2026-09-06
-* Progress: 16 / ~40 items
+* Progress: 17 / ~40 items
 
 ## Phase 0 — Projection Lines Bug Fix (P0, bundled)
 
@@ -40,7 +40,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 - [ ] 2.1 Extract `GameEventSink` interface to replace 15-closure `GardenGameCallbacks` (`garden_game.dart:20-59`); single `GameBridge` factory owned by `game_screen.dart:76-127`
 - [x] 2.2 Move `ref.listen` calls from `build` to `initState` (`_subscribeToProviders()`); theme sync `addPostFrameCallback` → `didChangeDependencies` (`_syncThemeColors()`) — done; also fixed vine-style forwarding to call `updateVineStyle(next)` (previously only `updateSimpleVines`, so classic/blossom/ethereal switches never reached Flame) + same forward added to tutorial screen
-- [ ] 2.3 Single-owner vine state: Riverpod owns, Flame mirrors read-only; remove `update(0)` force-redraw hacks (`grid_component.dart:106,324`, `garden_game.dart:314`); fix `LevelData==` new-level check (`:66`)
+- [x] 2.3 Single-owner vine state: `_clearVine` no longer mutates the local mirror (provider recomputes and pushes back via `updateVineStates`); removed `update(0)` force-redraw hacks (`grid_component`, `garden_game` — Flame renders continuously, `update(0)` was a dt=0 no-op); new-level check is now id-based instead of identity — done
 - [x] 2.4 Memoize `_calculateVineStates` by input signature (level + per-vine cleared/animation/attempted/withered); repeat calls with unchanged inputs return cached result — done + `gameplay_state_updates_test.dart`
 - [x] 2.5 Solver singleton injected: `GardenGame.solver` (from `levelSolverServiceProvider` in both screens) → `GridComponent.solver`; `getLevelSolverService()` returns shared instance instead of allocating per tap — done
 - [ ] 2.6 Move camera interpolation out of Riverpod: Flame-local `CameraComponent`/transform holds 60Hz ticks, Riverpod keeps settled state; queue gestures dropped today by `updateZoom:197/updatePanOffset:208` while animating
@@ -67,6 +67,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 *Add newest entries at top.*
 
+- `2026-09-06` — 2.3 landed: single-owner vine state, `update(0)` hacks removed, id-based level check. Full suite 726/726 pass, analyze clean. Remain: 2.1 GameEventSink, 2.6 camera decoupling.
 - `2026-09-06` — Phase 2 batch landed: 2.2 listen lifecycle + theme sync, 2.4 vine-state memo, 2.5 solver injection, 2.7 zoom bounds, 2.8 tap/haptics + counter. Bonus bug: vine-style switches never reached Flame (`updateVineStyle` had zero callers) — fixed on both screens. Full suite 726/726 pass, analyze clean. Remain: 2.1 GameEventSink, 2.3 single-owner state, 2.6 camera decoupling.
 - `2026-09-06` — Phase 1 batch 2 landed: 1.3 blur gating + off-board cull, 1.5 cell paint/theme hoisting, 1.7 background parallel load + detach + cover-fit, 1.8 timing consolidation (9 constants, 8 files). `flutter analyze` clean, 47/47 related tests pass. Open in Phase 1: grid consolidation eval (1.6), device profiling (1.9).
 - `2026-09-06` — Phase 1 batch landed: 1.1 idle-vine caching (`visualVersion` + cached calm color/points), 1.2 shader/paint/leaf-path hoisting, 1.4 projection paint + extension precompute; 0.6 arg-order verified correct. `flutter analyze` clean, 29/29 vine+projection tests pass. Open: blur gating + frustum culling (1.3), viewport clipping (1.4 remainder), device profiling (1.9).

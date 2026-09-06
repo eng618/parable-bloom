@@ -68,9 +68,12 @@ class GridComponent extends PositionComponent
   })  : solver = solver ?? LevelSolverService(),
         super(position: Vector2.zero());
 
-  // Set level data and vine states from Riverpod providers
+  // Set level data and vine states from Riverpod providers.
+  // Riverpod is the single owner of vine state; the grid keeps a read-only
+  // mirror refreshed via [updateVineStates]. Identity comparison would
+  // mistake a reloaded-but-identical level for a new one, so compare by id.
   void setLevelData(LevelData levelData, Map<String, VineState> vineStates) {
-    final isNewLevel = _currentLevel != levelData;
+    final isNewLevel = _currentLevel?.id != levelData.id;
     _currentLevel = levelData;
     _vineStates = Map.from(vineStates);
 
@@ -108,9 +111,9 @@ class GridComponent extends PositionComponent
         _vineComponents[vine.id] = comp;
       }
     }
-    // For state updates, just update the state without recreating components
-
-    update(0); // Force redraw
+    // For state updates, just update the state without recreating components.
+    // No forced redraw: Flame renders continuously, and update(0) only pumps
+    // children with dt=0 (a no-op for idle vines).
 
     if (!isNewLevel) {
       _processAutoClearing();
@@ -315,10 +318,10 @@ class GridComponent extends PositionComponent
   }
 
   void _clearVine(String vineId) {
-    // Update vine state to cleared
-    _vineStates[vineId] = _vineStates[vineId]!.copyWith(isCleared: true);
-
-    // Notify Riverpod provider
+    // Single-owner flow: do NOT mutate the local mirror here. The provider
+    // recomputes state and pushes it back via updateVineStates -> setLevelData.
+    // (The clearing vine's own component is already removed from the tree by
+    // VineComponent._finishAnimation, so one frame of stale mirror is harmless.)
     onVineCleared?.call(vineId);
     LoggerService.info('Vine cleared',
         tag: 'GridComponent', metadata: {'vine_id': vineId});
@@ -326,9 +329,6 @@ class GridComponent extends PositionComponent
     // TODO: Add particle effects and sound when vine is cleared
     // TODO: Gradually reveal parable background/image
     // TODO: Animate parable text appearing
-
-    // Force redraw to show vine removed
-    update(0);
   }
 
   void _processAutoClearing() async {
