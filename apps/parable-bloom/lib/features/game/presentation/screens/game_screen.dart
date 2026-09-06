@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import '../../../../core/app_theme.dart';
+import '../../../../core/constants/animation_timing.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/providers/settings_providers.dart';
@@ -638,7 +639,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     ref.read(gameInstanceProvider.notifier).resetGrace();
 
     // Wait for 2 seconds then navigate back to home OR show parable/scripture unlock.
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(AnimationTiming.levelCompleteDelay);
 
     if (!mounted) return;
 

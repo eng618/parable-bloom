@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/game_board_layout.dart';
+import '../../../../core/constants/animation_timing.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/settings_providers.dart' show VineStyle;
 import '../../../../core/services/logger_service.dart';
@@ -128,13 +131,17 @@ class GardenGame extends FlameGame with TapCallbacks {
   }
 
   void _updateBackgroundOpacity([bool? isSimpleVines]) {
-    if (_gameBackground != null) {
-      final simple = isSimpleVines ?? useSimpleVines;
-      if (simple) {
-        _gameBackground!.setOpacity(0.0);
-      } else {
-        _gameBackground!.setOpacity(1.0); // Full opacity for new assets
+    if (_gameBackground == null) return;
+    final simple = isSimpleVines ?? useSimpleVines;
+    if (simple) {
+      // Detach instead of hiding: keeps the full-bleed texture out of the
+      // component tree (and GPU workload) while simple vines are active.
+      _gameBackground!.removeFromParent();
+    } else {
+      if (!_gameBackground!.isMounted) {
+        add(_gameBackground!);
       }
+      _gameBackground!.setOpacity(1.0); // Full opacity for new assets
     }
   }
 
@@ -142,8 +149,9 @@ class GardenGame extends FlameGame with TapCallbacks {
     if (_gameBackground != null && _gameBackground!.sprite != null) {
       final spriteSize = _gameBackground!.sprite!.srcSize;
 
-      // Scale to match window height exactly
-      final scale = size.y / spriteSize.y;
+      // Cover-fit: no letterboxing on wide screens. Top-aligned to preserve
+      // the artwork's focal point; excess height crops from the bottom.
+      final scale = math.max(size.x / spriteSize.x, size.y / spriteSize.y);
 
       _gameBackground!.size = spriteSize * scale;
       _gameBackground!.position = Vector2(
@@ -171,10 +179,14 @@ class GardenGame extends FlameGame with TapCallbacks {
     images.prefix = 'assets/art/';
     await super.onLoad();
 
-    // Load parable background artwork
+    // Load parable background artwork in parallel
     try {
-      _bgDaySprite = await loadSprite('bg_day_new.png');
-      _bgNightSprite = await loadSprite('bg_night_new.png');
+      final sprites = await Future.wait([
+        loadSprite('bg_day_new.png'),
+        loadSprite('bg_night_new.png'),
+      ]);
+      _bgDaySprite = sprites[0];
+      _bgNightSprite = sprites[1];
 
       final isDark = _backgroundColor.computeLuminance() < 0.5;
 
@@ -275,7 +287,7 @@ class GardenGame extends FlameGame with TapCallbacks {
           tapPosition: position,
           color: _tapEffectColor,
           maxRadius: 30.0,
-          duration: 0.4,
+          duration: AnimationTiming.tapEffectSeconds,
         );
         grid.add(tapEffect);
       },
@@ -399,7 +411,7 @@ class GardenGame extends FlameGame with TapCallbacks {
         tapPosition: tapPos,
         color: _tapEffectColor,
         maxRadius: 30.0,
-        duration: 0.4,
+        duration: AnimationTiming.tapEffectSeconds,
       );
       add(tapEffect);
     }

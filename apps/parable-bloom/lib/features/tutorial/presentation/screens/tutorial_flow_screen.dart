@@ -7,6 +7,7 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
+import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../domain/entities/lesson_data.dart';
 import '../../../game/application/providers/camera_providers.dart';
@@ -626,7 +627,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     });
 
     // Wait for 2 seconds then advance to next lesson
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(AnimationTiming.levelCompleteDelay);
 
     if (!mounted) return;
 

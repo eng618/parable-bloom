@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import 'pond_ripple_effect_component.dart';
+import 'package:parable_bloom/core/constants/animation_timing.dart';
 
 /// Spawns a set of subtle "fireworks" that travel from the bottom
 /// toward random points and create small pond ripple effects on impact.
@@ -44,7 +45,8 @@ class RippleFireworksComponent extends Component with HasGameReference {
       // Launch time staggered across duration
       final launch = _rng.nextDouble() * (duration * 0.8);
       // Travel time subtle and quick
-      final travel = 0.35 + _rng.nextDouble() * 0.45; // 0.35..0.8s
+      final travel = AnimationTiming.fireworkTravelBaseSeconds +
+          _rng.nextDouble() * AnimationTiming.fireworkTravelSpanSeconds;
 
       // Start slightly below the screen toward the target x
       final sx = tx + (_rng.nextDouble() * 30 - 15); // small x variance
@@ -87,7 +89,7 @@ class RippleFireworksComponent extends Component with HasGameReference {
                 center: impactAt,
                 maxRadius: f.rippleRadius,
                 ringCount: 3,
-                duration: 1.6,
+                duration: AnimationTiming.fireworkRippleSeconds,
                 colors: colors,
               ),
             );

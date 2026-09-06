@@ -40,7 +40,10 @@ class VinePathPainter {
   static Path _leafPathFor(double size) {
     return _leafPathCache.putIfAbsent(size, () => _createLeafPath(size));
   }
-  /// Render main vine path, foliage, and directional arrow head
+  /// Render main vine path, foliage, and directional arrow head.
+  ///
+  /// [isAnimating] gates the expensive blur-based ethereal glow: idle vines
+  /// draw the flat leaf color only, animations get the full glow treatment.
   static void drawVine({
     required Canvas canvas,
     required VineData vineData,
@@ -52,6 +55,7 @@ class VinePathPainter {
     required Color drawColor,
     required Color calmColor,
     required bool isAttempted,
+    required bool isAnimating,
     ui.Image? classicTexture,
     ui.Image? blossomTexture,
     ui.Image? etherealTexture,
@@ -91,8 +95,9 @@ class VinePathPainter {
       );
     }
 
-    // 3. Draw Ethereal Outer Glow
-    if (vineStyle == VineStyle.ethereal) {
+    // 3. Draw Ethereal Outer Glow (animations only: MaskFilter.blur is
+    // one of the most expensive GPU ops in this renderer)
+    if (vineStyle == VineStyle.ethereal && isAnimating) {
       final glowPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth + 6.0
@@ -139,10 +144,13 @@ class VinePathPainter {
           ..style = PaintingStyle.fill
           ..color = const Color(0xFF00E5FF)
           ..colorFilter = ColorFilter.mode(drawColor, BlendMode.modulate);
-        etherealLeafGlow = Paint()
-          ..style = PaintingStyle.fill
-          ..color = const Color(0xFF00E5FF).withValues(alpha: 0.4)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+        // Per-leaf glow is blur-backed: allocate only for animations.
+        etherealLeafGlow = isAnimating
+            ? (Paint()
+              ..style = PaintingStyle.fill
+              ..color = const Color(0xFF00E5FF).withValues(alpha: 0.4)
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0))
+            : etherealLeafPaint;
       }
 
       for (int i = 0; i < points.length; i++) {

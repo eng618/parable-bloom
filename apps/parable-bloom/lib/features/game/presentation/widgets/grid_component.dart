@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/game_board_layout.dart';
+import '../../../../core/constants/animation_timing.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../application/providers/gameplay_state_providers.dart';
@@ -365,7 +366,7 @@ class GridComponent extends PositionComponent
         await parent.callbacks.onEnsureVineVisible?.call(vine);
 
         // 2. Add a 200ms delay to allow player to register camera zoom/pan
-        await Future.delayed(const Duration(milliseconds: 200));
+        await Future.delayed(AnimationTiming.autoClearPause);
 
         // 3. Automatically clear the blocked vine
         comp.slideOut();
@@ -388,6 +389,12 @@ class CellComponent extends RectangleComponent
   final int gridY;
   bool _isLongPressed = false;
 
+  /// Shared dot paint: the beige tint is identical in both themes, so one
+  /// instance serves all cells instead of one allocation per cell per frame.
+  static final Paint _dotPaint = Paint()
+    ..color = const Color(0x26E2D6C4)
+    ..style = PaintingStyle.fill;
+
   CellComponent({
     required this.gridX,
     required this.gridY,
@@ -408,25 +415,21 @@ class CellComponent extends RectangleComponent
     // Masked-out cells are not drawn.
     if (!level.isCellVisible(gridX, gridY)) return;
 
-    // Use theme-aware colors for grid dots
-    final theme = Theme.of(game.buildContext!);
-    final isDark = theme.brightness == Brightness.dark;
+    // Draw small dot in the center of the cell (shared paint, no per-frame
+    // allocation; avoids the Rect allocation of size.toRect().center).
+    canvas.drawCircle(
+      Offset(size.x / 2, size.y / 2),
+      GameBoardLayout.gridDotRadius,
+      _dotPaint,
+    );
 
-    // Draw small dot in the center of the cell
-    final center = size.toRect().center;
-    final dotColor = isDark
-        ? const Color(0x26E2D6C4) // Beige tint for dark mode
-        : const Color(0x26E2D6C4); // Same beige tint for light mode
-    final dotPaint = Paint()
-      ..color = dotColor
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, GameBoardLayout.gridDotRadius, dotPaint);
-
-    // Debug: draw x,y labels in corner only if debug mode is enabled
+    // Debug: draw x,y labels in corner only if debug mode is enabled.
+    // Theme lookup happens only on this path, never during normal play.
     final showCoordinates =
         game.callbacks.getDebugShowGridCoordinates?.call() ?? false;
 
     if (kDebugMode && showCoordinates) {
+      final theme = Theme.of(game.buildContext!);
       final textPainter = TextPainter(textDirection: TextDirection.ltr);
       textPainter.text = TextSpan(
         text: '$gridX,$gridY',
