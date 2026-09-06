@@ -120,6 +120,20 @@ class GameProgress {
     return module.allLevels.every(completedLevels.contains);
   }
 
+  /// First playlist level the player has not completed, or null when the
+  /// playlist is exhausted (truly finished) or empty (registry unavailable).
+  ///
+  /// This is the single source of truth for "what to play next". The
+  /// persisted [currentLevel] goes stale when the playlist grows (new cloud
+  /// levels) or IDs migrate, so callers must prefer this over trusting
+  /// [currentLevel] blindly.
+  String? nextUncompletedLevel(List<String> playlist) {
+    for (final id in playlist) {
+      if (!completedLevels.contains(id)) return id;
+    }
+    return null;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'currentLesson': currentLesson,

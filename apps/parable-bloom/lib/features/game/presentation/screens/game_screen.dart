@@ -955,12 +955,31 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Future<void> _loadLevelForGame(GardenGame game) async {
     final debugSelected = ref.read(debugSelectedLevelProvider);
     final gameProgress = ref.read(gameProgressProvider);
-    final levelId = debugSelected ?? gameProgress.currentLevel;
+    var levelId = debugSelected ?? gameProgress.currentLevel;
 
     try {
       final mappings = await ref.read(levelMappingsProvider.future);
+      if (!mappings.containsKey(levelId) && debugSelected == null) {
+        // The persisted pointer may predate the current playlist (new cloud
+        // levels, migrated IDs). Heal to the first uncompleted level before
+        // concluding anything about completion.
+        final healed =
+            await ref.read(gameProgressProvider.notifier).healCurrentLevel();
+        if (healed != null && mappings.containsKey(healed)) {
+          levelId = healed;
+        }
+      }
       if (!mappings.containsKey(levelId)) {
-        ref.read(gameCompletedProvider.notifier).setCompleted(true);
+        if (mappings.isEmpty) {
+          // Registry failed to load (offline/error): this is a load failure,
+          // not a finished game. Same handling as the exception path below.
+          LoggerService.error(
+              'Level mappings empty, cannot load $levelId (registry unavailable)',
+              tag: 'GameScreen');
+          ref.read(gameOverProvider.notifier).setGameOver(true);
+        } else {
+          ref.read(gameCompletedProvider.notifier).setCompleted(true);
+        }
         return;
       }
 
