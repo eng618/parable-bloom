@@ -203,6 +203,13 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   LevelData? _levelData;
   LevelSolverService? _solverService;
 
+  /// Memoized result of [_calculateVineStates]. The blocked-path simulation
+  /// (up to 300 steps x active vines per vine) is the hottest CPU loop in
+  /// state management, and callers re-run it on every animation-state flip —
+  /// often with unchanged inputs.
+  String _lastCalcKey = '';
+  Map<String, VineState> _lastCalcResult = const {};
+
   @override
   Map<String, VineState> build() {
     final levelData = ref.watch(currentLevelProvider);
@@ -216,6 +223,23 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
     Map<String, VineState> currentStates,
   ) {
     if (levelData == null || _solverService == null) return {};
+
+    // Cheap signature of everything the result depends on: level identity,
+    // per-vine cleared/animation flags (which drive the blocking set), and
+    // the preserved attempted/withered flags.
+    final keyBuffer = StringBuffer(levelData.id)
+      ..write('|')
+      ..write(levelData.vines.length)
+      ..write('|');
+    for (final vine in levelData.vines) {
+      final s = currentStates[vine.id];
+      keyBuffer
+        ..write(vine.id)
+        ..write(s == null ? 'n' : '${s.isCleared ? 1 : 0}${s.animationState.index}${s.hasBeenAttempted ? 1 : 0}${s.isWithered ? 1 : 0}')
+        ..write(';');
+    }
+    final key = keyBuffer.toString();
+    if (key == _lastCalcKey) return _lastCalcResult;
 
     final blockingVineIds = <String>[];
     for (final vine in levelData.vines) {
@@ -257,6 +281,8 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
       );
     }
 
+    _lastCalcKey = key;
+    _lastCalcResult = newStates;
     return newStates;
   }
 

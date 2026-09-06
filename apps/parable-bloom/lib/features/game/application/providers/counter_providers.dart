@@ -12,6 +12,10 @@ class LevelTotalTapsNotifier extends Notifier<int> {
     state++;
   }
 
+  void add(int count) {
+    state += count;
+  }
+
   void reset() {
     state = 0;
   }

@@ -16,6 +16,7 @@ import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart'
 import '../../application/providers/camera_providers.dart' show CameraState;
 import '../../application/providers/gameplay_state_providers.dart'
     show VineState, VineAnimationState;
+import '../../domain/services/level_solver_service.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
 import 'tap_effect_component.dart';
@@ -68,6 +69,11 @@ class GardenGame extends FlameGame with TapCallbacks {
   late ProjectionLinesComponent projectionLines;
   final GardenGameCallbacks callbacks;
 
+  /// Shared level-solver service, forwarded to [GridComponent] so per-tap
+  /// distance checks reuse the Riverpod singleton instead of allocating one
+  /// per call.
+  final LevelSolverService solver;
+
   bool _isGridInitialized = false;
   bool get isGridInitialized => _isGridInitialized;
   LevelData? _currentLevelData;
@@ -81,7 +87,8 @@ class GardenGame extends FlameGame with TapCallbacks {
   late Color _tapEffectColor;
   late Color _vineAttemptedColor;
 
-  GardenGame({required this.callbacks}) {
+  GardenGame({required this.callbacks, LevelSolverService? solver})
+      : solver = solver ?? LevelSolverService() {
     LoggerService.debug('Constructor called - creating new instance',
         tag: 'GardenGame');
     // Initialize with default theme colors - will be updated by game screen
@@ -92,8 +99,8 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   /// Factory constructor for loading a lesson
   factory GardenGame.fromLesson(LessonData lessonData,
-      {required GardenGameCallbacks callbacks}) {
-    final game = GardenGame(callbacks: callbacks);
+      {required GardenGameCallbacks callbacks, LevelSolverService? solver}) {
+    final game = GardenGame(callbacks: callbacks, solver: solver);
     game._currentLessonData = lessonData;
     return game;
   }
@@ -275,6 +282,7 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Interactive grid
     grid = GridComponent(
       cellSize: cellSize,
+      solver: solver,
       onVineCleared: callbacks.onVineCleared,
       onVineTap: (vineId) {
         // Called when user taps a vine (after checking if it's valid)
@@ -354,7 +362,9 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
   }
 
-  /// Update simple vines setting dynamically
+  /// Legacy entry point, superseded by [updateVineStyle] (which handles
+  /// background visibility internally). Kept for API compatibility.
+  @Deprecated('Use updateVineStyle() instead.')
   void updateSimpleVines(bool useSimple) {
     _updateBackgroundOpacity(useSimple);
   }

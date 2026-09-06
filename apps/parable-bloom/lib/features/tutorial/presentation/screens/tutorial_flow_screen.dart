@@ -12,6 +12,7 @@ import '../../../../core/services/logger_service.dart';
 import '../../domain/entities/lesson_data.dart';
 import '../../../game/application/providers/camera_providers.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
+import '../../../game/application/providers/solver_providers.dart';
 import '../../application/providers/tutorial_providers.dart';
 import '../../../game/presentation/widgets/garden_game.dart';
 import '../../../game/presentation/widgets/game_header.dart';
@@ -123,6 +124,11 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       _updateProjectionLinesVisibility();
     });
 
+    // Forward vine-style changes (the game otherwise stays on classic).
+    ref.listen<VineStyle>(vineStyleProvider, (previous, next) {
+      if (previous != next) _game?.updateVineStyle(next);
+    });
+
     // Validate lesson number
     if (currentLesson < 1 || currentLesson > LessonData.totalLessons) {
       return Scaffold(
@@ -150,6 +156,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
               _game = GardenGame.fromLesson(
                 lesson,
+                solver: ref.read(levelSolverServiceProvider),
                 callbacks: GardenGameCallbacks(
                   onGameLoaded: (game) {
                     if (!mounted) return;
@@ -204,9 +211,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                   },
                   onTapIncrement: (count) {
                     if (!mounted) return;
-                    for (int i = 0; i < count; i++) {
-                      ref.read(levelTotalTapsProvider.notifier).increment();
-                    }
+                    ref.read(levelTotalTapsProvider.notifier).add(count);
                   },
                   onTapOutsideGrid: () {
                     if (!mounted) return;

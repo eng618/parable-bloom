@@ -17,6 +17,9 @@ class CameraState {
   final double maxZoom;
   final bool isAnimating;
 
+  /// Single source of truth for the upper zoom bound.
+  static const double kMaxZoom = 2.5;
+
   const CameraState({
     required this.zoom,
     required this.panOffset,
@@ -42,11 +45,13 @@ class CameraState {
   }
 
   static CameraState defaultState() {
+    // Bounds match updateZoomBounds(): min in (fit * 0.85).clamp(0.3, 1.0),
+    // max is kMaxZoom. Keep them in sync.
     return CameraState(
       zoom: 1.0,
       panOffset: vm.Vector2.zero(),
       minZoom: 0.5,
-      maxZoom: 2.0,
+      maxZoom: kMaxZoom,
       isAnimating: false,
     );
   }
@@ -90,7 +95,7 @@ class CameraStateNotifier extends Notifier<CameraState> {
         zoomToFitWidth < zoomToFitHeight ? zoomToFitWidth : zoomToFitHeight;
 
     final minZoom = (zoomToFit * 0.85).clamp(0.3, 1.0);
-    final maxZoom = 2.5;
+    final maxZoom = CameraState.kMaxZoom;
 
     LoggerService.debug(
       'Updated zoom bounds - min: $minZoom, max: $maxZoom (fit: $zoomToFit)',
