@@ -228,9 +228,35 @@ class GardenGame extends FlameGame with TapCallbacks {
     required bool isAnimating,
   }) {
     if (_isGridInitialized && projectionLines.isMounted) {
-      projectionLines
-          .setVisible((visible || hintedVines.isNotEmpty) && !isAnimating);
+      final resolved = resolveProjectionVisibility(
+        visible: visible,
+        hintedVines: hintedVines,
+        isAnimating: isAnimating,
+      );
+      projectionLines.updateVisibility(
+        visible: resolved.visible,
+        hintedVineIds: resolved.hintedVineIds,
+        showAllVines: resolved.showAllVines,
+      );
     }
+  }
+
+  /// Pure, testable resolution of provider state into component state.
+  /// Single-hint wins visually; Show-All covers every active vine.
+  static ({
+    bool visible,
+    Set<String> hintedVineIds,
+    bool showAllVines,
+  }) resolveProjectionVisibility({
+    required bool visible,
+    required Set<String> hintedVines,
+    required bool isAnimating,
+  }) {
+    return (
+      visible: (visible || hintedVines.isNotEmpty) && !isAnimating,
+      hintedVineIds: Set<String>.from(hintedVines),
+      showAllVines: visible,
+    );
   }
 
   void _createLevelComponents() {

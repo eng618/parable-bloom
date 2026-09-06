@@ -42,6 +42,9 @@ class ProjectionLinesComponent extends PositionComponent
     }
   }
 
+  @Deprecated(
+    'Use updateVisibility() so hinted/show-all state stays in sync with _isVisible.',
+  )
   void setVisible(bool visible) {
     _isVisible = visible;
   }
@@ -79,6 +82,11 @@ class ProjectionLinesComponent extends PositionComponent
 
   Set<String> _hintedVineIds = {};
   bool _showAllVines = false;
+
+  /// Test-visible snapshot of the current filter state.
+  bool get isProjectionVisible => _isVisible;
+  Set<String> get hintedVineIds => Set<String>.unmodifiable(_hintedVineIds);
+  bool get showAllVines => _showAllVines;
 
   void updateVisibility({
     required bool visible,
