@@ -1,60 +1,52 @@
 {
     "id": 4,
-    "title": "Lesson 4: Complex Blocking Chains",
-    "objective": "Master solving vines with multiple blocking relationships",
-    "instructions": "Blocks can chain. Clear chains from their start.",
+    "title": "Lesson 4: Chains and Panning",
+    "objective": "Free two vines with one key and pan across a wide garden",
+    "instructions": "Vine 1 traps two others. Project each path, clear the key first. Drag to pan, pinch to zoom.",
     "learning_points": [
-        "Blocks can chain",
-        "Solve from the chain start",
-        "Plan the full sequence"
+        "One vine can trap two others",
+        "Drag to pan, pinch to zoom",
+        "Project first, then order"
     ],
     "grid_size": [
-        6,
-        6
+        7,
+        7
     ],
-    "max_moves": 999,
+    "max_moves": 4,
     "vines": [
         {
             "id": "vine_1",
             "head_direction": "right",
             "ordered_path": [
                 {
+                    "x": 5,
+                    "y": 5
+                },
+                {
+                    "x": 4,
+                    "y": 5
+                },
+                {
                     "x": 3,
-                    "y": 2
-                },
-                {
-                    "x": 2,
-                    "y": 2
-                },
-                {
-                    "x": 1,
-                    "y": 2
-                },
-                {
-                    "x": 0,
-                    "y": 2
+                    "y": 5
                 }
             ]
         },
         {
             "id": "vine_2",
-            "head_direction": "down",
+            "head_direction": "right",
             "ordered_path": [
                 {
-                    "x": 5,
-                    "y": 0
+                    "x": 2,
+                    "y": 5
                 },
                 {
-                    "x": 5,
-                    "y": 1
+                    "x": 1,
+                    "y": 5
                 },
                 {
-                    "x": 5,
-                    "y": 2
-                },
-                {
-                    "x": 5,
-                    "y": 3
+                    "x": 0,
+                    "y": 5
                 }
             ]
         },
@@ -63,16 +55,16 @@
             "head_direction": "left",
             "ordered_path": [
                 {
-                    "x": 3,
-                    "y": 4
+                    "x": 0,
+                    "y": 0
                 },
                 {
-                    "x": 4,
-                    "y": 4
+                    "x": 1,
+                    "y": 0
                 },
                 {
-                    "x": 5,
-                    "y": 4
+                    "x": 2,
+                    "y": 0
                 }
             ]
         },
@@ -81,30 +73,16 @@
             "head_direction": "up",
             "ordered_path": [
                 {
-                    "x": 1,
-                    "y": 5
+                    "x": 4,
+                    "y": 2
                 },
                 {
-                    "x": 1,
-                    "y": 4
+                    "x": 4,
+                    "y": 1
                 },
                 {
-                    "x": 1,
-                    "y": 3
-                }
-            ]
-        },
-        {
-            "id": "vine_5",
-            "head_direction": "right",
-            "ordered_path": [
-                {
-                    "x": 3,
-                    "y": 5
-                },
-                {
-                    "x": 2,
-                    "y": 5
+                    "x": 4,
+                    "y": 0
                 }
             ]
         }

@@ -277,6 +277,18 @@ Future<void> _validateLevel(File levelFile) async {
     reason: 'Circular blocking detected in ${levelFile.path}',
   );
 
+  if (isLesson && level.vines.isNotEmpty) {
+    // The tutorial guide suggests the first-listed vine first: it must be
+    // fully clearable at lesson start, never blocked (Lesson 9 regression
+    // pointed players at a stuck vine).
+    expect(
+      _vineCanClear(level.vines.first, level, occupied),
+      isTrue,
+      reason:
+          'First vine ${level.vines.first.id} is not clearable in ${levelFile.path} — guide would suggest a stuck vine',
+    );
+  }
+
   // NOTE: Expensive solvability checks (search-based) are now performed by
   // the Go level-builder validator in CI. Keep Dart tests focused on
   // structural and fast validations to keep the test run reliable.
@@ -315,8 +327,57 @@ bool _detectCircularBlocking(LevelData level) {
   return false;
 }
 
-bool _vineBlocksVine(
-  VineData blocker,
+/// Full head-path simulation mirroring the game solver: slides the vine
+/// along its head direction until it exits (true) or hits another vine (false).
+bool _vineCanClear(
+  VineData vine,
+  LevelData level,
+  Map<String, String> occupied,
+) {
+  if (vine.orderedPath.isEmpty) return false;
+  final delta = switch (vine.headDirection) {
+    'right' => (1, 0),
+    'left' => (-1, 0),
+    'up' => (0, 1),
+    'down' => (0, -1),
+    _ => (0, 0),
+  };
+  if (delta == (0, 0)) return false;
+
+  final positions = vine.orderedPath
+      .map((p) => (p['x'] as int, p['y'] as int))
+      .toList();
+  // Current body cells, updated as the vine slides (mirrors the solver).
+  final body = positions.map((p) => '${p.$1},${p.$2}').toSet();
+
+  final maxSteps =
+      level.gridWidth + level.gridHeight + positions.length;
+  for (var step = 0; step < maxSteps; step++) {
+    final head = positions[0];
+    final nx = head.$1 + delta.$1;
+    final ny = head.$2 + delta.$2;
+    if (nx < 0 ||
+        nx >= level.gridWidth ||
+        ny < 0 ||
+        ny >= level.gridHeight) {
+      return true;
+    }
+    final key = '$nx,$ny';
+    if (occupied.containsKey(key) && !body.contains(key)) {
+      return false;
+    }
+    for (var i = positions.length - 1; i > 0; i--) {
+      positions[i] = positions[i - 1];
+    }
+    positions[0] = (nx, ny);
+    body
+      ..clear()
+      ..addAll(positions.map((p) => '${p.$1},${p.$2}'));
+  }
+  return false;
+}
+
+bool _vineBlocksVine(  VineData blocker,
   VineData blocked,
   LevelData level,
   Map<String, String> occupied,

@@ -1,55 +1,70 @@
 {
     "id": 3,
-    "title": "Lesson 3: Blocking Mechanics",
-    "objective": "Learn when one vine blocks another from being cleared",
-    "instructions": "Some vines block others. Clear the blocking vine first.",
+    "title": "Lesson 3: Hints and Blocking",
+    "objective": "Preview paths with hints, then clear a blocking vine first",
+    "instructions": "Long-press a head to project its path. Vine 2 is trapped: clear vine 3 first, then vine 2.",
     "learning_points": [
-        "Identify blocking vines",
-        "Clear the blocker first"
+        "Long-press shows the exit path",
+        "Blocked means clear the blocker",
+        "Order matters: blocker first"
     ],
     "grid_size": [
-        5,
-        5
+        6,
+        6
     ],
-    "max_moves": 999,
+    "max_moves": 3,
     "vines": [
         {
             "id": "vine_1",
             "head_direction": "right",
             "ordered_path": [
                 {
-                    "x": 3,
-                    "y": 1
-                },
-                {
                     "x": 2,
-                    "y": 1
+                    "y": 4
                 },
                 {
                     "x": 1,
-                    "y": 1
+                    "y": 4
                 },
                 {
                     "x": 0,
-                    "y": 1
+                    "y": 4
                 }
             ]
         },
         {
             "id": "vine_2",
+            "head_direction": "right",
+            "ordered_path": [
+                {
+                    "x": 1,
+                    "y": 2
+                },
+                {
+                    "x": 0,
+                    "y": 2
+                }
+            ]
+        },
+        {
+            "id": "vine_3",
             "head_direction": "down",
             "ordered_path": [
                 {
-                    "x": 4,
+                    "x": 3,
                     "y": 0
                 },
                 {
-                    "x": 4,
+                    "x": 3,
                     "y": 1
                 },
                 {
-                    "x": 4,
+                    "x": 3,
                     "y": 2
+                },
+                {
+                    "x": 3,
+                    "y": 3
                 }
             ]
         }

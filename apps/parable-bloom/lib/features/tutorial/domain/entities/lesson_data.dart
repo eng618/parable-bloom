@@ -34,7 +34,7 @@ class LessonVineData {
 /// Lesson data for rendering in the game screen
 class LessonData {
   /// Total number of tutorial lessons (1..totalLessons).
-  static const int totalLessons = 10;
+  static const int totalLessons = 5;
 
   final int id; // Lesson ID (1-10)
   final String title;

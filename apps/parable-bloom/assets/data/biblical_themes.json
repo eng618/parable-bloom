@@ -12,7 +12,7 @@
           "title": "The Seed is the Word",
           "reference": "Luke 8:11",
           "type": "starter",
-          "trigger_level": "lesson_10",
+          "trigger_level": "lesson_5",
           "reflection_prompts": [
             "What kind of soil (receptive, distracted, or hardened) describes your heart right now?",
             "How can you make space today to let God's Word take deeper root in your life?"
@@ -385,7 +385,7 @@
           "trigger_level": "lvl_m06_challenge",
           "reflection_prompts": [
             "Who is easy to overlook that God is placing on your path?",
-            "What practical mercy will cost you time or comfort — and will you give it?"
+            "What practical mercy will cost you time or comfort \u2014 and will you give it?"
           ]
         }
       ]
@@ -815,7 +815,7 @@
           "trigger_level": "lvl_m13_20",
           "reflection_prompts": [
             "Are you counting offenses or cancelling them?",
-            "What would unlimited forgiveness cost you — and free you from?"
+            "What would unlimited forgiveness cost you \u2014 and free you from?"
           ]
         },
         {
@@ -825,7 +825,7 @@
           "type": "parable",
           "trigger_level": "lvl_m13_challenge",
           "reflection_prompts": [
-            "Compare your debt to God with the debt owed you — what changes?",
+            "Compare your debt to God with the debt owed you \u2014 what changes?",
             "Who needs your forgiveness today?"
           ]
         }
@@ -1014,7 +1014,7 @@
           "type": "parable",
           "trigger_level": "lvl_m16_challenge",
           "reflection_prompts": [
-            "Against which fruit is there no law — and why does that free you?",
+            "Against which fruit is there no law \u2014 and why does that free you?",
             "What harvest is God growing through your current season?"
           ]
         }
@@ -1212,7 +1212,7 @@
     {
       "id": "humility",
       "name": "Humility & Service",
-      "description": "Greatness through the towel — serving as Christ served.",
+      "description": "Greatness through the towel \u2014 serving as Christ served.",
       "icon": "water_drop",
       "passages": [
         {
@@ -1330,7 +1330,7 @@
           "trigger_level": "lvl_m21_challenge",
           "reflection_prompts": [
             "If persistence moves the unjust, what does it do with the Father?",
-            "Will He find faith — in you — when He answers?"
+            "Will He find faith \u2014 in you \u2014 when He answers?"
           ]
         }
       ]
@@ -1338,7 +1338,7 @@
     {
       "id": "foundation",
       "name": "Foundation & Obedience",
-      "description": "Hearing Christ's words and doing them — building to outlast storms.",
+      "description": "Hearing Christ's words and doing them \u2014 building to outlast storms.",
       "icon": "landscape",
       "passages": [
         {
@@ -1382,7 +1382,7 @@
           "trigger_level": "lvl_m22_20",
           "reflection_prompts": [
             "Where do you need to stop hurrying and trust the cornerstone?",
-            "What in your life is aligned — or misaligned — to Him?"
+            "What in your life is aligned \u2014 or misaligned \u2014 to Him?"
           ]
         },
         {
@@ -1412,7 +1412,7 @@
           "trigger_level": "lvl_m23_05",
           "reflection_prompts": [
             "Who are you actively teaching to observe Christ's commands?",
-            "What keeps you from going — comfort, fear, or busyness?"
+            "What keeps you from going \u2014 comfort, fear, or busyness?"
           ]
         },
         {

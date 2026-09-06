@@ -1,18 +1,16 @@
 # Lesson Drafts 6–10 (mechanics gap-fill)
 
-Status: PROMOTED — copies live in `apps/parable-bloom/assets/lessons/lesson_6..10.json`,
-registered in `modules.json` (tutorials + level_mappings), and the app's lesson
-count (`LessonData.totalLessons = 10`) covers them. These fixtures remain as the
-tested source of truth (`pkg/validator/lesson_drafts_test.go`).
+Status: SUPERSEDED — the 10-lesson experiment was folded back into a
+redesigned 5-lesson arc (shipped `assets/lessons/lesson_1..5.json`, with
+`lesson_5.json` rebuilt as the Grand Garden capstone). These fixtures remain
+as tested design history: L6's projection demo and L7's blocker shape fed the
+new L3; L10's key-frees-two shape fed the new L4; L8's grace text and L9's
+pan/zoom text were folded into lessons 2/4/5 instructions.
 
-Promotion checklist (done):
-
-1. [x] Copy to `apps/parable-bloom/assets/lessons/lesson_N.json`.
-2. [x] Append `"lesson_N"` to `tutorials` in `assets/data/modules.json`.
-3. [x] Widen Dart lesson-count guards (now `LessonData.totalLessons`).
-4. [x] Starter scripture trigger moved to the capstone (`lesson_10`).
-5. [x] Run `task levels:tutorials:validate` and
-   `task levels:tutorials:validate-solvable`.
+Design rule learned here (applies to all lessons): a lesson's first-listed
+vine must be immediately clearable — the guide overlay suggests the first
+non-cleared vine, and the old Lesson 9 violated this (vine_1 blocked),
+setting players up for failure.
 
 ## Grid-size convention (unified)
 
