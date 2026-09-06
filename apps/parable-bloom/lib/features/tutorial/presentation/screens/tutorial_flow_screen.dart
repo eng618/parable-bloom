@@ -111,6 +111,17 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       }
     });
 
+    // Forward projection-line state (Show All + long-press hint) to Flame.
+    ref.listen<bool>(projectionLinesVisibleProvider, (previous, next) {
+      if (previous != next) _updateProjectionLinesVisibility();
+    });
+    ref.listen<bool>(anyVineAnimatingProvider, (previous, next) {
+      if (previous != next) _updateProjectionLinesVisibility();
+    });
+    ref.listen<Set<String>>(hintedVineIdsProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
     // Validate lesson number
     if (currentLesson < 1 || currentLesson > LessonData.totalLessons) {
       return Scaffold(
@@ -394,6 +405,26 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   void _handleScaleEnd(ScaleEndDetails details) {
     _lastScale = ref.read(cameraStateProvider).zoom;
     _panStartOffset = ref.read(cameraStateProvider).panOffset;
+  }
+
+  void _updateProjectionLinesVisibility() {
+    if (_game == null) return;
+    final shouldShow = ref.read(projectionLinesVisibleProvider);
+    final hintedVines = ref.read(hintedVineIdsProvider);
+    final isAnimating = ref.read(anyVineAnimatingProvider);
+
+    if (isAnimating && shouldShow) {
+      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+    }
+    if (isAnimating && hintedVines.isNotEmpty) {
+      ref.read(hintedVineIdsProvider.notifier).clear();
+    }
+
+    _game!.updateProjectionLinesVisibility(
+      visible: shouldShow,
+      hintedVines: hintedVines,
+      isAnimating: isAnimating,
+    );
   }
 
   Widget _buildProjectionLinesFAB() {

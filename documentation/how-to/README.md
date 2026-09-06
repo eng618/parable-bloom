@@ -41,6 +41,13 @@ Guides for preparing store listings, marketing copy, and screenshots:
 - [Marketing](app-store-listings/marketing.md)
 - [Visual Assets](app-store-listings/visual-assets.md)
 
+### 5. [Flutter Architecture Improvement Plan](flutter-architecture-improvement-plan.md)
+
+Living checklist tracking the projection-lines bug fix plus Flutter/Flame performance, UX smoothness, and maintainability work:
+
+- Unified `ProjectionMode` fix (long-press single + Show-All FAB).
+- Rendering, state/camera, hygiene, and dependency upgrade phases.
+
 ---
 
 ## Diátaxis Navigation
