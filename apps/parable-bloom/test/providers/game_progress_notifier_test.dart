@@ -34,8 +34,8 @@ class TrackingFirebaseGameProgressRepository
   @override
   Future<void> syncToCloud() async {
     calls.add("syncToCloud");
-    _stored = _stored.copyWith(
-        currentLevel: 'lvl_m01_02', completedLevels: {'lvl_m01_01'});
+    _stored = _stored
+        .copyWith(currentLevel: 'lvl_m01_02', completedLevels: {'lvl_m01_01'});
   }
 
   @override

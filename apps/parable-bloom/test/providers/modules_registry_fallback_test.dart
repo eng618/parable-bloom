@@ -26,7 +26,8 @@ class _DeniedCollection extends Mock
   }
 }
 
-class _DeniedDoc extends Mock implements DocumentReference<Map<String, dynamic>> {
+class _DeniedDoc extends Mock
+    implements DocumentReference<Map<String, dynamic>> {
   @override
   Future<DocumentSnapshot<Map<String, dynamic>>> get([GetOptions? options]) {
     return Future.error(
@@ -61,7 +62,8 @@ class _SuccessCollection extends Mock
   }
 }
 
-class _SuccessDoc extends Mock implements DocumentReference<Map<String, dynamic>> {
+class _SuccessDoc extends Mock
+    implements DocumentReference<Map<String, dynamic>> {
   final Map<String, dynamic> data;
   _SuccessDoc(this.data);
 
@@ -139,7 +141,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final box = await container.read(hiveBoxProvider);
+      final box = container.read(hiveBoxProvider);
       await box.put(
         'cached_modules_registry',
         json.encode(cached),
@@ -159,7 +161,9 @@ void main() {
         'level_mappings': <String, dynamic>{'level_1': 'levels/level_1.json'},
       };
       final container = ProviderContainer(
-        overrides: [firestoreProvider.overrideWithValue(_SuccessFirestore(ota))],
+        overrides: [
+          firestoreProvider.overrideWithValue(_SuccessFirestore(ota))
+        ],
       );
       addTearDown(container.dispose);
 
@@ -168,8 +172,9 @@ void main() {
         {'id': 'ota-module'},
       ]);
 
-      final cachedStr =
-          container.read(hiveBoxProvider).get('cached_modules_registry') as String?;
+      final cachedStr = container
+          .read(hiveBoxProvider)
+          .get('cached_modules_registry') as String?;
       expect(cachedStr, isNotNull);
       expect((json.decode(cachedStr!) as Map)['modules'], [
         {'id': 'ota-module'},

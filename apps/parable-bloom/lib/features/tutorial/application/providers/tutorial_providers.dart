@@ -82,8 +82,7 @@ class TutorialProgressNotifier extends Notifier<TutorialProgress> {
     }
 
     final newCompleted = Set<int>.from(state.completedLessons)..add(lessonId);
-    final allComplete =
-        newCompleted.length == LessonData.totalLessons;
+    final allComplete = newCompleted.length == LessonData.totalLessons;
     final nextLesson = allComplete ? null : lessonId + 1;
 
     final lessonIdStr = 'lesson_$lessonId';

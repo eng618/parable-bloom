@@ -14,7 +14,8 @@ class VineAnimator {
   /// derived geometry and only rebuild on actual movement.
   int visualVersion = 0;
 
-  int currentAnimationStep = 0;  int totalAnimationSteps = 0;
+  int currentAnimationStep = 0;
+  int totalAnimationSteps = 0;
   int maxForwardStepsThisRun = 0;
   bool canClearThisRun = false;
   double animationTimer = 0.0;

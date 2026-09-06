@@ -344,22 +344,17 @@ bool _vineCanClear(
   };
   if (delta == (0, 0)) return false;
 
-  final positions = vine.orderedPath
-      .map((p) => (p['x'] as int, p['y'] as int))
-      .toList();
+  final positions =
+      vine.orderedPath.map((p) => (p['x'] as int, p['y'] as int)).toList();
   // Current body cells, updated as the vine slides (mirrors the solver).
   final body = positions.map((p) => '${p.$1},${p.$2}').toSet();
 
-  final maxSteps =
-      level.gridWidth + level.gridHeight + positions.length;
+  final maxSteps = level.gridWidth + level.gridHeight + positions.length;
   for (var step = 0; step < maxSteps; step++) {
     final head = positions[0];
     final nx = head.$1 + delta.$1;
     final ny = head.$2 + delta.$2;
-    if (nx < 0 ||
-        nx >= level.gridWidth ||
-        ny < 0 ||
-        ny >= level.gridHeight) {
+    if (nx < 0 || nx >= level.gridWidth || ny < 0 || ny >= level.gridHeight) {
       return true;
     }
     final key = '$nx,$ny';
@@ -377,7 +372,8 @@ bool _vineCanClear(
   return false;
 }
 
-bool _vineBlocksVine(  VineData blocker,
+bool _vineBlocksVine(
+  VineData blocker,
   VineData blocked,
   LevelData level,
   Map<String, String> occupied,

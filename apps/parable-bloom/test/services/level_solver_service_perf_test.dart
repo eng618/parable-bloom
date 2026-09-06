@@ -22,7 +22,7 @@ void main() {
         // Make long vines to increase M
         final path = <Map<String, int>>[];
         for (int j = 0; j < 20; j++) {
-           path.add({'x': i, 'y': j});
+          path.add({'x': i, 'y': j});
         }
 
         vines.add(VineData(
@@ -72,7 +72,7 @@ void main() {
         // Make long vines to increase M
         final path = <Map<String, int>>[];
         for (int j = 0; j < 20; j++) {
-           path.add({'x': i, 'y': j});
+          path.add({'x': i, 'y': j});
         }
 
         vines.add(VineData(

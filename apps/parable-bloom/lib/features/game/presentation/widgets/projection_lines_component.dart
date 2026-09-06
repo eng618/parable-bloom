@@ -42,10 +42,10 @@ class ProjectionLinesComponent extends PositionComponent
       GameBoardLayout.boardHeight(rows),
     );
 
-    final maxDimension = GameBoardLayout.boardWidth(cols) >
-            GameBoardLayout.boardHeight(rows)
-        ? GameBoardLayout.boardWidth(cols)
-        : GameBoardLayout.boardHeight(rows);
+    final maxDimension =
+        GameBoardLayout.boardWidth(cols) > GameBoardLayout.boardHeight(rows)
+            ? GameBoardLayout.boardWidth(cols)
+            : GameBoardLayout.boardHeight(rows);
     _extensionLength = maxDimension * 2; // Go 2x the max dimension
 
     // Position will be set by camera transform

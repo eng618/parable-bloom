@@ -126,7 +126,6 @@ class HiveSettingsRepository implements SettingsRepository {
 
   @override
   Future<void> setPreferredTranslation(String translationId) async {
-    await hiveBox.put(
-        _preferredTranslationKey, translationId.toLowerCase());
+    await hiveBox.put(_preferredTranslationKey, translationId.toLowerCase());
   }
 }

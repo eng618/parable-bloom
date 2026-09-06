@@ -760,7 +760,7 @@ Console says your app doesn't use advertising ID.`
   declares no ad-ID usage in Play Console.
 - Fix: `apps/parable-bloom/android/app/src/main/AndroidManifest.xml` strips it
   with `<uses-permission android:name="com.google.android.gms.permission.AD_ID"
-  tools:node="remove"/>` (requires `xmlns:tools`). The merged AAB then matches
+tools:node="remove"/>` (requires `xmlns:tools`). The merged AAB then matches
   the Play Console data-safety declaration.
 - Alternative (only if the app ever needs the ad ID, e.g. for Analytics
   demographics): keep the permission and instead update Play Console → App

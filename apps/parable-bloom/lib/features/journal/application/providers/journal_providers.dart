@@ -15,7 +15,8 @@ import '../../domain/entities/journal_theme.dart';
 const String kBiblicalThemesVersion = '2.0';
 
 final biblicalThemesRegistryProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {  final box = ref.watch(hiveBoxProvider);
+    FutureProvider<Map<String, dynamic>>((ref) async {
+  final box = ref.watch(hiveBoxProvider);
   final configsCollection = EnvironmentConfig.getConfigsCollection();
 
   // 1. Try Firestore

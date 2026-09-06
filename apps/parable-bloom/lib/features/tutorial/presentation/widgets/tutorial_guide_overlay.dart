@@ -178,8 +178,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
       } else {
         final targetId = _firstMovableId(currentLevel, vineStates);
         if (targetId != null) {
-          final vine =
-              currentLevel.vines.firstWhere((v) => v.id == targetId);
+          final vine = currentLevel.vines.firstWhere((v) => v.id == targetId);
           final head = vine.orderedPath.first;
           highlightPosition =
               game.getCellScreenPosition(head['x']!, head['y']!);
@@ -198,8 +197,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
       } else {
         final targetId = _firstMovableId(currentLevel, vineStates);
         if (targetId != null) {
-          final vine =
-              currentLevel.vines.firstWhere((v) => v.id == targetId);
+          final vine = currentLevel.vines.firstWhere((v) => v.id == targetId);
           final head = vine.orderedPath.first;
           highlightPosition =
               game.getCellScreenPosition(head['x']!, head['y']!);
