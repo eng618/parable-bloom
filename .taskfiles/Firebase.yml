@@ -56,12 +56,25 @@ tasks:
         msg: "Firebase CLI is not installed."
 
   levels:upload:
-    desc: "Upload generated levels to Cloud Firestore (usage: task firebase:levels:upload ENV=dev)"
+    desc: "Upload generated levels to Cloud Firestore (usage: task firebase:levels:upload ENV=dev ARGS='--dry-run')"
     vars:
       ENV: '{{.ENV | default "dev"}}'
+      ARGS: '{{.ARGS | default ""}}'
     cmds:
       - bun install firebase-admin
-      - node scripts/firebase/upload_levels.js "{{.ENV}}"
+      - node scripts/firebase/upload_levels.js "{{.ENV}}" {{.ARGS}}
+
+  themes:upload:
+    desc: "Upload biblical themes registry to Cloud Firestore (usage: task firebase:themes:upload ENV=dev ARGS='--dry-run')"
+    vars:
+      ENV: '{{.ENV | default "dev"}}'
+      ARGS: '{{.ARGS | default ""}}'
+    cmds:
+      - bun install firebase-admin
+      - node scripts/firebase/upload_themes.js "{{.ENV}}" {{.ARGS}}
+    preconditions:
+      - sh: command -v node >/dev/null 2>&1
+        msg: "Node.js is not installed."
 
   scriptures:upload:
     desc: "Upload on-demand scripture texts to Cloud Firestore (usage: task firebase:scriptures:upload ENV=dev)"

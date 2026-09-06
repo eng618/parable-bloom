@@ -1086,13 +1086,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       BuildContext context, WidgetRef ref, List<ModuleData> modules) {
     final safeContext = context;
 
-    // Fetch modules and build level list
-    final levels = <String>[];
-    for (final m in modules) {
-      levels.addAll(m.allLevels);
-    }
-
-    if (levels.isEmpty) {
+    if (modules.isEmpty) {
       ScaffoldMessenger.of(safeContext).showSnackBar(
         const SnackBar(content: Text('No levels available')),
       );
@@ -1101,35 +1095,65 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     String? selected = ref.read(debugSelectedLevelProvider);
 
+    // Preselect the module containing the current selection, else the first.
+    ModuleData selectedModule = modules.first;
+    for (final m in modules) {
+      if (selected != null && m.containsLevel(selected)) {
+        selectedModule = m;
+        break;
+      }
+    }
+    if (selected != null && !selectedModule.containsLevel(selected)) {
+      selected = null;
+    }
+
     showDialog(
       context: safeContext,
       builder: (dialogContext) {
-        return FutureBuilder<Map<String, String>>(
-          future: _loadLabels(levels, ref),
-          builder: (ctx, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return AlertDialog(
-                title: const Text('Debug: Select Level to Play'),
-                content: const CircularProgressIndicator(),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('Cancel'),
+        return StatefulBuilder(builder: (ctx, setState) {
+          final moduleLevels = selectedModule.allLevels;
+          return AlertDialog(
+            title: const Text('Debug: Select Level to Play'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<int>(
+                  isDense: true,
+                  initialValue: selectedModule.id,
+                  items: modules
+                      .map((m) => DropdownMenuItem<int>(
+                            value: m.id,
+                            child: Text(
+                                'Module ${m.id} — ${m.name} (${m.levelCount})'),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      selectedModule = modules.firstWhere(
+                        (m) => m.id == value,
+                        orElse: () => modules.first,
+                      );
+                      // Reset level selection when switching modules.
+                      selected = null;
+                    });
+                  },
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Module',
                   ),
-                ],
-              );
-            }
-            final labels = snapshot.data ?? {};
-            return AlertDialog(
-              title: const Text('Debug: Select Level to Play'),
-              content: StatefulBuilder(builder: (ctx, setState) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DropdownButtonFormField<String>(
+                ),
+                const SizedBox(height: 12),
+                FutureBuilder<Map<String, String>>(
+                  // Reload labels whenever the module changes.
+                  key: ValueKey(selectedModule.id),
+                  future: _loadLabels(moduleLevels, ref),
+                  builder: (labelCtx, snapshot) {
+                    final labels = snapshot.data ?? {};
+                    return DropdownButtonFormField<String>(
                       isDense: true,
                       initialValue: selected,
-                      items: levels
+                      items: moduleLevels
                           .map((lvl) => DropdownMenuItem<String>(
                                 value: lvl,
                                 child: Text(labels[lvl] ?? lvl),
@@ -1151,36 +1175,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Level',
                       ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Cancel'),
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(dialogContext).pop(),
-                          child: const Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          onPressed: selected == null
-                              ? null
-                              : () {
-                                  ref
-                                      .read(debugSelectedLevelProvider.notifier)
-                                      .setLevel(selected);
-                                  Navigator.of(dialogContext).pop();
-                                  Navigator.of(dialogContext)
-                                      .pushNamed('/game');
-                                },
-                          child: const Text('Play'),
-                        ),
-                      ],
+                    ElevatedButton(
+                      onPressed: selected == null
+                          ? null
+                          : () {
+                              ref
+                                  .read(debugSelectedLevelProvider.notifier)
+                                  .setLevel(selected);
+                              Navigator.of(dialogContext).pop();
+                              // go_router (MaterialApp.router) has no named
+                              // Navigator routes; pushNamed('/game') crashes.
+                              GoRouter.of(dialogContext).go('/game');
+                            },
+                      child: const Text('Play'),
                     ),
                   ],
-                );
-              }),
-            );
-          },
-        );
+                ),
+              ],
+            ),
+          );
+        });
       },
     );
   }
@@ -1194,7 +1219,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       try {
         final levelData = await ref.read(levelDataProvider(lvl).future);
         final difficulty = levelData.difficulty;
-        return MapEntry(lvl, 'Level $index ($lvl) — $difficulty');
+        final name = lvl.endsWith('challenge')
+            ? '★ Challenge ($lvl) — $difficulty'
+            : 'Level $index ($lvl) — $difficulty';
+        return MapEntry(lvl, name);
       } catch (_) {
         return MapEntry(lvl, lvl);
       }

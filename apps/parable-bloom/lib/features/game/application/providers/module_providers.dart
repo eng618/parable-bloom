@@ -135,9 +135,13 @@ final levelMappingsProvider = FutureProvider<Map<String, String>>((ref) async {
 });
 
 /// Exposes the canonical [LevelRepository] instance.
-final levelRepositoryProvider = Provider<LevelRepository>((ref) {
+///
+/// Async so bundled/OTA level mappings are always resolved before the first
+/// fetch. (A previous sync snapshot could serve an empty mapping table on
+/// cold start, sending every level to Firestore despite bundled assets.)
+final levelRepositoryProvider = FutureProvider<LevelRepository>((ref) async {
   final firestore = ref.watch(firestoreProvider);
-  final mappings = ref.watch(levelMappingsProvider).value ?? {};
+  final mappings = await ref.watch(levelMappingsProvider.future);
   final box = ref.watch(hiveBoxProvider);
   return DynamicLevelRepository(
     firestore: firestore,
@@ -149,6 +153,6 @@ final levelRepositoryProvider = Provider<LevelRepository>((ref) {
 /// Asynchronously provides [LevelData] for a specific logical level ID.
 final levelDataProvider =
     FutureProvider.family<LevelData, String>((ref, levelId) async {
-  final repo = ref.watch(levelRepositoryProvider);
+  final repo = await ref.watch(levelRepositoryProvider.future);
   return repo.getLevel(levelId);
 });
