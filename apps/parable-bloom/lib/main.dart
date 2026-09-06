@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -66,6 +67,11 @@ void main() async {
           ? 'Firebase initialized (Crashlytics disabled on web)'
           : 'Firebase initialized with Crashlytics',
     );
+    // Guest session for logged-out users: auth-gated reads (configs_prod)
+    // require request.auth != null, and progress sync keys off the UID.
+    // Non-fatal — bundled assets cover offline use. Requires Anonymous
+    // sign-in enabled in the Firebase console.
+    await _ensureGuestSession();
   }
 
   // Initialize Hive
@@ -102,8 +108,28 @@ void main() async {
   );
 }
 
-Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
-  final completedLevelsList = <String>[];
+/// Signs in anonymously when no user session exists so auth-gated Firestore
+/// reads (e.g. configs_prod) and UID-keyed progress sync work for guests.
+/// Upgrading to a permanent account later preserves progress via linking.
+Future<void> _ensureGuestSession() async {
+  try {
+    if (FirebaseAuth.instance.currentUser == null) {
+      final credential = await FirebaseAuth.instance.signInAnonymously();
+      LoggerService.info(
+        'Guest session started: ${credential.user?.uid}',
+        tag: 'AuthBootstrap',
+      );
+    }
+  } catch (e, stack) {
+    LoggerService.warn(
+      'Anonymous sign-in unavailable; continuing offline-first',
+      tag: 'AuthBootstrap',
+    );
+    LoggerService.debug('$e $stack', tag: 'AuthBootstrap');
+  }
+}
+
+Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {  final completedLevelsList = <String>[];
   // Seedling levels (1 to 20 + challenge)
   for (int i = 1; i <= 20; i++) {
     final idxStr = i < 10 ? '0$i' : '$i';
