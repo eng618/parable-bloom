@@ -7,9 +7,9 @@ Related: [System Architecture](../explanation/architecture.md) · App: `apps/par
 
 ## Status
 
-* Current phase: Phase 0 — bridge fix landed, unified model pending decision
+* Current phase: Phase 1 — rendering performance (1.1, 1.2, 1.4 landed)
 * Last updated: 2026-09-06
-* Progress: 4 / ~40 items
+* Progress: 7 / ~40 items
 
 ## Phase 0 — Projection Lines Bug Fix (P0, bundled)
 
@@ -20,16 +20,16 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 - [ ] 0.3 Migrate `_updateProjectionLinesVisibility()` (`game_screen.dart:1069-1087`) + FAB `toggle()` (`:391-399`) + `onHintVine/onClearHints` callbacks (`:108-127`) to `ProjectionMode` — deferred with 0.2
 - [x] 0.4 Deprecate/remove `setVisible()` (`projection_lines_component.dart:45-47`) so dual-API regression can't recur
 - [x] 0.5 Audit `tutorial_flow_screen.dart` for the same broken bridge pattern and fix
-- [ ] 0.6 Verify `_getVineAtCell(gridY, gridX)` arg order (`grid_component.dart:457` vs `:499`) with long-press log breakpoint
+- [x] 0.6 Verify `_getVineAtCell(gridY, gridX)` arg order (`grid_component.dart:457` vs `:499`) with long-press log breakpoint — verified correct by inspection (map keyed `(x,y)` from `orderedPath`, lookup `(col,row)`, callers pass `(gridY,gridX)`); only naming is confusing, rename deferred to hygiene phase
 - [x] 0.7 Regression test: single-hint shows one line, Show-All shows all, `isAnimating=true` hides, cleared vines skipped (`:117-121`); extend `projection_lines_providers_test.dart`
 - [ ] 0.8 Manual verify on device: long-press vine → single line; FAB → all lines; next tap clears hint
 
 ## Phase 1 — Rendering Performance (P0)
 
-- [ ] 1.1 `vine_component.dart:54-124`: cache resolved color + `points` on `setLevelData`/state change; early-out `render()` when idle and clean (stop per-frame `getCurrentVineState`, `resolve()`, `deriveCalmVariant`, point rebuild)
-- [ ] 1.2 `vine/vine_path_painter.dart:52-74`: cache `ImageShader` per texture+scale; hoist `Paint`s to static/reusable; precompute leaf `Path` + blossom dots
+- [x] 1.1 `vine_component.dart:54-124`: cache resolved color + `points` on `setLevelData`/state change; early-out `render()` when idle and clean — done via `VineAnimator.visualVersion` + cached `_calmColor`/`_cachedPoints`
+- [x] 1.2 `vine/vine_path_painter.dart:52-74`: cache `ImageShader` per texture+scale; hoist `Paint`s to static/reusable, precompute leaf `Path` + blossom dots — done (`_shaderCache`, `_leafPathCache`, paints hoisted out of segment loop, blossom paints per-frame); frustum culling still open
 - [ ] 1.3 Gate ethereal `MaskFilter.blur(5.0)` (`:84`) + leaf glow `blur(3.0)` (`:134`) to animating/clearing only; add frustum culling for off-screen vines
-- [ ] 1.4 `projection_lines_component.dart:104-108,167-172`: hoist line `Paint`, precompute `extensionLength` per level, clip to viewport (fix 2x off-screen overdraw)
+- [x] 1.4 `projection_lines_component.dart:104-108,167-172`: hoist line `Paint`, precompute `extensionLength` per level, clip to viewport — done except viewport clipping
 - [ ] 1.5 `grid_component.dart` `CellComponent:402-441`: hoist `Theme.of(game.buildContext!)` (`:412`) + dot colors; gate `TextPainter.layout` (`:430-439`) to debug; hoist cell `Paint`
 - [ ] 1.6 Evaluate single `GridBackgroundComponent` vs N `RectangleComponent` cells (100+ nodes); measure `raster` time before/after
 - [ ] 1.7 `garden_game.dart:176-177,130-154`: `Future.wait` background loads + preload; `removeFromParent()` instead of `setOpacity(0)` for simple-vine style; cover-fit sizing for wide screens
@@ -67,5 +67,6 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 *Add newest entries at top.*
 
+- `2026-09-06` — Phase 1 batch landed: 1.1 idle-vine caching (`visualVersion` + cached calm color/points), 1.2 shader/paint/leaf-path hoisting, 1.4 projection paint + extension precompute; 0.6 arg-order verified correct. `flutter analyze` clean, 29/29 vine+projection tests pass. Open: blur gating + frustum culling (1.3), viewport clipping (1.4 remainder), device profiling (1.9).
 - `2026-09-06` — Phase 0 bridge fix landed: `GardenGame.updateProjectionLinesVisibility` forwards via `updateVisibility()` (+ pure `resolveProjectionVisibility()` helper), `setVisible()` deprecated, `tutorial_flow_screen.dart` wired with provider listens + `_updateProjectionLinesVisibility()` (it never forwarded before). New `test/providers/projection_lines_visibility_test.dart` (7 tests); `flutter analyze` clean, 17/17 projection tests pass. Manual device verify (long-press + FAB) still open. Sealed `ProjectionMode` (0.2/0.3) deferred pending design approval.
 - `2026-09-06` — Plan created from architecture review + projection bug trace. No code changed yet.

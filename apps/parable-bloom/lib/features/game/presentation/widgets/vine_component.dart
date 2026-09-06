@@ -27,8 +27,19 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final VineBloomRenderer _bloomRenderer = VineBloomRenderer();
   bool _alreadyNotifiedCleared = false;
 
+  // Immutable per vine: resolved once instead of every frame.
+  late final Color _calmColor;
+
+  // Cached screen-space geometry. Rebuilt only when the animator's visual
+  // positions change (version bump) or the grid height changes.
+  List<Offset> _cachedPoints = const [];
+  int _cachedVisualVersion = -1;
+  int _cachedVisualHeight = -1;
+
   VineComponent({required this.vineData, required this.cellSize}) {
     _animator = VineAnimator(vineData: vineData);
+    final seedColor = VineColorPalette.resolve(vineData.vineColor);
+    _calmColor = VinePathPainter.deriveCalmVariant(seedColor, vineData.id);
   }
 
   @override
@@ -64,8 +75,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final level = parent.getCurrentLevelData();
     if (level == null || _animator.visualPositions.isEmpty) return;
 
-    final seedColor = VineColorPalette.resolve(vineData.vineColor);
-    final calmColor = VinePathPainter.deriveCalmVariant(seedColor, vineData.id);
+    final calmColor = _calmColor;
     final isAttempted = vineState.hasBeenAttempted;
     final baseColor = computeRenderColor(
       calmColor,
@@ -82,19 +92,27 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       drawColor = isAttempted ? calmColor : const Color(0xFFFFFFFF);
     }
 
-    // Build visual offsets from grid coordinates
+    // Rebuild visual offsets from grid coordinates only when the vine
+    // actually moved (or the grid height changed). Idle vines reuse cache.
     final visualHeight = level.gridHeight;
-    final List<Offset> points = [];
-    for (final cell in _animator.visualPositions) {
-      final x = cell['x'] as int;
-      final y = cell['y'] as int;
-      final visualY = visualHeight - 1 - y;
+    if (_cachedVisualVersion != _animator.visualVersion ||
+        _cachedVisualHeight != visualHeight) {
+      final List<Offset> points = [];
+      for (final cell in _animator.visualPositions) {
+        final x = cell['x'] as int;
+        final y = cell['y'] as int;
+        final visualY = visualHeight - 1 - y;
 
-      points.add(Offset(
-        GameBoardLayout.cellCenterX(x),
-        GameBoardLayout.cellCenterY(visualY),
-      ));
+        points.add(Offset(
+          GameBoardLayout.cellCenterX(x),
+          GameBoardLayout.cellCenterY(visualY),
+        ));
+      }
+      _cachedPoints = points;
+      _cachedVisualVersion = _animator.visualVersion;
+      _cachedVisualHeight = visualHeight;
     }
+    final points = _cachedPoints;
 
     final double strokeWidth = useSimpleVines ? 26.0 : 16.0;
 

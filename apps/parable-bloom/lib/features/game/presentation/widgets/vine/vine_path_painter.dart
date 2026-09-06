@@ -8,6 +8,38 @@ import 'package:parable_bloom/core/providers/settings_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 
 class VinePathPainter {
+  /// Cached shaders per texture image. The transform is always the same
+  /// (uniform [textureScale]), so rebuilding an [ImageShader] every frame
+  /// per vine is pure overhead.
+  static final Map<ui.Image, ui.ImageShader> _shaderCache = {};
+
+  /// Cached leaf shapes per size. [Path]s are never mutated after creation,
+  /// so sharing them across frames and vines is safe.
+  static final Map<double, Path> _leafPathCache = {};
+
+  static ui.ImageShader _shaderFor(ui.Image texture) {
+    return _shaderCache.putIfAbsent(texture, () {
+      final matrix = Float64List(16)
+        ..[0] = 1.0
+        ..[5] = 1.0
+        ..[10] = 1.0
+        ..[15] = 1.0;
+      const double textureScale = 0.25;
+      matrix[0] = textureScale;
+      matrix[5] = textureScale;
+
+      return ui.ImageShader(
+        texture,
+        TileMode.repeated,
+        TileMode.repeated,
+        matrix,
+      );
+    });
+  }
+
+  static Path _leafPathFor(double size) {
+    return _leafPathCache.putIfAbsent(size, () => _createLeafPath(size));
+  }
   /// Render main vine path, foliage, and directional arrow head
   static void drawVine({
     required Canvas canvas,
@@ -52,21 +84,7 @@ class VinePathPainter {
     if (useSimpleVines || texture == null) {
       paint.color = drawColor;
     } else {
-      final matrix = Float64List(16)
-        ..[0] = 1.0
-        ..[5] = 1.0
-        ..[10] = 1.0
-        ..[15] = 1.0;
-      const double textureScale = 0.25;
-      matrix[0] = textureScale;
-      matrix[5] = textureScale;
-
-      paint.shader = ImageShader(
-        texture,
-        TileMode.repeated,
-        TileMode.repeated,
-        matrix,
-      );
+      paint.shader = _shaderFor(texture);
       paint.colorFilter = ColorFilter.mode(
         drawColor,
         BlendMode.modulate,
@@ -88,8 +106,45 @@ class VinePathPainter {
     // 4. Draw Main Branch/Path
     canvas.drawPath(path, paint);
 
-    // 5. Draw Foliage Details
+    // 5. Draw Foliage Details (paints hoisted: reused across segments,
+    //    not reallocated per point per frame)
     if (!useSimpleVines) {
+      final double leafSize = strokeWidth * 0.95;
+      final Path leafPath = _leafPathFor(leafSize);
+
+      late final Paint classicLeafPaint;
+      late final Paint etherealLeafPaint;
+      late final Paint etherealLeafGlow;
+      late final Paint blossomPetalPaint;
+      late final Paint blossomCenterPaint;
+      if (vineStyle == VineStyle.classic) {
+        classicLeafPaint = Paint()
+          ..style = PaintingStyle.fill
+          ..color = drawColor;
+        if (texture != null) {
+          classicLeafPaint.shader = paint.shader;
+          classicLeafPaint.colorFilter = paint.colorFilter;
+        }
+      } else if (vineStyle == VineStyle.blossom) {
+        blossomPetalPaint = Paint()
+          ..style = PaintingStyle.fill
+          ..color = const Color(0xFFFFC2D8)
+          ..colorFilter = ColorFilter.mode(drawColor, BlendMode.modulate);
+        blossomCenterPaint = Paint()
+          ..style = PaintingStyle.fill
+          ..color = const Color(0xFFFFDB4D)
+          ..colorFilter = ColorFilter.mode(drawColor, BlendMode.modulate);
+      } else if (vineStyle == VineStyle.ethereal) {
+        etherealLeafPaint = Paint()
+          ..style = PaintingStyle.fill
+          ..color = const Color(0xFF00E5FF)
+          ..colorFilter = ColorFilter.mode(drawColor, BlendMode.modulate);
+        etherealLeafGlow = Paint()
+          ..style = PaintingStyle.fill
+          ..color = const Color(0xFF00E5FF).withValues(alpha: 0.4)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+      }
+
       for (int i = 0; i < points.length; i++) {
         if (i == 0) continue;
 
@@ -99,54 +154,38 @@ class VinePathPainter {
         final double baseAngle = math.atan2(dy, dx);
 
         if (vineStyle == VineStyle.classic) {
-          final leafPaint = Paint()
-            ..style = PaintingStyle.fill
-            ..color = drawColor;
-          if (texture != null) {
-            leafPaint.shader = paint.shader;
-            leafPaint.colorFilter = paint.colorFilter;
-          }
-
-          final double leafSize = strokeWidth * 0.95;
-
           canvas.save();
           canvas.translate(points[i].dx, points[i].dy);
           canvas.rotate(baseAngle + math.pi / 4.0);
-          canvas.drawPath(_createLeafPath(leafSize), leafPaint);
+          canvas.drawPath(leafPath, classicLeafPaint);
           canvas.restore();
 
           canvas.save();
           canvas.translate(points[i].dx, points[i].dy);
           canvas.rotate(baseAngle - math.pi / 4.0);
-          canvas.drawPath(_createLeafPath(leafSize), leafPaint);
+          canvas.drawPath(leafPath, classicLeafPaint);
           canvas.restore();
         } else if (vineStyle == VineStyle.blossom) {
-          _drawCherryBlossom(canvas, points[i], strokeWidth * 1.15, drawColor);
+          _drawCherryBlossom(
+            canvas,
+            points[i],
+            strokeWidth * 1.15,
+            petalPaint: blossomPetalPaint,
+            centerPaint: blossomCenterPaint,
+          );
         } else if (vineStyle == VineStyle.ethereal) {
-          final leafPaint = Paint()
-            ..style = PaintingStyle.fill
-            ..color = const Color(0xFF00E5FF)
-            ..colorFilter = ColorFilter.mode(drawColor, BlendMode.modulate);
-
-          final leafGlow = Paint()
-            ..style = PaintingStyle.fill
-            ..color = const Color(0xFF00E5FF).withValues(alpha: 0.4)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
-
-          final double leafSize = strokeWidth * 0.95;
-
           canvas.save();
           canvas.translate(points[i].dx, points[i].dy);
           canvas.rotate(baseAngle + math.pi / 4.0);
-          canvas.drawPath(_createLeafPath(leafSize), leafGlow);
-          canvas.drawPath(_createLeafPath(leafSize), leafPaint);
+          canvas.drawPath(leafPath, etherealLeafGlow);
+          canvas.drawPath(leafPath, etherealLeafPaint);
           canvas.restore();
 
           canvas.save();
           canvas.translate(points[i].dx, points[i].dy);
           canvas.rotate(baseAngle - math.pi / 4.0);
-          canvas.drawPath(_createLeafPath(leafSize), leafGlow);
-          canvas.drawPath(_createLeafPath(leafSize), leafPaint);
+          canvas.drawPath(leafPath, etherealLeafGlow);
+          canvas.drawPath(leafPath, etherealLeafPaint);
           canvas.restore();
         }
       }
@@ -204,17 +243,12 @@ class VinePathPainter {
   }
 
   static void _drawCherryBlossom(
-      Canvas canvas, Offset center, double size, Color baseColor) {
-    final petalPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = const Color(0xFFFFC2D8);
-    final centerPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = const Color(0xFFFFDB4D);
-
-    petalPaint.colorFilter = ColorFilter.mode(baseColor, BlendMode.modulate);
-    centerPaint.colorFilter = ColorFilter.mode(baseColor, BlendMode.modulate);
-
+    Canvas canvas,
+    Offset center,
+    double size, {
+    required Paint petalPaint,
+    required Paint centerPaint,
+  }) {
     final double petalRadius = size * 0.44;
     for (int i = 0; i < 5; i++) {
       final double angle = i * 2 * math.pi / 5;
