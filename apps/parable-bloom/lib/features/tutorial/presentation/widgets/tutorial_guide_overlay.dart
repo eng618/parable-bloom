@@ -6,6 +6,7 @@ import 'dart:ui';
 import '../../../game/application/providers/camera_providers.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/solver_providers.dart';
+import '../../../game/domain/entities/level_data.dart';
 
 /// State of a blocked tap event, used for drawing collision indicators.
 class BlockedTapState {
@@ -73,6 +74,27 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     super.dispose();
   }
 
+  /// First non-cleared vine that can actually move right now, so the guide
+  /// never points at a blocked vine. Falls back to the first non-cleared
+  /// vine when everything is stuck (shouldn't happen in tutorials).
+  String? _firstMovableId(
+    LevelData level,
+    Map<String, VineState> vineStates,
+  ) {
+    final activeIds = vineStates.entries
+        .where((e) => !e.value.isClearedOrClearing)
+        .map((e) => e.key)
+        .toList();
+    if (activeIds.isEmpty) return null;
+    final solver = ref.read(levelSolverServiceProvider);
+    for (final id in activeIds) {
+      if (!solver.isVineBlockedInState(level, id, activeIds)) {
+        return id;
+      }
+    }
+    return activeIds.first;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Watch cameraState to trigger rebuilds on pan/zoom so projections align perfectly
@@ -127,57 +149,16 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
         promptText = "Clear the garden";
       }
     } else if (lessonId == '3') {
-      // Lesson 3: Blocker is vine_2 (4,0), blocked is vine_1 (3,1)
-      final blockerState = vineStates['vine_2'];
-      final blockedState = vineStates['vine_1'];
-
-      if (blockerState != null && !blockerState.isClearedOrClearing) {
-        highlightPosition = game.getCellScreenPosition(4, 0);
-        promptText = "Clear blocker first";
-        highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
-      } else if (blockedState != null && !blockedState.isClearedOrClearing) {
-        highlightPosition = game.getCellScreenPosition(3, 1);
-        promptText = "Now clear!";
-      }
-    } else if (lessonId == '4') {
-      // Lesson 4: Highlight the starting vine which can clear completely
-      final activeVineIds = vineStates.entries
-          .where((e) => !e.value.isClearedOrClearing)
-          .map((e) => e.key)
-          .toList();
-
-      final solver = ref.read(levelSolverServiceProvider);
-      String? freeVineId;
-      for (final vineId in activeVineIds) {
-        if (solver.getDistanceToBlocker(currentLevel, vineId, activeVineIds) >
-            0) {
-          freeVineId = vineId;
-          break;
-        }
-      }
-
-      if (freeVineId != null) {
-        final vine = currentLevel.vines.firstWhere((v) => v.id == freeVineId);
-        final head = vine.orderedPath.first;
-        highlightPosition = game.getCellScreenPosition(head['x']!, head['y']!);
-        promptText = "Start the chain";
-      }
-    } else if (lessonId == '5') {
-      // Lesson 5: Capstone challenge, minimal text
-      promptText = "Untangle the vines";
-    } else if (lessonId == '6') {
-      // Lesson 6: Hint projection on vine_1 head at (2,4)
-      final vineState = vineStates['vine_1'];
-      if (vineState != null && !vineState.isClearedOrClearing) {
-        highlightPosition = game.getCellScreenPosition(2, 4);
-        promptText = "Long-press for hint path";
-      }
-    } else if (lessonId == '7') {
-      // Lesson 7: Blocker is vine_1 head at (3,0), blocked is vine_2
-      final blockerState = vineStates['vine_1'];
+      // Lesson 3: Project vine_1, then clear blocker vine_3 at (3,0),
+      // then blocked vine_2.
+      final projectState = vineStates['vine_1'];
+      final blockerState = vineStates['vine_3'];
       final blockedState = vineStates['vine_2'];
 
-      if (blockerState != null && !blockerState.isClearedOrClearing) {
+      if (projectState != null && !projectState.isClearedOrClearing) {
+        highlightPosition = game.getCellScreenPosition(2, 4);
+        promptText = "Long-press for hint path";
+      } else if (blockerState != null && !blockerState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(3, 0);
         promptText = "Clear blocker first";
         highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
@@ -185,41 +166,43 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
         highlightPosition = game.getCellScreenPosition(1, 2);
         promptText = "Now clear!";
       }
-    } else if (lessonId == '8' || lessonId == '9') {
-      // Lessons 8-9: free choice, highlight first non-cleared head
-      final activeVineId = vineStates.entries
-          .where((e) => !e.value.isClearedOrClearing)
-          .map((e) => e.key)
-          .firstOrNull;
-
-      if (activeVineId != null) {
-        final vine = currentLevel.vines.firstWhere((v) => v.id == activeVineId);
-        final head = vine.orderedPath.first;
-        highlightPosition = game.getCellScreenPosition(head['x']!, head['y']!);
-        promptText =
-            lessonId == '8' ? "Plan each move" : "Drag to pan the garden";
-      }
-    } else if (lessonId == '10') {
-      // Lesson 10: Key blocker is vine_1 head at (5,5)
+    } else if (lessonId == '4') {
+      // Lesson 4: vine_1 traps two others — clearing it unlocks them.
       final blockerState = vineStates['vine_1'];
 
       if (blockerState != null && !blockerState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(5, 5);
-        promptText = "Free the key first";
+        promptText = "Clear this vine — it traps two others";
         highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
       } else {
-        final activeVineId = vineStates.entries
-            .where((e) => !e.value.isClearedOrClearing)
-            .map((e) => e.key)
-            .firstOrNull;
-
-        if (activeVineId != null) {
+        final targetId = _firstMovableId(currentLevel, vineStates);
+        if (targetId != null) {
           final vine =
-              currentLevel.vines.firstWhere((v) => v.id == activeVineId);
+              currentLevel.vines.firstWhere((v) => v.id == targetId);
           final head = vine.orderedPath.first;
           highlightPosition =
               game.getCellScreenPosition(head['x']!, head['y']!);
           promptText = "Project, then order";
+        }
+      }
+    } else if (lessonId == '5') {
+      // Lesson 5: Grand garden capstone. Guide toward vine_3 at (6,5):
+      // it traps two others, so clearing it unlocks them.
+      final blockerState = vineStates['vine_3'];
+
+      if (blockerState != null && !blockerState.isClearedOrClearing) {
+        highlightPosition = game.getCellScreenPosition(6, 5);
+        promptText = "Clear this vine — it traps two others";
+        highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
+      } else {
+        final targetId = _firstMovableId(currentLevel, vineStates);
+        if (targetId != null) {
+          final vine =
+              currentLevel.vines.firstWhere((v) => v.id == targetId);
+          final head = vine.orderedPath.first;
+          highlightPosition =
+              game.getCellScreenPosition(head['x']!, head['y']!);
+          promptText = "Plan the full order";
         }
       }
     }

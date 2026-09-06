@@ -1,135 +1,116 @@
 {
     "id": 5,
-    "title": "Lesson 5: Comprehensive Challenge",
-    "objective": "Apply all learned mechanics to a real puzzle",
-    "instructions": "Use all mechanics in this full puzzle. Plan before you start.",
+    "title": "Lesson 5: The Grand Garden",
+    "objective": "Combine projection, ordering, and panning in one garden",
+    "instructions": "Project every vine, free the key that traps two, and pan to the far corners. Plan the full order first.",
     "learning_points": [
-        "Use learned mechanics",
-        "Plan and execute"
+        "Project every vine first",
+        "Clear the trapper, then the chain",
+        "Pan to check far corners"
     ],
     "grid_size": [
         8,
-        7
+        8
     ],
-    "max_moves": 999,
+    "max_moves": 6,
     "vines": [
         {
             "id": "vine_1",
             "head_direction": "right",
             "ordered_path": [
                 {
-                    "x": 3,
-                    "y": 1
-                },
-                {
                     "x": 2,
-                    "y": 1
+                    "y": 6
                 },
                 {
                     "x": 1,
-                    "y": 1
+                    "y": 6
                 },
                 {
                     "x": 0,
-                    "y": 1
+                    "y": 6
                 }
             ]
         },
         {
             "id": "vine_2",
-            "head_direction": "down",
+            "head_direction": "up",
             "ordered_path": [
                 {
-                    "x": 4,
-                    "y": 0
-                },
-                {
-                    "x": 4,
-                    "y": 1
-                },
-                {
-                    "x": 4,
+                    "x": 5,
                     "y": 2
                 },
                 {
-                    "x": 4,
-                    "y": 3
+                    "x": 5,
+                    "y": 1
+                },
+                {
+                    "x": 5,
+                    "y": 0
                 }
             ]
         },
         {
             "id": "vine_3",
-            "head_direction": "left",
+            "head_direction": "right",
             "ordered_path": [
                 {
-                    "x": 3,
-                    "y": 5
-                },
-                {
-                    "x": 4,
+                    "x": 6,
                     "y": 5
                 },
                 {
                     "x": 5,
+                    "y": 5
+                },
+                {
+                    "x": 4,
                     "y": 5
                 }
             ]
         },
         {
             "id": "vine_4",
-            "head_direction": "up",
+            "head_direction": "left",
             "ordered_path": [
                 {
-                    "x": 1,
-                    "y": 5
+                    "x": 6,
+                    "y": 1
                 },
                 {
-                    "x": 1,
-                    "y": 4
-                },
-                {
-                    "x": 1,
-                    "y": 3
+                    "x": 7,
+                    "y": 1
                 }
             ]
         },
         {
             "id": "vine_5",
-            "head_direction": "right",
+            "head_direction": "down",
             "ordered_path": [
                 {
-                    "x": 5,
-                    "y": 4
+                    "x": 0,
+                    "y": 1
                 },
                 {
-                    "x": 4,
-                    "y": 4
+                    "x": 0,
+                    "y": 2
                 },
                 {
-                    "x": 3,
-                    "y": 4
+                    "x": 0,
+                    "y": 3
                 }
             ]
         },
         {
             "id": "vine_6",
-            "head_direction": "down",
+            "head_direction": "up",
             "ordered_path": [
                 {
-                    "x": 2,
-                    "y": 3
-                },
-                {
-                    "x": 2,
+                    "x": 7,
                     "y": 4
                 },
                 {
-                    "x": 2,
-                    "y": 5
-                },
-                {
-                    "x": 2,
-                    "y": 6
+                    "x": 7,
+                    "y": 3
                 }
             ]
         }

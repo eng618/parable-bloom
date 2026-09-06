@@ -5,24 +5,14 @@
     "lesson_2",
     "lesson_3",
     "lesson_4",
-    "lesson_5",
-    "lesson_6",
-    "lesson_7",
-    "lesson_8",
-    "lesson_9",
-    "lesson_10"
+    "lesson_5"
   ],
   "level_mappings": {
     "lesson_1": "lessons/lesson_1.json",
-    "lesson_10": "lessons/lesson_10.json",
     "lesson_2": "lessons/lesson_2.json",
     "lesson_3": "lessons/lesson_3.json",
     "lesson_4": "lessons/lesson_4.json",
     "lesson_5": "lessons/lesson_5.json",
-    "lesson_6": "lessons/lesson_6.json",
-    "lesson_7": "lessons/lesson_7.json",
-    "lesson_8": "lessons/lesson_8.json",
-    "lesson_9": "lessons/lesson_9.json",
     "lvl_m01_01": "levels/level_1.json",
     "lvl_m01_02": "levels/level_2.json",
     "lvl_m01_03": "levels/level_3.json",
@@ -567,7 +557,7 @@
       "scriptures": [
         {
           "id": "seed_starter",
-          "trigger_level": "lesson_10",
+          "trigger_level": "lesson_5",
           "reference": "Luke 8:11",
           "title": "The Seed is the Word",
           "type": "starter"
@@ -963,7 +953,7 @@
         "title": "The Prodigal Son",
         "scripture": "Luke 15:11-32",
         "content": "A son squanders his inheritance and returns in shame, but his father runs to meet him with a robe, a ring, and a feast.",
-        "reflection": "Where is the Father inviting you home — or inviting you to celebrate another's return?",
+        "reflection": "Where is the Father inviting you home \u2014 or inviting you to celebrate another's return?",
         "background_image": ""
       },
       "unlock_message": "Come home to grace...",
@@ -1160,7 +1150,7 @@
       "parable": {
         "title": "The Leaven",
         "scripture": "Matthew 13:33",
-        "content": "A woman hides a little leaven in a large batch of dough until the whole batch is leavened — so the kingdom quietly spreads.",
+        "content": "A woman hides a little leaven in a large batch of dough until the whole batch is leavened \u2014 so the kingdom quietly spreads.",
         "reflection": "What small faithful influence is God multiplying through you unseen?",
         "background_image": ""
       },
@@ -1227,7 +1217,7 @@
         "title": "The Pearl of Great Value",
         "scripture": "Matthew 13:45-46",
         "content": "A merchant seeking fine pearls finds one of surpassing worth and sells all he has to possess it.",
-        "reflection": "What is Christ worth to you — what would joyful surrender look like?",
+        "reflection": "What is Christ worth to you \u2014 what would joyful surrender look like?",
         "background_image": ""
       },
       "unlock_message": "Count the cost with joy...",
@@ -1293,7 +1283,7 @@
         "title": "The Lost Coin",
         "scripture": "Luke 15:8-10",
         "content": "A woman loses a precious coin, lights a lamp, sweeps diligently until she finds it, and calls her friends to rejoice.",
-        "reflection": "What lost thing is worth your diligent searching — and who will you invite to rejoice?",
+        "reflection": "What lost thing is worth your diligent searching \u2014 and who will you invite to rejoice?",
         "background_image": ""
       },
       "unlock_message": "Heaven celebrates return...",
@@ -1424,7 +1414,7 @@
       "parable": {
         "title": "The Good Shepherd's Fold",
         "scripture": "John 10:1-18",
-        "content": "The shepherd enters by the door, calls his sheep by name, and lays down his life for them — and they know his voice.",
+        "content": "The shepherd enters by the door, calls his sheep by name, and lays down his life for them \u2014 and they know his voice.",
         "reflection": "How do you recognize the Shepherd's voice among strangers?",
         "background_image": ""
       },
@@ -1490,7 +1480,7 @@
       "parable": {
         "title": "Salt and Light",
         "scripture": "Matthew 5:13-16",
-        "content": "Disciples are the salt preserving the earth and the light that cannot be hidden — a city on a hill for all to see.",
+        "content": "Disciples are the salt preserving the earth and the light that cannot be hidden \u2014 a city on a hill for all to see.",
         "reflection": "Where has God placed you to preserve and to shine?",
         "background_image": ""
       },
@@ -1556,7 +1546,7 @@
       "parable": {
         "title": "The Fruit of the Spirit",
         "scripture": "Galatians 5:22-23",
-        "content": "Those who walk by the Spirit bear a ninefold harvest — love, joy, peace, and more — against which there is no law.",
+        "content": "Those who walk by the Spirit bear a ninefold harvest \u2014 love, joy, peace, and more \u2014 against which there is no law.",
         "reflection": "Which fruit of the Spirit is ripest in you, and which needs tending?",
         "background_image": ""
       },
@@ -1622,7 +1612,7 @@
       "parable": {
         "title": "The Armor of God",
         "scripture": "Ephesians 6:10-18",
-        "content": "Paul arrays believers for spiritual battle — truth, righteousness, peace, faith, salvation, the Word — and prayer on every occasion.",
+        "content": "Paul arrays believers for spiritual battle \u2014 truth, righteousness, peace, faith, salvation, the Word \u2014 and prayer on every occasion.",
         "reflection": "Which piece of armor are you neglecting as you enter today's battle?",
         "background_image": ""
       },
@@ -1688,7 +1678,7 @@
       "parable": {
         "title": "The Shepherd's Psalm",
         "scripture": "Psalm 23:1-6",
-        "content": "David sings the Shepherd who provides, restores, guides, protects, anoints, and pursues — goodness and mercy all our days.",
+        "content": "David sings the Shepherd who provides, restores, guides, protects, anoints, and pursues \u2014 goodness and mercy all our days.",
         "reflection": "Which pasture of this psalm does your soul need most today?",
         "background_image": ""
       },
@@ -1754,7 +1744,7 @@
       "parable": {
         "title": "The New Creation",
         "scripture": "2 Corinthians 5:17",
-        "content": "In Christ the old passes away and the new has come — renewed minds, fresh mercies, and a spring in the desert.",
+        "content": "In Christ the old passes away and the new has come \u2014 renewed minds, fresh mercies, and a spring in the desert.",
         "reflection": "What old thing is Christ making new in you right now?",
         "background_image": ""
       },
@@ -1820,7 +1810,7 @@
       "parable": {
         "title": "The Towel and Basin",
         "scripture": "John 13:1-17",
-        "content": "On His last night, Jesus wraps a towel around Himself and washes His disciples' feet — the Master as servant.",
+        "content": "On His last night, Jesus wraps a towel around Himself and washes His disciples' feet \u2014 the Master as servant.",
         "reflection": "Whose feet is Christ asking you to wash this week?",
         "background_image": ""
       },
@@ -1886,7 +1876,7 @@
       "parable": {
         "title": "The Persistent Widow",
         "scripture": "Luke 18:1-8",
-        "content": "A widow's relentless pleas finally move an unjust judge — how much more will the just Father answer His children speedily?",
+        "content": "A widow's relentless pleas finally move an unjust judge \u2014 how much more will the just Father answer His children speedily?",
         "reflection": "What have you stopped praying for that heaven still invites?",
         "background_image": ""
       },
@@ -1952,7 +1942,7 @@
       "parable": {
         "title": "The Two Builders",
         "scripture": "Matthew 7:24-27",
-        "content": "Two houses face the same storm: one founded on rock stands, one built on sand falls — hearing and doing makes the difference.",
+        "content": "Two houses face the same storm: one founded on rock stands, one built on sand falls \u2014 hearing and doing makes the difference.",
         "reflection": "What are you building on sand that needs moving to rock?",
         "background_image": ""
       },
@@ -2018,8 +2008,8 @@
       "parable": {
         "title": "The Great Commission",
         "scripture": "Matthew 28:18-20",
-        "content": "The risen Christ claims all authority and sends His disciples to all nations — baptizing, teaching, and never leaving them.",
-        "reflection": "Who is your 'all nations' — and what is your next step of going?",
+        "content": "The risen Christ claims all authority and sends His disciples to all nations \u2014 baptizing, teaching, and never leaving them.",
+        "reflection": "Who is your 'all nations' \u2014 and what is your next step of going?",
         "background_image": ""
       },
       "unlock_message": "Go and make disciples...",
@@ -2084,7 +2074,7 @@
       "parable": {
         "title": "The River of Life",
         "scripture": "Revelation 21:1-5",
-        "content": "John sees a new heaven and new earth, God dwelling with His people, every tear wiped away — 'Behold, I make all things new.'",
+        "content": "John sees a new heaven and new earth, God dwelling with His people, every tear wiped away \u2014 'Behold, I make all things new.'",
         "reflection": "How does the promised ending reshape your present persevering?",
         "background_image": ""
       },

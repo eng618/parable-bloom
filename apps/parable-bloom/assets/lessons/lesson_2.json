@@ -1,11 +1,12 @@
 {
     "id": 2,
     "title": "Lesson 2: Clear Multiple Vines",
-    "objective": "Learn to clear multiple vines that don't block each other",
-    "instructions": "Tap any vine to clear it; order does not matter.",
+    "objective": "Clear several vines and learn how grace handles mistakes",
+    "instructions": "Tap any vine to clear it; order does not matter. A wrong tap costs grace, and you can always restart.",
     "learning_points": [
         "Vines clear independently",
-        "Any order is ok"
+        "Grace covers a few mistakes",
+        "Restart is always available"
     ],
     "grid_size": [
         5,
