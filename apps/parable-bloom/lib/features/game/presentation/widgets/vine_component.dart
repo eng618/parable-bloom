@@ -249,8 +249,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   }
 
   void _logDebug(String message) {
-    final debugEnabled =
-        parent.parent.callbacks.getDebugVineAnimationLogging?.call() ?? false;
+    final debugEnabled = parent.parent.sink.debugVineAnimationLogging;
     if (debugEnabled) {
       LoggerService.debug(message,
           tag: 'VineComponent', metadata: {'vine_id': vineData.id});

@@ -6,25 +6,13 @@ import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/application/providers/camera_providers.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/garden_game.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/game_event_sink.dart';
 
 import 'package:flame/game.dart' show Vector2;
 
 class MockGardenGame extends GardenGame {
   final Vector2 mockSize;
-  MockGardenGame(this.mockSize)
-      : super(
-          callbacks: GardenGameCallbacks(
-            onGameLoaded: (_) {},
-            onGameRemoved: () {},
-            onVineCleared: (_) {},
-            onVineAnimationStateChanged: (_, __) {},
-            onVineAttempted: (_) {},
-            onTapIncrement: (_) {},
-            onTapOutsideGrid: () {},
-            getUseSimpleVines: () => false,
-            getHapticsEnabled: () => false,
-          ),
-        );
+  MockGardenGame(this.mockSize) : super(sink: TestGameEventSink());
 
   @override
   Vector2 get size => mockSize;

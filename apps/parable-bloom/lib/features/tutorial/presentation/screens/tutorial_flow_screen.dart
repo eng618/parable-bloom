@@ -15,6 +15,7 @@ import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/solver_providers.dart';
 import '../../application/providers/tutorial_providers.dart';
 import '../../../game/presentation/widgets/garden_game.dart';
+import '../../../game/presentation/widgets/game_event_sink.dart';
 import '../../../game/presentation/widgets/game_header.dart';
 import '../../../game/presentation/widgets/pause_menu_dialog.dart';
 import '../widgets/tutorial_guide_overlay.dart';
@@ -157,97 +158,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
               _game = GardenGame.fromLesson(
                 lesson,
                 solver: ref.read(levelSolverServiceProvider),
-                callbacks: GardenGameCallbacks(
-                  onGameLoaded: (game) {
-                    if (!mounted) return;
-                    ref.read(gameInstanceProvider.notifier).setGame(game);
-                    final levelData = lesson.toLevelData();
-                    ref.read(currentLevelProvider.notifier).setLevel(levelData);
-                    ref
-                        .read(vineStatesProvider.notifier)
-                        .resetForLevel(levelData);
-                    ref.read(levelCompleteProvider.notifier).setComplete(false);
-                    ref
-                        .read(gameCompletedProvider.notifier)
-                        .setCompleted(false);
-
-                    game.startLesson(lesson);
-
-                    final cameraNotifier =
-                        ref.read(cameraStateProvider.notifier);
-                    cameraNotifier.updateZoomBounds(
-                      screenWidth: game.size.x,
-                      screenHeight: game.size.y,
-                      gridCols: lesson.gridWidth,
-                      gridRows: lesson.gridHeight,
-                    );
-                    cameraNotifier.animateToDefaultZoom(
-                      screenWidth: game.size.x,
-                      screenHeight: game.size.y,
-                      gridCols: lesson.gridWidth,
-                      gridRows: lesson.gridHeight,
-                    );
-                    game.applyCameraTransform(ref.read(cameraStateProvider));
-                  },
-                  onGameRemoved: () {
-                    if (!mounted) return;
-                    if (ref.read(gameInstanceProvider) == _game) {
-                      ref.read(gameInstanceProvider.notifier).setGame(null);
-                    }
-                  },
-                  onVineCleared: (vineId) {
-                    if (!mounted) return;
-                    ref.read(vineStatesProvider.notifier).clearVine(vineId);
-                  },
-                  onVineAnimationStateChanged: (vineId, animationState) {
-                    if (!mounted) return;
-                    ref
-                        .read(vineStatesProvider.notifier)
-                        .setAnimationState(vineId, animationState);
-                  },
-                  onVineAttempted: (vineId) {
-                    if (!mounted) return;
-                    ref.read(vineStatesProvider.notifier).markAttempted(vineId);
-                  },
-                  onTapIncrement: (count) {
-                    if (!mounted) return;
-                    ref.read(levelTotalTapsProvider.notifier).add(count);
-                  },
-                  onTapOutsideGrid: () {
-                    if (!mounted) return;
-                    ref.read(hintedVineIdsProvider.notifier).clear();
-                  },
-                  onBlockedTap: (state) {
-                    if (!mounted) return;
-                    ref.read(blockedTapProvider.notifier).setBlockedTap(state);
-                  },
-                  onEnsureVineVisible: (vine) async {
-                    if (!mounted) return;
-                    await ref
-                        .read(cameraStateProvider.notifier)
-                        .ensureVineVisible(vine);
-                  },
-                  onHintVine: (vineId) {
-                    if (!mounted) return;
-                    ref.read(hintedVineIdsProvider.notifier).add(vineId);
-                  },
-                  onClearHints: () {
-                    if (!mounted) return;
-                    ref.read(hintedVineIdsProvider.notifier).clear();
-                  },
-                  getUseSimpleVines: () =>
-                      mounted ? ref.read(useSimpleVinesProvider) : false,
-                  getHapticsEnabled: () =>
-                      mounted ? ref.read(hapticsEnabledProvider) : false,
-                  getIsAnyAnimating: () =>
-                      mounted ? ref.read(anyVineAnimatingProvider) : false,
-                  getDebugShowGridCoordinates: () => mounted
-                      ? ref.read(debugShowGridCoordinatesProvider)
-                      : false,
-                  getDebugVineAnimationLogging: () => mounted
-                      ? ref.read(debugVineAnimationLoggingProvider)
-                      : false,
-                ),
+                sink: _TutorialFlowEventSink(this, lesson),
               );
             }
 
@@ -967,4 +878,128 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       ],
     );
   }
+}
+
+/// [GameEventSink] bridging the Flame engine to [_TutorialFlowState].
+///
+/// Carries the [LessonData] the game was created for, since lesson setup
+/// (level reset, camera framing) needs it on every [onGameLoaded].
+class _TutorialFlowEventSink implements GameEventSink {
+  _TutorialFlowEventSink(this._state, this._lesson);
+
+  final _TutorialFlowScreenState _state;
+  final LessonData _lesson;
+
+  WidgetRef get _ref => _state.ref;
+  bool get _mounted => _state.mounted;
+
+  @override
+  void onGameLoaded(GardenGame game) {
+    if (!_mounted) return;
+    _ref.read(gameInstanceProvider.notifier).setGame(game);
+    final levelData = _lesson.toLevelData();
+    _ref.read(currentLevelProvider.notifier).setLevel(levelData);
+    _ref.read(vineStatesProvider.notifier).resetForLevel(levelData);
+    _ref.read(levelCompleteProvider.notifier).setComplete(false);
+    _ref.read(gameCompletedProvider.notifier).setCompleted(false);
+
+    game.startLesson(_lesson);
+
+    final cameraNotifier = _ref.read(cameraStateProvider.notifier);
+    cameraNotifier.updateZoomBounds(
+      screenWidth: game.size.x,
+      screenHeight: game.size.y,
+      gridCols: _lesson.gridWidth,
+      gridRows: _lesson.gridHeight,
+    );
+    cameraNotifier.animateToDefaultZoom(
+      screenWidth: game.size.x,
+      screenHeight: game.size.y,
+      gridCols: _lesson.gridWidth,
+      gridRows: _lesson.gridHeight,
+    );
+    game.applyCameraTransform(_ref.read(cameraStateProvider));
+  }
+
+  @override
+  void onGameRemoved() {
+    if (!_mounted) return;
+    if (_ref.read(gameInstanceProvider) == _state._game) {
+      _ref.read(gameInstanceProvider.notifier).setGame(null);
+    }
+  }
+
+  @override
+  void onVineCleared(String vineId) {
+    if (!_mounted) return;
+    _ref.read(vineStatesProvider.notifier).clearVine(vineId);
+  }
+
+  @override
+  void onVineAnimationStateChanged(String vineId, VineAnimationState state) {
+    if (!_mounted) return;
+    _ref.read(vineStatesProvider.notifier).setAnimationState(vineId, state);
+  }
+
+  @override
+  void onVineAttempted(String vineId) {
+    if (!_mounted) return;
+    _ref.read(vineStatesProvider.notifier).markAttempted(vineId);
+  }
+
+  @override
+  void onTapIncrement(int count) {
+    if (!_mounted) return;
+    _ref.read(levelTotalTapsProvider.notifier).add(count);
+  }
+
+  @override
+  void onTapOutsideGrid() {
+    if (!_mounted) return;
+    _ref.read(hintedVineIdsProvider.notifier).clear();
+  }
+
+  @override
+  void onBlockedTap(BlockedTapState state) {
+    if (!_mounted) return;
+    _ref.read(blockedTapProvider.notifier).setBlockedTap(state);
+  }
+
+  @override
+  Future<void> onEnsureVineVisible(VineData vine) async {
+    if (!_mounted) return;
+    await _ref.read(cameraStateProvider.notifier).ensureVineVisible(vine);
+  }
+
+  @override
+  void onHintVine(String vineId) {
+    if (!_mounted) return;
+    _ref.read(hintedVineIdsProvider.notifier).add(vineId);
+  }
+
+  @override
+  void onClearHints() {
+    if (!_mounted) return;
+    _ref.read(hintedVineIdsProvider.notifier).clear();
+  }
+
+  @override
+  bool get useSimpleVines =>
+      _mounted ? _ref.read(useSimpleVinesProvider) : false;
+
+  @override
+  bool get hapticsEnabled =>
+      _mounted ? _ref.read(hapticsEnabledProvider) : false;
+
+  @override
+  bool get isAnyAnimating =>
+      _mounted ? _ref.read(anyVineAnimatingProvider) : false;
+
+  @override
+  bool get debugShowGridCoordinates =>
+      _mounted ? _ref.read(debugShowGridCoordinatesProvider) : false;
+
+  @override
+  bool get debugVineAnimationLogging =>
+      _mounted ? _ref.read(debugVineAnimationLoggingProvider) : false;
 }

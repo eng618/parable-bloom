@@ -6,24 +6,12 @@ import 'package:parable_bloom/features/game/application/providers/gameplay_state
 import 'package:parable_bloom/features/tutorial/domain/entities/lesson_data.dart';
 import 'package:parable_bloom/features/tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/garden_game.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/game_event_sink.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/grid_component.dart';
 
 class MockTutorialGardenGame extends GardenGame {
   final Vector2 mockSize;
-  MockTutorialGardenGame(this.mockSize)
-      : super(
-          callbacks: GardenGameCallbacks(
-            onGameLoaded: (_) {},
-            onGameRemoved: () {},
-            onVineCleared: (_) {},
-            onVineAnimationStateChanged: (_, __) {},
-            onVineAttempted: (_) {},
-            onTapIncrement: (_) {},
-            onTapOutsideGrid: () {},
-            getUseSimpleVines: () => false,
-            getHapticsEnabled: () => false,
-          ),
-        ) {
+  MockTutorialGardenGame(this.mockSize) : super(sink: TestGameEventSink()) {
     grid = GridComponent(
       cellSize: 48,
       onVineCleared: (_) {},
