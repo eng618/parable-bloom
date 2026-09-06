@@ -1,6 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/board_transform.dart';
 import '../../../../core/game_board_layout.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../application/providers/gameplay_state_providers.dart';
@@ -78,21 +79,19 @@ class ProjectionLinesComponent extends PositionComponent
     // Update scale
     scale = Vector2.all(zoom);
 
-    // Calculate scaled dimensions
+    // Calculate centered position with pan offset
+    // (single formula in BoardTransform, shared with the grid)
     if (_currentLevel != null) {
-      final scaledWidth =
-          GameBoardLayout.boardWidth(_currentLevel!.gridWidth) * zoom;
-      final scaledHeight =
-          GameBoardLayout.boardHeight(_currentLevel!.gridHeight) * zoom;
-
-      // Calculate centered position with pan offset
-      final centeredX = (screenWidth - scaledWidth) / 2;
-      final centeredY = (screenHeight - scaledHeight) / 2;
-
-      position = Vector2(
-        centeredX + panOffset.x,
-        centeredY + panOffset.y,
+      final pos = BoardTransform.boardPosition(
+        cols: _currentLevel!.gridWidth,
+        rows: _currentLevel!.gridHeight,
+        zoom: zoom,
+        panX: panOffset.x,
+        panY: panOffset.y,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
       );
+      position = Vector2(pos.x, pos.y);
     }
   }
 

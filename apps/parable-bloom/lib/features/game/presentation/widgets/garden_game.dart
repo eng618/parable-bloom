@@ -6,6 +6,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/game_board_layout.dart';
+import '../../../../core/board_transform.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/settings_providers.dart' show VineStyle;
@@ -19,6 +20,7 @@ import 'game_event_sink.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
 import 'tap_effect_component.dart';
+import 'vine/vine_texture_loader.dart';
 
 class GardenGame extends FlameGame with TapCallbacks {
   static const double cellSize = GameBoardLayout.cellSize;
@@ -33,6 +35,10 @@ class GardenGame extends FlameGame with TapCallbacks {
   /// distance checks reuse the Riverpod singleton instead of allocating one
   /// per call.
   final LevelSolverService solver;
+
+  /// Shared vine-texture loader: one in-flight load per game, reused by all
+  /// vine components (see [VineTextureLoader]).
+  final VineTextureLoader vineTextures = VineTextureLoader();
 
   bool _isGridInitialized = false;
   bool get isGridInitialized => _isGridInitialized;
@@ -86,8 +92,6 @@ class GardenGame extends FlameGame with TapCallbacks {
     if (vineAttemptedColor != null) {
       _vineAttemptedColor = vineAttemptedColor;
     }
-
-    _backgroundColor = backgroundColor;
 
     if (_gameBackground != null) {
       final isDark = _backgroundColor.computeLuminance() < 0.5;
@@ -350,23 +354,25 @@ class GardenGame extends FlameGame with TapCallbacks {
   Color backgroundColor() => _backgroundColor;
 
   /// Converts a grid coordinate (x, y) to global screenspace position.
-  /// y=0 is at the bottom of the grid.
+  /// y=0 is at the bottom of the grid. Shares the placement formula with
+  /// the grid itself via [BoardTransform] so overlay lookups can't drift
+  /// from the rendered board.
   Offset getCellScreenPosition(int x, int y) {
     if (_currentLevelData == null || !_isGridInitialized || !grid.isMounted) {
       return Offset.zero;
     }
-    final rows = _currentLevelData!.gridHeight;
-    final visualRow = rows - 1 - y;
-    final localX = GameBoardLayout.cellCenterX(x);
-    final localY = GameBoardLayout.cellCenterY(visualRow);
-
     final zoom = grid.scale.x;
     final gridPos = grid.position;
-
-    return Offset(
-      gridPos.x + (localX * zoom),
-      gridPos.y + (localY * zoom),
+    final center = BoardTransform.cellCenter(
+      x: x,
+      y: y,
+      gridHeight: _currentLevelData!.gridHeight,
+      zoom: zoom,
+      boardX: gridPos.x,
+      boardY: gridPos.y,
     );
+
+    return Offset(center.x, center.y);
   }
 
   @override

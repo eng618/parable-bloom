@@ -49,9 +49,9 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 ## Phase 3 — Hygiene & Full Upgrade (P2)
 
-- [ ] 3.1 Single `BoardTransform` helper replacing triplicated `applyCameraTransform` (`projection_lines:50-78` vs `grid:130-159` vs manual `getCellScreenPosition:329-345`)
-- [ ] 3.2 Texture loader service replacing racy static `ui.Image?` cache (`vine_component.dart:22-24,40-43`) with eviction + error handling
-- [ ] 3.3 Single-source vine style (`settings_providers.dart:97` vs `:124`); fix `_InMemoryBox.noSuchMethod` swallow (`infrastructure_providers.dart:76`); fix duplicate `_backgroundColor=` + ignored `surface/gridColor` (`garden_game.dart:101-128`)
+- [x] 3.1 Single `BoardTransform` helper (`core/board_transform.dart`, pure-Dart, tested): grid + projection-lines placement + `getCellScreenPosition` all delegate to it — done + `board_transform_test.dart`
+- [x] 3.2 `VineTextureLoader` service (per-game shared in-flight load) replaces racy static `ui.Image?` cache in `VineComponent` (now instance fields from the loader) — done
+- [x] 3.3 Hygiene: removed duplicate `_backgroundColor` assignment; `UseSimpleVinesNotifier.setEnabled(false)` no longer clobbers blossom/ethereal; `_InMemoryBox.noSuchMethod` throws explicit `UnimplementedError` — done (settings already single-sourced via derived `useSimpleVinesProvider`)
 - [ ] 3.4 Split `game_screen.dart` (1270L): extract dialogs, celebration FX, zoom controls, header wiring to widgets
 - [ ] 3.5 Dependency upgrade (`apps/parable-bloom/pubspec.yaml:37-56`): `flutter pub outdated` → branch → `upgrade --major-versions` (`flame ^1.35.1`, `riverpod ^3.0.3`, `just_audio`, `firebase_*`, `go_router ^17`, `hive`) with `flutter analyze + flutter test` gate; migrate Flame `TapCallbacks`/`CameraComponent`/`images.prefix` + Riverpod-3 Notifier APIs
 - [ ] 3.6 Validate: `task test:all`, `task validate`, screenshot goldens for vines/projections/backgrounds
@@ -67,6 +67,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 _Add newest entries at top._
 
+- `2026-09-06` — Phase 3 batch 1: 3.1 BoardTransform, 3.2 VineTextureLoader, 3.3 hygiene. Go lint: fixed 3 `errcheck` hits in `tools/level-builder/cmd/stats/stats.go` (4th identical site too); `task lb:lint:fix` still fails on package loading — GOPROXY empty/offline env issue, needs network. Full Flutter suite 738/738, analyze clean.
 - `2026-09-06` — Bugfix (out of band): completed-profile + new cloud levels loaded nothing ("Play Level 1" → false CONGRATULATIONS). Root cause: next level derived solely from stale persisted `currentLevel`, never recomputed when the playlist grows/migrates. Fix: `GameProgress.nextUncompletedLevel()` single source of truth, `GameProgressNotifier.healCurrentLevel()` persists dangling-pointer repair, `_loadLevelForGame` heals before declaring completion and treats empty mappings as load failure (gameOver) not finished, Home displays first-uncompleted number. Plus `level_healing_test.dart` (6 tests). Lint: fixed `await_only_futures` in `modules_registry_fallback_test`. Analyze clean, full suite 735/735.
 - `2026-09-06` — 2.6 landed, PHASE 2 COMPLETE. Full suite 729/729 pass, analyze clean. Pausing before Phase 3 for bug triage.
 - `2026-09-06` — 2.1 landed: `GameEventSink` replaces `GardenGameCallbacks` across engine, both screens, and tests. Full suite 726/726 pass, analyze clean. Remains: 2.6 camera decoupling.

@@ -73,7 +73,10 @@ class _InMemoryBox implements Box<dynamic> {
   Future<void> close() async {}
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError(
+        'In-memory test box does not implement ${invocation.memberName}. '
+        'Open a real Hive box or extend _InMemoryBox.',
+      );
 }
 
 final firestoreProvider = Provider<FirebaseFirestore>((ref) {

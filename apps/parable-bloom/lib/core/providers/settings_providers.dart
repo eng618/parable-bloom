@@ -133,6 +133,9 @@ class UseSimpleVinesNotifier extends Notifier<bool> {
   }
 
   Future<void> setEnabled(bool enabled) async {
+    // Never clobber a non-simple style: disabling the toggle only restores
+    // classic when simple mode is actually active.
+    if (!enabled && ref.read(vineStyleProvider) != VineStyle.simple) return;
     final style = enabled ? VineStyle.simple : VineStyle.classic;
     await ref.read(vineStyleProvider.notifier).setStyle(style);
   }

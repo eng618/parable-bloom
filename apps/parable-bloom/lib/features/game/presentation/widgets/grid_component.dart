@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/game_board_layout.dart';
+import '../../../../core/board_transform.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/services/logger_service.dart';
@@ -149,18 +150,17 @@ class GridComponent extends PositionComponent
     // Update grid scale
     scale = Vector2.all(zoom);
 
-    // Calculate scaled dimensions
-    final scaledWidth = GameBoardLayout.boardWidth(cols) * zoom;
-    final scaledHeight = GameBoardLayout.boardHeight(rows) * zoom;
-
-    // Calculate centered position with pan offset
-    final centeredX = (screenWidth - scaledWidth) / 2;
-    final centeredY = (screenHeight - scaledHeight) / 2;
-
-    position = Vector2(
-      centeredX + panOffset.x,
-      centeredY + panOffset.y,
+    // Centered position with pan offset (single formula in BoardTransform)
+    final pos = BoardTransform.boardPosition(
+      cols: cols,
+      rows: rows,
+      zoom: zoom,
+      panX: panOffset.x,
+      panY: panOffset.y,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
     );
+    position = Vector2(pos.x, pos.y);
 
     // Update all vine components with the new zoom
     for (final comp in _vineComponents.values) {

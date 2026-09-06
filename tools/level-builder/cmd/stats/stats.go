@@ -73,7 +73,7 @@ func runStats(cmd *cobra.Command, args []string) error {
 	failed := 0
 	for _, p := range files {
 		if err := summarizeValidationFile(out, p); err != nil {
-			fmt.Fprintf(out, "error summarizing %s: %v\n", p, err)
+			_, _ = fmt.Fprintf(out, "error summarizing %s: %v\n", p, err)
 			failed++
 		}
 	}
@@ -106,7 +106,7 @@ func summarizeValidationFile(out io.Writer, path string) error {
 		return fmt.Errorf("failed to parse %s: %w", path, err)
 	}
 	if len(arr) == 0 {
-		fmt.Fprintf(out, "%s: levels=0\n", path)
+		_, _ = fmt.Fprintf(out, "%s: levels=0\n", path)
 		return nil
 	}
 
@@ -145,7 +145,7 @@ func summarizeValidationFile(out io.Writer, path string) error {
 		solverStr += fmt.Sprintf("%s=%d", k, solvers[k])
 	}
 	sort.Ints(unsolved)
-	fmt.Fprintf(out, "%s: levels=%d solvable=%d unsolvable=%v gave_up=%d avg_states=%.1f max_states=%d avg_time_ms=%.1f solvers={%s}\n",
+	_, _ = fmt.Fprintf(out, "%s: levels=%d solvable=%d unsolvable=%v gave_up=%d avg_states=%.1f max_states=%d avg_time_ms=%.1f solvers={%s}\n",
 		path, n, solved, unsolved, gaveUp,
 		float64(totalStates)/float64(n), maxStates, float64(totalTime)/float64(n), solverStr)
 	return nil
@@ -208,7 +208,7 @@ func summarizeBatchDir(out io.Writer, dir string) error {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	fmt.Fprintf(out, "%s: levels=%d difficulties=%v avg_coverage=%.1f%% min_coverage=%.1f%% avg_vines=%.1f max_blocking=%d dumps=%d total_gen_ms=%d\n",
+	_, _ = fmt.Fprintf(out, "%s: levels=%d difficulties=%v avg_coverage=%.1f%% min_coverage=%.1f%% avg_vines=%.1f max_blocking=%d dumps=%d total_gen_ms=%d\n",
 		dir, len(files), keys, totalCoverage/n, minCoverage, float64(totalVines)/n, maxBlocking, totalDumps, totalGenMS)
 	return nil
 }

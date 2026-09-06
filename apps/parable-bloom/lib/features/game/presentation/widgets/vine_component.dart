@@ -19,9 +19,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final VineData vineData;
   final double cellSize;
 
-  static ui.Image? _classicTextureImage;
-  static ui.Image? _blossomTextureImage;
-  static ui.Image? _etherealTextureImage;
+  // Instance textures resolved from the shared game-level loader in onLoad
+  // (no statics: concurrent vine onLoads previously raced double-loads).
+  ui.Image? _classicTextureImage;
+  ui.Image? _blossomTextureImage;
+  ui.Image? _etherealTextureImage;
 
   late final VineAnimator _animator;
   final VineBloomRenderer _bloomRenderer = VineBloomRenderer();
@@ -49,10 +51,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     size = parent.size;
 
     final game = parent.parent;
-    _classicTextureImage ??= await game.images.load('classic_vine_texture.png');
-    _blossomTextureImage ??= await game.images.load('blossom_vine_texture.png');
-    _etherealTextureImage ??=
-        await game.images.load('ethereal_vine_texture.png');
+    final textures = game.vineTextures;
+    await textures.load(game.images);
+    _classicTextureImage = textures.classic;
+    _blossomTextureImage = textures.blossom;
+    _etherealTextureImage = textures.ethereal;
 
     LoggerService.debug('VineComponent loaded',
         tag: 'VineComponent',
