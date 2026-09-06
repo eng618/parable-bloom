@@ -97,17 +97,23 @@ func TestLiveRegistryRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load real modules.json: %v", err)
 	}
-	if len(reg.Modules) != 5 {
-		t.Fatalf("expected 5 shipped modules, got %d", len(reg.Modules))
+	if len(reg.Modules) != 24 {
+		t.Fatalf("expected 24 modules, got %d", len(reg.Modules))
 	}
 	total := 0
 	for _, m := range reg.Modules {
+		if len(m.Levels) != 20 {
+			t.Errorf("module %d has %d levels, want 20", m.ID, len(m.Levels))
+		}
+		if m.ChallengeLevel == "" {
+			t.Errorf("module %d missing challenge level", m.ID)
+		}
 		if len(m.Scriptures) == 0 {
 			t.Errorf("module %d lost scriptures in load", m.ID)
 		}
 		total += len(m.Levels)
 	}
-	if total != 100 {
-		t.Errorf("expected 100 regular levels, got %d", total)
+	if total != 480 {
+		t.Errorf("expected 480 regular levels, got %d", total)
 	}
 }

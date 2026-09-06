@@ -95,9 +95,9 @@ void main() {
 
       final registry = await container.read(modulesRegistryProvider.future);
 
-      // Bundled assets/data/modules.json: 5 modules + level mappings.
+      // Bundled assets/data/modules.json: 24 modules + level mappings.
       expect(registry['modules'], isList);
-      expect((registry['modules'] as List), hasLength(5));
+      expect((registry['modules'] as List), hasLength(24));
       expect(registry['level_mappings'], isMap);
     });
 
@@ -146,8 +146,8 @@ void main() {
       );
 
       final registry = await container.read(modulesRegistryProvider.future);
-      // Bundled assets/data/modules.json: 5 modules + level mappings.
-      expect((registry['modules'] as List), hasLength(5));
+      // Bundled assets/data/modules.json: 24 modules + level mappings.
+      expect((registry['modules'] as List), hasLength(24));
       expect(box.get('cached_modules_registry'), isNull);
     });
 
