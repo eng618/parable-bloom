@@ -11,63 +11,23 @@ import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/settings_providers.dart' show VineStyle;
 import '../../../../core/services/logger_service.dart';
 import '../../../tutorial/domain/entities/lesson_data.dart';
-import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart'
-    show BlockedTapState;
 import '../../application/providers/camera_providers.dart' show CameraState;
 import '../../application/providers/gameplay_state_providers.dart'
     show VineState, VineAnimationState;
 import '../../domain/services/level_solver_service.dart';
+import 'game_event_sink.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
 import 'tap_effect_component.dart';
-
-class GardenGameCallbacks {
-  final void Function(GardenGame game) onGameLoaded;
-  final void Function() onGameRemoved;
-  final void Function(String vineId) onVineCleared;
-  final void Function(String vineId, VineAnimationState state)
-      onVineAnimationStateChanged;
-  final void Function(String vineId) onVineAttempted;
-  final void Function(int count) onTapIncrement;
-  final void Function() onTapOutsideGrid;
-  final void Function(BlockedTapState state)? onBlockedTap;
-  final Future<void> Function(VineData vine)? onEnsureVineVisible;
-  final void Function(String vineId)? onHintVine;
-  final void Function()? onClearHints;
-
-  // Settings/State Getters
-  final bool Function() getUseSimpleVines;
-  final bool Function() getHapticsEnabled;
-  final bool Function()? getIsAnyAnimating;
-  final bool Function()? getDebugShowGridCoordinates;
-  final bool Function()? getDebugVineAnimationLogging;
-
-  GardenGameCallbacks({
-    required this.onGameLoaded,
-    required this.onGameRemoved,
-    required this.onVineCleared,
-    required this.onVineAnimationStateChanged,
-    required this.onVineAttempted,
-    required this.onTapIncrement,
-    required this.onTapOutsideGrid,
-    this.onBlockedTap,
-    this.onEnsureVineVisible,
-    this.onHintVine,
-    this.onClearHints,
-    required this.getUseSimpleVines,
-    required this.getHapticsEnabled,
-    this.getIsAnyAnimating,
-    this.getDebugShowGridCoordinates,
-    this.getDebugVineAnimationLogging,
-  });
-}
 
 class GardenGame extends FlameGame with TapCallbacks {
   static const double cellSize = GameBoardLayout.cellSize;
 
   late GridComponent grid;
   late ProjectionLinesComponent projectionLines;
-  final GardenGameCallbacks callbacks;
+
+  /// Bridge to the Flutter/Riverpod layer.
+  final GameEventSink sink;
 
   /// Shared level-solver service, forwarded to [GridComponent] so per-tap
   /// distance checks reuse the Riverpod singleton instead of allocating one
@@ -87,7 +47,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   late Color _tapEffectColor;
   late Color _vineAttemptedColor;
 
-  GardenGame({required this.callbacks, LevelSolverService? solver})
+  GardenGame({required this.sink, LevelSolverService? solver})
       : solver = solver ?? LevelSolverService() {
     LoggerService.debug('Constructor called - creating new instance',
         tag: 'GardenGame');
@@ -99,8 +59,8 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   /// Factory constructor for loading a lesson
   factory GardenGame.fromLesson(LessonData lessonData,
-      {required GardenGameCallbacks callbacks, LevelSolverService? solver}) {
-    final game = GardenGame(callbacks: callbacks, solver: solver);
+      {required GameEventSink sink, LevelSolverService? solver}) {
+    final game = GardenGame(sink: sink, solver: solver);
     game._currentLessonData = lessonData;
     return game;
   }
@@ -178,7 +138,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   Color get vineAttemptedColor => _vineAttemptedColor;
 
   /// Expose whether simple vines are enabled
-  bool get useSimpleVines => callbacks.getUseSimpleVines();
+  bool get useSimpleVines => sink.useSimpleVines;
 
   @override
   Future<void> onLoad() async {
@@ -216,7 +176,7 @@ class GardenGame extends FlameGame with TapCallbacks {
     camera.viewport.size = size;
 
     // Trigger game loaded callback to let the Flutter layer initialize the level
-    callbacks.onGameLoaded(this);
+    sink.onGameLoaded(this);
   }
 
   void applyCameraTransform(CameraState cameraState) {
@@ -283,13 +243,13 @@ class GardenGame extends FlameGame with TapCallbacks {
     grid = GridComponent(
       cellSize: cellSize,
       solver: solver,
-      onVineCleared: callbacks.onVineCleared,
+      onVineCleared: sink.onVineCleared,
       onVineTap: (vineId) {
         // Called when user taps a vine (after checking if it's valid)
       },
-      onVineAnimationStateChanged: callbacks.onVineAnimationStateChanged,
-      onVineAttempted: callbacks.onVineAttempted,
-      onTapIncrement: callbacks.onTapIncrement,
+      onVineAnimationStateChanged: sink.onVineAnimationStateChanged,
+      onVineAttempted: sink.onVineAttempted,
+      onTapIncrement: sink.onTapIncrement,
       onTapEffect: (position) {
         final tapEffect = TapEffectComponent(
           tapPosition: position,
@@ -393,7 +353,7 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   @override
   void onRemove() {
-    callbacks.onGameRemoved();
+    sink.onGameRemoved();
     super.onRemove();
   }
 
@@ -402,7 +362,7 @@ class GardenGame extends FlameGame with TapCallbacks {
     super.onTapDown(event);
 
     // Trigger haptic feedback on tap if enabled
-    if (callbacks.getHapticsEnabled()) {
+    if (sink.hapticsEnabled) {
       HapticFeedback.lightImpact();
     }
 
@@ -413,7 +373,7 @@ class GardenGame extends FlameGame with TapCallbacks {
     final isOutsideGrid = !gridBounds.contains(tapPos.toOffset());
 
     if (isOutsideGrid) {
-      callbacks.onTapOutsideGrid();
+      sink.onTapOutsideGrid();
 
       // Create tap effect at canvas position
       final tapEffect = TapEffectComponent(

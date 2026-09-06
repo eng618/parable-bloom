@@ -292,7 +292,7 @@ class GridComponent extends PositionComponent
       final headOffset = parent.getCellScreenPosition(head['x']!, head['y']!);
       final blockerOffset = parent.getCellScreenPosition(nextX, nextY);
 
-      parent.callbacks.onBlockedTap?.call(BlockedTapState(
+      parent.sink.onBlockedTap(BlockedTapState(
         headPosition: headOffset,
         blockerPosition: blockerOffset,
         timestamp: DateTime.now(),
@@ -338,7 +338,7 @@ class GridComponent extends PositionComponent
     if (level == null) return;
 
     // Check if any vine is currently animating
-    final isAnyAnimating = parent.callbacks.getIsAnyAnimating?.call() ?? false;
+    final isAnyAnimating = parent.sink.isAnyAnimating;
     if (isAnyAnimating) return;
 
     // Find first vine that meets the auto-clear criteria
@@ -369,7 +369,7 @@ class GridComponent extends PositionComponent
         );
 
         // 1. Adjust camera so the vine is visible
-        await parent.callbacks.onEnsureVineVisible?.call(vine);
+        await parent.sink.onEnsureVineVisible(vine);
 
         // 2. Add a 200ms delay to allow player to register camera zoom/pan
         await Future.delayed(AnimationTiming.autoClearPause);
@@ -431,8 +431,7 @@ class CellComponent extends RectangleComponent
 
     // Debug: draw x,y labels in corner only if debug mode is enabled.
     // Theme lookup happens only on this path, never during normal play.
-    final showCoordinates =
-        game.callbacks.getDebugShowGridCoordinates?.call() ?? false;
+    final showCoordinates = game.sink.debugShowGridCoordinates;
 
     if (kDebugMode && showCoordinates) {
       final theme = Theme.of(game.buildContext!);
@@ -468,12 +467,11 @@ class CellComponent extends RectangleComponent
       final state = gridParent.getCurrentVineState(clickedVine.id);
       if (state != null && !state.isCleared) {
         // Trigger haptic feedback on long press if enabled
-        final hapticsEnabled = game.callbacks.getHapticsEnabled();
-        if (hapticsEnabled) {
+        if (game.sink.hapticsEnabled) {
           HapticFeedback.mediumImpact();
         }
         // Add this vine ID to the hinted set
-        game.callbacks.onHintVine?.call(clickedVine.id);
+        game.sink.onHintVine(clickedVine.id);
       }
     }
   }
@@ -491,7 +489,7 @@ class CellComponent extends RectangleComponent
     final gridParent = parent as GridComponent;
 
     // Clear hints on tap
-    game.callbacks.onClearHints?.call();
+    game.sink.onClearHints();
 
     // Create tap effect at the tap position
     // Convert cell-local position to grid-local position
