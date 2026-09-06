@@ -352,13 +352,12 @@ class GardenGame extends FlameGame with TapCallbacks {
     startLevel(levelData, vineStates);
   }
 
-  /// Update vine states dynamically when they change in the app state
+  /// Update vine states dynamically when they change in the app state.
+  /// No forced redraw: Flame renders every frame, so the mirror update in
+  /// [GridComponent.setLevelData] is visible on the next frame by itself.
   void updateVineStates(Map<String, VineState> vineStates) {
     if (_currentLevelData != null && _isGridInitialized) {
       grid.setLevelData(_currentLevelData!, vineStates);
-      if (projectionLines.isMounted) {
-        projectionLines.update(0);
-      }
     }
   }
 
