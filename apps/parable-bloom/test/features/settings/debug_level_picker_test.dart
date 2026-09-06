@@ -120,11 +120,13 @@ void main() {
         await tester.tap(tileFinder);
         await tester.pumpAndSettle();
 
-        // Dialog should appear with level selection
+        // Dialog should appear with module + level selection
         expect(find.byType(AlertDialog), findsWidgets);
 
-        // Verify we can interact with the dropdown
+        // Two dropdowns: Module and Level-within-module
         final dropdownFinder = find.byType(DropdownButtonFormField<String>);
+        final moduleDropdownFinder = find.byType(DropdownButtonFormField<int>);
+        expect(moduleDropdownFinder.evaluate().isNotEmpty, isTrue);
         expect(dropdownFinder.evaluate().isNotEmpty, isTrue);
       }
     });

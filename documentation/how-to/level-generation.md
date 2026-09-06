@@ -105,7 +105,49 @@ If a level JSON file is corrupted or fails validation:
 
 ---
 
-## 6. Generator Resilience Workflow
+## 6. Uploading Levels to Firestore (dev → preview → prod)
+
+Levels reach players over the air: `levels_{env}/{logicalId}` plus the
+`configs_{env}/modules` and `configs_{env}/biblical_themes` registries. The
+uploaders validate everything locally first (mappings resolve, JSON parses,
+1 MiB doc limits), write via BulkWriter with retry, and support resume.
+
+```bash
+# 0. Authenticate once (Admin SDK via ADC)
+gcloud auth application-default login
+
+# 1. Dry-run first (no writes, no credentials needed)
+task firebase:levels:upload ENV=dev ARGS='--dry-run'
+task firebase:themes:upload ENV=dev ARGS='--dry-run'
+
+# 2. Dev: full upload, then verify in Singleton/console + in-app (APP_ENV=dev)
+task firebase:levels:upload ENV=dev
+task firebase:themes:upload ENV=dev
+
+# 3. Re-run safely any time (skips docs already present)
+task firebase:levels:upload ENV=dev ARGS='--only-missing'
+
+# 4. Preview, verify, then prod (export a backup first)
+task firebase:levels:upload ENV=preview
+task firebase:themes:upload ENV=preview
+gcloud firestore export gs://<your-bucket>/pre-504-$(date +%Y%m%d) \
+  --collection-ids=levels_prod,configs_prod
+CONFIRM_PROD_UPLOAD=yes task firebase:levels:upload ENV=prod
+CONFIRM_PROD_UPLOAD=yes task firebase:themes:upload ENV=prod
+```
+
+Notes:
+
+* Old-ID docs (e.g. `lvl_seed_01`) remain alongside the new scheme after
+  migration uploads; the app only reads mapped IDs, so they are harmless —
+  delete them in the console if you want a tidy collection.
+* `scripts/levels/check_scripture_texts.py` gates prod: KJV gaps fail,
+  missing NET only warns (bundled-KJV fallback covers offline).
+* Emulator testing: start a local Firestore emulator, then prefix any
+  command with `FIRESTORE_EMULATOR_HOST="localhost:8080"` (prod guard is
+  bypassed against the emulator).
+
+## 7. Generator Resilience Workflow
 
 When generating dense or complex levels (e.g. Transcendent 16x20 grids), the generator uses a layered resilience strategy:
 
