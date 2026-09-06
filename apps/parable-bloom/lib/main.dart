@@ -129,7 +129,8 @@ Future<void> _ensureGuestSession() async {
   }
 }
 
-Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {  final completedLevelsList = <String>[];
+Future<void> _seedScreenshotData(Box<dynamic> hiveBox) async {
+  final completedLevelsList = <String>[];
   // Seedling levels (1 to 20 + challenge)
   for (int i = 1; i <= 20; i++) {
     final idxStr = i < 10 ? '0$i' : '$i';

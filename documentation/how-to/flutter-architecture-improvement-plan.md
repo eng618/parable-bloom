@@ -7,9 +7,9 @@ Related: [System Architecture](../explanation/architecture.md) · App: `apps/par
 
 ## Status
 
-* Current phase: Phase 2 COMPLETE — pausing before Phase 3 for bug triage
-* Last updated: 2026-09-06
-* Progress: 19 / ~40 items
+- Current phase: Phase 2 COMPLETE — pausing before Phase 3 for bug triage
+- Last updated: 2026-09-06
+- Progress: 19 / ~40 items
 
 ## Phase 0 — Projection Lines Bug Fix (P0, bundled)
 
@@ -65,7 +65,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 ## Progress Log
 
-*Add newest entries at top.*
+_Add newest entries at top._
 
 - `2026-09-06` — 2.6 landed, PHASE 2 COMPLETE. Full suite 729/729 pass, analyze clean. Pausing before Phase 3 for bug triage.
 - `2026-09-06` — 2.1 landed: `GameEventSink` replaces `GardenGameCallbacks` across engine, both screens, and tests. Full suite 726/726 pass, analyze clean. Remains: 2.6 camera decoupling.

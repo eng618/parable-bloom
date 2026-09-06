@@ -92,8 +92,7 @@ void main() {
       expect(progress.completedLessons,
           equals({'lesson_1', 'lesson_2', 'lesson_3', 'lesson_4', 'lesson_5'}));
       expect(progress.currentLevel, equals('lvl_m05_12')); // 96 - 84 = 12
-      expect(
-          progress.savedMainGameLevel, equals('lvl_m02_01')); // 22 - 21 = 1
+      expect(progress.savedMainGameLevel, equals('lvl_m02_01')); // 22 - 21 = 1
 
       // Seedling levels check
       for (int i = 1; i <= 20; i++) {
@@ -113,15 +112,12 @@ void main() {
 
       // Blossom, Flourish, Harvest spot checks
       expect(progress.completedLevels.contains('lvl_m03_01'), isTrue);
-      expect(
-          progress.completedLevels.contains('lvl_m03_challenge'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m03_challenge'), isTrue);
       expect(progress.completedLevels.contains('lvl_m04_01'), isTrue);
-      expect(
-          progress.completedLevels.contains('lvl_m04_challenge'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m04_challenge'), isTrue);
       expect(progress.completedLevels.contains('lvl_m05_01'), isTrue);
       expect(progress.completedLevels.contains('lvl_m05_12'), isTrue);
-      expect(
-          progress.completedLevels.contains('lvl_m05_challenge'), isTrue);
+      expect(progress.completedLevels.contains('lvl_m05_challenge'), isTrue);
     });
 
     test('migrates pre-standardization string IDs to the generic scheme', () {
@@ -130,7 +126,11 @@ void main() {
         'completedLessons': ['lesson_1'],
         'lessonCompleted': false,
         'currentLevel': 'lvl_sprout_05',
-        'completedLevels': ['lvl_seed_01', 'lvl_sprout_challenge', 'lvl_m03_07'],
+        'completedLevels': [
+          'lvl_seed_01',
+          'lvl_sprout_challenge',
+          'lvl_m03_07'
+        ],
         'tutorialCompleted': false,
         'savedMainGameLevel': 'lvl_harvest_20',
         'unlockedTranslations': {},
@@ -138,8 +138,7 @@ void main() {
       });
 
       expect(progress.currentLevel, equals('lvl_m02_05'));
-      expect(
-          progress.completedLevels,
+      expect(progress.completedLevels,
           equals({'lvl_m01_01', 'lvl_m02_challenge', 'lvl_m03_07'}));
       expect(progress.savedMainGameLevel, equals('lvl_m05_20'));
     });

@@ -40,6 +40,7 @@ class VinePathPainter {
   static Path _leafPathFor(double size) {
     return _leafPathCache.putIfAbsent(size, () => _createLeafPath(size));
   }
+
   /// Render main vine path, foliage, and directional arrow head.
   ///
   /// [isAnimating] gates the expensive blur-based ethereal glow: idle vines

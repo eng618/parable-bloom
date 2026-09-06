@@ -119,9 +119,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         if (point.dy > maxY) maxY = point.dy;
       }
       _cachedPoints = points;
-      _cachedBounds = points.isEmpty
-          ? Rect.zero
-          : Rect.fromLTRB(minX, minY, maxX, maxY);
+      _cachedBounds =
+          points.isEmpty ? Rect.zero : Rect.fromLTRB(minX, minY, maxX, maxY);
       _cachedVisualVersion = _animator.visualVersion;
       _cachedVisualHeight = visualHeight;
     }

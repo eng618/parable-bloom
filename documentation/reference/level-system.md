@@ -273,14 +273,14 @@ The `batch` command in `tools/level-builder` is the primary level generation sys
 
 Source of truth: `pkg/generator/config.DifficultySpecs` + `GridSizeRanges`. Validator enforces the stricter of the spec occupancy and `common.MinCoverageForDifficulty`.
 
-| Difficulty   | Grid Size (W×H)   | Vine Count | Avg Length | Occupancy | Grace | Complexity |
-| ------------ | ----------------- | ---------- | ---------- | --------- | ----- | ---------- |
-| Tutorial     | 5×8 to 9×12       | 3-8        | 6-10       | 30%       | 3     | tutorial   |
-| Seedling     | 6×8 to 9×12       | 4-60       | 8-12       | 93%       | 3     | low        |
-| Sprout       | 9×12 to 12×16     | 8-80       | 8-14       | 93%       | 3     | low        |
-| Nurturing    | 9×16 to 12×20     | 12-100     | 8-14       | 93%       | 3     | medium     |
-| Flourishing  | 12×20 to 16×24    | 15-150     | 10-16      | 93%       | 3     | high       |
-| Transcendent | 16×28 to 24×40    | 15-200     | 12-18      | 93%       | 4     | extreme    |
+| Difficulty   | Grid Size (W×H) | Vine Count | Avg Length | Occupancy | Grace | Complexity |
+| ------------ | --------------- | ---------- | ---------- | --------- | ----- | ---------- |
+| Tutorial     | 5×8 to 9×12     | 3-8        | 6-10       | 30%       | 3     | tutorial   |
+| Seedling     | 6×8 to 9×12     | 4-60       | 8-12       | 93%       | 3     | low        |
+| Sprout       | 9×12 to 12×16   | 8-80       | 8-14       | 93%       | 3     | low        |
+| Nurturing    | 9×16 to 12×20   | 12-100     | 8-14       | 93%       | 3     | medium     |
+| Flourishing  | 12×20 to 16×24  | 15-150     | 10-16      | 93%       | 3     | high       |
+| Transcendent | 16×28 to 24×40  | 15-200     | 12-18      | 93%       | 4     | extreme    |
 
 ### 5.2 Direction-First Placement Algorithm
 

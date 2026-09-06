@@ -235,7 +235,9 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
       final s = currentStates[vine.id];
       keyBuffer
         ..write(vine.id)
-        ..write(s == null ? 'n' : '${s.isCleared ? 1 : 0}${s.animationState.index}${s.hasBeenAttempted ? 1 : 0}${s.isWithered ? 1 : 0}')
+        ..write(s == null
+            ? 'n'
+            : '${s.isCleared ? 1 : 0}${s.animationState.index}${s.hasBeenAttempted ? 1 : 0}${s.isWithered ? 1 : 0}')
         ..write(';');
     }
     final key = keyBuffer.toString();

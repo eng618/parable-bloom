@@ -131,7 +131,7 @@ task firebase:levels:upload ENV=dev ARGS='--only-missing'
 task firebase:levels:upload ENV=preview
 task firebase:themes:upload ENV=preview
 task firebase:scriptures:upload ENV=preview
-node scripts/firebase/backup_firestore.js prod  # CONFIRM_PROD_BACKUP=yes if asked
+node scripts/firebase/backup_firestore.js prod # CONFIRM_PROD_BACKUP=yes if asked
 CONFIRM_PROD_UPLOAD=yes task firebase:levels:upload ENV=prod
 CONFIRM_PROD_UPLOAD=yes task firebase:themes:upload ENV=prod
 CONFIRM_PROD_UPLOAD=yes task firebase:scriptures:upload ENV=prod
@@ -139,12 +139,12 @@ CONFIRM_PROD_UPLOAD=yes task firebase:scriptures:upload ENV=prod
 
 Notes:
 
-* Old-ID docs (e.g. `lvl_seed_01`) remain alongside the new scheme after
+- Old-ID docs (e.g. `lvl_seed_01`) remain alongside the new scheme after
   migration uploads; the app only reads mapped IDs, so they are harmless —
   delete them in the console if you want a tidy collection.
-* `scripts/levels/check_scripture_texts.py` gates prod: KJV gaps fail,
+- `scripts/levels/check_scripture_texts.py` gates prod: KJV gaps fail,
   missing NET only warns (bundled-KJV fallback covers offline).
-* Emulator testing: start a local Firestore emulator, then prefix any
+- Emulator testing: start a local Firestore emulator, then prefix any
   command with `FIRESTORE_EMULATOR_HOST="localhost:8080"` (prod guard is
   bypassed against the emulator).
 
