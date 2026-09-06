@@ -30,9 +30,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // Immutable per vine: resolved once instead of every frame.
   late final Color _calmColor;
 
-  // Cached screen-space geometry. Rebuilt only when the animator's visual
-  // positions change (version bump) or the grid height changes.
+  // Cached screen-space geometry. Rebuilt only when the vine
+  // actually moved (or the grid height changed).
   List<Offset> _cachedPoints = const [];
+  Rect _cachedBounds = Rect.zero;
   int _cachedVisualVersion = -1;
   int _cachedVisualHeight = -1;
 
@@ -98,21 +99,53 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     if (_cachedVisualVersion != _animator.visualVersion ||
         _cachedVisualHeight != visualHeight) {
       final List<Offset> points = [];
+      var minX = double.infinity;
+      var minY = double.infinity;
+      var maxX = double.negativeInfinity;
+      var maxY = double.negativeInfinity;
       for (final cell in _animator.visualPositions) {
         final x = cell['x'] as int;
         final y = cell['y'] as int;
         final visualY = visualHeight - 1 - y;
 
-        points.add(Offset(
+        final point = Offset(
           GameBoardLayout.cellCenterX(x),
           GameBoardLayout.cellCenterY(visualY),
-        ));
+        );
+        points.add(point);
+        if (point.dx < minX) minX = point.dx;
+        if (point.dy < minY) minY = point.dy;
+        if (point.dx > maxX) maxX = point.dx;
+        if (point.dy > maxY) maxY = point.dy;
       }
       _cachedPoints = points;
+      _cachedBounds = points.isEmpty
+          ? Rect.zero
+          : Rect.fromLTRB(minX, minY, maxX, maxY);
       _cachedVisualVersion = _animator.visualVersion;
       _cachedVisualHeight = visualHeight;
     }
     final points = _cachedPoints;
+    final isAnimating = _animator.isAnimating;
+
+    // Frustum culling: a clearing vine slides fully off-board, in which case
+    // there is no path left to draw (the edge bloom still renders below).
+    if (isAnimating && points.isNotEmpty) {
+      final boardRect = Rect.fromLTWH(
+        0,
+        0,
+        GameBoardLayout.boardWidth(level.gridWidth),
+        GameBoardLayout.boardHeight(visualHeight),
+      );
+      if (!_cachedBounds.overlaps(boardRect)) {
+        _bloomRenderer.draw(
+          canvas: canvas,
+          renderColor: drawColor,
+          cellSize: cellSize,
+        );
+        return;
+      }
+    }
 
     final double strokeWidth = useSimpleVines ? 26.0 : 16.0;
 
@@ -128,6 +161,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       drawColor: drawColor,
       calmColor: calmColor,
       isAttempted: isAttempted,
+      isAnimating: isAnimating,
       classicTexture: _classicTextureImage,
       blossomTexture: _blossomTextureImage,
       etherealTexture: _etherealTextureImage,

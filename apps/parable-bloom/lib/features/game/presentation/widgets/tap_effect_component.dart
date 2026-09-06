@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import 'package:parable_bloom/core/constants/animation_timing.dart';
+
 /// A visual component that displays a pulse ring effect at a tap location.
 /// The ring expands and fades out over a short duration.
 /// Renders with very high priority to appear on top of all game elements.
@@ -19,7 +21,7 @@ class TapEffectComponent extends PositionComponent {
     required this.tapPosition,
     this.color = Colors.white,
     this.maxRadius = 15.0,
-    this.duration = 0.4,
+    this.duration = AnimationTiming.tapEffectSeconds,
   }) : super(
           position: tapPosition,
           anchor: Anchor.center,

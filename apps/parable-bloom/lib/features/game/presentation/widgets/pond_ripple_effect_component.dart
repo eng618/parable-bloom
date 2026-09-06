@@ -1,6 +1,8 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import 'package:parable_bloom/core/constants/animation_timing.dart';
+
 /// A subtle pond ripple celebration effect.
 /// Renders concentric rings that expand and fade with slight staggering.
 class PondRippleEffectComponent extends PositionComponent {
@@ -16,7 +18,7 @@ class PondRippleEffectComponent extends PositionComponent {
     required Vector2 center,
     required this.maxRadius,
     this.ringCount = 4,
-    this.duration = 2.0,
+    this.duration = AnimationTiming.pondRippleSeconds,
     this.colors = const [],
   }) : super(
           position: center,

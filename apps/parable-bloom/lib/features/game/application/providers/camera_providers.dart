@@ -149,7 +149,7 @@ class CameraStateNotifier extends Notifier<CameraState> {
     _animationTimer?.cancel();
     final startTime = DateTime.now();
     _animationTimer = Timer.periodic(
-      const Duration(milliseconds: 16),
+      AnimationTiming.cameraTick,
       (timer) {
         if (ref.read(disableAnimationsProvider)) {
           timer.cancel();
@@ -307,7 +307,7 @@ class CameraStateNotifier extends Notifier<CameraState> {
     _animationTimer?.cancel();
     final startTime = DateTime.now();
     _animationTimer = Timer.periodic(
-      const Duration(milliseconds: 16),
+      AnimationTiming.cameraTick,
       (timer) {
         if (ref.read(disableAnimationsProvider)) {
           timer.cancel();

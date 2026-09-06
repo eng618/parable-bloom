@@ -7,6 +7,7 @@ import '../../../game/application/providers/camera_providers.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/solver_providers.dart';
 import '../../../game/domain/entities/level_data.dart';
+import '../../../../core/constants/animation_timing.dart';
 
 /// State of a blocked tap event, used for drawing collision indicators.
 class BlockedTapState {
@@ -59,7 +60,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     // Concentric pulse animation
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: AnimationTiming.guidePulse,
     )..repeat();
 
     _pulseAnimation = Tween<double>(begin: 0.6, end: 1.2).animate(
@@ -115,7 +116,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     // Reset blocked tap indicator after 1.5 seconds automatically
     if (blockedTap != null) {
       _blockedTapTimer?.cancel();
-      _blockedTapTimer = Timer(const Duration(milliseconds: 1500), () {
+      _blockedTapTimer = Timer(AnimationTiming.blockedTapDisplay, () {
         if (mounted) {
           ref.read(blockedTapProvider.notifier).setBlockedTap(null);
         }
