@@ -63,6 +63,7 @@ final cameraStateProvider = NotifierProvider<CameraStateNotifier, CameraState>(
 
 class CameraStateNotifier extends Notifier<CameraState> {
   Timer? _animationTimer;
+  Completer<void>? _animationCompleter;
   double _animationStartZoom = 1.0;
   double _animationTargetZoom = 1.0;
   vm.Vector2 _animationStartOffset = vm.Vector2.zero();
@@ -75,6 +76,9 @@ class CameraStateNotifier extends Notifier<CameraState> {
   CameraState build() {
     ref.onDispose(() {
       _animationTimer?.cancel();
+      _animationTimer = null;
+      _animationCompleter?.complete();
+      _animationCompleter = null;
     });
     return CameraState.defaultState();
   }
@@ -151,18 +155,36 @@ class CameraStateNotifier extends Notifier<CameraState> {
       return;
     }
 
+    _runAnimation();
+  }
+
+  /// Shared 60fps interpolation driver. Per-tick values go straight to Flame
+  /// via [applyCameraFrame] (no provider notification); Riverpod gets a
+  /// throttled progress write (~10fps, keeps overlays aligned) plus one
+  /// final settled write. Previously every 16ms tick wrote state (~50
+  /// notifications per 0.8s animation, each rebuilding all watchers).
+  ///
+  /// If [completer] is given (from [animateToPosition]), it completes when
+  /// the animation settles OR is interrupted by a gesture/dispose, so
+  /// awaiters (e.g. auto-clear) never hang.
+  void _runAnimation({Completer<void>? completer}) {
+    _animationCompleter = completer;
     _animationTimer?.cancel();
     final startTime = DateTime.now();
+    var tick = 0;
     _animationTimer = Timer.periodic(
       AnimationTiming.cameraTick,
       (timer) {
         if (ref.read(disableAnimationsProvider)) {
           timer.cancel();
+          _animationTimer = null;
           state = state.copyWith(isAnimating: false);
           LoggerService.debug(
             'Animations disabled during run - cancelling',
             tag: 'CameraStateNotifier',
           );
+          _animationCompleter?.complete();
+          _animationCompleter = null;
           return;
         }
 
@@ -181,18 +203,47 @@ class CameraStateNotifier extends Notifier<CameraState> {
               (_animationTargetOffset.y - _animationStartOffset.y) * t,
         );
 
-        state = state.copyWith(
-          zoom: newZoom,
-          panOffset: newOffset,
-        );
+        // Smooth path: straight to Flame, no notification.
+        ref.read(gameInstanceProvider)?.applyCameraFrame(
+              zoom: newZoom,
+              panX: newOffset.x,
+              panY: newOffset.y,
+            );
+
+        // Throttled progress sync for Riverpod watchers (zoom controls,
+        // tutorial overlay alignment).
+        tick++;
+        if (tick % 6 == 0) {
+          state = state.copyWith(
+            zoom: newZoom,
+            panOffset: newOffset,
+          );
+        }
 
         if (_animationProgress >= 1.0) {
           timer.cancel();
-          state = state.copyWith(isAnimating: false);
+          _animationTimer = null;
+          state = state.copyWith(
+            zoom: _animationTargetZoom,
+            panOffset: _animationTargetOffset,
+            isAnimating: false,
+          );
           LoggerService.debug('Animation complete', tag: 'CameraStateNotifier');
+          _animationCompleter?.complete();
+          _animationCompleter = null;
         }
       },
     );
+  }
+
+  /// Stops a running animation without writing state. The caller immediately
+  /// overwrites state itself (gesture takeover / reset), so no extra
+  /// notification is needed here. Awaiters are released.
+  void _interruptAnimation() {
+    _animationTimer?.cancel();
+    _animationTimer = null;
+    _animationCompleter?.complete();
+    _animationCompleter = null;
   }
 
   double _easeInOutCubic(double t) {
@@ -200,14 +251,16 @@ class CameraStateNotifier extends Notifier<CameraState> {
   }
 
   void updateZoom(double newZoom, {bool clamp = true}) {
+    // A user gesture takes over: interrupt the running animation instead of
+    // dropping the input (previous behavior silently returned).
     if (state.isAnimating) {
-      return;
+      _interruptAnimation();
     }
 
     final clampedZoom =
         clamp ? newZoom.clamp(state.minZoom, state.maxZoom) : newZoom;
 
-    state = state.copyWith(zoom: clampedZoom);
+    state = state.copyWith(zoom: clampedZoom, isAnimating: false);
   }
 
   void updatePanOffset(
@@ -217,8 +270,9 @@ class CameraStateNotifier extends Notifier<CameraState> {
     required int gridCols,
     required int gridRows,
   }) {
+    // Same gesture-takeover policy as updateZoom.
     if (state.isAnimating) {
-      return;
+      _interruptAnimation();
     }
 
     final constrainedOffset = _constrainPanOffset(
@@ -229,7 +283,7 @@ class CameraStateNotifier extends Notifier<CameraState> {
       gridRows: gridRows,
     );
 
-    state = state.copyWith(panOffset: constrainedOffset);
+    state = state.copyWith(panOffset: constrainedOffset, isAnimating: false);
   }
 
   vm.Vector2 _constrainPanOffset(
@@ -264,18 +318,20 @@ class CameraStateNotifier extends Notifier<CameraState> {
   }
 
   void reset() {
-    _animationTimer?.cancel();
+    _interruptAnimation();
     state = CameraState.defaultState();
   }
 
   void resetToCenter() {
-    if (state.isAnimating) return;
+    // Take over any running animation rather than ignoring the tap.
+    _interruptAnimation();
 
     final boardZoomScale = ref.read(boardZoomScaleProvider).value ?? 1.0;
 
     state = state.copyWith(
       zoom: 1.0 * boardZoomScale,
       panOffset: vm.Vector2.zero(),
+      isAnimating: false,
     );
   }
 
@@ -309,45 +365,7 @@ class CameraStateNotifier extends Notifier<CameraState> {
       return completer.future;
     }
 
-    _animationTimer?.cancel();
-    final startTime = DateTime.now();
-    _animationTimer = Timer.periodic(
-      AnimationTiming.cameraTick,
-      (timer) {
-        if (ref.read(disableAnimationsProvider)) {
-          timer.cancel();
-          state = state.copyWith(isAnimating: false);
-          completer.complete();
-          return;
-        }
-
-        final elapsed = DateTime.now().difference(startTime).inMilliseconds;
-        _animationProgress =
-            (elapsed / (_animationDurationSeconds * 1000)).clamp(0.0, 1.0);
-
-        final t = _easeInOutCubic(_animationProgress);
-
-        final newZoom = _animationStartZoom +
-            (_animationTargetZoom - _animationStartZoom) * t;
-        final newOffset = vm.Vector2(
-          _animationStartOffset.x +
-              (_animationTargetOffset.x - _animationStartOffset.x) * t,
-          _animationStartOffset.y +
-              (_animationTargetOffset.y - _animationStartOffset.y) * t,
-        );
-
-        state = state.copyWith(
-          zoom: newZoom,
-          panOffset: newOffset,
-        );
-
-        if (_animationProgress >= 1.0) {
-          timer.cancel();
-          state = state.copyWith(isAnimating: false);
-          completer.complete();
-        }
-      },
-    );
+    _runAnimation(completer: completer);
 
     return completer.future;
   }

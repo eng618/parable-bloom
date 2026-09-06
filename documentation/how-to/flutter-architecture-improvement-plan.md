@@ -7,9 +7,9 @@ Related: [System Architecture](../explanation/architecture.md) · App: `apps/par
 
 ## Status
 
-* Current phase: Phase 2 — only camera decoupling (2.6) remains
+* Current phase: Phase 2 COMPLETE — pausing before Phase 3 for bug triage
 * Last updated: 2026-09-06
-* Progress: 18 / ~40 items
+* Progress: 19 / ~40 items
 
 ## Phase 0 — Projection Lines Bug Fix (P0, bundled)
 
@@ -43,7 +43,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 - [x] 2.3 Single-owner vine state: `_clearVine` no longer mutates the local mirror (provider recomputes and pushes back via `updateVineStates`); removed `update(0)` force-redraw hacks (`grid_component`, `garden_game` — Flame renders continuously, `update(0)` was a dt=0 no-op); new-level check is now id-based instead of identity — done
 - [x] 2.4 Memoize `_calculateVineStates` by input signature (level + per-vine cleared/animation/attempted/withered); repeat calls with unchanged inputs return cached result — done + `gameplay_state_updates_test.dart`
 - [x] 2.5 Solver singleton injected: `GardenGame.solver` (from `levelSolverServiceProvider` in both screens) → `GridComponent.solver`; `getLevelSolverService()` returns shared instance instead of allocating per tap — done
-- [ ] 2.6 Move camera interpolation out of Riverpod: Flame-local `CameraComponent`/transform holds 60Hz ticks, Riverpod keeps settled state; queue gestures dropped today by `updateZoom:197/updatePanOffset:208` while animating
+- [x] 2.6 Camera decoupling: 60fps interpolation no longer writes Riverpod state per tick — `GardenGame.applyCameraFrame(zoom:, panX:, panY:)` applies straight to Flame; Riverpod keeps settled state + throttled ~10fps progress writes + final write (~10 notifications vs ~50 per 0.8s animation). Gestures now interrupt/take over instead of being silently dropped (`updateZoom`/`updatePanOffset`/`resetToCenter`); animation futures always resolve (interrupt/dispose complete the completer) — done + `camera_animation_test.dart`
 - [x] 2.7 Unify `min/maxZoom`: single `CameraState.kMaxZoom = 2.5` source; `defaultState()` max 2.0 → 2.5 to match `updateZoomBounds()` — done
 - [x] 2.8 Tap ownership unified: cell-level duplicate `lightImpact` removed (`GardenGame.onTapDown` is single owner; long-press `mediumImpact` kept); `onTapIncrement` loop → `LevelTotalTapsNotifier.add(count)` on both screens — done
 
@@ -67,6 +67,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 *Add newest entries at top.*
 
+- `2026-09-06` — 2.6 landed, PHASE 2 COMPLETE. Full suite 729/729 pass, analyze clean. Pausing before Phase 3 for bug triage.
 - `2026-09-06` — 2.1 landed: `GameEventSink` replaces `GardenGameCallbacks` across engine, both screens, and tests. Full suite 726/726 pass, analyze clean. Remains: 2.6 camera decoupling.
 - `2026-09-06` — 2.3 landed: single-owner vine state, `update(0)` hacks removed, id-based level check. Full suite 726/726 pass, analyze clean. Remain: 2.1 GameEventSink, 2.6 camera decoupling.
 - `2026-09-06` — Phase 2 batch landed: 2.2 listen lifecycle + theme sync, 2.4 vine-state memo, 2.5 solver injection, 2.7 zoom bounds, 2.8 tap/haptics + counter. Bonus bug: vine-style switches never reached Flame (`updateVineStyle` had zero callers) — fixed on both screens. Full suite 726/726 pass, analyze clean. Remain: 2.1 GameEventSink, 2.3 single-owner state, 2.6 camera decoupling.

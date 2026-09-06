@@ -180,11 +180,29 @@ class GardenGame extends FlameGame with TapCallbacks {
   }
 
   void applyCameraTransform(CameraState cameraState) {
+    applyCameraFrame(
+      zoom: cameraState.zoom,
+      panX: cameraState.panOffset.x,
+      panY: cameraState.panOffset.y,
+    );
+  }
+
+  /// Per-frame camera application that bypasses Riverpod: the camera provider
+  /// calls this ~60fps during animations so smooth interpolation doesn't
+  /// fan out into provider notifications on every tick. Riverpod keeps the
+  /// settled state (plus throttled progress writes); Flame owns the frames.
+  /// Plain doubles keep this callable from providers using vector_math_64.
+  void applyCameraFrame({
+    required double zoom,
+    required double panX,
+    required double panY,
+  }) {
+    final panOffset = Vector2(panX, panY);
     // Apply zoom and pan to grid
     if (_isGridInitialized && grid.isMounted) {
       grid.applyCameraTransform(
-        zoom: cameraState.zoom,
-        panOffset: Vector2(cameraState.panOffset.x, cameraState.panOffset.y),
+        zoom: zoom,
+        panOffset: panOffset,
         screenWidth: size.x,
         screenHeight: size.y,
       );
@@ -193,8 +211,8 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Apply to projection lines
     if (_isGridInitialized && projectionLines.isMounted) {
       projectionLines.applyCameraTransform(
-        zoom: cameraState.zoom,
-        panOffset: Vector2(cameraState.panOffset.x, cameraState.panOffset.y),
+        zoom: zoom,
+        panOffset: panOffset,
         screenWidth: size.x,
         screenHeight: size.y,
       );
