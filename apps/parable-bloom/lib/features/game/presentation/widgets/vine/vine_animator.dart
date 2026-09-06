@@ -9,8 +9,12 @@ class VineAnimator {
   bool willClearAfterAnimation = false;
 
   List<Map<String, int>> visualPositions = [];
-  int currentAnimationStep = 0;
-  int totalAnimationSteps = 0;
+
+  /// Bumped every time [visualPositions] changes, so renderers can cache
+  /// derived geometry and only rebuild on actual movement.
+  int visualVersion = 0;
+
+  int currentAnimationStep = 0;  int totalAnimationSteps = 0;
   int maxForwardStepsThisRun = 0;
   bool canClearThisRun = false;
   double animationTimer = 0.0;
@@ -111,6 +115,7 @@ class VineAnimator {
               (pos) => Map<String, int>.from(pos),
             ),
           );
+          visualVersion++;
         }
 
         currentAnimationStep++;
@@ -225,6 +230,7 @@ class VineAnimator {
 
     visualPositions[headIndex]['x'] = newHeadX;
     visualPositions[headIndex]['y'] = newHeadY;
+    visualVersion++;
   }
 
   bool hasExitedVisibleGrid(LevelData? level) {

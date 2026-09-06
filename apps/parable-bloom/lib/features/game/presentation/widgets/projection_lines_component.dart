@@ -15,6 +15,16 @@ class ProjectionLinesComponent extends PositionComponent
   LevelData? _currentLevel;
   bool _isVisible = false;
 
+  /// Extension length precomputed per level (2x max board dimension).
+  double _extensionLength = 0.0;
+
+  /// Reused across frames: color/width never change per line.
+  final Paint _linePaint = Paint()
+    ..color = Colors.grey.withValues(alpha: 0.2)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 4
+    ..strokeCap = StrokeCap.round;
+
   // Camera transform properties
   double _screenWidth = 0.0;
   double _screenHeight = 0.0;
@@ -31,6 +41,12 @@ class ProjectionLinesComponent extends PositionComponent
       GameBoardLayout.boardWidth(cols),
       GameBoardLayout.boardHeight(rows),
     );
+
+    final maxDimension = GameBoardLayout.boardWidth(cols) >
+            GameBoardLayout.boardHeight(rows)
+        ? GameBoardLayout.boardWidth(cols)
+        : GameBoardLayout.boardHeight(rows);
+    _extensionLength = maxDimension * 2; // Go 2x the max dimension
 
     // Position will be set by camera transform
     // Initialize with centered position if camera not yet applied
@@ -107,13 +123,8 @@ class ProjectionLinesComponent extends PositionComponent
     final vineStates = parent.grid.vineStates;
     final hintedVines = _hintedVineIds;
     final showAllVines = _showAllVines;
-
-    // Paint for projection lines - semi-transparent gray
-    final linePaint = Paint()
-      ..color = Colors.grey.withValues(alpha: 0.2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
+    final linePaint = _linePaint;
+    final extensionLength = _extensionLength;
 
     final visualHeight = _currentLevel!.gridHeight;
 
@@ -172,13 +183,6 @@ class ProjectionLinesComponent extends PositionComponent
 
       // Calculate end point far off-screen
       // Extend the line to go well beyond the visible area
-      final maxDimension =
-          GameBoardLayout.boardWidth(_currentLevel!.gridWidth) >
-                  GameBoardLayout.boardHeight(_currentLevel!.gridHeight)
-              ? GameBoardLayout.boardWidth(_currentLevel!.gridWidth)
-              : GameBoardLayout.boardHeight(_currentLevel!.gridHeight);
-      final extensionLength = maxDimension * 2; // Go 2x the max dimension
-
       final endPoint = Offset(
         headCenter.dx + directionVector.dx * extensionLength,
         headCenter.dy + directionVector.dy * extensionLength,
