@@ -25,11 +25,13 @@ Map<String, dynamic> _seedJson({
   required String currentLevel,
   required List<String> completed,
 }) =>
-    GameProgress.initial().copyWith(
-      currentLevel: currentLevel,
-      completedLevels: Set<String>.from(completed),
-      tutorialCompleted: true,
-    ).toJson();
+    GameProgress.initial()
+        .copyWith(
+          currentLevel: currentLevel,
+          completedLevels: Set<String>.from(completed),
+          tutorialCompleted: true,
+        )
+        .toJson();
 
 ProviderContainer _container() {
   final container = ProviderContainer(
@@ -56,8 +58,8 @@ void main() {
         completedLevels: {'lvl_m01_01'},
       );
       expect(
-        progress.nextUncompletedLevel(
-            ['lvl_m01_01', 'lvl_m01_02', 'lvl_m01_03']),
+        progress
+            .nextUncompletedLevel(['lvl_m01_01', 'lvl_m01_02', 'lvl_m01_03']),
         'lvl_m01_02',
       );
     });
@@ -81,10 +83,12 @@ void main() {
   group('GameProgressNotifier.healCurrentLevel', () {
     test('heals dangling pointer to first uncompleted level', () async {
       final container = _container();
-      await _seed(container, _seedJson(
-        currentLevel: 'lvl_m99_99',
-        completed: ['lvl_m01_01'],
-      ));
+      await _seed(
+          container,
+          _seedJson(
+            currentLevel: 'lvl_m99_99',
+            completed: ['lvl_m01_01'],
+          ));
       final notifier = container.read(gameProgressProvider.notifier);
       await notifier.initialize();
 
@@ -96,10 +100,12 @@ void main() {
 
     test('leaves a valid pointer untouched', () async {
       final container = _container();
-      await _seed(container, _seedJson(
-        currentLevel: 'lvl_m01_02',
-        completed: ['lvl_m01_01'],
-      ));
+      await _seed(
+          container,
+          _seedJson(
+            currentLevel: 'lvl_m01_02',
+            completed: ['lvl_m01_01'],
+          ));
       final notifier = container.read(gameProgressProvider.notifier);
       await notifier.initialize();
 
@@ -112,10 +118,12 @@ void main() {
     test('returns null when everything is completed (truly finished)',
         () async {
       final container = _container();
-      await _seed(container, _seedJson(
-        currentLevel: 'lvl_m01_03',
-        completed: ['lvl_m01_01', 'lvl_m01_02', 'lvl_m01_03'],
-      ));
+      await _seed(
+          container,
+          _seedJson(
+            currentLevel: 'lvl_m01_03',
+            completed: ['lvl_m01_01', 'lvl_m01_02', 'lvl_m01_03'],
+          ));
       final notifier = container.read(gameProgressProvider.notifier);
       await notifier.initialize();
 

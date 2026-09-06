@@ -69,9 +69,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           (playlist.contains(gameProgress.currentLevel)
                               ? gameProgress.currentLevel
                               : null);
-                  final nextLevelIdx = displayId == null
-                      ? -1
-                      : playlist.indexOf(displayId);
+                  final nextLevelIdx =
+                      displayId == null ? -1 : playlist.indexOf(displayId);
                   final levelDisplayNumber =
                       nextLevelIdx != -1 ? nextLevelIdx + 1 : 1;
 

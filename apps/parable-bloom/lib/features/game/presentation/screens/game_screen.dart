@@ -19,7 +19,10 @@ import '../../application/providers/module_providers.dart';
 import '../../application/providers/progress_providers.dart';
 import '../widgets/game_header.dart';
 import '../widgets/game_event_sink.dart';
+import '../widgets/game_state_dialogs.dart';
+import '../widgets/game_zoom_controls.dart';
 import '../widgets/garden_game.dart';
+import '../widgets/level_complete_overlay.dart';
 import '../widgets/pause_menu_dialog.dart';
 import '../widgets/pond_ripple_effect_component.dart';
 import '../widgets/ripple_fireworks_component.dart';
@@ -305,32 +308,32 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           _restartLevel();
         },
         onHome: () {
-          final currentLevel = ref.read(currentLevelProvider);
-          if (currentLevel != null) {
-            final startMs = ref.read(levelStartTimestampProvider);
-            final elapsedSeconds = startMs != null
-                ? ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000)
-                    .round()
-                : -1;
-            final tapCount = ref.read(levelTotalTapsProvider);
-            final remainingVines = ref
-                .read(vineStatesProvider)
-                .values
-                .where((s) => !s.isCleared)
-                .length;
-
-            ref.read(analyticsServiceProvider).logLevelQuit(
-                  levelId: currentLevel.id,
-                  elapsedSeconds: elapsedSeconds,
-                  taps: tapCount,
-                  remainingVines: remainingVines,
-                );
-          }
+          _logLevelQuit();
           if (context.canPop()) context.pop(); // Close dialog
           context.go('/');
         },
       ),
     );
+  }
+
+  /// Analytics for abandoning a level via the pause menu.
+  void _logLevelQuit() {
+    final currentLevel = ref.read(currentLevelProvider);
+    if (currentLevel == null) return;
+    final startMs = ref.read(levelStartTimestampProvider);
+    final elapsedSeconds = startMs != null
+        ? ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000).round()
+        : -1;
+    final tapCount = ref.read(levelTotalTapsProvider);
+    final remainingVines =
+        ref.read(vineStatesProvider).values.where((s) => !s.isCleared).length;
+
+    ref.read(analyticsServiceProvider).logLevelQuit(
+          levelId: currentLevel.id,
+          elapsedSeconds: elapsedSeconds,
+          taps: tapCount,
+          remainingVines: remainingVines,
+        );
   }
 
   Widget _buildProjectionLinesFAB() {
@@ -344,132 +347,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Widget _buildZoomControls() {
-    final currentLevel = ref.watch(currentLevelProvider);
-    if (currentLevel == null) return const SizedBox.shrink();
-
-    final cameraState = ref.watch(cameraStateProvider);
-
-    return Positioned(
-      right: 16,
-      bottom: 80, // Position above FAB
-      child: Card(
-        elevation: 4,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.add),
-              tooltip: 'Zoom In',
-              splashColor: Colors.transparent,
-              onPressed: cameraState.zoom >= cameraState.maxZoom
-                  ? null
-                  : () {
-                      final newZoom = (cameraState.zoom + 0.2).clamp(
-                        cameraState.minZoom,
-                        cameraState.maxZoom,
-                      );
-                      ref
-                          .read(cameraStateProvider.notifier)
-                          .updateZoom(newZoom);
-                    },
-            ),
-            const Divider(height: 1),
-            IconButton(
-              icon: const Icon(Icons.remove),
-              tooltip: 'Zoom Out',
-              splashColor: Colors.transparent,
-              onPressed: cameraState.zoom <= cameraState.minZoom
-                  ? null
-                  : () {
-                      final newZoom = (cameraState.zoom - 0.2).clamp(
-                        cameraState.minZoom,
-                        cameraState.maxZoom,
-                      );
-                      ref
-                          .read(cameraStateProvider.notifier)
-                          .updateZoom(newZoom);
-                    },
-            ),
-            const Divider(height: 1),
-            IconButton(
-              icon: const Icon(Icons.center_focus_strong),
-              tooltip: 'Reset Zoom',
-              splashColor: Colors.transparent,
-              onPressed: () {
-                ref.read(cameraStateProvider.notifier).resetToCenter();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+    return const GameZoomControls();
   }
 
   // Confetti implementation removed; celebration handled via in-game ripple effect.
 
   Widget _buildLevelCompleteOverlay() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final themeColor = isDark ? AppTheme.secondarySeed : AppTheme.primarySeed;
-
-    return Stack(
-      children: [
-        // Content only (no rigid colored box), with subtle text shadow
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Level Complete',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        color: themeColor,
-                        fontWeight: FontWeight.w900,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  _currentCongratulationMessage,
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: themeColor,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 10.0,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .shadow
-                            .withValues(alpha: 0.6),
-                        offset: const Offset(2.0, 2.0),
-                      ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Icon(
-                  Icons.celebration,
-                  color: themeColor,
-                  size: 72,
-                  shadows: [
-                    Shadow(
-                      blurRadius: 8.0,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .shadow
-                          .withValues(alpha: 0.4),
-                      offset: const Offset(1.5, 1.5),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+    return LevelCompleteOverlay(message: _currentCongratulationMessage);
   }
 
   void _showLevelCompleteOverlay() async {
@@ -1094,64 +978,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _showGameCompletedDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        final cs = Theme.of(dialogContext).colorScheme;
-        return AlertDialog(
-          backgroundColor: cs.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            'CONGRATULATIONS!',
-            style: TextStyle(
-              color: cs.onSurface,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.emoji_events, color: cs.onSurface, size: 64),
-              const SizedBox(height: 16),
-              Text(
-                'You have completed the game!',
-                style: TextStyle(color: cs.onSurface, fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Stay tuned for updates that are released regularly.',
-                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  LoggerService.info('Returning to home from completion dialog',
-                      tag: 'GameScreen');
-                  ref.read(gameCompletedProvider.notifier).setCompleted(false);
-                  if (dialogContext.mounted) {
-                    Navigator.of(dialogContext).pop();
-                  }
-                  context.go('/');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                ),
-                child: const Text('BACK TO HOME'),
-              ),
-            ),
-          ],
-        );
+    showGameCompletedDialog(
+      context,
+      onBackToHome: () {
+        LoggerService.info('Returning to home from completion dialog',
+            tag: 'GameScreen');
+        ref.read(gameCompletedProvider.notifier).setCompleted(false);
+        context.go('/');
       },
     );
   }
@@ -1163,73 +996,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       ref.read(analyticsServiceProvider).logGameOver(currentLevel.id);
     }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        final cs = Theme.of(dialogContext).colorScheme;
-        return AlertDialog(
-          backgroundColor: cs.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            'OUT OF GRACE',
-            style: TextStyle(
-              color: cs.onSurface,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.healing, color: cs.onSurfaceVariant, size: 64),
-              const SizedBox(height: 16),
-              Text(
-                'God\'s grace is endless—try again!',
-                style: TextStyle(color: cs.onSurface, fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Take a moment to reflect and try again.',
-                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  if (dialogContext.mounted) {
-                    Navigator.of(dialogContext).pop();
-                  }
-                  _restartLevel();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'TRY AGAIN',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+    showGameOverDialog(context, onTryAgain: _restartLevel);
   }
 }
 
