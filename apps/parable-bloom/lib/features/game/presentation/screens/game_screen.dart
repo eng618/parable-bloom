@@ -14,6 +14,7 @@ import '../../../../core/providers/settings_providers.dart';
 import '../../application/providers/camera_providers.dart';
 import '../../application/providers/counter_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
+import '../../application/providers/solver_providers.dart';
 import '../../application/providers/module_providers.dart';
 import '../../application/providers/progress_providers.dart';
 import '../widgets/game_header.dart';
@@ -64,16 +65,99 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     _isLevelCompleteOverlayVisible = false;
     _currentCongratulationMessage = '';
     _initGame();
+    _subscribeToProviders();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(analyticsServiceProvider).logScreenView('Gameplay');
     });
   }
 
+  /// Provider subscriptions live here — not in [build] — so they are
+  /// registered once instead of re-subscribed on every rebuild.
+  void _subscribeToProviders() {
+    // Watch for level completion and show overlay
+    ref.listen(levelCompleteProvider, (previous, next) {
+      LoggerService.debug('levelCompleteProvider changed',
+          tag: 'GameScreen',
+          metadata: {
+            'previous': previous,
+            'next': next,
+          });
+      if (next && (previous == null || !previous)) {
+        LoggerService.info('Showing level complete overlay', tag: 'GameScreen');
+        _showLevelCompleteOverlay();
+      }
+    });
+
+    // Watch for total game completion
+    ref.listen(gameCompletedProvider, (previous, next) {
+      if (next && (previous == null || !previous)) {
+        LoggerService.info('Showing game completed dialog', tag: 'GameScreen');
+        _showGameCompletedDialog();
+      }
+    });
+
+    // Watch for Game Over
+    ref.listen(gameOverProvider, (previous, next) {
+      if (next && (previous == null || !previous)) {
+        LoggerService.info('Showing game over dialog', tag: 'GameScreen');
+        _showGameOverDialog();
+      }
+    });
+
+    // Sync state with Flame GardenGame instance
+    ref.listen(cameraStateProvider, (previous, next) {
+      _game?.applyCameraTransform(next);
+    });
+
+    ref.listen(vineStatesProvider, (previous, next) {
+      _game?.updateVineStates(next);
+    });
+
+    ref.listen(vineStyleProvider, (previous, next) {
+      // Single entry point: also handles background visibility for
+      // VineStyle.simple internally.
+      _game?.updateVineStyle(next);
+    });
+
+    ref.listen(projectionLinesVisibleProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listen(anyVineAnimatingProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+
+    ref.listen(hintedVineIdsProvider, (previous, next) {
+      _updateProjectionLinesVisibility();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Theme sync runs here so it re-fires on brightness/theme changes —
+    // not on every build.
+    _syncThemeColors();
+  }
+
+  void _syncThemeColors() {
+    if (_game == null) return;
+    final extension = Theme.of(context).extension<AppThemeExtension>()!;
+    _game!.updateThemeColors(
+      AppTheme.getGameBackground(Theme.of(context).brightness),
+      AppTheme.getGameSurface(Theme.of(context).brightness),
+      AppTheme.getGridBackground(Theme.of(context).brightness),
+      tapEffectColor: extension.tapEffect,
+      vineAttemptedColor: extension.vineAttempted,
+    );
+  }
+
   void _initGame() {
     LoggerService.debug('Creating new GardenGame instance in initState',
         tag: 'GameScreen');
     _game = GardenGame(
+      solver: ref.read(levelSolverServiceProvider),
       callbacks: GardenGameCallbacks(
         onGameLoaded: (game) {
           if (!mounted) return;
@@ -102,9 +186,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         },
         onTapIncrement: (count) {
           if (!mounted) return;
-          for (int i = 0; i < count; i++) {
-            ref.read(levelTotalTapsProvider.notifier).increment();
-          }
+          ref.read(levelTotalTapsProvider.notifier).add(count);
         },
         onTapOutsideGrid: () {
           if (!mounted) return;
@@ -153,85 +235,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
-    // Update game theme colors when theme changes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_game != null) {
-        final extension = Theme.of(context).extension<AppThemeExtension>()!;
-        final gameBackground = AppTheme.getGameBackground(
-          Theme.of(context).brightness,
-        );
-        final gameSurface = AppTheme.getGameSurface(
-          Theme.of(context).brightness,
-        );
-        final gridBackground = AppTheme.getGridBackground(
-          Theme.of(context).brightness,
-        );
-
-        _game!.updateThemeColors(
-          gameBackground,
-          gameSurface,
-          gridBackground,
-          tapEffectColor: extension.tapEffect,
-          vineAttemptedColor: extension.vineAttempted,
-        );
-      }
-    });
-
-    // Watch for level completion and show overlay
-    ref.listen(levelCompleteProvider, (previous, next) {
-      LoggerService.debug('levelCompleteProvider changed',
-          tag: 'GameScreen',
-          metadata: {
-            'previous': previous,
-            'next': next,
-          });
-      if (next && (previous == null || !previous)) {
-        LoggerService.info('Showing level complete overlay', tag: 'GameScreen');
-        _showLevelCompleteOverlay();
-      }
-    });
-
-    // Watch for total game completion
-    ref.listen(gameCompletedProvider, (previous, next) {
-      if (next && (previous == null || !previous)) {
-        LoggerService.info('Showing game completed dialog', tag: 'GameScreen');
-        _showGameCompletedDialog();
-      }
-    });
-
-    // Watch for Game Over
-    ref.listen(gameOverProvider, (previous, next) {
-      if (next && (previous == null || !previous)) {
-        LoggerService.info('Showing game over dialog', tag: 'GameScreen');
-        _showGameOverDialog();
-      }
-    });
-
-    // Sync state with Flame GardenGame instance
-    ref.listen(cameraStateProvider, (previous, next) {
-      _game?.applyCameraTransform(next);
-    });
-
-    ref.listen(vineStatesProvider, (previous, next) {
-      _game?.updateVineStates(next);
-    });
-
-    ref.listen(vineStyleProvider, (previous, next) {
-      _game?.updateSimpleVines(next == VineStyle.simple);
-    });
-
-    ref.listen(projectionLinesVisibleProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
-    });
-
-    ref.listen(anyVineAnimatingProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
-    });
-
-    ref.listen(hintedVineIdsProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
-    });
 
     return Scaffold(
       backgroundColor: colorScheme.surface,

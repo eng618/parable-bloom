@@ -51,6 +51,10 @@ class GridComponent extends PositionComponent
 
   bool _isAutoClearingInProgress = false;
 
+  /// Shared solver instance. Injected so per-tap distance checks reuse one
+  /// (stateless) service instead of allocating a fresh one per call.
+  final LevelSolverService solver;
+
   GridComponent({
     required this.cellSize,
     this.onLevelComplete,
@@ -60,7 +64,9 @@ class GridComponent extends PositionComponent
     this.onVineAttempted,
     this.onTapIncrement,
     this.onTapEffect,
-  }) : super(position: Vector2.zero());
+    LevelSolverService? solver,
+  })  : solver = solver ?? LevelSolverService(),
+        super(position: Vector2.zero());
 
   // Set level data and vine states from Riverpod providers
   void setLevelData(LevelData levelData, Map<String, VineState> vineStates) {
@@ -173,7 +179,7 @@ class GridComponent extends PositionComponent
   LevelData? getCurrentLevelData() => _currentLevel;
 
   LevelSolverService getLevelSolverService() {
-    return LevelSolverService();
+    return solver;
   }
 
   @override
@@ -480,12 +486,8 @@ class CellComponent extends RectangleComponent
       return;
     }
 
-    // Trigger haptic feedback on tap if enabled
-    final hapticsEnabled = game.callbacks.getHapticsEnabled();
-    if (hapticsEnabled) {
-      HapticFeedback.lightImpact();
-    }
-
+    // No haptics here: GardenGame.onTapDown already fires lightImpact for
+    // every canvas tap (single owner), so this would double-vibrate.
     final gridParent = parent as GridComponent;
 
     // Clear hints on tap
