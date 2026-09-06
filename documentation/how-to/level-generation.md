@@ -25,15 +25,19 @@ task levels:generate:all
 
 ### Generating Module Batches (canonical flow)
 
-Levels are generated per module (21 levels each, 105 total across 5 modules)
-following the canonical 5×21 progression (`tools/level-builder/pkg/common/progression.go`):
+Levels are generated per module (21 levels each; modules 1–5 shipped with
+105 levels, modules 6–24 registered for the 504-level cloud set)
+following the canonical 21-per-module progression (`tools/level-builder/pkg/common/progression.go`):
 5× Seedling, Sprout, Nurturing, Flourishing, then a Transcendent challenge.
 Every level must pass acceptance gates (structural + solvable + 100% playable
 coverage + quality) before it is written.
 
 ```bash
-# Canonical flow: generate all 5 modules (Levels 1-105) with the batch generator
+# Canonical flow: generate modules 1-5 (Levels 1-105) with the batch generator
 task levels:generate:all
+
+# Generate the cloud expansion, e.g. modules 6-24 (Levels 106-504)
+START_MODULE=6 END_MODULE=24 ./generate_all.sh
 
 # Or generate a single module (e.g., Module 1 = Levels 1-21)
 ./tools/level-builder/level-builder batch --module 1 --overwrite --verbose
