@@ -7,9 +7,9 @@ Related: [System Architecture](../explanation/architecture.md) · App: `apps/par
 
 ## Status
 
-- Current phase: Phase 3 — remain 3.5 upgrade, 3.6 validate (both need network)
+- Current phase: Phase 3 — remain 3.6 full validation (Flutter side green; Go toolchain broken in this env)
 - Last updated: 2026-09-06
-- Progress: 23 / ~40 items
+- Progress: 24 / ~40 items
 
 ## Phase 0 — Projection Lines Bug Fix (P0, bundled)
 
@@ -53,8 +53,8 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 - [x] 3.2 `VineTextureLoader` service (per-game shared in-flight load) replaces racy static `ui.Image?` cache in `VineComponent` (now instance fields from the loader) — done
 - [x] 3.3 Hygiene: removed duplicate `_backgroundColor` assignment; `UseSimpleVinesNotifier.setEnabled(false)` no longer clobbers blossom/ethereal; `_InMemoryBox.noSuchMethod` throws explicit `UnimplementedError` — done (settings already single-sourced via derived `useSimpleVinesProvider`)
 - [x] 3.4 Split `game_screen.dart` (1337→1104 lines): extracted `GameZoomControls` (self-contained ConsumerWidget), `LevelCompleteOverlay(message:)`, `showGameCompletedDialog`/`showGameOverDialog` (pure UI, callbacks for analytics/nav), `_logLevelQuit()` helper — done + `game_screen_widgets_test.dart` (5 tests)
-- [ ] 3.5 Dependency upgrade (`apps/parable-bloom/pubspec.yaml:37-56`): `flutter pub outdated` → branch → `upgrade --major-versions` (`flame ^1.35.1`, `riverpod ^3.0.3`, `just_audio`, `firebase_*`, `go_router ^17`, `hive`) with `flutter analyze + flutter test` gate; migrate Flame `TapCallbacks`/`CameraComponent`/`images.prefix` + Riverpod-3 Notifier APIs
-- [ ] 3.6 Validate: `task test:all`, `task validate`, screenshot goldens for vines/projections/backgrounds
+- [x] 3.5 Dependency upgrade: non-majors (`riverpod`/`flutter_riverpod` 3.4.3, `win32` 6.4.0) + majors (`go_router` 18.0.1 — zero code changes; `dynamic_color` REJECTED at 2.x — returns the `material_ui` fork's `ColorScheme`, incompatible with Flutter SDK type — pinned `^1.7.0`). `vector_math`/`mockito`/`intl`/`test` stay on SDK/flame pins — done, suite green
+- [ ] 3.6 Validate: `task test:all`, `task validate`, screenshot goldens for vines/projections/backgrounds — Flutter side done (analyze clean, 743/743); Go side blocked (see log)
 
 ## Verification Checklist (run per phase)
 
@@ -67,6 +67,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 _Add newest entries at top._
 
+- `2026-09-06` — 3.5 landed (see item). 3.6 partial: Flutter analyze + 743/743 green; Go build/test/lint unverifiable here — asdf Go installs are gutted (no `src/`, no `vet` tool) and `GOROOT` env points at the workspace; `GOPROXY` empty. Needs toolchain reinstall with network. Same env note: `lint:fix:all` wiring fixed (nx no longer appends `--fix` to go-task), flutter+next fix through it; `lb:lint:fix` fails only on the env issue.
 - `2026-09-06` — 3.4 landed: game_screen split + widget tests. Full suite 743/743, analyze clean.
 - `2026-09-06` — Phase 3 batch 1: 3.1 BoardTransform, 3.2 VineTextureLoader, 3.3 hygiene. Go lint: fixed 3 `errcheck` hits in `tools/level-builder/cmd/stats/stats.go` (4th identical site too); `task lb:lint:fix` still fails on package loading — GOPROXY empty/offline env issue, needs network. Full Flutter suite 738/738, analyze clean.
 - `2026-09-06` — Bugfix (out of band): completed-profile + new cloud levels loaded nothing ("Play Level 1" → false CONGRATULATIONS). Root cause: next level derived solely from stale persisted `currentLevel`, never recomputed when the playlist grows/migrates. Fix: `GameProgress.nextUncompletedLevel()` single source of truth, `GameProgressNotifier.healCurrentLevel()` persists dangling-pointer repair, `_loadLevelForGame` heals before declaring completion and treats empty mappings as load failure (gameOver) not finished, Home displays first-uncompleted number. Plus `level_healing_test.dart` (6 tests). Lint: fixed `await_only_futures` in `modules_registry_fallback_test`. Analyze clean, full suite 735/735.

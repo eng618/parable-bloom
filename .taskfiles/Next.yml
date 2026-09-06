@@ -47,6 +47,13 @@ tasks:
     cmds:
       - bun run lint
 
+  lint:fix:
+    desc: Fix lint issues for the Next.js site
+    dir: apps/parable-bloom-site
+    deps: [get]
+    cmds:
+      - bun run lint:fix
+
   test:
     desc: Run unit tests for the Next.js site
     dir: apps/parable-bloom-site
