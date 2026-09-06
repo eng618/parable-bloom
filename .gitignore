@@ -116,6 +116,9 @@ tools/level-builder/assets/
 # Level dumps from failing level generations
 logs/
 
+# Local Firestore backups (prod data must never be committed)
+backups/
+
 # Taskfile checksums
 .task/
 

@@ -127,13 +127,14 @@ task firebase:themes:upload ENV=dev
 # 3. Re-run safely any time (skips docs already present)
 task firebase:levels:upload ENV=dev ARGS='--only-missing'
 
-# 4. Preview, verify, then prod (export a backup first)
+# 4. Preview, verify, then prod (local backup first — no billing required)
 task firebase:levels:upload ENV=preview
 task firebase:themes:upload ENV=preview
-gcloud firestore export gs://<your-bucket>/pre-504-$(date +%Y%m%d) \
-  --collection-ids=levels_prod,configs_prod
+task firebase:scriptures:upload ENV=preview
+node scripts/firebase/backup_firestore.js prod  # CONFIRM_PROD_BACKUP=yes if asked
 CONFIRM_PROD_UPLOAD=yes task firebase:levels:upload ENV=prod
 CONFIRM_PROD_UPLOAD=yes task firebase:themes:upload ENV=prod
+CONFIRM_PROD_UPLOAD=yes task firebase:scriptures:upload ENV=prod
 ```
 
 Notes:

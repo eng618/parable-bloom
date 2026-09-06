@@ -21,6 +21,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,7 +64,11 @@ const sources = {
 };
 
 async function main() {
-  const db = admin.firestore();
+  // firebase-admin v14 removed admin.firestore(); v13 and earlier have it.
+  const db =
+    typeof admin.firestore === 'function'
+      ? admin.firestore()
+      : getFirestore();
   let uploaded = 0;
   let skipped = 0;
   for (const [reference, versions] of Object.entries(passages)) {

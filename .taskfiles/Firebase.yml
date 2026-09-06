@@ -76,6 +76,17 @@ tasks:
       - sh: command -v node >/dev/null 2>&1
         msg: "Node.js is not installed."
 
+  backup:
+    desc: "Back up game collections to local JSON (usage: task firebase:backup ENV=prod)"
+    vars:
+      ENV: '{{.ENV | default "dev"}}'
+    cmds:
+      - bun install firebase-admin
+      - node scripts/firebase/backup_firestore.js "{{.ENV}}"
+    preconditions:
+      - sh: command -v node >/dev/null 2>&1
+        msg: "Node.js is not installed."
+
   scriptures:upload:
     desc: "Upload on-demand scripture texts to Cloud Firestore (usage: task firebase:scriptures:upload ENV=dev)"
     vars:
