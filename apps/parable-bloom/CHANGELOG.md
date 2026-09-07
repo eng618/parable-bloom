@@ -1,3 +1,28 @@
+## 1.9.6 (2026-09-07)
+
+### 🚀 Features
+
+- scaffold Flutter app architecture, configure Taskfile, and update project documentation ([cf8bf89](https://github.com/eng618/parable-bloom/commit/cf8bf89))
+- add Firestore backup script with Task integration and update scripture seeds ([ef25d57](https://github.com/eng618/parable-bloom/commit/ef25d57))
+- add over 100 new game levels and update module configurations ([a5a40ae](https://github.com/eng618/parable-bloom/commit/a5a40ae))
+- expand content library with new themes and add scripture verification script to ensure production data integrity. ([bae06df](https://github.com/eng618/parable-bloom/commit/bae06df))
+- add tutorial levels 6-10 and upgrade level-builder stats and repair tools ([43fbaf1](https://github.com/eng618/parable-bloom/commit/43fbaf1))
+- add micro-level content and harden level generation pipelines with robust ID resolution and atomic file writes. ([49bf3ab](https://github.com/eng618/parable-bloom/commit/49bf3ab))
+
+### 🩹 Fixes
+
+- harden level load resolution to prevent registry skew and ensure valid pointers ([94d52e9](https://github.com/eng618/parable-bloom/commit/94d52e9))
+- implement home screen and add level progress healing logic with accompanying tests ([b8a4ea3](https://github.com/eng618/parable-bloom/commit/b8a4ea3))
+- resolve projection visibility regression by replacing setVisible with unified updateVisibility and adding integration tests. ([ded9b0c](https://github.com/eng618/parable-bloom/commit/ded9b0c))
+
+### 🔥 Performance
+
+- optimize vine rendering by caching shaders, paths, and paints to minimize per-frame allocations and reconciliations ([b68238b](https://github.com/eng618/parable-bloom/commit/b68238b))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.9.5 (2026-09-07)
 
 This was a version bump only for parable-bloom to align it with other projects, there were no code changes.
