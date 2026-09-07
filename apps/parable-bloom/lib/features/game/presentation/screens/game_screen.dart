@@ -845,12 +845,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       final mappings = await ref.read(levelMappingsProvider.future);
       if (!mappings.containsKey(levelId) && debugSelected == null) {
         // The persisted pointer may predate the current playlist (new cloud
-        // levels, migrated IDs). Heal to the first uncompleted level before
-        // concluding anything about completion.
-        final healed =
-            await ref.read(gameProgressProvider.notifier).healCurrentLevel();
-        if (healed != null && mappings.containsKey(healed)) {
-          levelId = healed;
+        // levels, migrated IDs) or the registry sources may disagree. Resolve
+        // to something loadable before concluding anything about completion.
+        // resolveLevelToLoad only returns IDs present in mappings.
+        final resolved = await ref
+            .read(gameProgressProvider.notifier)
+            .resolveLevelToLoad();
+        if (resolved != null) {
+          levelId = resolved;
         }
       }
       if (!mappings.containsKey(levelId)) {

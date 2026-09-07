@@ -33,13 +33,20 @@ Map<String, dynamic> _seedJson({
         )
         .toJson();
 
-ProviderContainer _container() {
+ProviderContainer _container({Map<String, String>? mappings}) {
   final container = ProviderContainer(
     overrides: [
       gameProgressRepositoryProvider.overrideWith(
         (ref) => ref.watch(localGameProgressRepositoryProvider),
       ),
       modulesProvider.overrideWith((ref) async => [_module()]),
+      levelMappingsProvider.overrideWith((ref) async =>
+          mappings ??
+          {
+            'lvl_m01_01': 'levels/lvl_m01_01.json',
+            'lvl_m01_02': 'levels/lvl_m01_02.json',
+            'lvl_m01_03': 'levels/lvl_m01_03.json',
+          }),
     ],
   );
   addTearDown(container.dispose);
@@ -115,8 +122,7 @@ void main() {
       expect(container.read(gameProgressProvider).currentLevel, 'lvl_m01_02');
     });
 
-    test('returns null when everything is completed (truly finished)',
-        () async {
+    test('replays mapped level when everything is completed', () async {
       final container = _container();
       await _seed(
           container,
@@ -127,7 +133,44 @@ void main() {
       final notifier = container.read(gameProgressProvider.notifier);
       await notifier.initialize();
 
-      expect(await notifier.healCurrentLevel(), isNull);
+      // A mapped pointer always wins, even when completed (intentional
+      // replay); "finished" is a home-screen concern, never a load error.
+      expect(await notifier.resolveLevelToLoad(), 'lvl_m01_03');
+    });
+
+    test('skips unmapped levels when resolving (registry skew)', () async {
+      final container = _container(mappings: {
+        'lvl_m01_01': 'levels/lvl_m01_01.json',
+        // lvl_m01_02 missing from mappings despite being in the playlist
+        'lvl_m01_03': 'levels/lvl_m01_03.json',
+      });
+      await _seed(
+          container,
+          _seedJson(
+            currentLevel: 'lvl_m99_99',
+            completed: ['lvl_m01_01'],
+          ));
+      final notifier = container.read(gameProgressProvider.notifier);
+      await notifier.initialize();
+
+      // Must never resolve to an ID the game screen cannot load.
+      final resolved = await notifier.resolveLevelToLoad();
+      expect(resolved, 'lvl_m01_03');
+      expect(container.read(gameProgressProvider).currentLevel, 'lvl_m01_03');
+    });
+
+    test('returns null when nothing is mapped (registry failure)', () async {
+      final container = _container(mappings: {});
+      await _seed(
+          container,
+          _seedJson(
+            currentLevel: 'lvl_m99_99',
+            completed: ['lvl_m01_01'],
+          ));
+      final notifier = container.read(gameProgressProvider.notifier);
+      await notifier.initialize();
+
+      expect(await notifier.resolveLevelToLoad(), isNull);
     });
   });
 }

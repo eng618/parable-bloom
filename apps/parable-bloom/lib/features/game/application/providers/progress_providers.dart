@@ -542,32 +542,59 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   /// it then names an ID absent from the playlist, and loaders fall back to
   /// "Play Level 1" / false "game finished". Healing points it at the first
   /// uncompleted level and persists, so refreshes stay fixed.
-  Future<String?> healCurrentLevel() async {
+  Future<String?> healCurrentLevel() => resolveLevelToLoad();
+
+  /// Full load resolution across the two registry sources of truth
+  /// ([modulesProvider] playlist and [levelMappingsProvider]).
+  ///
+  /// Returns a level ID guaranteed present in [levelMappingsProvider] (so
+  /// callers never mistake registry skew for "game finished"), persisting
+  /// pointer repairs. Returns null only when nothing is loadable.
+  ///
+  /// Policy: a mapped [currentLevel] always wins (covers normal resume AND
+  /// intentional replay of completed levels); otherwise prefer the first
+  /// uncompleted mapped level, then the first mapped level at all.
+  Future<String?> resolveLevelToLoad() async {
     if (!ref.mounted) return null;
     List<String> playlist;
+    Map<String, String> mappings;
     try {
       final modulesList = await ref.read(modulesProvider.future);
       if (!ref.mounted) return null;
       playlist = modulesList.expand((m) => m.allLevels).toList();
+      mappings = await ref.read(levelMappingsProvider.future);
+      if (!ref.mounted) return null;
     } catch (e) {
-      LoggerService.warn('Could not load playlist for level healing: $e',
+      LoggerService.warn('Could not load registry for level resolution: $e',
           tag: 'GameProgressNotifier');
       return null;
     }
 
-    final next = state.nextUncompletedLevel(playlist);
-    if (next == null) return null;
-    if (state.currentLevel == next || playlist.contains(state.currentLevel)) {
-      // Pointer is still valid (points at a real level): leave replay and
-      // in-progress semantics untouched, just report what should load.
-      return state.currentLevel;
+    final current = state.currentLevel;
+    if (mappings.containsKey(current)) return current;
+
+    String? firstMapped;
+    for (final id in playlist) {
+      if (!mappings.containsKey(id)) continue;
+      firstMapped ??= id;
+      if (!state.completedLevels.contains(id)) {
+        LoggerService.info(
+          'Resolving level load $current -> $id (stale pointer)',
+          tag: 'GameProgressNotifier',
+        );
+        await _saveProgress(state.copyWith(currentLevel: id));
+        return id;
+      }
     }
-    LoggerService.info(
-      'Healing stale currentLevel ${state.currentLevel} -> $next',
-      tag: 'GameProgressNotifier',
-    );
-    await _saveProgress(state.copyWith(currentLevel: next));
-    return next;
+    if (firstMapped != null) {
+      LoggerService.info(
+        'Resolving level load $current -> $firstMapped (replay; all mapped complete)',
+        tag: 'GameProgressNotifier',
+      );
+      await _saveProgress(state.copyWith(currentLevel: firstMapped));
+      return firstMapped;
+    }
+    return null;
   }
 
   Future<void> enableCloudSync() async {

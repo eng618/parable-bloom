@@ -67,7 +67,8 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 _Add newest entries at top._
 
-- `2026-09-06` — Go toolchain restored: `lb:lint`/`lint:fix` 0 issues, build up to date, `lb:test` green, `lint:fix:all` passes fully. 3.6 done except screenshot goldens.
+- `2026-09-06` — Bug still live on prod: fix NOT on `main` (prod deploys from `main` only; fix sits on `develop`). Hardened further anyway: `resolveLevelToLoad()` resolves across BOTH registry sources (mapped pointer wins incl. replay; else first uncompleted mapped; else first mapped; null only when nothing loadable) so no skew can ever show false CONGRATULATIONS; game screen uses it, `healCurrentLevel` delegates. +2 skew tests. Analyze clean, 745/745. SHIP: release develop→main, then hard-refresh prod and retest.
+- `2026-09-06` — Go toolchain restored
 - `2026-09-06` — 3.5 landed (see item). 3.6 partial: Flutter analyze + 743/743 green; Go build/test/lint unverifiable here — asdf Go installs are gutted (no `src/`, no `vet` tool) and `GOROOT` env points at the workspace; `GOPROXY` empty. Needs toolchain reinstall with network. Same env note: `lint:fix:all` wiring fixed (nx no longer appends `--fix` to go-task), flutter+next fix through it; `lb:lint:fix` fails only on the env issue.
 - `2026-09-06` — 3.4 landed: game_screen split + widget tests. Full suite 743/743, analyze clean.
 - `2026-09-06` — Phase 3 batch 1: 3.1 BoardTransform, 3.2 VineTextureLoader, 3.3 hygiene. Go lint: fixed 3 `errcheck` hits in `tools/level-builder/cmd/stats/stats.go` (4th identical site too); `task lb:lint:fix` still fails on package loading — GOPROXY empty/offline env issue, needs network. Full Flutter suite 738/738, analyze clean.
