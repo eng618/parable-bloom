@@ -15,37 +15,99 @@ class MockVineStatesNotifier extends VineStatesNotifier {
 }
 
 void main() {
-  group('Projection Lines Providers', () {
-    test('projectionLinesVisibleProvider should initialize with false', () {
+  group('ProjectionMode state', () {
+    test('initializes hidden', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      final isVisible = container.read(projectionLinesVisibleProvider);
-      expect(isVisible, false);
+      final mode = container.read(projectionModeProvider);
+      expect(mode.showAll, isFalse);
+      expect(mode.hintedVineIds, isEmpty);
+      expect(mode.isHidden, isTrue);
     });
 
-    test('projectionLinesVisibleProvider should toggle visibility', () {
+    test('toggleAll flips show-all without touching hints', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
+      final notifier = container.read(projectionModeProvider.notifier);
 
-      // Initially false
-      expect(container.read(projectionLinesVisibleProvider), false);
+      notifier.hint('vine_1');
+      notifier.toggleAll();
 
-      // Set to true
-      container.read(projectionLinesVisibleProvider.notifier).setVisible(true);
-      expect(container.read(projectionLinesVisibleProvider), true);
+      var mode = container.read(projectionModeProvider);
+      expect(mode.showAll, isTrue);
+      expect(mode.hintedVineIds, contains('vine_1'));
 
-      // Toggle using toggle method
-      container.read(projectionLinesVisibleProvider.notifier).toggle();
-      expect(container.read(projectionLinesVisibleProvider), false);
-
-      // Toggle back to true
-      container.read(projectionLinesVisibleProvider.notifier).toggle();
-      expect(container.read(projectionLinesVisibleProvider), true);
+      notifier.toggleAll();
+      mode = container.read(projectionModeProvider);
+      expect(mode.showAll, isFalse);
+      expect(mode.hintedVineIds, contains('vine_1'));
     });
 
-    test('anyVineAnimatingProvider should return false when no vines animating',
-        () {
+    test('hint accumulates vine IDs', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(projectionModeProvider.notifier);
+
+      notifier.hint('vine_1');
+      notifier.hint('vine_2');
+
+      final mode = container.read(projectionModeProvider);
+      expect(mode.hintedVineIds, containsAll(['vine_1', 'vine_2']));
+      expect(mode.showAll, isFalse);
+    });
+
+    test('clearHints keeps show-all', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(projectionModeProvider.notifier);
+
+      notifier.toggleAll();
+      notifier.hint('vine_1');
+      notifier.clearHints();
+
+      final mode = container.read(projectionModeProvider);
+      expect(mode.hintedVineIds, isEmpty);
+      expect(mode.showAll, isTrue);
+    });
+
+    test('setShowAll is idempotent', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(projectionModeProvider.notifier);
+
+      var notifications = 0;
+      container.listen<ProjectionMode>(
+        projectionModeProvider,
+        (_, __) => notifications++,
+      );
+
+      notifier.setShowAll(false);
+      expect(notifications, 0);
+
+      notifier.setShowAll(true);
+      expect(notifications, 1);
+      expect(container.read(projectionModeProvider).showAll, isTrue);
+    });
+
+    test('mode equality distinguishes states', () {
+      expect(
+        const ProjectionMode(),
+        const ProjectionMode(showAll: false, hintedVineIds: {}),
+      );
+      expect(
+        const ProjectionMode(showAll: true),
+        isNot(const ProjectionMode()),
+      );
+      expect(
+        const ProjectionMode(hintedVineIds: {'a'}),
+        const ProjectionMode(hintedVineIds: {'a'}),
+      );
+    });
+  });
+
+  group('anyVineAnimatingProvider', () {
+    test('should return false when no vines animating', () {
       final container = ProviderContainer(
         overrides: [
           vineStatesProvider.overrideWith(() => MockVineStatesNotifier({})),
@@ -151,46 +213,6 @@ void main() {
 
       final isAnimating = container.read(anyVineAnimatingProvider);
       expect(isAnimating, true);
-    });
-
-    test('hintedVineIdsProvider should initialize with an empty set', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      final hintedVines = container.read(hintedVineIdsProvider);
-      expect(hintedVines, isEmpty);
-    });
-
-    test('hintedVineIdsProvider should add hinted vine IDs', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      // Initially empty
-      expect(container.read(hintedVineIdsProvider), isEmpty);
-
-      // Add vine_1
-      container.read(hintedVineIdsProvider.notifier).add('vine_1');
-      expect(container.read(hintedVineIdsProvider), contains('vine_1'));
-      expect(container.read(hintedVineIdsProvider).length, 1);
-
-      // Add vine_2
-      container.read(hintedVineIdsProvider.notifier).add('vine_2');
-      expect(container.read(hintedVineIdsProvider), contains('vine_1'));
-      expect(container.read(hintedVineIdsProvider), contains('vine_2'));
-      expect(container.read(hintedVineIdsProvider).length, 2);
-    });
-
-    test('hintedVineIdsProvider should clear hinted vine IDs', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      // Add vine_1
-      container.read(hintedVineIdsProvider.notifier).add('vine_1');
-      expect(container.read(hintedVineIdsProvider), contains('vine_1'));
-
-      // Clear
-      container.read(hintedVineIdsProvider.notifier).clear();
-      expect(container.read(hintedVineIdsProvider), isEmpty);
     });
   });
 }

@@ -378,39 +378,71 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   }
 }
 
-final projectionLinesVisibleProvider =
-    NotifierProvider<ProjectionLinesVisibleNotifier, bool>(
-  ProjectionLinesVisibleNotifier.new,
+final projectionModeProvider =
+    NotifierProvider<ProjectionModeNotifier, ProjectionMode>(
+  ProjectionModeNotifier.new,
 );
 
-class ProjectionLinesVisibleNotifier extends Notifier<bool> {
+/// Unified projection-lines UI state: the Show-All toggle plus the
+/// long-press single-vine hint set in one atomic object.
+///
+/// Previously two independent providers (`bool` + `Set`) that could disagree
+/// mid-frame (one updated, listeners firing between the two writes). One
+/// assignment now carries the complete filter state to Flame.
+class ProjectionMode {
+  final bool showAll;
+  final Set<String> hintedVineIds;
+
+  const ProjectionMode({
+    this.showAll = false,
+    this.hintedVineIds = const {},
+  });
+
+  bool get isHidden => !showAll && hintedVineIds.isEmpty;
+
   @override
-  bool build() => false;
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProjectionMode &&
+          runtimeType == other.runtimeType &&
+          showAll == other.showAll &&
+          hintedVineIds.length == other.hintedVineIds.length &&
+          hintedVineIds.every(other.hintedVineIds.contains);
 
-  void toggle() {
-    state = !state;
-  }
-
-  void setVisible(bool visible) {
-    state = visible;
-  }
+  @override
+  int get hashCode => Object.hash(showAll, hintedVineIds.length);
 }
 
-final hintedVineIdsProvider =
-    NotifierProvider<HintedVineIdsNotifier, Set<String>>(
-  HintedVineIdsNotifier.new,
-);
-
-class HintedVineIdsNotifier extends Notifier<Set<String>> {
+class ProjectionModeNotifier extends Notifier<ProjectionMode> {
   @override
-  Set<String> build() => {};
+  ProjectionMode build() => const ProjectionMode();
 
-  void add(String vineId) {
-    state = {...state, vineId};
+  void toggleAll() {
+    state = ProjectionMode(
+      showAll: !state.showAll,
+      hintedVineIds: state.hintedVineIds,
+    );
   }
 
-  void clear() {
-    state = {};
+  void setShowAll(bool visible) {
+    if (state.showAll == visible) return;
+    state = ProjectionMode(
+      showAll: visible,
+      hintedVineIds: state.hintedVineIds,
+    );
+  }
+
+  void hint(String vineId) {
+    if (state.hintedVineIds.contains(vineId)) return;
+    state = ProjectionMode(
+      showAll: state.showAll,
+      hintedVineIds: {...state.hintedVineIds, vineId},
+    );
+  }
+
+  void clearHints() {
+    if (state.hintedVineIds.isEmpty) return;
+    state = ProjectionMode(showAll: state.showAll);
   }
 }
 

@@ -7,17 +7,17 @@ Related: [System Architecture](../explanation/architecture.md) · App: `apps/par
 
 ## Status
 
-- Current phase: Phase 3 — remain 3.6 full validation (Flutter side green; Go toolchain broken in this env)
+- Current phase: Phase 3 — 3.6 screenshot goldens remain; open device-only items (0.8, 1.6, 1.9)
 - Last updated: 2026-09-06
-- Progress: 24 / ~40 items
+- Progress: 26 / ~40 items
 
 ## Phase 0 — Projection Lines Bug Fix (P0, bundled)
 
 Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/presentation/widgets/garden_game.dart:225-234`) only calls `setVisible()`, never `updateVisibility()`, so `ProjectionLinesComponent` (`lib/features/game/presentation/widgets/projection_lines_component.dart:80-91,124`) keeps `_hintedVineIds={} / _showAllVines=false` and `render():124` skips all vines. Data flow upstream (FAB `lib/features/game/presentation/screens/game_screen.dart:391-399`, long-press `lib/features/game/presentation/widgets/grid_component.dart:454-469`, providers `lib/features/game/application/providers/gameplay_state_providers.dart:353-387`) is intact.
 
 - [x] 0.1 Replace `setVisible()` call with `updateVisibility(visible:, hintedVineIds:, showAllVines:)` in `garden_game.dart:225-234`
-- [ ] 0.2 Introduce unified `ProjectionMode` sealed model (`Hidden` / `SingleVine(id)` / `ShowAll`, single-wins) in `gameplay_state_providers.dart`; keep existing providers as compat façade during migration — deferred pending approval of unification design; bridge now forwards via testable `GardenGame.resolveProjectionVisibility()`
-- [ ] 0.3 Migrate `_updateProjectionLinesVisibility()` (`game_screen.dart:1069-1087`) + FAB `toggle()` (`:391-399`) + `onHintVine/onClearHints` callbacks (`:108-127`) to `ProjectionMode` — deferred with 0.2
+- [x] 0.2 Unified `ProjectionMode` (`showAll` + `hintedVineIds` in one atomic object with value equality) replaces the bool+set provider pair — done
+- [x] 0.3 Migrated `_updateProjectionLinesVisibility()` + FAB `toggleAll()` + `onHintVine`/`onClearHints` on both screens to `ProjectionMode`; single listen per screen (was two) — done
 - [x] 0.4 Deprecate/remove `setVisible()` (`projection_lines_component.dart:45-47`) so dual-API regression can't recur
 - [x] 0.5 Audit `tutorial_flow_screen.dart` for the same broken bridge pattern and fix
 - [x] 0.6 Verify `_getVineAtCell(gridY, gridX)` arg order (`grid_component.dart:457` vs `:499`) with long-press log breakpoint — verified correct by inspection (map keyed `(x,y)` from `orderedPath`, lookup `(col,row)`, callers pass `(gridY,gridX)`); only naming is confusing, rename deferred to hygiene phase
@@ -67,6 +67,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 _Add newest entries at top._
 
+- `2026-09-06` — 0.2/0.3 landed: unified `ProjectionMode` replaces the bool+set pair (atomic updates, single listen per screen, value equality skips redundant notifies). Both projection UX preserved bit-for-bit. Analyze clean, 746/746.
 - `2026-09-06` — Bug still live on prod: fix NOT on `main` (prod deploys from `main` only; fix sits on `develop`). Hardened further anyway: `resolveLevelToLoad()` resolves across BOTH registry sources (mapped pointer wins incl. replay; else first uncompleted mapped; else first mapped; null only when nothing loadable) so no skew can ever show false CONGRATULATIONS; game screen uses it, `healCurrentLevel` delegates. +2 skew tests. Analyze clean, 745/745. SHIP: release develop→main, then hard-refresh prod and retest.
 - `2026-09-06` — Go toolchain restored
 - `2026-09-06` — 3.5 landed (see item). 3.6 partial: Flutter analyze + 743/743 green; Go build/test/lint unverifiable here — asdf Go installs are gutted (no `src/`, no `vet` tool) and `GOROOT` env points at the workspace; `GOPROXY` empty. Needs toolchain reinstall with network. Same env note: `lint:fix:all` wiring fixed (nx no longer appends `--fix` to go-task), flutter+next fix through it; `lb:lint:fix` fails only on the env issue.

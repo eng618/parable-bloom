@@ -115,14 +115,12 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     });
 
     // Forward projection-line state (Show All + long-press hint) to Flame.
-    ref.listen<bool>(projectionLinesVisibleProvider, (previous, next) {
+    // Single subscription: ProjectionMode carries both atomically.
+    ref.listen<ProjectionMode>(projectionModeProvider, (previous, next) {
       if (previous != next) _updateProjectionLinesVisibility();
     });
     ref.listen<bool>(anyVineAnimatingProvider, (previous, next) {
       if (previous != next) _updateProjectionLinesVisibility();
-    });
-    ref.listen<Set<String>>(hintedVineIdsProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
     });
 
     // Forward vine-style changes (the game otherwise stays on classic).
@@ -326,20 +324,22 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
   void _updateProjectionLinesVisibility() {
     if (_game == null) return;
-    final shouldShow = ref.read(projectionLinesVisibleProvider);
-    final hintedVines = ref.read(hintedVineIdsProvider);
+    final notifier = ref.read(projectionModeProvider.notifier);
+    var mode = ref.read(projectionModeProvider);
     final isAnimating = ref.read(anyVineAnimatingProvider);
 
-    if (isAnimating && shouldShow) {
-      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+    if (isAnimating && mode.showAll) {
+      notifier.setShowAll(false);
+      mode = ref.read(projectionModeProvider);
     }
-    if (isAnimating && hintedVines.isNotEmpty) {
-      ref.read(hintedVineIdsProvider.notifier).clear();
+    if (isAnimating && mode.hintedVineIds.isNotEmpty) {
+      notifier.clearHints();
+      mode = ref.read(projectionModeProvider);
     }
 
     _game!.updateProjectionLinesVisibility(
-      visible: shouldShow,
-      hintedVines: hintedVines,
+      visible: mode.showAll,
+      hintedVines: mode.hintedVineIds,
       isAnimating: isAnimating,
     );
   }
@@ -347,7 +347,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   Widget _buildProjectionLinesFAB() {
     return FloatingActionButton(
       onPressed: () {
-        ref.read(projectionLinesVisibleProvider.notifier).toggle();
+        ref.read(projectionModeProvider.notifier).toggleAll();
       },
       tooltip: 'Toggle projection lines',
       child: const Icon(Icons.tag),
@@ -956,7 +956,7 @@ class _TutorialFlowEventSink implements GameEventSink {
   @override
   void onTapOutsideGrid() {
     if (!_mounted) return;
-    _ref.read(hintedVineIdsProvider.notifier).clear();
+    _ref.read(projectionModeProvider.notifier).clearHints();
   }
 
   @override
@@ -974,13 +974,13 @@ class _TutorialFlowEventSink implements GameEventSink {
   @override
   void onHintVine(String vineId) {
     if (!_mounted) return;
-    _ref.read(hintedVineIdsProvider.notifier).add(vineId);
+    _ref.read(projectionModeProvider.notifier).hint(vineId);
   }
 
   @override
   void onClearHints() {
     if (!_mounted) return;
-    _ref.read(hintedVineIdsProvider.notifier).clear();
+    _ref.read(projectionModeProvider.notifier).clearHints();
   }
 
   @override

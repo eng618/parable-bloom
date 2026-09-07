@@ -124,15 +124,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _game?.updateVineStyle(next);
     });
 
-    ref.listen(projectionLinesVisibleProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
+    // Single subscription: ProjectionMode carries show-all + hints atomically.
+    ref.listen(projectionModeProvider, (previous, next) {
+      if (previous != next) _updateProjectionLinesVisibility();
     });
 
     ref.listen(anyVineAnimatingProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
-    });
-
-    ref.listen(hintedVineIdsProvider, (previous, next) {
       _updateProjectionLinesVisibility();
     });
   }
@@ -339,7 +336,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Widget _buildProjectionLinesFAB() {
     return FloatingActionButton(
       onPressed: () {
-        ref.read(projectionLinesVisibleProvider.notifier).toggle();
+        ref.read(projectionModeProvider.notifier).toggleAll();
       },
       tooltip: 'Toggle projection lines',
       child: const Icon(Icons.tag),
@@ -848,9 +845,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         // levels, migrated IDs) or the registry sources may disagree. Resolve
         // to something loadable before concluding anything about completion.
         // resolveLevelToLoad only returns IDs present in mappings.
-        final resolved = await ref
-            .read(gameProgressProvider.notifier)
-            .resolveLevelToLoad();
+        final resolved =
+            await ref.read(gameProgressProvider.notifier).resolveLevelToLoad();
         if (resolved != null) {
           levelId = resolved;
         }
@@ -918,20 +914,22 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _updateProjectionLinesVisibility() {
     if (_game == null) return;
-    final shouldShow = ref.read(projectionLinesVisibleProvider);
-    final hintedVines = ref.read(hintedVineIdsProvider);
+    final notifier = ref.read(projectionModeProvider.notifier);
+    var mode = ref.read(projectionModeProvider);
     final isAnimating = ref.read(anyVineAnimatingProvider);
 
-    if (isAnimating && shouldShow) {
-      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+    if (isAnimating && mode.showAll) {
+      notifier.setShowAll(false);
+      mode = ref.read(projectionModeProvider);
     }
-    if (isAnimating && hintedVines.isNotEmpty) {
-      ref.read(hintedVineIdsProvider.notifier).clear();
+    if (isAnimating && mode.hintedVineIds.isNotEmpty) {
+      notifier.clearHints();
+      mode = ref.read(projectionModeProvider);
     }
 
     _game!.updateProjectionLinesVisibility(
-      visible: shouldShow,
-      hintedVines: hintedVines,
+      visible: mode.showAll,
+      hintedVines: mode.hintedVineIds,
       isAnimating: isAnimating,
     );
   }
@@ -961,7 +959,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       ref.read(gameOverProvider.notifier).setGameOver(false);
       ref.read(gameInstanceProvider.notifier).resetGrace();
 
-      ref.read(projectionLinesVisibleProvider.notifier).setVisible(false);
+      ref.read(projectionModeProvider.notifier).setShowAll(false);
 
       if (_game != null) {
         _game!.startLevel(currentLevel, ref.read(vineStatesProvider));
@@ -1057,7 +1055,7 @@ class _GameScreenEventSink implements GameEventSink {
   @override
   void onTapOutsideGrid() {
     if (!_mounted) return;
-    _ref.read(hintedVineIdsProvider.notifier).clear();
+    _ref.read(projectionModeProvider.notifier).clearHints();
   }
 
   @override
@@ -1075,13 +1073,13 @@ class _GameScreenEventSink implements GameEventSink {
   @override
   void onHintVine(String vineId) {
     if (!_mounted) return;
-    _ref.read(hintedVineIdsProvider.notifier).add(vineId);
+    _ref.read(projectionModeProvider.notifier).hint(vineId);
   }
 
   @override
   void onClearHints() {
     if (!_mounted) return;
-    _ref.read(hintedVineIdsProvider.notifier).clear();
+    _ref.read(projectionModeProvider.notifier).clearHints();
   }
 
   @override
