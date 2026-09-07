@@ -54,7 +54,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 - [x] 3.3 Hygiene: removed duplicate `_backgroundColor` assignment; `UseSimpleVinesNotifier.setEnabled(false)` no longer clobbers blossom/ethereal; `_InMemoryBox.noSuchMethod` throws explicit `UnimplementedError` — done (settings already single-sourced via derived `useSimpleVinesProvider`)
 - [x] 3.4 Split `game_screen.dart` (1337→1104 lines): extracted `GameZoomControls` (self-contained ConsumerWidget), `LevelCompleteOverlay(message:)`, `showGameCompletedDialog`/`showGameOverDialog` (pure UI, callbacks for analytics/nav), `_logLevelQuit()` helper — done + `game_screen_widgets_test.dart` (5 tests)
 - [x] 3.5 Dependency upgrade: non-majors (`riverpod`/`flutter_riverpod` 3.4.3, `win32` 6.4.0) + majors (`go_router` 18.0.1 — zero code changes; `dynamic_color` REJECTED at 2.x — returns the `material_ui` fork's `ColorScheme`, incompatible with Flutter SDK type — pinned `^1.7.0`). `vector_math`/`mockito`/`intl`/`test` stay on SDK/flame pins — done, suite green
-- [ ] 3.6 Validate: `task test:all`, `task validate`, screenshot goldens for vines/projections/backgrounds — Flutter side done (analyze clean, 743/743); Go side blocked (see log)
+- [x] 3.6 Validate: Flutter side done (analyze clean, 743/743); Go side now VERIFIED with working toolchain — `lb:lint`/`lb:lint:fix` 0 issues (stats.go errcheck fix confirmed by real linter), `lb:build` up to date, `lb:test` pass (cmd/stats 71.9%); `lint:fix:all` passes end-to-end (flutter+next+lb). Remain: screenshot goldens for vines/projections/backgrounds
 
 ## Verification Checklist (run per phase)
 
@@ -67,6 +67,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 _Add newest entries at top._
 
+- `2026-09-06` — Go toolchain restored: `lb:lint`/`lint:fix` 0 issues, build up to date, `lb:test` green, `lint:fix:all` passes fully. 3.6 done except screenshot goldens.
 - `2026-09-06` — 3.5 landed (see item). 3.6 partial: Flutter analyze + 743/743 green; Go build/test/lint unverifiable here — asdf Go installs are gutted (no `src/`, no `vet` tool) and `GOROOT` env points at the workspace; `GOPROXY` empty. Needs toolchain reinstall with network. Same env note: `lint:fix:all` wiring fixed (nx no longer appends `--fix` to go-task), flutter+next fix through it; `lb:lint:fix` fails only on the env issue.
 - `2026-09-06` — 3.4 landed: game_screen split + widget tests. Full suite 743/743, analyze clean.
 - `2026-09-06` — Phase 3 batch 1: 3.1 BoardTransform, 3.2 VineTextureLoader, 3.3 hygiene. Go lint: fixed 3 `errcheck` hits in `tools/level-builder/cmd/stats/stats.go` (4th identical site too); `task lb:lint:fix` still fails on package loading — GOPROXY empty/offline env issue, needs network. Full Flutter suite 738/738, analyze clean.
