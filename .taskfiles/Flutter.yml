@@ -346,7 +346,7 @@ tasks:
     generates:
       - build/web/**/*
     cmds:
-      - flutter build web --release
+      - flutter build web --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}}
     preconditions:
       - sh: command -v flutter >/dev/null 2>&1
         msg: "Flutter is not installed."
@@ -357,6 +357,7 @@ tasks:
     cmds:
       - |
         flutter build appbundle --release \
+          --dart-define=APP_ENV={{.APP_ENV | default "prod"}} \
           {{if .BUILD_NAME}}--build-name "{{.BUILD_NAME}}"{{end}} \
           {{if .BUILD_NUMBER}}--build-number "{{.BUILD_NUMBER}}"{{end}}
 
@@ -365,28 +366,28 @@ tasks:
     dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
-      - flutter build ios --release
+      - flutter build ios --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}}
 
   build:linux:
     desc: Build the Linux application
     dir: apps/parable-bloom
     platforms: [linux]
     cmds:
-      - flutter build linux --release
+      - flutter build linux --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}}
 
   build:windows:
     desc: Build the Windows application
     dir: apps/parable-bloom
     platforms: [windows]
     cmds:
-      - flutter build windows --release
+      - flutter build windows --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}}
 
   build:macos:
     desc: Build the macOS application
     dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
-      - flutter build macos --release
+      - flutter build macos --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}}
 
   build:web:dev:
     desc: Build the web application for development environment
