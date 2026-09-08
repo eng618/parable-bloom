@@ -1,3 +1,13 @@
+## 0.5.12 (2026-09-08)
+
+### 🚀 Features
+
+- add Fastlane configuration for Android with automatic Play Store edit collision retries ([ab652c2](https://github.com/eng618/parable-bloom/commit/ab652c2))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 0.5.11 (2026-09-08)
 
 ### 🩹 Fixes
