@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -120,9 +118,10 @@ class GardenGame extends FlameGame with TapCallbacks {
     if (_gameBackground != null && _gameBackground!.sprite != null) {
       final spriteSize = _gameBackground!.sprite!.srcSize;
 
-      // Cover-fit: no letterboxing on wide screens. Top-aligned to preserve
-      // the artwork's focal point; excess height crops from the bottom.
-      final scale = math.max(size.x / spriteSize.x, size.y / spriteSize.y);
+      // Height-fit (contain): the full artwork stays visible, centered
+      // horizontally and top-aligned. Cover-fit was tried here but cropped
+      // most of the image on wide screens.
+      final scale = size.y / spriteSize.y;
 
       _gameBackground!.size = spriteSize * scale;
       _gameBackground!.position = Vector2(
