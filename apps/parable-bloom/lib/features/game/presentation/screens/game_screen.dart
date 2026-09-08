@@ -78,9 +78,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   /// Provider subscriptions live here — not in [build] — so they are
   /// registered once instead of re-subscribed on every rebuild.
+  /// Uses [listenManual]: [ref.listen] asserts a build context and throws
+  /// when called from [initState]; manual subscriptions are closed
+  /// automatically on unmount.
   void _subscribeToProviders() {
     // Watch for level completion and show overlay
-    ref.listen(levelCompleteProvider, (previous, next) {
+    ref.listenManual(levelCompleteProvider, (previous, next) {
       LoggerService.debug('levelCompleteProvider changed',
           tag: 'GameScreen',
           metadata: {
@@ -94,7 +97,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
 
     // Watch for total game completion
-    ref.listen(gameCompletedProvider, (previous, next) {
+    ref.listenManual(gameCompletedProvider, (previous, next) {
       if (next && (previous == null || !previous)) {
         LoggerService.info('Showing game completed dialog', tag: 'GameScreen');
         _showGameCompletedDialog();
@@ -102,7 +105,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
 
     // Watch for Game Over
-    ref.listen(gameOverProvider, (previous, next) {
+    ref.listenManual(gameOverProvider, (previous, next) {
       if (next && (previous == null || !previous)) {
         LoggerService.info('Showing game over dialog', tag: 'GameScreen');
         _showGameOverDialog();
@@ -110,26 +113,26 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
 
     // Sync state with Flame GardenGame instance
-    ref.listen(cameraStateProvider, (previous, next) {
+    ref.listenManual(cameraStateProvider, (previous, next) {
       _game?.applyCameraTransform(next);
     });
 
-    ref.listen(vineStatesProvider, (previous, next) {
+    ref.listenManual(vineStatesProvider, (previous, next) {
       _game?.updateVineStates(next);
     });
 
-    ref.listen(vineStyleProvider, (previous, next) {
+    ref.listenManual(vineStyleProvider, (previous, next) {
       // Single entry point: also handles background visibility for
       // VineStyle.simple internally.
       _game?.updateVineStyle(next);
     });
 
     // Single subscription: ProjectionMode carries show-all + hints atomically.
-    ref.listen(projectionModeProvider, (previous, next) {
+    ref.listenManual(projectionModeProvider, (previous, next) {
       if (previous != next) _updateProjectionLinesVisibility();
     });
 
-    ref.listen(anyVineAnimatingProvider, (previous, next) {
+    ref.listenManual(anyVineAnimatingProvider, (previous, next) {
       _updateProjectionLinesVisibility();
     });
   }

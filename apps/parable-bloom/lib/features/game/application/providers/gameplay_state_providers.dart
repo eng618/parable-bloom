@@ -250,7 +250,13 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
       final animationState =
           currentState?.animationState ?? VineAnimationState.normal;
 
-      if (!isCleared && animationState != VineAnimationState.animatingClear) {
+      // A finished clear animation means the vine is gone even if the
+      // isCleared flag has not propagated yet (finish notifies animation
+      // state before cleared). Counting it as a blocker resurrects it as a
+      // ghost and deadlocks neighbors.
+      if (!isCleared &&
+          animationState != VineAnimationState.animatingClear &&
+          animationState != VineAnimationState.cleared) {
         blockingVineIds.add(vine.id);
       }
     }
@@ -358,13 +364,18 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   void setAnimationState(String vineId, VineAnimationState animationState) {
     final currentState = state[vineId];
     if (currentState == null) return;
+    if (currentState.animationState == animationState) return;
 
-    state = {
-      ...state,
-      vineId: currentState.copyWith(animationState: animationState),
-    };
-
-    state = _calculateVineStates(_levelData, state);
+    // Single calculated emit: the old code assigned the raw spread first
+    // (publishing stale isBlocked to listeners/mirror) and recalculated
+    // second. Listeners now only ever see consistent generations.
+    state = _calculateVineStates(
+      _levelData,
+      {
+        ...state,
+        vineId: currentState.copyWith(animationState: animationState),
+      },
+    );
 
     if (animationState == VineAnimationState.animatingClear ||
         animationState == VineAnimationState.cleared) {

@@ -166,8 +166,7 @@ void main() {
     expect(container.read(graceProvider), 2);
   });
 
-  test('anyVineAnimating resets after rapid clear and blocked transitions', () {
-    final container = ProviderContainer();
+  test('anyVineAnimating resets after rapid clear and blocked transitions', () {    final container = ProviderContainer();
     addTearDown(container.dispose);
 
     final notifier = container.read(vineStatesProvider.notifier);
@@ -216,6 +215,103 @@ void main() {
     notifier.clearVine('v1');
 
     expect(container.read(anyVineAnimatingProvider), isFalse);
+  });
+
+  test(
+    'finished clear animation unblocks neighbors before isCleared propagates',
+    () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(vineStatesProvider.notifier);
+      final level = LevelData(
+        id: 'lvl_m01_101',
+        name: 'Ghost Blocker Regression',
+        difficulty: 'Seed',
+        gridWidth: 4,
+        gridHeight: 3,
+        vines: [
+          VineData(
+            id: 'v1',
+            headDirection: 'up',
+            orderedPath: [
+              {'x': 2, 'y': 0},
+              {'x': 2, 'y': 1},
+            ],
+          ),
+          VineData(
+            id: 'v2',
+            headDirection: 'right',
+            orderedPath: [
+              {'x': 1, 'y': 0},
+              {'x': 0, 'y': 0},
+            ],
+          ),
+        ],
+        maxMoves: 6,
+        minMoves: 2,
+        complexity: 'low',
+        grace: 2,
+        mask: MaskData(mode: 'show-all', points: const []),
+      );
+
+      notifier.resetForLevel(level);
+      expect(notifier.state['v2']!.isBlocked, isTrue);
+
+      // _finishAnimation notifies animation state BEFORE the cleared flag.
+      // The gone vine must not resurrect as a blocker in between.
+      notifier.setAnimationState('v1', VineAnimationState.cleared);
+
+      expect(notifier.state['v1']!.animationState,
+          VineAnimationState.cleared);
+      expect(notifier.state['v1']!.isCleared, isFalse);
+      expect(notifier.state['v2']!.isBlocked, isFalse);
+
+      notifier.clearVine('v1');
+      expect(notifier.state['v2']!.isBlocked, isFalse);
+    },
+  );
+
+  test('setAnimationState emits a single consistent generation', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(vineStatesProvider.notifier);
+    notifier.resetForLevel(LevelData(
+      id: 'lvl_m01_102',
+      name: 'Single Emit',
+      difficulty: 'Seed',
+      gridWidth: 2,
+      gridHeight: 2,
+      vines: [
+        VineData(
+          id: 'v1',
+          headDirection: 'right',
+          orderedPath: [
+            {'x': 0, 'y': 0},
+            {'x': 1, 'y': 0},
+          ],
+        ),
+      ],
+      maxMoves: 2,
+      minMoves: 1,
+      complexity: 'low',
+      grace: 1,
+      mask: MaskData(mode: 'show-all', points: const []),
+    ));
+
+    var notifications = 0;
+    container.listen<Map<String, VineState>>(
+      vineStatesProvider,
+      (_, __) => notifications++,
+    );
+
+    notifier.setAnimationState('v1', VineAnimationState.animatingClear);
+    expect(notifications, 1);
+
+    // Repeating the same transition must not re-notify.
+    notifier.setAnimationState('v1', VineAnimationState.animatingClear);
+    expect(notifications, 1);
   });
 }
 

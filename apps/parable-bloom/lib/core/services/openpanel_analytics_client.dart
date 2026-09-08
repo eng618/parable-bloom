@@ -157,16 +157,17 @@ class OpenpanelAnalyticsClient {
       );
 
       if (response.statusCode >= 400) {
-        LoggerService.error(
+        // Delivery failure is never app-actionable (offline, sandbox
+        // egress blocks, endpoint downtime): debug-log only, so tracking
+        // noise never reaches Crashlytics as an error.
+        LoggerService.debug(
           "Openpanel event rejected with status ${response.statusCode}",
           tag: "OpenpanelAnalytics",
         );
       }
-    } catch (error, stackTrace) {
-      LoggerService.error(
-        "Openpanel event submission failed",
-        error: error,
-        stackTrace: stackTrace,
+    } catch (error) {
+      LoggerService.debug(
+        "Openpanel event submission failed: $error",
         tag: "OpenpanelAnalytics",
       );
     }

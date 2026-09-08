@@ -318,10 +318,16 @@ class GridComponent extends PositionComponent
   }
 
   void _clearVine(String vineId) {
-    // Single-owner flow: do NOT mutate the local mirror here. The provider
-    // recomputes state and pushes it back via updateVineStates -> setLevelData.
-    // (The clearing vine's own component is already removed from the tree by
-    // VineComponent._finishAnimation, so one frame of stale mirror is harmless.)
+    // Optimistic mirror exclusion: the provider round-trip
+    // (onVineCleared -> clearVine -> listen -> updateVineStates) lands after
+    // the next tap may already have read the mirror. A still-listed vine
+    // acts as a ghost blocker in getActiveVineIds/distance checks and can
+    // deadlock the level, so exclude it here too. The provider remains the
+    // single owner; the listen path overwrites this with computed state.
+    final existing = _vineStates[vineId];
+    if (existing != null && !existing.isCleared) {
+      _vineStates[vineId] = existing.copyWith(isCleared: true);
+    }
     onVineCleared?.call(vineId);
     LoggerService.info('Vine cleared',
         tag: 'GridComponent', metadata: {'vine_id': vineId});
