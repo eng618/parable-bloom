@@ -44,18 +44,36 @@ platform :android do
 
     # Upload to Play Console (internal track for testing)
     # Authentication via Appfile (json_key or json_key_data)
-    upload_to_play_store(
-      json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json',
-      track: 'internal',
-      aab: '../build/app/outputs/bundle/release/app-release.aab',
-      skip_upload_metadata: true,
-      skip_upload_images: true,
-      skip_upload_screenshots: true,
-      release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft',
-      ack_bundle_installation_warning: true,
-      changes_not_sent_for_review: true,
-      timeout: 600
-    )
+    #
+    # The Play Edits API rejects a commit when anything else touches the app
+    # mid-upload ("A change was made to the application outside of this
+    # Edit"). The AAB upload takes ~40s, so a stale open edit or console
+    # activity can collide transiently — retry with backoff instead of
+    # failing the release.
+    attempts = (ENV["GOOGLE_PLAY_UPLOAD_RETRIES"] || "3").to_i
+    begin
+      upload_to_play_store(
+        json_key: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_PATH"] || '/tmp/service-account.json',
+        track: 'internal',
+        aab: '../build/app/outputs/bundle/release/app-release.aab',
+        skip_upload_metadata: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        release_status: ENV["GOOGLE_PLAY_RELEASE_STATUS"] || 'draft',
+        ack_bundle_installation_warning: true,
+        changes_not_sent_for_review: true,
+        timeout: 600
+      )
+    rescue => e
+      attempts -= 1
+      if attempts > 0 && e.message.match?(/outside of this Edit|Invalid request/i)
+        wait = [15, 30, 60][3 - attempts] || 60
+        UI.important("Play Console edit collision (#{e.message}). Retrying in #{wait}s (#{attempts} left)...")
+        sleep(wait)
+        retry
+      end
+      raise
+    end
 
     UI.success("✅ Successfully deployed to Google Play Console (Internal Testing)")
   end
