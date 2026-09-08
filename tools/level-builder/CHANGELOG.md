@@ -1,3 +1,13 @@
+## 1.9.8 (2026-09-08)
+
+### 🩹 Fixes
+
+- resolve ghost-blocker deadlock, add Openpanel analytics service, and update navigation to use listenManual for Riverpod 3 compatibility. ([0715e65](https://github.com/eng618/parable-bloom/commit/0715e65))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.9.7 (2026-09-08)
 
 This was a version bump only for level-builder to align it with other projects, there were no code changes.
