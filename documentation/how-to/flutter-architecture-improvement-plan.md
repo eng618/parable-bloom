@@ -67,6 +67,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 _Add newest entries at top._
 
+- `2026-09-06` — Web readability: new `ConstrainedPage` widget (680 text / 440 form widths, phones unaffected) applied to settings, journal list + reflection sheet, pause dialog (440 cap), auth card (440), home (600). AppBars stay full-bleed. +3 widget tests. Analyze clean, 751/751.
 - `2026-09-06` — Env plumbing fix: native/web release builds never passed `--dart-define=APP_ENV`, so every store build compiled as `dev` (banner + `*_dev` Firestore). All `build:*` tasks now take `APP_ENV` (default `prod`); release lanes forward it (`task release:android APP_ENV=preview` to override). Verified via `task --dry`.
 - `2026-09-06` — Android deploy fix: Play Edits collision ("change made outside of this Edit") now retried with backoff (3 attempts, 15/30/60s) in the `deploy` lane instead of failing the release; override via `GOOGLE_PLAY_UPLOAD_RETRIES`. `ruby -c` clean (lane itself needs creds+AAB to run). Note: fastlane 2.239 available (on 2.238; not the cause, optional bump).
 - `2026-09-06` — Follow-ups from local testing: tutorial zoom controls + camera gestures removed (lesson grids auto-frame on load; the screen had no camera listener so gestures never reached Flame — hiding per agreement, re-enable = add the listen); background reverted to height-fit contain (cover-fit cropped the artwork on wide screens). Analyze clean, 748/748.

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/logger_service.dart';
+import '../../../../core/widgets/constrained_page.dart';
 import '../../../../core/providers/infrastructure_providers.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/providers/settings_providers.dart';
@@ -46,148 +47,154 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: const Text('Settings'),
         backgroundColor: Theme.of(context).colorScheme.surface,
       ),
-      body: ListView(
-        children: [
-          const SizedBox(height: 16),
-          _buildSectionHeader(context, 'Account'),
-          _buildAccountTile(context, ref),
-          const Divider(),
-          _buildSectionHeader(context, 'Appearance'),
-          _buildThemeTile(context, ref, themeMode),
-          _buildBoardZoomTile(context, ref),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      _getVineStyleIcon(vineStyle),
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Vine Style',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          Text(
-                            _getVineStyleSubtitle(vineStyle),
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.6),
-                                    ),
-                          ),
-                        ],
+      body: ConstrainedPage(
+        child: ListView(
+          children: [
+            const SizedBox(height: 16),
+            _buildSectionHeader(context, 'Account'),
+            _buildAccountTile(context, ref),
+            const Divider(),
+            _buildSectionHeader(context, 'Appearance'),
+            _buildThemeTile(context, ref, themeMode),
+            _buildBoardZoomTile(context, ref),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        _getVineStyleIcon(vineStyle),
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<VineStyle>(
-                    showSelectedIcon: false,
-                    segments: const <ButtonSegment<VineStyle>>[
-                      ButtonSegment<VineStyle>(
-                        value: VineStyle.classic,
-                        icon: Icon(Icons.park),
-                        label: Text('Classic'),
-                      ),
-                      ButtonSegment<VineStyle>(
-                        value: VineStyle.blossom,
-                        icon: Icon(Icons.local_florist),
-                        label: Text('Blossom'),
-                      ),
-                      ButtonSegment<VineStyle>(
-                        value: VineStyle.ethereal,
-                        icon: Icon(Icons.star),
-                        label: Text('Ethereal'),
-                      ),
-                      ButtonSegment<VineStyle>(
-                        value: VineStyle.simple,
-                        icon: Icon(Icons.grid_view),
-                        label: Text('Simple'),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Vine Style',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Text(
+                              _getVineStyleSubtitle(vineStyle),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.6),
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                    selected: <VineStyle>{vineStyle},
-                    onSelectionChanged: (Set<VineStyle> newSelection) async {
-                      await ref
-                          .read(vineStyleProvider.notifier)
-                          .setStyle(newSelection.first);
-                    },
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<VineStyle>(
+                      showSelectedIcon: false,
+                      segments: const <ButtonSegment<VineStyle>>[
+                        ButtonSegment<VineStyle>(
+                          value: VineStyle.classic,
+                          icon: Icon(Icons.park),
+                          label: Text('Classic'),
+                        ),
+                        ButtonSegment<VineStyle>(
+                          value: VineStyle.blossom,
+                          icon: Icon(Icons.local_florist),
+                          label: Text('Blossom'),
+                        ),
+                        ButtonSegment<VineStyle>(
+                          value: VineStyle.ethereal,
+                          icon: Icon(Icons.star),
+                          label: Text('Ethereal'),
+                        ),
+                        ButtonSegment<VineStyle>(
+                          value: VineStyle.simple,
+                          icon: Icon(Icons.grid_view),
+                          label: Text('Simple'),
+                        ),
+                      ],
+                      selected: <VineStyle>{vineStyle},
+                      onSelectionChanged: (Set<VineStyle> newSelection) async {
+                        await ref
+                            .read(vineStyleProvider.notifier)
+                            .setStyle(newSelection.first);
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Divider(),
-          _buildSectionHeader(context, 'Scripture'),
-          _buildPreferredTranslationTile(context, ref),
-          _buildScriptureAttributionsTile(context, ref),
-          const Divider(),
-          _buildSectionHeader(context, 'Audio & Haptics'),
-          SwitchListTile(
-            secondary: Icon(
-              backgroundAudioEnabled ? Icons.music_note : Icons.music_off,
-              color: backgroundAudioEnabled
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-            title: const Text('Background Audio'),
-            subtitle: const Text('Play background music on a loop'),
-            value: backgroundAudioEnabled,
-            onChanged: (value) async {
-              await ref
-                  .read(backgroundAudioEnabledProvider.notifier)
-                  .setEnabled(value);
-            },
-          ),
-          SwitchListTile(
-            secondary: Icon(
-              hapticsEnabled ? Icons.vibration : Icons.smartphone,
-              color: hapticsEnabled
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-            title: const Text('Haptic Feedback'),
-            subtitle: const Text('Vibrate on game events'),
-            value: hapticsEnabled,
-            onChanged: (value) async {
-              await ref.read(hapticsEnabledProvider.notifier).setEnabled(value);
-            },
-          ),
-          const Divider(),
-          _buildSectionHeader(context, 'Data & Sync'),
-          _buildCloudSyncTile(context, ref),
-          _buildTelemetryTile(context, ref),
-          _buildRedoTutorialTile(context, ref),
-          const Divider(),
-          _buildSectionHeader(context, 'About'),
-          _buildVersionTile(context, ref),
-          const Divider(),
-          if (kDebugMode || ref.watch(debugUiEnabledForTestsProvider)) ...[
-            _buildSectionHeader(context, 'Debug'),
-            _buildDebugGridCoordinatesTile(context, ref),
-            _buildDebugVineAnimationLoggingTile(context, ref),
-            _buildDebugLevelPickerTile(context, ref),
             const Divider(),
+            _buildSectionHeader(context, 'Scripture'),
+            _buildPreferredTranslationTile(context, ref),
+            _buildScriptureAttributionsTile(context, ref),
+            const Divider(),
+            _buildSectionHeader(context, 'Audio & Haptics'),
+            SwitchListTile(
+              secondary: Icon(
+                backgroundAudioEnabled ? Icons.music_note : Icons.music_off,
+                color: backgroundAudioEnabled
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              title: const Text('Background Audio'),
+              subtitle: const Text('Play background music on a loop'),
+              value: backgroundAudioEnabled,
+              onChanged: (value) async {
+                await ref
+                    .read(backgroundAudioEnabledProvider.notifier)
+                    .setEnabled(value);
+              },
+            ),
+            SwitchListTile(
+              secondary: Icon(
+                hapticsEnabled ? Icons.vibration : Icons.smartphone,
+                color: hapticsEnabled
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              title: const Text('Haptic Feedback'),
+              subtitle: const Text('Vibrate on game events'),
+              value: hapticsEnabled,
+              onChanged: (value) async {
+                await ref
+                    .read(hapticsEnabledProvider.notifier)
+                    .setEnabled(value);
+              },
+            ),
+            const Divider(),
+            _buildSectionHeader(context, 'Data & Sync'),
+            _buildCloudSyncTile(context, ref),
+            _buildTelemetryTile(context, ref),
+            _buildRedoTutorialTile(context, ref),
+            const Divider(),
+            _buildSectionHeader(context, 'About'),
+            _buildVersionTile(context, ref),
+            const Divider(),
+            if (kDebugMode || ref.watch(debugUiEnabledForTestsProvider)) ...[
+              _buildSectionHeader(context, 'Debug'),
+              _buildDebugGridCoordinatesTile(context, ref),
+              _buildDebugVineAnimationLoggingTile(context, ref),
+              _buildDebugLevelPickerTile(context, ref),
+              const Divider(),
+            ],
+            _buildSectionHeader(context, 'Danger Zone'),
+            _buildResetDataTile(context, ref),
+            _buildDeleteAccountTile(context, ref),
           ],
-          _buildSectionHeader(context, 'Danger Zone'),
-          _buildResetDataTile(context, ref),
-          _buildDeleteAccountTile(context, ref),
-        ],
+        ),
       ),
     );
   }
