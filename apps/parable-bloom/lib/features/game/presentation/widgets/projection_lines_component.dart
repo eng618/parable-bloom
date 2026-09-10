@@ -59,13 +59,6 @@ class ProjectionLinesComponent extends PositionComponent
     }
   }
 
-  @Deprecated(
-    'Use updateVisibility() so hinted/show-all state stays in sync with _isVisible.',
-  )
-  void setVisible(bool visible) {
-    _isVisible = visible;
-  }
-
   // Apply camera transform (zoom and pan)
   void applyCameraTransform({
     required double zoom,

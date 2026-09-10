@@ -87,7 +87,7 @@ void main() {
     });
   });
 
-  group('GameProgressNotifier.healCurrentLevel', () {
+  group('GameProgressNotifier.resolveLevelToLoad', () {
     test('heals dangling pointer to first uncompleted level', () async {
       final container = _container();
       await _seed(
@@ -99,7 +99,7 @@ void main() {
       final notifier = container.read(gameProgressProvider.notifier);
       await notifier.initialize();
 
-      final healed = await notifier.healCurrentLevel();
+      final healed = await notifier.resolveLevelToLoad();
 
       expect(healed, 'lvl_m01_02');
       expect(container.read(gameProgressProvider).currentLevel, 'lvl_m01_02');
@@ -116,7 +116,7 @@ void main() {
       final notifier = container.read(gameProgressProvider.notifier);
       await notifier.initialize();
 
-      final healed = await notifier.healCurrentLevel();
+      final healed = await notifier.resolveLevelToLoad();
 
       expect(healed, 'lvl_m01_02');
       expect(container.read(gameProgressProvider).currentLevel, 'lvl_m01_02');

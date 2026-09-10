@@ -18,14 +18,14 @@ import '../../application/providers/solver_providers.dart';
 import '../../application/providers/module_providers.dart';
 import '../../application/providers/progress_providers.dart';
 import '../widgets/game_header.dart';
+import '../widgets/celebration_effects.dart';
 import '../widgets/game_event_sink.dart';
 import '../widgets/game_state_dialogs.dart';
 import '../widgets/game_zoom_controls.dart';
 import '../widgets/garden_game.dart';
 import '../widgets/level_complete_overlay.dart';
+import '../widgets/projection_sync.dart';
 import '../widgets/pause_menu_dialog.dart';
-import '../widgets/pond_ripple_effect_component.dart';
-import '../widgets/ripple_fireworks_component.dart';
 import '../../../journal/application/providers/journal_providers.dart';
 import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import '../../../../core/services/logger_service.dart';
@@ -41,25 +41,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   GardenGame? _game;
   late bool _isLevelCompleteOverlayVisible;
   late String _currentCongratulationMessage;
-
-  // List of congratulatory messages
-  static const List<String> _congratulationMessages = [
-    'Well done, good and faithful servant!',
-    'Blessed are you in Christ!',
-    'Your faith is bearing fruit!',
-    'The Lord is with you always!',
-    'Rejoice in the Lord!',
-    'Grace upon grace!',
-    'In His strength alone!',
-    'Abundant life in Christ!',
-    'A fruitful harvest awaits!',
-    'Seeds of faith growing deep!',
-    'Abide in His love!',
-    'He makes your path straight!',
-    'The joy of the Lord is your strength!',
-    'Walk by faith, not by sight!',
-    'Rooted and built up in Him!',
-  ];
 
   @override
   void initState() {
@@ -129,11 +110,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     // Single subscription: ProjectionMode carries show-all + hints atomically.
     ref.listenManual(projectionModeProvider, (previous, next) {
-      if (previous != next) _updateProjectionLinesVisibility();
+      if (previous != next) syncProjectionLines(ref, _game);
     });
 
     ref.listenManual(anyVineAnimatingProvider, (previous, next) {
-      _updateProjectionLinesVisibility();
+      syncProjectionLines(ref, _game);
     });
   }
 
@@ -359,54 +340,20 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _showLevelCompleteOverlay() async {
     if (_isLevelCompleteOverlayVisible) return;
 
-    // Select a random congratulatory message
-    final randomIndex =
-        DateTime.now().millisecondsSinceEpoch % _congratulationMessages.length;
-    _currentCongratulationMessage = _congratulationMessages[randomIndex];
+    _currentCongratulationMessage = pickCongratulationMessage();
 
     setState(() {
       _isLevelCompleteOverlayVisible = true;
     });
 
-    // Add subtle pond ripple effect to the game scene
+    // Celebration FX, centered on the board.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_game != null) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final animationColors =
-            isDark ? [AppTheme.secondarySeed] : [AppTheme.primarySeed];
-        final center = Vector2(_game!.size.x / 2, _game!.size.y / 2);
-        final effect = ref.read(celebrationEffectProvider);
-        switch (effect) {
-          case CelebrationEffect.pondRipples:
-            _game!.add(
-              PondRippleEffectComponent(
-                center: center,
-                maxRadius: (_game!.size.y * 0.45),
-                ringCount: 4,
-                duration: 2.0,
-                colors: animationColors,
-              ),
-            );
-            break;
-          case CelebrationEffect.rippleFireworks:
-            _game!.add(
-              RippleFireworksComponent(
-                count: 8,
-                duration: 2.0,
-                minRippleRadius: 30,
-                maxRippleRadius: 64,
-                colors: animationColors,
-                paddingRatio: 0.12,
-              ),
-            );
-            break;
-          case CelebrationEffect.leafPetals:
-            // Future: add leaf petals effect
-            break;
-          case CelebrationEffect.confetti:
-            // Deprecated: previously used external package
-            break;
-        }
+        spawnCelebrationEffect(
+          game: _game!,
+          effect: ref.read(celebrationEffectProvider),
+          isDark: Theme.of(context).brightness == Brightness.dark,
+        );
       }
     });
 
@@ -870,13 +817,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
       final levelData = await ref.read(levelDataProvider(levelId).future);
 
+      // Capture before setLevel: a fresh level starts the attempt count at
+      // 1, a reloaded same level keeps counting. (Reading after setLevel
+      // always compares the id to itself, so the reset never fired.)
+      final previousLevelId = ref.read(currentLevelProvider)?.id;
       ref.read(currentLevelProvider.notifier).setLevel(levelData);
       ref.read(gameCompletedProvider.notifier).setCompleted(false);
 
       ref.read(levelTotalTapsProvider.notifier).reset();
       ref.read(levelWrongTapsProvider.notifier).reset();
 
-      final previousLevelId = ref.read(currentLevelProvider)?.id;
       final attemptNotifier = ref.read(levelAttemptCountProvider.notifier);
       if (previousLevelId != levelData.id) {
         attemptNotifier.set(1);
@@ -913,28 +863,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           error: e, stackTrace: stack, tag: 'GameScreen');
       ref.read(gameOverProvider.notifier).setGameOver(true);
     }
-  }
-
-  void _updateProjectionLinesVisibility() {
-    if (_game == null) return;
-    final notifier = ref.read(projectionModeProvider.notifier);
-    var mode = ref.read(projectionModeProvider);
-    final isAnimating = ref.read(anyVineAnimatingProvider);
-
-    if (isAnimating && mode.showAll) {
-      notifier.setShowAll(false);
-      mode = ref.read(projectionModeProvider);
-    }
-    if (isAnimating && mode.hintedVineIds.isNotEmpty) {
-      notifier.clearHints();
-      mode = ref.read(projectionModeProvider);
-    }
-
-    _game!.updateProjectionLinesVisibility(
-      visible: mode.showAll,
-      hintedVines: mode.hintedVineIds,
-      isAnimating: isAnimating,
-    );
   }
 
   void _restartLevel() {

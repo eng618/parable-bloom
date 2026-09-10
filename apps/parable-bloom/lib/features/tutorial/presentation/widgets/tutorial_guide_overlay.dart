@@ -54,6 +54,12 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
   late Animation<double> _pulseAnimation;
   Timer? _blockedTapTimer;
 
+  // Memoized solver result: camera ticks rebuild this widget with the same
+  // vine-states instance, so skip the per-vine blocking scan on cache hit.
+  Map<String, VineState>? _lastMovableStates;
+  String? _lastMovableLevelId;
+  String? _lastMovableResult;
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +72,17 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     _pulseAnimation = Tween<double>(begin: 0.6, end: 1.2).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    // Dismiss the blocked-tap indicator once per event (not per rebuild).
+    ref.listenManual<BlockedTapState?>(blockedTapProvider, (previous, next) {
+      _blockedTapTimer?.cancel();
+      if (next == null) return;
+      _blockedTapTimer = Timer(AnimationTiming.blockedTapDisplay, () {
+        if (mounted) {
+          ref.read(blockedTapProvider.notifier).setBlockedTap(null);
+        }
+      });
+    });
   }
 
   @override
@@ -78,28 +95,46 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
   /// First non-cleared vine that can actually move right now, so the guide
   /// never points at a blocked vine. Falls back to the first non-cleared
   /// vine when everything is stuck (shouldn't happen in tutorials).
+  ///
+  /// Memoized: camera ticks rebuild with the identical states map, and the
+  /// per-vine solver scan is the hottest loop in this widget.
   String? _firstMovableId(
     LevelData level,
     Map<String, VineState> vineStates,
   ) {
+    if (identical(vineStates, _lastMovableStates) &&
+        level.id == _lastMovableLevelId) {
+      return _lastMovableResult;
+    }
     final activeIds = vineStates.entries
         .where((e) => !e.value.isClearedOrClearing)
         .map((e) => e.key)
         .toList();
-    if (activeIds.isEmpty) return null;
-    final solver = ref.read(levelSolverServiceProvider);
-    for (final id in activeIds) {
-      if (!solver.isVineBlockedInState(level, id, activeIds)) {
-        return id;
+    String? result;
+    if (activeIds.isNotEmpty) {
+      final solver = ref.read(levelSolverServiceProvider);
+      for (final id in activeIds) {
+        if (!solver.isVineBlockedInState(level, id, activeIds)) {
+          result = id;
+          break;
+        }
       }
+      result ??= activeIds.first;
     }
-    return activeIds.first;
+    _lastMovableStates = vineStates;
+    _lastMovableLevelId = level.id;
+    _lastMovableResult = result;
+    return result;
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch cameraState to trigger rebuilds on pan/zoom so projections align perfectly
-    ref.watch(cameraStateProvider);
+    // Rebuild only when the transform values actually change (not on
+    // unrelated camera-state writes like isAnimating flips); alignment
+    // needs exact pan/zoom, so no further throttling here.
+    ref.watch(cameraStateProvider.select(
+      (c) => (c.zoom, c.panOffset.x, c.panOffset.y),
+    ));
 
     final currentLevel = ref.watch(currentLevelProvider);
     final vineStates = ref.watch(vineStatesProvider);
@@ -112,16 +147,6 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     }
 
     final lessonId = currentLevel.id.replaceAll('lesson_', '');
-
-    // Reset blocked tap indicator after 1.5 seconds automatically
-    if (blockedTap != null) {
-      _blockedTapTimer?.cancel();
-      _blockedTapTimer = Timer(AnimationTiming.blockedTapDisplay, () {
-        if (mounted) {
-          ref.read(blockedTapProvider.notifier).setBlockedTap(null);
-        }
-      });
-    }
 
     // Determine visual guides and prompt text based on current lesson
     Offset? highlightPosition;
@@ -208,8 +233,11 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
 
     final targetPosition = highlightPosition;
 
-    return IgnorePointer(
-      child: Stack(
+    // Isolated repaint: the pulse/hand builders tick at 60fps; keep them
+    // off the parent's repaint path.
+    return RepaintBoundary(
+      child: IgnorePointer(
+        child: Stack(
         children: [
           // 1. Draw collision path if a blocked tap occurred recently
           if (blockedTap != null) ...[
@@ -312,6 +340,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
               ),
             ),
         ],
+        ),
       ),
     );
   }

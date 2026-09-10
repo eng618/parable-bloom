@@ -13,6 +13,9 @@ class AnimationTiming {
   /// Impact ripple lifespan for celebration fireworks.
   static const double fireworkRippleSeconds = 1.6;
 
+  /// Celebration fireworks coordinator lifespan (total launch span).
+  static const double celebrationSpanSeconds = 2.0;
+
   /// Firework travel time range (base + random span).
   static const double fireworkTravelBaseSeconds = 0.35;
   static const double fireworkTravelSpanSeconds = 0.45;

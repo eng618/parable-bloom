@@ -233,7 +233,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
     // Persist any stale-pointer heal before entering the game so the
     // resolved level survives refreshes even if the load below races it.
-    await ref.read(gameProgressProvider.notifier).healCurrentLevel();
+    await ref.read(gameProgressProvider.notifier).resolveLevelToLoad();
     if (!mounted) return;
     context.go('/game');
   }

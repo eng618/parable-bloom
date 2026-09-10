@@ -342,13 +342,6 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
   }
 
-  /// Legacy entry point, superseded by [updateVineStyle] (which handles
-  /// background visibility internally). Kept for API compatibility.
-  @Deprecated('Use updateVineStyle() instead.')
-  void updateSimpleVines(bool useSimple) {
-    _updateBackgroundOpacity(useSimple);
-  }
-
   @override
   Color backgroundColor() => _backgroundColor;
 

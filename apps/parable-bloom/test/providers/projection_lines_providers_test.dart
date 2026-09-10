@@ -90,6 +90,50 @@ void main() {
       expect(container.read(projectionModeProvider).showAll, isTrue);
     });
 
+    test('switching hints notifies (equal-sized sets are distinct)', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(projectionModeProvider.notifier);
+
+      var notifications = 0;
+      container.listen<ProjectionMode>(
+        projectionModeProvider,
+        (_, __) => notifications++,
+      );
+
+      notifier.hint('vine_1');
+      expect(notifications, 1);
+
+      // Same cardinality, different content: must still notify, or the
+      // new hint never renders.
+      notifier.clearHints();
+      notifier.hint('vine_2');
+      expect(notifications, 3);
+      expect(
+        container.read(projectionModeProvider).hintedVineIds,
+        contains('vine_2'),
+      );
+    });
+
+    test('suppressDuringAnimation drops transient modes', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(projectionModeProvider.notifier);
+
+      notifier.toggleAll();
+      notifier.hint('vine_1');
+      notifier.suppressDuringAnimation(true);
+
+      final mode = container.read(projectionModeProvider);
+      expect(mode.showAll, isFalse);
+      expect(mode.hintedVineIds, isEmpty);
+
+      // No animation: untouched.
+      notifier.toggleAll();
+      notifier.suppressDuringAnimation(false);
+      expect(container.read(projectionModeProvider).showAll, isTrue);
+    });
+
     test('mode equality distinguishes states', () {
       expect(
         const ProjectionMode(),

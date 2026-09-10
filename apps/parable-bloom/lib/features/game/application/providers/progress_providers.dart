@@ -97,6 +97,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
 
   Future<void> _backfillUnlockedScriptures() async {
     if (!ref.mounted) return;
+    _runTranslationId = null;
     try {
       final modulesList = await ref.read(modulesProvider.future);
       if (!ref.mounted) return;
@@ -162,9 +163,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
                   Set<String>.from(updatedProgress.unlockedScriptureIds)
                     ..add(scripture.id);
 
-              final scriptureService = ref.read(scriptureServiceProvider);
-              final translationId =
-                  await scriptureService.pickRandomActiveTranslation();
+              final translationId = await _unlockTranslationId();
               if (!ref.mounted) return;
 
               final updatedTranslations =
@@ -188,9 +187,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
         if (updatedProgress.isModuleCompleted(module.id, modulesList)) {
           if (!updatedProgress.unlockedTranslations
               .containsKey(module.id.toString())) {
-            final scriptureService = ref.read(scriptureServiceProvider);
-            final translationId =
-                await scriptureService.pickRandomActiveTranslation();
+            final translationId = await _unlockTranslationId();
             if (!ref.mounted) return;
 
             final updatedTranslations =
@@ -237,9 +234,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
                     Set<String>.from(updatedProgress.unlockedScriptureIds)
                       ..add(passage.id);
 
-                final scriptureService = ref.read(scriptureServiceProvider);
-                final translationId =
-                    await scriptureService.pickRandomActiveTranslation();
+                final translationId = await _unlockTranslationId();
                 if (!ref.mounted) return;
 
                 final updatedTranslations = Map<String, String>.from(
@@ -281,6 +276,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
 
     final modulesList = await ref.read(modulesProvider.future);
     if (!ref.mounted) return;
+    _runTranslationId = null;
     final playlist = modulesList.expand((m) => m.allLevels).toList();
     final newProgress = state.completeLevel(levelId, playlist);
 
@@ -293,9 +289,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
               final newScriptures =
                   Set<String>.from(updatedProgress.unlockedScriptureIds)
                     ..add(scripture.id);
-              final scriptureService = ref.read(scriptureServiceProvider);
-              final translationId =
-                  await scriptureService.pickRandomActiveTranslation();
+              final translationId = await _unlockTranslationId();
               if (!ref.mounted) return;
               final updatedTranslations =
                   Map<String, String>.from(updatedProgress.unlockedTranslations)
@@ -324,9 +318,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
                 final newScriptures =
                     Set<String>.from(updatedProgress.unlockedScriptureIds)
                       ..add(passage.id);
-                final scriptureService = ref.read(scriptureServiceProvider);
-                final translationId =
-                    await scriptureService.pickRandomActiveTranslation();
+                final translationId = await _unlockTranslationId();
                 if (!ref.mounted) return;
                 final updatedTranslations = Map<String, String>.from(
                     updatedProgress.unlockedTranslations)
@@ -403,6 +395,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   }) async {
     final newCompletedLessons = Set<String>.from(state.completedLessons)
       ..add(lessonId);
+    _runTranslationId = null;
 
     var newProgress = state.copyWith(
       completedLessons: newCompletedLessons,
@@ -424,9 +417,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
               final newScriptures =
                   Set<String>.from(newProgress.unlockedScriptureIds)
                     ..add(scripture.id);
-              final scriptureService = ref.read(scriptureServiceProvider);
-              final translationId =
-                  await scriptureService.pickRandomActiveTranslation();
+              final translationId = await _unlockTranslationId();
               if (!ref.mounted) return;
               final updatedTranslations =
                   Map<String, String>.from(newProgress.unlockedTranslations)
@@ -455,9 +446,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
                 final newScriptures =
                     Set<String>.from(newProgress.unlockedScriptureIds)
                       ..add(passage.id);
-                final scriptureService = ref.read(scriptureServiceProvider);
-                final translationId =
-                    await scriptureService.pickRandomActiveTranslation();
+                final translationId = await _unlockTranslationId();
                 if (!ref.mounted) return;
                 final updatedTranslations =
                     Map<String, String>.from(newProgress.unlockedTranslations)
@@ -534,15 +523,16 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     state = progress;
   }
 
-  /// Heals a stale [GameProgress.currentLevel] pointer and returns the level
-  /// ID that should actually load, or null when there is nothing to heal to.
-  ///
-  /// The pointer goes stale when the level playlist grows (new cloud levels
-  /// published after the profile finished everything) or level IDs migrate:
-  /// it then names an ID absent from the playlist, and loaders fall back to
-  /// "Play Level 1" / false "game finished". Healing points it at the first
-  /// uncompleted level and persists, so refreshes stay fixed.
-  Future<String?> healCurrentLevel() => resolveLevelToLoad();
+  /// Unlock translation picked once per run. Previously every missing
+  /// scripture triggered its own pick (service init + connectivity
+  /// round-trip each), stalling cold starts and offline backfills N+1.
+  String? _runTranslationId;
+
+  Future<String> _unlockTranslationId() async {
+    return _runTranslationId ??= await ref
+        .read(scriptureServiceProvider)
+        .pickRandomActiveTranslation();
+  }
 
   /// Full load resolution across the two registry sources of truth
   /// ([modulesProvider] playlist and [levelMappingsProvider]).

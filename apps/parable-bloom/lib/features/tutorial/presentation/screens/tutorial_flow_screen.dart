@@ -12,12 +12,13 @@ import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/solver_providers.dart';
 import '../../application/providers/tutorial_providers.dart';
 import '../../../game/presentation/widgets/garden_game.dart';
+import '../../../game/presentation/widgets/celebration_effects.dart';
+import '../../../game/presentation/widgets/level_complete_overlay.dart';
 import '../../../game/presentation/widgets/game_event_sink.dart';
+import '../../../game/presentation/widgets/projection_sync.dart';
 import '../../../game/presentation/widgets/game_header.dart';
 import '../../../game/presentation/widgets/pause_menu_dialog.dart';
 import '../widgets/tutorial_guide_overlay.dart';
-import '../../../game/presentation/widgets/pond_ripple_effect_component.dart';
-import '../../../game/presentation/widgets/ripple_fireworks_component.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
 import '../../../../core/providers/service_providers.dart';
@@ -40,57 +41,20 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   bool _isLevelCompleteOverlayVisible = false;
   String _currentCongratulationMessage = '';
 
-  // Congratulatory messages (same as GameScreen)
-  static const List<String> _congratulationMessages = [
-    'Well done, good and faithful servant!',
-    'Blessed are you in Christ!',
-    'Your faith is bearing fruit!',
-    'The Lord is with you always!',
-    'Rejoice in the Lord!',
-    'Grace upon grace!',
-    'In His strength alone!',
-    'Abundant life in Christ!',
-    'A fruitful harvest awaits!',
-    'Seeds of faith growing deep!',
-    'Abide in His love!',
-    'He makes your path straight!',
-    'The joy of the Lord is your strength!',
-    'Walk by faith, not by sight!',
-    'Rooted and built up in Him!',
-  ];
-
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final tutorialProgress = ref.watch(tutorialProgressProvider);
-    final currentLesson = tutorialProgress.currentLesson;
+  void initState() {
+    super.initState();
+    _subscribeToProviders();
+  }
 
-    // Update game theme colors when theme changes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_game != null) {
-        final extension = Theme.of(context).extension<AppThemeExtension>()!;
-        final gameBackground = AppTheme.getGameBackground(
-          Theme.of(context).brightness,
-        );
-        final gameSurface = AppTheme.getGameSurface(
-          Theme.of(context).brightness,
-        );
-        final gridBackground = AppTheme.getGridBackground(
-          Theme.of(context).brightness,
-        );
-
-        _game!.updateThemeColors(
-          gameBackground,
-          gameSurface,
-          gridBackground,
-          tapEffectColor: extension.tapEffect,
-          vineAttemptedColor: extension.vineAttempted,
-        );
-      }
-    });
-
+  /// Provider subscriptions live here — not in [build] — so they are
+  /// registered once instead of re-subscribed on every rebuild.
+  /// Uses [listenManual]: [ref.listen] asserts a build context and throws
+  /// when called from [initState]; manual subscriptions are closed
+  /// automatically on unmount.
+  void _subscribeToProviders() {
     // Listen for level completion
-    ref.listen<bool>(levelCompleteProvider, (previous, next) {
+    ref.listenManual<bool>(levelCompleteProvider, (previous, next) {
       LoggerService.debug('levelCompleteProvider changed $previous -> $next',
           tag: 'TutorialFlowScreen');
       if (next && (previous == null || !previous)) {
@@ -99,7 +63,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     });
 
     // Listen for game completion (all vines cleared)
-    ref.listen<bool>(gameCompletedProvider, (previous, next) {
+    ref.listenManual<bool>(gameCompletedProvider, (previous, next) {
       LoggerService.debug('gameCompletedProvider changed $previous -> $next',
           tag: 'TutorialFlowScreen');
       if (next && (previous == null || !previous)) {
@@ -109,17 +73,44 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
     // Forward projection-line state (Show All + long-press hint) to Flame.
     // Single subscription: ProjectionMode carries both atomically.
-    ref.listen<ProjectionMode>(projectionModeProvider, (previous, next) {
-      if (previous != next) _updateProjectionLinesVisibility();
+    ref.listenManual<ProjectionMode>(projectionModeProvider, (previous, next) {
+      if (previous != next) syncProjectionLines(ref, _game);
     });
-    ref.listen<bool>(anyVineAnimatingProvider, (previous, next) {
-      if (previous != next) _updateProjectionLinesVisibility();
+    ref.listenManual<bool>(anyVineAnimatingProvider, (previous, next) {
+      if (previous != next) syncProjectionLines(ref, _game);
     });
 
     // Forward vine-style changes (the game otherwise stays on classic).
-    ref.listen<VineStyle>(vineStyleProvider, (previous, next) {
+    ref.listenManual<VineStyle>(vineStyleProvider, (previous, next) {
       if (previous != next) _game?.updateVineStyle(next);
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Theme sync runs here so it re-fires on brightness/theme changes —
+    // not on every build.
+    _syncThemeColors();
+  }
+
+  void _syncThemeColors() {
+    if (_game == null) return;
+    final extension = Theme.of(context).extension<AppThemeExtension>()!;
+    _game!.updateThemeColors(
+      AppTheme.getGameBackground(Theme.of(context).brightness),
+      AppTheme.getGameSurface(Theme.of(context).brightness),
+      AppTheme.getGridBackground(Theme.of(context).brightness),
+      tapEffectColor: extension.tapEffect,
+      vineAttemptedColor: extension.vineAttempted,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final tutorialProgress = ref.watch(tutorialProgressProvider);
+    final currentLesson = tutorialProgress.currentLesson;
 
     // Validate lesson number
     if (currentLesson < 1 || currentLesson > LessonData.totalLessons) {
@@ -211,28 +202,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     return GameWidget<GardenGame>(
       game: _game!,
       loadingBuilder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-  }
-
-  void _updateProjectionLinesVisibility() {
-    if (_game == null) return;
-    final notifier = ref.read(projectionModeProvider.notifier);
-    var mode = ref.read(projectionModeProvider);
-    final isAnimating = ref.read(anyVineAnimatingProvider);
-
-    if (isAnimating && mode.showAll) {
-      notifier.setShowAll(false);
-      mode = ref.read(projectionModeProvider);
-    }
-    if (isAnimating && mode.hintedVineIds.isNotEmpty) {
-      notifier.clearHints();
-      mode = ref.read(projectionModeProvider);
-    }
-
-    _game!.updateProjectionLinesVisibility(
-      visible: mode.showAll,
-      hintedVines: mode.hintedVineIds,
-      isAnimating: isAnimating,
     );
   }
 
@@ -329,52 +298,20 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   void _showLevelCompleteOverlay() async {
     if (_isLevelCompleteOverlayVisible) return;
 
-    // Select a random congratulatory message
-    final randomIndex =
-        DateTime.now().millisecondsSinceEpoch % _congratulationMessages.length;
-    _currentCongratulationMessage = _congratulationMessages[randomIndex];
+    _currentCongratulationMessage = pickCongratulationMessage();
 
     setState(() {
       _isLevelCompleteOverlayVisible = true;
     });
 
-    // Add subtle pond ripple effect to the game scene
+    // Celebration FX, centered on the board.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_game != null) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final animationColors =
-            isDark ? [AppTheme.secondarySeed] : [AppTheme.primarySeed];
-        final center = Vector2(_game!.size.x / 2, _game!.size.y / 2);
-        final effect = ref.read(celebrationEffectProvider);
-        switch (effect) {
-          case CelebrationEffect.pondRipples:
-            _game!.add(
-              PondRippleEffectComponent(
-                center: center,
-                maxRadius: (_game!.size.y * 0.45),
-                ringCount: 4,
-                duration: 2.0,
-                colors: animationColors,
-              ),
-            );
-            break;
-          case CelebrationEffect.rippleFireworks:
-            _game!.add(
-              RippleFireworksComponent(
-                count: 8,
-                duration: 2.0,
-                minRippleRadius: 30,
-                maxRippleRadius: 64,
-                colors: animationColors,
-                paddingRatio: 0.12,
-              ),
-            );
-            break;
-          case CelebrationEffect.leafPetals:
-            break;
-          case CelebrationEffect.confetti:
-            break;
-        }
+        spawnCelebrationEffect(
+          game: _game!,
+          effect: ref.read(celebrationEffectProvider),
+          isDark: Theme.of(context).brightness == Brightness.dark,
+        );
       }
     });
 
@@ -661,58 +598,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   }
 
   Widget _buildLevelCompleteOverlay() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final themeColor = isDark ? AppTheme.secondarySeed : AppTheme.primarySeed;
-
-    return Stack(
-      children: [
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _currentCongratulationMessage,
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: themeColor,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 10.0,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .shadow
-                            .withValues(alpha: 0.6),
-                        offset: const Offset(2.0, 2.0),
-                      ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Icon(
-                  Icons.celebration,
-                  color: themeColor,
-                  size: 72,
-                  shadows: [
-                    Shadow(
-                      blurRadius: 8.0,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .shadow
-                          .withValues(alpha: 0.4),
-                      offset: const Offset(1.5, 1.5),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+    // Shared widget (same as the game screen, including the title the
+    // old inline version was missing).
+    return LevelCompleteOverlay(message: _currentCongratulationMessage);
   }
 }
 

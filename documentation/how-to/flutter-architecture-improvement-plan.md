@@ -7,9 +7,9 @@ Related: [System Architecture](../explanation/architecture.md) · App: `apps/par
 
 ## Status
 
-- Current phase: Phase 3 — 3.6 screenshot goldens remain; open device-only items (0.8, 1.6, 1.9)
+- Current phase: Phase 4 (follow-up batch) complete — device-only items remain
 - Last updated: 2026-09-06
-- Progress: 26 / ~40 items
+- Progress: 32 / ~46 items
 
 ## Phase 0 — Projection Lines Bug Fix (P0, bundled)
 
@@ -32,7 +32,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 - [x] 1.4 `projection_lines_component.dart`: hoist line `Paint`, precompute `extensionLength` per level — done; viewport clipping deferred (2x off-screen extension is by design, canvas clips)
 - [x] 1.5 `CellComponent.render`: hoist dot `Paint` to shared static (both theme branches were the identical beige), drop per-frame `Theme.of` + `toRect()` except on debug-coordinate path — done
 - [ ] 1.6 Evaluate single `GridBackgroundComponent` vs N `RectangleComponent` cells (100+ nodes); measure `raster` time before/after
-- [x] 1.7 `garden_game.dart`: parallel `Future.wait` background loads, `removeFromParent()` instead of `setOpacity(0)` for simple-vine style, cover-fit scale (no wide-screen letterbox, top-aligned art preserved) — done
+- [x] 1.7 `garden_game.dart`: parallel `Future.wait` background loads, `removeFromParent()` instead of `setOpacity(0)` for simple-vine style, height-fit contain sizing (cover-fit tried and reverted — cropped artwork on wide screens) — done
 - [x] 1.8 Consolidate scattered durations into `AnimationTiming` — done (`tapEffect`, `pondRipple`, `fireworkRipple/Travel`, `autoClearPause`, `levelCompleteDelay`, `guidePulse`, `blockedTapDisplay`, `cameraTick`); call sites in `garden_game`, `grid_component`, tap/pond/fireworks components, both screens, guide overlay, camera providers
 - [ ] 1.9 Profile: `flutter run --profile`, check 60fps zoom/pan/clear on mid-range Android + iPhone; record before/after
 
@@ -40,7 +40,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 - [x] 2.1 `GameEventSink` interface (`game_event_sink.dart`) replaces the 15-closure `GardenGameCallbacks` struct; `getX()` closures become typed getters, optionals are required methods; `_GameScreenEventSink` / `_TutorialFlowEventSink` hold screen state (same-library private access), `TestGameEventSink` no-op for tests — done, zero `callbacks.` references remain
 - [x] 2.2 Move `ref.listen` calls from `build` to `initState` (`_subscribeToProviders()`); theme sync `addPostFrameCallback` → `didChangeDependencies` (`_syncThemeColors()`) — done; also fixed vine-style forwarding to call `updateVineStyle(next)` (previously only `updateSimpleVines`, so classic/blossom/ethereal switches never reached Flame) + same forward added to tutorial screen
-- [x] 2.3 Single-owner vine state: `_clearVine` no longer mutates the local mirror (provider recomputes and pushes back via `updateVineStates`); removed `update(0)` force-redraw hacks (`grid_component`, `garden_game` — Flame renders continuously, `update(0)` was a dt=0 no-op); new-level check is now id-based instead of identity — done
+- [x] 2.3 Single-owner vine state with optimistic mirror exclusion on clear (provider recomputes and overwrites via `updateVineStates`; `cleared` animation state excluded from blocking set; `setAnimationState` single calculated emit); removed `update(0)` force-redraw hacks; new-level check id-based — done
 - [x] 2.4 Memoize `_calculateVineStates` by input signature (level + per-vine cleared/animation/attempted/withered); repeat calls with unchanged inputs return cached result — done + `gameplay_state_updates_test.dart`
 - [x] 2.5 Solver singleton injected: `GardenGame.solver` (from `levelSolverServiceProvider` in both screens) → `GridComponent.solver`; `getLevelSolverService()` returns shared instance instead of allocating per tap — done
 - [x] 2.6 Camera decoupling: 60fps interpolation no longer writes Riverpod state per tick — `GardenGame.applyCameraFrame(zoom:, panX:, panY:)` applies straight to Flame; Riverpod keeps settled state + throttled ~10fps progress writes + final write (~10 notifications vs ~50 per 0.8s animation). Gestures now interrupt/take over instead of being silently dropped (`updateZoom`/`updatePanOffset`/`resetToCenter`); animation futures always resolve (interrupt/dispose complete the completer) — done + `camera_animation_test.dart`
@@ -54,7 +54,16 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 - [x] 3.3 Hygiene: removed duplicate `_backgroundColor` assignment; `UseSimpleVinesNotifier.setEnabled(false)` no longer clobbers blossom/ethereal; `_InMemoryBox.noSuchMethod` throws explicit `UnimplementedError` — done (settings already single-sourced via derived `useSimpleVinesProvider`)
 - [x] 3.4 Split `game_screen.dart` (1337→1104 lines): extracted `GameZoomControls` (self-contained ConsumerWidget), `LevelCompleteOverlay(message:)`, `showGameCompletedDialog`/`showGameOverDialog` (pure UI, callbacks for analytics/nav), `_logLevelQuit()` helper — done + `game_screen_widgets_test.dart` (5 tests)
 - [x] 3.5 Dependency upgrade: non-majors (`riverpod`/`flutter_riverpod` 3.4.3, `win32` 6.4.0) + majors (`go_router` 18.0.1 — zero code changes; `dynamic_color` REJECTED at 2.x — returns the `material_ui` fork's `ColorScheme`, incompatible with Flutter SDK type — pinned `^1.7.0`). `vector_math`/`mockito`/`intl`/`test` stay on SDK/flame pins — done, suite green
-- [x] 3.6 Validate: Flutter side done (analyze clean, 743/743); Go side now VERIFIED with working toolchain — `lb:lint`/`lb:lint:fix` 0 issues (stats.go errcheck fix confirmed by real linter), `lb:build` up to date, `lb:test` pass (cmd/stats 71.9%); `lint:fix:all` passes end-to-end (flutter+next+lb). Remain: screenshot goldens for vines/projections/backgrounds
+- [x] 3.6 Validate: Flutter side done (analyze clean); Go side VERIFIED with working toolchain — `lb:lint`/`lb:lint:fix` 0 issues, `lb:build` up to date, `lb:test` pass; `lint:fix:all` passes end-to-end. Remain: screenshot goldens for vines/projections/backgrounds
+
+## Phase 4 — Dedup & Polish (follow-up batch)
+
+- [x] 4.1 Tutorial lifecycle parity: listens → `initState`/`listenManual`, theme sync → `didChangeDependencies` (game creation stays guarded in `build` — needs async lesson data)
+- [x] 4.2 Projection sync dedup: shared `syncProjectionLines(ref, game)` + `suppressDuringAnimation()` policy on the notifier; `ProjectionMode.hashCode` hashes set contents (was length-only — hint switches could skip rebuilds)
+- [x] 4.3 Celebration dedup: shared `kCongratulationMessages`/`pickCongratulationMessage`/`spawnCelebrationEffect` (+ `celebrationSpanSeconds`); tutorial overlay reuses `LevelCompleteOverlay` (fixes missing-title drift); divergent unlock dialogs deliberately left separate
+- [x] 4.4 Guide overlay diet: `select` on camera transform values, blocked-tap timer hoisted to `initState` listen, memoized `_firstMovableId`, `RepaintBoundary` around prompt stack
+- [x] 4.5 Backfill N+1: one translation pick per run (`_unlockTranslationId`) across backfill/completeLevel/completeLesson; stored values untouched (migration-safe)
+- [x] 4.6 Dead-code sweep: removed zero-caller `updateSimpleVines`/`setVisible`/no-op `leafPetals`+`confetti` arms; collapsed `healCurrentLevel` into `resolveLevelToLoad`; fixed dead `previousLevelId` attempt-reset branch (read-before-set now)
 
 ## Verification Checklist (run per phase)
 
@@ -67,6 +76,7 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 
 _Add newest entries at top._
 
+- `2026-09-06` — Phase 4 complete (streams A–F): tutorial lifecycle parity, projection sync dedup + hash fix, celebration dedup, overlay diet, backfill N+1 hoist, dead-code sweep. Net −160 lines lib code. Analyze clean, 758/758. Left: device-only items (0.8, 1.9, goldens) + prod release train.
 - `2026-09-06` — Web readability: new `ConstrainedPage` widget (680 text / 440 form widths, phones unaffected) applied to settings, journal list + reflection sheet, pause dialog (440 cap), auth card (440), home (600). AppBars stay full-bleed. +3 widget tests. Analyze clean, 751/751.
 - `2026-09-06` — Env plumbing fix: native/web release builds never passed `--dart-define=APP_ENV`, so every store build compiled as `dev` (banner + `*_dev` Firestore). All `build:*` tasks now take `APP_ENV` (default `prod`); release lanes forward it (`task release:android APP_ENV=preview` to override). Verified via `task --dry`.
 - `2026-09-06` — Android deploy fix: Play Edits collision ("change made outside of this Edit") now retried with backoff (3 attempts, 15/30/60s) in the `deploy` lane instead of failing the release; override via `GOOGLE_PLAY_UPLOAD_RETRIES`. `ruby -c` clean (lane itself needs creds+AAB to run). Note: fastlane 2.239 available (on 2.238; not the cause, optional bump).

@@ -127,8 +127,6 @@ final debugPlayModeProvider = Provider<bool>((ref) {
 
 enum CelebrationEffect {
   pondRipples,
-  leafPetals,
-  confetti,
   rippleFireworks,
 }
 
@@ -421,7 +419,12 @@ class ProjectionMode {
           hintedVineIds.every(other.hintedVineIds.contains);
 
   @override
-  int get hashCode => Object.hash(showAll, hintedVineIds.length);
+  int get hashCode => Object.hash(
+        showAll,
+        // Order-independent: equal hint sets must hash equally regardless
+        // of insertion order.
+        hintedVineIds.fold<int>(0, (h, id) => h ^ id.hashCode),
+      );
 }
 
 class ProjectionModeNotifier extends Notifier<ProjectionMode> {
@@ -454,6 +457,15 @@ class ProjectionModeNotifier extends Notifier<ProjectionMode> {
   void clearHints() {
     if (state.hintedVineIds.isEmpty) return;
     state = ProjectionMode(showAll: state.showAll);
+  }
+
+  /// Animation-suppression policy, previously duplicated on both screens:
+  /// while any vine animates, transient projection modes are dropped so
+  /// lines never draw over motion.
+  void suppressDuringAnimation(bool isAnimating) {
+    if (!isAnimating) return;
+    if (state.showAll) setShowAll(false);
+    if (state.hintedVineIds.isNotEmpty) clearHints();
   }
 }
 
