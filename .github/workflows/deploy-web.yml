@@ -7,6 +7,16 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment (prod deploys parable-bloom.web.app)"
+        required: true
+        default: "preview"
+        type: choice
+        options:
+          - preview
+          - prod
 
 permissions:
   contents: read
@@ -19,13 +29,15 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       DEPLOY_SKIPPED: "false"
       APP_ENV: "preview"
       SKIP_DEPLOY: "false"
+      # Empty when the secret is unset → Sentry stays disabled in the build.
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -110,21 +122,27 @@ jobs:
       - name: Determine environment
         id: env
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_run" && "${{ github.event.workflow_run.head_branch }}" == "main" ]]; then
-            echo "APP_ENV=prod" >> $GITHUB_ENV
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            APP_ENV="${{ inputs.environment }}"
+          elif [[ "${{ github.event_name }}" == "workflow_run" && "${{ github.event.workflow_run.head_branch }}" == "main" ]]; then
+            APP_ENV="prod"
           else
-            echo "APP_ENV=preview" >> $GITHUB_ENV
+            APP_ENV="preview"
           fi
+          echo "APP_ENV=$APP_ENV" >> $GITHUB_ENV
+          echo "================================================================"
+          echo "DEPLOY RESOLUTION: event=${{ github.event_name }} ref=${{ github.ref }} APP_ENV=$APP_ENV"
+          echo "================================================================"
 
       - name: Build Web
         run: bunx nx build parable-bloom -c ${{ env.APP_ENV }}
 
       - name: Deploy to Hosting
         run: task firebase:h:deploy
-        if: ${{ env.SKIP_DEPLOY != 'true' && github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && env.DEPLOY_SKIPPED != 'true' }}
+        if: ${{ env.SKIP_DEPLOY != 'true' && (github.event_name == 'workflow_dispatch' && inputs.environment == 'prod' || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main') && env.DEPLOY_SKIPPED != 'true' }}
 
       - name: Deploy Preview (develop branch)
-        if: ${{ env.SKIP_DEPLOY != 'true' && github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop' && env.DEPLOY_SKIPPED != 'true' }}
+        if: ${{ env.SKIP_DEPLOY != 'true' && (github.event_name == 'workflow_dispatch' && inputs.environment == 'preview' || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'develop') && env.DEPLOY_SKIPPED != 'true' }}
         run: task firebase:hosting:channel:deploy CHANNEL=preview
 
       - name: Deploy Preview (PR only)

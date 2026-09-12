@@ -55,6 +55,7 @@ dependencies:
   intl: ^0.20.2
   flutter_localizations:
     sdk: flutter
+  sentry_flutter: ^9.30.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -70,6 +71,7 @@ dev_dependencies:
   firebase_auth_mocks: ^0.15.1
   yaml: ^3.1.2 # Required for version bump script
   flutter_launcher_icons: ^0.14.1
+  sentry_dart_plugin: ^3.4.0
   integration_test:
     sdk: flutter
 
@@ -136,3 +138,11 @@ flutter_launcher_icons:
     image_path: assets/art/app_icon_branded.png
   adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: assets/art/app_icon_branded.png
+
+# Sentry symbol/source-map upload (sentry_dart_plugin). Auth via
+# SENTRY_AUTH_TOKEN env var in CI; uploads run on release builds.
+sentry:
+  upload_debug_symbols: true
+  upload_source_maps: true
+  project: parable-bloom
+  org: garcia-ventures

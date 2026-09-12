@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +12,7 @@ import 'firebase_options.dart';
 import 'core/providers/infrastructure_providers.dart';
 import 'core/providers/service_providers.dart';
 import 'core/services/analytics_service.dart';
+import 'core/services/error_reporting_service.dart';
 import 'core/services/logger_service.dart';
 import 'core/services/openpanel_analytics_client.dart';
 
@@ -47,12 +47,24 @@ void main() async {
     );
   }
 
-  if (!_isScreenshotMode && !kIsWeb) {
-    // Pass all uncaught "fatal" errors from the framework to Crashlytics.
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  if (!_isScreenshotMode) {
+    // Error reporting (Sentry, all platforms incl. web). No-op without a
+    // SENTRY_DSN dart-define; pass --dart-define=SENTRY_DSN=... in CI.
+    await ErrorReporting.init();
   }
 
-  // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+  // Pass all uncaught framework errors to the logger (→ Sentry).
+  // Works on web too, unlike the previous Crashlytics-only handler.
+  FlutterError.onError = (details) {
+    LoggerService.error(
+      'Uncaught Flutter error',
+      error: details.exception,
+      stackTrace: details.stack,
+      fatal: true,
+    );
+  };
+
+  // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Sentry
   PlatformDispatcher.instance.onError = (error, stack) {
     LoggerService.error('Uncaught platform error',
         error: error, stackTrace: stack, fatal: true);
@@ -63,9 +75,7 @@ void main() async {
     LoggerService.info('Running in screenshot mode (Firebase disabled)');
   } else {
     LoggerService.info(
-      kIsWeb
-          ? 'Firebase initialized (Crashlytics disabled on web)'
-          : 'Firebase initialized with Crashlytics',
+      'Firebase initialized (error reporting via Sentry)',
     );
     // Guest session for logged-out users: auth-gated reads (configs_prod)
     // require request.auth != null, and progress sync keys off the UID.

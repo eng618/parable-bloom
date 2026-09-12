@@ -126,6 +126,16 @@ class GridComponent extends PositionComponent
   VineComponent? getVineComponent(String vineId) => _vineComponents[vineId];
 
   void setVineAnimationState(String vineId, VineAnimationState animationState) {
+    // Optimistic mirror update (same pattern as _clearVine): the provider
+    // round-trip lands after the next tap may already have read the mirror,
+    // and a stale animationState resurrects cleared/clearing vines as ghost
+    // blockers in getActiveVineIds/distance checks. The listen path
+    // overwrites this with computed state.
+    final existing = _vineStates[vineId];
+    if (existing != null && existing.animationState != animationState) {
+      _vineStates[vineId] =
+          existing.copyWith(animationState: animationState);
+    }
     onVineAnimationStateChanged?.call(vineId, animationState);
   }
 

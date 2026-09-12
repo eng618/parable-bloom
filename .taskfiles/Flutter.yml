@@ -346,7 +346,7 @@ tasks:
     generates:
       - build/web/**/*
     cmds:
-      - flutter build web --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}}
+      - flutter build web --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
     preconditions:
       - sh: command -v flutter >/dev/null 2>&1
         msg: "Flutter is not installed."
@@ -357,7 +357,7 @@ tasks:
     cmds:
       - |
         flutter build appbundle --release \
-          --dart-define=APP_ENV={{.APP_ENV | default "prod"}} \
+          --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-} \
           {{if .BUILD_NAME}}--build-name "{{.BUILD_NAME}}"{{end}} \
           {{if .BUILD_NUMBER}}--build-number "{{.BUILD_NUMBER}}"{{end}}
 
@@ -366,46 +366,46 @@ tasks:
     dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
-      - flutter build ios --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}}
+      - flutter build ios --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
 
   build:linux:
     desc: Build the Linux application
     dir: apps/parable-bloom
     platforms: [linux]
     cmds:
-      - flutter build linux --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}}
+      - flutter build linux --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
 
   build:windows:
     desc: Build the Windows application
     dir: apps/parable-bloom
     platforms: [windows]
     cmds:
-      - flutter build windows --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}}
+      - flutter build windows --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
 
   build:macos:
     desc: Build the macOS application
     dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
-      - flutter build macos --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}}
+      - flutter build macos --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
 
   build:web:dev:
     desc: Build the web application for development environment
     dir: apps/parable-bloom
     cmds:
-      - flutter build web --release --dart-define=APP_ENV=dev
+      - flutter build web --release --dart-define=APP_ENV=dev --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
 
   build:web:preview:
     desc: Build the web application for preview environment
     dir: apps/parable-bloom
     cmds:
-      - flutter build web --release --dart-define=APP_ENV=preview
+      - flutter build web --release --dart-define=APP_ENV=preview --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
 
   build:web:prod:
     desc: Build the web application for production environment
     dir: apps/parable-bloom
     cmds:
-      - flutter build web --release --dart-define=APP_ENV=prod
+      - flutter build web --release --dart-define=APP_ENV=prod --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
 
   # -----------------------------------------------------------------------------
   # Asset Management

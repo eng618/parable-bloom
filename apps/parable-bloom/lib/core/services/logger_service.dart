@@ -1,11 +1,14 @@
+import 'dart:async';
+
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import '../config/environment_config.dart';
+import 'error_reporting_service.dart';
 
 /// Centralized logging service for the application.
 ///
-/// Handles console logging in development and breadcrumbs/error reporting
-/// in production via Firebase Crashlytics.
+/// Console logging in development; breadcrumbs via Firebase Crashlytics and
+/// error reporting via Sentry (all platforms, including web) in production.
 class LoggerService {
   // FirebaseCrashlytics is only available after a Firebase app is initialized.
   // In unit tests we typically don't call `Firebase.initializeApp`, so we
@@ -34,26 +37,10 @@ class LoggerService {
     }
   }
 
-  static void _safeCrashlyticsRecordError(
-    Object error,
-    StackTrace? stackTrace, {
-    required String reason,
-    required bool fatal,
-  }) {
-    final crashlytics = _crashlytics;
-    if (crashlytics == null) {
-      return;
-    }
-    try {
-      crashlytics.recordError(
-        error,
-        stackTrace,
-        reason: reason,
-        fatal: fatal,
-      );
-    } catch (_) {
-      // Ignore Crashlytics runtime issues in local/dev environments.
-    }
+  static void _reportError(Object error, StackTrace? stackTrace) {
+    // Fire-and-forget: callers (including framework error handlers) must
+    // never block or throw on reporting. No-op without a Sentry DSN.
+    unawaited(ErrorReporting.reportError(error, stackTrace));
   }
 
   /// Log an info message.
@@ -77,12 +64,7 @@ class LoggerService {
 
     _safeCrashlyticsLog(formattedMessage);
     if (error != null) {
-      _safeCrashlyticsRecordError(
-        error,
-        stackTrace,
-        reason: formattedMessage,
-        fatal: false,
-      );
+      _reportError(error, stackTrace);
     }
   }
 
@@ -107,12 +89,7 @@ class LoggerService {
 
     _safeCrashlyticsLog(formattedMessage);
     if (error != null) {
-      _safeCrashlyticsRecordError(
-        error,
-        stackTrace,
-        reason: formattedMessage,
-        fatal: false,
-      );
+      _reportError(error, stackTrace);
     }
   }
 
@@ -130,7 +107,7 @@ class LoggerService {
 
   /// Log an error with an optional stack trace.
   ///
-  /// Always reported to Crashlytics and printed to console in dev.
+  /// Always reported to Sentry (all platforms) and printed to console in dev.
   static void error(
     String message, {
     Object? error,
@@ -148,12 +125,7 @@ class LoggerService {
       if (stackTrace != null) debugPrint('StackTrace: $stackTrace');
     }
 
-    _safeCrashlyticsRecordError(
-      error ?? message,
-      stackTrace,
-      reason: formattedMessage,
-      fatal: fatal,
-    );
+    _reportError(error ?? message, stackTrace);
   }
 
   static String _format(String message,

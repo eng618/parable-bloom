@@ -147,3 +147,5 @@ apps/parable-bloom-site/.github/instructions/codacy.instructions.md
 .gitnexus/
 
 .claude/worktrees
+
+sentry.properties
