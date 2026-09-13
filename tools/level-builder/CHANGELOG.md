@@ -1,3 +1,15 @@
+## 1.9.11 (2026-09-13)
+
+### 🚀 Features
+
+- add sentry for crash reporting ([91bc203](https://github.com/eng618/parable-bloom/commit/91bc203))
+- introduce ConstrainedPage widget and implement full authentication screen with sync conflict resolution ([67570a1](https://github.com/eng618/parable-bloom/commit/67570a1))
+- add Flutter Taskfile and release automation configuration ([910b2a0](https://github.com/eng618/parable-bloom/commit/910b2a0))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.9.10 (2026-09-08)
 
 This was a version bump only for level-builder to align it with other projects, there were no code changes.
