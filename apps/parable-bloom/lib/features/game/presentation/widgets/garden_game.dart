@@ -46,6 +46,10 @@ class GardenGame extends FlameGame with TapCallbacks {
   Sprite? _bgDaySprite;
   Sprite? _bgNightSprite;
 
+  // Scratch pan vector: applyCameraFrame runs ~60fps during camera
+  // animations; reuse instead of allocating a Vector2 per tick.
+  final Vector2 _scratchPan = Vector2.zero();
+
   // Theme colors - updated dynamically from app theme
   late Color _backgroundColor;
   late Color _tapEffectColor;
@@ -200,7 +204,7 @@ class GardenGame extends FlameGame with TapCallbacks {
     required double panX,
     required double panY,
   }) {
-    final panOffset = Vector2(panX, panY);
+    final panOffset = _scratchPan..setValues(panX, panY);
     // Apply zoom and pan to grid
     if (_isGridInitialized && grid.isMounted) {
       grid.applyCameraTransform(
@@ -243,6 +247,9 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   /// Pure, testable resolution of provider state into component state.
   /// Single-hint wins visually; Show-All covers every active vine.
+  /// NOTE: [hintedVines] is passed through by reference (no Set.from copy):
+  /// callers must not mutate it after the call; ProjectionLinesComponent
+  /// stores the reference until the next sync.
   static ({
     bool visible,
     Set<String> hintedVineIds,
@@ -254,7 +261,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   }) {
     return (
       visible: (visible || hintedVines.isNotEmpty) && !isAnimating,
-      hintedVineIds: Set<String>.from(hintedVines),
+      hintedVineIds: hintedVines,
       showAllVines: visible,
     );
   }

@@ -12,6 +12,31 @@ class VineBloomRenderer {
   final double bloomEffectDuration = AnimationTiming.vineBloomSeconds;
   Offset? bloomEffectPosition;
 
+  // Reused across frames: avoids ~18 Paint() allocs per clearing vine per
+  // frame. Color/width are overwritten each draw.
+  final Paint _ringPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _fillPaint = Paint()..style = PaintingStyle.fill;
+
+  // Precomputed unit vectors for sparkles/dust: no per-frame cos/sin.
+  static const int _sparkleCount = 6;
+  static final List<double> _sparkleCos = List<double>.generate(
+    _sparkleCount,
+    (i) => math.cos((i / _sparkleCount) * 2 * math.pi),
+  );
+  static final List<double> _sparkleSin = List<double>.generate(
+    _sparkleCount,
+    (i) => math.sin((i / _sparkleCount) * 2 * math.pi),
+  );
+  static const int _dustCount = 4;
+  static final List<double> _dustCos = List<double>.generate(
+    _dustCount,
+    (i) => math.cos((i / _dustCount) * 2 * math.pi),
+  );
+  static final List<double> _dustSin = List<double>.generate(
+    _dustCount,
+    (i) => math.sin((i / _dustCount) * 2 * math.pi),
+  );
+
   void startBloomEffect({
     required VineData vineData,
     required LevelData level,
@@ -22,8 +47,8 @@ class VineBloomRenderer {
 
     if (visualPositions.isNotEmpty) {
       final headPos = visualPositions[0];
-      final headX = headPos['x'] as int;
-      final headY = headPos['y'] as int;
+      final headX = headPos['x'] ?? 0;
+      final headY = headPos['y'] ?? 0;
 
       int bloomX = headX;
       int bloomY = headY;
@@ -90,69 +115,53 @@ class VineBloomRenderer {
 
     final progress = bloomEffectTimer / bloomEffectDuration;
     final center = bloomEffectPosition!;
+    // Clamp once: withValues asserts 0..1 and progress can exceed 1 on the
+    // final frame before reset.
+    final fade = (1.0 - progress).clamp(0.0, 1.0);
 
-    // Create expanding sparkle rings
-    final sparkleColors = [
-      renderColor.withValues(alpha: (1.0 - progress) * 0.8),
-      renderColor.withValues(alpha: (1.0 - progress) * 0.6),
-      renderColor.withValues(alpha: (1.0 - progress) * 0.4),
-    ];
-
+    // Create expanding sparkle rings (2 instead of 3: halves stroke overdraw)
     final maxRadius = cellSize * 2.0;
-    const ringCount = 3;
+    const ringCount = 2;
 
     for (int i = 0; i < ringCount; i++) {
-      final ringProgress = (progress + i * 0.2) % 1.0;
+      final ringProgress = (progress + i * 0.33) % 1.0;
       final radius = ringProgress * maxRadius;
 
       if (radius > 0) {
-        final paint = Paint()
-          ..color = sparkleColors[i % sparkleColors.length]
-          ..style = PaintingStyle.stroke
+        _ringPaint
+          ..color = renderColor.withValues(
+            alpha: fade * (0.8 - i * 0.2),
+          )
           ..strokeWidth = 3.0 * (1.0 - ringProgress);
-
-        canvas.drawCircle(center, radius, paint);
+        canvas.drawCircle(center, radius, _ringPaint);
       }
     }
 
     // Add central glow
     final glowRadius = progress * cellSize * 0.8;
     if (glowRadius > 0) {
-      final glowPaint = Paint()
-        ..color = renderColor.withValues(alpha: (1.0 - progress) * 0.5)
-        ..style = PaintingStyle.fill;
-
-      canvas.drawCircle(center, glowRadius, glowPaint);
+      _fillPaint.color = renderColor.withValues(alpha: fade * 0.5);
+      canvas.drawCircle(center, glowRadius, _fillPaint);
     }
 
-    // Add sparkle particles
-    const particleCount = 8;
-    for (int i = 0; i < particleCount; i++) {
-      final angle = (i / particleCount) * 2 * math.pi;
+    // Add sparkle particles (precomputed directions, shared paint)
+    for (int i = 0; i < _sparkleCount; i++) {
       final distance = progress * cellSize * 1.5;
-      final particleX = center.dx + distance * math.cos(angle);
-      final particleY = center.dy + distance * math.sin(angle);
+      final particleX = center.dx + distance * _sparkleCos[i];
+      final particleY = center.dy + distance * _sparkleSin[i];
 
-      final particlePaint = Paint()
-        ..color = renderColor.withValues(alpha: (1.0 - progress) * 0.9)
-        ..style = PaintingStyle.fill;
-
-      canvas.drawCircle(Offset(particleX, particleY), 2.0, particlePaint);
+      _fillPaint.color = renderColor.withValues(alpha: fade * 0.9);
+      canvas.drawCircle(Offset(particleX, particleY), 2.0, _fillPaint);
     }
 
     // Add extra dust particles
-    const dustCount = 6;
-    for (int i = 0; i < dustCount; i++) {
-      final angle = (i / dustCount) * 2 * math.pi + (progress * 0.5);
+    for (int i = 0; i < _dustCount; i++) {
       final distance = progress * cellSize * 2.5;
-      final x = center.dx + distance * math.cos(angle);
-      final y = center.dy + distance * math.sin(angle);
+      final x = center.dx + distance * _dustCos[i];
+      final y = center.dy + distance * _dustSin[i];
 
-      final dustPaint = Paint()
-        ..color = renderColor.withValues(alpha: (1.0 - progress) * 0.4)
-        ..style = PaintingStyle.fill;
-
-      canvas.drawCircle(Offset(x, y), 1.0, dustPaint);
+      _fillPaint.color = renderColor.withValues(alpha: fade * 0.4);
+      canvas.drawCircle(Offset(x, y), 1.0, _fillPaint);
     }
   }
 }

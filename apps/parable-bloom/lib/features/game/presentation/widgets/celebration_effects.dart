@@ -27,7 +27,8 @@ const List<String> kCongratulationMessages = [
 ];
 
 /// Time-based pick so consecutive completions vary the message.
-String pickCongratulationMessage([List<String> messages = kCongratulationMessages]) {
+String pickCongratulationMessage(
+    [List<String> messages = kCongratulationMessages]) {
   return messages[DateTime.now().millisecondsSinceEpoch % messages.length];
 }
 
@@ -47,8 +48,10 @@ void spawnCelebrationEffect({
       game.add(
         PondRippleEffectComponent(
           center: center,
-          maxRadius: (game.size.y * 0.45),
-          ringCount: 4,
+          // 0.35 instead of 0.45: the full-screen stroke was the largest
+          // single overdraw in the game; 3 rings instead of 4.
+          maxRadius: (game.size.y * 0.35),
+          ringCount: 3,
           duration: AnimationTiming.pondRippleSeconds,
           colors: animationColors,
         ),

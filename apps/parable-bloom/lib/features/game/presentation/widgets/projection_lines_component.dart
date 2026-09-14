@@ -47,7 +47,9 @@ class ProjectionLinesComponent extends PositionComponent
         GameBoardLayout.boardWidth(cols) > GameBoardLayout.boardHeight(rows)
             ? GameBoardLayout.boardWidth(cols)
             : GameBoardLayout.boardHeight(rows);
-    _extensionLength = maxDimension * 2; // Go 2x the max dimension
+    // 1.2x is enough to exit the board + viewport margin; 2x drew far
+    // off-screen lines every frame (GPU clip cost with zero visual gain).
+    _extensionLength = maxDimension * 1.2;
 
     // Position will be set by camera transform
     // Initialize with centered position if camera not yet applied
@@ -120,6 +122,11 @@ class ProjectionLinesComponent extends PositionComponent
 
     final visualHeight = _currentLevel!.gridHeight;
 
+    // Clip to the board bounds: projection lines extend off-screen by
+    // design, and without a clip the GPU shades far off-screen segments.
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.x, size.y));
+
     // Draw projection line for each active vine head
     for (final vine in _currentLevel!.vines) {
       final vineState = vineStates[vine.id];
@@ -140,8 +147,8 @@ class ProjectionLinesComponent extends PositionComponent
       if (vine.orderedPath.isEmpty) continue;
 
       final headCell = vine.orderedPath[0];
-      final headX = headCell['x'] as int;
-      final headY = headCell['y'] as int;
+      final headX = headCell['x'] ?? 0;
+      final headY = headCell['y'] ?? 0;
 
       // Transform to visual coordinates (y=0 at bottom)
       final visualY = visualHeight - 1 - headY;
@@ -183,5 +190,6 @@ class ProjectionLinesComponent extends PositionComponent
       // Draw the projection line
       canvas.drawLine(headCenter, endPoint, linePaint);
     }
+    canvas.restore();
   }
 }

@@ -39,6 +39,12 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   int _cachedVisualVersion = -1;
   int _cachedVisualHeight = -1;
 
+  // Cached board rect for frustum culling: avoids Rect.fromLTWH +
+  // boardWidth/Height recompute per animating vine per frame.
+  Rect _cachedBoardRect = Rect.zero;
+  int _cachedBoardWidth = -1;
+  int _cachedBoardHeight = -1;
+
   VineComponent({required this.vineData, required this.cellSize}) {
     _animator = VineAnimator(vineData: vineData);
     final seedColor = VineColorPalette.resolve(vineData.vineColor);
@@ -107,8 +113,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       var maxX = double.negativeInfinity;
       var maxY = double.negativeInfinity;
       for (final cell in _animator.visualPositions) {
-        final x = cell['x'] as int;
-        final y = cell['y'] as int;
+        final x = cell['x'] ?? 0;
+        final y = cell['y'] ?? 0;
         final visualY = visualHeight - 1 - y;
 
         final point = Offset(
@@ -127,19 +133,25 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       _cachedVisualVersion = _animator.visualVersion;
       _cachedVisualHeight = visualHeight;
     }
+    // Refresh cached board rect only when dimensions change.
+    if (_cachedBoardWidth != level.gridWidth ||
+        _cachedBoardHeight != visualHeight) {
+      _cachedBoardWidth = level.gridWidth;
+      _cachedBoardHeight = visualHeight;
+      _cachedBoardRect = Rect.fromLTWH(
+        0,
+        0,
+        GameBoardLayout.boardWidth(level.gridWidth),
+        GameBoardLayout.boardHeight(visualHeight),
+      );
+    }
     final points = _cachedPoints;
     final isAnimating = _animator.isAnimating;
 
     // Frustum culling: a clearing vine slides fully off-board, in which case
     // there is no path left to draw (the edge bloom still renders below).
     if (isAnimating && points.isNotEmpty) {
-      final boardRect = Rect.fromLTWH(
-        0,
-        0,
-        GameBoardLayout.boardWidth(level.gridWidth),
-        GameBoardLayout.boardHeight(visualHeight),
-      );
-      if (!_cachedBounds.overlaps(boardRect)) {
+      if (!_cachedBounds.overlaps(_cachedBoardRect)) {
         _bloomRenderer.draw(
           canvas: canvas,
           renderColor: drawColor,

@@ -196,18 +196,18 @@ class CameraStateNotifier extends Notifier<CameraState> {
 
         final newZoom = _animationStartZoom +
             (_animationTargetZoom - _animationStartZoom) * t;
-        final newOffset = vm.Vector2(
-          _animationStartOffset.x +
-              (_animationTargetOffset.x - _animationStartOffset.x) * t,
-          _animationStartOffset.y +
-              (_animationTargetOffset.y - _animationStartOffset.y) * t,
-        );
+        // Compute offset as plain doubles: avoids a Vector2 alloc per 16ms
+        // tick. A Vector2 is only allocated on throttled state writes.
+        final newOffsetX = _animationStartOffset.x +
+            (_animationTargetOffset.x - _animationStartOffset.x) * t;
+        final newOffsetY = _animationStartOffset.y +
+            (_animationTargetOffset.y - _animationStartOffset.y) * t;
 
         // Smooth path: straight to Flame, no notification.
         ref.read(gameInstanceProvider)?.applyCameraFrame(
               zoom: newZoom,
-              panX: newOffset.x,
-              panY: newOffset.y,
+              panX: newOffsetX,
+              panY: newOffsetY,
             );
 
         // Throttled progress sync for Riverpod watchers (zoom controls,
@@ -216,7 +216,7 @@ class CameraStateNotifier extends Notifier<CameraState> {
         if (tick % 6 == 0) {
           state = state.copyWith(
             zoom: newZoom,
-            panOffset: newOffset,
+            panOffset: vm.Vector2(newOffsetX, newOffsetY),
           );
         }
 

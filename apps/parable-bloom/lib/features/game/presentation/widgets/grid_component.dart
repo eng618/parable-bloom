@@ -26,6 +26,15 @@ class GridComponent extends PositionComponent
   // Camera transform properties
   double _screenWidth = 0.0;
   double _screenHeight = 0.0;
+  double _lastZoom = double.nan;
+
+  // Cached per-level cell visibility: avoids `mask.points.any()` scan per
+  // cell per frame. Null means show-all (no lookup).
+  Set<(int, int)>? _visibleCells;
+
+  /// Cached debug flag, refreshed once per frame in [update] instead of a
+  /// Riverpod read per cell per frame in [CellComponent.render].
+  bool debugCoordinatesCached = false;
 
   // Current level data - will be set by Riverpod
   LevelData? _currentLevel;
@@ -76,7 +85,21 @@ class GridComponent extends PositionComponent
   void setLevelData(LevelData levelData, Map<String, VineState> vineStates) {
     final isNewLevel = _currentLevel?.id != levelData.id;
     _currentLevel = levelData;
-    _vineStates = Map.from(vineStates);
+    // In-place mirror update: avoids a full Map.from copy on every provider
+    // tick (fired on attempted/animating/cleared). Flame reads the mirror on
+    // the next frame; identity is preserved for unchanged entries.
+    if (_vineStates.length != vineStates.length) {
+      _vineStates = Map<String, VineState>.from(vineStates);
+    } else {
+      vineStates.forEach((key, value) {
+        if (_vineStates[key] != value) _vineStates[key] = value;
+      });
+      // Remove stale keys without allocating when sizes match but keys differ
+      // (rare: only on level reload).
+      if (!_vineStates.keys.every(vineStates.containsKey)) {
+        _vineStates.removeWhere((key, _) => !vineStates.containsKey(key));
+      }
+    }
 
     // Grid dimensions are driven by grid_size.
     cols = levelData.gridWidth;
@@ -84,6 +107,25 @@ class GridComponent extends PositionComponent
 
     // Only recreate components if it's a new level
     if (isNewLevel) {
+      // Cache cell visibility once per level: show-all needs no set.
+      if (levelData.mask.mode == 'show-all') {
+        _visibleCells = null;
+      } else if (levelData.mask.mode == 'show') {
+        _visibleCells = {
+          for (final p in levelData.mask.points) (p['x'] ?? -1, p['y'] ?? -1),
+        };
+      } else {
+        // 'hide': precompute visible set for the board bounds.
+        final hidden = {
+          for (final p in levelData.mask.points) (p['x'] ?? -1, p['y'] ?? -1),
+        };
+        _visibleCells = {
+          for (int y = 0; y < levelData.gridHeight; y++)
+            for (int x = 0; x < levelData.gridWidth; x++)
+              if (!hidden.contains((x, y))) (x, y),
+        };
+      }
+
       // Create grid cells for the new level
       _createGridCells();
 
@@ -133,8 +175,7 @@ class GridComponent extends PositionComponent
     // overwrites this with computed state.
     final existing = _vineStates[vineId];
     if (existing != null && existing.animationState != animationState) {
-      _vineStates[vineId] =
-          existing.copyWith(animationState: animationState);
+      _vineStates[vineId] = existing.copyWith(animationState: animationState);
     }
     onVineAnimationStateChanged?.call(vineId, animationState);
   }
@@ -157,8 +198,8 @@ class GridComponent extends PositionComponent
     _screenWidth = screenWidth;
     _screenHeight = screenHeight;
 
-    // Update grid scale
-    scale = Vector2.all(zoom);
+    // Update grid scale in place (no Vector2.all alloc per camera frame).
+    scale.setValues(zoom, zoom);
 
     // Centered position with pan offset (single formula in BoardTransform)
     final pos = BoardTransform.boardPosition(
@@ -170,12 +211,39 @@ class GridComponent extends PositionComponent
       screenWidth: screenWidth,
       screenHeight: screenHeight,
     );
-    position = Vector2(pos.x, pos.y);
+    position.setValues(pos.x, pos.y);
 
-    // Update all vine components with the new zoom
-    for (final comp in _vineComponents.values) {
-      comp.updateZoom(zoom);
+    // Vine zoom is a no-op (handled via parent scale); skip the per-vine
+    // loop unless zoom actually changed.
+    if (zoom != _lastZoom) {
+      _lastZoom = zoom;
+      for (final comp in _vineComponents.values) {
+        comp.updateZoom(zoom);
+      }
     }
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    // Cache the debug flag once per frame: CellComponent.render runs per
+    // cell per frame and must not hit Riverpod 100x/frame.
+    debugCoordinatesCached = parent.sink.debugShowGridCoordinates;
+  }
+
+  /// Fast visibility check backed by the per-level cache built in
+  /// [setLevelData]. Falls back to the level mask when no cache exists
+  /// (e.g. before the first level loads).
+  bool isCellVisibleCached(int x, int y) {
+    final cached = _visibleCells;
+    if (cached == null) {
+      // show-all fast path or no level yet: avoid set lookup.
+      if (_currentLevel == null || _currentLevel!.mask.mode == 'show-all') {
+        return true;
+      }
+      return _currentLevel!.isCellVisible(x, y);
+    }
+    return cached.contains((x, y));
   }
 
   List<String> getActiveVineIds() {
@@ -417,13 +485,15 @@ class CellComponent extends RectangleComponent
     ..color = const Color(0x26E2D6C4)
     ..style = PaintingStyle.fill;
 
+  static final Paint _transparentPaint = Paint()..color = Colors.transparent;
+
   CellComponent({
     required this.gridX,
     required this.gridY,
     required super.size,
     required super.position,
   }) : super(
-          paint: Paint()..color = Colors.transparent,
+          paint: _transparentPaint,
           anchor: Anchor.topLeft,
         );
 
@@ -431,11 +501,11 @@ class CellComponent extends RectangleComponent
   void render(Canvas canvas) {
     super.render(canvas);
 
-    final level = (parent as GridComponent).getCurrentLevelData();
-    if (level == null) return;
+    final grid = parent as GridComponent;
+    if (grid.getCurrentLevelData() == null) return;
 
-    // Masked-out cells are not drawn.
-    if (!level.isCellVisible(gridX, gridY)) return;
+    // Masked-out cells are not drawn (cached bitmask, no per-frame scan).
+    if (!grid.isCellVisibleCached(gridX, gridY)) return;
 
     // Draw small dot in the center of the cell (shared paint, no per-frame
     // allocation; avoids the Rect allocation of size.toRect().center).
@@ -446,8 +516,8 @@ class CellComponent extends RectangleComponent
     );
 
     // Debug: draw x,y labels in corner only if debug mode is enabled.
-    // Theme lookup happens only on this path, never during normal play.
-    final showCoordinates = game.sink.debugShowGridCoordinates;
+    // Flag is cached once per frame on the grid (no per-cell provider read).
+    final showCoordinates = grid.debugCoordinatesCached;
 
     if (kDebugMode && showCoordinates) {
       final theme = Theme.of(game.buildContext!);

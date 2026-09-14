@@ -21,8 +21,32 @@ class VineAnimator {
   double animationTimer = 0.0;
   double stepDuration = AnimationTiming.vineStepSeconds;
 
-  List<List<Map<String, int>>> positionHistory = [];
+  List<List<int>> positionHistory = [];
   bool isBlockedAnimation = false;
+
+  /// Snapshot current head-to-tail positions as a flat [x0,y0,x1,y1,...]
+  /// list. Flat ints avoid the per-step `Map.from` deep copies that used to
+  /// allocate N maps per animation step.
+  List<int> _snapshotFlat() {
+    final flat = List<int>.filled(visualPositions.length * 2, 0);
+    for (int i = 0; i < visualPositions.length; i++) {
+      final pos = visualPositions[i];
+      flat[i * 2] = pos['x'] ?? 0;
+      flat[i * 2 + 1] = pos['y'] ?? 0;
+    }
+    return flat;
+  }
+
+  /// Restore a flat snapshot in place: mutates the existing maps instead of
+  /// allocating a new outer list + N new maps.
+  void _restore(List<int> flat) {
+    final count = flat.length ~/ 2;
+    for (int i = 0; i < count && i < visualPositions.length; i++) {
+      visualPositions[i]['x'] = flat[i * 2];
+      visualPositions[i]['y'] = flat[i * 2 + 1];
+    }
+    visualVersion++;
+  }
 
   VineAnimator({required this.vineData}) {
     visualPositions = List<Map<String, int>>.from(
@@ -37,7 +61,7 @@ class VineAnimator {
     if (isAnimating) return;
     isAnimating = true;
 
-    positionHistory = [];
+    positionHistory.clear();
     currentAnimationStep = 0;
     isBlockedAnimation = false;
     animationTimer = 0.0;
@@ -110,13 +134,8 @@ class VineAnimator {
 
       if (isBlockedAnimation) {
         final historyIndex = positionHistory.length - 1 - currentAnimationStep;
-        if (historyIndex >= 0) {
-          visualPositions = List<Map<String, int>>.from(
-            positionHistory[historyIndex].map(
-              (pos) => Map<String, int>.from(pos),
-            ),
-          );
-          visualVersion++;
+        if (historyIndex >= 0 && historyIndex < positionHistory.length) {
+          _restore(positionHistory[historyIndex]);
         }
 
         currentAnimationStep++;
@@ -144,9 +163,7 @@ class VineAnimator {
         }
 
         positionHistory.add(
-          List<Map<String, int>>.from(
-            visualPositions.map((pos) => Map<String, int>.from(pos)),
-          ),
+          _snapshotFlat(),
         );
 
         _stepForward();
@@ -166,9 +183,7 @@ class VineAnimator {
         }
       } else if (willClearAfterAnimation) {
         positionHistory.add(
-          List<Map<String, int>>.from(
-            visualPositions.map((pos) => Map<String, int>.from(pos)),
-          ),
+          _snapshotFlat(),
         );
 
         _stepForward();
@@ -195,10 +210,11 @@ class VineAnimator {
   }
 
   void _stepForward() {
-    final headIndex = 0;
-    final headPos = visualPositions[headIndex];
-    var newHeadX = headPos['x'] as int;
-    var newHeadY = headPos['y'] as int;
+    if (visualPositions.isEmpty) return;
+    final positions = visualPositions;
+    final headPos = positions[0];
+    var newHeadX = headPos['x'] ?? 0;
+    var newHeadY = headPos['y'] ?? 0;
 
     switch (vineData.headDirection) {
       case 'right':
@@ -215,30 +231,31 @@ class VineAnimator {
         break;
     }
 
-    var prevX = headPos['x'] as int;
-    var prevY = headPos['y'] as int;
+    var prevX = headPos['x'] ?? 0;
+    var prevY = headPos['y'] ?? 0;
 
-    for (int i = 1; i < visualPositions.length; i++) {
-      final tempX = visualPositions[i]['x'] as int;
-      final tempY = visualPositions[i]['y'] as int;
+    for (int i = 1; i < positions.length; i++) {
+      final cell = positions[i];
+      final tempX = cell['x'] ?? 0;
+      final tempY = cell['y'] ?? 0;
 
-      visualPositions[i]['x'] = prevX;
-      visualPositions[i]['y'] = prevY;
+      cell['x'] = prevX;
+      cell['y'] = prevY;
 
       prevX = tempX;
       prevY = tempY;
     }
 
-    visualPositions[headIndex]['x'] = newHeadX;
-    visualPositions[headIndex]['y'] = newHeadY;
+    headPos['x'] = newHeadX;
+    headPos['y'] = newHeadY;
     visualVersion++;
   }
 
   bool hasExitedVisibleGrid(LevelData? level) {
     if (level == null || visualPositions.isEmpty) return true;
     final headPos = visualPositions[0];
-    final x = headPos['x'] as int;
-    final y = headPos['y'] as int;
+    final x = headPos['x'] ?? 0;
+    final y = headPos['y'] ?? 0;
 
     return x < 0 || x >= level.gridWidth || y < 0 || y >= level.gridHeight;
   }
@@ -250,8 +267,8 @@ class VineAnimator {
     const int offScreenMargin = 3;
 
     for (final pos in visualPositions) {
-      final x = pos['x'] as int;
-      final y = pos['y'] as int;
+      final x = pos['x'] ?? 0;
+      final y = pos['y'] ?? 0;
 
       if (x >= -offScreenMargin &&
           x < gridCols + offScreenMargin &&

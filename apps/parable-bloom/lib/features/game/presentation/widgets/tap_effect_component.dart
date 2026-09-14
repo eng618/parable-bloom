@@ -15,7 +15,14 @@ class TapEffectComponent extends PositionComponent {
   final double duration;
 
   double _elapsed = 0.0;
-  final List<({double angle, double speed, double size})> _sparkles = [];
+  final List<({double dx, double dy, double speed, double size})> _sparkles =
+      [];
+
+  // Shared RNG + paints: avoids per-tap Random() and per-frame Paint() churn
+  // on the most frequent effect (stacks on rapid taps).
+  static final math.Random _sharedRandom = math.Random();
+  final Paint _ringPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _fillPaint = Paint()..style = PaintingStyle.fill;
 
   TapEffectComponent({
     required this.tapPosition,
@@ -27,11 +34,14 @@ class TapEffectComponent extends PositionComponent {
           anchor: Anchor.center,
           priority: 10000,
         ) {
-    // Generate random sparkle data
-    final random = math.Random();
+    // Generate random sparkle data with precomputed unit vectors so render()
+    // does no trig.
+    final random = _sharedRandom;
     for (int i = 0; i < 6; i++) {
+      final angle = random.nextDouble() * math.pi * 2;
       _sparkles.add((
-        angle: random.nextDouble() * math.pi * 2,
+        dx: math.cos(angle),
+        dy: math.sin(angle),
         speed: 15.0 + random.nextDouble() * 25.0,
         size: 1.0 + random.nextDouble() * 1.5,
       ));
@@ -65,34 +75,28 @@ class TapEffectComponent extends PositionComponent {
     final opacity = (1.0 - progress).clamp(0.0, 1.0);
 
     // Draw outer ring
-    final paint = Paint()
+    _ringPaint
       ..color = color.withValues(alpha: opacity * 0.6)
-      ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 
-    canvas.drawCircle(Offset.zero, currentRadius, paint);
+    canvas.drawCircle(Offset.zero, currentRadius, _ringPaint);
 
     // Draw inner filled circle that quickly fades
     if (progress < 0.3) {
       final innerOpacity = (1.0 - progress / 0.3).clamp(0.0, 1.0);
-      final innerPaint = Paint()
-        ..color = color.withValues(alpha: innerOpacity * 0.3)
-        ..style = PaintingStyle.fill;
+      _fillPaint.color = color.withValues(alpha: innerOpacity * 0.3);
 
-      canvas.drawCircle(Offset.zero, currentRadius * 0.5, innerPaint);
+      canvas.drawCircle(Offset.zero, currentRadius * 0.5, _fillPaint);
     }
 
-    // Draw radiating sparkles
+    // Draw radiating sparkles (no trig: unit vectors precomputed)
+    _fillPaint.color = color.withValues(alpha: opacity * 0.8);
     for (final sparkle in _sparkles) {
       final distance = progress * sparkle.speed;
-      final sparkleX = math.cos(sparkle.angle) * distance;
-      final sparkleY = math.sin(sparkle.angle) * distance;
+      final sparkleX = sparkle.dx * distance;
+      final sparkleY = sparkle.dy * distance;
 
-      final sparklePaint = Paint()
-        ..color = color.withValues(alpha: opacity * 0.8)
-        ..style = PaintingStyle.fill;
-
-      canvas.drawCircle(Offset(sparkleX, sparkleY), sparkle.size, sparklePaint);
+      canvas.drawCircle(Offset(sparkleX, sparkleY), sparkle.size, _fillPaint);
     }
   }
 

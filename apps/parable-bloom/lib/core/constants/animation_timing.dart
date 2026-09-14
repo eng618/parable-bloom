@@ -30,7 +30,9 @@ class AnimationTiming {
   static const Duration guidePulse = Duration(milliseconds: 1500);
   static const Duration blockedTapDisplay = Duration(milliseconds: 1500);
 
-  /// Camera animation tick (drives 60fps interpolation).
+  /// Camera animation tick. Timer-driven at ~60Hz; Flame itself still
+  /// renders at the display refresh rate (90/120Hz), and applyCameraFrame is
+  /// allocation-free per tick so interpolation stays smooth on ProMotion.
   static const Duration cameraTick = Duration(milliseconds: 16);
 
   const AnimationTiming._();

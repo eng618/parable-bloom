@@ -20,6 +20,8 @@ class RippleFireworksComponent extends Component with HasGameReference {
   final math.Random _rng = math.Random();
 
   late final List<_ScheduledFirework> _schedule;
+  int _nextLaunchIndex = 0;
+  int _launchedCount = 0;
 
   RippleFireworksComponent({
     this.count = 8,
@@ -71,10 +73,16 @@ class RippleFireworksComponent extends Component with HasGameReference {
     super.update(dt);
     _elapsed += dt;
 
-    // Launch any due fireworks
-    for (final f in _schedule.where((e) => !e.launched).toList()) {
-      if (_elapsed >= f.launchTime) {
+    // Launch any due fireworks: schedule is sorted by launchTime, so walk
+    // forward with an index instead of `.where().toList()` + closure churn
+    // every frame.
+    while (_nextLaunchIndex < _schedule.length &&
+        _elapsed >= _schedule[_nextLaunchIndex].launchTime) {
+      final f = _schedule[_nextLaunchIndex];
+      _nextLaunchIndex++;
+      if (!f.launched) {
         f.launched = true;
+        _launchedCount++;
         final projectile = _FireworkProjectile(
           start: f.start,
           target: f.target,
@@ -100,7 +108,7 @@ class RippleFireworksComponent extends Component with HasGameReference {
     }
 
     // Remove this coordinator once all have launched and enough time has passed
-    if (_schedule.every((f) => f.launched) && _elapsed > duration + 1.0) {
+    if (_launchedCount >= _schedule.length && _elapsed > duration + 1.0) {
       removeFromParent();
     }
   }
@@ -131,6 +139,7 @@ class _FireworkProjectile extends PositionComponent {
   final void Function(Vector2 impactAt) onImpact;
 
   double _elapsed = 0.0;
+  final Paint _paint = Paint()..style = PaintingStyle.fill;
 
   _FireworkProjectile({
     required this.start,
@@ -138,7 +147,9 @@ class _FireworkProjectile extends PositionComponent {
     required this.travelTime,
     required this.color,
     required this.onImpact,
-  }) : super(position: start.clone(), anchor: Anchor.center, priority: 9500);
+  }) : super(position: start.clone(), anchor: Anchor.center, priority: 9500) {
+    _paint.color = color.withValues(alpha: 0.7);
+  }
 
   @override
   void update(double dt) {
@@ -146,7 +157,8 @@ class _FireworkProjectile extends PositionComponent {
     _elapsed += dt;
     final t = (_elapsed / travelTime).clamp(0.0, 1.0);
     final eased = _easeOutCubic(t);
-    position = Vector2(
+    // Mutate in place: avoids a Vector2() alloc per projectile per frame.
+    position.setValues(
       start.x + (target.x - start.x) * eased,
       start.y + (target.y - start.y) * eased,
     );
@@ -160,11 +172,8 @@ class _FireworkProjectile extends PositionComponent {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    // Tiny, subtle dot
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.7)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset.zero, 2.0, paint);
+    // Tiny, subtle dot (shared paint, no per-frame alloc)
+    canvas.drawCircle(Offset.zero, 2.0, _paint);
   }
 
   double _easeOutCubic(double t) {

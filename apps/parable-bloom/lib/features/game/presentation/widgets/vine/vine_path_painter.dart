@@ -41,6 +41,40 @@ class VinePathPainter {
     return _leafPathCache.putIfAbsent(size, () => _createLeafPath(size));
   }
 
+  /// Cached ColorFilters per draw color: `ColorFilter.mode` allocates per
+  /// call and was previously rebuilt per vine per frame.
+  static final Map<Color, ColorFilter> _colorFilterCache = {};
+  static ColorFilter _filterFor(Color c) => _colorFilterCache.putIfAbsent(
+        c,
+        () => ColorFilter.mode(c, BlendMode.modulate),
+      );
+
+  // Reused paints: draws are sequential on one thread, so overwriting color/
+  // shader/filter before each draw is safe and avoids per-vine-per-frame
+  // Paint + ColorFilter allocations.
+  static final Paint _mainPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round;
+  static final Paint _glowPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..color = const Color(0xFF00E5FF).withValues(alpha: 0.35)
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
+  static final Paint _leafPaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _leafGlowPaint = Paint()
+    ..style = PaintingStyle.fill
+    ..color = const Color(0xFF00E5FF).withValues(alpha: 0.4)
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+  static final Paint _petalPaint = Paint()
+    ..style = PaintingStyle.fill
+    ..color = const Color(0xFFFFC2D8);
+  static final Paint _blossomCenterPaint = Paint()
+    ..style = PaintingStyle.fill
+    ..color = const Color(0xFFFFDB4D);
+  static final Paint _headPaint = Paint()..style = PaintingStyle.fill;
+
   /// Render main vine path, foliage, and directional arrow head.
   ///
   /// [isAnimating] gates the expensive blur-based ethereal glow: idle vines
@@ -70,11 +104,11 @@ class VinePathPainter {
       path.lineTo(points[i].dx, points[i].dy);
     }
 
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
+    final paint = _mainPaint
       ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..color = drawColor
+      ..shader = null
+      ..colorFilter = null;
 
     // 2. Resolve Texture / Shader
     ui.Image? texture;
@@ -90,72 +124,53 @@ class VinePathPainter {
       paint.color = drawColor;
     } else {
       paint.shader = _shaderFor(texture);
-      paint.colorFilter = ColorFilter.mode(
-        drawColor,
-        BlendMode.modulate,
-      );
+      paint.colorFilter = _filterFor(drawColor);
     }
 
     // 3. Draw Ethereal Outer Glow (animations only: MaskFilter.blur is
     // one of the most expensive GPU ops in this renderer)
     if (vineStyle == VineStyle.ethereal && isAnimating) {
-      final glowPaint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth + 6.0
-        ..color = const Color(0xFF00E5FF).withValues(alpha: 0.35)
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
-      canvas.drawPath(path, glowPaint);
+      _glowPaint.strokeWidth = strokeWidth + 6.0;
+      canvas.drawPath(path, _glowPaint);
     }
 
     // 4. Draw Main Branch/Path
     canvas.drawPath(path, paint);
 
     // 5. Draw Foliage Details (paints hoisted: reused across segments,
-    //    not reallocated per point per frame)
+    //    not reallocated per point per frame). Idle vines use LOD stride 2
+    //    to halve leaf/blossom overdraw; animations keep full density.
     if (!useSimpleVines) {
       final double leafSize = strokeWidth * 0.95;
       final Path leafPath = _leafPathFor(leafSize);
+      final int stride = isAnimating ? 1 : 2;
 
-      late final Paint classicLeafPaint;
-      late final Paint etherealLeafPaint;
-      late final Paint etherealLeafGlow;
-      late final Paint blossomPetalPaint;
-      late final Paint blossomCenterPaint;
+      Paint? classicLeaf;
+      Paint? etherealLeaf;
+      Paint? etherealGlow;
+      Paint? petal;
+      Paint? blossomCenter;
       if (vineStyle == VineStyle.classic) {
-        classicLeafPaint = Paint()
-          ..style = PaintingStyle.fill
-          ..color = drawColor;
-        if (texture != null) {
-          classicLeafPaint.shader = paint.shader;
-          classicLeafPaint.colorFilter = paint.colorFilter;
-        }
+        classicLeaf = _leafPaint
+          ..color = drawColor
+          ..shader = paint.shader
+          ..colorFilter = paint.colorFilter;
       } else if (vineStyle == VineStyle.blossom) {
-        blossomPetalPaint = Paint()
-          ..style = PaintingStyle.fill
-          ..color = const Color(0xFFFFC2D8)
-          ..colorFilter = ColorFilter.mode(drawColor, BlendMode.modulate);
-        blossomCenterPaint = Paint()
-          ..style = PaintingStyle.fill
-          ..color = const Color(0xFFFFDB4D)
-          ..colorFilter = ColorFilter.mode(drawColor, BlendMode.modulate);
+        petal = _petalPaint..colorFilter = _filterFor(drawColor);
+        blossomCenter = _blossomCenterPaint
+          ..colorFilter = _filterFor(drawColor);
       } else if (vineStyle == VineStyle.ethereal) {
-        etherealLeafPaint = Paint()
-          ..style = PaintingStyle.fill
+        etherealLeaf = _leafPaint
           ..color = const Color(0xFF00E5FF)
-          ..colorFilter = ColorFilter.mode(drawColor, BlendMode.modulate);
-        // Per-leaf glow is blur-backed: allocate only for animations.
-        etherealLeafGlow = isAnimating
-            ? (Paint()
-              ..style = PaintingStyle.fill
-              ..color = const Color(0xFF00E5FF).withValues(alpha: 0.4)
-              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0))
-            : etherealLeafPaint;
+          ..shader = null
+          ..colorFilter = _filterFor(drawColor);
+        // Per-leaf glow is blur-backed: reuse shared blurred paint only for
+        // animations; idle vines reuse the flat leaf paint.
+        etherealGlow = isAnimating ? _leafGlowPaint : etherealLeaf;
       }
 
-      for (int i = 0; i < points.length; i++) {
-        if (i == 0) continue;
+      for (int i = 1; i < points.length; i++) {
+        if (stride > 1 && (i & 1) == 0) continue;
 
         final nextPoint = points[i - 1];
         final dx = nextPoint.dx - points[i].dx;
@@ -166,35 +181,35 @@ class VinePathPainter {
           canvas.save();
           canvas.translate(points[i].dx, points[i].dy);
           canvas.rotate(baseAngle + math.pi / 4.0);
-          canvas.drawPath(leafPath, classicLeafPaint);
+          canvas.drawPath(leafPath, classicLeaf!);
           canvas.restore();
 
           canvas.save();
           canvas.translate(points[i].dx, points[i].dy);
           canvas.rotate(baseAngle - math.pi / 4.0);
-          canvas.drawPath(leafPath, classicLeafPaint);
+          canvas.drawPath(leafPath, classicLeaf);
           canvas.restore();
         } else if (vineStyle == VineStyle.blossom) {
           _drawCherryBlossom(
             canvas,
             points[i],
             strokeWidth * 1.15,
-            petalPaint: blossomPetalPaint,
-            centerPaint: blossomCenterPaint,
+            petalPaint: petal!,
+            centerPaint: blossomCenter!,
           );
         } else if (vineStyle == VineStyle.ethereal) {
           canvas.save();
           canvas.translate(points[i].dx, points[i].dy);
           canvas.rotate(baseAngle + math.pi / 4.0);
-          canvas.drawPath(leafPath, etherealLeafGlow);
-          canvas.drawPath(leafPath, etherealLeafPaint);
+          canvas.drawPath(leafPath, etherealGlow!);
+          canvas.drawPath(leafPath, etherealLeaf!);
           canvas.restore();
 
           canvas.save();
           canvas.translate(points[i].dx, points[i].dy);
           canvas.rotate(baseAngle - math.pi / 4.0);
-          canvas.drawPath(leafPath, etherealLeafGlow);
-          canvas.drawPath(leafPath, etherealLeafPaint);
+          canvas.drawPath(leafPath, etherealGlow);
+          canvas.drawPath(leafPath, etherealLeaf);
           canvas.restore();
         }
       }
@@ -228,9 +243,10 @@ class VinePathPainter {
       headPath.close();
     }
 
-    final headPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = drawColor;
+    final headPaint = _headPaint
+      ..color = drawColor
+      ..shader = null
+      ..colorFilter = null;
 
     if (useSimpleVines || texture == null) {
       headPaint.color = drawColor;
@@ -259,12 +275,30 @@ class VinePathPainter {
     required Paint centerPaint,
   }) {
     final double petalRadius = size * 0.44;
-    for (int i = 0; i < 5; i++) {
-      final double angle = i * 2 * math.pi / 5;
-      final px = center.dx + petalRadius * math.cos(angle);
-      final py = center.dy + petalRadius * math.sin(angle);
-      canvas.drawCircle(Offset(px, py), size * 0.34, petalPaint);
-    }
+    final double r = size * 0.34;
+    // 5 petal offsets precomputed inline (no per-petal cos/sin per frame).
+    canvas.drawCircle(
+        Offset(center.dx + petalRadius, center.dy), r, petalPaint);
+    canvas.drawCircle(
+        Offset(
+            center.dx + petalRadius * 0.309, center.dy + petalRadius * 0.951),
+        r,
+        petalPaint);
+    canvas.drawCircle(
+        Offset(
+            center.dx - petalRadius * 0.809, center.dy + petalRadius * 0.588),
+        r,
+        petalPaint);
+    canvas.drawCircle(
+        Offset(
+            center.dx - petalRadius * 0.809, center.dy - petalRadius * 0.588),
+        r,
+        petalPaint);
+    canvas.drawCircle(
+        Offset(
+            center.dx + petalRadius * 0.309, center.dy - petalRadius * 0.951),
+        r,
+        petalPaint);
     canvas.drawCircle(center, size * 0.22, centerPaint);
   }
 

@@ -13,6 +13,10 @@ class PondRippleEffectComponent extends PositionComponent {
 
   double _elapsed = 0.0;
 
+  /// Reused paint: one allocation per component instead of one per ring per
+  /// frame.
+  final Paint _paint = Paint()..style = PaintingStyle.stroke;
+
   /// Centered effect; set [position] to the ripple origin and [anchor] to center.
   PondRippleEffectComponent({
     required Vector2 center,
@@ -61,12 +65,11 @@ class PondRippleEffectComponent extends PositionComponent {
       final Color color =
           (colors.isNotEmpty) ? colors[i % colors.length] : Colors.white;
 
-      final paint = Paint()
+      _paint
         ..color = color.withValues(alpha: alpha)
-        ..style = PaintingStyle.stroke
         ..strokeWidth = stroke;
 
-      canvas.drawCircle(Offset.zero, radius, paint);
+      canvas.drawCircle(Offset.zero, radius, _paint);
     }
   }
 
