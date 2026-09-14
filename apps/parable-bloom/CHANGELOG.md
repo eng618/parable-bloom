@@ -1,3 +1,17 @@
+## 1.9.12 (2026-09-14)
+
+### 🩹 Fixes
+
+- **tellemetry:** wrong tap when panning board ([7660c8f](https://github.com/eng618/parable-bloom/commit/7660c8f))
+
+### 🔥 Performance
+
+- improve animation performance for a smoother experiance ([35354f7](https://github.com/eng618/parable-bloom/commit/35354f7))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.9.11 (2026-09-13)
 
 ### 🚀 Features

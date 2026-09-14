@@ -1,3 +1,7 @@
+## 1.9.12 (2026-09-14)
+
+This was a version bump only for level-builder to align it with other projects, there were no code changes.
+
 ## 1.9.11 (2026-09-13)
 
 ### 🚀 Features
