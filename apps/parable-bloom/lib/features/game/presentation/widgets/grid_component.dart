@@ -325,16 +325,26 @@ class GridComponent extends PositionComponent
 
   // Individual vines are now rendered by VineComponent children
 
-  // Handle cell tap from child CellComponent
+  // Handle cell tap from child CellComponent.
+  // Visual tap effects fire for every board tap (vine or empty) in
+  // CellComponent.onTapUp. Telemetry splits two ways:
+  // - total taps: every visible-cell tap (vine or empty), excluding
+  //   pan/zoom gestures and masked-out cells;
+  // - wrong taps: ONLY a tap on a vine that is not clearable (blocked),
+  //   recorded downstream by the animator via markVineAttempted. Empty
+  //   cells never produce wrong taps by construction.
   void handleCellTap(int row, int col) {
-    // Notify tap counter via callback
-    onTapIncrement?.call(1);
+    // Pan/zoom gestures are not taps.
+    if (parent.shouldSuppressTaps) return;
 
     final level = _currentLevel;
     if (level == null) return;
 
     // Masked-out cells are not interactive.
-    if (!level.isCellVisible(col, row)) return;
+    if (!isCellVisibleCached(col, row)) return;
+
+    // Total-tap telemetry: visible board tap (vine or empty spot).
+    onTapIncrement?.call(1);
 
     final clickedVine = _getVineAtCell(row, col);
 
@@ -377,7 +387,10 @@ class GridComponent extends PositionComponent
       ));
     }
 
-    // Notify that a vine was tapped
+    // Notify that a vine was tapped. Wrong-tap telemetry is NOT recorded
+    // here: the animator calls markVineAttempted only when the tapped vine
+    // turns out to be blocked (not clearable), so empty taps can never
+    // become wrong taps.
     onVineTap?.call(clickedVine.id);
     LoggerService.debug('Sliding out vine',
         tag: 'GridComponent', metadata: {'vine_id': clickedVine.id});
@@ -548,6 +561,8 @@ class CellComponent extends RectangleComponent
   void onLongTapDown(TapDownEvent event) {
     _isLongPressed = true;
     final gridParent = parent as GridComponent;
+    // Pan/zoom gestures are not taps: no hint telemetry.
+    if (gridParent.parent.shouldSuppressTaps) return;
     final clickedVine = gridParent._getVineAtCell(gridY, gridX);
     if (clickedVine != null) {
       final state = gridParent.getCurrentVineState(clickedVine.id);
@@ -570,10 +585,14 @@ class CellComponent extends RectangleComponent
       return;
     }
 
-    // No haptics here: GardenGame.onTapDown already fires lightImpact for
-    // every canvas tap (single owner), so this would double-vibrate.
     final gridParent = parent as GridComponent;
 
+    // Pan/zoom gestures are not taps: no hint clearing, no tap effect,
+    // no vine handling, no telemetry.
+    if (gridParent.parent.shouldSuppressTaps) return;
+
+    // No haptics here: GardenGame.onTapDown already fires lightImpact for
+    // every canvas tap (single owner), so this would double-vibrate.
     // Clear hints on tap
     game.sink.onClearHints();
 

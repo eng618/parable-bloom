@@ -237,6 +237,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       details.focalPoint.dy,
     );
     _panStartOffset = cameraState.panOffset;
+    // Any scale gesture (pinch or single-finger pan) suppresses Flame taps
+    // until shortly after the gesture ends: fingers on the board are camera
+    // input, never tap telemetry.
+    _game?.setCameraGestureActive(true);
   }
 
   void _handleScaleUpdate(
@@ -246,6 +250,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   ) {
     final currentLevel = ref.read(currentLevelProvider);
     if (currentLevel == null) return;
+
+    // Keep suppression active for the whole gesture (start may have been
+    // missed if the game instance was recreated mid-gesture).
+    _game?.setCameraGestureActive(true);
 
     final cameraNotifier = ref.read(cameraStateProvider.notifier);
 
@@ -275,7 +283,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _handleScaleEnd(ScaleEndDetails details) {
-    // Scale gesture ended - store final state
+    // Scale gesture ended - store final state. Tap suppression lingers for
+    // a short window (see GardenGame.shouldSuppressTaps) to swallow the
+    // finger-lift tap that races onTapUp.
+    _game?.setCameraGestureActive(false);
     _lastScale = ref.read(cameraStateProvider).zoom;
     _panStartOffset = ref.read(cameraStateProvider).panOffset;
   }

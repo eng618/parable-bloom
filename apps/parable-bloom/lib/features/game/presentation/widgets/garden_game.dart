@@ -50,6 +50,36 @@ class GardenGame extends FlameGame with TapCallbacks {
   // animations; reuse instead of allocating a Vector2 per tick.
   final Vector2 _scratchPan = Vector2.zero();
 
+  /// True while a Flutter pan/zoom gesture is active. Set by the screen's
+  /// `onScaleStart/Update/End` so Flame taps landing mid-gesture are
+  /// ignored: panning/zooming must not count as taps, wrong taps, or
+  /// telemetry of any kind.
+  bool _cameraGestureActive = false;
+
+  /// End time of the last camera gesture. Taps landing within
+  /// [_tapSuppressWindow] after the gesture are still the tail of the
+  /// gesture (finger lift races Flame's onTapUp) and are suppressed too.
+  DateTime? _cameraGestureEndedAt;
+  static const Duration _tapSuppressWindow = Duration(milliseconds: 120);
+
+  /// Called by the Flutter gesture layer on scale start/update/end.
+  void setCameraGestureActive(bool active) {
+    _cameraGestureActive = active;
+    if (!active) {
+      _cameraGestureEndedAt = DateTime.now();
+    } else {
+      _cameraGestureEndedAt = null;
+    }
+  }
+
+  /// Whether taps should be ignored right now (gesture active or just ended).
+  bool get shouldSuppressTaps {
+    if (_cameraGestureActive) return true;
+    final endedAt = _cameraGestureEndedAt;
+    if (endedAt == null) return false;
+    return DateTime.now().difference(endedAt) < _tapSuppressWindow;
+  }
+
   // Theme colors - updated dynamically from app theme
   late Color _backgroundColor;
   late Color _tapEffectColor;
@@ -383,6 +413,10 @@ class GardenGame extends FlameGame with TapCallbacks {
   @override
   void onTapDown(TapDownEvent event) {
     super.onTapDown(event);
+
+    // Pan/zoom gestures are not taps: ignore entirely (no haptics, no
+    // outside-grid callback, no tap effect).
+    if (shouldSuppressTaps) return;
 
     // Trigger haptic feedback on tap if enabled
     if (sink.hapticsEnabled) {
