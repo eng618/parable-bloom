@@ -461,63 +461,79 @@ class LevelSolverService {
     String vineId,
     List<String> activeVineIds,
   ) {
-    final vine = level.vines.firstWhere((v) => v.id == vineId);
-
-    if (vine.orderedPath.isEmpty) return 0;
-
-    // Start with current positions
-    var currentPositions = List<Map<String, int>>.from(vine.orderedPath);
-    int distance = 0;
-
-    // Upper bound: enough steps for head to exit the grid from anywhere.
-    final maxCheckDistance =
-        (level.gridWidth + level.gridHeight + vine.orderedPath.length + 10)
-            .clamp(50, 300);
-
-    // Create a map for O(1) vine lookup instead of iterating level.vines repeatedly
     final vineMap = {for (final v in level.vines) v.id: v};
+    final vine = vineMap[vineId];
+    if (vine == null || vine.orderedPath.isEmpty) return 0;
+
+    // Build occupancy set once: O(total cells). Encode as x * stride + y.
+    final stride = level.gridHeight + 1;
+    final occupied = <int>{};
+    for (final otherId in activeVineIds) {
+      if (otherId == vineId) continue;
+      final other = vineMap[otherId];
+      if (other == null) continue;
+      for (final cell in other.orderedPath) {
+        occupied.add((cell['x'] as int) * stride + (cell['y'] as int));
+      }
+    }
+
+    // Copy path into flat int lists to avoid per-step Map allocations.
+    var xs = List<int>.filled(
+      vine.orderedPath.length,
+      0,
+    );
+    var ys = List<int>.filled(vine.orderedPath.length, 0);
+    for (var i = 0; i < vine.orderedPath.length; i++) {
+      xs[i] = vine.orderedPath[i]['x'] as int;
+      ys[i] = vine.orderedPath[i]['y'] as int;
+    }
+
+    int dx = 0, dy = 0;
+    switch (vine.headDirection) {
+      case 'right':
+        dx = 1;
+        break;
+      case 'left':
+        dx = -1;
+        break;
+      case 'up':
+        dy = 1;
+        break;
+      case 'down':
+        dy = -1;
+        break;
+    }
+
+    final maxCheckDistance =
+        (level.gridWidth + level.gridHeight + xs.length + 10).clamp(50, 300);
 
     for (int step = 0; step < maxCheckDistance; step++) {
-      // Simulate one step of movement
-      final newPositions = _simulateVineMovementFromPositions(
-        currentPositions,
-        vine.headDirection,
-      );
+      final newHeadX = xs[0] + dx;
+      final newHeadY = ys[0] + dy;
+      // Shift segments back-to-front in place (snake follow).
+      for (var i = xs.length - 1; i >= 1; i--) {
+        xs[i] = xs[i - 1];
+        ys[i] = ys[i - 1];
+      }
+      xs[0] = newHeadX;
+      ys[0] = newHeadY;
 
-      // Check if any of the new positions would be occupied by other active vines
-      for (final newPos in newPositions) {
-        for (final otherId in activeVineIds) {
-          if (otherId == vineId) continue;
-
-          final otherVine = vineMap[otherId];
-          if (otherVine == null) continue;
-          for (final cell in otherVine.orderedPath) {
-            if (cell['x'] == newPos['x'] && cell['y'] == newPos['y']) {
-              return -(distance +
-                  1); // Negative = blocked by vine at this distance
-            }
-          }
+      for (var i = 0; i < xs.length; i++) {
+        if (occupied.contains(xs[i] * stride + ys[i])) {
+          return -(step + 1);
         }
       }
 
-      // If the head exits the grid (without collision), the vine can clear.
-      final newHead = newPositions.first;
-      final headX = newHead['x'] as int;
-      final headY = newHead['y'] as int;
-      if (headX < 0 ||
-          headX >= level.gridWidth ||
-          headY < 0 ||
-          headY >= level.gridHeight) {
-        return distance + 1;
+      if (newHeadX < 0 ||
+          newHeadX >= level.gridWidth ||
+          newHeadY < 0 ||
+          newHeadY >= level.gridHeight) {
+        return step + 1;
       }
-
-      // Move to next positions
-      currentPositions = newPositions;
-      distance++;
     }
 
     // If we never hit a collision or exited, treat as blocked (conservative).
-    return -(distance + 1);
+    return -(maxCheckDistance + 1);
   }
 
   /// Simulates snake-like movement from given positions.
