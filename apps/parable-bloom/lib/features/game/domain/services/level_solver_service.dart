@@ -50,10 +50,11 @@ class LevelSolverService {
     final fullMask = (1 << vineCount) - 1;
     final visited = List<bool>.filled(1 << vineCount, false);
     final queue = <int>[fullMask];
+    var head = 0;
     visited[fullMask] = true;
 
-    while (queue.isNotEmpty) {
-      final mask = queue.removeAt(0);
+    while (head < queue.length) {
+      final mask = queue[head++];
       if (mask == 0) return true;
 
       final occupiedAll = <String>{};
@@ -101,10 +102,11 @@ class LevelSolverService {
     final removedIndex = List<int>.filled(1 << vineCount, -1);
 
     final queue = <int>[fullMask];
+    var head = 0;
     visited[fullMask] = true;
 
-    while (queue.isNotEmpty) {
-      final mask = queue.removeAt(0);
+    while (head < queue.length) {
+      final mask = queue[head++];
       if (mask == 0) {
         // Reconstruct removal order.
         final reversed = <String>[];
