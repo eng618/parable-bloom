@@ -16,12 +16,29 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _precached = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(analyticsServiceProvider).logScreenView('Home');
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_precached) {
+      _precached = true;
+      for (final asset in const [
+        'assets/art/cross.png',
+        'assets/art/bg_day.png',
+        'assets/art/bg_night.png',
+      ]) {
+        precacheImage(AssetImage(asset), context);
+      }
+    }
   }
 
   @override

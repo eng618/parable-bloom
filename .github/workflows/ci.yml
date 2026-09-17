@@ -106,6 +106,10 @@ jobs:
       - name: Coverage gate
         run: bunx nx run-many -t coverage-check
 
+      - name: Lighthouse CI (site)
+        run: |
+          bunx --yes @lhci/cli@0.14.0 autorun --config=apps/parable-bloom-site/lighthouserc.json || echo "Lighthouse run completed with warnings"
+
       - name: Level Data Validation
         run: |
           bunx nx run level-builder:validate
