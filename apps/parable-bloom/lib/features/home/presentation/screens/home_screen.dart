@@ -161,7 +161,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   );
                 },
-                loading: () => const GardenLoadingView(message: "Loading garden…"),
+                loading: () =>
+                    const GardenLoadingView(message: "Loading garden…"),
                 error: (error, __) => Column(
                   children: [
                     Text(
