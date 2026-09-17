@@ -238,108 +238,109 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     return RepaintBoundary(
       child: IgnorePointer(
         child: Stack(
-        children: [
-          // 1. Draw collision path if a blocked tap occurred recently
-          if (blockedTap != null) ...[
-            CustomPaint(
-              size: Size.infinite,
-              painter: CollisionPathPainter(
-                from: blockedTap.headPosition,
-                to: blockedTap.blockerPosition,
+          children: [
+            // 1. Draw collision path if a blocked tap occurred recently
+            if (blockedTap != null) ...[
+              CustomPaint(
+                size: Size.infinite,
+                painter: CollisionPathPainter(
+                  from: blockedTap.headPosition,
+                  to: blockedTap.blockerPosition,
+                ),
               ),
-            ),
-            // Floating warning next to the blocker
-            Positioned(
-              left: blockedTap.blockerPosition.dx - 80,
-              top: blockedTap.blockerPosition.dy - 65,
-              child: _buildFloatingAlert("Blocked! Blocker first"),
-            ),
-          ],
+              // Floating warning next to the blocker
+              Positioned(
+                left: blockedTap.blockerPosition.dx - 80,
+                top: blockedTap.blockerPosition.dy - 65,
+                child: _buildFloatingAlert("Blocked! Blocker first"),
+              ),
+            ],
 
-          // 2. Pulse Highlight Ring on target cell
-          if (targetPosition != null) ...[
-            AnimatedBuilder(
-              animation: _pulseAnimation,
-              builder: (context, child) {
-                return Positioned(
-                  left: targetPosition.dx - 36 * _pulseAnimation.value,
-                  top: targetPosition.dy - 36 * _pulseAnimation.value,
-                  child: Container(
-                    width: 72 * _pulseAnimation.value,
-                    height: 72 * _pulseAnimation.value,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: highlightColor.withValues(
-                          alpha: (1.2 - _pulseAnimation.value).clamp(0.0, 1.0),
+            // 2. Pulse Highlight Ring on target cell
+            if (targetPosition != null) ...[
+              AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) {
+                  return Positioned(
+                    left: targetPosition.dx - 36 * _pulseAnimation.value,
+                    top: targetPosition.dy - 36 * _pulseAnimation.value,
+                    child: Container(
+                      width: 72 * _pulseAnimation.value,
+                      height: 72 * _pulseAnimation.value,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: highlightColor.withValues(
+                            alpha:
+                                (1.2 - _pulseAnimation.value).clamp(0.0, 1.0),
+                          ),
+                          width: 3.0,
                         ),
-                        width: 3.0,
+                        boxShadow: [
+                          BoxShadow(
+                            color: highlightColor.withValues(alpha: 0.15),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: highlightColor.withValues(alpha: 0.15),
-                          blurRadius: 10,
-                          spreadRadius: 2,
+                    ),
+                  );
+                },
+              ),
+
+              // Moss green glow ring
+              Positioned(
+                left: targetPosition.dx - 18,
+                top: targetPosition.dy - 18,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: highlightColor.withValues(alpha: 0.25),
+                    border: Border.all(color: highlightColor, width: 2),
+                  ),
+                ),
+              ),
+
+              // Animated Hand tap indicator
+              AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, child) {
+                  final bounceOffset =
+                      (1.0 - (_pulseController.value * 2 - 1.0).abs()) * 6.0;
+                  return Positioned(
+                    left: targetPosition.dx - 12 - bounceOffset * 0.4,
+                    top: targetPosition.dy + 8 - bounceOffset,
+                    child: Icon(
+                      Icons.touch_app,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 30,
+                      shadows: const [
+                        Shadow(
+                          color: Colors.black45,
+                          blurRadius: 4,
+                          offset: Offset(1, 1),
                         ),
                       ],
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+            ],
 
-            // Moss green glow ring
-            Positioned(
-              left: targetPosition.dx - 18,
-              top: targetPosition.dy - 18,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: highlightColor.withValues(alpha: 0.25),
-                  border: Border.all(color: highlightColor, width: 2),
+            // 3. Glassmorphic Micro-Prompt anchored near the top of the screen (in clear sky area)
+            if (promptText.isNotEmpty)
+              Positioned(
+                left: 16,
+                right: 16,
+                top: 90, // Positioned beautifully below the progress indicator
+                child: Center(
+                  child: _buildGlassmorphicPrompt(promptText),
                 ),
               ),
-            ),
-
-            // Animated Hand tap indicator
-            AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                final bounceOffset =
-                    (1.0 - (_pulseController.value * 2 - 1.0).abs()) * 6.0;
-                return Positioned(
-                  left: targetPosition.dx - 12 - bounceOffset * 0.4,
-                  top: targetPosition.dy + 8 - bounceOffset,
-                  child: Icon(
-                    Icons.touch_app,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 30,
-                    shadows: const [
-                      Shadow(
-                        color: Colors.black45,
-                        blurRadius: 4,
-                        offset: Offset(1, 1),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
           ],
-
-          // 3. Glassmorphic Micro-Prompt anchored near the top of the screen (in clear sky area)
-          if (promptText.isNotEmpty)
-            Positioned(
-              left: 16,
-              right: 16,
-              top: 90, // Positioned beautifully below the progress indicator
-              child: Center(
-                child: _buildGlassmorphicPrompt(promptText),
-              ),
-            ),
-        ],
         ),
       ),
     );
