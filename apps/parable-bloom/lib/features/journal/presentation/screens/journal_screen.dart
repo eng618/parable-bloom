@@ -123,8 +123,22 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           error: (error, _) => Center(child: Text("Error: $error")),
           data: (themes) {
             if (themes.isEmpty) {
-              return const Center(
-                child: Text("No biblical themes loaded."),
+              return Center(
+                child: Semantics(
+                  label: 'No journal entries yet',
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('No blooms yet', style: textTheme.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Complete levels to unlock scripture and parables.',
+                        style: textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
               );
             }
 
