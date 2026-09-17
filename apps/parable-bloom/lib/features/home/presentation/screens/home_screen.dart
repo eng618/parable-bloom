@@ -6,6 +6,7 @@ import '../../../game/application/providers/module_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/widgets/constrained_page.dart';
+import '../../../../core/widgets/garden_loading_view.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -143,7 +144,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   );
                 },
-                loading: () => const CircularProgressIndicator(),
+                loading: () => const GardenLoadingView(message: "Loading garden…"),
                 error: (error, __) => Column(
                   children: [
                     Text(

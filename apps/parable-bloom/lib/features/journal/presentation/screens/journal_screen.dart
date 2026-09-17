@@ -8,6 +8,7 @@ import "../../../../core/widgets/constrained_page.dart";
 import "../../../../core/widgets/scripture_citation.dart";
 import "../../domain/entities/journal_theme.dart";
 import "../../application/providers/journal_providers.dart";
+import '../../../../core/widgets/garden_loading_view.dart';
 
 class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
@@ -118,7 +119,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
       ),
       body: ConstrainedPage(
         child: themesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const GardenLoadingView(message: "Loading journal…"),
           error: (error, _) => Center(child: Text("Error: $error")),
           data: (themes) {
             if (themes.isEmpty) {
