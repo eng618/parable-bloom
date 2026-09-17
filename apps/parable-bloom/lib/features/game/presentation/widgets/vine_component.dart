@@ -38,6 +38,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   Rect _cachedBounds = Rect.zero;
   int _cachedVisualVersion = -1;
   int _cachedVisualHeight = -1;
+  Path? _cachedPath;
 
   // Cached board rect for frustum culling: avoids Rect.fromLTWH +
   // boardWidth/Height recompute per animating vine per frame.
@@ -132,6 +133,18 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           points.isEmpty ? Rect.zero : Rect.fromLTRB(minX, minY, maxX, maxY);
       _cachedVisualVersion = _animator.visualVersion;
       _cachedVisualHeight = visualHeight;
+      // Bake the idle path once per geometry change; painter reuses it
+      // instead of allocating a Path per vine per frame.
+      if (points.isEmpty) {
+        _cachedPath = null;
+      } else {
+        final baked = Path();
+        baked.moveTo(points.first.dx, points.first.dy);
+        for (var i = 1; i < points.length; i++) {
+          baked.lineTo(points[i].dx, points[i].dy);
+        }
+        _cachedPath = baked;
+      }
     }
     // Refresh cached board rect only when dimensions change.
     if (_cachedBoardWidth != level.gridWidth ||
@@ -148,9 +161,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final points = _cachedPoints;
     final isAnimating = _animator.isAnimating;
 
-    // Frustum culling: a clearing vine slides fully off-board, in which case
-    // there is no path left to draw (the edge bloom still renders below).
-    if (isAnimating && points.isNotEmpty) {
+    // Frustum culling for all vines (idle + animating): skip off-board paths.
+    if (points.isNotEmpty) {
       if (!_cachedBounds.overlaps(_cachedBoardRect)) {
         _bloomRenderer.draw(
           canvas: canvas,
@@ -176,6 +188,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       calmColor: calmColor,
       isAttempted: isAttempted,
       isAnimating: isAnimating,
+      cachedPath: _cachedPath,
       classicTexture: _classicTextureImage,
       blossomTexture: _blossomTextureImage,
       etherealTexture: _etherealTextureImage,
