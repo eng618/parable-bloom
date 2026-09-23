@@ -84,15 +84,6 @@ func DefaultGridSize(difficulty string) []int {
 
 // GridSizeForLevel returns the appropriate grid size for a level ID.
 func GridSizeForLevel(levelID int) []int {
-	// This needs to be imported or duplicated. For now, let's duplicate the logic.
-	// TODO: Consider moving DifficultyForLevel to generator or creating a shared constant.
-	difficulty := difficultyForLevel(levelID)
+	difficulty := common.ExpectedDifficulty(levelID)
 	return DefaultGridSize(difficulty)
-}
-
-// difficultyForLevel returns the difficulty tier for a given level ID.
-// Delegates to common.ExpectedDifficulty (canonical 5x21 progression) to avoid
-// drift between GridSizeForLevel and batch/validator.
-func difficultyForLevel(levelID int) string {
-	return common.ExpectedDifficulty(levelID)
 }
