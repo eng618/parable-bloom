@@ -139,6 +139,8 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       }
 
       // 2. Backfill micro-verses and starter scriptures from modules
+      String? cachedTranslationId = _runTranslationId;
+
       for (final module in modulesList) {
         for (final scripture in module.scriptures) {
           final triggerLvl = scripture.triggerLevel;
@@ -163,12 +165,12 @@ class GameProgressNotifier extends Notifier<GameProgress> {
                   Set<String>.from(updatedProgress.unlockedScriptureIds)
                     ..add(scripture.id);
 
-              final translationId = await _unlockTranslationId();
+              cachedTranslationId ??= await _unlockTranslationId();
               if (!ref.mounted) return;
 
               final updatedTranslations =
                   Map<String, String>.from(updatedProgress.unlockedTranslations)
-                    ..[scripture.id] = translationId;
+                    ..[scripture.id] = cachedTranslationId;
 
               updatedProgress = updatedProgress.copyWith(
                 unlockedScriptureIds: newScriptures,
@@ -176,7 +178,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
               );
               changed = true;
               LoggerService.info(
-                'Backfill scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $translationId',
+                'Backfill scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $cachedTranslationId',
                 tag: 'GameProgressNotifier',
               );
             }
@@ -187,19 +189,19 @@ class GameProgressNotifier extends Notifier<GameProgress> {
         if (updatedProgress.isModuleCompleted(module.id, modulesList)) {
           if (!updatedProgress.unlockedTranslations
               .containsKey(module.id.toString())) {
-            final translationId = await _unlockTranslationId();
+            cachedTranslationId ??= await _unlockTranslationId();
             if (!ref.mounted) return;
 
             final updatedTranslations =
                 Map<String, String>.from(updatedProgress.unlockedTranslations)
-                  ..[module.id.toString()] = translationId;
+                  ..[module.id.toString()] = cachedTranslationId;
 
             updatedProgress = updatedProgress.copyWith(
               unlockedTranslations: updatedTranslations,
             );
             changed = true;
             LoggerService.info(
-              'Backfill parable translation: Module ${module.id} (${module.name}) with translation $translationId',
+              'Backfill parable translation: Module ${module.id} (${module.name}) with translation $cachedTranslationId',
               tag: 'GameProgressNotifier',
             );
           }
@@ -234,12 +236,12 @@ class GameProgressNotifier extends Notifier<GameProgress> {
                     Set<String>.from(updatedProgress.unlockedScriptureIds)
                       ..add(passage.id);
 
-                final translationId = await _unlockTranslationId();
+                cachedTranslationId ??= await _unlockTranslationId();
                 if (!ref.mounted) return;
 
                 final updatedTranslations = Map<String, String>.from(
                     updatedProgress.unlockedTranslations)
-                  ..[passage.id] = translationId;
+                  ..[passage.id] = cachedTranslationId;
 
                 updatedProgress = updatedProgress.copyWith(
                   unlockedScriptureIds: newScriptures,
@@ -247,7 +249,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
                 );
                 changed = true;
                 LoggerService.info(
-                  'Backfill biblical theme scripture unlocked: ${passage.id} (${passage.reference}) with translation $translationId',
+                  'Backfill biblical theme scripture unlocked: ${passage.id} (${passage.reference}) with translation $cachedTranslationId',
                   tag: 'GameProgressNotifier',
                 );
               }
@@ -282,6 +284,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
 
     var updatedProgress = newProgress;
     try {
+      String? cachedTranslationId = _runTranslationId;
       for (final module in modulesList) {
         for (final scripture in module.scriptures) {
           if (scripture.triggerLevel == levelId) {
@@ -289,18 +292,18 @@ class GameProgressNotifier extends Notifier<GameProgress> {
               final newScriptures =
                   Set<String>.from(updatedProgress.unlockedScriptureIds)
                     ..add(scripture.id);
-              final translationId = await _unlockTranslationId();
+              cachedTranslationId ??= await _unlockTranslationId();
               if (!ref.mounted) return;
               final updatedTranslations =
                   Map<String, String>.from(updatedProgress.unlockedTranslations)
-                    ..[scripture.id] = translationId;
+                    ..[scripture.id] = cachedTranslationId;
 
               updatedProgress = updatedProgress.copyWith(
                 unlockedScriptureIds: newScriptures,
                 unlockedTranslations: updatedTranslations,
               );
               LoggerService.info(
-                'Scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $translationId',
+                'Scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $cachedTranslationId',
                 tag: 'GameProgressNotifier',
               );
             }
@@ -318,18 +321,18 @@ class GameProgressNotifier extends Notifier<GameProgress> {
                 final newScriptures =
                     Set<String>.from(updatedProgress.unlockedScriptureIds)
                       ..add(passage.id);
-                final translationId = await _unlockTranslationId();
+                cachedTranslationId ??= await _unlockTranslationId();
                 if (!ref.mounted) return;
                 final updatedTranslations = Map<String, String>.from(
                     updatedProgress.unlockedTranslations)
-                  ..[passage.id] = translationId;
+                  ..[passage.id] = cachedTranslationId;
 
                 updatedProgress = updatedProgress.copyWith(
                   unlockedScriptureIds: newScriptures,
                   unlockedTranslations: updatedTranslations,
                 );
                 LoggerService.info(
-                  'Biblical theme scripture unlocked: ${passage.id} (${passage.reference}) with translation $translationId',
+                  'Biblical theme scripture unlocked: ${passage.id} (${passage.reference}) with translation $cachedTranslationId',
                   tag: 'GameProgressNotifier',
                 );
               }
@@ -410,6 +413,7 @@ class GameProgressNotifier extends Notifier<GameProgress> {
     try {
       final modulesList = await ref.read(modulesProvider.future);
       if (!ref.mounted) return;
+      String? cachedTranslationId = _runTranslationId;
       for (final module in modulesList) {
         for (final scripture in module.scriptures) {
           if (scripture.triggerLevel == lessonId) {
@@ -417,18 +421,18 @@ class GameProgressNotifier extends Notifier<GameProgress> {
               final newScriptures =
                   Set<String>.from(newProgress.unlockedScriptureIds)
                     ..add(scripture.id);
-              final translationId = await _unlockTranslationId();
+              cachedTranslationId ??= await _unlockTranslationId();
               if (!ref.mounted) return;
               final updatedTranslations =
                   Map<String, String>.from(newProgress.unlockedTranslations)
-                    ..[scripture.id] = translationId;
+                    ..[scripture.id] = cachedTranslationId;
 
               newProgress = newProgress.copyWith(
                 unlockedScriptureIds: newScriptures,
                 unlockedTranslations: updatedTranslations,
               );
               LoggerService.info(
-                'Lesson Scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $translationId',
+                'Lesson Scripture unlocked: ${scripture.id} (${scripture.reference}) with translation $cachedTranslationId',
                 tag: 'GameProgressNotifier',
               );
             }
@@ -446,18 +450,18 @@ class GameProgressNotifier extends Notifier<GameProgress> {
                 final newScriptures =
                     Set<String>.from(newProgress.unlockedScriptureIds)
                       ..add(passage.id);
-                final translationId = await _unlockTranslationId();
+                cachedTranslationId ??= await _unlockTranslationId();
                 if (!ref.mounted) return;
                 final updatedTranslations =
                     Map<String, String>.from(newProgress.unlockedTranslations)
-                      ..[passage.id] = translationId;
+                      ..[passage.id] = cachedTranslationId;
 
                 newProgress = newProgress.copyWith(
                   unlockedScriptureIds: newScriptures,
                   unlockedTranslations: updatedTranslations,
                 );
                 LoggerService.info(
-                  'Lesson Biblical Theme Scripture unlocked: ${passage.id} (${passage.reference}) with translation $translationId',
+                  'Lesson Biblical Theme Scripture unlocked: ${passage.id} (${passage.reference}) with translation $cachedTranslationId',
                   tag: 'GameProgressNotifier',
                 );
               }
@@ -529,9 +533,8 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   String? _runTranslationId;
 
   Future<String> _unlockTranslationId() async {
-    return _runTranslationId ??= await ref
-        .read(scriptureServiceProvider)
-        .pickRandomActiveTranslation();
+    return _runTranslationId ??=
+        await ref.read(scriptureServiceProvider).pickRandomActiveTranslation();
   }
 
   /// Full load resolution across the two registry sources of truth
