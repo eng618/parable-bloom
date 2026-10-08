@@ -26,8 +26,8 @@ graph LR
 
 - [x] **Monorepo Validation**: `task validate` executes cleanly across all projects (Flutter app, Next.js site, Go level-builder) with zero failures.
 - [x] **Static Analysis**: `task flutter:analyze` returns **zero warnings and zero errors** across all production and test files.
-- [x] **Go Toolchain Alignment**: Inherits Go `1.26.6` workspace-wide; `task lb:lint`, `task lb:test`, and `task lb:build` pass cleanly.
-- [x] **Dependencies Hygiene**: Production dependencies contain zero test-only packages; `mockito` and `test` isolated to `dev_dependencies`.
+- [x] **Go Toolchain Alignment**: Inherits Go `1.27.1` workspace-wide; `task lb:lint`, `task lb:test`, and `task lb:build` pass cleanly.
+- [x] **Dependencies Hygiene**: Production dependencies contain zero test-only packages; `mocktail` and `test` isolated to `dev_dependencies`.
 
 ### 2. Puzzle Solvability & Level Matrix
 

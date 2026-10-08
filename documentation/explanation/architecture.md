@@ -2,12 +2,12 @@
 
 ## 1. Technology Stack
 
-- **Framework**: Flutter 3.24+
+- **Framework**: Flutter 3.47+
 - **Game Engine**: Flame (Rendering, Input)
 - **State Management**: Riverpod (Reactive, Decoupled)
 - **Local Persistence**: Hive (Key-Value Store)
 - **Cloud Backend**: Firebase (Cloud Firestore offline-first sync, Firebase Auth with Anonymous, Email/Password, and Google Sign-In)
-- **Languages**: Dart (App), Go 1.26+ (Level Builder CLI)
+- **Languages**: Dart (App), Go 1.27+ (Level Builder CLI)
 - **Minimum OS Targets**:
   - **iOS**: 16.0+
   - **macOS**: 11.0+
@@ -227,7 +227,7 @@ Instead of using `debugPrint` or `print`, all modules should use `LoggerService`
 > interface gains or removes methods, remember to update any hand‑rolled mock
 > classes (usually located alongside the tests) to prevent compile errors. For
 > substantial interfaces consider moving mocks to a shared `test/mocks/` helper
-> file or using `mockito`/`mocktail` to generate them automatically.
+> file or using `mocktail` (no code generation required).
 
 ### 5.2 Error Reporting Standards
 

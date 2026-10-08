@@ -1,7 +1,7 @@
 # 🌿 Parable Bloom
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.24+-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?style=for-the-badge&logo=dart)](https://dart.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-3.47+-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.13+-0175C2?style=for-the-badge&logo=dart)](https://dart.dev)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 [![CI](https://github.com/eng618/parable-bloom/actions/workflows/ci.yml/badge.svg)](https://github.com/eng618/parable-bloom/actions/workflows/ci.yml)
@@ -23,8 +23,9 @@
 
 ### Prerequisites
 
-- **Flutter**: 3.24+ ([Installation Guide](https://flutter.dev/docs/get-started/install))
-- **Dart**: 3.0+
+- **Flutter**: 3.47+ ([Installation Guide](https://flutter.dev/docs/get-started/install))
+- **Dart**: 3.13+ (Included with Flutter)
+- **Go**: 1.27+ (Required for the `level-builder` tool)
 - **Platform Tools**: Xcode (iOS) or Android SDK (Android)
 
 ### Installation

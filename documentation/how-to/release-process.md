@@ -40,7 +40,7 @@ Parable Bloom uses a fully automated release pipeline that:
 
 ### Required Tools
 
-- [ ] **Flutter SDK** 3.24+ with Dart 3.0+
+- [ ] **Flutter SDK** 3.47+ with Dart 3.13+
 - [ ] **Task** (go-task) — `brew install go-task/tap/go-task`
 - [ ] **BWS CLI** — Bitwarden Secrets Manager CLI
 - [ ] **Firebase CLI** — `bun add -g firebase-tools`

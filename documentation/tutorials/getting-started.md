@@ -8,9 +8,9 @@ Welcome to **Parable Bloom**! In this tutorial, you will set up your local devel
 
 Before starting, ensure you have the following installed on your workstation:
 
-- **Flutter SDK**: 3.24+ ([Flutter Installation Guide](https://flutter.dev/docs/get-started/install))
-- **Dart SDK**: 3.0+ (Included with Flutter)
-- **Go**: 1.25+ (Required for the `level-builder` tool)
+- **Flutter SDK**: 3.47+ ([Flutter Installation Guide](https://flutter.dev/docs/get-started/install))
+- **Dart SDK**: 3.13+ (Included with Flutter)
+- **Go**: 1.27+ (Required for the `level-builder` tool)
 - **Task**: Task runner for executing workspace commands ([Taskfile Installation](https://taskfile.dev/installation/))
 
   ```bash
