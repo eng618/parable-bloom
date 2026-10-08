@@ -11,7 +11,7 @@
   "devDependencies": {
     "@eng618/prettier-config": "^2.10.2",
     "@nx/js": "^23.1.2",
-    "prettier": "^3.9.6"
+    "prettier": "^3.9.9"
   },
   "dependencies": {
     "firebase-admin": "^14.3.0"
