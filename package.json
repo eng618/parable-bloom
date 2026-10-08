@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@eng618/prettier-config": "^2.10.2",
-    "@nx/js": "^23.1.2",
+    "@nx/js": "^23.2.1",
     "prettier": "^3.9.9"
   },
   "dependencies": {
