@@ -529,9 +529,8 @@ class GameProgressNotifier extends Notifier<GameProgress> {
   String? _runTranslationId;
 
   Future<String> _unlockTranslationId() async {
-    return _runTranslationId ??= await ref
-        .read(scriptureServiceProvider)
-        .pickRandomActiveTranslation();
+    return _runTranslationId ??=
+        await ref.read(scriptureServiceProvider).pickRandomActiveTranslation();
   }
 
   /// Full load resolution across the two registry sources of truth

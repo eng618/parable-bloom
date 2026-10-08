@@ -8,6 +8,7 @@ import "../../../../core/widgets/constrained_page.dart";
 import "../../../../core/widgets/scripture_citation.dart";
 import "../../domain/entities/journal_theme.dart";
 import "../../application/providers/journal_providers.dart";
+import '../../../../core/widgets/garden_loading_view.dart';
 
 class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
@@ -118,12 +119,26 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
       ),
       body: ConstrainedPage(
         child: themesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const GardenLoadingView(message: "Loading journal…"),
           error: (error, _) => Center(child: Text("Error: $error")),
           data: (themes) {
             if (themes.isEmpty) {
-              return const Center(
-                child: Text("No biblical themes loaded."),
+              return Center(
+                child: Semantics(
+                  label: 'No journal entries yet',
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('No blooms yet', style: textTheme.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Complete levels to unlock scripture and parables.',
+                        style: textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
               );
             }
 

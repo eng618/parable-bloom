@@ -8,7 +8,7 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:hive/hive.dart";
-import "package:mockito/mockito.dart";
+import "package:mocktail/mocktail.dart";
 import "package:parable_bloom/features/game/application/providers/module_providers.dart";
 import "package:parable_bloom/features/game/application/providers/progress_providers.dart";
 import "package:parable_bloom/features/game/data/repositories/firebase_game_progress_repository.dart";

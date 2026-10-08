@@ -8,6 +8,7 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 
 import '../../../../core/app_theme.dart';
 import '../../../../core/constants/animation_timing.dart';
+import '../../../../core/widgets/garden_loading_view.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/providers/settings_providers.dart';
@@ -217,7 +218,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             child: GameWidget<GardenGame>(
               game: _game!,
               loadingBuilder: (_) =>
-                  const Center(child: CircularProgressIndicator()),
+                  const GardenLoadingView(message: 'Preparing garden…'),
             ),
           ),
         );

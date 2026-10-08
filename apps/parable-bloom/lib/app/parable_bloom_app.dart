@@ -47,6 +47,23 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(gameProgressProvider.notifier).initialize();
     });
+    // Auth-change sync subscription lives here — not in build — so it is
+    // registered once instead of re-subscribed on every rebuild.
+    // Uses [ref.listenManual]: [ref.listen] asserts a build context and
+    // throws when called from [initState]; manual subscriptions are closed
+    // automatically on unmount.
+    if (!_isScreenshotMode) {
+      ref.listenManual(authUserProvider, (previous, next) async {
+        final user = next.value;
+        final previousUser = previous?.value;
+
+        if (user != null && user.uid != previousUser?.uid) {
+          LoggerService.info('User logged in/changed. Triggering sync...',
+              tag: 'App');
+          await ref.read(gameProgressProvider.notifier).manualSync();
+        }
+      });
+    }
   }
 
   @override
@@ -120,20 +137,6 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
-    ref.watch(backgroundAudioControllerProvider);
-
-    if (!_isScreenshotMode) {
-      ref.listen(authUserProvider, (previous, next) async {
-        final user = next.value;
-        final previousUser = previous?.value;
-
-        if (user != null && user.uid != previousUser?.uid) {
-          LoggerService.info('User logged in/changed. Triggering sync...',
-              tag: 'App');
-          await ref.read(gameProgressProvider.notifier).manualSync();
-        }
-      });
-    }
 
     final app = MaterialApp.router(
       title: 'Parable Bloom',

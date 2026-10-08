@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+
 import { cn } from './utils';
 
 describe('cn utility', () => {
@@ -7,7 +8,9 @@ describe('cn utility', () => {
   });
 
   it('handles conditional class names with boolean/falsy values', () => {
-    expect(cn('class1', true && 'class2', false && 'class3', null, undefined)).toBe('class1 class2');
+    const showSecond = true;
+    const showThird = false;
+    expect(cn('class1', showSecond && 'class2', showThird && 'class3', null, undefined)).toBe('class1 class2');
   });
 
   it('handles objects with conditional classes', () => {

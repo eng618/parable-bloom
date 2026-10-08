@@ -436,7 +436,13 @@ class GridComponent extends PositionComponent
 
     // Check if any vine is currently animating
     final isAnyAnimating = parent.sink.isAnyAnimating;
-    if (isAnyAnimating) return;
+    if (isAnyAnimating) {
+      LoggerService.debug(
+        'Auto-clear deferred: another vine is still animating',
+        tag: 'GridComponent',
+      );
+      return;
+    }
 
     // Find first vine that meets the auto-clear criteria
     String? targetVineId;
@@ -452,7 +458,13 @@ class GridComponent extends PositionComponent
       }
     }
 
-    if (targetVineId == null) return;
+    if (targetVineId == null) {
+      LoggerService.debug(
+        'Auto-clear scan: no attempted+unblocked vine to clear',
+        tag: 'GridComponent',
+      );
+      return;
+    }
 
     _isAutoClearingInProgress = true;
 

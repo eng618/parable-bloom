@@ -56,6 +56,13 @@ class GardenGame extends FlameGame with TapCallbacks {
   /// telemetry of any kind.
   bool _cameraGestureActive = false;
 
+  /// Last time gesture activity was observed. The active flag self-expires:
+  /// if the end event is ever missed (e.g. the gesture widget unmounts
+  /// mid-pan), suppression lapses on its own instead of swallowing taps
+  /// forever.
+  DateTime? _lastGestureActivityAt;
+  static const Duration _stuckGestureTimeout = Duration(seconds: 1);
+
   /// End time of the last camera gesture. Taps landing within
   /// [_tapSuppressWindow] after the gesture are still the tail of the
   /// gesture (finger lift races Flame's onTapUp) and are suppressed too.
@@ -64,17 +71,30 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   /// Called by the Flutter gesture layer on scale start/update/end.
   void setCameraGestureActive(bool active) {
-    _cameraGestureActive = active;
-    if (!active) {
-      _cameraGestureEndedAt = DateTime.now();
-    } else {
+    final now = DateTime.now();
+    if (active) {
+      _cameraGestureActive = true;
+      _lastGestureActivityAt = now;
       _cameraGestureEndedAt = null;
+    } else {
+      _cameraGestureActive = false;
+      _cameraGestureEndedAt = now;
     }
   }
 
   /// Whether taps should be ignored right now (gesture active or just ended).
   bool get shouldSuppressTaps {
-    if (_cameraGestureActive) return true;
+    if (_cameraGestureActive) {
+      final lastActivity = _lastGestureActivityAt;
+      // Self-heal a missed end event: a gesture with no activity for over
+      // a second is dead; stop suppressing.
+      if (lastActivity == null ||
+          DateTime.now().difference(lastActivity) > _stuckGestureTimeout) {
+        _cameraGestureActive = false;
+      } else {
+        return true;
+      }
+    }
     final endedAt = _cameraGestureEndedAt;
     if (endedAt == null) return false;
     return DateTime.now().difference(endedAt) < _tapSuppressWindow;

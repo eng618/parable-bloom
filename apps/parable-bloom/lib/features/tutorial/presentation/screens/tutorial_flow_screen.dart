@@ -26,6 +26,7 @@ import '../../../../core/providers/settings_providers.dart';
 import '../../../game/application/providers/counter_providers.dart';
 import '../../../game/domain/entities/level_data.dart';
 import '../../../journal/application/providers/journal_providers.dart';
+import '../../../../core/widgets/garden_loading_view.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
 /// Shows the game with GameHeader (pause, grace) and a simple instruction overlay.
@@ -183,7 +184,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
           },
           loading: () => const Scaffold(
             body: Center(
-              child: CircularProgressIndicator(),
+              child: GardenLoadingView(message: "Preparing lesson…"),
             ),
           ),
           error: (error, stack) => Scaffold(

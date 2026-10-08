@@ -166,7 +166,8 @@ void main() {
     expect(container.read(graceProvider), 2);
   });
 
-  test('anyVineAnimating resets after rapid clear and blocked transitions', () {    final container = ProviderContainer();
+  test('anyVineAnimating resets after rapid clear and blocked transitions', () {
+    final container = ProviderContainer();
     addTearDown(container.dispose);
 
     final notifier = container.read(vineStatesProvider.notifier);
@@ -262,8 +263,7 @@ void main() {
       // The gone vine must not resurrect as a blocker in between.
       notifier.setAnimationState('v1', VineAnimationState.cleared);
 
-      expect(notifier.state['v1']!.animationState,
-          VineAnimationState.cleared);
+      expect(notifier.state['v1']!.animationState, VineAnimationState.cleared);
       expect(notifier.state['v1']!.isCleared, isFalse);
       expect(notifier.state['v2']!.isBlocked, isFalse);
 

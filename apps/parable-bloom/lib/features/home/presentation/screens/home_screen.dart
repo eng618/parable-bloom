@@ -6,6 +6,7 @@ import '../../../game/application/providers/module_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/widgets/constrained_page.dart';
+import '../../../../core/widgets/garden_loading_view.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -15,12 +16,29 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _precached = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(analyticsServiceProvider).logScreenView('Home');
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_precached) {
+      _precached = true;
+      for (final asset in const [
+        'assets/art/cross.png',
+        'assets/art/bg_day.png',
+        'assets/art/bg_night.png',
+      ]) {
+        precacheImage(AssetImage(asset), context);
+      }
+    }
   }
 
   @override
@@ -143,7 +161,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   );
                 },
-                loading: () => const CircularProgressIndicator(),
+                loading: () =>
+                    const GardenLoadingView(message: "Loading garden…"),
                 error: (error, __) => Column(
                   children: [
                     Text(
