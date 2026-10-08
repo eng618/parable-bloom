@@ -1,8 +1,10 @@
+import type { Metadata, Viewport } from 'next';
+import type { ReactNode } from 'react';
+
 import OpenpanelProvider from '@/components/openpanel-provider';
 import SiteShell from '@/components/site-shell';
 import UiThemeProvider from '@/components/ui-theme-provider';
-import type { Metadata, Viewport } from 'next';
-import type { ReactNode } from 'react';
+
 import './globals.css';
 
 export const metadata: Metadata = {

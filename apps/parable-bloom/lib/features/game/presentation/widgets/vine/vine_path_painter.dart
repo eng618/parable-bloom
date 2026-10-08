@@ -91,17 +91,24 @@ class VinePathPainter {
     required Color calmColor,
     required bool isAttempted,
     required bool isAnimating,
+    Path? cachedPath,
     ui.Image? classicTexture,
     ui.Image? blossomTexture,
     ui.Image? etherealTexture,
   }) {
     if (points.isEmpty) return;
 
-    // 1. Compute Path
-    final path = Path();
-    path.moveTo(points.first.dx, points.first.dy);
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
+    // Use caller-cached Path for idle vines; build fresh while animating
+    // (points mutate every frame) or when no cache was provided.
+    final Path path;
+    if (cachedPath != null && !isAnimating) {
+      path = cachedPath;
+    } else {
+      path = Path();
+      path.moveTo(points.first.dx, points.first.dy);
+      for (int i = 1; i < points.length; i++) {
+        path.lineTo(points[i].dx, points[i].dy);
+      }
     }
 
     final paint = _mainPaint

@@ -7,81 +7,27 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
 import 'package:parable_bloom/features/game/data/repositories/firebase_game_progress_repository.dart';
 import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 
-// Mock Firestore
-class MockFirebaseFirestore extends Mock implements FirebaseFirestore {
-  @override
-  CollectionReference<Map<String, dynamic>> collection(String? collectionPath) {
-    return super.noSuchMethod(
-      Invocation.method(#collection, [collectionPath]),
-      returnValue: MockCollectionReference(),
-    ) as CollectionReference<Map<String, dynamic>>;
-  }
-}
+// Mocktail mocks — no manual noSuchMethod needed, no codegen.
+class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
 
 class MockCollectionReference extends Mock
-    implements CollectionReference<Map<String, dynamic>> {
-  @override
-  DocumentReference<Map<String, dynamic>> doc([String? path]) {
-    return super.noSuchMethod(
-      Invocation.method(#doc, [path]),
-      returnValue: MockDocumentReference(),
-    ) as DocumentReference<Map<String, dynamic>>;
-  }
-}
+    implements CollectionReference<Map<String, dynamic>> {}
 
 class MockDocumentReference extends Mock
-    implements DocumentReference<Map<String, dynamic>> {
-  @override
-  CollectionReference<Map<String, dynamic>> collection(String? collectionPath) {
-    return super.noSuchMethod(
-      Invocation.method(#collection, [collectionPath]),
-      returnValue: MockCollectionReference(),
-    ) as CollectionReference<Map<String, dynamic>>;
-  }
-
-  @override
-  Future<void> set(Map<String, dynamic>? data, [SetOptions? options]) {
-    return super.noSuchMethod(
-      Invocation.method(#set, [data, options]),
-      returnValue: Future<void>.value(),
-    ) as Future<void>;
-  }
-
-  @override
-  Future<DocumentSnapshot<Map<String, dynamic>>> get([GetOptions? options]) {
-    return super.noSuchMethod(
-      Invocation.method(#get, [options]),
-      returnValue: Future.value(MockDocumentSnapshot()),
-    ) as Future<DocumentSnapshot<Map<String, dynamic>>>;
-  }
-
-  @override
-  Future<void> delete() {
-    return super.noSuchMethod(
-      Invocation.method(#delete, []),
-      returnValue: Future<void>.value(),
-    ) as Future<void>;
-  }
-}
+    implements DocumentReference<Map<String, dynamic>> {}
 
 class MockDocumentSnapshot extends Mock
-    implements DocumentSnapshot<Map<String, dynamic>> {
-  @override
-  bool get exists =>
-      super.noSuchMethod(Invocation.getter(#exists), returnValue: false)
-          as bool;
+    implements DocumentSnapshot<Map<String, dynamic>> {}
 
-  @override
-  Map<String, dynamic>? data() =>
-      super.noSuchMethod(Invocation.method(#data, []), returnValue: null)
-          as Map<String, dynamic>?;
-}
+class FakeSetOptions extends Fake implements SetOptions {}
+
+class FakeGetOptions extends Fake implements GetOptions {}
 
 void main() {
   late Box box;
@@ -97,6 +43,9 @@ void main() {
     tempDir = await Directory.systemTemp.createTemp('hive_firebase_test_');
     // Initialize Hive with the temp directory
     Hive.init(tempDir.path);
+    registerFallbackValue(<String, dynamic>{});
+    registerFallbackValue(FakeSetOptions());
+    registerFallbackValue(FakeGetOptions());
   });
 
   setUp(() async {
@@ -123,22 +72,22 @@ void main() {
 
     // Stub chain: firestore -> collection -> doc -> collection -> doc
     // Using explicit values to satisfy sound null safety for non-nullable parameters
-    when(mockFirestore.collection('game_progress_dev'))
+    when(() => mockFirestore.collection('game_progress_dev'))
         .thenReturn(mockCollection);
-    when(mockCollection.doc('test-user-id')).thenReturn(mockDoc);
-    when(mockDoc.collection('data')).thenReturn(mockSubCollection);
-    when(mockSubCollection.doc('progress')).thenReturn(mockSubDoc);
+    when(() => mockCollection.doc('test-user-id')).thenReturn(mockDoc);
+    when(() => mockDoc.collection('data')).thenReturn(mockSubCollection);
+    when(() => mockSubCollection.doc('progress')).thenReturn(mockSubDoc);
 
     // Stub operations
-    // get() takes optional GetOptions, so any is okay if inferred correctly.
-    // set() takes non-nullable Map<String, dynamic>, using any as dynamic to satisfy type check.
-    when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
-    when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async => {});
-    when(mockSubDoc.delete()).thenAnswer((_) async => {});
+    // get() takes optional GetOptions, so any() is okay if inferred correctly.
+    // set() takes non-nullable Map<String, dynamic>, using any() to satisfy type check.
+    when(() => mockSubDoc.get(any())).thenAnswer((_) async => mockSnapshot);
+    when(() => mockSubDoc.set(any())).thenAnswer((_) async => {});
+    when(() => mockSubDoc.delete()).thenAnswer((_) async => {});
 
     // Default snapshot state (does not exist)
-    when(mockSnapshot.exists).thenReturn(false);
-    when(mockSnapshot.data()).thenReturn(null);
+    when(() => mockSnapshot.exists).thenReturn(false);
+    when(() => mockSnapshot.data()).thenReturn(null);
   });
 
   tearDown(() async {
@@ -230,8 +179,8 @@ void main() {
           'lvl_m01_05'
         },
       );
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(cloud.toJson());
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(cloud.toJson());
 
       await repository.setCloudSyncEnabled(true);
 
@@ -261,8 +210,8 @@ void main() {
       );
       await repository.saveProgress(local);
 
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
           currentLevel: 'lvl_m01_03',
           completedLevels: {'lvl_m01_01', 'lvl_m01_02'},
@@ -270,7 +219,7 @@ void main() {
       );
 
       int writeAttempts = 0;
-      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+      when(() => mockSubDoc.set(any())).thenAnswer((_) async {
         writeAttempts += 1;
       });
 
@@ -293,8 +242,8 @@ void main() {
       );
       await repository.saveProgress(local);
 
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
           currentLevel: 'lvl_m01_06',
           completedLevels: {
@@ -307,7 +256,7 @@ void main() {
       );
 
       int writeAttempts = 0;
-      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+      when(() => mockSubDoc.set(any())).thenAnswer((_) async {
         writeAttempts += 1;
       });
 
@@ -384,7 +333,7 @@ void main() {
       await box.put('last_sync_time', now);
 
       int writeAttempts = 0;
-      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+      when(() => mockSubDoc.set(any())).thenAnswer((_) async {
         writeAttempts += 1;
       });
 
@@ -406,12 +355,12 @@ void main() {
       await box.put('last_local_update', now);
       await box.put('last_sync_time', now - 1000);
 
-      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.exists).thenReturn(false);
-      when(mockSnapshot.data()).thenReturn(null);
+      when(() => mockSubDoc.get(any())).thenAnswer((_) async => mockSnapshot);
+      when(() => mockSnapshot.exists).thenReturn(false);
+      when(() => mockSnapshot.data()).thenReturn(null);
 
       int writeAttempts = 0;
-      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+      when(() => mockSubDoc.set(any())).thenAnswer((_) async {
         writeAttempts += 1;
       });
 
@@ -430,12 +379,12 @@ void main() {
         cloudRetryDelay: Duration.zero,
       );
 
-      when(mockSubDoc.get(any)).thenAnswer((_) async {
+      when(() => mockSubDoc.get(any())).thenAnswer((_) async {
         await Future<void>.delayed(const Duration(milliseconds: 30));
         return mockSnapshot;
       });
-      when(mockSnapshot.exists).thenReturn(false);
-      when(mockSnapshot.data()).thenReturn(null);
+      when(() => mockSnapshot.exists).thenReturn(false);
+      when(() => mockSnapshot.data()).thenReturn(null);
 
       await box.put('cloud_sync_enabled', true);
 
@@ -452,10 +401,10 @@ void main() {
         cloudRetryDelay: Duration.zero,
       );
 
-      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.exists).thenReturn(false);
-      when(mockSnapshot.data()).thenReturn(null);
-      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+      when(() => mockSubDoc.get(any())).thenAnswer((_) async => mockSnapshot);
+      when(() => mockSnapshot.exists).thenReturn(false);
+      when(() => mockSnapshot.data()).thenReturn(null);
+      when(() => mockSubDoc.set(any())).thenAnswer((_) async {
         await Future<void>.delayed(const Duration(milliseconds: 30));
       });
 
@@ -475,10 +424,10 @@ void main() {
       );
       int writeAttempts = 0;
 
-      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.exists).thenReturn(false);
-      when(mockSnapshot.data()).thenReturn(null);
-      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+      when(() => mockSubDoc.get(any())).thenAnswer((_) async => mockSnapshot);
+      when(() => mockSnapshot.exists).thenReturn(false);
+      when(() => mockSnapshot.data()).thenReturn(null);
+      when(() => mockSubDoc.set(any())).thenAnswer((_) async {
         writeAttempts += 1;
         if (writeAttempts < 3) {
           throw TimeoutException('transient timeout');
@@ -500,10 +449,10 @@ void main() {
       );
       int writeAttempts = 0;
 
-      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.exists).thenReturn(false);
-      when(mockSnapshot.data()).thenReturn(null);
-      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+      when(() => mockSubDoc.get(any())).thenAnswer((_) async => mockSnapshot);
+      when(() => mockSnapshot.exists).thenReturn(false);
+      when(() => mockSnapshot.data()).thenReturn(null);
+      when(() => mockSubDoc.set(any())).thenAnswer((_) async {
         writeAttempts += 1;
         if (writeAttempts < 3) {
           throw FirebaseException(
@@ -530,10 +479,10 @@ void main() {
       );
       int writeAttempts = 0;
 
-      when(mockSubDoc.get(any)).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.exists).thenReturn(false);
-      when(mockSnapshot.data()).thenReturn(null);
-      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+      when(() => mockSubDoc.get(any())).thenAnswer((_) async => mockSnapshot);
+      when(() => mockSnapshot.exists).thenReturn(false);
+      when(() => mockSnapshot.data()).thenReturn(null);
+      when(() => mockSubDoc.set(any())).thenAnswer((_) async {
         writeAttempts += 1;
         throw FirebaseException(
           plugin: 'cloud_firestore',
@@ -552,7 +501,7 @@ void main() {
         () async {
       int readAttempts = 0;
 
-      when(mockSubDoc.get(any)).thenAnswer((_) async {
+      when(() => mockSubDoc.get(any())).thenAnswer((_) async {
         readAttempts += 1;
         if (readAttempts < 3) {
           throw FirebaseException(
@@ -563,8 +512,8 @@ void main() {
         }
         return mockSnapshot;
       });
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
             currentLevel: 'lvl_m01_05',
             completedLevels: {
@@ -593,7 +542,7 @@ void main() {
         () async {
       int readAttempts = 0;
 
-      when(mockSubDoc.get(any)).thenAnswer((_) async {
+      when(() => mockSubDoc.get(any())).thenAnswer((_) async {
         readAttempts += 1;
         throw FirebaseException(
           plugin: 'cloud_firestore',
@@ -619,7 +568,7 @@ void main() {
     test('should not retry cloud read for permanent Firebase errors', () async {
       int readAttempts = 0;
 
-      when(mockSubDoc.get(any)).thenAnswer((_) async {
+      when(() => mockSubDoc.get(any())).thenAnswer((_) async {
         readAttempts += 1;
         throw FirebaseException(
           plugin: 'cloud_firestore',
@@ -649,8 +598,8 @@ void main() {
       );
       await repository.saveProgress(local);
 
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
             currentLevel: 'lvl_m01_06',
             completedLevels: {
@@ -676,8 +625,8 @@ void main() {
       );
       await repository.saveProgress(shared);
 
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(shared.toJson());
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(shared.toJson());
 
       final conflict = await repository.inspectSyncConflict();
 
@@ -708,8 +657,8 @@ void main() {
         },
       );
 
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(cloud.toJson());
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(cloud.toJson());
 
       final conflict = await repository.inspectSyncConflict();
 
@@ -736,8 +685,8 @@ void main() {
           'lvl_m01_07'
         },
       );
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(cloud.toJson());
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(cloud.toJson());
 
       await repository.resolveSyncConflict(SyncConflictResolution.keepCloud);
 
@@ -768,8 +717,8 @@ void main() {
       );
       await repository.saveProgress(local);
 
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(
         GameProgress.initial().copyWith(
           currentLevel: 'lvl_m01_03',
           completedLevels: {'lvl_m01_01', 'lvl_m01_02'},
@@ -804,11 +753,11 @@ void main() {
       );
       await repository.saveProgress(local);
 
-      when(mockSnapshot.exists).thenReturn(false);
-      when(mockSnapshot.data()).thenReturn(null);
+      when(() => mockSnapshot.exists).thenReturn(false);
+      when(() => mockSnapshot.data()).thenReturn(null);
 
       int writeAttempts = 0;
-      when(mockSubDoc.set(any as dynamic)).thenAnswer((_) async {
+      when(() => mockSubDoc.set(any())).thenAnswer((_) async {
         writeAttempts += 1;
       });
 

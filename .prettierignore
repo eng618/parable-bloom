@@ -16,11 +16,8 @@ package-lock.json
 **/*.g.dart
 **/*.freezed.dart
 
-# Next.js
-apps/parable-bloom-site/.next/
-apps/parable-bloom-site/.eslintcache
-apps/parable-bloom-site/next-env.d.ts
-apps/parable-bloom-site/tsconfig.tsbuildinfo
+# Next.js site is owned by OXC (oxfmt/oxlint) — keep root Prettier off it
+apps/parable-bloom-site/
 
 # Taskfile / Cache / Logs
 .task/
