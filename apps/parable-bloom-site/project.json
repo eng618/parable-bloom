@@ -13,9 +13,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": [
-        "{projectRoot}/.next"
-      ],
+      "outputs": ["{projectRoot}/.next"],
       "options": {
         "command": "task next:build",
         "cwd": "."

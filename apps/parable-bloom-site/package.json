@@ -1,14 +1,14 @@
 {
   "name": "parable-bloom-site",
   "version": "0.5.15",
+  "private": true,
   "scripts": {
     "build": "next build",
     "dev": "next dev --port 4201",
-    "format": "prettier --write .",
-    "format:ci": "prettier --check .",
-    "lint": "eslint . --cache",
-    "lint:fix": "eslint . --cache --fix",
-    "lint:report": "eslint . --cache -o ./eslintReport.html -f html",
+    "format": "oxfmt --write .",
+    "format:ci": "oxfmt --check .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix",
     "prepare": "husky",
     "start": "next start --port 4201",
     "test": "bun test",
@@ -28,28 +28,23 @@
     "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
-    "@eng618/prettier-config": "^2.10.2",
-    "@gv-tech/eslint-config": "^0.1.15",
-    "@next/eslint-plugin-next": "^16.3.4",
+    "@gv-tech/oxc-config": "^1.2.0",
     "@types/node": "24.7.2",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
-    "eslint": "^10.10.0",
-    "eslint-config-next": "16.3.4",
     "husky": "^9.1.7",
-    "lint-staged": "^17.4.1",
-    "prettier": "^3.9.6",
-    "typescript": "^6.0.2"
+    "lint-staged": "^17.6.0",
+    "oxfmt": "^0.72.0",
+    "oxlint": "^1.87.0",
+    "typescript": "^7.0.2"
   },
-  "private": true,
   "lint-staged": {
-    "*.(js|ts|mjs|cjs)?(x)": [
-      "prettier --write",
-      "eslint --cache --fix"
+    "*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}": [
+      "oxfmt --write",
+      "oxlint --fix"
     ],
-    "*.(md)?(x)": [
-      "prettier --write"
+    "*.{json,jsonc,md,yml,yaml}": [
+      "oxfmt --write"
     ]
-  },
-  "prettier": "@eng618/prettier-config"
+  }
 }

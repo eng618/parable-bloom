@@ -1,5 +1,6 @@
 import { Text } from '@gv-tech/ui-web/text';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -152,7 +153,7 @@ export default function PrivacyPage() {
       <Text variant="body">
         You can delete your account and all associated data directly within the app by navigating to{' '}
         <strong>Settings &gt; Delete Account</strong>. Alternatively, you may request account deletion at any time by
-        visiting our <a href="/delete-account">Account Deletion Page</a>.
+        visiting our <Link href="/delete-account">Account Deletion Page</Link>.
       </Text>
 
       <Text variant="h2">7. Changes to This Privacy Policy</Text>

@@ -3,7 +3,7 @@ import Link from 'next/link';
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center gap-4 py-16 text-center">
-      <span className="text-5xl" role="img" aria-hidden="true">
+      <span className="text-5xl" aria-hidden="true">
         🍂
       </span>
       <h2 className="font-display text-text-primary text-2xl font-semibold">Path not found</h2>

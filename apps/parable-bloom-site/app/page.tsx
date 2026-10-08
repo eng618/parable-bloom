@@ -1,9 +1,10 @@
-import DesignSystemCard from '@/components/design-system-card';
 import { Badge } from '@gv-tech/ui-web/badge';
 import { Separator } from '@gv-tech/ui-web/separator';
 import { Text } from '@gv-tech/ui-web/text';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+
+import DesignSystemCard from '@/components/design-system-card';
 
 const Empty = () => null;
 

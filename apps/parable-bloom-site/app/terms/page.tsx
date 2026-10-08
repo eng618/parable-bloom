@@ -1,5 +1,6 @@
 import { Text } from '@gv-tech/ui-web/text';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -67,7 +68,7 @@ export default function TermsPage() {
       <Text variant="body">
         You acknowledge that the App may automatically collect anonymous usage statistics and crash reports
         ("Telemetry") to assist in the diagnosis of technical issues and the improvement of the user experience, as
-        detailed in our <a href="/privacy">Privacy Policy</a>.
+        detailed in our <Link href="/privacy">Privacy Policy</Link>.
       </Text>
 
       <Text variant="h2">5. Intellectual Property</Text>

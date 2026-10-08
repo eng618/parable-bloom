@@ -45,6 +45,19 @@ task test:all
 flutter test --coverage
 ```
 
+### Next.js Site Tooling (OXC)
+
+The marketing site (`apps/parable-bloom-site`) uses **OXC** for formatting and linting — `oxfmt` and `oxlint`
+via `bun run format` / `bun run lint` (or `task next:format` / `task next:lint`). Both extend the shared
+`@gv-tech/oxc-config` presets (`oxlint.config.ts`, `oxfmt.config.ts`). Do not reintroduce Prettier or ESLint
+configs in the site directory; the root Prettier setup intentionally ignores it (see `.prettierignore`).
+
+Intentional rule deviations (documented in `oxlint.config.ts`):
+
+- `react/react-in-jsx-scope` is off — Next.js + React 19 always use the automatic JSX runtime.
+- `eslint/no-console` allows `debug`/`warn`/`error` (diagnostic logging) and is off for `scripts/**/*.mjs`
+  (CLI output).
+
 ## 🎯 Contribution Guidelines
 
 ### Types of Contributions
