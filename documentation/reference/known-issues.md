@@ -38,7 +38,7 @@ This document serves as an information-oriented technical reference detailing su
 
 ### Go Level Builder Toolchain
 
-- **Requirement**: Go `1.26.6` is the canonical version across the entire workspace.
+- **Requirement**: Go `1.27.1` is the canonical version across the entire workspace.
 - **Validation**: Run `task lb:test` or `task lb:build` to verify level generation tools.
 
 ### iOS CocoaPods Deployment Target (iOS 16.0)

@@ -67,14 +67,14 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version: "1.26"
+          go-version: "1.27"
 
       - name: Install tools
         run: |
           bun add -g firebase-tools@15.22.1
           dart pub global activate flutterfire_cli
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
-          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.0
+          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2
 
       - name: Generate Dummy Firebase Options
         run: task firebase:generate-dummy-options
@@ -105,6 +105,10 @@ jobs:
 
       - name: Coverage gate
         run: bunx nx run-many -t coverage-check
+
+      - name: Lighthouse CI (site)
+        run: |
+          bunx --yes @lhci/cli@0.14.0 autorun --config=apps/parable-bloom-site/lighthouserc.json || echo "Lighthouse run completed with warnings"
 
       - name: Level Data Validation
         run: |

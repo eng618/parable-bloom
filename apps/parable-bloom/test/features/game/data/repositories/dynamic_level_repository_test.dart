@@ -3,71 +3,23 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
 import 'package:parable_bloom/features/game/data/repositories/dynamic_level_repository.dart';
 
-// Generate Mocks for Hive Box and Firestore
-class MockBox extends Mock implements Box {
-  @override
-  bool containsKey(dynamic key) =>
-      super.noSuchMethod(Invocation.method(#containsKey, [key]),
-          returnValue: false) as bool;
+// Mocktail mocks — no manual noSuchMethod needed, no codegen.
+class MockBox extends Mock implements Box {}
 
-  @override
-  dynamic get(dynamic key, {dynamic defaultValue}) =>
-      super.noSuchMethod(Invocation.method(#get, [key]), returnValue: null);
-
-  @override
-  Future<void> put(dynamic key, dynamic value) =>
-      super.noSuchMethod(Invocation.method(#put, [key, value]),
-          returnValue: Future<void>.value()) as Future<void>;
-}
-
-class MockFirebaseFirestore extends Mock implements FirebaseFirestore {
-  @override
-  CollectionReference<Map<String, dynamic>> collection(String collectionPath) {
-    return super.noSuchMethod(
-      Invocation.method(#collection, [collectionPath]),
-      returnValue: MockCollectionReference(),
-    ) as CollectionReference<Map<String, dynamic>>;
-  }
-}
+class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
 
 class MockCollectionReference extends Mock
-    implements CollectionReference<Map<String, dynamic>> {
-  @override
-  DocumentReference<Map<String, dynamic>> doc([String? path]) {
-    return super.noSuchMethod(
-      Invocation.method(#doc, [path]),
-      returnValue: MockDocumentReference(),
-    ) as DocumentReference<Map<String, dynamic>>;
-  }
-}
+    implements CollectionReference<Map<String, dynamic>> {}
 
 class MockDocumentReference extends Mock
-    implements DocumentReference<Map<String, dynamic>> {
-  @override
-  Future<DocumentSnapshot<Map<String, dynamic>>> get([GetOptions? options]) {
-    return super.noSuchMethod(
-      Invocation.method(#get, [options]),
-      returnValue: Future.value(MockDocumentSnapshot()),
-    ) as Future<DocumentSnapshot<Map<String, dynamic>>>;
-  }
-}
+    implements DocumentReference<Map<String, dynamic>> {}
 
 class MockDocumentSnapshot extends Mock
-    implements DocumentSnapshot<Map<String, dynamic>> {
-  @override
-  bool get exists =>
-      super.noSuchMethod(Invocation.getter(#exists), returnValue: false)
-          as bool;
-
-  @override
-  Map<String, dynamic>? data() =>
-      super.noSuchMethod(Invocation.method(#data, []), returnValue: null)
-          as Map<String, dynamic>?;
-}
+    implements DocumentSnapshot<Map<String, dynamic>> {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -107,9 +59,10 @@ void main() {
     mockDoc = MockDocumentReference();
     mockSnapshot = MockDocumentSnapshot();
 
-    when(mockFirestore.collection('levels_dev')).thenReturn(mockCollection);
-    when(mockCollection.doc('lvl_test')).thenReturn(mockDoc);
-    when(mockDoc.get()).thenAnswer((_) async => mockSnapshot);
+    when(() => mockFirestore.collection('levels_dev'))
+        .thenReturn(mockCollection);
+    when(() => mockCollection.doc('lvl_test')).thenReturn(mockDoc);
+    when(() => mockDoc.get()).thenAnswer((_) async => mockSnapshot);
   });
 
   group('DynamicLevelRepository Baseline & Memory Cache Tests', () {
@@ -120,10 +73,11 @@ void main() {
         cacheBox: mockCacheBox,
       );
 
-      when(mockCacheBox.containsKey('cached_level_lvl_test')).thenReturn(false);
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(testLevelJson);
-      when(mockCacheBox.put(any, any)).thenAnswer((_) async {});
+      when(() => mockCacheBox.containsKey('cached_level_lvl_test'))
+          .thenReturn(false);
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(testLevelJson);
+      when(() => mockCacheBox.put(any(), any())).thenAnswer((_) async {});
 
       final level = await repository.getLevel('lvl_test');
 
@@ -131,11 +85,10 @@ void main() {
       expect(level.name, 'Test Level');
 
       // Verifies it hit Firestore and stored in Hive
-      verify(mockFirestore.collection('levels_dev')).called(1);
-      verify(mockDoc.get()).called(1);
-      verify(mockCacheBox.put(
-              'cached_level_lvl_test', json.encode(testLevelJson)))
-          .called(1);
+      verify(() => mockFirestore.collection('levels_dev')).called(1);
+      verify(() => mockDoc.get()).called(1);
+      verify(() => mockCacheBox.put(
+          'cached_level_lvl_test', json.encode(testLevelJson))).called(1);
     });
 
     test('loads dynamic levels from Hive cache on cache hit', () async {
@@ -145,14 +98,15 @@ void main() {
         cacheBox: mockCacheBox,
       );
 
-      when(mockCacheBox.containsKey('cached_level_lvl_test')).thenReturn(true);
-      when(mockCacheBox.get('cached_level_lvl_test'))
+      when(() => mockCacheBox.containsKey('cached_level_lvl_test'))
+          .thenReturn(true);
+      when(() => mockCacheBox.get('cached_level_lvl_test'))
           .thenReturn(json.encode(testLevelJson));
 
       final level = await repository.getLevel('lvl_test');
 
       expect(level.id, 'lvl_test');
-      verify(mockCacheBox.get('cached_level_lvl_test')).called(1);
+      verify(() => mockCacheBox.get('cached_level_lvl_test')).called(1);
       verifyZeroInteractions(mockFirestore);
     });
 
@@ -166,10 +120,11 @@ void main() {
       );
 
       // First fetch: Cache miss in memory, cache miss in Hive, fetch from Firestore
-      when(mockCacheBox.containsKey('cached_level_lvl_test')).thenReturn(false);
-      when(mockSnapshot.exists).thenReturn(true);
-      when(mockSnapshot.data()).thenReturn(testLevelJson);
-      when(mockCacheBox.put(any, any)).thenAnswer((_) async {});
+      when(() => mockCacheBox.containsKey('cached_level_lvl_test'))
+          .thenReturn(false);
+      when(() => mockSnapshot.exists).thenReturn(true);
+      when(() => mockSnapshot.data()).thenReturn(testLevelJson);
+      when(() => mockCacheBox.put(any(), any())).thenAnswer((_) async {});
 
       final level1 = await repository.getLevel('lvl_test');
       expect(level1.id, 'lvl_test');

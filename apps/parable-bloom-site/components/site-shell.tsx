@@ -1,12 +1,15 @@
 'use client';
 
-import { trackNavigationClick } from '@/lib/analytics';
-import { cn } from '@/lib/utils';
 import { SupportFab } from '@gv-tech/ui-web/support-fab';
 import { Text } from '@gv-tech/ui-web/text';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+
+import { trackNavigationClick } from '@/lib/analytics';
+import { cn } from '@/lib/utils';
+
+const currentYear = new Date().getFullYear();
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -75,7 +78,7 @@ export default function SiteShell({ children }: SiteShellProps) {
       {/* ── Footer ── */}
       <footer className="bg-brand/80 border-t border-white/20 py-8 text-center backdrop-blur-sm">
         <Text variant="caption" className="text-white/80">
-          © {new Date().getFullYear()} GVTech. All rights reserved.
+          © {currentYear} GVTech. All rights reserved.
         </Text>
         <div className="mt-2 flex justify-center gap-4 text-xs text-white/60">
           <Link
