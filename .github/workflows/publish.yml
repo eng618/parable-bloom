@@ -38,7 +38,8 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .nx/cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-${{ github.run_id }}
+          key:
+            ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-${{ github.run_id }}
             ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-
             ${{ runner.os }}-nx-
 
@@ -124,7 +125,8 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .nx/cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-${{ github.run_id }}
+          key:
+            ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-${{ github.run_id }}
             ${{ runner.os }}-nx-${{ hashFiles('bun.lock', 'nx.json') }}-
             ${{ runner.os }}-nx-
 
@@ -248,7 +250,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version: "1.27"
+          # Pinned to the exact patch in .tool-versions (see ci.yml).
+          go-version: "1.27.1"
 
       - name: Build Level Builder
         run: |
