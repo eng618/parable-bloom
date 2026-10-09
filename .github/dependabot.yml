@@ -1,40 +1,40 @@
 version: 2
 updates:
   # Enable version updates for github actions
-  - package-ecosystem: 'github-actions'
-    directory: '/'
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: 'monthly'
+      interval: "monthly"
 
   # Enable version updates for go
   - package-ecosystem: gomod
-    directory: '/tools/level-builder'
+    directory: "/tools/level-builder"
     schedule:
-      interval: 'monthly'
+      interval: "monthly"
 
   # Enable version updates for Bun (Root, Apps, and Tools)
-  - package-ecosystem: 'bun'
-    directory: '/'
+  - package-ecosystem: "bun"
+    directory: "/"
     schedule:
-      interval: 'monthly'
+      interval: "monthly"
 
-  - package-ecosystem: 'bun'
-    directory: 'apps/parable-bloom-site'
+  - package-ecosystem: "bun"
+    directory: "apps/parable-bloom-site"
     schedule:
-      interval: 'monthly'
+      interval: "monthly"
 
-  - package-ecosystem: 'bun'
-    directory: '/apps/parable-bloom'
+  - package-ecosystem: "bun"
+    directory: "/apps/parable-bloom"
     schedule:
-      interval: 'monthly'
+      interval: "monthly"
 
-  - package-ecosystem: 'bun'
-    directory: '/tools/level-builder'
+  - package-ecosystem: "bun"
+    directory: "/tools/level-builder"
     schedule:
-      interval: 'monthly'
+      interval: "monthly"
 
   # Enable version updates for Pub (Flutter App)
-  - package-ecosystem: 'pub'
-    directory: '/apps/parable-bloom'
+  - package-ecosystem: "pub"
+    directory: "/apps/parable-bloom"
     schedule:
-      interval: 'monthly'
+      interval: "monthly"

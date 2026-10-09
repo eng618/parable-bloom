@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 includes:
   flutter: .taskfiles/Flutter.yml
@@ -102,12 +102,12 @@ tasks:
       - bunx nx run-many -t lint --parallel=false
 
   docs:format:
-    desc: Format documentation files using Prettier and @eng618/prettier-config
+    desc: Format documentation files using oxfmt and @gv-tech/oxc-config
     cmds:
       - bun run format:docs
 
   docs:format:check:
-    desc: Check documentation formatting using Prettier
+    desc: Check documentation formatting using oxfmt
     cmds:
       - bun run format:docs:check
 

@@ -348,7 +348,7 @@ Fastlane automates store uploads, beta distributions, and metadata management.
    ```bash
    # Get your project ID
    PROJECT_ID=$(bws project list | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
-   
+
    # Create secret
    bws secret create "PARABLE_BLOOM_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" "$(base64 -i ~/Downloads/service-account.json)" "$PROJECT_ID"
    ```
@@ -606,7 +606,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    ```bash
    # Dry-run to see what will happen
    bunx nx release --dry-run
-   
+
    # Bump version (independent for each project)
    bunx nx release --yes
    ```
@@ -760,7 +760,7 @@ Console says your app doesn't use advertising ID.`
   declares no ad-ID usage in Play Console.
 - Fix: `apps/parable-bloom/android/app/src/main/AndroidManifest.xml` strips it
   with `<uses-permission android:name="com.google.android.gms.permission.AD_ID"
-tools:node="remove"/>` (requires `xmlns:tools`). The merged AAB then matches
+  tools:node="remove"/>` (requires `xmlns:tools`). The merged AAB then matches
   the Play Console data-safety declaration.
 - Alternative (only if the app ever needs the ad ID, e.g. for Analytics
   demographics): keep the permission and instead update Play Console → App

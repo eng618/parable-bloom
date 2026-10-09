@@ -1,20 +1,19 @@
 {
   "name": "parable-bloom-workspace",
   "private": true,
-  "packageManager": "bun@1.3.14",
   "scripts": {
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "format:docs": "prettier --write \"documentation/**/*.md\" \"*.md\"",
-    "format:docs:check": "prettier --check \"documentation/**/*.md\" \"*.md\""
-  },
-  "devDependencies": {
-    "@eng618/prettier-config": "^2.10.2",
-    "@nx/js": "^23.1.2",
-    "prettier": "^3.9.9"
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "format:docs": "oxfmt --write \"documentation/**/*.md\" \"*.md\"",
+    "format:docs:check": "oxfmt --check \"documentation/**/*.md\" \"*.md\""
   },
   "dependencies": {
     "firebase-admin": "^14.3.0"
   },
-  "prettier": "@eng618/prettier-config"
+  "devDependencies": {
+    "@gv-tech/oxc-config": "^1.2.0",
+    "@nx/js": "^23.1.2",
+    "oxfmt": "^0.72.0"
+  },
+  "packageManager": "bun@1.3.14"
 }

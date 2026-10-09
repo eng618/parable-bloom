@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   # -----------------------------------------------------------------------------
@@ -11,7 +11,7 @@ tasks:
       - fastlane deploy
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   android:beta:
     desc: Deploy Android to Google Play Beta Track via Fastlane
@@ -20,7 +20,7 @@ tasks:
       - fastlane beta
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   android:build:
     desc: Build Android release bundle via Fastlane (no upload)
@@ -29,7 +29,7 @@ tasks:
       - fastlane build_release
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   android:validate:
     desc: Validate Android bundle and credentials
@@ -38,7 +38,7 @@ tasks:
       - fastlane validate
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   # -----------------------------------------------------------------------------
   # iOS Deployment
@@ -51,7 +51,7 @@ tasks:
       - fastlane beta
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   ios:release:
     desc: Deploy iOS to App Store via Fastlane
@@ -61,7 +61,7 @@ tasks:
       - fastlane release
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   ios:build:
     desc: Build iOS IPA via Fastlane (no upload)
@@ -71,7 +71,7 @@ tasks:
       - fastlane build_release
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   ios:screenshots:
     desc: Capture iOS App Store screenshots locally via Flutter integration tests
@@ -81,7 +81,7 @@ tasks:
       - fastlane screenshots
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   ios:screenshots:frame:
     desc: Frame local iOS screenshots with frameit (optional)
@@ -98,7 +98,7 @@ tasks:
       - fastlane validate
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   # -----------------------------------------------------------------------------
   # CI Support
@@ -111,7 +111,7 @@ tasks:
       - fastlane setup_keychain
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   ios:cleanup:
     desc: Clean up iOS CI artifacts
@@ -121,7 +121,7 @@ tasks:
       - fastlane cleanup
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   # -----------------------------------------------------------------------------
   # Android Local Screenshots
@@ -133,7 +133,7 @@ tasks:
       - fastlane screenshots
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."
 
   android:screenshots:frame:
     desc: Frame local Android screenshots with frameit (optional)
@@ -142,4 +142,4 @@ tasks:
       - cd fastlane && frameit
     preconditions:
       - sh: command -v fastlane >/dev/null 2>&1
-        msg: 'Fastlane is not installed.'
+        msg: "Fastlane is not installed."

@@ -236,14 +236,7 @@ A global `level_mappings` object maps logical gameplay IDs to physical assets.
             }
           }
         },
-        "required": [
-          "id",
-          "name",
-          "levels",
-          "challenge_level",
-          "parable",
-          "theme_seed"
-        ]
+        "required": ["id", "name", "levels", "challenge_level", "parable", "theme_seed"]
       }
     }
   },

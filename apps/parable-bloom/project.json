@@ -6,17 +6,13 @@
   "release": {
     "version": {
       "preserveLocalDependencyProtocols": false,
-      "manifestRootsToUpdate": [
-        "apps/parable-bloom"
-      ]
+      "manifestRootsToUpdate": ["apps/parable-bloom"]
     }
   },
   "targets": {
     "build": {
       "executor": "nx:run-commands",
-      "outputs": [
-        "{projectRoot}/build/web"
-      ],
+      "outputs": ["{projectRoot}/build/web"],
       "options": {
         "command": "task flutter:build:web",
         "cwd": "."
@@ -32,9 +28,7 @@
     },
     "test": {
       "executor": "nx:run-commands",
-      "outputs": [
-        "{projectRoot}/coverage/lcov.info"
-      ],
+      "outputs": ["{projectRoot}/coverage/lcov.info"],
       "options": {
         "command": "task flutter:test",
         "cwd": "."
@@ -42,12 +36,8 @@
     },
     "coverage-check": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "test"
-      ],
-      "outputs": [
-        "{projectRoot}/coverage/lcov.info"
-      ],
+      "dependsOn": ["test"],
+      "outputs": ["{projectRoot}/coverage/lcov.info"],
       "options": {
         "command": "task flutter:coverage:check",
         "cwd": "."
@@ -70,9 +60,7 @@
     "release-web": {
       "executor": "nx:run-commands",
       "cache": true,
-      "outputs": [
-        "{projectRoot}/build/web"
-      ],
+      "outputs": ["{projectRoot}/build/web"],
       "options": {
         "command": "task flutter:build:web",
         "cwd": "."
@@ -81,9 +69,7 @@
     "release-android": {
       "executor": "nx:run-commands",
       "cache": true,
-      "outputs": [
-        "{projectRoot}/build/app/outputs/bundle/release"
-      ],
+      "outputs": ["{projectRoot}/build/app/outputs/bundle/release"],
       "options": {
         "command": "task release:android",
         "cwd": "."

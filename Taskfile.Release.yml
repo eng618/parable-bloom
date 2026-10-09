@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   _ensure:main:
@@ -43,7 +43,7 @@ tasks:
       - task: :flutter:get
       - task: :flutter:build:web
         vars:
-          APP_ENV: '{{.APP_ENV}}'
+          APP_ENV: "{{.APP_ENV}}"
 
   android:
     desc: Build the Android application
@@ -52,9 +52,9 @@ tasks:
       - task: :flutter:get
       - task: :flutter:build:android
         vars:
-          APP_ENV: '{{.APP_ENV}}'
-          BUILD_NAME: '{{.BUILD_NAME}}'
-          BUILD_NUMBER: '{{.BUILD_NUMBER}}'
+          APP_ENV: "{{.APP_ENV}}"
+          BUILD_NAME: "{{.BUILD_NAME}}"
+          BUILD_NUMBER: "{{.BUILD_NUMBER}}"
 
   ios:
     desc: Build the iOS application
@@ -63,7 +63,7 @@ tasks:
       - task: :flutter:get
       - task: :flutter:build:ios
         vars:
-          APP_ENV: '{{.APP_ENV}}'
+          APP_ENV: "{{.APP_ENV}}"
 
   ios:screenshots:
     desc: Capture iOS App Store screenshots
@@ -94,7 +94,7 @@ tasks:
       - task: :flutter:get
       - task: :flutter:build:linux
         vars:
-          APP_ENV: '{{.APP_ENV}}'
+          APP_ENV: "{{.APP_ENV}}"
 
   windows:
     desc: Build the Windows application
@@ -103,7 +103,7 @@ tasks:
       - task: :flutter:get
       - task: :flutter:build:windows
         vars:
-          APP_ENV: '{{.APP_ENV}}'
+          APP_ENV: "{{.APP_ENV}}"
 
   macos:
     desc: Build the macOS application
@@ -112,4 +112,4 @@ tasks:
       - task: :flutter:get
       - task: :flutter:build:macos
         vars:
-          APP_ENV: '{{.APP_ENV}}'
+          APP_ENV: "{{.APP_ENV}}"
