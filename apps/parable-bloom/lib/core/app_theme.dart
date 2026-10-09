@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'dart:math';
 
 /// Centralized theme configuration for Parable Bloom.
@@ -225,20 +224,6 @@ class AppTheme {
     final lum1 = luminance(foreground) + 0.05;
     final lum2 = luminance(background) + 0.05;
     return lum1 > lum2 ? lum1 / lum2 : lum2 / lum1;
-  }
-
-  /// Create dynamic color scheme for Android 12+ based on system wallpaper
-  static Future<ColorScheme?> getDynamicColorScheme(
-      Brightness brightness) async {
-    try {
-      final corePalette = await DynamicColorPlugin.getCorePalette();
-      if (corePalette != null) {
-        return corePalette.toColorScheme(brightness: brightness);
-      }
-    } catch (e) {
-      // Fallback to default if dynamic color fails
-    }
-    return null; // Return null to use default theme
   }
 }
 
