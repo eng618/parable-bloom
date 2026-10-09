@@ -1203,8 +1203,6 @@ PODS:
     - FlutterMacOS
   - connectivity_plus (0.0.1):
     - FlutterMacOS
-  - dynamic_color (0.0.3):
-    - FlutterMacOS
   - Firebase/Auth (12.19.0):
     - Firebase/CoreOnly
     - FirebaseAuth (~> 12.19.0)
@@ -1485,7 +1483,6 @@ DEPENDENCIES:
   - audio_session (from `Flutter/ephemeral/.symlinks/plugins/audio_session/macos`)
   - cloud_firestore (from `Flutter/ephemeral/.symlinks/plugins/cloud_firestore/macos`)
   - connectivity_plus (from `Flutter/ephemeral/.symlinks/plugins/connectivity_plus/macos`)
-  - dynamic_color (from `Flutter/ephemeral/.symlinks/plugins/dynamic_color/macos`)
   - firebase_analytics (from `Flutter/ephemeral/.symlinks/plugins/firebase_analytics/macos`)
   - firebase_auth (from `Flutter/ephemeral/.symlinks/plugins/firebase_auth/macos`)
   - firebase_core (from `Flutter/ephemeral/.symlinks/plugins/firebase_core/macos`)
@@ -1533,8 +1530,6 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/cloud_firestore/macos
   connectivity_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/connectivity_plus/macos
-  dynamic_color:
-    :path: Flutter/ephemeral/.symlinks/plugins/dynamic_color/macos
   firebase_analytics:
     :path: Flutter/ephemeral/.symlinks/plugins/firebase_analytics/macos
   firebase_auth:
@@ -1558,7 +1553,6 @@ SPEC CHECKSUMS:
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
   cloud_firestore: 9b70b8b29bf8160be076793e2060e36c4827714d
   connectivity_plus: 4adf20a405e25b42b9c9f87feff8f4b6fde18a4e
-  dynamic_color: 4f4c0d2861eb7ff36a2a5e8e2d441e1b6c681ddf
   Firebase: 7ca191e43724142f79fae653547b3382c45413cc
   firebase_analytics: b7df5e79df324a07e8d3cc3231f6f6d45bf509c9
   firebase_auth: 804cfa1228062df4ae24a5ef37dbca85933e6c3d
