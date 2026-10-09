@@ -143,6 +143,12 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                 solver: ref.read(levelSolverServiceProvider),
                 sink: _TutorialFlowEventSink(this, lesson),
               );
+              // The game is created lazily here (after the lesson loads), so
+              // didChangeDependencies already ran with _game == null and
+              // skipped the theme sync. Apply the current theme immediately
+              // so GardenGame doesn't keep its dark-mode defaults; onLoad
+              // picks the day/night sprite from this color.
+              _syncThemeColors();
             }
 
             return Scaffold(
@@ -629,6 +635,10 @@ class _TutorialFlowEventSink implements GameEventSink {
     _ref.read(gameCompletedProvider.notifier).setCompleted(false);
 
     game.startLesson(_lesson);
+
+    // Re-apply the current theme: the game was created with a snapshot of
+    // the theme, but the brightness may have changed before onLoad finished.
+    _state._syncThemeColors();
 
     final cameraNotifier = _ref.read(cameraStateProvider.notifier);
     cameraNotifier.updateZoomBounds(
