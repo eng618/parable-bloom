@@ -162,11 +162,10 @@ Text('Warning', style: TextStyle(color: AppTheme.warningColor));
 
 ### 4. Dynamic Color Considerations
 
-For Android 12+ dynamic color support:
-
-- Use `AppTheme.getDynamicColorScheme()` to get system-based schemes
-- Fallback to static themes if dynamic fails
-- Test on devices with wallpaper theming enabled
+The `dynamic_color` package was removed (it was unused — the app ships
+static `AppTheme.lightTheme`/`darkTheme` only). If system-wallpaper
+theming is ever needed, re-add the package and gate it behind a
+Riverpod provider with a static-theme fallback.
 
 ### 5. Testing Requirements
 
