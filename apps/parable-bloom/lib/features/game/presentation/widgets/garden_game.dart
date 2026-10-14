@@ -348,11 +348,15 @@ class GardenGame extends FlameGame with TapCallbacks {
   }
 
   /// Start or load a level with the given level data and current states
-  void startLevel(LevelData levelData, Map<String, VineState> vineStates) {
+  void startLevel(
+    LevelData levelData,
+    Map<String, VineState> vineStates, {
+    bool forceRebuild = false,
+  }) {
     _currentLevelData = levelData;
 
     // Set level data on grid
-    grid.setLevelData(levelData, vineStates);
+    grid.setLevelData(levelData, vineStates, forceRebuild: forceRebuild);
 
     // Set level data on projection lines
     projectionLines.setLevelData(levelData);

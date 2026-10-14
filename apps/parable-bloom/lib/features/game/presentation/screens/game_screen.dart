@@ -905,7 +905,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       ref.read(projectionModeProvider.notifier).setShowAll(false);
 
       if (_game != null) {
-        _game!.startLevel(currentLevel, ref.read(vineStatesProvider));
+        _game!.startLevel(
+          currentLevel,
+          ref.read(vineStatesProvider),
+          forceRebuild: true,
+        );
         final cameraNotifier = ref.read(cameraStateProvider.notifier);
         cameraNotifier.animateToDefaultZoom(
           screenWidth: _game!.size.x,

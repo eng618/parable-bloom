@@ -82,8 +82,21 @@ class GridComponent extends PositionComponent
   // Riverpod is the single owner of vine state; the grid keeps a read-only
   // mirror refreshed via [updateVineStates]. Identity comparison would
   // mistake a reloaded-but-identical level for a new one, so compare by id.
-  void setLevelData(LevelData levelData, Map<String, VineState> vineStates) {
+  void setLevelData(
+    LevelData levelData,
+    Map<String, VineState> vineStates, {
+    bool forceRebuild = false,
+  }) {
     final isNewLevel = _currentLevel?.id != levelData.id;
+    // Same-level reloads (game-over retry, pause restart) must rebuild vine
+    // components: cleared vines already called removeFromParent(), so the
+    // old components are detached even though the level id is unchanged.
+    // Without a rebuild the visuals stay gone while the solver still treats
+    // those vines as blockers, soft-locking the level.
+    final needsRebuild = isNewLevel ||
+        forceRebuild ||
+        _vineComponents.length != levelData.vines.length ||
+        _vineComponents.values.any((comp) => comp.isRemoved);
     _currentLevel = levelData;
     // In-place mirror update: avoids a full Map.from copy on every provider
     // tick (fired on attempted/animating/cleared). Flame reads the mirror on
@@ -105,8 +118,10 @@ class GridComponent extends PositionComponent
     cols = levelData.gridWidth;
     rows = levelData.gridHeight;
 
-    // Only recreate components if it's a new level
-    if (isNewLevel) {
+    // Only recreate components if it's a new level or a forced same-level
+    // reload (restart/retry). Fresh VineComponents also reset per-attempt
+    // flags such as _alreadyNotifiedCleared.
+    if (needsRebuild) {
       // Cache cell visibility once per level: show-all needs no set.
       if (levelData.mask.mode == 'show-all') {
         _visibleCells = null;
@@ -158,7 +173,7 @@ class GridComponent extends PositionComponent
     // No forced redraw: Flame renders continuously, and update(0) only pumps
     // children with dt=0 (a no-op for idle vines).
 
-    if (!isNewLevel) {
+    if (!needsRebuild) {
       _processAutoClearing();
     }
   }
