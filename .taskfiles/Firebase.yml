@@ -114,11 +114,31 @@ tasks:
   # firebase.json). If Storage is adopted, add the rules file, the
   # firebase.json block, and a deploy task together.
 
+  hosting:ensure:
+    desc: Ensure Firebase Hosting site exists (required before first deploy since Oct 15 2026)
+    dir: apps/parable-bloom
+    vars:
+      SITE_ID: '{{.SITE_ID | default "parable-bloom"}}'
+      PROJECT_ID: '{{.PROJECT_ID | default "parable-bloom"}}'
+    cmds:
+      - |
+        if firebase hosting:sites:get "{{.SITE_ID}}" --project "{{.PROJECT_ID}}" >/dev/null 2>&1; then
+          echo "✅ Hosting site {{.SITE_ID}} already exists in {{.PROJECT_ID}}"
+        else
+          echo "Creating hosting site {{.SITE_ID}} in {{.PROJECT_ID}}..."
+          firebase hosting:sites:create "{{.SITE_ID}}" --project "{{.PROJECT_ID}}"
+        fi
+    preconditions:
+      - sh: command -v firebase >/dev/null 2>&1
+        msg: "Firebase CLI is not installed."
+
   hosting:deploy:
     desc: Deploy Firebase Hosting
     dir: apps/parable-bloom
+    deps:
+      - task: hosting:ensure
     cmds:
-      - firebase deploy --only hosting
+      - firebase deploy --only hosting --project parable-bloom
     preconditions:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
@@ -139,14 +159,18 @@ tasks:
     preconditions:
       - sh: command -v firebase >/dev/null 2>&1
         msg: "Firebase CLI is not installed."
+    deps:
+      - task: hosting:ensure
     cmds:
-      - firebase deploy --only hosting
+      - firebase deploy --only hosting --project parable-bloom
 
   hosting:channel:deploy:
     desc: Deploy to a Firebase Hosting channel
     dir: apps/parable-bloom
     vars:
       CHANNEL: '{{.CHANNEL | default "preview"}}'
+    deps:
+      - task: hosting:ensure
     cmds:
       - firebase hosting:channel:deploy "{{.CHANNEL}}" --project parable-bloom --no-authorized-domains {{.CLI_ARGS}}
     preconditions:

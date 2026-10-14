@@ -207,6 +207,21 @@ jobs:
         if: matrix.platform == 'web'
         run: bun add -g firebase-tools@15.22.1
 
+      - name: Ensure Firebase Hosting site exists
+        if: matrix.platform == 'web'
+        working-directory: apps/parable-bloom
+        run: |
+          # Required since Oct 15 2026: Firebase no longer auto-creates the
+          # default Hosting site on first deploy. Idempotent ensure.
+          SITE_ID="${FIREBASE_HOSTING_SITE_ID:-parable-bloom}"
+          PROJECT_ID="parable-bloom"
+          if firebase hosting:sites:get "$SITE_ID" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            echo "✅ Hosting site $SITE_ID already exists in $PROJECT_ID"
+          else
+            echo "Creating hosting site $SITE_ID in $PROJECT_ID..."
+            firebase hosting:sites:create "$SITE_ID" --project "$PROJECT_ID"
+          fi
+
       - name: Deploy to Firebase Hosting
         if: matrix.platform == 'web'
         run: bunx nx run parable-bloom:deploy-web

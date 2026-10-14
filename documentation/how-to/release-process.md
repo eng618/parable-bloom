@@ -654,6 +654,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Downloads firebase_options.dart
 - Sets up Flutter with caching
 - Runs `task release:web`
+- Ensures the Hosting site exists (`firebase hosting:sites:get/create parable-bloom --project parable-bloom`) — required since Oct 15 2026, Firebase no longer auto-creates the default site on first deploy
 - Packages and uploads web build artifact
 
 #### Job: build-linux (ubuntu-latest)
@@ -699,6 +700,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## Troubleshooting
+
+### Firebase Hosting Issues
+
+**Problem**: `firebase deploy --only hosting` fails with site-not-found / 404 after Oct 15 2026
+
+- Cause: Firebase stopped auto-creating the default Hosting site on first deploy.
+- Fix: ensure the site exists before deploying (idempotent):
+
+  ```bash
+  task firebase:hosting:ensure
+  # manual equivalent:
+  firebase hosting:sites:get parable-bloom --project parable-bloom \
+    || firebase hosting:sites:create parable-bloom --project parable-bloom
+  ```
+
+  CI (`deploy-web.yml`, `publish.yml`) and Task (`firebase:hosting:deploy`, `firebase:h:deploy`, `firebase:hosting:channel:deploy`) all run this ensure step automatically. Override with `SITE_ID` / `PROJECT_ID` / `FIREBASE_HOSTING_SITE_ID` env vars for non-default sites.
 
 ### BWS CLI Issues
 

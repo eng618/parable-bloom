@@ -109,6 +109,21 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
 
+      - name: Ensure Firebase Hosting site exists
+        if: env.SKIP_DEPLOY != 'true'
+        working-directory: apps/parable-bloom
+        run: |
+          # Required since Oct 15 2026: Firebase no longer auto-creates the
+          # default Hosting site on first deploy. Idempotent ensure.
+          SITE_ID="${FIREBASE_HOSTING_SITE_ID:-parable-bloom}"
+          PROJECT_ID="parable-bloom"
+          if firebase hosting:sites:get "$SITE_ID" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            echo "✅ Hosting site $SITE_ID already exists in $PROJECT_ID"
+          else
+            echo "Creating hosting site $SITE_ID in $PROJECT_ID..."
+            firebase hosting:sites:create "$SITE_ID" --project "$PROJECT_ID"
+          fi
+
       - name: Generate firebase_options.dart
         timeout-minutes: 5
         run: |
