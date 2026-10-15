@@ -1,3 +1,21 @@
+## 0.5.16 (2026-10-15)
+
+### 🚀 Features
+
+- add Firebase hosting site check and creation before deployment and update dependencies ([3f0dec8](https://github.com/eng618/parable-bloom/commit/3f0dec8))
+- **game:** precache home artwork and polish journal empty state ([8574153](https://github.com/eng618/parable-bloom/commit/8574153))
+- **site:** add loading, error, and not-found boundaries ([d14c673](https://github.com/eng618/parable-bloom/commit/d14c673))
+
+### 🩹 Fixes
+
+- **ci:** pin Go toolchain and golangci-lint to match .tool-versions ([#135](https://github.com/eng618/parable-bloom/pull/135))
+- **fl:** upgrade flutter to fix dependencies ([b43d039](https://github.com/eng618/parable-bloom/commit/b43d039))
+
+### ❤️ Thank You
+
+- Eric Garcia @eng618
+- Eric N. Garcia @eng618
+
 ## 0.5.15 (2026-09-14)
 
 This was a version bump only for parable-bloom-site to align it with other projects, there were no code changes.

@@ -1,3 +1,33 @@
+## 1.10.0 (2026-10-15)
+
+### 🚀 Features
+
+- sync persisted vine style on game load in game event sink and screens ([ee41891](https://github.com/eng618/parable-bloom/commit/ee41891))
+- add Firebase hosting site check and creation before deployment and update dependencies ([3f0dec8](https://github.com/eng618/parable-bloom/commit/3f0dec8))
+- **game:** precache home artwork and polish journal empty state ([8574153](https://github.com/eng618/parable-bloom/commit/8574153))
+- **game:** roll out GardenLoadingView to home, journal, and tutorial ([1dc00b8](https://github.com/eng618/parable-bloom/commit/1dc00b8))
+- **game:** add branded GardenLoadingView and use in game screen ([2527a75](https://github.com/eng618/parable-bloom/commit/2527a75))
+
+### 🩹 Fixes
+
+- navigate to home before opening journal from game completion dialogs to prevent stale board state ([33d9564](https://github.com/eng618/parable-bloom/commit/33d9564))
+- force vine component rebuild on same-level restart and add regression tests ([e3456a1](https://github.com/eng618/parable-bloom/commit/e3456a1))
+- sync tutorial game theme colors upon lazy creation and lesson start ([848ca07](https://github.com/eng618/parable-bloom/commit/848ca07))
+- **ci:** pin Go toolchain and golangci-lint to match .tool-versions ([#135](https://github.com/eng618/parable-bloom/pull/135))
+- **fl:** upgrade flutter to fix dependencies ([b43d039](https://github.com/eng618/parable-bloom/commit/b43d039))
+- **game:** self-expire stuck camera gesture and move auth sync to initState ([949a802](https://github.com/eng618/parable-bloom/commit/949a802))
+
+### 🔥 Performance
+
+- **game:** cache idle vine Path and cull off-screen vines ([f1f6279](https://github.com/eng618/parable-bloom/commit/f1f6279))
+- **game:** use head-pointer BFS queue and add solver regression tests ([95f9ede](https://github.com/eng618/parable-bloom/commit/95f9ede))
+- **game:** optimize getDistanceToBlocker with occupancy set and in-place simulation ([c2a3b2d](https://github.com/eng618/parable-bloom/commit/c2a3b2d))
+
+### ❤️ Thank You
+
+- Eric Garcia @eng618
+- Eric N. Garcia @eng618
+
 ## 1.9.12 (2026-09-14)
 
 ### 🩹 Fixes
