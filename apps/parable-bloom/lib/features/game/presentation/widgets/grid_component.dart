@@ -14,6 +14,7 @@ import '../../../game/domain/services/level_solver_service.dart';
 import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import 'garden_game.dart';
 import 'vine_component.dart';
+import 'vine_layer_component.dart';
 
 class GridComponent extends PositionComponent
     with TapCallbacks, ParentIsA<GardenGame> {
@@ -56,8 +57,18 @@ class GridComponent extends PositionComponent
   final Function(Vector2)?
       onTapEffect; // Callback to create tap effect at position
 
-  // Map to track active vine components
+  // Map to track active vine components (logic + geometry owners; the
+  // single [VineLayerComponent] renders all of them in one batch pass).
   final Map<String, VineComponent> _vineComponents = {};
+
+  /// Batched vine renderer. Added once in [onLoad], kept on top of the
+  /// cells in [_createGridCells].
+  late final VineLayerComponent vineLayer;
+
+  /// Logic components for the batch renderer to read.
+  Iterable<VineComponent> get vineLogicComponents => _vineComponents.values;
+
+  int get vineCount => _vineComponents.length;
 
   bool _isAutoClearingInProgress = false;
 
@@ -88,14 +99,33 @@ class GridComponent extends PositionComponent
     bool forceRebuild = false,
   }) {
     final isNewLevel = _currentLevel?.id != levelData.id;
+    // Prune components for cleared vines BEFORE deciding on a rebuild. A
+    // cleared vine detaches its component in _finishAnimation (or is simply
+    // dead logically while detachment is still queued); treating that
+    // corpse as "same-level reload" would rebuild the whole board on the
+    // next state tick, killing a just-started slide animation on another
+    // vine (user has to tap twice) and suppressing auto-clear (which only
+    // runs on non-rebuild ticks). Cleared vines intentionally have no
+    // component, so the size check below counts visible vines only.
+    _vineComponents.removeWhere((id, comp) {
+      final incoming = vineStates[id];
+      final mirrored = _vineStates[id];
+      final cleared = incoming?.isCleared ?? mirrored?.isCleared ?? true;
+      if (!cleared) return false;
+      if (comp.isMounted) comp.removeFromParent();
+      return true;
+    });
+    final visibleCount = levelData.vines.length -
+        vineStates.values.where((s) => s.isCleared).length;
     // Same-level reloads (game-over retry, pause restart) must rebuild vine
     // components: cleared vines already called removeFromParent(), so the
     // old components are detached even though the level id is unchanged.
     // Without a rebuild the visuals stay gone while the solver still treats
-    // those vines as blockers, soft-locking the level.
+    // those vines as blockers, soft-locking the level. A removed component
+    // for a vine that should still be visible (not cleared) also rebuilds.
     final needsRebuild = isNewLevel ||
         forceRebuild ||
-        _vineComponents.length != levelData.vines.length ||
+        _vineComponents.length != visibleCount ||
         _vineComponents.values.any((comp) => comp.isRemoved);
     _currentLevel = levelData;
     // In-place mirror update: avoids a full Map.from copy on every provider
@@ -162,8 +192,12 @@ class GridComponent extends PositionComponent
         }
       }
 
-      // Add new vine components for each vine in the level
+      // Add new vine components for each visible vine in the level.
+      // Cleared vines intentionally get no component (the batch layer skips
+      // them anyway); this keeps [_vineComponents.length] equal to the
+      // visible count so steady-state ticks don't rebuild.
       for (final vine in levelData.vines) {
+        if (vineStates[vine.id]?.isCleared ?? false) continue;
         final comp = VineComponent(vineData: vine, cellSize: cellSize);
         add(comp);
         _vineComponents[vine.id] = comp;
@@ -286,6 +320,10 @@ class GridComponent extends PositionComponent
     // Grid will be sized and positioned when level data is set
     size = Vector2.zero();
     position = Vector2.zero();
+
+    // Single batched vine renderer (logic lives in VineComponents).
+    vineLayer = VineLayerComponent();
+    add(vineLayer);
   }
 
   // Create or update grid cells based on level data
@@ -327,6 +365,14 @@ class GridComponent extends PositionComponent
       GameBoardLayout.boardWidth(cols),
       GameBoardLayout.boardHeight(rows),
     );
+
+    // Keep the batched vine layer sized to the board and above the cells.
+    // Logic-only VineComponents render nothing, so tree order is free.
+    vineLayer.size.setFrom(size);
+    if (vineLayer.isMounted) {
+      vineLayer.removeFromParent();
+    }
+    add(vineLayer);
 
     // Position will be set by camera transform
     // Initialize with centered position if camera not yet applied

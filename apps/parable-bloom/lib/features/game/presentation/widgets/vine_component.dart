@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
@@ -7,44 +5,42 @@ import 'package:parable_bloom/core/game_board_layout.dart';
 import 'package:parable_bloom/core/services/logger_service.dart';
 import 'package:parable_bloom/core/vine_color_palette.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
-import 'package:parable_bloom/core/providers/settings_providers.dart'
-    show VineStyle;
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/grid_component.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_animator.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_bloom_renderer.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_path_painter.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_tube_path.dart';
 
+/// Logic + geometry owner for one vine.
+///
+/// Rendering moved to [VineLayerComponent] (single batched pass over all
+/// vines). This component owns the animator, bloom state, calm color, and
+/// cached screen-space geometry; it draws nothing itself.
 class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final VineData vineData;
   final double cellSize;
 
-  // Instance textures resolved from the shared game-level loader in onLoad
-  // (no statics: concurrent vine onLoads previously raced double-loads).
-  ui.Image? _classicTextureImage;
-  ui.Image? _blossomTextureImage;
-  ui.Image? _etherealTextureImage;
-
   late final VineAnimator _animator;
+  VineAnimator get animator => _animator;
+
   final VineBloomRenderer _bloomRenderer = VineBloomRenderer();
+  VineBloomRenderer get bloom => _bloomRenderer;
+
   bool _alreadyNotifiedCleared = false;
 
   // Immutable per vine: resolved once instead of every frame.
   late final Color _calmColor;
+  Color get calmColor => _calmColor;
 
   // Cached screen-space geometry. Rebuilt only when the vine
-  // actually moved (or the grid height changed).
+  // actually moved (or the grid height changed). Animating vines bypass
+  // the cache: interpolated positions change every frame.
   List<Offset> _cachedPoints = const [];
   Rect _cachedBounds = Rect.zero;
   int _cachedVisualVersion = -1;
   int _cachedVisualHeight = -1;
   Path? _cachedPath;
-
-  // Cached board rect for frustum culling: avoids Rect.fromLTWH +
-  // boardWidth/Height recompute per animating vine per frame.
-  Rect _cachedBoardRect = Rect.zero;
-  int _cachedBoardWidth = -1;
-  int _cachedBoardHeight = -1;
 
   VineComponent({required this.vineData, required this.cellSize}) {
     _animator = VineAnimator(vineData: vineData);
@@ -57,13 +53,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     position = Vector2.zero();
     size = parent.size;
 
-    final game = parent.parent;
-    final textures = game.vineTextures;
-    await textures.load(game.images);
-    _classicTextureImage = textures.classic;
-    _blossomTextureImage = textures.blossom;
-    _etherealTextureImage = textures.ethereal;
-
     LoggerService.debug('VineComponent loaded',
         tag: 'VineComponent',
         metadata: {
@@ -72,134 +61,73 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         });
   }
 
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-
-    final vineState = parent.getCurrentVineState(vineData.id);
-    if (vineState == null) return;
-    if (vineState.isCleared &&
-        vineState.animationState != VineAnimationState.animatingClear) {
-      return;
+  /// Screen-space centerline points for the current frame. Idle vines reuse
+  /// the cache; animating vines rebuild from interpolated grid positions.
+  List<Offset> renderPoints(int gridHeight) {
+    if (_animator.isAnimating) {
+      return _buildPoints(_animator.renderGridPositions(), gridHeight);
     }
-
-    final level = parent.getCurrentLevelData();
-    if (level == null || _animator.visualPositions.isEmpty) return;
-
-    final calmColor = _calmColor;
-    final isAttempted = vineState.hasBeenAttempted;
-    final baseColor = computeRenderColor(
-      calmColor,
-      isAttempted,
-      parent.parent.vineAttemptedColor,
-    );
-
-    final game = parent.parent;
-    final vineStyle = game.vineStyle;
-    final useSimpleVines = vineStyle == VineStyle.simple;
-
-    Color drawColor = baseColor;
-    if (!useSimpleVines) {
-      drawColor = isAttempted ? calmColor : const Color(0xFFFFFFFF);
-    }
-
-    // Rebuild visual offsets from grid coordinates only when the vine
-    // actually moved (or the grid height changed). Idle vines reuse cache.
-    final visualHeight = level.gridHeight;
     if (_cachedVisualVersion != _animator.visualVersion ||
-        _cachedVisualHeight != visualHeight) {
-      final List<Offset> points = [];
-      var minX = double.infinity;
-      var minY = double.infinity;
-      var maxX = double.negativeInfinity;
-      var maxY = double.negativeInfinity;
-      for (final cell in _animator.visualPositions) {
-        final x = cell['x'] ?? 0;
-        final y = cell['y'] ?? 0;
-        final visualY = visualHeight - 1 - y;
-
-        final point = Offset(
-          GameBoardLayout.cellCenterX(x),
-          GameBoardLayout.cellCenterY(visualY),
-        );
-        points.add(point);
-        if (point.dx < minX) minX = point.dx;
-        if (point.dy < minY) minY = point.dy;
-        if (point.dx > maxX) maxX = point.dx;
-        if (point.dy > maxY) maxY = point.dy;
-      }
-      _cachedPoints = points;
-      _cachedBounds =
-          points.isEmpty ? Rect.zero : Rect.fromLTRB(minX, minY, maxX, maxY);
-      _cachedVisualVersion = _animator.visualVersion;
-      _cachedVisualHeight = visualHeight;
-      // Bake the idle path once per geometry change; painter reuses it
-      // instead of allocating a Path per vine per frame.
-      if (points.isEmpty) {
-        _cachedPath = null;
-      } else {
-        final baked = Path();
-        baked.moveTo(points.first.dx, points.first.dy);
-        for (var i = 1; i < points.length; i++) {
-          baked.lineTo(points[i].dx, points[i].dy);
-        }
-        _cachedPath = baked;
-      }
+        _cachedVisualHeight != gridHeight) {
+      _rebuildCache(gridHeight);
     }
-    // Refresh cached board rect only when dimensions change.
-    if (_cachedBoardWidth != level.gridWidth ||
-        _cachedBoardHeight != visualHeight) {
-      _cachedBoardWidth = level.gridWidth;
-      _cachedBoardHeight = visualHeight;
-      _cachedBoardRect = Rect.fromLTWH(
-        0,
-        0,
-        GameBoardLayout.boardWidth(level.gridWidth),
-        GameBoardLayout.boardHeight(visualHeight),
-      );
+    return _cachedPoints;
+  }
+
+  /// Rounded tube path matching [renderPoints]. Idle vines reuse the baked
+  /// path; animating vines rebuild it every frame.
+  Path? renderPath(int gridHeight, List<Offset> points) {
+    if (_animator.isAnimating || points.isEmpty) {
+      if (points.isEmpty) return null;
+      return VineTubePath.buildRoundedTube(points);
     }
-    final points = _cachedPoints;
-    final isAnimating = _animator.isAnimating;
+    return _cachedPath;
+  }
 
-    // Frustum culling for all vines (idle + animating): skip off-board paths.
-    if (points.isNotEmpty) {
-      if (!_cachedBounds.overlaps(_cachedBoardRect)) {
-        _bloomRenderer.draw(
-          canvas: canvas,
-          renderColor: drawColor,
-          cellSize: cellSize,
-        );
-        return;
-      }
+  /// Tight bounds of the current centerline, for frustum culling.
+  Rect renderBounds(List<Offset> points) {
+    if (points.isEmpty) return Rect.zero;
+    if (!_animator.isAnimating && identical(points, _cachedPoints)) {
+      return _cachedBounds;
     }
+    var minX = double.infinity;
+    var minY = double.infinity;
+    var maxX = double.negativeInfinity;
+    var maxY = double.negativeInfinity;
+    for (final p in points) {
+      if (p.dx < minX) minX = p.dx;
+      if (p.dy < minY) minY = p.dy;
+      if (p.dx > maxX) maxX = p.dx;
+      if (p.dy > maxY) maxY = p.dy;
+    }
+    return Rect.fromLTRB(minX, minY, maxX, maxY);
+  }
 
-    final double strokeWidth = useSimpleVines ? 26.0 : 16.0;
+  void _rebuildCache(int gridHeight) {
+    final cells = _animator.visualPositions
+        .map(
+            (c) => <double>[(c['x'] ?? 0).toDouble(), (c['y'] ?? 0).toDouble()])
+        .toList();
+    final points = _buildPoints(cells, gridHeight);
+    _cachedPoints = points;
+    _cachedBounds = renderBounds(points);
+    _cachedVisualVersion = _animator.visualVersion;
+    _cachedVisualHeight = gridHeight;
+    _cachedPath = points.isEmpty ? null : VineTubePath.buildRoundedTube(points);
+  }
 
-    // Delegate main vine path drawing to VinePathPainter
-    VinePathPainter.drawVine(
-      canvas: canvas,
-      vineData: vineData,
-      points: points,
-      strokeWidth: strokeWidth,
-      cellSize: cellSize,
-      useSimpleVines: useSimpleVines,
-      vineStyle: vineStyle,
-      drawColor: drawColor,
-      calmColor: calmColor,
-      isAttempted: isAttempted,
-      isAnimating: isAnimating,
-      cachedPath: _cachedPath,
-      classicTexture: _classicTextureImage,
-      blossomTexture: _blossomTextureImage,
-      etherealTexture: _etherealTextureImage,
-    );
-
-    // Delegate bloom rendering to VineBloomRenderer
-    _bloomRenderer.draw(
-      canvas: canvas,
-      renderColor: drawColor,
-      cellSize: cellSize,
-    );
+  /// Map grid-space positions (ints or interpolated doubles) to
+  /// screen-space centers. Same formula as [GameBoardLayout.cellCenterX/Y],
+  /// generalized to doubles.
+  List<Offset> _buildPoints(List<List<double>> cells, int gridHeight) {
+    const half = GameBoardLayout.cellSize / 2;
+    const spacing = GameBoardLayout.pointSpacing;
+    return List<Offset>.generate(cells.length, (i) {
+      final x = cells[i][0];
+      final y = cells[i][1];
+      final visualY = (gridHeight - 1) - y;
+      return Offset(x * spacing + half, visualY * spacing + half);
+    });
   }
 
   @override

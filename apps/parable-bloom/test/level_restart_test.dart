@@ -137,5 +137,44 @@ void main() {
       clearCount++;
       expect(clearCount, 2);
     });
+
+    test("state tick after a clear does not rebuild live components", () async {
+      // Regression: tapping vine B right after vine A cleared rebuilt the
+      // whole board (dead-component corpse tripped needsRebuild), killing
+      // B's just-started slide so the first tap was swallowed.
+      final level = _level();
+      final grid = await _gridWithLevel(level);
+      final v2Before = grid.getVineComponent("v2")!;
+
+      // v1 clears and detaches, as VineComponent._finishAnimation does.
+      grid.setVineAnimationState("v1", VineAnimationState.cleared);
+      grid.notifyVineCleared("v1");
+      grid.getVineComponent("v1")!.removeFromParent();
+
+      // Provider reports v1 cleared while v2 starts sliding.
+      grid.setLevelData(level, {
+        "v1": VineState(
+          id: "v1",
+          isBlocked: false,
+          isCleared: true,
+          animationState: VineAnimationState.cleared,
+        ),
+        "v2": VineState(
+          id: "v2",
+          isBlocked: false,
+          isCleared: false,
+          animationState: VineAnimationState.animatingClear,
+        ),
+      });
+
+      // No rebuild: v2 keeps its component (and its in-flight animation),
+      // and the cleared vine's corpse is pruned instead of resurrected.
+      expect(identical(grid.getVineComponent("v2"), v2Before), isTrue);
+      expect(grid.getVineComponent("v1"), isNull);
+      expect(
+        grid.getCurrentVineState("v2")!.animationState,
+        VineAnimationState.animatingClear,
+      );
+    });
   });
 }

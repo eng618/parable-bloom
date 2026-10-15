@@ -42,6 +42,13 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   bool _isLevelCompleteOverlayVisible = false;
   String _currentCongratulationMessage = '';
 
+  /// Provider container captured in [didChangeDependencies] while the
+  /// element is active. The Flame bridge sink reads through it instead of
+  /// [WidgetRef.read], whose ancestor lookup throws while the element is
+  /// deactivated (navigation transitions, hot reload) even though
+  /// [State.mounted] is still true.
+  ProviderContainer? _providerContainer;
+
   @override
   void initState() {
     super.initState();
@@ -90,6 +97,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _providerContainer = ProviderScope.containerOf(context, listen: false);
     // Theme sync runs here so it re-fires on brightness/theme changes —
     // not on every build.
     _syncThemeColors();
@@ -621,18 +629,44 @@ class _TutorialFlowEventSink implements GameEventSink {
   final _TutorialFlowScreenState _state;
   final LessonData _lesson;
 
-  WidgetRef get _ref => _state.ref;
-  bool get _mounted => _state.mounted;
+  ProviderContainer? get _container => _state._providerContainer;
+
+  /// Element-tree-independent provider read (see
+  /// [_TutorialFlowScreenState._providerContainer]). Falls back to
+  /// [fallback] when the screen was never attached or the app is tearing
+  /// down. Safe to call from the Flame game loop at any time.
+  T _read<T>(T Function(ProviderContainer container) read, T fallback) {
+    final container = _container;
+    if (container == null) return fallback;
+    try {
+      return read(container);
+    } on StateError {
+      return fallback;
+    }
+  }
+
+  /// Fire-and-forget provider mutation with the same lifecycle safety as
+  /// [_read]. Mutating a live container after unmount is harmless (listeners
+  /// are already closed), and game truth must not depend on widget presence.
+  void _call(void Function(ProviderContainer container) fn) {
+    final container = _container;
+    if (container == null) return;
+    try {
+      fn(container);
+    } on StateError {
+      // App teardown: container disposed; nothing left to update.
+    }
+  }
 
   @override
   void onGameLoaded(GardenGame game) {
-    if (!_mounted) return;
-    _ref.read(gameInstanceProvider.notifier).setGame(game);
+    if (!_state.mounted) return;
+    _call((c) => c.read(gameInstanceProvider.notifier).setGame(game));
     final levelData = _lesson.toLevelData();
-    _ref.read(currentLevelProvider.notifier).setLevel(levelData);
-    _ref.read(vineStatesProvider.notifier).resetForLevel(levelData);
-    _ref.read(levelCompleteProvider.notifier).setComplete(false);
-    _ref.read(gameCompletedProvider.notifier).setCompleted(false);
+    _call((c) => c.read(currentLevelProvider.notifier).setLevel(levelData));
+    _call((c) => c.read(vineStatesProvider.notifier).resetForLevel(levelData));
+    _call((c) => c.read(levelCompleteProvider.notifier).setComplete(false));
+    _call((c) => c.read(gameCompletedProvider.notifier).setCompleted(false));
 
     game.startLesson(_lesson);
 
@@ -640,7 +674,11 @@ class _TutorialFlowEventSink implements GameEventSink {
     // the theme, but the brightness may have changed before onLoad finished.
     _state._syncThemeColors();
 
-    final cameraNotifier = _ref.read(cameraStateProvider.notifier);
+    final cameraNotifier = _read<CameraStateNotifier?>(
+        (c) => c.read(cameraStateProvider.notifier), null);
+    final cameraState =
+        _read<CameraState?>((c) => c.read(cameraStateProvider), null);
+    if (cameraNotifier == null || cameraState == null) return;
     cameraNotifier.updateZoomBounds(
       screenWidth: game.size.x,
       screenHeight: game.size.y,
@@ -653,88 +691,90 @@ class _TutorialFlowEventSink implements GameEventSink {
       gridCols: _lesson.gridWidth,
       gridRows: _lesson.gridHeight,
     );
-    game.applyCameraTransform(_ref.read(cameraStateProvider));
+    game.applyCameraTransform(cameraState);
   }
 
   @override
   void onGameRemoved() {
-    if (!_mounted) return;
-    if (_ref.read(gameInstanceProvider) == _state._game) {
-      _ref.read(gameInstanceProvider.notifier).setGame(null);
-    }
+    if (!_state.mounted) return;
+    _call((c) {
+      if (c.read(gameInstanceProvider) == _state._game) {
+        c.read(gameInstanceProvider.notifier).setGame(null);
+      }
+    });
   }
 
   @override
   void onVineCleared(String vineId) {
-    if (!_mounted) return;
-    _ref.read(vineStatesProvider.notifier).clearVine(vineId);
+    _call((c) => c.read(vineStatesProvider.notifier).clearVine(vineId));
   }
 
   @override
   void onVineAnimationStateChanged(String vineId, VineAnimationState state) {
-    if (!_mounted) return;
-    _ref.read(vineStatesProvider.notifier).setAnimationState(vineId, state);
+    _call((c) =>
+        c.read(vineStatesProvider.notifier).setAnimationState(vineId, state));
   }
 
   @override
   void onVineAttempted(String vineId) {
-    if (!_mounted) return;
-    _ref.read(vineStatesProvider.notifier).markAttempted(vineId);
+    _call((c) => c.read(vineStatesProvider.notifier).markAttempted(vineId));
   }
 
   @override
   void onTapIncrement(int count) {
-    if (!_mounted) return;
-    _ref.read(levelTotalTapsProvider.notifier).add(count);
+    _call((c) => c.read(levelTotalTapsProvider.notifier).add(count));
   }
 
   @override
   void onTapOutsideGrid() {
-    if (!_mounted) return;
-    _ref.read(projectionModeProvider.notifier).clearHints();
+    _call((c) => c.read(projectionModeProvider.notifier).clearHints());
   }
 
   @override
   void onBlockedTap(BlockedTapState state) {
-    if (!_mounted) return;
-    _ref.read(blockedTapProvider.notifier).setBlockedTap(state);
+    _call((c) => c.read(blockedTapProvider.notifier).setBlockedTap(state));
   }
 
   @override
   Future<void> onEnsureVineVisible(VineData vine) async {
-    if (!_mounted) return;
-    await _ref.read(cameraStateProvider.notifier).ensureVineVisible(vine);
+    final container = _container;
+    if (container == null) return;
+    try {
+      await container
+          .read(cameraStateProvider.notifier)
+          .ensureVineVisible(vine);
+    } on StateError {
+      // App teardown mid-flight; the pending auto-clear is obsolete.
+    }
   }
 
   @override
   void onHintVine(String vineId) {
-    if (!_mounted) return;
-    _ref.read(projectionModeProvider.notifier).hint(vineId);
+    _call((c) => c.read(projectionModeProvider.notifier).hint(vineId));
   }
 
   @override
   void onClearHints() {
-    if (!_mounted) return;
-    _ref.read(projectionModeProvider.notifier).clearHints();
+    _call((c) => c.read(projectionModeProvider.notifier).clearHints());
   }
 
   @override
   bool get useSimpleVines =>
-      _mounted ? _ref.read(useSimpleVinesProvider) : false;
+      _read((c) => c.read(useSimpleVinesProvider), false);
 
   @override
   bool get hapticsEnabled =>
-      _mounted ? _ref.read(hapticsEnabledProvider) : false;
+      _read((c) => c.read(hapticsEnabledProvider), false);
 
   @override
   bool get isAnyAnimating =>
-      _mounted ? _ref.read(anyVineAnimatingProvider) : false;
+      _read((c) => c.read(anyVineAnimatingProvider), false);
 
   @override
   bool get debugShowGridCoordinates =>
-      _mounted ? _ref.read(debugShowGridCoordinatesProvider) : false;
+      _read((c) => c.read(debugShowGridCoordinatesProvider), false);
 
   @override
   bool get debugVineAnimationLogging =>
-      _mounted ? _ref.read(debugVineAnimationLoggingProvider) : false;
+      _read((c) => c.read(debugVineAnimationLoggingProvider), false);
 }

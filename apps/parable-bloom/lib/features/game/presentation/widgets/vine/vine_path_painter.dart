@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import 'package:parable_bloom/core/providers/settings_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_tube_path.dart';
 
 class VinePathPainter {
   /// Cached shaders per texture image. The transform is always the same
@@ -77,8 +79,13 @@ class VinePathPainter {
 
   /// Render main vine path, foliage, and directional arrow head.
   ///
-  /// [isAnimating] gates the expensive blur-based ethereal glow: idle vines
-  /// draw the flat leaf color only, animations get the full glow treatment.
+  /// Thin-tube look: uniform [VineMetrics.tubeWidth] core with rounded
+  /// corners, sparse small foliage on textured styles only, and a compact
+  /// arrow head. [isAnimating] gates the expensive blur-based ethereal
+  /// glow: idle vines draw the flat leaf color only.
+  ///
+  /// [foliageStride] is board-size-aware LOD from [VineMetrics]: every Nth
+  /// point draws foliage. Simple vines never draw foliage.
   static void drawVine({
     required Canvas canvas,
     required VineData vineData,
@@ -91,6 +98,7 @@ class VinePathPainter {
     required Color calmColor,
     required bool isAttempted,
     required bool isAnimating,
+    required int foliageStride,
     Path? cachedPath,
     ui.Image? classicTexture,
     ui.Image? blossomTexture,
@@ -98,17 +106,13 @@ class VinePathPainter {
   }) {
     if (points.isEmpty) return;
 
-    // Use caller-cached Path for idle vines; build fresh while animating
-    // (points mutate every frame) or when no cache was provided.
+    // Use caller-cached rounded Path for idle vines; build fresh while
+    // animating (points mutate every frame) or when no cache was provided.
     final Path path;
     if (cachedPath != null && !isAnimating) {
       path = cachedPath;
     } else {
-      path = Path();
-      path.moveTo(points.first.dx, points.first.dy);
-      for (int i = 1; i < points.length; i++) {
-        path.lineTo(points[i].dx, points[i].dy);
-      }
+      path = VineTubePath.buildRoundedTube(points);
     }
 
     final paint = _mainPaint
@@ -145,12 +149,13 @@ class VinePathPainter {
     canvas.drawPath(path, paint);
 
     // 5. Draw Foliage Details (paints hoisted: reused across segments,
-    //    not reallocated per point per frame). Idle vines use LOD stride 2
-    //    to halve leaf/blossom overdraw; animations keep full density.
+    //    not reallocated per point per frame). Sparse small leaves scaled to
+    //    the thin tube so foliage never bridges the lane gap. Stride comes
+    //    from the caller (board-size-aware LOD).
     if (!useSimpleVines) {
-      final double leafSize = strokeWidth * 0.95;
+      final double leafSize = strokeWidth * VineMetrics.leafScale;
       final Path leafPath = _leafPathFor(leafSize);
-      final int stride = isAnimating ? 1 : 2;
+      final int stride = foliageStride < 1 ? 1 : foliageStride;
 
       Paint? classicLeaf;
       Paint? etherealLeaf;
@@ -200,7 +205,7 @@ class VinePathPainter {
           _drawCherryBlossom(
             canvas,
             points[i],
-            strokeWidth * 1.15,
+            strokeWidth * VineMetrics.blossomScale,
             petalPaint: petal!,
             centerPaint: blossomCenter!,
           );
@@ -222,33 +227,14 @@ class VinePathPainter {
       }
     }
 
-    // 6. Draw Arrow Head at the Tip
+    // 6. Draw compact arrow head at the tip (same lane, never wider than
+    // the gap allows).
     final head = points.first;
-    final String dir = vineData.headDirection;
-    final double arrowSize = strokeWidth * 1.45;
-    final headPath = Path();
-
-    if (dir == 'up') {
-      headPath.moveTo(head.dx, head.dy - arrowSize * 0.85);
-      headPath.lineTo(head.dx - arrowSize * 0.72, head.dy + arrowSize * 0.22);
-      headPath.lineTo(head.dx + arrowSize * 0.72, head.dy + arrowSize * 0.22);
-      headPath.close();
-    } else if (dir == 'down') {
-      headPath.moveTo(head.dx, head.dy + arrowSize * 0.85);
-      headPath.lineTo(head.dx - arrowSize * 0.72, head.dy - arrowSize * 0.22);
-      headPath.lineTo(head.dx + arrowSize * 0.72, head.dy - arrowSize * 0.22);
-      headPath.close();
-    } else if (dir == 'left') {
-      headPath.moveTo(head.dx - arrowSize * 0.85, head.dy);
-      headPath.lineTo(head.dx + arrowSize * 0.22, head.dy - arrowSize * 0.72);
-      headPath.lineTo(head.dx + arrowSize * 0.22, head.dy + arrowSize * 0.72);
-      headPath.close();
-    } else if (dir == 'right') {
-      headPath.moveTo(head.dx + arrowSize * 0.85, head.dy);
-      headPath.lineTo(head.dx - arrowSize * 0.22, head.dy - arrowSize * 0.72);
-      headPath.lineTo(head.dx - arrowSize * 0.22, head.dy + arrowSize * 0.72);
-      headPath.close();
-    }
+    final headPath = VineTubePath.buildArrowHead(
+      head,
+      vineData.headDirection,
+      strokeWidth,
+    );
 
     final headPaint = _headPaint
       ..color = drawColor

@@ -1,7 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:parable_bloom/core/constants/animation_timing.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/grid_component.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
 
 class VineAnimator {
   final VineData vineData;
@@ -20,6 +23,44 @@ class VineAnimator {
   bool canClearThisRun = false;
   double animationTimer = 0.0;
   double stepDuration = AnimationTiming.vineStepSeconds;
+
+  /// Interpolated slide segment for clear animations: [_segFrom] and [_segTo]
+  /// are flat [x0,y0,...] grid snapshots; the renderer lerps between them
+  /// with [renderT] so motion is continuous instead of cell-stepped.
+  /// Blocked (bump-and-return) animations keep the discrete history path.
+  List<int>? _segFrom;
+  List<int>? _segTo;
+
+  /// 0..1 progress through the current segment. Idle when not animating.
+  double get renderT {
+    if (!isAnimating || _segFrom == null || _segTo == null) return 0.0;
+    return (animationTimer / stepDuration).clamp(0.0, 1.0);
+  }
+
+  /// Grid positions with the in-flight segment interpolated. Returns doubles
+  /// so the renderer can draw sub-cell motion. Idle vines get exact ints.
+  List<List<double>> renderGridPositions() {
+    final count = visualPositions.length;
+    final result = List<List<double>>.generate(
+      count,
+      (i) => <double>[
+        (visualPositions[i]['x'] ?? 0).toDouble(),
+        (visualPositions[i]['y'] ?? 0).toDouble(),
+      ],
+    );
+    final from = _segFrom;
+    final to = _segTo;
+    if (!isAnimating || from == null || to == null) return result;
+    final t = _easeOutCubic(renderT);
+    final n = (from.length ~/ 2).clamp(0, count);
+    for (var i = 0; i < n && i * 2 + 1 < to.length; i++) {
+      result[i][0] = from[i * 2] + (to[i * 2] - from[i * 2]) * t;
+      result[i][1] = from[i * 2 + 1] + (to[i * 2 + 1] - from[i * 2 + 1]) * t;
+    }
+    return result;
+  }
+
+  static double _easeOutCubic(double t) => 1 - math.pow(1 - t, 3).toDouble();
 
   List<List<int>> positionHistory = [];
   bool isBlockedAnimation = false;
@@ -65,6 +106,7 @@ class VineAnimator {
     currentAnimationStep = 0;
     isBlockedAnimation = false;
     animationTimer = 0.0;
+    stepDuration = AnimationTiming.vineStepSeconds;
 
     final int rawDistance = calculateMovementDistance(grid);
     canClearThisRun = rawDistance > 0;
@@ -76,6 +118,10 @@ class VineAnimator {
           vineData.orderedPath.length +
           extraOffScreenSteps;
       willClearAfterAnimation = true;
+      // Adaptive pacing: long clears step faster so total time stays snappy.
+      stepDuration = VineMetrics.stepDurationFor(totalAnimationSteps);
+      _segFrom = null;
+      _segTo = null;
 
       grid.setVineAnimationState(
         vineData.id,
@@ -129,6 +175,35 @@ class VineAnimator {
     if (!isAnimating) return false;
 
     animationTimer += dt;
+
+    // Interpolated clear slide: the renderer lerps [_segFrom] -> [_segTo]
+    // every frame (see [renderGridPositions]); step boundaries only commit.
+    // Slow frames may span multiple steps, hence the loop.
+    if (willClearAfterAnimation && !isBlockedAnimation) {
+      if (_segFrom == null || _segTo == null) _beginSegment();
+      var advanced = false;
+      while (animationTimer >= stepDuration && isAnimating) {
+        animationTimer -= stepDuration;
+        _commitSegment();
+        currentAnimationStep++;
+        advanced = true;
+
+        if (hasExitedVisibleGrid(grid.getCurrentLevelData())) {
+          onHeadExitedGrid();
+        }
+
+        if (currentAnimationStep >= totalAnimationSteps) {
+          logDebug(
+            'Animation steps timeout fallback: vineId=${vineData.id}, '
+            'starting bloom effect',
+          );
+          onHeadExitedGrid();
+        }
+        if (isAnimating) _beginSegment();
+      }
+      return advanced || isAnimating;
+    }
+
     if (animationTimer >= stepDuration) {
       animationTimer = 0.0;
 
@@ -207,6 +282,52 @@ class VineAnimator {
     }
 
     return true;
+  }
+
+  /// Start a new interpolated segment from the current committed position.
+  void _beginSegment() {
+    final from = _snapshotFlat();
+    _segFrom = from;
+    _segTo = _steppedFlat(from);
+  }
+
+  /// Commit the in-flight segment target as the new committed position.
+  void _commitSegment() {
+    final to = _segTo;
+    if (to != null) _restore(to);
+  }
+
+  /// Pure grid-step over a flat snapshot: head advances in [headDirection],
+  /// body follows. Mirrors [_stepForward] without touching live state.
+  List<int> _steppedFlat(List<int> flat) {
+    final next = List<int>.from(flat);
+    if (next.length < 2) return next;
+    var newHeadX = next[0];
+    var newHeadY = next[1];
+
+    switch (vineData.headDirection) {
+      case 'right':
+        newHeadX += 1;
+        break;
+      case 'left':
+        newHeadX -= 1;
+        break;
+      case 'up':
+        newHeadY += 1;
+        break;
+      case 'down':
+        newHeadY -= 1;
+        break;
+    }
+
+    for (int i = next.length ~/ 2 - 1; i >= 1; i--) {
+      next[i * 2] = flat[(i - 1) * 2];
+      next[i * 2 + 1] = flat[(i - 1) * 2 + 1];
+    }
+
+    next[0] = newHeadX;
+    next[1] = newHeadY;
+    return next;
   }
 
   void _stepForward() {
@@ -290,5 +411,7 @@ class VineAnimator {
     maxForwardStepsThisRun = 0;
     canClearThisRun = false;
     animationTimer = 0.0;
+    _segFrom = null;
+    _segTo = null;
   }
 }
