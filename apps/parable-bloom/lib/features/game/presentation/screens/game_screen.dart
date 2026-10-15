@@ -667,7 +667,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                if (context.canPop()) context.pop(); // pop game screen to home
+                // Reset to home first: the game screen was reached via go(),
+                // so there is nothing to pop. Back-from-journal must land on
+                // home (Play loads the next level), never on this stale
+                // cleared board.
+                context.go('/');
                 context.push('/journal');
               },
               child: const Text('VIEW JOURNAL'),
@@ -789,7 +793,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                if (context.canPop()) context.pop(); // pop game screen to home
+                // Reset to home first: the game screen was reached via go(),
+                // so there is nothing to pop. Back-from-journal must land on
+                // home (Play loads the next level), never on this stale
+                // cleared board.
+                context.go('/');
                 context.push('/journal');
               },
               child: const Text('GO TO JOURNAL'),
