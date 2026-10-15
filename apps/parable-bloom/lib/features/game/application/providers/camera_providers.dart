@@ -55,6 +55,28 @@ class CameraState {
       isAnimating: false,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CameraState &&
+          runtimeType == other.runtimeType &&
+          zoom == other.zoom &&
+          minZoom == other.minZoom &&
+          maxZoom == other.maxZoom &&
+          isAnimating == other.isAnimating &&
+          panOffset.x == other.panOffset.x &&
+          panOffset.y == other.panOffset.y;
+
+  @override
+  int get hashCode => Object.hash(
+        zoom,
+        panOffset.x,
+        panOffset.y,
+        minZoom,
+        maxZoom,
+        isAnimating,
+      );
 }
 
 final cameraStateProvider = NotifierProvider<CameraStateNotifier, CameraState>(

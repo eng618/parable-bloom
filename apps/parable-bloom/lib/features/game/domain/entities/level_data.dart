@@ -114,6 +114,20 @@ class MaskData {
 
     return MaskData(mode: mode, points: pts);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MaskData &&
+          runtimeType == other.runtimeType &&
+          mode == other.mode &&
+          _cellListsEqual(points, other.points);
+
+  @override
+  int get hashCode => Object.hash(
+        mode,
+        Object.hashAll(points.map((p) => Object.hash(p["x"], p["y"]))),
+      );
 }
 
 class VineData {
@@ -151,6 +165,24 @@ class VineData {
       vineColor: vineColor,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VineData &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          headDirection == other.headDirection &&
+          vineColor == other.vineColor &&
+          _cellListsEqual(orderedPath, other.orderedPath);
+
+  @override
+  int get hashCode => Object.hash(
+        id,
+        headDirection,
+        vineColor,
+        Object.hashAll(orderedPath.map((p) => Object.hash(p["x"], p["y"]))),
+      );
 }
 
 class LevelData {
@@ -262,6 +294,40 @@ class LevelData {
   int get width => gridWidth;
   int get height => gridHeight;
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LevelData &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          difficulty == other.difficulty &&
+          gridWidth == other.gridWidth &&
+          gridHeight == other.gridHeight &&
+          maxMoves == other.maxMoves &&
+          minMoves == other.minMoves &&
+          complexity == other.complexity &&
+          grace == other.grace &&
+          mask == other.mask &&
+          vines.length == other.vines.length &&
+          List.generate(vines.length, (i) => vines[i] == other.vines[i])
+              .every((e) => e);
+
+  @override
+  int get hashCode => Object.hash(
+        id,
+        name,
+        difficulty,
+        gridWidth,
+        gridHeight,
+        maxMoves,
+        minMoves,
+        complexity,
+        grace,
+        mask,
+        Object.hashAll(vines),
+      );
+
   static bool _isCellVisibleWithMask(MaskData mask, int x, int y) {
     switch (mask.mode) {
       case 'show-all':
@@ -274,4 +340,14 @@ class LevelData {
         return true;
     }
   }
+}
+
+/// Order-sensitive cell-list equality for `orderedPath` / mask points.
+bool _cellListsEqual(List<Map<String, int>> a, List<Map<String, int>> b) {
+  if (identical(a, b)) return true;
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i]["x"] != b[i]["x"] || a[i]["y"] != b[i]["y"]) return false;
+  }
+  return true;
 }

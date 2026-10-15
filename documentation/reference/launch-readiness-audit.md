@@ -3,6 +3,7 @@
 This document serves as the formal technical reference specification for evaluating and verifying release readiness across **Parable Bloom** applications, services, and tooling.
 
 > **Last audit:** 2026-10-14 — `parable-bloom` app `1.9.12+32`, scope **Android + Web**. Verdict: **Conditional GO** (ship after Firebase Hosting ensure lands + one preview-channel and one Play internal-track prove-out). iOS/macOS out of scope (ExportOptions placeholders, `if: false` CI jobs).
+> **Quick wins delivered 2026-10-15:** silent-catch logging, `og:image`/`twitter:image`, hosting security headers, `usesCleartextTraffic="false"`, value-object `==`/`hashCode`, partial-run warning, root CHANGELOG placeholder cleanup.
 
 ---
 
@@ -32,7 +33,7 @@ graph LR
 - [x] **Go Toolchain Alignment**: Inherits Go `1.27.1` workspace-wide; `task lb:lint`, `task lb:test`, and `task lb:build` pass cleanly.
 - [x] **Dependencies Hygiene**: Production dependencies contain zero test-only packages; `mocktail` and `test` isolated to `dev_dependencies`. `vector_math` pinned to `^2.4.3` (`apps/parable-bloom/pubspec.yaml:48`) — `any` removed 2026-10-14 for reproducible builds.
 - [ ] **Release shrinking (P1)**: `android/app/build.gradle.kts:45-56` declares `proguardFiles` but never sets `isMinifyEnabled` / `isShrinkResources` — releases ship unobfuscated/unshrunk. Enable and prove on internal track before prod.
-- [ ] **Value-object hygiene (P1/P2)**: `VineState` (`gameplay_state_providers.dart:156`) and `CameraState` (`camera_providers.dart:13`) have `copyWith` but no `==`/`hashCode`; level entities (`level_data.dart`) lack the trio. Hot-path rebuild risk, not a ship-blocker.
+- [x] **Value-object hygiene (delivered 2026-10-15)**: `VineState`, `CameraState`, `VineData`, `MaskData`, `LevelData` now implement `==`/`hashCode`.
 
 ### 2. Puzzle Solvability & Level Matrix
 
@@ -49,7 +50,7 @@ graph LR
   - `SettingsScreen` (`test/features/settings/presentation/screens/settings_screen_test.dart`)
   - `JournalScreen` (`test/features/journal/presentation/screens/journal_screen_test.dart`)
   - `GameHeader` & `PauseMenuDialog` (`test/features/game/presentation/widgets/game_header_and_pause_dialog_test.dart`)
-- [ ] **Partial-run guard (P1)**: `level_validation_test.dart:56-59` honors `PB_LEVEL_START/END/BATCH` + `tags: ['level-solver']` — CI tag/env filters can silently validate a subset. Release gate must run the full matrix.
+- [x] **Partial-run guard (delivered 2026-10-15)**: `level_validation_test.dart` prints a `WARNING` when `PB_LEVEL_START/END` partial filters are set; release gate runs the full matrix unset.
 
 ### 4. Data Integrity & App Lifecycle
 
@@ -58,7 +59,7 @@ graph LR
 - [x] **Engine Teardown**: Flame `GardenGame` instance initialized in `initState()` and explicitly disposed in `dispose()`.
 - [x] **Crash Fallback & Router Boundaries**: `GoRouter` configured with `errorBuilder` and `ErrorWidget.builder` registered for graceful error recovery.
 - [ ] **Init ordering (P1)**: `main.dart:45-89` initializes Hive after Firebase/auth (network-adjacent delay on offline-first load); progress `initialize()` fires post-frame (`parable_bloom_app.dart:47-49`) so first frame renders defaults. Add timeout + skeleton/await before prod polish.
-- [ ] **Silent catch (P1)**: `progress_providers.dart:89` swallows `syncFromCloud` failure with `catch (_){}` — log it.
+- [x] **Silent catch (delivered 2026-10-15)**: `progress_providers.dart` `syncFromCloud` failure now logs via `LoggerService.warn`.
 - [ ] **Firestore hardening (P2)**: per-user `uid == userId` scoping is correct and `configs_prod` auth-gating works via anonymous guest session (`main.dart:124-140`); dev/preview `configs_*` public-read is intentional. No `request.resource` size/schema checks — compromised client can write large docs (quota/cost).
 
 ### 5. Legal & Asset Attributions
@@ -66,7 +67,7 @@ graph LR
 - [x] **Licensing Attribution**: All audio assets, fonts (Fraunces, Playfair Display, Alegreya Sans), textures, and devotionals fully documented in `documentation/reference/attributions.md`.
 - [x] **Scripture Compliance**: Scripture quotations comply with copyright and gratis usage guidelines documented in `documentation/reference/scripture-licensing.md`.
 - [x] **Branding & Social Metadata**: Web PWA `manifest.json` configured with brand green `#177245` and `#1A2E3F` background; Open Graph and Twitter text tags populated (`web/index.html:29-38`).
-- [ ] **Link previews (P2)**: `og:image` / `twitter:image` tags missing — shares render text-only. Add before marketing push.
+- [x] **Link previews (delivered 2026-10-15)**: `og:image` / `twitter:image` point at `https://parable-bloom.web.app/icons/Icon-512.png`.
 
 ---
 
@@ -75,9 +76,9 @@ graph LR
 - [x] **Firebase Hosting site ensure (P0 fix, delivered 2026-10-14)**: Firebase stopped auto-creating the default Hosting site on first deploy (enforced Oct 15 2026). `task firebase:hosting:ensure` (`hosting:sites:get || hosting:sites:create parable-bloom --project parable-bloom`) is now a `deps` of `hosting:deploy`, `h:deploy`, and `hosting:channel:deploy` (`.taskfiles/Firebase.yml`); explicit ensure steps added to `.github/workflows/deploy-web.yml` and `publish.yml`; troubleshooting in `documentation/how-to/release-process.md`.
 - [x] **Android signing**: release `signingConfig` + `taskGraph.whenReady` fail-fast on missing `ANDROID_*` env/keystore (`build.gradle.kts:36-43,62-86`) — no debug-key fallback. AD_ID stripped (`AndroidManifest.xml:12-13`); permissions minimal (`INTERNET`, `ACCESS_NETWORK_STATE`).
 - [x] **Telemetry privacy**: Sentry DSN via `--dart-define` (no hardcoded secret), `sendDefaultPii` unset (false), `tracesSampleRate 0.2` (`error_reporting_service.dart`). Crashlytics breadcrumb dual-sink noted — keep opt-outs in sync.
-- [ ] **Web security headers (P2)**: `firebase.json` hosting has `rewrites` but no `headers` (CSP, `nosniff`, HSTS). Add tuned for `flutter_bootstrap.js`.
-- [ ] **Android hardening (P2)**: set explicit `usesCleartextTraffic="false"` + backup rules; no `network_security_config.xml` (defaults currently safe).
-- [ ] **Release hygiene (P1)**: root `CHANGELOG.md` still has `TODO` placeholders for `1.1.x–1.3.x` (app changelog clean) — regenerate via `nx release` before tagging. `develop` is the working branch; `release:bump` requires `main` — merge before versioning.
+- [x] **Web security headers (delivered 2026-10-15)**: `firebase.json` hosting sets `nosniff`, `SAMEORIGIN`, HSTS. CSP intentionally deferred (needs `flutter_bootstrap.js` tuning).
+- [x] **Android hardening (delivered 2026-10-15)**: explicit `usesCleartextTraffic="false"` + `allowBackup="true"`. No `network_security_config.xml` (defaults safe).
+- [x] **Release hygiene (delivered 2026-10-15)**: root `CHANGELOG.md` `1.1.x–1.3.x` `TODO` placeholders collapsed to an archived note; `apps/parable-bloom/CHANGELOG.md` (via `nx release`) is the source of truth — regenerate before tagging.
 
 ---
 

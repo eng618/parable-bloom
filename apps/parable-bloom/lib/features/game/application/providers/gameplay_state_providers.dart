@@ -190,6 +190,28 @@ class VineState {
       animationState: animationState ?? this.animationState,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VineState &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          isBlocked == other.isBlocked &&
+          isCleared == other.isCleared &&
+          hasBeenAttempted == other.hasBeenAttempted &&
+          isWithered == other.isWithered &&
+          animationState == other.animationState;
+
+  @override
+  int get hashCode => Object.hash(
+        id,
+        isBlocked,
+        isCleared,
+        hasBeenAttempted,
+        isWithered,
+        animationState,
+      );
 }
 
 final vineStatesProvider =

@@ -86,7 +86,12 @@ class GameProgressNotifier extends Notifier<GameProgress> {
       // Pull preferred translation from cloud (offline-first Hive wins on failure).
       try {
         await ref.read(preferredTranslationProvider.notifier).syncFromCloud();
-      } catch (_) {}
+      } catch (e) {
+        LoggerService.warn(
+          "syncFromCloud failed during initialize: $e",
+          tag: "GameProgressNotifier",
+        );
+      }
     } catch (e, stack) {
       if (!ref.mounted) return;
       LoggerService.error('Error initializing GameProgress',

@@ -58,6 +58,16 @@ void main() {
   final endFilter = int.tryParse(env['PB_LEVEL_END'] ?? '');
   final batchSize = int.tryParse(env['PB_LEVEL_BATCH'] ?? '') ?? 10;
 
+  // Release-gate guard: partial runs are for local iteration only.
+  // CI tag/env filters can otherwise silently validate a subset.
+  if (startFilter != null || endFilter != null) {
+    // ignore: avoid_print
+    print(
+      'WARNING: partial level run PB_LEVEL_START=$startFilter '
+      'PB_LEVEL_END=$endFilter — release gate must run the full matrix unset.',
+    );
+  }
+
   // Sort files by level ID
   allFiles.sort((a, b) {
     final idA = _extractId(a.path);
