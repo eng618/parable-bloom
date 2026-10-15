@@ -777,4 +777,8 @@ class _TutorialFlowEventSink implements GameEventSink {
   @override
   bool get debugVineAnimationLogging =>
       _read((c) => c.read(debugVineAnimationLoggingProvider), false);
+
+  @override
+  VineStyle get vineStyle =>
+      _read((c) => c.read(vineStyleProvider), VineStyle.classic);
 }

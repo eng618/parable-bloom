@@ -3,6 +3,7 @@ import '../../application/providers/gameplay_state_providers.dart'
 import '../../domain/entities/level_data.dart' show VineData;
 import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart'
     show BlockedTapState;
+import '../../../../core/providers/settings_providers.dart' show VineStyle;
 import 'garden_game.dart';
 
 /// Single bridge between the Flame engine ([GardenGame] and its components)
@@ -29,6 +30,11 @@ abstract class GameEventSink {
   bool get isAnyAnimating;
   bool get debugShowGridCoordinates;
   bool get debugVineAnimationLogging;
+
+  /// Persisted vine style. The game syncs this on load: without it, a fresh
+  /// game instance defaults to classic and the provider listener (which only
+  /// fires on change) never corrects it.
+  VineStyle get vineStyle;
 }
 
 /// No-op [GameEventSink] for tests that need a game instance without
@@ -81,4 +87,7 @@ class TestGameEventSink implements GameEventSink {
 
   @override
   bool get debugVineAnimationLogging => false;
+
+  @override
+  VineStyle get vineStyle => VineStyle.classic;
 }

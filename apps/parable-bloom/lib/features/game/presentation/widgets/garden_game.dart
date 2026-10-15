@@ -232,6 +232,12 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Center camera
     camera.viewport.size = size;
 
+    // Sync the persisted vine style before the Flutter layer loads the
+    // level: fresh game instances default to classic, and the provider
+    // listener only fires on change, so without this every new level
+    // resets the visuals.
+    updateVineStyle(sink.vineStyle);
+
     // Trigger game loaded callback to let the Flutter layer initialize the level
     sink.onGameLoaded(this);
   }
