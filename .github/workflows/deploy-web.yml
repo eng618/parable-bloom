@@ -170,7 +170,10 @@ jobs:
         id: deploy-preview
         run: |
           CHANNEL_NAME="pr-${{ github.event.pull_request.number }}"
-          task firebase:hosting:channel:deploy CHANNEL=$CHANNEL_NAME CLI_ARGS="--json" > deploy_output.json
+          # --silent keeps go-task's own `task:` echoes off stdout so the
+          # redirected file holds only firebase's --json (hosting:ensure logs
+          # to stderr for the same reason).
+          task --silent firebase:hosting:channel:deploy CHANNEL=$CHANNEL_NAME CLI_ARGS="--json" > deploy_output.json
           cat deploy_output.json
 
           # Use node to extract the URL from JSON output consistently
