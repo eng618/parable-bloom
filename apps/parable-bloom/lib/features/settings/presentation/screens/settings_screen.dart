@@ -17,7 +17,6 @@ import '../../../game/domain/entities/level_data.dart';
 import '../../../game/application/providers/counter_providers.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
-import '../../../journal/application/providers/journal_display_providers.dart';
 import '../../../tutorial/application/providers/tutorial_providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -1418,8 +1417,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ref.invalidate(hapticsEnabledProvider);
       ref.invalidate(vineStyleProvider);
       ref.invalidate(preferredTranslationProvider);
-      ref.invalidate(journalLockedStyleProvider);
-      ref.invalidate(journalBookmarkProvider);
       LoggerService.info('Reset completed successfully', tag: 'ResetData');
 
       // 4. Close the loading dialog.
