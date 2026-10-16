@@ -58,8 +58,9 @@ class VineLayerComponent extends PositionComponent
     // NOTE: no board-space clip here. Clearing vines slide outside the
     // board and must stay visible until fully off-screen; clipping to
     // board bounds masks them at the grid edge so they pop out instead of
-    // traveling off. (Projection lines clip because they extend far
-    // off-screen by design; vines only briefly leave the board.)
+    // traveling off. (Projection lines likewise run unclipped to the
+    // viewport edge; their endpoints are computed on the visible rect, so
+    // overdraw stays bounded.)
     // Cull margin: tube half-width + arrow head extent. Applies to idle
     // vines only: clearing vines slide off-board by design and bypass the
     // cull below so they stay visible until fully off-screen.

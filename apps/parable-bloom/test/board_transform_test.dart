@@ -56,5 +56,116 @@ void main() {
       expect(center.x, boardX + GameBoardLayout.cellCenterX(2) * zoom);
       expect(center.y, boardY + GameBoardLayout.cellCenterY(visualRow) * zoom);
     });
+
+    group('projectToViewportEdge', () {
+      test('each direction reaches its viewport edge', () {
+        const l = 0.0, t = 0.0, r = 800.0, b = 600.0;
+
+        var p = BoardTransform.projectToViewportEdge(
+          headX: 100,
+          headY: 100,
+          direction: 'right',
+          left: l,
+          top: t,
+          right: r,
+          bottom: b,
+        )!;
+        expect(p.x, r);
+        expect(p.y, 100);
+
+        p = BoardTransform.projectToViewportEdge(
+          headX: 100,
+          headY: 100,
+          direction: 'left',
+          left: l,
+          top: t,
+          right: r,
+          bottom: b,
+        )!;
+        expect(p.x, l);
+        expect(p.y, 100);
+
+        p = BoardTransform.projectToViewportEdge(
+          headX: 100,
+          headY: 100,
+          direction: 'down',
+          left: l,
+          top: t,
+          right: r,
+          bottom: b,
+        )!;
+        expect(p.x, 100);
+        expect(p.y, b);
+
+        p = BoardTransform.projectToViewportEdge(
+          headX: 100,
+          headY: 100,
+          direction: 'up',
+          left: l,
+          top: t,
+          right: r,
+          bottom: b,
+        )!;
+        expect(p.x, 100);
+        expect(p.y, t);
+      });
+
+      test('overshoot pushes past the edge for round-cap bleed', () {
+        final p = BoardTransform.projectToViewportEdge(
+          headX: 100,
+          headY: 100,
+          direction: 'right',
+          left: 0,
+          top: 0,
+          right: 800,
+          bottom: 600,
+          overshoot: 6,
+        )!;
+        expect(p.x, 806);
+        expect(p.y, 100);
+      });
+
+      test('head past the edge in ray direction returns null', () {
+        expect(
+          BoardTransform.projectToViewportEdge(
+            headX: 900,
+            headY: 100,
+            direction: 'right',
+            left: 0,
+            top: 0,
+            right: 800,
+            bottom: 600,
+          ),
+          isNull,
+        );
+        expect(
+          BoardTransform.projectToViewportEdge(
+            headX: 100,
+            headY: -10,
+            direction: 'up',
+            left: 0,
+            top: 0,
+            right: 800,
+            bottom: 600,
+          ),
+          isNull,
+        );
+      });
+
+      test('unknown direction returns null', () {
+        expect(
+          BoardTransform.projectToViewportEdge(
+            headX: 100,
+            headY: 100,
+            direction: 'diagonal',
+            left: 0,
+            top: 0,
+            right: 800,
+            bottom: 600,
+          ),
+          isNull,
+        );
+      });
+    });
   });
 }
