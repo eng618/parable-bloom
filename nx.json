@@ -3,7 +3,10 @@
     "version": "23.1.2"
   },
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
     "production": [
       "default",
       "!{projectRoot}/test/**/*",
@@ -21,24 +24,41 @@
   "targetDefaults": {
     "build": {
       "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
     },
     "test": {
       "cache": true,
-      "inputs": ["default", "^default"]
+      "inputs": [
+        "default",
+        "^default"
+      ]
     },
     "lint": {
       "cache": true,
-      "inputs": ["default", "^default"]
+      "inputs": [
+        "default",
+        "^default"
+      ]
     },
     "validate": {
       "cache": true,
-      "dependsOn": ["lint", "test", "build"]
+      "dependsOn": [
+        "lint",
+        "test",
+        "build"
+      ]
     },
     "deploy": {
       "cache": true,
-      "dependsOn": ["build"]
+      "dependsOn": [
+        "build"
+      ]
     }
   },
   "release": {
@@ -47,7 +67,9 @@
     },
     "groups": {
       "parable-bloom": {
-        "projects": ["parable-bloom"],
+        "projects": [
+          "parable-bloom"
+        ],
         "version": {
           "currentVersionResolver": "disk"
         },
@@ -59,7 +81,9 @@
         }
       },
       "parable-bloom-site": {
-        "projects": ["parable-bloom-site"],
+        "projects": [
+          "parable-bloom-site"
+        ],
         "version": {
           "currentVersionResolver": "disk"
         },
@@ -71,7 +95,9 @@
         }
       },
       "level-builder": {
-        "projects": ["level-builder"],
+        "projects": [
+          "level-builder"
+        ],
         "version": {
           "currentVersionResolver": "disk"
         },
@@ -94,5 +120,6 @@
     }
   },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "analytics": true
+  "analytics": true,
+  "nxCloudId": "6ad2552d530c3895b0e17973"
 }
