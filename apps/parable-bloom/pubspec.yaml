@@ -136,9 +136,11 @@ flutter_launcher_icons:
   adaptive_icon_foreground: assets/art/app_icon_branded.png
 
 # Sentry symbol/source-map upload (sentry_dart_plugin). Auth via
-# SENTRY_AUTH_TOKEN env var in CI; uploads run on release builds.
+# SENTRY_AUTH_TOKEN env var in CI; uploads run on release builds via
+# `dart run sentry_dart_plugin` after `flutter build` (see .taskfiles/Flutter.yml).
 sentry:
   upload_debug_symbols: true
   upload_source_maps: true
+  dart_symbol_map_path: build/app/obfuscation.map.json
   project: parable-bloom
   org: garcia-ventures

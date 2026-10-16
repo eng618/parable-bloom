@@ -36,8 +36,13 @@ jobs:
       DEPLOY_SKIPPED: "false"
       APP_ENV: "preview"
       SKIP_DEPLOY: "false"
-      # Empty when the secret is unset → Sentry stays disabled in the build.
+      # Empty when the secret is unset → Sentry stays disabled and the symbol
+      # upload step in the build tasks is skipped (see _sentry:upload).
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID }}
+      OPENPANEL_CLIENT_SECRET: ${{ secrets.OPENPANEL_CLIENT_SECRET }}
+      OPENPANEL_API_URL: ${{ secrets.OPENPANEL_API_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7

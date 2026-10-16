@@ -167,7 +167,7 @@ The application implements a multi-channel, privacy-focused telemetry strategy d
 All telemetry events are dispatched through `AnalyticsService`, which coordinates data collection across:
 
 - **Firebase Analytics**: Standard client-side SDK. Used for general usage statistics, game lifecycle, and crash correlation.
-- **Openpanel (Self-Hosted)**: Lightweight, cookie-less, self-hosted analytics engine (`openpanel.gventureshq.com`). Events are submitted via direct API calls (`OpenpanelAnalyticsClient`) using privacy-focused endpoints with platform-specific Client IDs (Android, iOS, Web, macOS, Windows, Linux).
+- **Openpanel (Self-Hosted)**: Lightweight, cookie-less, self-hosted analytics engine (`openpanel.gventureshq.com`). Events are submitted via direct API calls (`OpenpanelAnalyticsClient`) using privacy-focused endpoints with platform-specific Client IDs (Android, iOS, Web, macOS, Windows, Linux). Native (non-browser) track calls carry no `Origin` header, so the client also sends `openpanel-client-secret` (baked in via the `OPENPANEL_CLIENT_SECRET` dart-define) — without it the API answers `401 "Invalid cors or secret"` and events are dropped. Overrides (`OPENPANEL_CLIENT_ID` / `OPENPANEL_CLIENT_SECRET` / `OPENPANEL_API_URL`) are plumbed through every release build task in `.taskfiles/Flutter.yml` and the `deploy-web` / `publish` workflows; empty values fall back to the baked-in per-platform defaults.
 
 #### Privacy Control & Opt-out Toggle
 
