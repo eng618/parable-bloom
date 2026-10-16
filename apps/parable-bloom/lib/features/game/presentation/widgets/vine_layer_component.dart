@@ -15,8 +15,8 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine_component.
 /// Single batched renderer for all vines on the board.
 ///
 /// Replaces N per-vine Flame render passes with one component that draws
-/// every vine in a single canvas traversal: one clip, shared static paints,
-/// per-vine frustum culling, and board-size-aware foliage LOD. Logic and
+/// every vine in a single canvas traversal: shared static paints, per-vine
+/// frustum culling, and board-size-aware foliage LOD. Logic and
 /// animation state stay in [VineComponent]; this component only reads.
 class VineLayerComponent extends PositionComponent
     with ParentIsA<GridComponent> {
@@ -55,12 +55,14 @@ class VineLayerComponent extends PositionComponent
     final gridHeight = level.gridHeight;
     final vineCount = grid.vineCount;
 
-    // One board-space clip for the whole batch: projection-style off-screen
-    // segments never shade outside the board.
-    canvas.save();
-    canvas.clipRect(Rect.fromLTWH(0, 0, size.x, size.y));
-
-    // Cull margin: tube half-width + arrow head extent.
+    // NOTE: no board-space clip here. Clearing vines slide outside the
+    // board and must stay visible until fully off-screen; clipping to
+    // board bounds masks them at the grid edge so they pop out instead of
+    // traveling off. (Projection lines clip because they extend far
+    // off-screen by design; vines only briefly leave the board.)
+    // Cull margin: tube half-width + arrow head extent. Applies to idle
+    // vines only: clearing vines slide off-board by design and bypass the
+    // cull below so they stay visible until fully off-screen.
     const cullPad = VineMetrics.tubeWidth * 2;
     final boardRect = Rect.fromLTWH(
       -cullPad,
@@ -87,7 +89,8 @@ class VineLayerComponent extends PositionComponent
         );
         continue;
       }
-      if (!comp.renderBounds(points).overlaps(boardRect)) {
+      if (!comp.renderBounds(points).overlaps(boardRect) &&
+          !comp.animator.isAnimating) {
         continue;
       }
 
@@ -131,6 +134,5 @@ class VineLayerComponent extends PositionComponent
         cellSize: comp.cellSize,
       );
     }
-    canvas.restore();
   }
 }
