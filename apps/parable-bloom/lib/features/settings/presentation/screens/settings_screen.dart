@@ -14,9 +14,10 @@ import '../../../game/application/providers/module_providers.dart';
 import '../../../game/domain/entities/cloud_sync_state.dart';
 import '../../../game/domain/entities/game_progress.dart';
 import '../../../game/domain/entities/level_data.dart';
+import '../../../game/application/providers/counter_providers.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
-import '../../../home/presentation/screens/home_screen.dart';
+import '../../../journal/application/providers/journal_display_providers.dart';
 import '../../../tutorial/application/providers/tutorial_providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -1341,11 +1342,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Close the confirmation dialog immediately (before any async work)
     if (context.canPop()) context.pop();
 
-    // Store service references before async operations
-    final firestore = ref.read(firestoreProvider);
-    final auth = ref.read(firebaseAuthProvider);
-    final box = ref.read(hiveBoxProvider);
-
     // Show loading dialog and capture its context
     BuildContext? loadingContext;
     showDialog(
@@ -1369,9 +1365,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     // Perform async operations without awaiting, using .then() and .catchError()
     _performResetAsync(
-      firestore: firestore,
-      auth: auth,
-      box: box,
       ref: ref,
       loadingContext: loadingContext,
       originalContext: context,
@@ -1379,34 +1372,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _performResetAsync({
-    required dynamic firestore,
-    required dynamic auth,
-    required dynamic box,
     required WidgetRef ref,
     required BuildContext? loadingContext,
     required BuildContext originalContext,
   }) async {
     try {
-      // 1. Clear Firebase data first
-      LoggerService.info('Clearing Firebase data...', tag: 'ResetData');
-      final user = auth.currentUser;
+      // 1. Reset progress through the repository: reseeds local Hive with
+      // initial progress AND deletes the real cloud progress doc
+      // ({env}/{uid}/data/{progressDoc}). A previous revision deleted
+      // `users/{uid}` (which never holds progress) and left cloud data
+      // behind to resurrect local state on the next sync.
+      LoggerService.info('Resetting game progress...', tag: 'ResetData');
+      await ref.read(gameProgressProvider.notifier).resetProgress();
+      LoggerService.info('Game progress reset', tag: 'ResetData');
 
-      if (user != null) {
-        // Clear user's cloud data
-        final userDoc = firestore.collection('users').doc(user.uid);
-        await userDoc.delete();
-        LoggerService.info('Firebase data cleared for user ${user.uid}',
-            tag: 'ResetData');
-      }
-
-      // 2. Clear Hive data
+      // 2. Clear remaining Hive data (settings, preferences, cached
+      // registries, journal display state).
       LoggerService.info('Clearing Hive data...', tag: 'ResetData');
+      final box = ref.read(hiveBoxProvider);
       await box.clear();
       LoggerService.info('Hive data cleared', tag: 'ResetData');
 
-      // 3. Close the loading dialog immediately (before invalidating providers)
-      LoggerService.debug('Attempting to close loading dialog...',
-          tag: 'ResetData');
+      // 3. Invalidate in-memory provider state BEFORE navigating: after
+      // push/go the settings element is unmounted and its ref is disposed,
+      // so any invalidate here would throw and be swallowed (this was the
+      // "still on the same level" bug — only gameProgressProvider was
+      // invalidated, after navigation, so it never ran).
+      // NB: tutorialProgressProvider reads (not watches) gameProgress, so
+      // it goes stale unless explicitly invalidated.
+      LoggerService.debug('Invalidating providers...', tag: 'ResetData');
+      ref.invalidate(gameProgressProvider);
+      ref.invalidate(tutorialProgressProvider);
+      ref.invalidate(currentLevelProvider);
+      ref.invalidate(levelCompleteProvider);
+      ref.invalidate(gameCompletedProvider);
+      ref.invalidate(graceProvider);
+      ref.invalidate(gameOverProvider);
+      ref.invalidate(gameInstanceProvider);
+      ref.invalidate(levelTotalTapsProvider);
+      ref.invalidate(levelWrongTapsProvider);
+      ref.invalidate(levelAttemptCountProvider);
+      ref.invalidate(levelStartTimestampProvider);
+      ref.invalidate(themeModeProvider);
+      ref.invalidate(backgroundAudioEnabledProvider);
+      ref.invalidate(hapticsEnabledProvider);
+      ref.invalidate(vineStyleProvider);
+      ref.invalidate(preferredTranslationProvider);
+      ref.invalidate(journalLockedStyleProvider);
+      ref.invalidate(journalBookmarkProvider);
+      LoggerService.info('Reset completed successfully', tag: 'ResetData');
+
+      // 4. Close the loading dialog.
       try {
         if (loadingContext != null && loadingContext.mounted) {
           Navigator.of(loadingContext).pop();
@@ -1417,35 +1433,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             error: dialogError, stackTrace: stack, tag: 'ResetData');
       }
 
-      // 4. Check context before continuing
+      // 5. Navigate home via go_router (the app's router). Do not use
+      // Navigator.pushAndRemoveUntil: it stacks a non-router HomeScreen
+      // above the router and leaves router location stale.
       if (!originalContext.mounted) {
         LoggerService.warn('Original context not mounted, aborting',
             tag: 'ResetData');
         return;
       }
-
-      // 5. Navigate to home immediately (before invalidating UI providers)
       LoggerService.info('Navigating to home screen...', tag: 'ResetData');
-      try {
-        await Navigator.of(originalContext).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (route) => false,
-        );
-        LoggerService.debug('Navigation completed', tag: 'ResetData');
-      } catch (navError, stack) {
-        LoggerService.error('Navigation error',
-            error: navError, stackTrace: stack, tag: 'ResetData');
-        return;
-      }
-
-      // 6. NOW invalidate only essential progress/level providers
-      // (after navigation is complete)
-      // These providers will rebuild with cleared data when HomeScreen loads
-      LoggerService.debug('Invalidating progress providers...',
-          tag: 'ResetData');
-      ref.invalidate(gameProgressProvider);
-
-      LoggerService.info('Reset completed successfully', tag: 'ResetData');
+      originalContext.go('/');
     } catch (e, stack) {
       LoggerService.error('Error during reset',
           error: e, stackTrace: stack, tag: 'ResetData');
