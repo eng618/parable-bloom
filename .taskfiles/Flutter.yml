@@ -331,6 +331,13 @@ tasks:
     cmds:
       - flutter test --dart-define=APP_ENV=prod
 
+  validate:
+    desc: Validate the Flutter app (strict lint + tests + web build)
+    cmds:
+      - task: lint
+      - task: test
+      - task: build:web
+
   # -----------------------------------------------------------------------------
   # Builds & Compilation
   # -----------------------------------------------------------------------------
