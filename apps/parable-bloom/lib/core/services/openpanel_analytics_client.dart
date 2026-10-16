@@ -24,6 +24,7 @@ class OpenpanelAnalyticsClient {
   static const String defaultApiUrl = "https://openpanel.gventureshq.com/api";
 
   final String clientId;
+  final String clientSecret;
   final String endpoint;
   final String platform;
   final http.Client _client;
@@ -35,9 +36,15 @@ class OpenpanelAnalyticsClient {
     String? platform,
     http.Client? client,
     bool Function()? isOptedOut,
+    String? clientSecret,
   })  : platform = platform ?? resolveCurrentPlatform(),
         _client = client ?? http.Client(),
-        _isOptedOut = isOptedOut ?? _defaultOptOut;
+        _isOptedOut = isOptedOut ?? _defaultOptOut,
+        clientSecret = clientSecret ??
+            const String.fromEnvironment(
+              "OPENPANEL_CLIENT_SECRET",
+              defaultValue: "",
+            );
 
   static String resolveCurrentPlatform() {
     if (kIsWeb) return "web";
@@ -89,6 +96,7 @@ class OpenpanelAnalyticsClient {
     http.Client? client,
     bool Function()? isOptedOut,
     String? platform,
+    String? clientSecret,
   }) {
     final resolvedPlatform = platform ?? resolveCurrentPlatform();
     final defaultIdForPlatform = resolveDefaultClientId(resolvedPlatform);
@@ -107,7 +115,10 @@ class OpenpanelAnalyticsClient {
       defaultValue: defaultApiUrl,
     );
 
-    final endpoint = normalizeEndpoint(rawApiUrl);
+    // An explicitly empty dart-define (`--dart-define=OPENPANEL_API_URL=` when
+    // the env var is unset) must not override the default with a blank URL.
+    final endpoint =
+        normalizeEndpoint(rawApiUrl.isEmpty ? defaultApiUrl : rawApiUrl);
 
     return OpenpanelAnalyticsClient(
       clientId: clientId,
@@ -115,6 +126,7 @@ class OpenpanelAnalyticsClient {
       platform: resolvedPlatform,
       client: client,
       isOptedOut: isOptedOut,
+      clientSecret: clientSecret,
     );
   }
 
@@ -150,6 +162,14 @@ class OpenpanelAnalyticsClient {
         headers: {
           "Content-Type": "application/json",
           "openpanel-client-id": clientId,
+          // Native (non-browser) track calls carry no Origin header, so the
+          // self-hosted API requires the client secret ("Invalid cors or
+          // secret" 401s without it). Web authenticates via CORS instead and
+          // must never transmit the secret: anything baked into the JS bundle
+          // is extractable by readers (build tasks omit the define for web
+          // targets entirely; this guard is belt-and-braces).
+          if (!kIsWeb && clientSecret.isNotEmpty)
+            "openpanel-client-secret": clientSecret,
           "openpanel-sdk-name": "flutter",
           "openpanel-sdk-version": "1.0.0",
         },

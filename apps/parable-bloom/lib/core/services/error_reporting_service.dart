@@ -17,6 +17,10 @@ class ErrorReporting {
 
   static Future<void> init() async {
     if (dsn.isEmpty || _initialized) return;
+    // Release/dist intentionally left to SentryFlutter auto-detection so the
+    // runtime release matches the `release` the sentry_dart_plugin uploads
+    // symbols under (pubspec name@version). Overriding one side without the
+    // other silently breaks deobfuscation.
     await SentryFlutter.init(
       (options) {
         options.dsn = dsn;

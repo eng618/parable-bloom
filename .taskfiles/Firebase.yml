@@ -123,10 +123,10 @@ tasks:
     cmds:
       - |
         if firebase hosting:sites:get "{{.SITE_ID}}" --project "{{.PROJECT_ID}}" >/dev/null 2>&1; then
-          echo "✅ Hosting site {{.SITE_ID}} already exists in {{.PROJECT_ID}}"
+          echo "✅ Hosting site {{.SITE_ID}} already exists in {{.PROJECT_ID}}" >&2
         else
-          echo "Creating hosting site {{.SITE_ID}} in {{.PROJECT_ID}}..."
-          firebase hosting:sites:create "{{.SITE_ID}}" --project "{{.PROJECT_ID}}"
+          echo "Creating hosting site {{.SITE_ID}} in {{.PROJECT_ID}}..." >&2
+          firebase hosting:sites:create "{{.SITE_ID}}" --project "{{.PROJECT_ID}}" >&2
         fi
     preconditions:
       - sh: command -v firebase >/dev/null 2>&1

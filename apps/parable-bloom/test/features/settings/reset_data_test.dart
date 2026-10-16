@@ -12,7 +12,6 @@ import 'package:parable_bloom/features/game/application/providers/module_provide
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
-import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart';
 import 'package:parable_bloom/features/journal/application/providers/journal_display_providers.dart';
 import 'package:parable_bloom/features/tutorial/application/providers/tutorial_providers.dart';

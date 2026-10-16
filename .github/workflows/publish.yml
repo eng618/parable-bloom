@@ -89,6 +89,15 @@ jobs:
         platform: [web, android]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # Empty when unset: Sentry reporting + symbol upload stay disabled and
+      # OpenPanel falls back to baked-in per-platform client IDs (no secret
+      # header). Add the secrets in repo settings to enable them.
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID }}
+      OPENPANEL_CLIENT_SECRET: ${{ secrets.OPENPANEL_CLIENT_SECRET }}
+      OPENPANEL_API_URL: ${{ secrets.OPENPANEL_API_URL }}
     steps:
       - uses: actions/checkout@v7
       - name: Download firebase_options.dart
