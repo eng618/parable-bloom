@@ -127,7 +127,16 @@ class GameProgress {
   /// persisted [currentLevel] goes stale when the playlist grows (new cloud
   /// levels) or IDs migrate, so callers must prefer this over trusting
   /// [currentLevel] blindly.
-  String? nextUncompletedLevel(List<String> playlist) {
+  String? nextUncompletedLevel(List<String> playlist) =>
+      GameProgress.firstUncompletedInPlaylist(playlist, completedLevels);
+
+  /// Playlist-scan variant that takes [completedLevels] directly, so callers
+  /// which select only that set from [gameProgressProvider] (instead of
+  /// watching the whole [GameProgress] object) can run the same scan.
+  static String? firstUncompletedInPlaylist(
+    List<String> playlist,
+    Set<String> completedLevels,
+  ) {
     for (final id in playlist) {
       if (!completedLevels.contains(id)) return id;
     }

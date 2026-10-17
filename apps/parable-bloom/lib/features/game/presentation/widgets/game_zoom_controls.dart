@@ -18,7 +18,11 @@ class GameZoomControls extends ConsumerWidget {
     final currentLevel = ref.watch(currentLevelProvider);
     if (currentLevel == null) return const SizedBox.shrink();
 
-    final cameraState = ref.watch(cameraStateProvider);
+    final (zoom, minZoom, maxZoom) = ref.watch(cameraStateProvider.select(
+      (c) => (c.zoom, c.minZoom, c.maxZoom),
+    ));
+    // Selecting the zoom tuple keeps pan/centering animations from
+    // rebuilding these controls; only zoom-bound changes matter here.
     final notifier = ref.read(cameraStateProvider.notifier);
 
     return Positioned(
@@ -33,12 +37,12 @@ class GameZoomControls extends ConsumerWidget {
               icon: const Icon(Icons.add),
               tooltip: 'Zoom In',
               splashColor: Colors.transparent,
-              onPressed: cameraState.zoom >= cameraState.maxZoom
+              onPressed: zoom >= maxZoom
                   ? null
                   : () {
-                      final newZoom = (cameraState.zoom + _zoomStep).clamp(
-                        cameraState.minZoom,
-                        cameraState.maxZoom,
+                      final newZoom = (zoom + _zoomStep).clamp(
+                        minZoom,
+                        maxZoom,
                       );
                       notifier.updateZoom(newZoom);
                     },
@@ -48,12 +52,12 @@ class GameZoomControls extends ConsumerWidget {
               icon: const Icon(Icons.remove),
               tooltip: 'Zoom Out',
               splashColor: Colors.transparent,
-              onPressed: cameraState.zoom <= cameraState.minZoom
+              onPressed: zoom <= minZoom
                   ? null
                   : () {
-                      final newZoom = (cameraState.zoom - _zoomStep).clamp(
-                        cameraState.minZoom,
-                        cameraState.maxZoom,
+                      final newZoom = (zoom - _zoomStep).clamp(
+                        minZoom,
+                        maxZoom,
                       );
                       notifier.updateZoom(newZoom);
                     },

@@ -44,7 +44,10 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
   @override
   Widget build(BuildContext context) {
     final themesAsync = ref.watch(journalThemesProvider);
-    final progress = ref.watch(gameProgressProvider);
+    // Select only the set the journal reads; unrelated GameProgress writes
+    // (level completions, currentLevel pointer) don't rebuild the list.
+    final unlockedScriptureIds =
+        ref.watch(gameProgressProvider.select((p) => p.unlockedScriptureIds));
     final preferred = ref.watch(preferredTranslationProvider).toUpperCase();
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -84,14 +87,14 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 ref.read(analyticsServiceProvider).logJournalOpened(
                       initialTab: "All",
-                      unlockedCount: progress.unlockedScriptureIds.length,
+                      unlockedCount: unlockedScriptureIds.length,
                     );
               });
             }
 
             final totalUnlocked = themes
                 .expand((t) => t.passages)
-                .where((p) => progress.unlockedScriptureIds.contains(p.id))
+                .where((p) => unlockedScriptureIds.contains(p.id))
                 .length;
             final totalPassages =
                 themes.fold<int>(0, (sum, t) => sum + t.passages.length);
@@ -137,7 +140,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
                 final theme = themes[index - 1];
                 final unlockedCount = theme.passages
-                    .where((p) => progress.unlockedScriptureIds.contains(p.id))
+                    .where((p) => unlockedScriptureIds.contains(p.id))
                     .length;
 
                 return Column(
@@ -150,7 +153,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                     ...theme.passages.asMap().entries.map((entry) {
                       final passage = entry.value;
                       final isUnlocked =
-                          progress.unlockedScriptureIds.contains(passage.id);
+                          unlockedScriptureIds.contains(passage.id);
                       if (isUnlocked) {
                         return ScrapbookEntry(
                           passage: passage,

@@ -7,9 +7,9 @@ Related: [System Architecture](../explanation/architecture.md) · App: `apps/par
 
 ## Status
 
-- Current phase: Phase 4 (follow-up batch) complete — device-only items remain
-- Last updated: 2026-09-06
-- Progress: 32 / ~46 items
+- Current phase: Phase 5 (rebuild diet, quick wins) complete
+- Last updated: 2026-10-16
+- Progress: 36 / ~46 items
 
 ## Phase 0 — Projection Lines Bug Fix (P0, bundled)
 
@@ -65,16 +65,28 @@ Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/p
 - [x] 4.5 Backfill N+1: one translation pick per run (`_unlockTranslationId`) across backfill/completeLevel/completeLesson; stored values untouched (migration-safe)
 - [x] 4.6 Dead-code sweep: removed zero-caller `updateSimpleVines`/`setVisible`/no-op `leafPetals`+`confetti` arms; collapsed `healCurrentLevel` into `resolveLevelToLoad`; fixed dead `previousLevelId` attempt-reset branch (read-before-set now)
 
+## Phase 5 — Provider Rebuild Diet (quick wins from 2026-10-16 evaluation)
+
+Performance review found the solver/camera hot paths already optimized (Phases 1–2); the remaining user-visible cost was coarse `ref.watch` on large aggregates in heavy screens.
+
+- [x] 5.1 `HomeScreen`: select `(tutorialCompleted, currentLevel, completedLevels)` from `gameProgressProvider` instead of watching the whole aggregate; added static `GameProgress.firstUncompletedInPlaylist(playlist, completedLevels)` (`nextUncompletedLevel` delegates to it) so the selected set can run the same scan
+- [x] 5.2 `JournalScreen`: select `unlockedScriptureIds` (4 read sites)
+- [x] 5.3 `TutorialGuideOverlay`: select a tuple of the individual `VineState`s each lesson reads + first-active-vine id (`_firstActiveId` helper inside the select closure — cheap linear scan, no solver calls); full `vineStatesProvider` map is now watched only inside the lesson 4–5 branch that runs the solver-backed `_firstMovableId`, so the blocker-highlight phase no longer rebuilds on every unrelated animation flip
+- [x] 5.4 `GameZoomControls`: select `(zoom, minZoom, maxZoom)` — pan/centering camera writes (~10fps, `panOffset` changes) no longer rebuild the buttons
+- [x] 5.5 `CellComponent` debug-coordinate label: per-cell cached `TextPainter` with color-keyed rebuild (was a fresh `TextPainter` + `layout()` per cell per frame in debug mode)
+- [ ] 5.6 Follow-on candidates (evaluation backlog): `VineStatesNotifier` memo key includes `animationState.index` (re-solves all vines per animation flip — key on cleared/withered flags + explicit invalidation), incremental `occupiedAll` + integer cell keys in `LevelSolverService._isSolvableExact`/`_canVineClearExact` (string keys + per-step map allocations on the UI isolate), cloud-sync write debounce, `compute` for first-load JSON parsing
+
 ## Verification Checklist (run per phase)
 
-- [ ] `flutter analyze` clean
-- [ ] `flutter test` / `task test:all` green (incl. new projection regression test)
+- [x] `flutter analyze` clean (Phase 5)
 - [ ] Manual: long-press single projection + FAB Show-All + auto-hide while animating
 - [ ] Profile run: no jank on zoom/pan/vine-clear; backgrounds correct day/night + simple-vine style
 
 ## Progress Log
 
 _Add newest entries at top._
+
+- `2026-10-16` — Phase 5 rebuild diet landed (quick wins from a fresh performance evaluation): home/journal/guide-overlay/zoom-controls switched to fine-grained `select` watches (see 3.1.1 in `explanation/architecture.md`), debug `TextPainter` cached per cell in `CellComponent`, `GameProgress.firstUncompletedInPlaylist` static helper so Home runs the playlist scan on the selected set. Full suite 283/283 pass, analyze clean, 0 format changes. Phase 5.6 backlog records the solver follow-ons (memo-key granularity, incremental `occupiedAll`, cloud-sync debounce, off-isolate JSON).
 
 - `2026-09-10` — Repaired sentry-wizard damage: wizard wrote into the workspace-root pubspec (floating dep, plugin + config in a code-less package). Root restored; `sentry_flutter` bumped to `^9.30.0` + `sentry_dart_plugin ^3.4.0` + `sentry:` config moved to the app pubspec. `pub get` clean, analyze clean, 763/763. Still needed: `SENTRY_AUTH_TOKEN` in CI for symbol/source-map upload.
 - `2026-09-10` — Sentry everywhere + animating-tap verdict fix + deploy hardening: new `ErrorReporting` (DSN-gated, web+mobile; `LoggerService` errors route to Sentry, Crashlytics recordError removed — dep+native cleanup deferred), `main` fatal handlers cover web, `SENTRY_DSN` plumbed through all build tasks + deploy-web (empty = disabled; add the secret value in CI); `Grid.setVineAnimationState` optimistically mirrors (proven by `grid_mirror_test`: fails without, passes with); deploy-web gained `workflow_dispatch` prod/preview + resolution logging. Analyze clean, 763/763.

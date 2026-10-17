@@ -74,6 +74,17 @@ The application uses a reactive architecture where the UI and Game Engine observ
 - **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
 - **`boardZoomScaleProvider`**: Manages the user's preferred default board zoom scale (0.5x to 2.0x).
 
+### 3.1.1 Fine-Grained Watches
+
+Providers emit immutable objects with value equality (`GameProgress`, `CameraState`, `VineState`), but watching a whole aggregate still rebuilds the consumer whenever any unrelated field changes. Heavy consumers therefore watch selected slices via `ref.watch(provider.select(...))` (a record of primitives/value-equal entities):
+
+- **`HomeScreen`** selects `(tutorialCompleted, currentLevel, completedLevels)` and uses the static `GameProgress.firstUncompletedInPlaylist(playlist, completedLevels)` on the selected set, instead of watching the whole `GameProgress`.
+- **`JournalScreen`** selects `unlockedScriptureIds`.
+- **`TutorialGuideOverlay`** selects a tuple of the individual `VineState`s each lesson reads (plus the first active vine id); the full `vineStatesProvider` map is watched only inside the lesson 4–5 branch that runs the solver-backed movable scan.
+- **`GameZoomControls`** selects `(zoom, minZoom, maxZoom)` so pan/centering camera writes (~10fps) don't rebuild the controls.
+
+Flame-side rendering bypasses Riverpod notifications entirely for the per-frame camera path (`applyCameraFrame`); Riverpod camera state is throttled to ~10fps.
+
 ### 3.2 Logic & Solvers
 
 - **`LevelSolver`**: A Breadth-First Search (BFS) solver that validates level solvability and determines blocking relationships.

@@ -5,8 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
 
+### Changed
+- Fine-grained Riverpod watches on heavy screens: `HomeScreen` selects tutorial/level/completed fields, `JournalScreen` selects unlocked scriptures, `TutorialGuideOverlay` selects only the vine states each lesson reads, `GameZoomControls` selects zoom bounds — unrelated provider writes no longer rebuild these widgets.
+- Added `GameProgress.firstUncompletedInPlaylist(playlist, completedLevels)` static helper; `nextUncompletedLevel` delegates to it.
 
+### Performance
+- Cached the debug-mode cell coordinate `TextPainter` per cell in `CellComponent` (was a fresh `TextPainter` + layout per cell per frame).
 
 
 
