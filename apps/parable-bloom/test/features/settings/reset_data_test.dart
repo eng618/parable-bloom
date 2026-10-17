@@ -13,7 +13,6 @@ import 'package:parable_bloom/features/game/application/providers/progress_provi
 import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 import 'package:parable_bloom/features/game/domain/repositories/game_progress_repository.dart';
-import 'package:parable_bloom/features/journal/application/providers/journal_display_providers.dart';
 import 'package:parable_bloom/features/tutorial/application/providers/tutorial_providers.dart';
 
 /// Regression test for the "Reset All Data leaves me on the same level"
@@ -71,10 +70,6 @@ void main() {
 
       // Stale-able in-memory session state.
       container.read(graceProvider.notifier).setGrace(1);
-      await container.read(journalBookmarkProvider.notifier).save(7);
-      await container
-          .read(journalLockedStyleProvider.notifier)
-          .setStyle(JournalLockedStyle.teaser);
 
       // --- Fixed reset sequence (mirrors _performResetAsync) ---
       await container.read(gameProgressProvider.notifier).resetProgress();
@@ -96,8 +91,6 @@ void main() {
       container.invalidate(hapticsEnabledProvider);
       container.invalidate(vineStyleProvider);
       container.invalidate(preferredTranslationProvider);
-      container.invalidate(journalLockedStyleProvider);
-      container.invalidate(journalBookmarkProvider);
 
       // --- Assertions: everything home depends on is fresh ---
       final fresh = container.read(gameProgressProvider);
@@ -113,11 +106,6 @@ void main() {
 
       expect(container.read(currentLevelProvider), isNull);
       expect(container.read(graceProvider), equals(3));
-      expect(container.read(journalBookmarkProvider), equals(0));
-      expect(
-        container.read(journalLockedStyleProvider),
-        equals(JournalLockedStyle.sealed),
-      );
 
       // Repository itself was reset through resetProgress, not just the box.
       expect(fakeRepo.resetCalled, isTrue);

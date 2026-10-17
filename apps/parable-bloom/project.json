@@ -50,6 +50,15 @@
         "cwd": "."
       }
     },
+    "validate": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": [],
+      "options": {
+        "command": "task flutter:validate",
+        "cwd": "."
+      }
+    },
     "deploy": {
       "executor": "nx:run-commands",
       "options": {

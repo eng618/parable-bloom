@@ -74,7 +74,7 @@ void main() {
   }
 
   group('JournalScreen Widget Tests', () {
-    testWidgets('Renders app bar and theme card', (tester) async {
+    testWidgets('Renders scrapbook with chapter divider', (tester) async {
       final progress = GameProgress.initial();
 
       await tester.pumpWidget(createJournalScreen(progress: progress));
@@ -82,22 +82,26 @@ void main() {
 
       expect(find.text('Journal'), findsOneWidget);
       expect(find.text('Seeds of Faith'), findsOneWidget);
-      expect(find.text('0 / 1 Collected'), findsOneWidget);
+      expect(find.textContaining('0 / 1 Collected'), findsWidgets);
     });
 
-    testWidgets('Shows locked scripture state when level not completed',
-        (tester) async {
+    testWidgets('Locked envelope hides title and reference', (tester) async {
       final progress = GameProgress.initial();
 
       await tester.pumpWidget(createJournalScreen(progress: progress));
       await tester.pumpAndSettle();
 
       expect(find.text('Locked Scripture'), findsOneWidget);
-      expect(find.text('Unlocks at Level 1 (Module 1)'), findsOneWidget);
+      expect(
+        find.text('Unlocks at Level 1 (Module 1)'),
+        findsOneWidget,
+      );
+      // Fully sealed: no title or reference tease anywhere.
+      expect(find.text('Faith in Action'), findsNothing);
+      expect(find.textContaining('Hebrews 11:1'), findsNothing);
     });
 
-    testWidgets('Shows unlocked passage when scripture is in unlocked list',
-        (tester) async {
+    testWidgets('Unlocked entry card opens reading sheet', (tester) async {
       final progress = GameProgress.initial().copyWith(
         unlockedScriptureIds: {'faith_1'},
       );
@@ -105,24 +109,20 @@ void main() {
       await tester.pumpWidget(createJournalScreen(progress: progress));
       await tester.pumpAndSettle();
 
+      // Entry card visible inline in the scroll view.
       expect(find.text('Faith in Action'), findsOneWidget);
-      // List subtitle renders the preferred translation (NET by default).
-      expect(find.text('Hebrews 11:1 (NET)'), findsOneWidget);
-      expect(find.text('1 / 1 Collected'), findsOneWidget);
-    });
-
-    testWidgets('Tapping unlocked passage opens scripture reflection sheet',
-        (tester) async {
-      final progress = GameProgress.initial().copyWith(
-        unlockedScriptureIds: {'faith_1'},
-      );
-
-      await tester.pumpWidget(createJournalScreen(progress: progress));
-      await tester.pumpAndSettle();
+      expect(find.textContaining('1 / 1 Collected'), findsWidgets);
 
       await tester.tap(find.text('Faith in Action'));
       await tester.pumpAndSettle();
 
+      expect(
+        find.textContaining(
+          'Now faith is the substance',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
       expect(find.text('What does faith mean to you?'), findsOneWidget);
     });
   });
