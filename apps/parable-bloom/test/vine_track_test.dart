@@ -126,4 +126,67 @@ void main() {
       }
     });
   });
+
+  group('VineTrack.windowPath', () {
+    test('window path length equals the window arc for every head position',
+        () {
+      final track = buildTrack(extensionArc: 6 * pitch);
+      for (var headArc = 0.0;
+          headArc <= track.exitArc + 2 * pitch;
+          headArc += pitch / 2) {
+        final path = track.windowPath(headArc, track.windowLength);
+        final metrics = path.computeMetrics().toList();
+        expect(metrics.length, 1, reason: 'headArc=$headArc');
+        // Chords along straight runs are exact; corner chords add <0.1px.
+        expect(
+          metrics.first.length,
+          closeTo(track.windowLength, 1.0),
+          reason: 'headArc=$headArc',
+        );
+      }
+    });
+
+    test('window edges cut exactly at the requested arcs', () {
+      final track = buildTrack(extensionArc: 6 * pitch);
+      final scratch = Float32List(VineTrack.positionW);
+
+      void expectEdgeMatches(double headArc, double tailArc) {
+        final path = track.windowPath(headArc, headArc - tailArc);
+        final metric = path.computeMetrics().first;
+        track.sampleAt(headArc, scratch);
+        final headSample = Offset(scratch[0], scratch[1]);
+        final endTangent = metric.getTangentForOffset(metric.length)!;
+        // Exact on straight runs; sub-pixel deviation mid-corner because
+        // sampleAt chords between 8px samples while the fine cut follows
+        // the baked corner arc.
+        expect(
+          (endTangent.position - headSample).distance,
+          lessThan(0.6),
+          reason: 'head edge at headArc=$headArc',
+        );
+
+        track.sampleAt(tailArc, scratch);
+        final tailSample = Offset(scratch[0], scratch[1]);
+        final startTangent = metric.getTangentForOffset(0.0)!;
+        if (tailArc <= track.startArc) {
+          // Clamped tail: path must start at the track's first vertex.
+          expect(startTangent.position, tailSample,
+              reason: 'clamped tail edge');
+        } else {
+          expect(
+            (startTangent.position - tailSample).distance,
+            lessThan(0.6),
+            reason: 'tail edge near tailArc=$tailArc',
+          );
+        }
+      }
+
+      expectEdgeMatches(0, -track.windowLength); // idle
+      expectEdgeMatches(2 * pitch, 2 * pitch - track.windowLength);
+      expectEdgeMatches(track.exitArc + 4 * pitch,
+          track.exitArc + 4 * pitch - track.windowLength);
+      // Mid-corner cut (irregular offset).
+      expectEdgeMatches(pitch * 1.37, pitch * 1.37 - track.windowLength);
+    });
+  });
 }

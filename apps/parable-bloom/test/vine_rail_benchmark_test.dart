@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -93,6 +94,65 @@ void main() {
     // @60Hz (and 6.9 ms @120Hz) frame budgets. Legacy O(N) path painting
     // was the regression baseline; the rail write is O(window floats) and
     // typically ~10x faster per frame than the old Path rebuild.
+    expect(perFrameMs, lessThan(1.5), reason: 'perFrameMs=$perFrameMs');
+  });
+
+  test('simple stroked-path pipeline cost stays inside frame budget', () {
+    // Same 60-cell snake fixture, exercising the simple render pass's
+    // per-frame work: windowPath re-cut from the baked fine polyline.
+    const gridW = 12, gridH = 12;
+    final walk = <Map<String, int>>[];
+    var placed = 0;
+    for (var row = 0; row < gridH && placed < 60; row++) {
+      final leftToRight = row.isEven;
+      for (var i = 0; i < gridW && placed < 60; i++) {
+        final px = leftToRight ? i : gridW - 1 - i;
+        walk.add({'x': px, 'y': row});
+        placed++;
+      }
+    }
+    final orderedPath = walk.reversed.toList();
+
+    const pitch = 42.0;
+    const approachSteps = 4;
+    final track = VineTrack.build(
+      orderedPath: orderedPath,
+      headDirection: 'right',
+      gridWidth: gridW,
+      gridHeight: gridH,
+      extensionArc: (approachSteps + 60 + 7) * pitch,
+    );
+
+    final controller = VineSlideController.idle();
+    controller.startRun(
+      track: track,
+      approachSteps: approachSteps,
+      isClear: true,
+    );
+
+    // Warm up.
+    final paths = <ui.Path>[];
+    for (var i = 0; i < 50; i++) {
+      paths.add(track.windowPath(controller.headArc, track.windowLength));
+      controller.update(1 / 60);
+    }
+
+    // Measure: windowPath build each frame is the only alloc/scan work the
+    // simple pass adds per frame (the stroke itself is one AA draw).
+    var frames = 0;
+    final sw = Stopwatch()..start();
+    while (controller.isAnimating && frames < 400) {
+      paths.add(track.windowPath(controller.headArc, track.windowLength));
+      controller.update(1 / 60);
+      frames++;
+    }
+    sw.stop();
+    final perFrameMs = sw.elapsedMicroseconds / math.max(1, frames) / 1000.0;
+    paths.clear();
+
+    expect(frames, greaterThan(50));
+    // Much lighter than the vertex write (a few hundred lineTo), and well
+    // below frame budget at 60/120Hz.
     expect(perFrameMs, lessThan(1.5), reason: 'perFrameMs=$perFrameMs');
   });
 

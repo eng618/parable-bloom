@@ -64,6 +64,14 @@ class VineTrack {
   /// Baked per-sample unit normals, interleaved (nx, ny).
   late final Float32List sampleNormals;
 
+  /// Baked fine centerline (tail→head) with exact corner arcs — the same
+  /// scale-free geometry the legacy `buildRoundedTube` drew. Used by the
+  /// stroked-path (simple style) render pass for vector-crisp AA at any DPR.
+  int fineCount = 0;
+  late final Float32List fineX;
+  late final Float32List fineY;
+  late final Float32List fineCum;
+
   /// Track arc of sample i = `i * spacing - headArcOffset` (the fine
   /// resampling grid starts at the tail vertex, so the head cell center sits
   /// at fineArc = headArcOffset = track arc 0).
@@ -165,6 +173,65 @@ class VineTrack {
     return 1.0 - fadeOut;
   }
 
+  /// Builds the centerline [Path] for the sliding window
+  /// `[headArc - windowLength, headArc]` from the baked fine polyline.
+  ///
+  /// Both window edges are cut exactly at the requested arc (interpolated
+  /// mid-corner if needed), so a stroke along this path is the rigid vine
+  /// body. O(fine points in window) — a few hundred at most — and the
+  /// result is stroked with AA by the renderer, keeping edges vector-crisp
+  /// at any device pixel ratio in both the `simple` render pass.
+  Path windowPath(double headArc, double windowLength) {
+    final lo =
+        ((headArc - windowLength + headArcOffset).clamp(0.0, _fineTotal()));
+    final hi = ((headArc + headArcOffset).clamp(lo, _fineTotal()));
+
+    final path = Path();
+    final loIdx = _bisectCum(lo);
+    final start = _finePointAt(lo, loIdx);
+    path.moveTo(start.dx, start.dy);
+    for (var i = loIdx; i < fineCount && fineCum[i] <= hi; i++) {
+      path.lineTo(fineX[i], fineY[i]);
+    }
+    final end = _finePointAt(hi, _bisectCum(hi));
+    path.lineTo(end.dx, end.dy);
+    return path;
+  }
+
+  double _fineTotal() => fineCum[fineCount - 1];
+
+  /// First vertex index whose fine-cumulative arc is >= [arc].
+  int _bisectCum(double arc) {
+    var lo = 0;
+    var hi = fineCount - 1;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (fineCum[mid] < arc) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    return lo;
+  }
+
+  /// Interpolated point on the fine polyline at fine-arc [arc], binary
+  /// bracketed by [idx] (first vertex with cum >= arc).
+  Offset _finePointAt(double arc, int idx) {
+    if (idx <= 0) return Offset(fineX[0], fineY[0]);
+    if (idx >= fineCount) {
+      return Offset(fineX[fineCount - 1], fineY[fineCount - 1]);
+    }
+    final c0 = fineCum[idx - 1];
+    final c1 = fineCum[idx];
+    if (c1 - c0 <= 1e-9) return Offset(fineX[idx], fineY[idx]);
+    final t = ((arc - c0) / (c1 - c0)).clamp(0.0, 1.0);
+    return Offset(
+      fineX[idx - 1] + (fineX[idx] - fineX[idx - 1]) * t,
+      fineY[idx - 1] + (fineY[idx] - fineY[idx - 1]) * t,
+    );
+  }
+
   /// Builds a track for one vine.
   ///
   /// [extensionArc] is the forward arc length past the head cell reserved
@@ -252,7 +319,6 @@ class VineTrack {
     // Arc coordinates of tail cell (0 by construction) and head cell.
     final headCum = _cumAtPoint(fine, cum, headCenter);
     // Arc coordinates are fine-arc minus headCum; no index offset needed.
-
     // Exit trigger: head center one full cell beyond the edge (bloom-time
     // parity with the legacy animator).
     final headCellX = headCell['x'] ?? 0;
@@ -287,6 +353,18 @@ class VineTrack {
       headCellY: headCellY,
       headArcOffset: headCum,
     );
+
+    // Bake the fine centerline onto the track (exact path geometry for the
+    // stroked-path simple render pass).
+    track.fineCount = fine.length;
+    track.fineX = Float32List(fine.length);
+    track.fineY = Float32List(fine.length);
+    track.fineCum = Float32List(fine.length);
+    for (var i = 0; i < fine.length; i++) {
+      track.fineX[i] = fine[i].dx;
+      track.fineY[i] = fine[i].dy;
+      track.fineCum[i] = cum[i];
+    }
 
     // Resample uniformly across [0, total] fine arc. The fine grid starts
     // at the tail vertex, so the head cell center sits at fineArc =

@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19
+Date: 2026-10-19 (last updated 2026-10-20: indexed triangle topology fix + simple stroked pass)
 
 ## Why a redesign
 
@@ -34,7 +34,9 @@ lib/features/game/presentation/widgets/
   vine/vine_slide_controller.dart  scalar phase machine (replaces VineAnimator)
   vine/vine_foliage_atlas.dart startup-baked white leaf atlas + quad writer
   vine/vine_rail_draw.dart     per-frame draw payload record
-  vine/vine_rail_renderer.dart native pass (drawVertices strips, caps, arrow)
+  vine/vine_rail_renderer.dart native pass (drawVertices strips + caps +
+                               arrow for textured styles; AA stroked path
+                               for the simple style)
   vine/vine_path_painter.dart  legacy painter (legacy mode only)
   vine/vine_animator.dart      legacy step animator (legacy mode only)
   vine/vine_tube_path.dart     legacy corner/arrow geometry (arrow still used)
@@ -81,10 +83,30 @@ lib/features/game/presentation/widgets/
   valid again.
 - Textured styles sample opaque, pre-colored trellis+vine JPEG textures
   directly (`texture × vertex color` modulate), so the tube reads as a
-  solid wood trellis with vines wrapped around it; the `simple` style is
-  the same grid with a flat tint.
+  solid wood trellis with vines wrapped around it.
 - Idle vines freeze their built `ui.Vertices` (tint-keyed); animating vines
   rebuild only the window each frame.
+
+### Simple render pass (stroked path)
+
+The `simple` style does **not** render through the vertex strip: `drawVertices`
+is never edge-anti-aliased (Impeller or CanvasKit), so a crisp flat look is
+impossible there. Instead it strokes the baked centerline — a vector-crisp,
+DPI-independent pass:
+
+- `VineTrack.windowPath(headArc, windowLength)` cuts the fine baked centerline
+  (the exact legacy `buildRoundedTube` geometry) at both window edges,
+  interpolating mid-corner when an edge lands inside a corner arc.
+  `O(fine points in window)` per frame — a few hundred points for a 40-cell
+  bind; idle vines cache the built `Path` tint-keyed like the `Vertices`.
+- Draw = one `drawPath` stroke (`VineMetrics.tubeWidth`, round cap, round
+  join, flat tint, no shader/blur) + one solid `VineTubePath.buildArrowHead`
+  triangle at the head. Tail cap coverage comes free from the round stroke
+  cap.
+- Exit fade is uniform: the whole vine's alpha follows the head through the
+  `exitFadeArc` band (`tint × fadeAlphaAt(headArc)`), instead of a
+  per-vertex gradient. Tail and head vacate simultaneously, so the slide-out
+  reads as one object dimming as it leaves.
 
 ### VineSlideController (phases)
 
@@ -111,8 +133,8 @@ lib/features/game/presentation/widgets/
   rotated quads + optional glow) per stride cell of the body window; quads
   travel with the vine and rotate through corners using sampled track
   normals. One `drawVertices` per vine regardless of leaf count.
-- `Simple` style renders through the same strip pipeline with flat tint and
-  no foliage.
+- `Simple` style skips foliage (and the strip) entirely — see the simple
+  render pass above.
 
 ## Constants pinned by tests
 
@@ -121,7 +143,9 @@ pitch, `8px` sample spacing, `2px` feather, `63px` exit fade, `0.25` UV
 scale, adaptive step pacing — asserted in `test/vine_track_test.dart`,
 `test/vine_strip_mesh_test.dart`, `test/vine_slide_controller_test.dart`.
 Per-frame cost is benchmarked in `test/vine_rail_benchmark_test.dart` (a
-60-cell multi-turn bind must write + rebuild its strip in well under 1.5ms).
+60-cell multi-turn bind must write + rebuild its strip — and rebuild its
+simple-window path — in well under 1.5ms per frame). Window-path edge cuts
+and length invariants are asserted in `test/vine_track_test.dart`.
 
 ## Renderer selection
 

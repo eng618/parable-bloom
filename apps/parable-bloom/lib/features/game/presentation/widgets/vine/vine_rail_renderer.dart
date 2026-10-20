@@ -11,11 +11,16 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track
 
 /// Native renderer pass for the rail architecture.
 ///
-/// Per vine per frame: one `drawVertices` for the tube strip, one for the
-/// foliage quads (textured styles), plus two round tube caps and a canvas
-/// arrow head. Draw-call count is independent of vine length, and geometry
-/// comes straight from the invariant [VineTrack], so the tube reads as one
-/// continuous object through turns and while exiting off-screen.
+/// Two render paths per vine, both with draw-call count independent of vine
+/// length:
+/// - **Textured styles**: one `drawVertices` for the tube strip, one for the
+///   foliage quads, plus two round tube caps and a canvas arrow head.
+/// - **Simple**: an anti-aliased stroked `Path` along the baked centerline
+///   plus a solid arrow head — vector-crisp edges at any device pixel ratio.
+///
+/// Geometry comes straight from the invariant [VineTrack], so the tube
+/// reads as one continuous object through turns and while exiting
+/// off-screen.
 class VineRailRenderer {
   /// Identity-matrix ImageShaders per texture image (UVs already carry the
   /// legacy 0.25 world scale — see [VineTrack.textureScale]).
@@ -57,14 +62,45 @@ class VineRailRenderer {
     final track = rail.track;
     final headArc = rail.headArc;
     final windowLength = track.windowLength;
+
+    // ---------- Simple render pass: anti-aliased stroked path ----------
+    //
+    // `drawVertices` never reaches vector-crisp edges (no AA on any
+    // backend), so the flat/simple style strokes the baked centerline
+    // instead: round cap + round join, solid tint, plus a solid triangle
+    // head. Whole-vine alpha follows the head through the exit fade band.
+    if (useSimpleVines) {
+      final alpha = track.fadeAlphaAt(headArc);
+      final color = tint.withValues(alpha: tint.a * alpha);
+      final path = rail.simplePath ?? track.windowPath(headArc, windowLength);
+      _simplePaint
+        ..shader = null
+        ..strokeWidth = VineMetrics.tubeWidth
+        ..color = color;
+      canvas.drawPath(path, _simplePaint);
+
+      track.sampleAt(headArc, _sample);
+      final head = Offset(_sample[0], _sample[1]);
+      final headPath = VineTubePath.buildArrowHead(
+        head,
+        track.headDirection,
+        VineMetrics.tubeWidth,
+      );
+      _headPaint
+        ..shader = null
+        ..color = color;
+      canvas.drawPath(headPath, _headPaint);
+      return;
+    }
+
+    // ---------- Textured styles: vertex strip pipeline ----------
     final texture = switch (vineStyle) {
       VineStyle.classic => classicTexture,
       VineStyle.blossom => blossomTexture,
       VineStyle.ethereal => etherealTexture,
       _ => null,
     };
-    final shader =
-        useSimpleVines || texture == null ? null : _shaderFor(texture);
+    final shader = texture == null ? null : _shaderFor(texture);
 
     // 1. Tube strip (single draw call regardless of vine length).
     if (rail.strip != null) {
@@ -117,4 +153,11 @@ class VineRailRenderer {
 
   static final Paint _capPaint = Paint()..style = PaintingStyle.fill;
   static final Paint _headPaint = Paint()..style = PaintingStyle.fill;
+
+  /// Simple-pass stroke: solid AA vector stroke with round caps and joins.
+  static final Paint _simplePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..color = const Color(0xFFFFFFFF);
 }

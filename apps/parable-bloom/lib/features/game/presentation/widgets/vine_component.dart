@@ -73,6 +73,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   ui.Vertices? _cachedFoliage;
   Color? _cacheTint;
   bool _railIdleCacheValid = false;
+  ui.Path? _cachedSimplePath;
 
   final VineBloomRenderer _bloomRenderer = VineBloomRenderer();
   VineBloomRenderer get bloom => _bloomRenderer;
@@ -108,8 +109,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   /// Prepares (or reuses) this frame's rail payload for the batched layer.
   ///
   /// Idle vines freeze their vertex objects; animating vines rebuild the
-  /// visible window sub-range every frame (O(window) float copies, far
-  /// below the legacy O(N) path tessellation).
+  /// visible window sub-range every frame (O(window) work, far below the
+  /// legacy O(N) path tessellation). The flat/simple style instead builds
+  /// the stroked centerline [Path] per window — anti-aliased, no vertex
+  /// mesh work, and equally cheap (O(window) points).
   VineRailDraw? prepareRailDraw({
     required VineStyle style,
     required int foliageStride,
@@ -124,6 +127,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final headArc = _slide.headArc;
     final windowLength = track.windowLength;
     final halfWidth = VineMetrics.tubeWidth / 2;
+    final simple = style == VineStyle.simple;
 
     // Idle caches are keyed on tint: attempted-state color changes must
     // rebuild the vertex colors even while the vine is not moving.
@@ -133,35 +137,43 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         headArc: headArc,
         strip: _cachedStrip,
         foliage: _cachedFoliage,
+        simplePath: _cachedSimplePath,
       );
     }
 
-    _stripBuffers ??= VineStripMesh.allocate(track);
-    VineStripMesh.writeWindow(
-      track: track,
-      headArc: headArc,
-      windowLength: windowLength,
-      buffers: _stripBuffers!,
-      tint: tint,
-      halfWidth: halfWidth,
-    );
-    final strip = VineStripMesh.verticesFor(
-        _stripBuffers!, _stripBuffers!.lastVertexCount);
-
+    ui.Vertices? strip;
     ui.Vertices? foliage;
-    final mesh = _foliageMesh;
-    if (mesh != null && foliageAtlas!.supportsStyle(style)) {
-      mesh.write(
+    ui.Path? simplePath;
+    if (simple) {
+      // Vector-crisp stroked pass: no strip, no foliage quads.
+      simplePath = track.windowPath(headArc, windowLength);
+    } else {
+      _stripBuffers ??= VineStripMesh.allocate(track);
+      VineStripMesh.writeWindow(
         track: track,
         headArc: headArc,
         windowLength: windowLength,
-        stride: foliageStride,
-        style: style,
+        buffers: _stripBuffers!,
         tint: tint,
         halfWidth: halfWidth,
-        scratch: _scratch,
       );
-      foliage = mesh.vertices();
+      strip = VineStripMesh.verticesFor(
+          _stripBuffers!, _stripBuffers!.lastVertexCount);
+
+      final mesh = _foliageMesh;
+      if (mesh != null && foliageAtlas!.supportsStyle(style)) {
+        mesh.write(
+          track: track,
+          headArc: headArc,
+          windowLength: windowLength,
+          stride: foliageStride,
+          style: style,
+          tint: tint,
+          halfWidth: halfWidth,
+          scratch: _scratch,
+        );
+        foliage = mesh.vertices();
+      }
     }
 
     if (_slide.isAnimating) {
@@ -171,12 +183,14 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         headArc: headArc,
         strip: strip,
         foliage: foliage,
+        simplePath: simplePath,
       );
     }
 
     // Idle: freeze the freshly built payload.
     _cachedStrip = strip;
     _cachedFoliage = foliage;
+    _cachedSimplePath = simplePath;
     _cacheTint = tint;
     _railIdleCacheValid = true;
     return VineRailDraw(
@@ -184,6 +198,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       headArc: headArc,
       strip: strip,
       foliage: foliage,
+      simplePath: simplePath,
     );
   }
 
@@ -361,6 +376,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       extensionArc: extensionArc,
     );
     _stripBuffers = null;
+    _cachedSimplePath = null;
     _railIdleCacheValid = false;
   }
 
