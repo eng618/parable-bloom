@@ -15,8 +15,9 @@ class VineMetrics {
   /// the adjacent segment lengths so tight U-turns can't overshoot.
   static const double cornerRadius = 12.0;
 
-  /// Arrow head length as a multiple of [tubeWidth].
-  static const double arrowLengthScale = 1.7;
+  /// Arrow head length as a multiple of [tubeWidth]. Chunky enough to read
+  /// as a solid directional marker from across the board.
+  static const double arrowLengthScale = 2.1;
 
   /// Arrow head half-width as a multiple of [tubeWidth].
   static const double arrowHalfWidthScale = 1.05;
@@ -39,4 +40,15 @@ class VineMetrics {
   /// stays snappy (~1s worst case) instead of scaling linearly with length.
   static double stepDurationFor(int totalSteps) =>
       totalSteps > 12 ? 0.035 : 0.06;
+
+  /// Arc length of the exit fade band (world px). After the head crosses
+  /// the board edge (see [VineTrack.exitArc]), per-vertex alpha ramps 1→0
+  /// across this distance — the rail renderer's replacement for unclipped
+  /// travel + late culling.
+  static const double exitFadeArc = 63.0;
+
+  /// Width of the baked strip-edge feather (per side, world px). Replaces
+  /// the legacy `MaskFilter.blur` glow and gives CanvasKit-native
+  /// `drawVertices` strips soft, anti-aliased-looking edges.
+  static const double tubeFeather = 2.0;
 }

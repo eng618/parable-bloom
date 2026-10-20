@@ -203,6 +203,33 @@ final debugVineAnimationLoggingProvider =
 
 final debugUiEnabledForTestsProvider = Provider<bool>((ref) => false);
 
+/// Which vine renderer runs. `rail` is the new track/window/vertex-strip
+/// renderer; `legacy` keeps the per-frame Path painter for A/B regression.
+final vineRenderModeProvider =
+    NotifierProvider<VineRenderModeNotifier, VineRenderMode>(
+  VineRenderModeNotifier.new,
+);
+
+enum VineRenderMode { rail, legacy }
+
+class VineRenderModeNotifier extends Notifier<VineRenderMode> {
+  @override
+  VineRenderMode build() {
+    final box = ref.watch(hiveBoxProvider);
+    final value = box.get('vineRenderMode', defaultValue: 'rail') as String;
+    return VineRenderMode.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => VineRenderMode.rail,
+    );
+  }
+
+  Future<void> setMode(VineRenderMode mode) async {
+    state = mode;
+    final box = ref.read(hiveBoxProvider);
+    await box.put('vineRenderMode', mode.name);
+  }
+}
+
 class DebugVineAnimationLoggingNotifier extends Notifier<bool> {
   @override
   bool build() {

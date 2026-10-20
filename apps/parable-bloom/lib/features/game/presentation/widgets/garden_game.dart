@@ -7,7 +7,8 @@ import '../../../../core/game_board_layout.dart';
 import '../../../../core/board_transform.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
-import '../../../../core/providers/settings_providers.dart' show VineStyle;
+import '../../../../core/providers/settings_providers.dart'
+    show VineRenderMode, VineStyle;
 import '../../../../core/services/logger_service.dart';
 import '../../../tutorial/domain/entities/lesson_data.dart';
 import '../../application/providers/camera_providers.dart' show CameraState;
@@ -104,6 +105,10 @@ class GardenGame extends FlameGame with TapCallbacks {
   late Color _backgroundColor;
   late Color _tapEffectColor;
   late Color _vineAttemptedColor;
+
+  /// Which vine renderer the batched vine layer uses (rail = track +
+  /// vertex-strip renderer; legacy = per-frame Path painter).
+  late VineRenderMode vineRenderMode = VineRenderMode.rail;
 
   GardenGame({required this.sink, LevelSolverService? solver})
       : solver = solver ?? LevelSolverService() {
@@ -378,6 +383,16 @@ class GardenGame extends FlameGame with TapCallbacks {
   void updateVineStyle(VineStyle style) {
     _vineStyle = style;
     _updateBackgroundOpacity(style == VineStyle.simple);
+  }
+
+  /// Update the vine renderer mode dynamically (rail vs legacy painter).
+  /// Applied to the live layer whenever it exists, and to freshly created
+  /// grids through [vineRenderMode].
+  void updateVineRenderMode(VineRenderMode mode) {
+    vineRenderMode = mode;
+    if (_isGridInitialized) {
+      grid.vineLayer.renderMode = mode;
+    }
   }
 
   /// Start or load a lesson with the given lesson data

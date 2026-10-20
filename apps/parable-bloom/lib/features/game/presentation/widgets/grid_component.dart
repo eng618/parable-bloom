@@ -198,7 +198,14 @@ class GridComponent extends PositionComponent
       // visible count so steady-state ticks don't rebuild.
       for (final vine in levelData.vines) {
         if (vineStates[vine.id]?.isCleared ?? false) continue;
-        final comp = VineComponent(vineData: vine, cellSize: cellSize);
+        final comp = VineComponent(
+          vineData: vine,
+          cellSize: cellSize,
+          // Components read the layer's startup-baked foliage atlas so the
+          // rail renderer can draw leaf quads without per-frame work in the
+          // bake.
+          foliageAtlas: vineLayer.foliageAtlas,
+        );
         add(comp);
         _vineComponents[vine.id] = comp;
       }
