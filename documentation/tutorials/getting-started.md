@@ -45,7 +45,9 @@ flutter doctor
    task setup
    ```
 
-   This will install Flutter dependencies, CocoaPods dependencies (on macOS), and prepare workspace tooling.
+   This will install Flutter dependencies, CocoaPods dependencies (iOS uses
+   CocoaPods; macOS resolves all plugins through Swift Package Manager), and
+   prepare workspace tooling.
 
 ---
 

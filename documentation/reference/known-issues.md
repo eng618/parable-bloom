@@ -46,6 +46,12 @@ This document serves as an information-oriented technical reference detailing su
 - **Behavior**: Newer transitive Swift frameworks (e.g. `Promises`, `FirebaseSessions`) specify a minimum deployment target of iOS 16.0.
 - **Configuration**: The `Podfile` automatically forces `IPHONEOS_DEPLOYMENT_TARGET = '16.0'` across all Pod targets in its `post_install` hook to prevent compilation mismatch errors.
 
+### macOS Builds Use Swift Package Manager (2026-10)
+
+- **Behavior**: All macOS plugins resolve through Swift Package Manager; the CocoaPods integration (`Podfile`, `Pods/`, pod xcconfig includes) has been removed from `macos/`.
+- **Gotcha (resolved)**: The old Podfile `post_install` hook forced `MACOSX_DEPLOYMENT_TARGET = 11.0` on every pod, which modern Xcode rejects (minimum 12.0). With SPM the deployment target comes from the Runner project itself (12.0+).
+- **Gotcha (resolved)**: The `FlutterFire: flutterfire upload-crashlytics-symbols` build phase derived its SPM checkout path from an Xcode `DerivedData` regex that never matches Flutter's build layout. The phase now walks up from `BUILT_PRODUCTS_DIR` to find `SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run` and skips gracefully (with a log line) when it is absent, instead of failing the build.
+
 ### Headless Test Execution
 
 - **Behavior**: In headless CI environments, Flutter widget tests and Flame component tests operate via automated test bindings without requiring physical GPU context.

@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 - Cached the debug-mode cell coordinate `TextPainter` per cell in `CellComponent` (was a fresh `TextPainter` + layout per cell per frame).
+- Vine rendering "Vine Rail" redesign behind `vineRenderModeProvider` (`rail` default, `legacy` for A/B): invariant baked track + scalar slide controller, sliding-window vertex strip (indexed triangle grid) for textured styles, and an anti-aliased stroked-path pass for the flat/simple style — draw calls independent of vine length, no per-frame blur, exit fade via per-vertex alpha (textured) or uniform alpha (simple). See `documentation/reference/vine-rendering.md`.
+
+### Fixed
+- macOS builds: completed the Swift Package Manager migration (all macOS plugins resolve via SPM; `Podfile`/`Pods`/pod xcconfig includes removed). The old Podfile hook forced `MACOSX_DEPLOYMENT_TARGET = 11.0` on all pods, which modern Xcode rejects (minimum 12.0). The `flutterfire upload-crashlytics-symbols` phase now locates the SwiftPM `firebase-ios-sdk` checkout that matches Flutter's build layout and skips gracefully when it is absent, instead of failing the build.
 
 
 

@@ -32,14 +32,6 @@ tasks:
       - pod install
     run: once
 
-  macos:pod-install:
-    desc: Run CocoaPods install in macos directory
-    platforms: [darwin]
-    dir: apps/parable-bloom/macos
-    cmds:
-      - pod install
-    run: once
-
   _ensure_ios_sim:
     internal: true
     platforms: [darwin]
@@ -100,7 +92,7 @@ tasks:
         if command -v pod >/dev/null 2>&1; then
           echo "[OK] cocoapods: $(pod --version)"
         else
-          echo "[MISSING] cocoapods (needed for iOS/macOS pods)"
+          echo "[MISSING] cocoapods (needed for iOS pods)"
         fi
 
         if command -v firebase >/dev/null 2>&1; then

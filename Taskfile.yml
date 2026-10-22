@@ -30,7 +30,6 @@ tasks:
       - task: firebase:configure
       - task: _setup:darwin:toolchain
       - task: _setup:ios:pod-install
-      - task: _setup:macos:pod-install
 
   _setup:darwin:toolchain:
     internal: true
@@ -43,12 +42,6 @@ tasks:
     platforms: [darwin]
     cmds:
       - task: flutter:ios:pod-install
-
-  _setup:macos:pod-install:
-    internal: true
-    platforms: [darwin]
-    cmds:
-      - task: flutter:macos:pod-install
 
   validate:
     desc: Validate code quality across all modules (analysis, format, tests, and builds)
