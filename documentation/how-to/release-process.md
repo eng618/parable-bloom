@@ -319,10 +319,7 @@ bws secret create "PARABLE_BLOOM_APP_STORE_CONNECT_ISSUER_ID" "<issuer-uuid>" "$
 ### Step 8: Test Local Build
 
 ```bash
-# Install pods
-cd ios && pod install && cd ..
-
-# Build archive
+# Build archive (all plugins resolve via Swift Package Manager)
 flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
 
 # Check output
@@ -809,7 +806,7 @@ Console says your app doesn't use advertising ID.`
 
 **Problem**: `Code signing failed`
 
-- Clean build: `flutter clean && cd ios && pod install`
+- Clean build: `flutter clean && flutter build ios --simulator --debug`
 - Check Xcode signing settings: Open `ios/Runner.xcworkspace` in Xcode
 
 ### Fastlane Issues

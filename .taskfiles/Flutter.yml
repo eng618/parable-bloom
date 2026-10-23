@@ -24,20 +24,11 @@ tasks:
       - sh: command -v flutter >/dev/null 2>&1
         msg: "Flutter is not installed."
 
-  ios:pod-install:
-    desc: Run CocoaPods install in ios directory
-    platforms: [darwin]
-    dir: apps/parable-bloom/ios
-    cmds:
-      - pod install
-    run: once
-
   _ensure_ios_sim:
     internal: true
     platforms: [darwin]
     cmds:
       - task: get
-      - task: ios:pod-install
       - ./scripts/ios/boot_simulator.sh
 
   # -----------------------------------------------------------------------------
@@ -87,12 +78,6 @@ tasks:
           echo "[OK] xcode-select path: $(xcode-select -p)"
         else
           echo "[MISSING] xcode-select configuration"
-        fi
-
-        if command -v pod >/dev/null 2>&1; then
-          echo "[OK] cocoapods: $(pod --version)"
-        else
-          echo "[MISSING] cocoapods (needed for iOS pods)"
         fi
 
         if command -v firebase >/dev/null 2>&1; then

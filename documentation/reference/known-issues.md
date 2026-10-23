@@ -41,10 +41,14 @@ This document serves as an information-oriented technical reference detailing su
 - **Requirement**: Go `1.27.1` is the canonical version across the entire workspace.
 - **Validation**: Run `task lb:test` or `task lb:build` to verify level generation tools.
 
-### iOS CocoaPods Deployment Target (iOS 16.0)
+### iOS Builds Use Swift Package Manager (2026-10)
 
-- **Behavior**: Newer transitive Swift frameworks (e.g. `Promises`, `FirebaseSessions`) specify a minimum deployment target of iOS 16.0.
-- **Configuration**: The `Podfile` automatically forces `IPHONEOS_DEPLOYMENT_TARGET = '16.0'` across all Pod targets in its `post_install` hook to prevent compilation mismatch errors.
+- **Behavior**: All iOS plugins resolve through Swift Package Manager, like macOS; the CocoaPods integration (`Podfile`, `Pods/`, pod xcconfig includes) has been removed from `ios/`.
+- **Deployment target**: The Runner project keeps `IPHONEOS_DEPLOYMENT_TARGET = 16.0` natively (previous Podfile `post_install` hook forced the same value per pod; no longer needed).
+
+### iOS CocoaPods Deployment Target (iOS 16.0) — pre-2026-10 (resolved)
+
+- **Behavior (historical)**: Newer transitive Swift frameworks (e.g. `Promises`, `FirebaseSessions`) specified a minimum deployment target of iOS 16.0, enforced via the old `Podfile` `post_install` hook. Superseded by the SPM migration: the project-level target is set natively.
 
 ### macOS Builds Use Swift Package Manager (2026-10)
 

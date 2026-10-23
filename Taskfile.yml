@@ -19,7 +19,7 @@ tasks:
   # High-level Orchestration
 
   setup:
-    desc: Set up the project for development (Flutter, Go, Next.js, and CocoaPods)
+    desc: Set up the project for development (Flutter, Go, Next.js, Apple SPM)
     run: once
     cmds:
       - task: flutter:get
@@ -29,19 +29,12 @@ tasks:
       - task: firebase:check:auth
       - task: firebase:configure
       - task: _setup:darwin:toolchain
-      - task: _setup:ios:pod-install
 
   _setup:darwin:toolchain:
     internal: true
     platforms: [darwin]
     cmds:
       - task: flutter:check:macos:toolchain
-
-  _setup:ios:pod-install:
-    internal: true
-    platforms: [darwin]
-    cmds:
-      - task: flutter:ios:pod-install
 
   validate:
     desc: Validate code quality across all modules (analysis, format, tests, and builds)
