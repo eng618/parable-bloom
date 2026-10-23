@@ -52,6 +52,20 @@ tasks:
     cmds:
       - task: flutter:clean
 
+  clean:all:
+    desc: Reclaim disk space — Flutter build trees, Nx/Go/Next caches everywhere
+    cmds:
+      - cmd: echo "Disk before clean:"
+        silent: true
+      - cmd: df -h /System/Volumes/Data | tail -1 || true
+        platforms: [darwin]
+      - task: flutter:clean
+      - cmd: rm -rf .nx .gotmp .gocache apps/parable-bloom-site/.next apps/parable-bloom-site/build node_modules/.cache tools/level-builder/level-builder
+      - cmd: echo "Cleaned Flutter build trees, Nx cache, Go build/test caches, Next.js build, and the level-builder binary."
+      - cmd: echo "Disk after clean:"
+      - cmd: df -h /System/Volumes/Data | tail -1 || true
+        platforms: [darwin]
+
   doctor:macos:
     desc: Check macOS local development toolchain status
     platforms: [darwin]

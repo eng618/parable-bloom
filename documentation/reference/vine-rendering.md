@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-10-20: indexed triangle topology fix + simple stroked pass)
+Date: 2026-10-19 (last updated 2026-10-22: skin atlas + cylindrical wrap UVs + withered state)
 
 ## Why a redesign
 
@@ -29,15 +29,19 @@ lib/features/game/presentation/widgets/
   vine_component.dart          logic owner; owns rail track + controller,
                                per-frame payload assembly, bloom trigger
   vine/vine_track.dart         invariant "rail": baked polyline + corner arcs,
-                               uniform samples (pos/UV/normal/fade alpha)
-  vine/vine_strip_mesh.dart    sliding-window vertex strip writer (reused buffers)
+                               uniform samples (pos/normal/fade alpha)
+  vine/vine_strip_mesh.dart    sliding-window vertex strip writer (reused buffers);
+                               cylindrical-wrap UVs into the skin atlas
+  vine/vine_skin_atlas.dart    startup-baked wood-trellis tube skins (per style
+                               + withered variant) — the rail texture source
   vine/vine_slide_controller.dart  scalar phase machine (replaces VineAnimator)
   vine/vine_foliage_atlas.dart startup-baked white leaf atlas + quad writer
   vine/vine_rail_draw.dart     per-frame draw payload record
   vine/vine_rail_renderer.dart native pass (drawVertices strips + caps +
                                arrow for textured styles; AA stroked path
                                for the simple style)
-  vine/vine_path_painter.dart  legacy painter (legacy mode only)
+  vine/vine_path_painter.dart  legacy painter (legacy mode only; still samples
+                               the full-scene JPEG textures)
   vine/vine_animator.dart      legacy step animator (legacy mode only)
   vine/vine_tube_path.dart     legacy corner/arrow geometry (arrow still used)
   vine/vine_metrics.dart       shared visual constants
@@ -52,7 +56,7 @@ lib/features/game/presentation/widgets/
 - Corner arcs (quadratic, `VineMetrics.cornerRadius` = 12px, radius clamped
   to lane half-lengths — the same rounding as the legacy `VineTubePath`) are
   baked into a fine polyline and resampled at fixed 8px spacing. Position,
-  world-anchored UV, unit normal, and fade alpha are static per sample.
+  unit normal, and fade alpha are static per sample.
 - Arc `0` sits at the head cell center; negative arcs run back to the tail;
   positive arcs are off-board extension. `windowLength` = baked tail→head
   arc: a moving vine is exactly a window of this length.
@@ -68,8 +72,6 @@ lib/features/game/presentation/widgets/
   typed-data buffers (`O(window)` float writes) and `Vertices.raw` is drawn
   with one `canvas.drawVertices` per vine — draw calls are independent of
   vine length.
-- UVs are `(worldX, worldY) * 0.25` (the legacy ImageShader world map), so
-  the texture grain stays glued to the board while the tube slides.
 - Cross-tube rows carry 6 columns with a baked alpha feather on both edges
   (`VineMetrics.tubeFeather` = 2px): CanvasKit has no per-edge AA for vertex
   strips, and the feather replaces the legacy blur glow entirely.
@@ -81,11 +83,48 @@ lib/features/game/presentation/widgets/
   `VineMetrics.exitFadeArc` (63px) past the board edge, replacing the
   unclipped "draw until fully off-screen" travel and making frustum culling
   valid again.
-- Textured styles sample opaque, pre-colored trellis+vine JPEG textures
-  directly (`texture × vertex color` modulate), so the tube reads as a
-  solid wood trellis with vines wrapped around it.
-- Idle vines freeze their built `ui.Vertices` (tint-keyed); animating vines
-  rebuild only the window each frame.
+- Tube width varies by style: `VineMetrics.tubeWidth` (13px) for the flat
+  vector stroke, `VineMetrics.texturedTubeWidth` (15px) for the textured
+  skins — the wrapped-vine pattern needs the extra width to read.
+
+### Skin atlas (the vine-on-a-wood-dowel texture)
+
+`VineSkinAtlas.bake()` renders six fully-colored tiles into one
+`ui.Image` (`PictureRecorder` + `toImageSync`, zero new assets): for each
+of `classic` (green ivy on warm oak), `blossom` (adds five-petal flowers),
+and `ethereal` (dark plum wood, glowing teal coil) a **healthy** and a
+**withered** variant. Each tile is a self-contained slice of "a wooden
+trellis dowel with a vine wrapped around it":
+
+- Wood base + wobbly grain streaks running along the tube axis (grain runs
+  along u, like a real trellis stick).
+- One diagonal vine coil per tile (63px tile = 1.5 cells at the 42px lane
+  pitch — a snug wrap with wood visible between coils), drawn as shadow +
+  body + highlight strokes; leaf clusters mark the wrap-behind points;
+  blossom flowers; ethereal glow layers.
+- Baked cylindrical shading (vertical gradient, dark `v`-edges) so the
+  dowel reads as a round 3-D object without runtime blur.
+- Withered variants bake the "dead vine" palette: warm bark brown
+  (`VineMetrics.witheredColor`), drooped brown leaves, faded petals,
+  extinguished glow. Selected per style by `VineSkinAtlas.tileFor`.
+
+**UV mapping (root cause of the old "random colored bands"):** the strip no
+longer samples the full-scene trellis JPEGs with world-anchored
+`(worldX, worldY) * 0.25` UVs — arbitrary 13px-wide slices of a scene texture
+looked like random color stripes. Instead the mesh writes
+**cylindrical wrap UVs**: `u = (rowArc − headArc) · tileScale + phase`
+wrapped manually into the tile's atlas column (`VineSkinAtlas.wrapU`), and
+`v =` fixed per-column cross-tube offset centered on the tile's midline.
+Because `u` is body-relative, the skin is pinned to the rigid vine and
+travels with it while sliding; the single tile-wrap seam lands exactly under
+the head's round end cap (phase stays 0) so no seam is visible on the body.
+Draw-time vertex tint stays white — the tiles carry the final look — while
+caps and the arrow head are filled flat with
+`VineSkinAtlas.accentFor(style)` (or the withered brown after a failed
+attempt).
+
+- Idle vines freeze their built `ui.Vertices` (keyed on tint × skin tile);
+  animating vines rebuild only the window each frame.
 
 ### Simple render pass (stroked path)
 
@@ -123,6 +162,24 @@ DPI-independent pass:
   the flow (`VineAnimationState.cleared` → `notifyVineCleared` → remove)
   proceeds unchanged.
 
+### Withered state (failed clear attempts)
+
+A blocked clear attempt is a stateful swap, driven by solver truth:
+
+- `VineComponent.slideOut` resolves the run with the solver's
+  `getDistanceToBlocker` **sign preserved**: positive → clear run,
+  negative → blocked run traveling `distance.abs()` cells so the head
+  visibly reaches the blocker (parity with the legacy animator's
+  `rawDistance.abs()`), then returns home. `justReachedBlocker` fires
+  `markVineAttempted`, which flips `hasBeenAttempted` + `isWithered` in
+  `VineStatesNotifier` (and decrements grace).
+- From then on (for the session) the vine renders withered in every rail
+  pass: the strip selects the baked withered skin tile, foliage quads tint
+  warm bark brown, caps/arrow head go brown, and the flat/simple stroke
+  swaps to `VineMetrics.witheredColor`. Motion never changes.
+- The idle caches key on tint × skin tile, so the flip rebuilds even when
+  the vine is not moving.
+
 ### Foliage (one startup bake, zero per-leaf canvas draws)
 
 - `VineFoliageAtlas.bake()` renders five white tiles via `PictureRecorder`
@@ -132,15 +189,18 @@ DPI-independent pass:
 - `VineFoliageMesh` writes one quad (classic/ethereal: two mirrored
   rotated quads + optional glow) per stride cell of the body window; quads
   travel with the vine and rotate through corners using sampled track
-  normals. One `drawVertices` per vine regardless of leaf count.
+  normals. One `drawVertices` per vine regardless of leaf count. The
+  foliage tint comes from the layer: the vine's calm palette color while
+  healthy, `VineMetrics.witheredColor` when withered.
 - `Simple` style skips foliage (and the strip) entirely — see the simple
   render pass above.
 
 ## Constants pinned by tests
 
-`13px` tube (`VineMetrics.tubeWidth`), `12px` corner radius, `42px` lane
-pitch, `8px` sample spacing, `2px` feather, `63px` exit fade, `0.25` UV
-scale, adaptive step pacing — asserted in `test/vine_track_test.dart`,
+`13px` flat tube (`VineMetrics.tubeWidth`), `12px` corner radius, `42px`
+lane pitch, `8px` sample spacing, `2px` feather, `63px` exit fade, `15px`
+textured tube width, `63px` skin tile length (1.5 cells per vine coil),
+adaptive step pacing — asserted in `test/vine_track_test.dart`,
 `test/vine_strip_mesh_test.dart`, `test/vine_slide_controller_test.dart`.
 Per-frame cost is benchmarked in `test/vine_rail_benchmark_test.dart` (a
 60-cell multi-turn bind must write + rebuild its strip — and rebuild its

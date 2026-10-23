@@ -10,10 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Fine-grained Riverpod watches on heavy screens: `HomeScreen` selects tutorial/level/completed fields, `JournalScreen` selects unlocked scriptures, `TutorialGuideOverlay` selects only the vine states each lesson reads, `GameZoomControls` selects zoom bounds — unrelated provider writes no longer rebuild these widgets.
 - Added `GameProgress.firstUncompletedInPlaylist(playlist, completedLevels)` static helper; `nextUncompletedLevel` delegates to it.
+- **Vine skin redesign** (rail renderer): textured styles now draw startup-baked tube skins (`VineSkinAtlas`) — a wood-trellis dowel with a green vine coil wrapped around it, one 63px tile per 1.5 cells, with `blossom` and `ethereal` variants — instead of sampling the full-scene JPEGs with world-anchored UVs (the cause of the "random color band" look). UVs are cylindrical and body-pinned (`u` along the vine arc, `v` around the dowel), so the skin travels with the rigid vine; textured tube width is 15px (flat/simple stays 13px).
 
 ### Performance
 - Cached the debug-mode cell coordinate `TextPainter` per cell in `CellComponent` (was a fresh `TextPainter` + layout per cell per frame).
 - Vine rendering "Vine Rail" redesign behind `vineRenderModeProvider` (`rail` default, `legacy` for A/B): invariant baked track + scalar slide controller, sliding-window vertex strip (indexed triangle grid) for textured styles, and an anti-aliased stroked-path pass for the flat/simple style — draw calls independent of vine length, no per-frame blur, exit fade via per-vertex alpha (textured) or uniform alpha (simple). See `documentation/reference/vine-rendering.md`.
+
+### Added
+- **Withered vine state restored**: a blocked clear attempt now travels `|solver distance|` cells so the head visibly bumps the blocker and returns, then `markVineAttempted` withers the vine for the session — baked withered skin tiles, brown foliage/caps, and a warm bark brown (`VineMetrics.witheredColor`) flat stroke replacing the old dark-blue/white attempted colors. (Root cause: the rail run folded the solver's negative distance to 0, so the bump — and the attempted flag — never happened.)
+- Disk hygiene: `task clean:all` reclaims build/cache disk across Flutter, Nx, Go (`.gotmp`/`.gocache`), Next.js, and the level-builder binary in one shot, printing free-space before/after.
 
 ### Fixed
 - macOS & iOS builds: completed the Swift Package Manager migration on **both platforms** (all plugins resolve via SPM; `Podfile`/`Pods`/pod xcconfig includes removed). The old iOS `Podfile` hook forced deployment targets per pod (the project sets 16.0 natively); the old macOS hook forced `MACOSX_DEPLOYMENT_TARGET = 11.0`, rejected by modern Xcode. The `flutterfire upload-crashlytics-symbols` phase now locates the SwiftPM `firebase-ios-sdk` checkout that matches Flutter's build layout and skips gracefully when it is absent, instead of failing the build.

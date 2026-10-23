@@ -13,17 +13,20 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track
 ///
 /// Two render paths per vine, both with draw-call count independent of vine
 /// length:
-/// - **Textured styles**: one `drawVertices` for the tube strip, one for the
-///   foliage quads, plus two round tube caps and a canvas arrow head.
+/// - **Textured styles**: one `drawVertices` for the tube strip (the baked
+///   skin atlas with cylindrical-wrap UVs), one for the foliage quads, plus
+///   two flat tube caps and a canvas arrow head in the style's vine-accent
+///   color.
 /// - **Simple**: an anti-aliased stroked `Path` along the baked centerline
 ///   plus a solid arrow head — vector-crisp edges at any device pixel ratio.
 ///
 /// Geometry comes straight from the invariant [VineTrack], so the tube
 /// reads as one continuous object through turns and while exiting
-/// off-screen.
+/// off-screen. A failed clear attempt (withered) swaps the skin to the
+/// baked withered tile and paints the caps/head/foliage warm bark brown.
 class VineRailRenderer {
-  /// Identity-matrix ImageShaders per texture image (UVs already carry the
-  /// legacy 0.25 world scale — see [VineTrack.textureScale]).
+  /// Identity-matrix ImageShader per atlas image (cylindrical UVs already
+  /// carry the wrap; offsets live per tile in the mesh's UV writes).
   static final Map<ui.Image, ui.ImageShader> _shaderCache = {};
 
   static final Float64List _identityMatrix = Float64List(16)
@@ -53,11 +56,12 @@ class VineRailRenderer {
     required VineRailDraw rail,
     required VineStyle vineStyle,
     required bool useSimpleVines,
-    required ui.Image? classicTexture,
-    required ui.Image? blossomTexture,
-    required ui.Image? etherealTexture,
+    required bool isAttempted,
+    required ui.Image? skinAtlasImage,
     required ui.Image? foliageAtlasImage,
-    required Color tint,
+    required Color tubeTint,
+    required Color foliageTint,
+    required Color capTint,
   }) {
     final track = rail.track;
     final headArc = rail.headArc;
@@ -71,36 +75,21 @@ class VineRailRenderer {
     // head. Whole-vine alpha follows the head through the exit fade band.
     if (useSimpleVines) {
       final alpha = track.fadeAlphaAt(headArc);
-      final color = tint.withValues(alpha: tint.a * alpha);
-      final path = rail.simplePath ?? track.windowPath(headArc, windowLength);
-      _simplePaint
-        ..shader = null
-        ..strokeWidth = VineMetrics.tubeWidth
-        ..color = color;
-      canvas.drawPath(path, _simplePaint);
-
-      track.sampleAt(headArc, _sample);
-      final head = Offset(_sample[0], _sample[1]);
-      final headPath = VineTubePath.buildArrowHead(
-        head,
-        track.headDirection,
-        VineMetrics.tubeWidth,
+      final color = tubeTint.withValues(alpha: tubeTint.a * alpha);
+      _drawSimpleBody(
+        canvas: canvas,
+        rail: rail,
+        track: track,
+        headArc: headArc,
+        windowLength: windowLength,
+        color: color,
       );
-      _headPaint
-        ..shader = null
-        ..color = color;
-      canvas.drawPath(headPath, _headPaint);
       return;
     }
 
     // ---------- Textured styles: vertex strip pipeline ----------
-    final texture = switch (vineStyle) {
-      VineStyle.classic => classicTexture,
-      VineStyle.blossom => blossomTexture,
-      VineStyle.ethereal => etherealTexture,
-      _ => null,
-    };
-    final shader = texture == null ? null : _shaderFor(texture);
+    final shader = _shaderFor(skinAtlasImage);
+    final tubeWidth = VineMetrics.texturedTubeWidth;
 
     // 1. Tube strip (single draw call regardless of vine length).
     if (rail.strip != null) {
@@ -110,8 +99,10 @@ class VineRailRenderer {
       canvas.drawVertices(rail.strip!, BlendMode.srcOver, _stripPaint);
     }
 
-    // 2. Rounded caps (the legacy StrokeCap.round look, as two tiny canvas
-    // draws — far cheaper than baking cap fans into the strip).
+    // 2. Rounded caps + arrow head in the style's vine-accent color
+    //    (withered state: warm bark brown — the tip reads as the dead
+    //    stem's end). Two tiny canvas draws, far cheaper than baking cap
+    //    fans into the strip.
     track.sampleAt(headArc, _sample);
     final head = Offset(_sample[0], _sample[1]);
     final headAlpha = track.fadeAlphaAt(headArc);
@@ -121,34 +112,58 @@ class VineRailRenderer {
     final tail = Offset(_sample[0], _sample[1]);
     final tailAlpha = track.fadeAlphaAt(tailArc);
 
-    final capRadius = VineMetrics.tubeWidth / 2;
-    final capPaint = (_capPaint)..shader = shader;
-    capPaint.color = tint.withValues(alpha: headAlpha);
+    final capRadius = tubeWidth / 2;
+    final capPaint = (_capPaint)..shader = null;
+    capPaint.color = capTint.withValues(alpha: headAlpha);
     canvas.drawCircle(head, capRadius, capPaint);
-    capPaint.color = tint.withValues(alpha: tailAlpha);
+    capPaint.color = capTint.withValues(alpha: tailAlpha);
     canvas.drawCircle(tail, capRadius, capPaint);
 
-    // 3. Compact arrow head at the tip.
-    final headPath = VineTubePath.buildArrowHead(
-      head,
-      track.headDirection,
-      VineMetrics.tubeWidth,
-    );
+    final headPath =
+        VineTubePath.buildArrowHead(head, track.headDirection, tubeWidth);
     _headPaint
-      ..shader = shader
-      ..color = tint.withValues(alpha: headAlpha);
+      ..shader = null
+      ..color = capTint.withValues(alpha: headAlpha);
     canvas.drawPath(headPath, _headPaint);
 
-    // 4. Foliage quads (one drawVertices per vine).
-    final foliageShader = useSimpleVines || foliageAtlasImage == null
-        ? null
-        : _shaderFor(foliageAtlasImage);
+    // 3. Foliage quads (one drawVertices per vine); tint carries the
+    //    per-vine leaf color, or the withered brown after a failed
+    //    attempt.
+    final foliageShader = _shaderFor(foliageAtlasImage);
     if (rail.foliage != null && foliageShader != null) {
       _stripPaint
         ..shader = foliageShader
         ..color = const Color(0xFFFFFFFF);
       canvas.drawVertices(rail.foliage!, BlendMode.srcOver, _stripPaint);
     }
+  }
+
+  static void _drawSimpleBody({
+    required Canvas canvas,
+    required VineRailDraw rail,
+    required VineTrack track,
+    required double headArc,
+    required double windowLength,
+    required Color color,
+  }) {
+    final path = rail.simplePath ?? track.windowPath(headArc, windowLength);
+    _simplePaint
+      ..shader = null
+      ..strokeWidth = VineMetrics.tubeWidth
+      ..color = color;
+    canvas.drawPath(path, _simplePaint);
+
+    track.sampleAt(headArc, _sample);
+    final head = Offset(_sample[0], _sample[1]);
+    final headPath = VineTubePath.buildArrowHead(
+      head,
+      track.headDirection,
+      VineMetrics.tubeWidth,
+    );
+    _headPaint
+      ..shader = null
+      ..color = color;
+    canvas.drawPath(headPath, _headPaint);
   }
 
   static final Paint _capPaint = Paint()..style = PaintingStyle.fill;

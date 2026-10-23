@@ -19,13 +19,9 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metri
 ///   (the head extension used to travel off-screen).
 /// - Samples are uniformly spaced along arc: arc ↔ sample index is O(1).
 ///
-/// Position, UV, and per-vertex fade alpha are static per sample; the
-/// renderer only copies the visible sub-range each frame.
+/// Position and per-vertex fade alpha are static per sample; the renderer
+/// only copies the visible sub-range each frame.
 class VineTrack {
-  /// World pixels per texture texel. Matches the legacy ImageShader matrix
-  /// scale of 0.25 so the grain anchors to the board exactly as before.
-  static const double textureScale = 0.25;
-
   /// Uniform sample spacing along the track (world px).
   static const double spacing = 8.0;
 
@@ -57,8 +53,6 @@ class VineTrack {
   // Uniform samples, ascending arc. Arrays cover the whole track.
   late final Float32List sampleX;
   late final Float32List sampleY;
-  late final Float32List sampleU;
-  late final Float32List sampleV;
   late final Float32List sampleAlpha;
 
   /// Baked per-sample unit normals, interleaved (nx, ny).
@@ -372,8 +366,6 @@ class VineTrack {
     final count = (total / spacing).ceil() + 1;
     track.sampleX = Float32List(count);
     track.sampleY = Float32List(count);
-    track.sampleU = Float32List(count);
-    track.sampleV = Float32List(count);
     track.sampleAlpha = Float32List(count);
     track.sampleNormals = Float32List(count * 2);
 
@@ -382,8 +374,6 @@ class VineTrack {
       final p = _resamplePoint(fine, cum, fineArc);
       track.sampleX[i] = p.dx;
       track.sampleY[i] = p.dy;
-      track.sampleU[i] = p.dx * textureScale;
-      track.sampleV[i] = p.dy * textureScale;
 
       // Normal from the chord toward the next sample.
       final nextArc = math.min(total, fineArc + spacing);

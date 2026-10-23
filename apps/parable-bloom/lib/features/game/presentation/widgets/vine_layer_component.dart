@@ -13,6 +13,7 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine_component.
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_foliage_atlas.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_rail_renderer.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_skin_atlas.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_path_painter.dart';
 
 /// Single batched renderer for all vines on the board.
@@ -27,13 +28,19 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_path_
 /// the per-frame Path painter for A/B regression.
 class VineLayerComponent extends PositionComponent
     with ParentIsA<GridComponent> {
-  // Shared textures resolved once from the game-level loader.
+  // Shared textures resolved once from the game-level loader (legacy mode
+  // keeps sampling the full-scene JPEGs for regression).
   ui.Image? _classicTexture;
   ui.Image? _blossomTexture;
   ui.Image? _etherealTexture;
 
   /// Startup-baked foliage atlas for the rail renderer.
   final VineFoliageAtlas foliageAtlas = VineFoliageAtlas();
+
+  /// Startup-baked tube-skin atlas for the rail renderer (wood trellis +
+  /// wrapped vine per style, plus a withered variant each). Free of new
+  /// assets; drawn procedurally once per layer load.
+  final VineSkinAtlas skinAtlas = VineSkinAtlas();
 
   /// Live render mode (set from [vineRenderModeProvider] by GardenGame).
   VineRenderMode renderMode = VineRenderMode.rail;
@@ -65,6 +72,15 @@ class VineLayerComponent extends PositionComponent
         metadata: {'error': '$e'},
       );
     }
+    try {
+      skinAtlas.bake();
+    } catch (e) {
+      LoggerService.warn(
+        'Skin atlas bake failed; textured vines fall back to flat colors',
+        tag: 'VineLayer',
+        metadata: {'error': '$e'},
+      );
+    }
   }
 
   @override
@@ -83,10 +99,11 @@ class VineLayerComponent extends PositionComponent
     final gridHeight = level.gridHeight;
     final vineCount = grid.vineCount;
 
-    // Cull margin: tube half-width + feather + arrow head extent. Applies
-    // to idle vines only: clearing vines exit through the fade band and
-    // their components disappear immediately after the bloom completes.
-    const cullPad = VineMetrics.tubeWidth * 2;
+    // Cull margin: textured tube half-width + feather + arrow head extent.
+    // Uses the widest tube so textured styles never clip; applies to idle
+    // vines only: clearing vines exit through the fade band and their
+    // components disappear immediately after the bloom completes.
+    const cullPad = VineMetrics.texturedTubeWidth * 2;
     final boardRect = Rect.fromLTWH(
       -cullPad,
       -cullPad,
@@ -126,10 +143,43 @@ class VineLayerComponent extends PositionComponent
       if (renderMode == VineRenderMode.rail) {
         comp.ensureRailTrack();
         final isAnimating = comp.slide.isAnimating;
+        final skinReady = skinAtlas.image != null;
+
+        // Rail tint rules (see [VineRailRenderer.draw]):
+        // - tube strip carries white modulate over the fully colored skin
+        //   tiles; the withered variant is baked, so no brown tint needed.
+        // - flat/simple stroke: withered bark brown after a failed
+        //   attempt, otherwise the vine's calm palette color.
+        // - foliage quads: per-vine calm color, brown when withered.
+        // - caps/arrow head: the style's vine accent color (flat draw,
+        //   does not sample the skin atlas), brown when withered.
+        // When the skin atlas is missing, textured styles degrade to the
+        // flat vector look with these same colors.
+        final flatTint = isAttempted ? VineMetrics.witheredColor : calmColor;
+        final skinTile =
+            VineSkinAtlas.tileFor(vineStyle, isAttempted: isAttempted);
+        Color tubeTint;
+        Color capTint;
+        if (useSimpleVines || !skinReady) {
+          tubeTint = flatTint;
+          capTint = flatTint;
+        } else {
+          tubeTint = const Color(0xFFFFFFFF);
+          capTint =
+              VineSkinAtlas.accentFor(vineStyle, isAttempted: isAttempted);
+        }
+        final foliageTint = useSimpleVines
+            ? flatTint
+            : isAttempted
+                ? VineMetrics.witheredColor
+                : calmColor;
+
         final rail = comp.prepareRailDraw(
           style: vineStyle,
           foliageStride: isAnimating ? animatingFoliageStride : foliageStride,
-          tint: drawColor,
+          stripTint: tubeTint,
+          foliageTint: foliageTint,
+          skinTile: skinTile,
         );
         if (rail == null) continue;
         VineRailRenderer.draw(
@@ -137,11 +187,12 @@ class VineLayerComponent extends PositionComponent
           rail: rail,
           vineStyle: vineStyle,
           useSimpleVines: useSimpleVines,
-          classicTexture: _classicTexture,
-          blossomTexture: _blossomTexture,
-          etherealTexture: _etherealTexture,
+          isAttempted: isAttempted,
+          skinAtlasImage: skinAtlas.image,
           foliageAtlasImage: foliageAtlas.image,
-          tint: drawColor,
+          tubeTint: tubeTint,
+          foliageTint: foliageTint,
+          capTint: capTint,
         );
         comp.bloom.draw(
           canvas: canvas,

@@ -71,9 +71,16 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
   ui.Vertices? _cachedStrip;
   ui.Vertices? _cachedFoliage;
-  Color? _cacheTint;
+  Color? _cacheStripTint;
+  Color? _cacheFoliageTint;
+  int? _cacheSkinTile;
   bool _railIdleCacheValid = false;
   ui.Path? _cachedSimplePath;
+
+  /// Phase offset into the skin atlas tile. Zero keeps the tile-wrap seam
+  /// exactly at the head position, where the round end cap hides it; a
+  /// nonzero phase would move the seam into the visible body.
+  static const double skinPhase = 0.0;
 
   final VineBloomRenderer _bloomRenderer = VineBloomRenderer();
   VineBloomRenderer get bloom => _bloomRenderer;
@@ -113,10 +120,16 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   /// legacy O(N) path tessellation). The flat/simple style instead builds
   /// the stroked centerline [Path] per window — anti-aliased, no vertex
   /// mesh work, and equally cheap (O(window) points).
+  ///
+  /// Skin variants ([skinTile]) and both tints are part of the idle cache
+  /// key: the withered state flip must rebuild vertex colors and the UV
+  /// atlas column even while the vine is not moving.
   VineRailDraw? prepareRailDraw({
     required VineStyle style,
     required int foliageStride,
-    required Color tint,
+    required Color stripTint,
+    required Color foliageTint,
+    required int skinTile,
   }) {
     final level = parent.getCurrentLevelData();
     if (level == null) return null;
@@ -126,12 +139,15 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
     final headArc = _slide.headArc;
     final windowLength = track.windowLength;
-    final halfWidth = VineMetrics.tubeWidth / 2;
+    final halfWidth = VineMetrics.texturedTubeWidth / 2;
     final simple = style == VineStyle.simple;
 
-    // Idle caches are keyed on tint: attempted-state color changes must
-    // rebuild the vertex colors even while the vine is not moving.
-    if (!_slide.isAnimating && _railIdleCacheValid && _cacheTint == tint) {
+    // Idle caches are keyed on tint + skin tile (see doc comment).
+    if (!_slide.isAnimating &&
+        _railIdleCacheValid &&
+        _cacheStripTint == stripTint &&
+        _cacheFoliageTint == foliageTint &&
+        _cacheSkinTile == skinTile) {
       return VineRailDraw(
         track: track,
         headArc: headArc,
@@ -154,8 +170,10 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         headArc: headArc,
         windowLength: windowLength,
         buffers: _stripBuffers!,
-        tint: tint,
+        tint: stripTint,
         halfWidth: halfWidth,
+        skinTile: skinTile,
+        skinPhase: skinPhase,
       );
       strip = VineStripMesh.verticesFor(
           _stripBuffers!, _stripBuffers!.lastVertexCount);
@@ -168,7 +186,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           windowLength: windowLength,
           stride: foliageStride,
           style: style,
-          tint: tint,
+          tint: foliageTint,
           halfWidth: halfWidth,
           scratch: _scratch,
         );
@@ -191,7 +209,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _cachedStrip = strip;
     _cachedFoliage = foliage;
     _cachedSimplePath = simplePath;
-    _cacheTint = tint;
+    _cacheStripTint = stripTint;
+    _cacheFoliageTint = foliageTint;
+    _cacheSkinTile = skinTile;
     _railIdleCacheValid = true;
     return VineRailDraw(
       track: track,
@@ -319,27 +339,32 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       return;
     }
 
-    final approachSteps = railMovementDistance().clamp(0, 4096);
+    final rawDistance = railMovementDistance();
+    // Solver contract: positive = cells to the board edge (clear),
+    // negative = cells until the blocker. The blocked bump travels the
+    // absolute distance so the head visibly reaches the blocker before
+    // returning (legacy animator used `rawDistance.abs()` here too).
+    final approachSteps = rawDistance.abs().clamp(0, 4096);
     _buildRailTrack(extensionArc: _railExtensionArrangement(approachSteps));
 
     _slide.startRun(
       track: _railTrack!,
       approachSteps: approachSteps,
-      isClear: approachSteps > 0,
+      isClear: rawDistance > 0,
     );
     _railClearFinished = false;
     _railIdleCacheValid = false;
 
     parent.setVineAnimationState(
       vineData.id,
-      approachSteps > 0
+      rawDistance > 0
           ? VineAnimationState.animatingClear
           : VineAnimationState.animatingBlocked,
     );
 
     _logDebug(
-      'Rail slide started: vineId=${vineData.id}, approachSteps=$approachSteps, '
-      'isClear=${approachSteps > 0}',
+      'Rail slide started: vineId=${vineData.id}, rawDistance=$rawDistance, '
+      'approachSteps=$approachSteps',
     );
   }
 

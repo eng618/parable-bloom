@@ -4,12 +4,24 @@
 /// rounded corners, and compact arrow heads (see reference board art).
 /// Lane pitch is 42px ([GameBoardLayout.pointSpacing]), so a 13px tube
 /// leaves ~29px of breathing room between parallel vines.
+library;
+
+import 'package:flutter/material.dart';
+
 class VineMetrics {
   const VineMetrics._();
 
-  /// Uniform tube width for every vine style. Textured styles render the
-  /// same thin core; texture is grain detail, not bulk.
+  /// Uniform tube width for the flat/simple style (an AA vector stroke).
   static const double tubeWidth = 13.0;
+
+  /// Tube width for the textured skin styles. The baked wood-trellis skin
+  /// reads better as a slightly wider dowel than the flat vector stroke.
+  static const double texturedTubeWidth = 15.0;
+
+  /// Withered palette: one warm bark brown for the tube, foliage, and caps
+  /// after a failed clear attempt. Deliberately theme-independent — dead
+  /// vine brown must not follow light/dark theming.
+  static const Color witheredColor = Color(0xFF8B5E34);
 
   /// Corner rounding radius for the spline path. Clamped per-corner to half
   /// the adjacent segment lengths so tight U-turns can't overshoot.

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_skin_atlas.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track.dart';
 
 /// Vertex buffers for the rail strip renderer.
@@ -23,9 +24,13 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track
 /// actually rasterizes (a strip chain across a wide row is all
 /// degenerates).
 ///
-/// Texture anchoring: UVs are `(worldX, worldY) * [VineTrack.textureScale]`,
-/// exactly the legacy ImageShader world-map, so the grain stays glued to
-/// the board while the tube slides.
+/// Texture anchoring: UVs are a **cylindrical wrap** over the baked skin
+/// atlas (see [VineSkinAtlas]). `u` runs along the vine body —
+/// `(rowArc - headArc) + perVinePhase`, wrapped into the tile — so the
+/// skin is pinned to the rigid vine and travels with it; `v` is a fixed
+/// per-column cross-tube offset centered on the tube's axis. The old
+/// world-anchored `(worldX, worldY) * 0.25` sampling produced arbitrary
+/// 13px slices of a full-scene JPEG and is gone.
 class VineStripMesh {
   /// Vertices per cross-tube row: two feather columns per side, two opaque
   /// core columns in the middle.
@@ -62,6 +67,8 @@ class VineStripMesh {
     required WindowBuffers buffers,
     required Color tint,
     required double halfWidth,
+    required int skinTile,
+    required double skinPhase,
   }) {
     final tailArc = headArc - windowLength;
     final baseIndex = track.indexOfArc(tailArc);
@@ -120,8 +127,16 @@ class VineStripMesh {
       final alphaBase = (track.sampleAlpha[idx] +
               (track.sampleAlpha[idx + 1] - track.sampleAlpha[idx]) * frac)
           .clamp(0.0, 1.0);
-      final u = (x * VineTrack.textureScale).toDouble();
-      final v = (y * VineTrack.textureScale).toDouble();
+
+      // Cylindrical wrap UVs: u follows the vine body along the tube's
+      // arc length (pinned to the head, plus a per-vine phase for
+      // variety), wrapped into this tile's atlas column; v is the fixed
+      // cross-tube offset per column, ImageShader samples in image px, so
+      // both axes are scaled by [VineSkinAtlas.bakeScale].
+      final bodyArc = track.arcOf(idx) + frac * VineTrack.spacing - headArc;
+      final uLocal = VineSkinAtlas.wrapU(bodyArc + skinPhase);
+      final u = (skinTile * VineSkinAtlas.tileLength + uLocal) *
+          VineSkinAtlas.bakeScale;
 
       final p = row * columns * 2;
       for (var c = 0; c < columns; c++) {
@@ -129,7 +144,8 @@ class VineStripMesh {
         positions[p + c * 2] = (x + nX * o).toDouble();
         positions[p + c * 2 + 1] = (y + nY * o).toDouble();
         texCoords[p + c * 2] = u;
-        texCoords[p + c * 2 + 1] = v;
+        texCoords[p + c * 2 + 1] =
+            (VineSkinAtlas.halfHeight + o) * VineSkinAtlas.bakeScale;
         final alphaC = alphaBase * weights[c] * 255.0;
         colors[row * columns + c] =
             ((alphaC.round().clamp(0, 255) << 24) | (r << 16) | (g << 8) | b)
