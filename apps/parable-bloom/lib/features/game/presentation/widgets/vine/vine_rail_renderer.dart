@@ -13,20 +13,20 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track
 ///
 /// Two render paths per vine, both with draw-call count independent of vine
 /// length:
-/// - **Textured styles**: one `drawVertices` for the tube strip (the baked
-///   skin atlas with cylindrical-wrap UVs), one for the foliage quads, plus
-///   two flat tube caps and a canvas arrow head in the style's vine-accent
-///   color.
+/// - **Textured styles**: one `drawVertices` for the tube strip sampling the
+///   real trellis/ivy texture with body-pinned cylindrical wrap UVs, one for
+///   the foliage quads, plus two flat tube caps and a canvas arrow head in
+///   the style's vine-accent color.
 /// - **Simple**: an anti-aliased stroked `Path` along the baked centerline
 ///   plus a solid arrow head — vector-crisp edges at any device pixel ratio.
 ///
 /// Geometry comes straight from the invariant [VineTrack], so the tube
 /// reads as one continuous object through turns and while exiting
-/// off-screen. A failed clear attempt (withered) swaps the skin to the
-/// baked withered tile and paints the caps/head/foliage warm bark brown.
+/// off-screen. A failed clear attempt (withered) modulates the tube in
+/// warm bark brown and paints caps/head/foliage brown.
 class VineRailRenderer {
-  /// Identity-matrix ImageShader per atlas image (cylindrical UVs already
-  /// carry the wrap; offsets live per tile in the mesh's UV writes).
+  /// Identity-matrix ImageShader per texture image (cylindrical UVs already
+  /// carry the wrap).
   static final Map<ui.Image, ui.ImageShader> _shaderCache = {};
 
   static final Float64List _identityMatrix = Float64List(16)
@@ -56,11 +56,20 @@ class VineRailRenderer {
     required VineRailDraw rail,
     required VineStyle vineStyle,
     required bool useSimpleVines,
-    required bool isAttempted,
-    required ui.Image? skinAtlasImage,
+
+    /// The real trellis/ivy texture for textured styles; null degrades to
+    /// flat-colored vertex strips.
+    required ui.Image? textureImage,
     required ui.Image? foliageAtlasImage,
+
+    /// Vertex RGB+alpha for the tube: white (healthy) lets the real texture
+    /// show; [VineMetrics.witheredColor] turns dead vines brown.
     required Color tubeTint,
+
+    /// Vertex RGB+alpha for foliage quads.
     required Color foliageTint,
+
+    /// Flat fill color for caps and arrow head.
     required Color capTint,
   }) {
     final track = rail.track;
@@ -88,7 +97,7 @@ class VineRailRenderer {
     }
 
     // ---------- Textured styles: vertex strip pipeline ----------
-    final shader = _shaderFor(skinAtlasImage);
+    final shader = _shaderFor(textureImage);
     final tubeWidth = VineMetrics.texturedTubeWidth;
 
     // 1. Tube strip (single draw call regardless of vine length).

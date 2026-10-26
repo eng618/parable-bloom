@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-10-22: skin atlas + cylindrical wrap UVs + withered state)
+Date: 2026-10-19 (last updated 2026-10-26: real trellis+ivy texture with body-pinned wrap UVs; baked sine-coil atlas removed)
 
 ## Why a redesign
 
@@ -31,9 +31,7 @@ lib/features/game/presentation/widgets/
   vine/vine_track.dart         invariant "rail": baked polyline + corner arcs,
                                uniform samples (pos/normal/fade alpha)
   vine/vine_strip_mesh.dart    sliding-window vertex strip writer (reused buffers);
-                               cylindrical-wrap UVs into the skin atlas
-  vine/vine_skin_atlas.dart    startup-baked wood-trellis tube skins (per style
-                               + withered variant) — the rail texture source
+                               cylindrical-wrap UVs into the real texture
   vine/vine_slide_controller.dart  scalar phase machine (replaces VineAnimator)
   vine/vine_foliage_atlas.dart startup-baked white leaf atlas + quad writer
   vine/vine_rail_draw.dart     per-frame draw payload record
@@ -87,41 +85,38 @@ lib/features/game/presentation/widgets/
   vector stroke, `VineMetrics.texturedTubeWidth` (15px) for the textured
   skins — the wrapped-vine pattern needs the extra width to read.
 
-### Skin atlas (the vine-on-a-wood-dowel texture)
+### Skin texture: real trellis+ivy with body-pinned wrap UVs
 
-`VineSkinAtlas.bake()` renders six fully-colored tiles into one
-`ui.Image` (`PictureRecorder` + `toImageSync`, zero new assets): for each
-of `classic` (green ivy on warm oak), `blossom` (adds five-petal flowers),
-and `ethereal` (dark plum wood, glowing teal coil) a **healthy** and a
-**withered** variant. Each tile is a self-contained slice of "a wooden
-trellis dowel with a vine wrapped around it":
+Textured styles sample the real trellis/ivy texture images
+(`assets/art/classic_vine_texture.png`, `blossom_vine_texture.png`,
+`ethereal_vine_texture.png`) instead of a baked atlas — this is what gives
+the wood grain and vine wrapping their natural, non-repeating look.
 
-- Wood base + wobbly grain streaks running along the tube axis (grain runs
-  along u, like a real trellis stick).
-- One diagonal vine coil per tile (63px tile = 1.5 cells at the 42px lane
-  pitch — a snug wrap with wood visible between coils), drawn as shadow +
-  body + highlight strokes; leaf clusters mark the wrap-behind points;
-  blossom flowers; ethereal glow layers.
-- Baked cylindrical shading (vertical gradient, dark `v`-edges) so the
-  dowel reads as a round 3-D object without runtime blur.
-- Withered variants bake the "dead vine" palette: warm bark brown
-  (`VineMetrics.witheredColor`), drooped brown leaves, faded petals,
-  extinguished glow. Selected per style by `VineSkinAtlas.tileFor`.
+Each texture is wrapped around the tube with **cylindrical wrap UVs** pinned
+to the vine body:
 
-**UV mapping (root cause of the old "random colored bands"):** the strip no
-longer samples the full-scene trellis JPEGs with world-anchored
-`(worldX, worldY) * 0.25` UVs — arbitrary 13px-wide slices of a scene texture
-looked like random color stripes. Instead the mesh writes
-**cylindrical wrap UVs**: `u = (rowArc − headArc) · tileScale + phase`
-wrapped manually into the tile's atlas column (`VineSkinAtlas.wrapU`), and
-`v =` fixed per-column cross-tube offset centered on the tile's midline.
-Because `u` is body-relative, the skin is pinned to the rigid vine and
-travels with it while sliding; the single tile-wrap seam lands exactly under
-the head's round end cap (phase stays 0) so no seam is visible on the body.
-Draw-time vertex tint stays white — the tiles carry the final look — while
-caps and the arrow head are filled flat with
-`VineSkinAtlas.accentFor(style)` (or the withered brown after a failed
-attempt).
+- `v` (along the tube axis) = `(rowArc − headArc + uvPhase) × (texHeight /
+  textureRepeatArc)`, wrapped into `[0, texHeight)`. Because `v` is
+  body-relative, the texture is pinned to the rigid vine and travels with it
+  as it slides — no more arbitrary world-anchored slices that looked like
+  random color bands.
+- `u` (around the tube's circumference) = a narrow per-column bark sliver
+  centered on `texWidth/2`, so the tube reads as a single wood dowel strip.
+- `uvPhase` is a per-vine offset (deterministic from the vine id) so vines
+  sample different parts of the trellis image.
+
+`VineMetrics.textureRepeatArc` (63px) is the body arc over which the
+texture advances one full vertical cycle. `VineMetrics.textureUPerPx`
+(2.5) scales the cross-tube bark sliver. One `ImageShader` per texture
+(image px, repeated in both axes); draw-time vertex tint stays white so the
+real bark/vine detail shows. A failed clear attempt modulates the strip with
+`VineMetrics.witheredColor`, turning dead vines brown naturally (like dead
+vines on wood) — no separate withered tile needed.
+
+The old baked sine-coil atlas and its choppy repeating oval "buds" are gone;
+the real texture carries the vine detail, with head/tail distinction still
+provided by round caps and the arrow head in the style's accent color
+(flat fill, brown when withered).
 
 - Idle vines freeze their built `ui.Vertices` (keyed on tint × skin tile);
   animating vines rebuild only the window each frame.
@@ -183,9 +178,9 @@ A blocked clear attempt is a stateful swap, driven by solver truth:
 ### Foliage (one startup bake, zero per-leaf canvas draws)
 
 - `VineFoliageAtlas.bake()` renders five white tiles via `PictureRecorder`
-  + `toImageSync` (classic leaf A/B mirrors, ethereal core, ethereal glow
-  halo, blossom flower). At draw time vertex colors modulate the atlas —
-  the same `texture × color` contract as the legacy painter.
+  - `toImageSync` (classic leaf A/B mirrors, ethereal core, ethereal glow
+    halo, blossom flower). At draw time vertex colors modulate the atlas —
+    the same `texture × color` contract as the legacy painter.
 - `VineFoliageMesh` writes one quad (classic/ethereal: two mirrored
   rotated quads + optional glow) per stride cell of the body window; quads
   travel with the vine and rotate through corners using sampled track

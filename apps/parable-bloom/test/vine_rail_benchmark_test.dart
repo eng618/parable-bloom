@@ -65,8 +65,9 @@ void main() {
         buffers: buffers,
         tint: tint,
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 0.0,
+        uvPhase: 0.0,
+        texWidth: 1024,
+        texHeight: 1024,
       );
       controller.update(dt);
     }
@@ -83,8 +84,9 @@ void main() {
         buffers: buffers,
         tint: tint,
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 0.0,
+        uvPhase: 0.0,
+        texWidth: 1024,
+        texHeight: 1024,
       );
       VineStripMesh.verticesFor(buffers, buffers.lastVertexCount);
       controller.update(dt);

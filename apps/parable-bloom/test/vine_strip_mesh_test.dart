@@ -5,9 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parable_bloom/core/game_board_layout.dart';
-import 'package:parable_bloom/core/providers/settings_providers.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
-import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_skin_atlas.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_strip_mesh.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track.dart';
 
@@ -29,6 +27,9 @@ void main() {
         extensionArc: 8 * pitch,
       );
 
+  const texW = 1024;
+  const texH = 1024;
+
   group('VineStripMesh.writeWindow', () {
     test('static window covers the body; tiny windows still yield rows', () {
       final track = buildTrack();
@@ -40,8 +41,9 @@ void main() {
         buffers: buffers,
         tint: const Color(0xFF123456),
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 0.0,
+        uvPhase: 0.0,
+        texWidth: texW,
+        texHeight: texH,
       );
       expect(buffers.lastVertexCount, vertexCount);
       expect(
@@ -56,16 +58,59 @@ void main() {
         buffers: buffers,
         tint: const Color(0xFF123456),
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 0.0,
+        uvPhase: 0.0,
+        texWidth: texW,
+        texHeight: texH,
       );
       expect(tiny, 2 * VineStripMesh.columns);
     });
 
-    test('UVs wrap inside the skin tile column (no neighbor bleed)', () {
+    test('u is a narrow per-column bark sliver around texWidth/2', () {
       final track = buildTrack();
       final buffers = VineStripMesh.allocate(track);
-      const skinTile = VineSkinAtlas.tileBlossom;
+      VineStripMesh.writeWindow(
+        track: track,
+        headArc: 0,
+        windowLength: track.windowLength,
+        buffers: buffers,
+        tint: const Color(0xFF123456),
+        halfWidth: VineMetrics.texturedTubeWidth / 2,
+        uvPhase: 0.0,
+        texWidth: texW,
+        texHeight: texH,
+      );
+      final mid = texW / 2.0;
+      final halfExp = VineMetrics.texturedTubeWidth / 2;
+      final feather = VineMetrics.tubeFeather;
+      final expandedHalf = halfExp + feather;
+      // Columns within one row: u straddles texWidth/2 over the expanded
+      // width (±texturedTubeWidth/2 + feather scaled by uPerPx).
+      double minU = double.infinity, maxU = -double.infinity;
+      for (var c = 0; c < VineStripMesh.columns; c++) {
+        final u = buffers.texCoords[c * 2];
+        minU = math.min(minU, u);
+        maxU = math.max(maxU, u);
+        expect(
+          u,
+          greaterThanOrEqualTo(
+              mid - expandedHalf * VineMetrics.textureUPerPx - 1.0),
+          reason: 'col $c u=$u below floor',
+        );
+        expect(
+          u,
+          lessThanOrEqualTo(
+              mid + expandedHalf * VineMetrics.textureUPerPx + 1.0),
+          reason: 'col $c u=$u above ceiling',
+        );
+      }
+      final span = maxU - minU;
+      final expectedSpan = 2 * expandedHalf * VineMetrics.textureUPerPx;
+      expect(span, closeTo(expectedSpan, 0.2));
+    });
+
+    test('v stays within [0, texHeight) (cylindrical wrap)', () {
+      final track = buildTrack();
+      final buffers = VineStripMesh.allocate(track);
       VineStripMesh.writeWindow(
         track: track,
         headArc: 0,
@@ -73,33 +118,35 @@ void main() {
         buffers: buffers,
         tint: const Color(0xFF123456),
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: skinTile,
-        skinPhase: 5.0,
+        uvPhase: 0.0,
+        texWidth: texW,
+        texHeight: texH,
       );
-      final tilePx = VineSkinAtlas.tileLength * VineSkinAtlas.bakeScale;
-      final lo = skinTile * tilePx;
-      final hi = (skinTile + 1) * tilePx;
       final uvCount = buffers.lastVertexCount * 2;
-      for (var i = 0; i < uvCount; i += 2) {
-        final u = buffers.texCoords[i];
+      for (var i = 1; i < uvCount; i += 2) {
+        final v = buffers.texCoords[i];
         expect(
-          u,
-          inExclusiveRange(lo - 0.01, hi + 0.01),
-          reason: 'u=$u must stay inside tile $skinTile',
+          v,
+          greaterThanOrEqualTo(0.0),
+          reason: 'v=$v below 0',
+        );
+        expect(
+          v,
+          lessThan(texH.toDouble()),
+          reason: 'v=$v at or above texHeight',
         );
       }
     });
 
     test(
-        'skin is pinned to the vine body: per-row u is stable while '
+        'texture is pinned to the vine body: per-row v is stable while '
         'sliding', () {
       final track = buildTrack();
       final buffers = VineStripMesh.allocate(track);
       // Rows keep their body-relative arc (rowArc - headArc), so every
-      // row's u is invariant under a slide (modulo the tile-wrap seam,
-      // which sits where bodyArc + phase == 0). Sample rows with a
-      // mid-tile phase: nowhere near the seam.
-      List<double> rowUs(double headArc) {
+      // row's v is invariant under a slide (modulo the texHeight wrap).
+      // Use a mid-texture phase far from wrap boundaries.
+      List<double> rowVs(double headArc) {
         VineStripMesh.writeWindow(
           track: track,
           headArc: headArc,
@@ -107,21 +154,22 @@ void main() {
           buffers: buffers,
           tint: const Color(0xFF123456),
           halfWidth: VineMetrics.tubeWidth / 2,
-          skinTile: 0,
-          skinPhase: 31.0,
+          uvPhase: texH / 3,
+          texWidth: texW,
+          texHeight: texH,
         );
         return [
-          buffers.texCoords[0],
-          buffers.texCoords[buffers.lastVertexCount ~/ 2 * 2],
+          buffers.texCoords[1],
+          buffers.texCoords[buffers.lastVertexCount ~/ 2 * 2 + 1],
         ];
       }
 
-      final a = rowUs(0.0);
-      final b = rowUs(31.0); // three quarters of a cell slide
+      final a = rowVs(0.0);
+      final b = rowVs(31.0); // three quarters of a cell slide
       expect(b[0], closeTo(a[0], 1.0));
     });
 
-    test('skin phase shifts u deterministically', () {
+    test('uv phase shifts v deterministically', () {
       final track = buildTrack();
       final buffers = VineStripMesh.allocate(track);
       VineStripMesh.writeWindow(
@@ -131,10 +179,11 @@ void main() {
         buffers: buffers,
         tint: const Color(0xFF123456),
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 0.0,
+        uvPhase: 0.0,
+        texWidth: texW,
+        texHeight: texH,
       );
-      final u0 = buffers.texCoords[0];
+      final v0 = buffers.texCoords[1];
       VineStripMesh.writeWindow(
         track: track,
         headArc: 0,
@@ -142,43 +191,17 @@ void main() {
         buffers: buffers,
         tint: const Color(0xFF123456),
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 7.0,
+        uvPhase: 7.0,
+        texWidth: texW,
+        texHeight: texH,
       );
-      final u1 = buffers.texCoords[0];
-      expect(u1, closeTo(u0 + 7 * VineSkinAtlas.bakeScale, 0.5));
-    });
-
-    test('v spans the expanded tube around the tile center per column', () {
-      final track = buildTrack();
-      final buffers = VineStripMesh.allocate(track);
-      VineStripMesh.writeWindow(
-        track: track,
-        headArc: 0,
-        windowLength: track.windowLength,
-        buffers: buffers,
-        tint: const Color(0xFF123456),
-        halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 0.0,
-      );
-      final centerV = VineSkinAtlas.halfHeight * VineSkinAtlas.bakeScale;
-      double minV = double.infinity, maxV = -double.infinity;
-      for (var c = 0; c < VineStripMesh.columns; c++) {
-        final v = buffers.texCoords[c * 2 + 1];
-        minV = math.min(minV, v);
-        maxV = math.max(maxV, v);
-        expect(v, greaterThanOrEqualTo(0.0));
-        expect(
-            v,
-            lessThanOrEqualTo(
-                VineSkinAtlas.tileHeight * VineSkinAtlas.bakeScale));
-      }
-      final expectedSpan = 2 *
-          ((VineMetrics.tubeWidth / 2) + VineMetrics.tubeFeather) *
-          VineSkinAtlas.bakeScale;
-      expect(maxV - minV, closeTo(expectedSpan, 0.1));
-      expect((minV + maxV) / 2, closeTo(centerV, 0.1));
+      final v1 = buffers.texCoords[1];
+      expect(
+          v1,
+          closeTo(
+              (v0 + 7 * (texH / VineMetrics.textureRepeatArc)) %
+                  texH.toDouble(),
+              0.5));
     });
 
     test('vertex colors encode tint and fade alpha', () {
@@ -192,8 +215,9 @@ void main() {
         buffers: buffers,
         tint: const Color(0xFFFF00FF),
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 0.0,
+        uvPhase: 0.0,
+        texWidth: texW,
+        texHeight: texH,
       );
       final lastVertexColor = buffers.colors[buffers.lastVertexCount - 1];
       expect((lastVertexColor >> 24) & 0xFF, 0);
@@ -206,8 +230,9 @@ void main() {
         buffers: buffers,
         tint: const Color(0xFFFF00FF),
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 0.0,
+        uvPhase: 0.0,
+        texWidth: texW,
+        texHeight: texH,
       );
       for (var k = 1; k < VineStripMesh.columns - 1; k++) {
         final coreColor = buffers.colors[k];
@@ -230,8 +255,9 @@ void main() {
         buffers: buffers,
         tint: const Color(0xFF000000),
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 0.0,
+        uvPhase: 0.0,
+        texWidth: texW,
+        texHeight: texH,
       );
       final limit = (VineMetrics.tubeWidth / 2) + VineMetrics.tubeFeather + 0.1;
       // Vertex column opposite the row's centerline point: verify each
@@ -280,8 +306,9 @@ void main() {
         buffers: buffers,
         tint: const Color(0xFF000000),
         halfWidth: VineMetrics.tubeWidth / 2,
-        skinTile: 0,
-        skinPhase: 0.0,
+        uvPhase: 0.0,
+        texWidth: texW,
+        texHeight: texH,
       );
 
       final rows = buffers.lastVertexCount ~/ VineStripMesh.columns;
@@ -316,38 +343,6 @@ void main() {
           reason: 'degenerate same-row triangle at $t',
         );
       }
-    });
-  });
-
-  group('VineSkinAtlas helpers', () {
-    const styleSet = <VineStyle>[
-      VineStyle.classic,
-      VineStyle.blossom,
-      VineStyle.ethereal,
-    ];
-
-    test('tileFor maps style × state to distinct withered variants', () {
-      for (final style in styleSet) {
-        final healthy = VineSkinAtlas.tileFor(style, isAttempted: false);
-        final withered = VineSkinAtlas.tileFor(style, isAttempted: true);
-        expect(healthy + 3, withered); // withered column mirrors the look
-      }
-    });
-
-    test('accentFor turns withered bark brown after a failed attempt', () {
-      for (final style in styleSet) {
-        expect(
-          VineSkinAtlas.accentFor(style, isAttempted: true),
-          VineMetrics.witheredColor,
-        );
-      }
-    });
-
-    test('wrapU stays in [0, tileLength) for negative body arcs', () {
-      expect(VineSkinAtlas.wrapU(10), 10.0);
-      expect(VineSkinAtlas.wrapU(-63.0), closeTo(0.0, 1e-9));
-      expect(VineSkinAtlas.wrapU(-630.0), closeTo(0.0, 1e-9));
-      expect(VineSkinAtlas.wrapU(-1.0), closeTo(62.0, 1e-9));
     });
   });
 }

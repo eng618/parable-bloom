@@ -56,6 +56,11 @@ This document serves as an information-oriented technical reference detailing su
 - **Gotcha (resolved)**: The old Podfile `post_install` hook forced `MACOSX_DEPLOYMENT_TARGET = 11.0` on every pod, which modern Xcode rejects (minimum 12.0). With SPM the deployment target comes from the Runner project itself (12.0+).
 - **Gotcha (resolved)**: The `FlutterFire: flutterfire upload-crashlytics-symbols` build phase derived its SPM checkout path from an Xcode `DerivedData` regex that never matches Flutter's build layout. The phase now walks up from `BUILT_PRODUCTS_DIR` to find `SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run` and skips gracefully (with a log line) when it is absent, instead of failing the build.
 
+### Disk Pressure From Build Caches (2026-10)
+
+- **Behavior**: Flutter iOS/macOS build trees plus SwiftPM checkouts (Firebase/gRPC) can reach 40GB+ per platform; when the data volume nears 0 free space, builds fail with `No space left on device` (`errno=28`) in unrelated-looking steps (manifest compilation, linking).
+- **Recovery**: Run `task clean:all` — one shot `flutter clean`, then clears the Nx cache, Go build/test caches (`.gotmp`, `.gocache`), Next.js build output, and the level-builder binary. It prints free-space before/after. Never trust a weird build failure on a nearly-full disk: check `df -h /System/Volumes/Data` first.
+
 ### Headless Test Execution
 
 - **Behavior**: In headless CI environments, Flutter widget tests and Flame component tests operate via automated test bindings without requiring physical GPU context.

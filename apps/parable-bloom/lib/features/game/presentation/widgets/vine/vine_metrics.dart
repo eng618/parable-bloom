@@ -8,6 +8,9 @@ library;
 
 import 'package:flutter/material.dart';
 
+import 'package:parable_bloom/core/providers/settings_providers.dart'
+    show VineStyle;
+
 class VineMetrics {
   const VineMetrics._();
 
@@ -22,6 +25,30 @@ class VineMetrics {
   /// after a failed clear attempt. Deliberately theme-independent — dead
   /// vine brown must not follow light/dark theming.
   static const Color witheredColor = Color(0xFF8B5E34);
+
+  /// Tube-texture UV parameters for the textured rail styles.
+  ///
+  /// The real trellis/ivy image is wrapped around the tube with cylindrical
+  /// UVs: `v` (along the tube axis) advances with the vine body so the
+  /// texture is pinned to the rigid vine and travels with it; `u`
+  /// (around the tube's circumference) is a narrow, per-column sliver of
+  /// bark so the tube reads as a wood dowel, not random color bands.
+  ///
+  /// [textureRepeatArc] is the body arc (world px) over which the texture
+  /// advances one full vertical cycle. Smaller = tighter pattern repeat.
+  static const double textureRepeatArc = 63.0;
+
+  /// Texture px sampled per world px across the tube's width for `u`. A
+  /// narrow band keeps the tube reading as a single wood strip.
+  static const double textureUPerPx = 2.5;
+
+  /// Vine-stem accent color for caps and arrow heads on textured styles,
+  /// per style. The withered state overrides with [witheredColor].
+  static Color accentColor(VineStyle style) => switch (style) {
+        VineStyle.blossom => const Color(0xFFDE7FA4),
+        VineStyle.ethereal => const Color(0xFF74F4FF),
+        _ => const Color(0xFF5E9C33),
+      };
 
   /// Corner rounding radius for the spline path. Clamped per-corner to half
   /// the adjacent segment lengths so tight U-turns can't overshoot.

@@ -73,14 +73,24 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   ui.Vertices? _cachedFoliage;
   Color? _cacheStripTint;
   Color? _cacheFoliageTint;
-  int? _cacheSkinTile;
+  double? _cacheUvPhase;
   bool _railIdleCacheValid = false;
   ui.Path? _cachedSimplePath;
 
-  /// Phase offset into the skin atlas tile. Zero keeps the tile-wrap seam
-  /// exactly at the head position, where the round end cap hides it; a
-  /// nonzero phase would move the seam into the visible body.
-  static const double skinPhase = 0.0;
+  /// Per-vine body-arc phase offset into the texture so vines sample
+  /// different parts of the trellis image (deterministic from the vine id).
+  late final double uvPhase = _computeUvPhase(vineData.id);
+
+  static double _computeUvPhase(String id) {
+    const fnvPrime = 0x01000193;
+    var hash = 0x811C9DC5;
+    for (final unit in id.codeUnits) {
+      hash ^= unit;
+      hash = (hash * fnvPrime) & 0xFFFFFFFF;
+    }
+    // Keep the phase within one texture cycle so it never drifts far.
+    return (hash % 1024).toDouble();
+  }
 
   final VineBloomRenderer _bloomRenderer = VineBloomRenderer();
   VineBloomRenderer get bloom => _bloomRenderer;
@@ -121,15 +131,17 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   /// the stroked centerline [Path] per window — anti-aliased, no vertex
   /// mesh work, and equally cheap (O(window) points).
   ///
-  /// Skin variants ([skinTile]) and both tints are part of the idle cache
-  /// key: the withered state flip must rebuild vertex colors and the UV
-  /// atlas column even while the vine is not moving.
+  /// Skin texture phase ([uvPhase]) and both tints are part of the idle
+  /// cache key: the withered state flip must rebuild vertex colors and the
+  /// UV position even while the vine is not moving.
   VineRailDraw? prepareRailDraw({
     required VineStyle style,
     required int foliageStride,
     required Color stripTint,
     required Color foliageTint,
-    required int skinTile,
+    required double uvPhase,
+    required int texWidth,
+    required int texHeight,
   }) {
     final level = parent.getCurrentLevelData();
     if (level == null) return null;
@@ -147,7 +159,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         _railIdleCacheValid &&
         _cacheStripTint == stripTint &&
         _cacheFoliageTint == foliageTint &&
-        _cacheSkinTile == skinTile) {
+        _cacheUvPhase == uvPhase) {
       return VineRailDraw(
         track: track,
         headArc: headArc,
@@ -172,8 +184,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         buffers: _stripBuffers!,
         tint: stripTint,
         halfWidth: halfWidth,
-        skinTile: skinTile,
-        skinPhase: skinPhase,
+        uvPhase: uvPhase,
+        texWidth: texWidth,
+        texHeight: texHeight,
       );
       strip = VineStripMesh.verticesFor(
           _stripBuffers!, _stripBuffers!.lastVertexCount);
@@ -211,7 +224,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _cachedSimplePath = simplePath;
     _cacheStripTint = stripTint;
     _cacheFoliageTint = foliageTint;
-    _cacheSkinTile = skinTile;
+    _cacheUvPhase = uvPhase;
     _railIdleCacheValid = true;
     return VineRailDraw(
       track: track,
