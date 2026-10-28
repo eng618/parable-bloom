@@ -1,3 +1,18 @@
+## 1.11.1 (2026-10-28)
+
+### 🚀 Features
+
+- add smooth scrolling to deep-linked journal entries ([63ccf47](https://github.com/eng618/parable-bloom/commit/63ccf47))
+- add deep-linking support to open specific journal entries from game screens ([4a62270](https://github.com/eng618/parable-bloom/commit/4a62270))
+
+### 🩹 Fixes
+
+- increase Android minSdkVersion to 26 for Sentry compatibility and add Gradle properties ([daa4fa4](https://github.com/eng618/parable-bloom/commit/daa4fa4))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.11.0 (2026-10-28)
 
 ### 🚀 Features
