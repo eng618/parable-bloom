@@ -1,3 +1,13 @@
+## 0.5.18 (2026-10-28)
+
+### 🚀 Features
+
+- high-performance rail-based vine rendering system and journal redesign ([#140](https://github.com/eng618/parable-bloom/pull/140))
+
+### ❤️ Thank You
+
+- Eric Garcia @eng618
+
 ## 0.5.17 (2026-10-23)
 
 ### 🚀 Features
