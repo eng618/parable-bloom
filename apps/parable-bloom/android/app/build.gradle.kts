@@ -27,7 +27,10 @@ android {
         applicationId = "com.garciaericn.parable_bloom"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // sentry_flutter 10.x (pubspec allows ^10.1.0) requires minSdk 26, while
+        // Flutter 3.x defaults minSdkVersion to 24. Override so the release
+        // manifest merger does not fail.
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
