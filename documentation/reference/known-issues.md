@@ -41,10 +41,25 @@ This document serves as an information-oriented technical reference detailing su
 - **Requirement**: Go `1.27.1` is the canonical version across the entire workspace.
 - **Validation**: Run `task lb:test` or `task lb:build` to verify level generation tools.
 
-### iOS CocoaPods Deployment Target (iOS 16.0)
+### iOS Builds Use Swift Package Manager (2026-10)
 
-- **Behavior**: Newer transitive Swift frameworks (e.g. `Promises`, `FirebaseSessions`) specify a minimum deployment target of iOS 16.0.
-- **Configuration**: The `Podfile` automatically forces `IPHONEOS_DEPLOYMENT_TARGET = '16.0'` across all Pod targets in its `post_install` hook to prevent compilation mismatch errors.
+- **Behavior**: All iOS plugins resolve through Swift Package Manager, like macOS; the CocoaPods integration (`Podfile`, `Pods/`, pod xcconfig includes) has been removed from `ios/`.
+- **Deployment target**: The Runner project keeps `IPHONEOS_DEPLOYMENT_TARGET = 16.0` natively (previous Podfile `post_install` hook forced the same value per pod; no longer needed).
+
+### iOS CocoaPods Deployment Target (iOS 16.0) — pre-2026-10 (resolved)
+
+- **Behavior (historical)**: Newer transitive Swift frameworks (e.g. `Promises`, `FirebaseSessions`) specified a minimum deployment target of iOS 16.0, enforced via the old `Podfile` `post_install` hook. Superseded by the SPM migration: the project-level target is set natively.
+
+### macOS Builds Use Swift Package Manager (2026-10)
+
+- **Behavior**: All macOS plugins resolve through Swift Package Manager; the CocoaPods integration (`Podfile`, `Pods/`, pod xcconfig includes) has been removed from `macos/`.
+- **Gotcha (resolved)**: The old Podfile `post_install` hook forced `MACOSX_DEPLOYMENT_TARGET = 11.0` on every pod, which modern Xcode rejects (minimum 12.0). With SPM the deployment target comes from the Runner project itself (12.0+).
+- **Gotcha (resolved)**: The `FlutterFire: flutterfire upload-crashlytics-symbols` build phase derived its SPM checkout path from an Xcode `DerivedData` regex that never matches Flutter's build layout. The phase now walks up from `BUILT_PRODUCTS_DIR` to find `SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run` and skips gracefully (with a log line) when it is absent, instead of failing the build.
+
+### Disk Pressure From Build Caches (2026-10)
+
+- **Behavior**: Flutter iOS/macOS build trees plus SwiftPM checkouts (Firebase/gRPC) can reach 40GB+ per platform; when the data volume nears 0 free space, builds fail with `No space left on device` (`errno=28`) in unrelated-looking steps (manifest compilation, linking).
+- **Recovery**: Run `task clean:all` — one shot `flutter clean`, then clears the Nx cache, Go build/test caches (`.gotmp`, `.gocache`), Next.js build output, and the level-builder binary. It prints free-space before/after. Never trust a weird build failure on a nearly-full disk: check `df -h /System/Volumes/Data` first.
 
 ### Headless Test Execution
 

@@ -158,6 +158,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       solver: ref.read(levelSolverServiceProvider),
       sink: _GameScreenEventSink(this),
     );
+    // Vine renderer selection (rail vs legacy painter).
+    _game!.updateVineRenderMode(ref.read(vineRenderModeProvider));
   }
 
   @override

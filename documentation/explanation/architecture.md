@@ -74,6 +74,17 @@ The application uses a reactive architecture where the UI and Game Engine observ
 - **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
 - **`boardZoomScaleProvider`**: Manages the user's preferred default board zoom scale (0.5x to 2.0x).
 
+### 3.1.1 Fine-Grained Watches
+
+Providers emit immutable objects with value equality (`GameProgress`, `CameraState`, `VineState`), but watching a whole aggregate still rebuilds the consumer whenever any unrelated field changes. Heavy consumers therefore watch selected slices via `ref.watch(provider.select(...))` (a record of primitives/value-equal entities):
+
+- **`HomeScreen`** selects `(tutorialCompleted, currentLevel, completedLevels)` and uses the static `GameProgress.firstUncompletedInPlaylist(playlist, completedLevels)` on the selected set, instead of watching the whole `GameProgress`.
+- **`JournalScreen`** selects `unlockedScriptureIds`.
+- **`TutorialGuideOverlay`** selects a tuple of the individual `VineState`s each lesson reads (plus the first active vine id); the full `vineStatesProvider` map is watched only inside the lesson 4–5 branch that runs the solver-backed movable scan.
+- **`GameZoomControls`** selects `(zoom, minZoom, maxZoom)` so pan/centering camera writes (~10fps) don't rebuild the controls.
+
+Flame-side rendering bypasses Riverpod notifications entirely for the per-frame camera path (`applyCameraFrame`); Riverpod camera state is throttled to ~10fps.
+
 ### 3.2 Logic & Solvers
 
 - **`LevelSolver`**: A Breadth-First Search (BFS) solver that validates level solvability and determines blocking relationships.
@@ -86,15 +97,17 @@ The game implements several high-performance visual systems within the Flame `Po
 - **Tap Feedback**: `TapEffectComponent` handles the visual pulse and particle effects on user interaction.
 - **Particle System**: `TapEffectComponent` and `VineComponent` (bloom) utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
 - **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input. It supports auto-focusing on specific vines if they are off-screen or near the boundaries during the auto-clearing sequence.
-- **Vine Styles (Thin-tube batched renderer)**: `VineComponent` owns per-vine logic, animation state, and cached geometry; a single `VineLayerComponent` draws all vines in one batched canvas pass (one clip, shared static paints, per-vine frustum culling, board-size-aware foliage LOD):
+- **Vine Styles (Vine Rail renderer)**: `VineComponent` owns per-vine logic, animation state, and the invariant rail track; a single `VineLayerComponent` draws all vines in one batched pass. The active renderer is the **"Vine Rail"** architecture (see `reference/vine-rendering.md`); the legacy per-frame Path painter remains selectable via `vineRenderModeProvider` for A/B regression:
   - **Grid Compaction**: Visual layout is compacted (52px cells with 42px spacing) to reduce white space and create a dense, satisfying board.
-  - **Visual Profiles**: Uniform 13px thin-tube core (`VineMetrics.tubeWidth`) for every style with rounded-corner spline paths (`VineTubePath`, 12px corner radius) and compact lane-fitting arrow heads, leaving ~29px of breathing room between parallel vines.
-  - **Continuous Path Interpolation**: Clear animations interpolate sub-cell motion with an ease-out curve between grid steps (`VineAnimator.renderGridPositions`), and step pacing adapts to total length so long clears stay snappy. Blocked taps keep the discrete bump-and-return wiggle.
-  - **Dynamic Shaders**: Classic, Cherry Blossom, and Ethereal themes load generated high-resolution seamless textures (`classic_vine_texture.png`, etc.) as dynamic `ImageShader` grain over the thin core, tinted with the vine's group colors, keeping assets extremely lightweight.
+  - **Visual Profiles**: Uniform 13px thin-tube core (`VineMetrics.tubeWidth`) for every style, with corner rounding (12px radius) baked once into an invariant track polyline so corners never pop during animation.
+  - **Sliding-window animation**: a clearing vine is a rigid shape sliding along a fixed track — one scalar head-arc position drives the whole motion with a single global ease (no per-step sawtooth velocity). Off-screen exit is a board-edge clip plus a 63px per-vertex fade band (no unclipped travel; frustum culling valid again).
+  - **GPU vertex strips**: the tube is drawn with one `canvas.drawVertices` call per vine (`Vertices.raw` from reused typed-data buffers), independent of vine length; UVs anchor the texture grain to the board (0.25 world scale) exactly like the legacy shader.
+  - **Baked foliage**: a startup `PictureRecorder` atlas of white leaf/petal/glow tiles per style is tinted at draw time through vertex colors; foliage quads are one extra `drawVertices` per vine, and `Simple` stays flat through the same pipeline.
+  - **Dynamic texture themes**: Classic, Cherry Blossom, and Ethereal keep generated seamless textures (`classic_vine_texture.png`, etc.) as world-anchored `ImageShader` grain over the thin core, tinted with the vine's group colors.
   - **Organic Node Details**:
     - **Classic**: Watercolor green ivy leaves growing organically at alternating 45-degree angles along the branch segments (small 0.55x scale, sparse stride).
     - **Cherry Blossom**: Beautiful programmatically-rendered pink cherry blossoms with bright yellow centers at the segment joints (0.8x scale, sparse stride).
-    - **Ethereal**: Glowing bioluminescent cyber-cyan leaves alongside a soft cyan neon outer-glow blur path drawn underneath the obsidian branch (glow remains animation-gated).
+    - **Ethereal**: Glowing bioluminescent cyber-cyan leaves alongside a soft cyan neon outer-glow (baked halo tile — no runtime `MaskFilter.blur`).
     - **Simple**: Sleek solid thin-tube paths with compact triangular arrowheads, matching the clean maze aesthetic. No foliage.
 
 ---
@@ -167,7 +180,7 @@ The application implements a multi-channel, privacy-focused telemetry strategy d
 All telemetry events are dispatched through `AnalyticsService`, which coordinates data collection across:
 
 - **Firebase Analytics**: Standard client-side SDK. Used for general usage statistics, game lifecycle, and crash correlation.
-- **Openpanel (Self-Hosted)**: Lightweight, cookie-less, self-hosted analytics engine (`openpanel.gventureshq.com`). Events are submitted via direct API calls (`OpenpanelAnalyticsClient`) using privacy-focused endpoints with platform-specific Client IDs (Android, iOS, Web, macOS, Windows, Linux).
+- **Openpanel (Self-Hosted)**: Lightweight, cookie-less, self-hosted analytics engine (`openpanel.gventureshq.com`). Events are submitted via direct API calls (`OpenpanelAnalyticsClient`) using privacy-focused endpoints with platform-specific Client IDs (Android, iOS, Web, macOS, Windows, Linux). Native (non-browser) track calls carry no `Origin` header, so the client also sends `openpanel-client-secret` (baked in via the `OPENPANEL_CLIENT_SECRET` dart-define) — without it the API answers `401 "Invalid cors or secret"` and events are dropped. Overrides (`OPENPANEL_CLIENT_ID` / `OPENPANEL_CLIENT_SECRET` / `OPENPANEL_API_URL`) are plumbed through every release build task in `.taskfiles/Flutter.yml` and the `deploy-web` / `publish` workflows; empty values fall back to the baked-in per-platform defaults.
 
 #### Privacy Control & Opt-out Toggle
 

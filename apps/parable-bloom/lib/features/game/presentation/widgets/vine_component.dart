@@ -1,7 +1,12 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import 'package:parable_bloom/core/game_board_layout.dart';
+import 'package:parable_bloom/core/providers/settings_providers.dart'
+    show VineStyle;
 import 'package:parable_bloom/core/services/logger_service.dart';
 import 'package:parable_bloom/core/vine_color_palette.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
@@ -9,20 +14,83 @@ import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/grid_component.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_animator.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_bloom_renderer.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_foliage_atlas.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_rail_draw.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_slide_controller.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_strip_mesh.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_path_painter.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_tube_path.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track.dart';
+
+/// Per-frame rail draw payloads produced by [VineComponent.prepareRailDraw]
+/// and consumed by the rail renderer (see [VineRailDraw]).
 
 /// Logic + geometry owner for one vine.
 ///
 /// Rendering moved to [VineLayerComponent] (single batched pass over all
-/// vines). This component owns the animator, bloom state, calm color, and
-/// cached screen-space geometry; it draws nothing itself.
+/// vines). This component owns animation state, the rail track (when the
+/// rail renderer is active), bloom state, calm color, and cached geometry;
+/// it draws nothing itself.
 class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
+  VineComponent({
+    required this.vineData,
+    required this.cellSize,
+    this.useRailRenderer = true,
+    this.foliageAtlas,
+  }) {
+    _animator = VineAnimator(vineData: vineData);
+    final seedColor = VineColorPalette.resolve(vineData.vineColor);
+    _calmColor = VinePathPainter.deriveCalmVariant(seedColor, vineData.id);
+  }
+
   final VineData vineData;
   final double cellSize;
 
+  /// Whether the new rail renderer drives this vine. The legacy per-frame
+  /// Path painter stays reachable through [VineRenderMode.legacy] for A/B
+  /// regression until the cut-over.
+  final bool useRailRenderer;
+
+  /// Shared startup-baked foliage-atlas provider set by the layer.
+  final VineFoliageAtlas? foliageAtlas;
+
   late final VineAnimator _animator;
   VineAnimator get animator => _animator;
+
+  // ---- Rail state -------------------------------------------------------
+  final VineSlideController _slide = VineSlideController.idle();
+  VineSlideController get slide => _slide;
+
+  VineTrack? _railTrack;
+  VineTrack? get railTrack => _railTrack;
+  WindowBuffers? _stripBuffers;
+  late final VineFoliageMesh? _foliageMesh =
+      foliageAtlas == null ? null : VineFoliageMesh(atlas: foliageAtlas!);
+  final Float32List _scratch = Float32List(VineTrack.positionW);
+
+  ui.Vertices? _cachedStrip;
+  ui.Vertices? _cachedFoliage;
+  Color? _cacheStripTint;
+  Color? _cacheFoliageTint;
+  double? _cacheUvPhase;
+  bool _railIdleCacheValid = false;
+  ui.Path? _cachedSimplePath;
+
+  /// Per-vine body-arc phase offset into the texture so vines sample
+  /// different parts of the trellis image (deterministic from the vine id).
+  late final double uvPhase = _computeUvPhase(vineData.id);
+
+  static double _computeUvPhase(String id) {
+    const fnvPrime = 0x01000193;
+    var hash = 0x811C9DC5;
+    for (final unit in id.codeUnits) {
+      hash ^= unit;
+      hash = (hash * fnvPrime) & 0xFFFFFFFF;
+    }
+    // Keep the phase within one texture cycle so it never drifts far.
+    return (hash % 1024).toDouble();
+  }
 
   final VineBloomRenderer _bloomRenderer = VineBloomRenderer();
   VineBloomRenderer get bloom => _bloomRenderer;
@@ -33,20 +101,14 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   late final Color _calmColor;
   Color get calmColor => _calmColor;
 
-  // Cached screen-space geometry. Rebuilt only when the vine
-  // actually moved (or the grid height changed). Animating vines bypass
-  // the cache: interpolated positions change every frame.
+  // Cached screen-space geometry (legacy renderer only). Rebuilt only when
+  // the vine actually moved (or the grid height changed). Animating vines
+  // bypass the cache: interpolated positions change every frame.
   List<Offset> _cachedPoints = const [];
   Rect _cachedBounds = Rect.zero;
   int _cachedVisualVersion = -1;
   int _cachedVisualHeight = -1;
   Path? _cachedPath;
-
-  VineComponent({required this.vineData, required this.cellSize}) {
-    _animator = VineAnimator(vineData: vineData);
-    final seedColor = VineColorPalette.resolve(vineData.vineColor);
-    _calmColor = VinePathPainter.deriveCalmVariant(seedColor, vineData.id);
-  }
 
   @override
   Future<void> onLoad() async {
@@ -61,8 +123,308 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         });
   }
 
-  /// Screen-space centerline points for the current frame. Idle vines reuse
-  /// the cache; animating vines rebuild from interpolated grid positions.
+  /// Prepares (or reuses) this frame's rail payload for the batched layer.
+  ///
+  /// Idle vines freeze their vertex objects; animating vines rebuild the
+  /// visible window sub-range every frame (O(window) work, far below the
+  /// legacy O(N) path tessellation). The flat/simple style instead builds
+  /// the stroked centerline [Path] per window — anti-aliased, no vertex
+  /// mesh work, and equally cheap (O(window) points).
+  ///
+  /// Skin texture phase ([uvPhase]) and both tints are part of the idle
+  /// cache key: the withered state flip must rebuild vertex colors and the
+  /// UV position even while the vine is not moving.
+  VineRailDraw? prepareRailDraw({
+    required VineStyle style,
+    required int foliageStride,
+    required Color stripTint,
+    required Color foliageTint,
+    required double uvPhase,
+    required int texWidth,
+    required int texHeight,
+  }) {
+    final level = parent.getCurrentLevelData();
+    if (level == null) return null;
+
+    final track = _railTrack;
+    if (track == null) return null;
+
+    final headArc = _slide.headArc;
+    final windowLength = track.windowLength;
+    final halfWidth = VineMetrics.texturedTubeWidth / 2;
+    final simple = style == VineStyle.simple;
+
+    // Idle caches are keyed on tint + skin tile (see doc comment).
+    if (!_slide.isAnimating &&
+        _railIdleCacheValid &&
+        _cacheStripTint == stripTint &&
+        _cacheFoliageTint == foliageTint &&
+        _cacheUvPhase == uvPhase) {
+      return VineRailDraw(
+        track: track,
+        headArc: headArc,
+        strip: _cachedStrip,
+        foliage: _cachedFoliage,
+        simplePath: _cachedSimplePath,
+      );
+    }
+
+    ui.Vertices? strip;
+    ui.Vertices? foliage;
+    ui.Path? simplePath;
+    if (simple) {
+      // Vector-crisp stroked pass: no strip, no foliage quads.
+      simplePath = track.windowPath(headArc, windowLength);
+    } else {
+      _stripBuffers ??= VineStripMesh.allocate(track);
+      VineStripMesh.writeWindow(
+        track: track,
+        headArc: headArc,
+        windowLength: windowLength,
+        buffers: _stripBuffers!,
+        tint: stripTint,
+        halfWidth: halfWidth,
+        uvPhase: uvPhase,
+        texWidth: texWidth,
+        texHeight: texHeight,
+      );
+      strip = VineStripMesh.verticesFor(
+          _stripBuffers!, _stripBuffers!.lastVertexCount);
+
+      final mesh = _foliageMesh;
+      if (mesh != null && foliageAtlas!.supportsStyle(style)) {
+        mesh.write(
+          track: track,
+          headArc: headArc,
+          windowLength: windowLength,
+          stride: foliageStride,
+          style: style,
+          tint: foliageTint,
+          halfWidth: halfWidth,
+          scratch: _scratch,
+        );
+        foliage = mesh.vertices();
+      }
+    }
+
+    if (_slide.isAnimating) {
+      _railIdleCacheValid = false;
+      return VineRailDraw(
+        track: track,
+        headArc: headArc,
+        strip: strip,
+        foliage: foliage,
+        simplePath: simplePath,
+      );
+    }
+
+    // Idle: freeze the freshly built payload.
+    _cachedStrip = strip;
+    _cachedFoliage = foliage;
+    _cachedSimplePath = simplePath;
+    _cacheStripTint = stripTint;
+    _cacheFoliageTint = foliageTint;
+    _cacheUvPhase = uvPhase;
+    _railIdleCacheValid = true;
+    return VineRailDraw(
+      track: track,
+      headArc: headArc,
+      strip: strip,
+      foliage: foliage,
+      simplePath: simplePath,
+    );
+  }
+
+  void invalidateRailCache() => _railIdleCacheValid = false;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    if (useRailRenderer) {
+      _updateRail(dt);
+      return;
+    }
+
+    if (!_animator.isAnimating) return;
+
+    // Update bloom particles
+    if (_bloomRenderer.isShowingBloomEffect) {
+      _bloomRenderer.update(dt);
+
+      final isFullyOffScreen =
+          _animator.isFullyOffScreen(parent.getCurrentLevelData());
+      if (isFullyOffScreen &&
+          _bloomRenderer.bloomEffectTimer >=
+              _bloomRenderer.bloomEffectDuration) {
+        _logDebug(
+          'Fully off-screen and bloom complete: vineId=${vineData.id}, calling _finishAnimation()',
+        );
+        _finishAnimation();
+        return;
+      }
+    }
+
+    // Update step-by-step animator
+    _animator.update(
+      dt: dt,
+      grid: parent,
+      onHeadExitedGrid: () {
+        if (!_bloomRenderer.isShowingBloomEffect) {
+          final level = parent.getCurrentLevelData();
+          if (level != null) {
+            _bloomRenderer.startBloomEffect(
+              vineData: vineData,
+              level: level,
+              visualPositions: _animator.visualPositions,
+            );
+          }
+        }
+      },
+      onFinished: _finishAnimation,
+      logDebug: _logDebug,
+    );
+  }
+
+  void _updateRail(double dt) {
+    if (_bloomRenderer.isShowingBloomEffect) {
+      _bloomRenderer.update(dt);
+    }
+
+    if (!_slide.isAnimating) {
+      // The clear run finished; wait for the bloom to complete before
+      // removing (parity with the legacy off-screen + bloom gating).
+      if (_railClearFinished &&
+          (!_bloomRenderer.isShowingBloomEffect ||
+              _bloomRenderer.bloomEffectTimer >=
+                  _bloomRenderer.bloomEffectDuration)) {
+        _logDebug(
+          'Rail run complete and bloom finished: vineId=${vineData.id}, _finishAnimation()',
+        );
+        _finishAnimation();
+      }
+      return;
+    }
+
+    final update = _slide.update(dt);
+    if (update.justReachedBlocker) {
+      parent.markVineAttempted(vineData.id);
+    }
+    if (update.justExitedBoard && !_bloomRenderer.isShowingBloomEffect) {
+      _startRailBloom();
+    }
+    if (update.justReturnedHome) {
+      parent.setVineAnimationState(vineData.id, VineAnimationState.normal);
+    }
+    if (update.justFinished && _slide.isClearRun) {
+      _railClearFinished = true;
+    }
+  }
+
+  bool _railClearFinished = false;
+
+  void _startRailBloom() {
+    final track = _railTrack;
+    if (track == null) return;
+    final level = parent.getCurrentLevelData();
+    if (level == null) return;
+    final headCell = track.headCellAt(_slide.headArc);
+    _bloomRenderer.startBloomEffect(
+      vineData: vineData,
+      level: level,
+      visualPositions: [
+        {
+          'x': headCell[0],
+          'y': headCell[1],
+        }
+      ],
+    );
+  }
+
+  /// Starts a slide run (tap on a movable vine).
+  void slideOut() {
+    if (_slide.isAnimating) return;
+    final level = parent.getCurrentLevelData();
+    if (level == null) return;
+
+    if (!useRailRenderer) {
+      _animator.startSlideOut(grid: parent, logDebug: _logDebug);
+      return;
+    }
+
+    final rawDistance = railMovementDistance();
+    // Solver contract: positive = cells to the board edge (clear),
+    // negative = cells until the blocker. The blocked bump travels the
+    // absolute distance so the head visibly reaches the blocker before
+    // returning (legacy animator used `rawDistance.abs()` here too).
+    final approachSteps = rawDistance.abs().clamp(0, 4096);
+    _buildRailTrack(extensionArc: _railExtensionArrangement(approachSteps));
+
+    _slide.startRun(
+      track: _railTrack!,
+      approachSteps: approachSteps,
+      isClear: rawDistance > 0,
+    );
+    _railClearFinished = false;
+    _railIdleCacheValid = false;
+
+    parent.setVineAnimationState(
+      vineData.id,
+      rawDistance > 0
+          ? VineAnimationState.animatingClear
+          : VineAnimationState.animatingBlocked,
+    );
+
+    _logDebug(
+      'Rail slide started: vineId=${vineData.id}, rawDistance=$rawDistance, '
+      'approachSteps=$approachSteps',
+    );
+  }
+
+  /// Arc length reserved beyond the head cell for the off-screen exit,
+  /// mirroring the legacy step-plan (`approach + length + 6` cells).
+  double _railExtensionArrangement(int approachSteps) {
+    const pitch = GameBoardLayout.pointSpacing;
+    final trackProbe = _railTrack;
+    final windowSteps = trackProbe == null
+        ? (vineData.orderedPath.length - 1).toDouble()
+        : trackProbe.windowLength / pitch;
+    return (approachSteps + windowSteps + 7) * pitch;
+  }
+
+  /// Solver-backed distance to the blocker for this vine (same body as the
+  /// legacy animator's check).
+  int railMovementDistance() {
+    final activeIds = parent.getActiveVineIds();
+    final solver = parent.getLevelSolverService();
+    final level = parent.getCurrentLevelData();
+    if (level == null) return 0;
+    return solver.getDistanceToBlocker(level, vineData.id, activeIds);
+  }
+
+  /// Builds (or rebuilds) this vine's invariant rail track.
+  void _buildRailTrack({required double extensionArc}) {
+    final level = parent.getCurrentLevelData();
+    if (level == null) return;
+    _railTrack = VineTrack.build(
+      orderedPath: vineData.orderedPath,
+      headDirection: vineData.headDirection,
+      gridWidth: level.gridWidth,
+      gridHeight: level.gridHeight,
+      extensionArc: extensionArc,
+    );
+    _stripBuffers = null;
+    _cachedSimplePath = null;
+    _railIdleCacheValid = false;
+  }
+
+  /// Builds the idle rail track once per level load.
+  void ensureRailTrack() {
+    if (_railTrack != null) return;
+    _buildRailTrack(extensionArc: 0);
+  }
+
+  /// Screen-space centers for the current frame (legacy renderer only).
   List<Offset> renderPoints(int gridHeight) {
     if (_animator.isAnimating) {
       return _buildPoints(_animator.renderGridPositions(), gridHeight);
@@ -130,64 +492,15 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     });
   }
 
-  @override
-  void update(double dt) {
-    super.update(dt);
-
-    if (!_animator.isAnimating) return;
-
-    // Update bloom particles
-    if (_bloomRenderer.isShowingBloomEffect) {
-      _bloomRenderer.update(dt);
-
-      final isFullyOffScreen =
-          _animator.isFullyOffScreen(parent.getCurrentLevelData());
-      if (isFullyOffScreen &&
-          _bloomRenderer.bloomEffectTimer >=
-              _bloomRenderer.bloomEffectDuration) {
-        _logDebug(
-          'Fully off-screen and bloom complete: vineId=${vineData.id}, calling _finishAnimation()',
-        );
-        _finishAnimation();
-        return;
-      }
-    }
-
-    // Update step-by-step animator
-    _animator.update(
-      dt: dt,
-      grid: parent,
-      onHeadExitedGrid: () {
-        if (!_bloomRenderer.isShowingBloomEffect) {
-          final level = parent.getCurrentLevelData();
-          if (level != null) {
-            _bloomRenderer.startBloomEffect(
-              vineData: vineData,
-              level: level,
-              visualPositions: _animator.visualPositions,
-            );
-          }
-        }
-      },
-      onFinished: _finishAnimation,
-      logDebug: _logDebug,
-    );
-  }
-
-  void slideOut() {
-    _animator.startSlideOut(
-      grid: parent,
-      logDebug: _logDebug,
-    );
-  }
-
   void updateZoom(double zoom) {
     // Handled via parent scale transform
   }
 
   void _finishAnimation() {
+    _slide.reset();
     _animator.reset();
     _bloomRenderer.reset();
+    _railClearFinished = false;
 
     parent.setVineAnimationState(vineData.id, VineAnimationState.cleared);
 

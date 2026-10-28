@@ -24,28 +24,11 @@ tasks:
       - sh: command -v flutter >/dev/null 2>&1
         msg: "Flutter is not installed."
 
-  ios:pod-install:
-    desc: Run CocoaPods install in ios directory
-    platforms: [darwin]
-    dir: apps/parable-bloom/ios
-    cmds:
-      - pod install
-    run: once
-
-  macos:pod-install:
-    desc: Run CocoaPods install in macos directory
-    platforms: [darwin]
-    dir: apps/parable-bloom/macos
-    cmds:
-      - pod install
-    run: once
-
   _ensure_ios_sim:
     internal: true
     platforms: [darwin]
     cmds:
       - task: get
-      - task: ios:pod-install
       - ./scripts/ios/boot_simulator.sh
 
   # -----------------------------------------------------------------------------
@@ -97,12 +80,6 @@ tasks:
           echo "[MISSING] xcode-select configuration"
         fi
 
-        if command -v pod >/dev/null 2>&1; then
-          echo "[OK] cocoapods: $(pod --version)"
-        else
-          echo "[MISSING] cocoapods (needed for iOS/macOS pods)"
-        fi
-
         if command -v firebase >/dev/null 2>&1; then
           echo "[OK] firebase CLI: $(firebase --version)"
         else
@@ -136,20 +113,20 @@ tasks:
     dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
-      - flutter run -d chrome
+      - flutter run -d chrome --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   dev:linux:
     desc: Run the application in dev mode with Chromium
     dir: apps/parable-bloom
     platforms: [linux]
     cmds:
-      - CHROME_EXECUTABLE=/snap/bin/chromium flutter run -d chrome
+      - CHROME_EXECUTABLE=/snap/bin/chromium flutter run -d chrome --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:web:
     desc: Serve the application locally
     dir: apps/parable-bloom
     cmds:
-      - flutter run -d chrome
+      - flutter run -d chrome --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:web:clean:
     desc: Clean and serve the application
@@ -164,7 +141,7 @@ tasks:
     vars:
       DEVICE: '{{.DEVICE | default "SM S901U"}}'
     cmds:
-      - flutter run -d '{{.DEVICE}}'
+      - flutter run -d '{{.DEVICE}}' --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:ios:
     desc: Serve the application on iOS simulator (auto-selects available simulator)
@@ -172,7 +149,7 @@ tasks:
     platforms: [darwin]
     cmds:
       - task: _ensure_ios_sim
-      - flutter run
+      - flutter run --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:ios:clean:
     desc: Clean and serve the application on iOS simulator
@@ -181,7 +158,7 @@ tasks:
     cmds:
       - task: clean
       - task: _ensure_ios_sim
-      - flutter run
+      - flutter run --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:macos:
     desc: Serve the application on macOS
@@ -189,21 +166,21 @@ tasks:
     platforms: [darwin]
     cmds:
       - task: check:macos:toolchain
-      - flutter run -d macos
+      - flutter run -d macos --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:linux:
     desc: Serve the application on Linux
     dir: apps/parable-bloom
     platforms: [linux]
     cmds:
-      - flutter run -d linux
+      - flutter run -d linux --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:windows:
     desc: Serve the application on Windows
     dir: apps/parable-bloom
     platforms: [windows]
     cmds:
-      - flutter run -d windows
+      - flutter run -d windows --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   # -----------------------------------------------------------------------------
   # Environment-Specific Execution
@@ -213,37 +190,37 @@ tasks:
     desc: Run the application in development environment
     dir: apps/parable-bloom
     cmds:
-      - flutter run --dart-define=APP_ENV=dev
+      - flutter run --dart-define=APP_ENV=dev --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:dev:web:
     desc: Run the web application in development environment
     dir: apps/parable-bloom
     cmds:
-      - flutter run -d chrome --dart-define=APP_ENV=dev
+      - flutter run -d chrome --dart-define=APP_ENV=dev --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:preview:
     desc: Run the application in preview environment
     dir: apps/parable-bloom
     cmds:
-      - flutter run --dart-define=APP_ENV=preview
+      - flutter run --dart-define=APP_ENV=preview --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:preview:web:
     desc: Run the web application in preview environment
     dir: apps/parable-bloom
     cmds:
-      - flutter run -d chrome --dart-define=APP_ENV=preview
+      - flutter run -d chrome --dart-define=APP_ENV=preview --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:prod:
     desc: Run the application in production environment
     dir: apps/parable-bloom
     cmds:
-      - flutter run --dart-define=APP_ENV=prod
+      - flutter run --dart-define=APP_ENV=prod --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   serve:prod:web:
     desc: Run the web application in production environment
     dir: apps/parable-bloom
     cmds:
-      - flutter run -d chrome --dart-define=APP_ENV=prod
+      - flutter run -d chrome --dart-define=APP_ENV=prod --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
 
   # -----------------------------------------------------------------------------
   # Code Quality, Formatting & Linting
@@ -331,6 +308,13 @@ tasks:
     cmds:
       - flutter test --dart-define=APP_ENV=prod
 
+  validate:
+    desc: Validate the Flutter app (strict lint + tests + web build)
+    cmds:
+      - task: lint
+      - task: test
+      - task: build:web
+
   # -----------------------------------------------------------------------------
   # Builds & Compilation
   # -----------------------------------------------------------------------------
@@ -346,7 +330,12 @@ tasks:
     generates:
       - build/web/**/*
     cmds:
-      - flutter build web --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
+      - |
+        flutter build web --release --source-maps \
+          --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-} \
+          --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} \
+          --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
+      - task: _sentry:upload
     preconditions:
       - sh: command -v flutter >/dev/null 2>&1
         msg: "Flutter is not installed."
@@ -358,54 +347,109 @@ tasks:
       - |
         flutter build appbundle --release \
           --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-} \
+          --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} \
+          --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} \
+          --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-} \
+          --obfuscate --split-debug-info=build/app/symbols \
+          --extra-gen-snapshot-options=--save-obfuscation-map=build/app/obfuscation.map.json \
           {{if .BUILD_NAME}}--build-name "{{.BUILD_NAME}}"{{end}} \
           {{if .BUILD_NUMBER}}--build-number "{{.BUILD_NUMBER}}"{{end}}
+      - task: _sentry:upload
 
   build:ios:
     desc: Build the iOS application
     dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
-      - flutter build ios --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
+      - |
+        flutter build ios --release \
+          --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-} \
+          --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} \
+          --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} \
+          --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-} \
+          --obfuscate --split-debug-info=build/app/symbols \
+          --extra-gen-snapshot-options=--save-obfuscation-map=build/app/obfuscation.map.json
+      - task: _sentry:upload
 
   build:linux:
     desc: Build the Linux application
     dir: apps/parable-bloom
     platforms: [linux]
     cmds:
-      - flutter build linux --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
+      - |
+        flutter build linux --release \
+          --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-} \
+          --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} \
+          --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} \
+          --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-} \
+          --obfuscate --split-debug-info=build/app/symbols \
+          --extra-gen-snapshot-options=--save-obfuscation-map=build/app/obfuscation.map.json
+      - task: _sentry:upload
 
   build:windows:
     desc: Build the Windows application
     dir: apps/parable-bloom
     platforms: [windows]
     cmds:
-      - flutter build windows --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
+      - |
+        flutter build windows --release \
+          --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-} \
+          --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} \
+          --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} \
+          --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-} \
+          --obfuscate --split-debug-info=build/app/symbols \
+          --extra-gen-snapshot-options=--save-obfuscation-map=build/app/obfuscation.map.json
+      - task: _sentry:upload
 
   build:macos:
     desc: Build the macOS application
     dir: apps/parable-bloom
     platforms: [darwin]
     cmds:
-      - flutter build macos --release --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
+      - |
+        flutter build macos --release \
+          --dart-define=APP_ENV={{.APP_ENV | default "prod"}} --dart-define=SENTRY_DSN=${SENTRY_DSN:-} \
+          --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} \
+          --dart-define=OPENPANEL_CLIENT_SECRET=${OPENPANEL_CLIENT_SECRET:-} \
+          --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-} \
+          --obfuscate --split-debug-info=build/app/symbols \
+          --extra-gen-snapshot-options=--save-obfuscation-map=build/app/obfuscation.map.json
+      - task: _sentry:upload
 
   build:web:dev:
     desc: Build the web application for development environment
     dir: apps/parable-bloom
     cmds:
-      - flutter build web --release --dart-define=APP_ENV=dev --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
+      - flutter build web --release --source-maps --dart-define=APP_ENV=dev --dart-define=SENTRY_DSN=${SENTRY_DSN:-} --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
+      - task: _sentry:upload
 
   build:web:preview:
     desc: Build the web application for preview environment
     dir: apps/parable-bloom
     cmds:
-      - flutter build web --release --dart-define=APP_ENV=preview --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
+      - flutter build web --release --source-maps --dart-define=APP_ENV=preview --dart-define=SENTRY_DSN=${SENTRY_DSN:-} --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
+      - task: _sentry:upload
 
   build:web:prod:
     desc: Build the web application for production environment
     dir: apps/parable-bloom
     cmds:
-      - flutter build web --release --dart-define=APP_ENV=prod --dart-define=SENTRY_DSN=${SENTRY_DSN:-}
+      - flutter build web --release --source-maps --dart-define=APP_ENV=prod --dart-define=SENTRY_DSN=${SENTRY_DSN:-} --dart-define=OPENPANEL_CLIENT_ID=${OPENPANEL_CLIENT_ID:-} --dart-define=OPENPANEL_API_URL=${OPENPANEL_API_URL:-}
+      - task: _sentry:upload
+
+  # Uploads debug symbols / web source maps to Sentry after a release build.
+  # No-op (with a log line) when SENTRY_AUTH_TOKEN is unset, so local builds
+  # and Dependabot runs never fail on missing credentials.
+  _sentry:upload:
+    internal: true
+    dir: apps/parable-bloom
+    cmds:
+      - |
+        if [ -n "${SENTRY_AUTH_TOKEN:-}" ]; then
+          dart run sentry_dart_plugin
+        else
+          echo "SENTRY_AUTH_TOKEN unset — skipping Sentry symbol upload"
+        fi
 
   # -----------------------------------------------------------------------------
   # Asset Management

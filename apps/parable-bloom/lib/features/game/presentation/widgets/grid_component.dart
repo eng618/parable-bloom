@@ -198,7 +198,14 @@ class GridComponent extends PositionComponent
       // visible count so steady-state ticks don't rebuild.
       for (final vine in levelData.vines) {
         if (vineStates[vine.id]?.isCleared ?? false) continue;
-        final comp = VineComponent(vineData: vine, cellSize: cellSize);
+        final comp = VineComponent(
+          vineData: vine,
+          cellSize: cellSize,
+          // Components read the layer's startup-baked foliage atlas so the
+          // rail renderer can draw leaf quads without per-frame work in the
+          // bake.
+          foliageAtlas: vineLayer.foliageAtlas,
+        );
         add(comp);
         _vineComponents[vine.id] = comp;
       }
@@ -573,6 +580,11 @@ class CellComponent extends RectangleComponent
 
   static final Paint _transparentPaint = Paint()..color = Colors.transparent;
 
+  /// Debug coordinate label, laid out lazily and reused across frames
+  /// (gridX/gridY are fixed per cell; only a theme change relayouts).
+  TextPainter? _debugCoordinatePainter;
+  Color? _debugCoordinateColor;
+
   CellComponent({
     required this.gridX,
     required this.gridY,
@@ -607,16 +619,20 @@ class CellComponent extends RectangleComponent
 
     if (kDebugMode && showCoordinates) {
       final theme = Theme.of(game.buildContext!);
-      final textPainter = TextPainter(textDirection: TextDirection.ltr);
-      textPainter.text = TextSpan(
-        text: '$gridX,$gridY',
-        style: TextStyle(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-          fontSize: 14,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, const Offset(2, 2));
+      final color = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+      final painter = _debugCoordinatePainter;
+      if (painter == null || color != _debugCoordinateColor) {
+        _debugCoordinatePainter = TextPainter(
+          textDirection: TextDirection.ltr,
+        )
+          ..text = TextSpan(
+            text: '$gridX,$gridY',
+            style: TextStyle(color: color, fontSize: 14),
+          )
+          ..layout();
+        _debugCoordinateColor = color;
+      }
+      _debugCoordinatePainter!.paint(canvas, const Offset(2, 2));
     }
   }
 

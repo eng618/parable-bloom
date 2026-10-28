@@ -92,6 +92,16 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     super.dispose();
   }
 
+  /// First non-cleared vine id from [states], used by lesson 2's
+  /// free-choice phase. Runs inside the `select` closure, so it must stay
+  /// cheap (a linear scan, no solver calls).
+  String? _firstActiveId(Map<String, VineState> states) {
+    for (final e in states.entries) {
+      if (!e.value.isClearedOrClearing) return e.key;
+    }
+    return null;
+  }
+
   /// First non-cleared vine that can actually move right now, so the guide
   /// never points at a blocked vine. Falls back to the first non-cleared
   /// vine when everything is stuck (shouldn't happen in tutorials).
@@ -137,7 +147,20 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     ));
 
     final currentLevel = ref.watch(currentLevelProvider);
-    final vineStates = ref.watch(vineStatesProvider);
+
+    // The guide reads only a handful of specific vine states per lesson;
+    // select a stable tuple of them so an animation flip on any unrelated
+    // vine doesn't rebuild this overlay. Lessons 4–5 additionally need the
+    // full map for the solver-backed movable scan — that watch happens only
+    // inside that branch (below), while it is actually required.
+    final guideVines = ref.watch(vineStatesProvider.select(
+      (states) => (
+        vine1: states['vine_1'],
+        vine2: states['vine_2'],
+        vine3: states['vine_3'],
+        firstActiveId: _firstActiveId(states),
+      ),
+    ));
     final blockedTap = ref.watch(blockedTapProvider);
 
     final game = ref.watch(gameInstanceProvider);
@@ -155,7 +178,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
 
     if (lessonId == '1') {
       // Lesson 1: Highlight head of vine_1 at (3,1)
-      final vineState = vineStates['vine_1'];
+      final vineState = guideVines.vine1;
       if (vineState != null && !vineState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(3, 1);
         promptText = "Tap head to slide";
@@ -163,10 +186,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     } else if (lessonId == '2') {
       // Lesson 2: Multiple free-choice heads highlighted
       // Find first non-cleared vine
-      final activeVineId = vineStates.entries
-          .where((e) => !e.value.isClearedOrClearing)
-          .map((e) => e.key)
-          .firstOrNull;
+      final activeVineId = guideVines.firstActiveId;
 
       if (activeVineId != null) {
         final vine = currentLevel.vines.firstWhere((v) => v.id == activeVineId);
@@ -177,9 +197,9 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     } else if (lessonId == '3') {
       // Lesson 3: Project vine_1, then clear blocker vine_3 at (3,0),
       // then blocked vine_2.
-      final projectState = vineStates['vine_1'];
-      final blockerState = vineStates['vine_3'];
-      final blockedState = vineStates['vine_2'];
+      final projectState = guideVines.vine1;
+      final blockerState = guideVines.vine3;
+      final blockedState = guideVines.vine2;
 
       if (projectState != null && !projectState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(2, 4);
@@ -194,14 +214,19 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
       }
     } else if (lessonId == '4') {
       // Lesson 4: vine_1 traps two others — clearing it unlocks them.
-      final blockerState = vineStates['vine_1'];
+      final blockerState = guideVines.vine1;
 
       if (blockerState != null && !blockerState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(5, 5);
         promptText = "Clear this vine — it traps two others";
         highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
       } else {
-        final targetId = _firstMovableId(currentLevel, vineStates);
+        // Only here does the guide need the full states map for the
+        // solver-backed movable scan; watching it while the blocker is
+        // highlighted would rebuild the overlay on every animation flip
+        // it never reads.
+        final targetId =
+            _firstMovableId(currentLevel, ref.watch(vineStatesProvider));
         if (targetId != null) {
           final vine = currentLevel.vines.firstWhere((v) => v.id == targetId);
           final head = vine.orderedPath.first;
@@ -213,14 +238,15 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
     } else if (lessonId == '5') {
       // Lesson 5: Grand garden capstone. Guide toward vine_3 at (6,5):
       // it traps two others, so clearing it unlocks them.
-      final blockerState = vineStates['vine_3'];
+      final blockerState = guideVines.vine3;
 
       if (blockerState != null && !blockerState.isClearedOrClearing) {
         highlightPosition = game.getCellScreenPosition(6, 5);
         promptText = "Clear this vine — it traps two others";
         highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
       } else {
-        final targetId = _firstMovableId(currentLevel, vineStates);
+        final targetId =
+            _firstMovableId(currentLevel, ref.watch(vineStatesProvider));
         if (targetId != null) {
           final vine = currentLevel.vines.firstWhere((v) => v.id == targetId);
           final head = vine.orderedPath.first;

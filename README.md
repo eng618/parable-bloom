@@ -71,7 +71,7 @@ Common commands:
 **iOS Development:**
 
 ```bash
-# Install iOS dependencies (precache + pod install)
+# Install iOS dependencies (Swift Package Manager is used for Apple platforms)
 task setup
 ```
 

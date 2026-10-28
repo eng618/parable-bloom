@@ -67,6 +67,37 @@ final backgroundAudioEnabledProvider =
   BackgroundAudioEnabledNotifier.new,
 );
 
+/// Feature flag: textured vine skins (classic / blossom / ethereal) behind
+/// [vineTexturedSkinsEnabled]. When disabled only the flat/simple style is
+/// available so textured rendering stays a development-only option.
+final vineTexturedSkinsEnabledProvider =
+    NotifierProvider<VineTexturedSkinsEnabledNotifier, bool>(
+  VineTexturedSkinsEnabledNotifier.new,
+);
+
+class VineTexturedSkinsEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final box = ref.watch(hiveBoxProvider);
+    return box.get('vineTexturedSkins', defaultValue: false) as bool;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final box = ref.read(hiveBoxProvider);
+    await box.put('vineTexturedSkins', enabled);
+
+    // When disabling, force the active style back to simple so no textured
+    // vine leaks through while the flag is off.
+    if (!enabled) {
+      final style = ref.read(vineStyleProvider);
+      if (style != VineStyle.simple) {
+        await ref.read(vineStyleProvider.notifier).setStyle(VineStyle.simple);
+      }
+    }
+  }
+}
+
 class BackgroundAudioEnabledNotifier extends Notifier<bool> {
   @override
   bool build() {
@@ -95,6 +126,7 @@ final vineStyleProvider = NotifierProvider<VineStyleNotifier, VineStyle>(
 class VineStyleNotifier extends Notifier<VineStyle> {
   @override
   VineStyle build() {
+    final texturedEnabled = ref.watch(vineTexturedSkinsEnabledProvider);
     final box = ref.watch(hiveBoxProvider);
 
     // Support migration from old boolean 'useSimpleVines'
@@ -104,17 +136,31 @@ class VineStyleNotifier extends Notifier<VineStyle> {
           (oldUseSimpleVines as bool) ? VineStyle.simple : VineStyle.classic;
       box.put('vineStyle', style.name);
       box.delete('useSimpleVines');
-      return style;
+      return texturedEnabled ? style : VineStyle.simple;
     }
 
     final value = box.get('vineStyle', defaultValue: 'classic') as String;
-    return VineStyle.values.firstWhere(
+    final parsed = VineStyle.values.firstWhere(
       (e) => e.name == value,
       orElse: () => VineStyle.classic,
     );
+
+    // Textured skins are behind a feature flag: when disabled, only the flat
+    // simple style is available. A saved non-simple style silently degrades
+    // to simple rather than rendering a disabled texture.
+    if (!texturedEnabled && parsed != VineStyle.simple) {
+      return VineStyle.simple;
+    }
+    return parsed;
   }
 
   Future<void> setStyle(VineStyle style) async {
+    final texturedEnabled = ref.read(vineTexturedSkinsEnabledProvider);
+    if (!texturedEnabled && style != VineStyle.simple) {
+      // Textured skins are behind a feature flag: refuse to switch to a
+      // disabled texture and stay on simple instead.
+      style = VineStyle.simple;
+    }
     state = style;
     final repository = ref.read(settingsRepositoryProvider);
     await repository.setVineStyle(style.name);
@@ -133,6 +179,10 @@ class UseSimpleVinesNotifier extends Notifier<bool> {
   }
 
   Future<void> setEnabled(bool enabled) async {
+    final texturedEnabled = ref.read(vineTexturedSkinsEnabledProvider);
+    // When textured skins are disabled, simple is always on; the toggle is
+    // a no-op.
+    if (!texturedEnabled) return;
     // Never clobber a non-simple style: disabling the toggle only restores
     // classic when simple mode is actually active.
     if (!enabled && ref.read(vineStyleProvider) != VineStyle.simple) return;
@@ -202,6 +252,33 @@ final debugVineAnimationLoggingProvider =
 );
 
 final debugUiEnabledForTestsProvider = Provider<bool>((ref) => false);
+
+/// Which vine renderer runs. `rail` is the new track/window/vertex-strip
+/// renderer; `legacy` keeps the per-frame Path painter for A/B regression.
+final vineRenderModeProvider =
+    NotifierProvider<VineRenderModeNotifier, VineRenderMode>(
+  VineRenderModeNotifier.new,
+);
+
+enum VineRenderMode { rail, legacy }
+
+class VineRenderModeNotifier extends Notifier<VineRenderMode> {
+  @override
+  VineRenderMode build() {
+    final box = ref.watch(hiveBoxProvider);
+    final value = box.get('vineRenderMode', defaultValue: 'rail') as String;
+    return VineRenderMode.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => VineRenderMode.rail,
+    );
+  }
+
+  Future<void> setMode(VineRenderMode mode) async {
+    state = mode;
+    final box = ref.read(hiveBoxProvider);
+    await box.put('vineRenderMode', mode.name);
+  }
+}
 
 class DebugVineAnimationLoggingNotifier extends Notifier<bool> {
   @override

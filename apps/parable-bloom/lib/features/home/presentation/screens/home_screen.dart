@@ -7,6 +7,7 @@ import '../../../game/application/providers/progress_providers.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/widgets/constrained_page.dart';
 import '../../../../core/widgets/garden_loading_view.dart';
+import '../../../game/domain/entities/game_progress.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -43,7 +44,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final gameProgress = ref.watch(gameProgressProvider);
+    // Select only the fields the build reads, so unrelated GameProgress
+    // writes (scripture unlocks, journal notes, Hive reloads) don't rebuild
+    // this screen.
+    final (tutorialCompleted, currentLevelId, completedLevels) =
+        ref.watch(gameProgressProvider.select(
+      (p) => (p.tutorialCompleted, p.currentLevel, p.completedLevels),
+    ));
     final modulesAsync = ref.watch(modulesProvider);
 
     return Scaffold(
@@ -80,15 +87,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 data: (modules) {
                   final playlist = modules.expand((m) => m.allLevels).toList();
                   final allLevelsCompleted = playlist.isNotEmpty &&
-                      playlist.every(gameProgress.completedLevels.contains);
+                      playlist.every(completedLevels.contains);
                   // Display the first uncompleted level, not the persisted
                   // pointer: the pointer goes stale when new cloud levels
                   // ship (indexOf == -1 wrongly rendered "Play Level 1").
-                  final displayId =
-                      gameProgress.nextUncompletedLevel(playlist) ??
-                          (playlist.contains(gameProgress.currentLevel)
-                              ? gameProgress.currentLevel
-                              : null);
+                  final displayId = GameProgress.firstUncompletedInPlaylist(
+                        playlist,
+                        completedLevels,
+                      ) ??
+                      (playlist.contains(currentLevelId)
+                          ? currentLevelId
+                          : null);
                   final nextLevelIdx =
                       displayId == null ? -1 : playlist.indexOf(displayId);
                   final levelDisplayNumber =
@@ -151,7 +160,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       elevation: 4,
                     ),
                     child: Text(
-                      gameProgress.tutorialCompleted
+                      tutorialCompleted
                           ? 'Play Level $levelDisplayNumber'
                           : 'Start Tutorial',
                       style: const TextStyle(

@@ -319,10 +319,7 @@ bws secret create "PARABLE_BLOOM_APP_STORE_CONNECT_ISSUER_ID" "<issuer-uuid>" "$
 ### Step 8: Test Local Build
 
 ```bash
-# Install pods
-cd ios && pod install && cd ..
-
-# Build archive
+# Build archive (all plugins resolve via Swift Package Manager)
 flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
 
 # Check output
@@ -697,6 +694,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] **Update documentation**: If new features require docs updates
 - [ ] **Communicate release**: Social media, Discord, email newsletter
 
+### Crash Reporting (Sentry) — Keeping Stack Traces Readable
+
+Release builds compile with `--obfuscate --split-debug-info=build/app/symbols --extra-gen-snapshot-options=--save-obfuscation-map=build/app/obfuscation.map.json` (web adds `--source-maps`), and every build task runs `dart run sentry_dart_plugin` afterwards via the internal `flutter:_sentry:upload` step. That upload is what turns obfuscated release stack traces back into readable function names — if Sentry issues show minified frames, the upload didn't run for that build.
+
+Required GitHub secrets (repo Settings → Secrets → Actions):
+
+- `SENTRY_DSN` — baked into the app via `--dart-define`; empty means error reporting is a no-op (local dev, tests).
+- `SENTRY_AUTH_TOKEN` — lets CI upload symbols/source maps. Without it the build succeeds but Sentry issues stay obfuscated. Never commit the token; local dev reads it from the gitignored `sentry.properties` at the repo root.
+
+To verify after a release: open any Sentry issue from the new version and confirm frames show real file names and line numbers. If they don't, check the build log for the `sentry_dart_plugin` step — a missing `SENTRY_AUTH_TOKEN` prints `skipping Sentry symbol upload`.
+
+### Telemetry (OpenPanel) — Required Secret
+
+The Flutter app's OpenPanel events authenticate with `openpanel-client-id` **plus** `openpanel-client-secret` (native HTTP has no `Origin`, so the API's CORS check can't pass without the secret). Provide it as the `OPENPANEL_CLIENT_SECRET` GitHub secret (the client IDs live in `openpanel_analytics_client.dart`; per-client secrets come from the OpenPanel dashboard → Project Settings → Clients). Symptom of a missing/wrong secret: `401 "Invalid cors or secret"` on `/api/track` and no events in the dashboard, while the app itself stays silent (delivery failures are debug-logged only). Web builds intentionally omit the secret — browsers authenticate via the allowed-domains list, and anything baked into the JS bundle is extractable; the client also refuses to transmit it on web (`kIsWeb` guard) as belt-and-braces.
+
 ---
 
 ## Troubleshooting
@@ -794,7 +806,7 @@ Console says your app doesn't use advertising ID.`
 
 **Problem**: `Code signing failed`
 
-- Clean build: `flutter clean && cd ios && pod install`
+- Clean build: `flutter clean && flutter build ios --simulator --debug`
 - Check Xcode signing settings: Open `ios/Runner.xcworkspace` in Xcode
 
 ### Fastlane Issues

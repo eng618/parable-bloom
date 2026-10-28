@@ -16,8 +16,9 @@ class ProjectionLinesComponent extends PositionComponent
   LevelData? _currentLevel;
   bool _isVisible = false;
 
-  /// Extension length precomputed per level (2x max board dimension).
-  double _extensionLength = 0.0;
+  /// Overshoot past the viewport edge so round line caps bleed off-screen
+  /// instead of ending in a visible dot at the page edge.
+  static const double _edgeOvershoot = 6.0;
 
   /// Reused across frames: color/width never change per line.
   final Paint _linePaint = Paint()
@@ -42,14 +43,6 @@ class ProjectionLinesComponent extends PositionComponent
       GameBoardLayout.boardWidth(cols),
       GameBoardLayout.boardHeight(rows),
     );
-
-    final maxDimension =
-        GameBoardLayout.boardWidth(cols) > GameBoardLayout.boardHeight(rows)
-            ? GameBoardLayout.boardWidth(cols)
-            : GameBoardLayout.boardHeight(rows);
-    // 1.2x is enough to exit the board + viewport margin; 2x drew far
-    // off-screen lines every frame (GPU clip cost with zero visual gain).
-    _extensionLength = maxDimension * 1.2;
 
     // Position will be set by camera transform
     // Initialize with centered position if camera not yet applied
@@ -118,14 +111,16 @@ class ProjectionLinesComponent extends PositionComponent
     final hintedVines = _hintedVineIds;
     final showAllVines = _showAllVines;
     final linePaint = _linePaint;
-    final extensionLength = _extensionLength;
 
     final visualHeight = _currentLevel!.gridHeight;
 
-    // Clip to the board bounds: projection lines extend off-screen by
-    // design, and without a clip the GPU shades far off-screen segments.
-    canvas.save();
-    canvas.clipRect(Rect.fromLTWH(0, 0, size.x, size.y));
+    // NOTE: no board-space clip here (same lesson as the vine-layer fix):
+    // projection lines run to the viewport edge by design, and clipping to
+    // board bounds cuts them exactly at the grid edge. Overdraw is bounded:
+    // endpoints are computed on the visible rect, and the GameWidget clips
+    // at its own bounds. Draw each line from the vine head to the page edge
+    // in this component's local coordinates.
+    final viewport = _localViewportRect();
 
     // Draw projection line for each active vine head
     for (final vine in _currentLevel!.vines) {
@@ -159,37 +154,43 @@ class ProjectionLinesComponent extends PositionComponent
         GameBoardLayout.cellCenterY(visualY),
       );
 
-      // Calculate direction vector
-      final direction = vine.headDirection;
-      Offset directionVector;
-
-      switch (direction) {
-        case 'right':
-          directionVector = const Offset(1, 0);
-          break;
-        case 'left':
-          directionVector = const Offset(-1, 0);
-          break;
-        case 'up':
-          directionVector = const Offset(0, -1);
-          break;
-        case 'down':
-          directionVector = const Offset(0, 1);
-          break;
-        default:
-          continue; // Skip if direction is unknown
-      }
-
-      // Calculate end point far off-screen
-      // Extend the line to go well beyond the visible area
-      final endPoint = Offset(
-        headCenter.dx + directionVector.dx * extensionLength,
-        headCenter.dy + directionVector.dy * extensionLength,
+      // Run the ray to the viewport edge so the line reaches the page
+      // edge at any zoom/pan. Null when the head is already past the edge
+      // in the ray's direction (or the direction is unknown): skip it.
+      final edge = BoardTransform.projectToViewportEdge(
+        headX: headCenter.dx,
+        headY: headCenter.dy,
+        direction: vine.headDirection,
+        left: viewport.left,
+        top: viewport.top,
+        right: viewport.right,
+        bottom: viewport.bottom,
+        overshoot: _edgeOvershoot,
       );
+      if (edge == null) continue;
 
       // Draw the projection line
-      canvas.drawLine(headCenter, endPoint, linePaint);
+      canvas.drawLine(headCenter, Offset(edge.x, edge.y), linePaint);
     }
-    canvas.restore();
+  }
+
+  /// Visible screen rect in this component's local coordinates, derived
+  /// from the applied position/scale. Falls back to the board rect before
+  /// the first camera transform arrives.
+  Rect _localViewportRect() {
+    if (_screenWidth <= 0 ||
+        _screenHeight <= 0 ||
+        scale.x == 0 ||
+        scale.y == 0) {
+      return Rect.fromLTWH(0, 0, size.x, size.y);
+    }
+    final left = -position.x / scale.x;
+    final top = -position.y / scale.y;
+    return Rect.fromLTWH(
+      left,
+      top,
+      _screenWidth / scale.x,
+      _screenHeight / scale.y,
+    );
   }
 }

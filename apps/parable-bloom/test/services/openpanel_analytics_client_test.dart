@@ -134,5 +134,49 @@ void main() {
       );
       expect(client.platform, "ios");
     });
+
+    test("sends client secret header when configured", () async {
+      late Map<String, String> capturedHeaders;
+
+      final client = MockClient((request) async {
+        capturedHeaders = request.headers;
+        return http.Response('{"success":true}', 200);
+      });
+
+      final openpanel = OpenpanelAnalyticsClient(
+        clientId: "test-client-id-123",
+        endpoint: "https://openpanel.gventureshq.com/api/track",
+        platform: "android",
+        client: client,
+        clientSecret: "test-secret-abc",
+      );
+
+      await openpanel.trackEvent(eventName: "level_start");
+
+      expect(
+        capturedHeaders["openpanel-client-secret"],
+        "test-secret-abc",
+      );
+    });
+
+    test("omits client secret header when unconfigured", () async {
+      late Map<String, String> capturedHeaders;
+
+      final client = MockClient((request) async {
+        capturedHeaders = request.headers;
+        return http.Response('{"success":true}', 200);
+      });
+
+      final openpanel = OpenpanelAnalyticsClient(
+        clientId: "test-client-id-123",
+        endpoint: "https://openpanel.gventureshq.com/api/track",
+        platform: "android",
+        client: client,
+      );
+
+      await openpanel.trackEvent(eventName: "level_start");
+
+      expect(capturedHeaders.containsKey("openpanel-client-secret"), isFalse);
+    });
   });
 }

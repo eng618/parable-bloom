@@ -45,4 +45,42 @@ class BoardTransform {
       y: boardY + GameBoardLayout.cellCenterY(visualRow) * zoom,
     );
   }
+
+  /// Viewport edge hit by the axis-aligned ray from ([headX], [headY])
+  /// along [direction] (`up`/`down`/`left`/`right`), within the viewport
+  /// rect ([left], [top], [right], [bottom]) expressed in the same space.
+  ///
+  /// Used by projection lines so they run exactly to the page edge instead
+  /// of stopping at a fixed length or the board bounds. [overshoot] pushes
+  /// the point just past the edge so round caps bleed off-screen.
+  ///
+  /// Returns null when the head is already past the edge in the ray's
+  /// direction (nothing ahead to draw) or the direction is unknown.
+  static ({double x, double y})? projectToViewportEdge({
+    required double headX,
+    required double headY,
+    required String direction,
+    required double left,
+    required double top,
+    required double right,
+    required double bottom,
+    double overshoot = 0,
+  }) {
+    switch (direction) {
+      case 'right':
+        if (headX >= right) return null;
+        return (x: right + overshoot, y: headY);
+      case 'left':
+        if (headX <= left) return null;
+        return (x: left - overshoot, y: headY);
+      case 'down':
+        if (headY >= bottom) return null;
+        return (x: headX, y: bottom + overshoot);
+      case 'up':
+        if (headY <= top) return null;
+        return (x: headX, y: top - overshoot);
+      default:
+        return null;
+    }
+  }
 }
