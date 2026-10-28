@@ -1,3 +1,13 @@
+## 0.5.17 (2026-10-23)
+
+### 🚀 Features
+
+- **nx-cloud:** setup nx cloud workspace ([#139](https://github.com/eng618/parable-bloom/pull/139))
+
+### ❤️ Thank You
+
+- Eric Garcia @eng618
+
 ## 0.5.16 (2026-10-15)
 
 ### 🚀 Features
