@@ -20,7 +20,6 @@ class PauseMenuDialog extends ConsumerWidget {
     final audioEnabled = ref.watch(backgroundAudioEnabledProvider);
     final hapticsEnabled = ref.watch(hapticsEnabledProvider);
     final vineStyle = ref.watch(vineStyleProvider);
-    final texturedSkinsEnabled = ref.watch(vineTexturedSkinsEnabledProvider);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -71,32 +70,14 @@ class PauseMenuDialog extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: SegmentedButton<VineStyle>(
-                  segments: <ButtonSegment<VineStyle>>[
-                    if (texturedSkinsEnabled)
-                      ButtonSegment(
-                        value: VineStyle.classic,
-                        icon: Icon(Icons.park_outlined),
-                        tooltip: 'Classic Style',
-                      ),
-                    if (texturedSkinsEnabled)
-                      ButtonSegment(
-                        value: VineStyle.blossom,
-                        icon: Icon(Icons.local_florist_outlined),
-                        tooltip: 'Cherry Blossom',
-                      ),
-                    if (texturedSkinsEnabled)
-                      ButtonSegment(
-                        value: VineStyle.ethereal,
-                        icon: Icon(Icons.star_outline),
-                        tooltip: 'Ethereal Magic',
-                      ),
-                    ButtonSegment(
+                  segments: const <ButtonSegment<VineStyle>>[
+                    ButtonSegment<VineStyle>(
                       value: VineStyle.simple,
                       icon: Icon(Icons.grid_view_outlined),
                       tooltip: 'Simple Shapes',
                     ),
                   ],
-                  selected: {vineStyle},
+                  selected: <VineStyle>{vineStyle},
                   onSelectionChanged: (Set<VineStyle> newSelection) {
                     ref
                         .read(vineStyleProvider.notifier)

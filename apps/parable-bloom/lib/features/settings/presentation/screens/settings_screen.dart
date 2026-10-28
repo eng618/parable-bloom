@@ -41,7 +41,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final backgroundAudioEnabled = ref.watch(backgroundAudioEnabledProvider);
     final hapticsEnabled = ref.watch(hapticsEnabledProvider);
     final vineStyle = ref.watch(vineStyleProvider);
-    final texturedSkinsEnabled = ref.watch(vineTexturedSkinsEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -100,25 +99,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     width: double.infinity,
                     child: SegmentedButton<VineStyle>(
                       showSelectedIcon: false,
-                      segments: <ButtonSegment<VineStyle>>[
-                        if (texturedSkinsEnabled)
-                          ButtonSegment<VineStyle>(
-                            value: VineStyle.classic,
-                            icon: Icon(Icons.park),
-                            label: Text('Classic'),
-                          ),
-                        if (texturedSkinsEnabled)
-                          ButtonSegment<VineStyle>(
-                            value: VineStyle.blossom,
-                            icon: Icon(Icons.local_florist),
-                            label: Text('Blossom'),
-                          ),
-                        if (texturedSkinsEnabled)
-                          ButtonSegment<VineStyle>(
-                            value: VineStyle.ethereal,
-                            icon: Icon(Icons.star),
-                            label: Text('Ethereal'),
-                          ),
+                      segments: const <ButtonSegment<VineStyle>>[
                         ButtonSegment<VineStyle>(
                           value: VineStyle.simple,
                           icon: Icon(Icons.grid_view),
@@ -191,6 +172,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _buildSectionHeader(context, 'Debug'),
               _buildDebugGridCoordinatesTile(context, ref),
               _buildDebugVineAnimationLoggingTile(context, ref),
+              _buildDebugTexturedSkinsTile(context, ref),
               _buildDebugLevelPickerTile(context, ref),
               const Divider(),
             ],
@@ -1050,6 +1032,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       onChanged: (value) async {
         await ref
             .read(debugVineAnimationLoggingProvider.notifier)
+            .setEnabled(value);
+      },
+    );
+  }
+
+  Widget _buildDebugTexturedSkinsTile(BuildContext context, WidgetRef ref) {
+    final enabled = ref.watch(vineTexturedSkinsEnabledProvider);
+
+    return SwitchListTile(
+      secondary: Icon(
+        Icons.texture,
+        color: enabled
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+      ),
+      title: const Text('Textured Vine Skins'),
+      subtitle: const Text(
+        'Show classic/blossom/ethereal vine textures (debug only)',
+      ),
+      value: enabled,
+      onChanged: (value) async {
+        await ref
+            .read(vineTexturedSkinsEnabledProvider.notifier)
             .setEnabled(value);
       },
     );
