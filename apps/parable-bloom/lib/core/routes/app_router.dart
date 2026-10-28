@@ -77,7 +77,9 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/journal',
       builder: (BuildContext context, GoRouterState state) {
-        return const JournalScreen();
+        return JournalScreen(
+          initialPassageId: state.uri.queryParameters['entry'],
+        );
       },
     ),
     GoRoute(

@@ -672,9 +672,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 // Reset to home first: the game screen was reached via go(),
                 // so there is nothing to pop. Back-from-journal must land on
                 // home (Play loads the next level), never on this stale
-                // cleared board.
+                // cleared board. Deep-link into the journal at this entry.
                 context.go('/');
-                context.push('/journal');
+                context.push(
+                    '/journal?entry=${Uri.encodeComponent(scripture.id)}');
               },
               child: const Text('VIEW JOURNAL'),
             ),
@@ -798,9 +799,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 // Reset to home first: the game screen was reached via go(),
                 // so there is nothing to pop. Back-from-journal must land on
                 // home (Play loads the next level), never on this stale
-                // cleared board.
+                // cleared board. Deep-link into the journal at this entry
+                // when we have a reference to match.
                 context.go('/');
-                context.push('/journal');
+                final entry = scripture?.isNotEmpty == true
+                    ? '/journal?entry=${Uri.encodeComponent(scripture!)}'
+                    : '/journal';
+                context.push(entry);
               },
               child: const Text('GO TO JOURNAL'),
             ),

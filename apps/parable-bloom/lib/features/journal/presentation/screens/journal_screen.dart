@@ -15,7 +15,9 @@ import "../widgets/journal_scrapbook.dart";
 /// entry cards, and sealed envelopes for locked passages. Locked entries
 /// are fully sealed — no title or reference, just the lock and the unlock.
 class JournalScreen extends ConsumerStatefulWidget {
-  const JournalScreen({super.key});
+  final String? initialPassageId;
+
+  const JournalScreen({super.key, this.initialPassageId});
 
   @override
   ConsumerState<JournalScreen> createState() => _JournalScreenState();
@@ -23,6 +25,7 @@ class JournalScreen extends ConsumerStatefulWidget {
 
 class _JournalScreenState extends ConsumerState<JournalScreen> {
   bool _loggedOpen = false;
+  bool _deepLinkHandled = false;
 
   @override
   void initState() {
@@ -39,6 +42,22 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => JournalEntrySheet(passage: passage),
     );
+  }
+
+  /// Find a passage by id (preferred), falling back to reference so parable
+  /// unlocks — which only carry a reference string — can deep-link too.
+  JournalPassage? _findPassage(List<JournalTheme> themes, String id) {
+    for (final theme in themes) {
+      for (final passage in theme.passages) {
+        if (passage.id == id) return passage;
+      }
+    }
+    for (final theme in themes) {
+      for (final passage in theme.passages) {
+        if (passage.reference == id) return passage;
+      }
+    }
+    return null;
   }
 
   @override
@@ -89,6 +108,20 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                       initialTab: "All",
                       unlockedCount: unlockedScriptureIds.length,
                     );
+              });
+            }
+
+            // Deep link: open a specific entry sheet when the journal is
+            // opened via /journal?entry=<id> from a game unlock dialog.
+            if (widget.initialPassageId != null && !_deepLinkHandled) {
+              _deepLinkHandled = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                final passage = _findPassage(themes, widget.initialPassageId!);
+                if (passage != null &&
+                    unlockedScriptureIds.contains(passage.id)) {
+                  _openEntry(context, passage);
+                }
               });
             }
 
