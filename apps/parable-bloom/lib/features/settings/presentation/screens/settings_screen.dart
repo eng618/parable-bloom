@@ -41,6 +41,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final backgroundAudioEnabled = ref.watch(backgroundAudioEnabledProvider);
     final hapticsEnabled = ref.watch(hapticsEnabledProvider);
     final vineStyle = ref.watch(vineStyleProvider);
+    final texturedSkinsEnabled = ref.watch(vineTexturedSkinsEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -99,7 +100,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     width: double.infinity,
                     child: SegmentedButton<VineStyle>(
                       showSelectedIcon: false,
-                      segments: const <ButtonSegment<VineStyle>>[
+                      segments: <ButtonSegment<VineStyle>>[
+                        if (texturedSkinsEnabled)
+                          ButtonSegment<VineStyle>(
+                            value: VineStyle.classic,
+                            icon: Icon(Icons.park),
+                            label: Text('Classic'),
+                          ),
+                        if (texturedSkinsEnabled)
+                          ButtonSegment<VineStyle>(
+                            value: VineStyle.blossom,
+                            icon: Icon(Icons.local_florist),
+                            label: Text('Blossom'),
+                          ),
+                        if (texturedSkinsEnabled)
+                          ButtonSegment<VineStyle>(
+                            value: VineStyle.ethereal,
+                            icon: Icon(Icons.star),
+                            label: Text('Ethereal'),
+                          ),
                         ButtonSegment<VineStyle>(
                           value: VineStyle.simple,
                           icon: Icon(Icons.grid_view),
