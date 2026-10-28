@@ -26,13 +26,26 @@ class JournalScreen extends ConsumerStatefulWidget {
 class _JournalScreenState extends ConsumerState<JournalScreen> {
   bool _loggedOpen = false;
   bool _deepLinkHandled = false;
+  late final ScrollController _scrollController;
+
+  /// Maps unlocked passage ids to their [GlobalKey] so deep-link scrolling
+  /// can locate each entry's [BuildContext] by id. All unlocked passages get
+  /// a key up front so off-screen entries are still addressable.
+  final Map<String, GlobalKey> _entryKeys = {};
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(analyticsServiceProvider).logScreenView("Journal");
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _openEntry(BuildContext context, JournalPassage passage) {
@@ -58,6 +71,33 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
       }
     }
     return null;
+  }
+
+  /// Scrolls the journal so the entry comes into view, then opens its
+  /// reading sheet. Falls back to opening the sheet directly if the entry
+  /// context isn't available yet.
+  Future<void> _scrollAndOpenEntry(
+    List<JournalTheme> themes,
+    Set<String> unlockedScriptureIds,
+  ) async {
+    final passage = _findPassage(themes, widget.initialPassageId!);
+    if (passage == null || !unlockedScriptureIds.contains(passage.id)) return;
+
+    final key = _entryKeys[passage.id];
+    if (key == null || key.currentContext == null) {
+      // Entry hasn't rendered yet — open the sheet without scrolling.
+      if (!mounted) return;
+      _openEntry(context, passage);
+      return;
+    }
+
+    await Scrollable.ensureVisible(
+      key.currentContext!,
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeInOut,
+    );
+    if (!mounted) return;
+    _openEntry(context, passage);
   }
 
   @override
@@ -111,17 +151,22 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               });
             }
 
-            // Deep link: open a specific entry sheet when the journal is
-            // opened via /journal?entry=<id> from a game unlock dialog.
+            // Pre-populate entry keys for every unlocked passage so deep-link
+            // scrolling can resolve each entry's BuildContext by id.
+            for (final theme in themes) {
+              for (final passage in theme.passages) {
+                if (unlockedScriptureIds.contains(passage.id)) {
+                  _entryKeys.putIfAbsent(passage.id, () => GlobalKey());
+                }
+              }
+            }
+
+            // Deep link: scroll the entry into view, then open its sheet.
             if (widget.initialPassageId != null && !_deepLinkHandled) {
               _deepLinkHandled = true;
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) return;
-                final passage = _findPassage(themes, widget.initialPassageId!);
-                if (passage != null &&
-                    unlockedScriptureIds.contains(passage.id)) {
-                  _openEntry(context, passage);
-                }
+                _scrollAndOpenEntry(themes, unlockedScriptureIds);
               });
             }
 
@@ -132,12 +177,13 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
             final totalPassages =
                 themes.fold<int>(0, (sum, t) => sum + t.passages.length);
 
-            return ListView.builder(
+            return SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              itemCount: themes.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return Container(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -168,38 +214,43 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                         ),
                       ],
                     ),
-                  );
-                }
+                  ),
+                  const SizedBox(height: 16),
+                  ...themes.asMap().entries.map((entry) {
+                    final theme = entry.value;
+                    final unlockedCount = theme.passages
+                        .where((p) => unlockedScriptureIds.contains(p.id))
+                        .length;
 
-                final theme = themes[index - 1];
-                final unlockedCount = theme.passages
-                    .where((p) => unlockedScriptureIds.contains(p.id))
-                    .length;
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ChapterDivider(
-                      theme: theme,
-                      unlockedCount: unlockedCount,
-                    ),
-                    ...theme.passages.asMap().entries.map((entry) {
-                      final passage = entry.value;
-                      final isUnlocked =
-                          unlockedScriptureIds.contains(passage.id);
-                      if (isUnlocked) {
-                        return ScrapbookEntry(
-                          passage: passage,
-                          translationCode: preferred,
-                          index: entry.key,
-                          onTap: () => _openEntry(context, passage),
-                        );
-                      }
-                      return SealedEnvelope(passage: passage);
-                    }),
-                  ],
-                );
-              },
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ChapterDivider(
+                          theme: theme,
+                          unlockedCount: unlockedCount,
+                        ),
+                        const SizedBox(height: 8),
+                        ...theme.passages.asMap().entries.map((passageEntry) {
+                          final passage = passageEntry.value;
+                          final isUnlocked =
+                              unlockedScriptureIds.contains(passage.id);
+                          if (isUnlocked) {
+                            return ScrapbookEntry(
+                              key: _entryKeys[passage.id],
+                              passage: passage,
+                              translationCode: preferred,
+                              index: passageEntry.key,
+                              onTap: () => _openEntry(context, passage),
+                            );
+                          }
+                          return SealedEnvelope(passage: passage);
+                        }),
+                        const SizedBox(height: 20),
+                      ],
+                    );
+                  }),
+                ],
+              ),
             );
           },
         ),
