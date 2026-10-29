@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Soft habit / retention loop (MVP): Home welcome-back after a prior calendar day via local Hive visit timestamps (`habitSessionProvider`) and `habit_day_return` analytics. No session-close overlay, streaks, or push/local notifications.
+- Play Store screenshot integration test expanded (`integration_test/app_screenshots_test.dart`): six scenes per theme (home, mid-puzzle gameplay, Level Complete, scripture journal, settings with Theme toggle, tutorial), captured in light + dark via `task release:android:screenshots`. Gameplay capture now polls for async level load and seeds ~1/3 cleared vines for a mid-puzzle look.
 - **Withered vine state restored**: a blocked clear attempt now travels `|solver distance|` cells so the head visibly bumps the blocker and returns, then `markVineAttempted` withers the vine for the session — the strip modulates the real texture with warm bark brown (`VineMetrics.witheredColor`), foliage/caps go brown too, and the flat/simple stroke uses the brown (replacing the old dark-blue/white attempted colors). (Root cause: the rail run folded the solver's negative distance to 0, so the bump — and the attempted flag — never happened.)
 - Disk hygiene: `task clean:all` reclaims build/cache disk across Flutter, Nx, Go (`.gotmp`/`.gocache`), Next.js, and the level-builder binary in one shot, printing free-space before/after.
 
