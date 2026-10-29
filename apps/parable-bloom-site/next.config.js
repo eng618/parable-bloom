@@ -12,4 +12,7 @@ module.exports = {
   },
   // Enable static export for fully static builds (for Cloudflare Pages, etc)
   output: 'export',
+  experimental: {
+    agentUpgrade: 'security',
+  },
 };
