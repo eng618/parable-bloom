@@ -16,4 +16,7 @@ module.exports = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    agentUpgrade: 'security',
+  },
 };
