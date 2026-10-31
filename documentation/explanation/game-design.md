@@ -78,7 +78,7 @@ Tutorials run once at game start, separate from main levels. They introduce prog
 4. **Lesson 4: Complex Blocking Chains (Sequence Logic)**: Teaches sequential multi-blocking on a fully occupied garden. A thin flowing line traces dependencies on load, guiding the user to start at the free key vine.
 5. **Lesson 5: Comprehensive Challenge (Capstone)**: Synthesizes all mechanics in a near-full grand garden. Incorrect blocked taps display the collision line; the guide highlights the key vine that starts the clearing chain.
 
-Tutorial boards keep the same teaching concepts as before, but vine length and grid occupancy now match main-game visual density (full or near-full boards) so the jump into Seedling levels does not feel like a different game.
+Tutorial boards keep the same teaching concepts as before, but vine length and grid occupancy now match main-game visual density (full or near-full boards) so the jump into Seedling levels does not feel like a different game. A vine head must never point into its own body — that is a hard validation failure for lessons and main levels alike.
 
 Interactive elements are highlighted dynamically from each vine's head coordinates (layout-driven — not hardcoded cells), with context-sensitive floating glassmorphic prompts anchoring near cells.
 

@@ -252,6 +252,7 @@ All levels must pass the strict validator in `tools/level-builder`.
 2. **Difficulty lock**: Each level's `difficulty` must match the canonical 5×21 progression for its ID (`pkg/common/progression.go`: 5× Seedling, Sprout, Nurturing, Flourishing, then Transcendent challenge per module).
 3. **Solvability**: The level must be solvable within `max_moves`. The validator tries a greedy fast-path first (complete for current mechanics — removing vines only frees cells), then exact BFS/A* (≤24 vines) or heuristic search with a configurable budget (default **2,000,000 states** in `task levels:validate-solvable`).
 4. **Connectivity**: All vine segments must be 4-connected (Manhattan distance = 1). `head_direction` must match head-to-neck vector.
+4b. **No Self-Blocking Head**: The straight exit ray from a vine's head in `head_direction` to the grid edge must not intersect any segment of that same vine. A head may not point into its own body (hard fail in both `validate` and `validate-tutorials` via `ValidateSelfBlocking`).
 5. **No Overlaps**: No two vine segments may share a coordinate.
 6. **Minimum Length**: All vines must have at least 2 cells.
 7. **No Coverage Gaps**: While 100% vine occupancy is not required, any cells not occupied by vines must be explicitly masked out. The validator issues a **warning** for uncovered, unmasked cells.
