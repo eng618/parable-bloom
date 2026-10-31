@@ -1,3 +1,14 @@
+## 0.5.20 (2026-10-31)
+
+### 🚀 Features
+
+- **ui:** garden visual refresh with light/dark palette ([#143](https://github.com/eng618/parable-bloom/pull/143))
+- **home:** soft habit loop — session close + welcome-back ([#142](https://github.com/eng618/parable-bloom/pull/142))
+
+### ❤️ Thank You
+
+- Eric Garcia @eng618
+
 ## 0.5.19 (2026-10-28)
 
 This was a version bump only for parable-bloom-site to align it with other projects, there were no code changes.

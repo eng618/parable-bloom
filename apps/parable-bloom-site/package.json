@@ -1,6 +1,6 @@
 {
   "name": "parable-bloom-site",
-  "version": "0.5.19",
+  "version": "0.5.20",
   "private": true,
   "scripts": {
     "build": "next build",
