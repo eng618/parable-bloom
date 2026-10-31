@@ -81,9 +81,8 @@ class HabitSessionState {
           ? null
           : (scriptureIdToday ?? this.scriptureIdToday),
       isReturningDay: isReturningDay ?? this.isReturningDay,
-      daysSinceLast: clearDaysSinceLast
-          ? null
-          : (daysSinceLast ?? this.daysSinceLast),
+      daysSinceLast:
+          clearDaysSinceLast ? null : (daysSinceLast ?? this.daysSinceLast),
     );
   }
 
@@ -101,20 +100,20 @@ class HabitSessionState {
 
   @override
   int get hashCode => Object.hash(
-    lastSessionAt,
-    lastCloseShownDate,
-    lastLevelCompleteDate,
-    hadScriptureUnlockToday,
-    scriptureIdToday,
-    isReturningDay,
-    daysSinceLast,
-  );
+        lastSessionAt,
+        lastCloseShownDate,
+        lastLevelCompleteDate,
+        hadScriptureUnlockToday,
+        scriptureIdToday,
+        isReturningDay,
+        daysSinceLast,
+      );
 }
 
 final habitSessionProvider =
     NotifierProvider<HabitSessionNotifier, HabitSessionState>(
-      HabitSessionNotifier.new,
-    );
+  HabitSessionNotifier.new,
+);
 
 class HabitSessionNotifier extends Notifier<HabitSessionState> {
   @override
@@ -124,9 +123,8 @@ class HabitSessionNotifier extends Notifier<HabitSessionState> {
     final today = habitLocalDateKey(now);
 
     final lastSessionRaw = box.get(kHabitLastSessionAtKey) as String?;
-    final lastSessionAt = lastSessionRaw != null
-        ? DateTime.tryParse(lastSessionRaw)
-        : null;
+    final lastSessionAt =
+        lastSessionRaw != null ? DateTime.tryParse(lastSessionRaw) : null;
     final lastCloseShownDate = box.get(kHabitLastCloseShownDateKey) as String?;
     final lastLevelCompleteDate =
         box.get(kHabitLastLevelCompleteDateKey) as String?;
@@ -163,9 +161,8 @@ class HabitSessionNotifier extends Notifier<HabitSessionState> {
     if (prev != null) {
       final days = habitCalendarDaysBetween(prev, moment);
       if (days >= 1) {
-        daysSinceLast = days > kHabitDaysSinceLastCap
-            ? kHabitDaysSinceLastCap
-            : days;
+        daysSinceLast =
+            days > kHabitDaysSinceLastCap ? kHabitDaysSinceLastCap : days;
         box.put(kHabitReturnDayKey, today);
       }
     }
@@ -224,12 +221,10 @@ class HabitSessionNotifier extends Notifier<HabitSessionState> {
   bool shouldShowSessionClose({DateTime? now}) {
     final moment = now ?? DateTime.now();
     final today = habitLocalDateKey(moment);
-    final completeDate =
-        state.lastLevelCompleteDate ??
+    final completeDate = state.lastLevelCompleteDate ??
         ref.read(hiveBoxProvider).get(kHabitLastLevelCompleteDateKey)
             as String?;
-    final closeShown =
-        state.lastCloseShownDate ??
+    final closeShown = state.lastCloseShownDate ??
         ref.read(hiveBoxProvider).get(kHabitLastCloseShownDateKey) as String?;
     return completeDate == today && closeShown != today;
   }

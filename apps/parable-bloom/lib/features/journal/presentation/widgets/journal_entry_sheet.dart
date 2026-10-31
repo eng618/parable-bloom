@@ -76,7 +76,7 @@ class _JournalEntrySheetState extends ConsumerState<JournalEntrySheet> {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final paper = isDark ? const Color(0xFF33475C) : const Color(0xFFFDFBF4);
+    final paper = isDark ? const Color(0xFF1E241E) : const Color(0xFFFFFBF3);
     final preferred = ref.watch(preferredTranslationProvider).toUpperCase();
 
     return Padding(

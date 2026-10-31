@@ -3,6 +3,7 @@
 ### 🚀 Features
 
 - soft habit / retention loop: Home welcome-back after a prior calendar day, once-per-day session-close invite (scripture-aware Journal CTA), local Hive visit timestamps, and habit analytics events (`habit_day_return`, `habit_session_close_shown`, `habit_session_close_action`) — no streaks or notifications
+- visual refresh: garden parchment + forest / moonlit-soil palette (light + dark), Home botanical frame + wooden cross hero, session-close ornaments, and reusable `assets/art/home/` + `assets/art/ornaments/` art
 
 ## 1.11.1 (2026-10-28)
 

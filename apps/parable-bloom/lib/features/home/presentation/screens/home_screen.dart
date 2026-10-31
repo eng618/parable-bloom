@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../game/application/providers/module_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
+import '../../../../core/app_theme.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/widgets/constrained_page.dart';
 import '../../../../core/widgets/garden_loading_view.dart';
@@ -28,6 +29,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Timer? _sessionCloseTimer;
   String? _welcomeBackLine;
 
+  static const _homeAssets = [
+    'assets/art/home/cross_wood.png',
+    'assets/art/home/frame_light.png',
+    'assets/art/home/frame_dark.png',
+    'assets/art/home/parchment.png',
+    'assets/art/cross.png',
+    'assets/art/bg_day.png',
+    'assets/art/bg_night.png',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -48,11 +59,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.didChangeDependencies();
     if (!_precached) {
       _precached = true;
-      for (final asset in const [
-        'assets/art/cross.png',
-        'assets/art/bg_day.png',
-        'assets/art/bg_night.png',
-      ]) {
+      for (final asset in _homeAssets) {
         precacheImage(AssetImage(asset), context);
       }
     }
@@ -182,214 +189,268 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final welcomeLine =
         isReturningDay ? (_welcomeBackLine ?? pickWelcomeBackMessage()) : null;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final frameAsset = isDark
+        ? 'assets/art/home/frame_dark.png'
+        : 'assets/art/home/frame_light.png';
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        child: ConstrainedPage(
-          maxWidth: 600,
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Parable Bloom',
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                textAlign: TextAlign.center,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Soft parchment grain (light) / dim grain (dark)
+          Positioned.fill(
+            child: Opacity(
+              opacity: isDark ? 0.12 : 0.28,
+              child: Image.asset(
+                'assets/art/home/parchment.png',
+                fit: BoxFit.cover,
+                excludeFromSemantics: true,
               ),
-              if (welcomeLine != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  welcomeLine,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontStyle: FontStyle.italic,
-                        height: 1.35,
+            ),
+          ),
+          Positioned.fill(
+            child: Image.asset(
+              frameAsset,
+              fit: BoxFit.cover,
+              excludeFromSemantics: true,
+            ),
+          ),
+          SafeArea(
+            child: ConstrainedPage(
+              maxWidth: 600,
+              padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  Text(
+                    'Parable Bloom',
+                    style: theme.textTheme.displayMedium?.copyWith(
+                          color: cs.primary,
+                          fontWeight: FontWeight.w700,
+                          height: 1.15,
+                          letterSpacing: -0.5,
+                        ) ??
+                        TextStyle(
+                          fontFamily: AppTheme.displayFontFamily,
+                          fontFamilyFallback: AppTheme.displayFontFallback,
+                          fontSize: 40,
+                          fontWeight: FontWeight.w700,
+                          color: cs.primary,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (welcomeLine != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      welcomeLine,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                            color: cs.onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
+                            fontFamily: AppTheme.displayFontFamily,
+                            fontFamilyFallback: AppTheme.displayFontFallback,
+                            height: 1.4,
+                          ) ??
+                          TextStyle(
+                            color: cs.onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
+                            fontFamily: AppTheme.displayFontFamily,
+                            fontFamilyFallback: AppTheme.displayFontFallback,
+                            height: 1.4,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  Expanded(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                        child: Image.asset(
+                          'assets/art/home/cross_wood.png',
+                          fit: BoxFit.contain,
+                          semanticLabel: 'Wooden cross',
+                        ),
                       ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              const SizedBox(height: 48),
-              Expanded(
-                child: Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Image.asset(
-                      'assets/art/cross.png',
-                      fit: BoxFit.contain,
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 48),
-              modulesAsync.when(
-                data: (modules) {
-                  final playlist = modules.expand((m) => m.allLevels).toList();
-                  final allLevelsCompleted = playlist.isNotEmpty &&
-                      playlist.every(completedLevels.contains);
-                  // Display the first uncompleted level, not the persisted
-                  // pointer: the pointer goes stale when new cloud levels
-                  // ship (indexOf == -1 wrongly rendered "Play Level 1").
-                  final displayId = GameProgress.firstUncompletedInPlaylist(
-                        playlist,
-                        completedLevels,
-                      ) ??
-                      (playlist.contains(currentLevelId)
-                          ? currentLevelId
-                          : null);
-                  final nextLevelIdx =
-                      displayId == null ? -1 : playlist.indexOf(displayId);
-                  final levelDisplayNumber =
-                      nextLevelIdx != -1 ? nextLevelIdx + 1 : 1;
+                  modulesAsync.when(
+                    data: (modules) {
+                      final playlist =
+                          modules.expand((m) => m.allLevels).toList();
+                      final allLevelsCompleted = playlist.isNotEmpty &&
+                          playlist.every(completedLevels.contains);
+                      // Display the first uncompleted level, not the persisted
+                      // pointer: the pointer goes stale when new cloud levels
+                      // ship (indexOf == -1 wrongly rendered "Play Level 1").
+                      final displayId = GameProgress.firstUncompletedInPlaylist(
+                            playlist,
+                            completedLevels,
+                          ) ??
+                          (playlist.contains(currentLevelId)
+                              ? currentLevelId
+                              : null);
+                      final nextLevelIdx =
+                          displayId == null ? -1 : playlist.indexOf(displayId);
+                      final levelDisplayNumber =
+                          nextLevelIdx != -1 ? nextLevelIdx + 1 : 1;
 
-                  if (allLevelsCompleted) {
-                    return Column(
-                      children: [
-                        ElevatedButton(
-                          onPressed: null,
+                      if (allLevelsCompleted) {
+                        return Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: null,
+                                style: ElevatedButton.styleFrom(
+                                  disabledBackgroundColor:
+                                      cs.surfaceContainerHighest,
+                                  disabledForegroundColor: cs.onSurfaceVariant,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 48,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'All Levels Complete',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'More levels coming soon!',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: cs.onSurfaceVariant,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        );
+                      }
+
+                      return SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => _playNextLevel(),
                           style: ElevatedButton.styleFrom(
-                            disabledBackgroundColor: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
-                            disabledForegroundColor:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            backgroundColor: cs.primary,
+                            foregroundColor: cs.onPrimary,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 48,
                               vertical: 16,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(18),
                             ),
+                            elevation: 0,
                           ),
-                          child: const Text(
-                            'All Levels Complete',
-                            style: TextStyle(
+                          child: Text(
+                            tutorialCompleted
+                                ? 'Play Level $levelDisplayNumber'
+                                : 'Start Tutorial',
+                            style: const TextStyle(
                               fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: AppTheme.displayFontFamily,
+                              fontFamilyFallback: AppTheme.displayFontFallback,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                      );
+                    },
+                    loading: () =>
+                        const GardenLoadingView(message: "Loading garden…"),
+                    error: (error, __) => Column(
+                      children: [
                         Text(
-                          'More levels coming soon!',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontStyle: FontStyle.italic,
-                          ),
+                          'Failed to load levels. Please try again.',
+                          style: TextStyle(color: cs.error),
                           textAlign: TextAlign.center,
                         ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: () => ref.invalidate(modulesProvider),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: cs.primary,
+                            foregroundColor: cs.onPrimary,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text(
+                            'Retry',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ],
-                    );
-                  }
-
-                  return ElevatedButton(
-                    onPressed: () => _playNextLevel(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 48,
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 4,
                     ),
-                    child: Text(
-                      tutorialCompleted
-                          ? 'Play Level $levelDisplayNumber'
-                          : 'Start Tutorial',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
-                },
-                loading: () =>
-                    const GardenLoadingView(message: "Loading garden…"),
-                error: (error, __) => Column(
-                  children: [
-                    Text(
-                      'Failed to load levels. Please try again.',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: () => ref.invalidate(modulesProvider),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor:
-                            Theme.of(context).colorScheme.onPrimary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 4,
-                      ),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text(
-                        'Retry',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _openSettings(),
+                          icon: const Icon(Icons.settings_outlined, size: 20),
+                          label: const Text('Settings'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: cs.primary,
+                            backgroundColor: cs.surface.withValues(alpha: 0.72),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            side: BorderSide(color: cs.outline),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _openJournal(),
+                          icon: const Icon(Icons.menu_book_outlined, size: 20),
+                          label: const Text('Journal'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: cs.primary,
+                            backgroundColor: cs.surface.withValues(alpha: 0.72),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            side: BorderSide(color: cs.outline),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-              OutlinedButton.icon(
-                onPressed: () => _openSettings(),
-                icon: const Icon(Icons.settings),
-                label: const Text('Settings'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  side: BorderSide(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () => _openJournal(),
-                icon: const Icon(Icons.menu_book),
-                label: const Text('Journal'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  side: BorderSide(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

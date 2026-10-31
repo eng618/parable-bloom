@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'package:parable_bloom/core/app_theme.dart';
 import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
 import 'package:parable_bloom/core/providers/service_providers.dart';
 import 'package:parable_bloom/core/services/analytics_service.dart';
@@ -83,7 +84,11 @@ void main() {
           modules ?? AsyncValue.data(testModules),
         ),
       ],
-      child: const MaterialApp(home: HomeScreen()),
+      child: MaterialApp(
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        home: const HomeScreen(),
+      ),
     );
   }
 

@@ -2,42 +2,52 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 
 /// Centralized theme configuration for Parable Bloom.
-/// All colors, themes, and visual styling can be configured here.
+///
+/// Visual refresh palette (garden parchment + forest / moonlit soil) is
+/// documented in the project store at `docs/visual-refresh-palette.md` and
+/// mirrored in `documentation/reference/color-usage.md`.
 class AppTheme {
   // ============================================================
-  // BRAND COLORS - Core identity colors inspired by the braided bracelet
+  // BRAND COLORS - Garden identity (habit-loop visual refresh)
   // ============================================================
 
-  /// Primary brand color (Blue from bracelet)
-  static const Color primarySeed = Color(0xFF3A7DAF);
+  /// Primary brand color (deep forest green — light seed / titles / CTAs)
+  static const Color primarySeed = Color(0xFF344D2F);
 
-  /// Secondary accent color (Green from bracelet)
-  static const Color secondarySeed = Color(0xFF4F8A5B);
+  /// Secondary accent color (muted sage)
+  static const Color secondarySeed = Color(0xFF8DA082);
 
-  /// Tertiary neutral color (Beige from bracelet)
+  /// Tertiary warm neutral (parchment beige)
   static const Color tertiarySeed = Color(0xFFE2D6C4);
+
+  /// Primary brand color on dark surfaces (moonlit moss)
+  static const Color primarySeedDark = Color(0xFFA3B18A);
+
+  /// Rare floral highlight for ornaments (not a ColorScheme role)
+  static const Color daisyAccent = Color(0xFFE9C46A);
 
   // ============================================================
   // SEMANTIC COLORS - For game states and UI feedback
   // ============================================================
 
-  /// Success color (derived from secondary green)
+  /// Success color (sage / garden growth)
   static const Color successColor = secondarySeed;
 
-  /// Error color (standard red for consistency)
-  static const Color errorColor = Color(0xFFD32F2F);
+  /// Error color (Material-aligned red for consistency)
+  static const Color errorColor = Color(0xFFB3261E);
 
   // ============================================================
   // GAME COLORS - Colors used in the game itself
   // ============================================================
 
-  /// Color for active/unblocked vines (uses secondary for bracelet tie-in)
+  /// Color for active/unblocked vines (sage accent)
   static const Color vineGreen = secondarySeed;
 
-  static const Color vineAttemptedLight =
-      Color(0xFF2E638C); // soft dark-blue for light theme (replaces jet black)
-  static const Color vineAttemptedDark =
-      Color(0xFFFFFFFF); // white for dark theme
+  /// Reserved attempted/blocked vine color (light) — soft slate, not in palette
+  static const Color vineAttemptedLight = Color(0xFF4A5560);
+
+  /// Reserved attempted/blocked vine color (dark) — soft cream
+  static const Color vineAttemptedDark = Color(0xFFE8EADF);
 
   static Color getVineAttemptedColor(Brightness brightness) {
     return brightness == Brightness.dark
@@ -45,85 +55,138 @@ class AppTheme {
         : vineAttemptedLight;
   }
 
-  /// Grid dot color (light mode) - subtle beige tint
+  /// Grid dot color (light mode) - subtle parchment tint
   static const Color gridDotLight = Color(0x26E2D6C4); // 15% beige
 
-  /// Grid dot color (dark mode) - subtle blue tint for harmony
-  static const Color gridDotDark = Color(0x263A7DAF); // 15% primary blue
+  /// Grid dot color (dark mode) - subtle moss tint
+  static const Color gridDotDark = Color(0x26A3B18A); // 15% moss
 
   /// Get grid dot color based on brightness
   static Color getGridDotColor(Brightness brightness) {
     return brightness == Brightness.dark ? gridDotDark : gridDotLight;
   }
 
-  /// Tap effect color (light mode) - darker for contrast on light background
-  static const Color tapEffectLight = Color(0xFF8E8A86); // Muted gray
+  /// Tap effect color (light mode) - muted ink
+  static const Color tapEffectLight = Color(0xFF5A6258);
 
-  /// Tap effect color (dark mode) - lighter for contrast on dark background
-  static const Color tapEffectDark = Color(0xFFE6E1E5); // Light gray
+  /// Tap effect color (dark mode) - soft mist
+  static const Color tapEffectDark = Color(0xFFE8EADF);
 
   // ============================================================
-  // LIGHT THEME COLORS - Beige-dominant for warmth
+  // LIGHT THEME COLORS - Warm parchment garden
   // ============================================================
 
-  static const _lightBackground = Color(0xFFF8F5EF); // Lightened beige
-  static const _lightSurface = Color(0xFFFFFFFF);
+  static const _lightBackground = Color(0xFFF9F3E5); // gardenCream
+  static const _lightSurface = Color(0xFFFFFBF3); // gardenSurface
   static const _lightSurfaceContainerLow =
-      Color(0xFFEFF3ED); // Subtle green tint
+      Color(0xFFF1EBDD); // gardenSurfaceLow
   static const _lightSurfaceContainerHigh =
-      Color(0xFFE8E4DE); // Darker beige for depth
-  static const _lightOnSurface = Color(0xFF1C1B1F);
-  static const _lightOnSurfaceVariant = Color(0xFF49454F);
+      Color(0xFFE8E0CE); // gardenSurfaceHigh
+  static const _lightOnSurface = Color(0xFF2A3328); // inkOnSurface
+  static const _lightOnSurfaceVariant = Color(0xFF5A6258); // inkMuted
 
   // ============================================================
-  // DARK THEME COLORS - Blue-green mix for depth
+  // DARK THEME COLORS - Moonlit garden soil
   // ============================================================
 
-  static const _darkBackground = Color(0xFF1A2E3F); // Dark blue
-  static const _darkSurface = Color(0xFF2C3E50); // Deeper blue
-  static const _darkSurfaceContainerLow =
-      Color(0xFF3E5366); // Blue with green hint
+  static const _darkBackground = Color(0xFF141914); // nightSoil
+  static const _darkSurface = Color(0xFF1E241E); // nightSurface
+  static const _darkSurfaceContainerLow = Color(0xFF2A312A); // nightSurfaceLow
   static const _darkSurfaceContainerHigh =
-      Color(0xFF4A5F72); // Deeper blue-green for depth
-  static const _darkOnSurface = Color(0xFFE6E1E5);
-  static const _darkOnSurfaceVariant = Color(0xFFCAC4D0);
+      Color(0xFF353D35); // nightSurfaceHigh
+  static const _darkOnSurface = Color(0xFFE8EADF); // mistOnSurface
+  static const _darkOnSurfaceVariant = Color(0xFFA8AFA6); // mistMuted
 
   // ============================================================
   // THEME DATA
   // ============================================================
+
+  /// Bundled serif for brand / display moments (Liberation Serif).
+  static const String displayFontFamily = 'ParableDisplay';
+  static const List<String> displayFontFallback = ['Georgia', 'serif', 'Serif'];
+
+  /// Shared display (serif) text theme tones for brand moments.
+  static TextTheme _displayAwareTextTheme(
+    TextTheme base,
+    Color onSurface,
+  ) {
+    TextStyle serif(TextStyle? style) => (style ?? const TextStyle()).copyWith(
+          fontFamily: displayFontFamily,
+          fontFamilyFallback: displayFontFallback,
+          color: onSurface,
+        );
+
+    return base.copyWith(
+      displayLarge: serif(base.displayLarge),
+      displayMedium: serif(base.displayMedium),
+      displaySmall: serif(base.displaySmall),
+      headlineLarge: serif(base.headlineLarge),
+      headlineMedium: serif(base.headlineMedium),
+      headlineSmall: serif(base.headlineSmall),
+      titleLarge: serif(base.titleLarge),
+      bodyLarge:
+          (base.bodyLarge ?? const TextStyle()).copyWith(color: onSurface),
+      bodyMedium:
+          (base.bodyMedium ?? const TextStyle()).copyWith(color: onSurface),
+    );
+  }
 
   /// Light theme for the app
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primarySeed,
       brightness: Brightness.light,
+      primary: primarySeed,
+      onPrimary: _lightSurface,
+      secondary: secondarySeed,
+      tertiary: tertiarySeed,
       surface: _lightSurface,
       onSurface: _lightOnSurface,
       onSurfaceVariant: _lightOnSurfaceVariant,
+      error: errorColor,
     ).copyWith(
-      secondary: secondarySeed,
-      tertiary: tertiarySeed,
       surfaceContainerLow: _lightSurfaceContainerLow,
       surfaceContainerHighest: _lightSurfaceContainerHigh,
-      outlineVariant: tertiarySeed, // Tertiary for subtle outlines
+      outline: primarySeed.withValues(alpha: 0.55),
+      outlineVariant: tertiarySeed,
     );
 
-    return ThemeData(
+    final base = ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
       scaffoldBackgroundColor: _lightBackground,
+    );
+
+    return base.copyWith(
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.surfaceContainer,
+        backgroundColor: colorScheme.surfaceContainerLow,
         foregroundColor: _lightOnSurface,
       ),
-      textTheme: TextTheme(
-        headlineLarge: TextStyle(color: _lightOnSurface),
-        bodyLarge: TextStyle(color: _lightOnSurface),
-      ),
+      textTheme: _displayAwareTextTheme(base.textTheme, _lightOnSurface),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.outline),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: _lightSurface,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
       ),
       extensions: [
@@ -140,35 +203,59 @@ class AppTheme {
   /// Dark theme for the app
   static ThemeData get darkTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: primarySeed,
+      seedColor: primarySeedDark,
       brightness: Brightness.dark,
+      primary: primarySeedDark,
+      onPrimary: _darkBackground,
+      secondary: secondarySeed,
+      tertiary: const Color(0xFFC9C2B2),
       surface: _darkSurface,
       onSurface: _darkOnSurface,
       onSurfaceVariant: _darkOnSurfaceVariant,
+      error: const Color(0xFFF2B8B5),
     ).copyWith(
-      secondary: secondarySeed,
-      tertiary: tertiarySeed,
       surfaceContainerLow: _darkSurfaceContainerLow,
       surfaceContainerHighest: _darkSurfaceContainerHigh,
-      outlineVariant: tertiarySeed, // Tertiary for subtle outlines
+      outline: primarySeedDark.withValues(alpha: 0.45),
+      outlineVariant: const Color(0xFFC9C2B2),
     );
 
-    return ThemeData(
+    final base = ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
       scaffoldBackgroundColor: _darkBackground,
+    );
+
+    return base.copyWith(
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.surfaceContainer,
+        backgroundColor: colorScheme.surfaceContainerLow,
         foregroundColor: _darkOnSurface,
       ),
-      textTheme: TextTheme(
-        headlineLarge: TextStyle(color: _darkOnSurface),
-        bodyLarge: TextStyle(color: _darkOnSurface),
-      ),
+      textTheme: _displayAwareTextTheme(base.textTheme, _darkOnSurface),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.outline),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: _darkSurface,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
       ),
       extensions: [
