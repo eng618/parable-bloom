@@ -1,16 +1,12 @@
 import 'dart:async';
 
 import 'package:go_router/go_router.dart';
-import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:vector_math/vector_math_64.dart' as vm;
 
 import '../../../../core/app_theme.dart';
 import '../../../../core/constants/animation_timing.dart';
-import '../../../../core/widgets/garden_loading_view.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/providers/settings_providers.dart';
@@ -21,19 +17,22 @@ import '../../application/providers/gameplay_state_providers.dart';
 import '../../application/providers/solver_providers.dart';
 import '../../application/providers/module_providers.dart';
 import '../../application/providers/progress_providers.dart';
+import '../widgets/game_board_gestures.dart';
 import '../widgets/game_header.dart';
 import '../widgets/celebration_effects.dart';
 import '../widgets/game_event_sink.dart';
 import '../widgets/game_sfx_bridge.dart';
 import '../widgets/game_state_dialogs.dart';
+import '../widgets/game_unlock_dialogs.dart';
 import '../widgets/game_zoom_controls.dart';
 import '../widgets/garden_game.dart';
 import '../widgets/level_complete_overlay.dart';
 import '../widgets/projection_sync.dart';
 import '../widgets/pause_menu_dialog.dart';
-import '../../../journal/application/providers/journal_providers.dart';
 import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import '../../../../core/services/logger_service.dart';
+
+part 'game_screen_event_sink.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -197,7 +196,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       floatingActionButton: _buildProjectionLinesFAB(),
       body: Stack(
         children: [
-          _buildGameWidgetWithGestures(),
+          GameBoardGestures(game: _game!),
           SafeArea(
             child: Align(
               alignment: Alignment.topCenter,
@@ -212,114 +211,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         ],
       ),
     );
-  }
-
-  Widget _buildGameWidgetWithGestures() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Listener(
-          onPointerSignal: (pointerSignal) {
-            if (pointerSignal is PointerScrollEvent) {
-              final cameraNotifier = ref.read(cameraStateProvider.notifier);
-              final cameraState = ref.read(cameraStateProvider);
-              final currentLevel = ref.read(currentLevelProvider);
-              if (currentLevel == null) return;
-
-              final newOffset = cameraState.panOffset -
-                  vm.Vector2(
-                    pointerSignal.scrollDelta.dx,
-                    pointerSignal.scrollDelta.dy,
-                  );
-
-              cameraNotifier.updatePanOffset(
-                newOffset,
-                screenWidth: constraints.maxWidth,
-                screenHeight: constraints.maxHeight,
-                gridCols: currentLevel.gridWidth,
-                gridRows: currentLevel.gridHeight,
-              );
-            }
-          },
-          child: GestureDetector(
-            onScaleStart: _handleScaleStart,
-            onScaleUpdate: (details) => _handleScaleUpdate(
-              details,
-              constraints.maxWidth,
-              constraints.maxHeight,
-            ),
-            onScaleEnd: _handleScaleEnd,
-            child: GameWidget<GardenGame>(
-              game: _game!,
-              loadingBuilder: (_) =>
-                  const GardenLoadingView(message: 'Preparing garden…'),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  double _lastScale = 1.0;
-  vm.Vector2 _lastFocalPoint = vm.Vector2.zero();
-  vm.Vector2 _panStartOffset = vm.Vector2.zero();
-
-  void _handleScaleStart(ScaleStartDetails details) {
-    final cameraState = ref.read(cameraStateProvider);
-    _lastScale = cameraState.zoom;
-    _lastFocalPoint = vm.Vector2(details.focalPoint.dx, details.focalPoint.dy);
-    _panStartOffset = cameraState.panOffset;
-    // Any scale gesture (pinch or single-finger pan) suppresses Flame taps
-    // until shortly after the gesture ends: fingers on the board are camera
-    // input, never tap telemetry.
-    _game?.setCameraGestureActive(true);
-  }
-
-  void _handleScaleUpdate(
-    ScaleUpdateDetails details,
-    double screenWidth,
-    double screenHeight,
-  ) {
-    final currentLevel = ref.read(currentLevelProvider);
-    if (currentLevel == null) return;
-
-    // Keep suppression active for the whole gesture (start may have been
-    // missed if the game instance was recreated mid-gesture).
-    _game?.setCameraGestureActive(true);
-
-    final cameraNotifier = ref.read(cameraStateProvider.notifier);
-
-    // Handle zoom (pinch)
-    if (details.scale != 1.0) {
-      final newZoom = _lastScale * details.scale;
-      cameraNotifier.updateZoom(newZoom);
-    }
-
-    // Handle pan (drag) - only when not zooming significantly
-    if ((details.scale - 1.0).abs() < 0.1) {
-      final focalDelta = vm.Vector2(
-        details.focalPoint.dx - _lastFocalPoint.x,
-        details.focalPoint.dy - _lastFocalPoint.y,
-      );
-
-      final newOffset = _panStartOffset + focalDelta;
-
-      cameraNotifier.updatePanOffset(
-        newOffset,
-        screenWidth: screenWidth,
-        screenHeight: screenHeight,
-        gridCols: currentLevel.gridWidth,
-        gridRows: currentLevel.gridHeight,
-      );
-    }
-  }
-
-  void _handleScaleEnd(ScaleEndDetails details) {
-    // Scale gesture ended - store final state. Tap suppression lingers for
-    // a short window (see GardenGame.shouldSuppressTaps) to swallow the
-    // finger-lift tap that races onTapUp.
-    _game?.setCameraGestureActive(false);
-    _lastScale = ref.read(cameraStateProvider).zoom;
-    _panStartOffset = ref.read(cameraStateProvider).panOffset;
   }
 
   void _showPauseMenu() {
@@ -504,12 +395,25 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
 
     if (newlyUnlockedScripture != null && completedModule != null) {
+      final scripture = newlyUnlockedScripture;
+      final module = completedModule;
       if (isDebugPlay) {
         ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
       }
-      await _showScriptureUnlockedDialog(
-        newlyUnlockedScripture,
-        completedModule,
+      await showScriptureUnlockedDialog(
+        context,
+        ref,
+        scripture,
+        module,
+        onHome: _goHomeFromLevelComplete,
+        onViewJournal: () {
+          _homeExitRequested = true;
+          context.go('/');
+          context.push(
+            '/journal?entry=${Uri.encodeComponent(scripture.id)}',
+          );
+        },
+        onContinue: _continueToNextLevel,
       );
       return;
     }
@@ -518,7 +422,21 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       if (isDebugPlay) {
         ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
       }
-      await _showParableUnlockedDialog(completedModule);
+      await showParableUnlockedDialog(
+        context,
+        ref,
+        completedModule,
+        onHome: _goHomeFromLevelComplete,
+        onViewJournal: (scripture) {
+          _homeExitRequested = true;
+          context.go('/');
+          final entry = scripture != null && scripture.isNotEmpty
+              ? '/journal?entry=${Uri.encodeComponent(scripture)}'
+              : '/journal';
+          context.push(entry);
+        },
+        onContinue: _continueToNextLevel,
+      );
       return;
     }
 
@@ -577,363 +495,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       },
     );
     await _loadLevelForGame(game);
-  }
-
-  Future<void> _showScriptureUnlockedDialog(
-    ModuleScripture scripture,
-    ModuleData module,
-  ) async {
-    if (!mounted) return;
-
-    ref.read(analyticsServiceProvider).logParableViewed(scripture.id);
-
-    // Single-version UX: always render the user's preferred translation.
-    final preferred = ref.read(preferredTranslationProvider);
-
-    String resolvedText = '';
-    String displayCitation = scripture.reference;
-    String translationCode = preferred.toUpperCase();
-    bool didFallback = false;
-    bool requiresDownload = false;
-    String themeName = module.name;
-    String? reflectionPrompt;
-
-    try {
-      final themes = await ref.read(journalThemesProvider.future);
-      for (final theme in themes) {
-        for (final passage in theme.passages) {
-          if (passage.id == scripture.id ||
-              passage.reference == scripture.reference) {
-            themeName = theme.name;
-            if (passage.reflectionPrompts.isNotEmpty) {
-              reflectionPrompt = passage.reflectionPrompts.first;
-            }
-            break;
-          }
-        }
-      }
-    } catch (_) {}
-
-    try {
-      final result = await ref.read(scriptureServiceProvider).loadScripture(
-            scripture.reference,
-            preferredTranslationId: preferred,
-          );
-
-      resolvedText = result['text'] ?? '';
-      translationCode = result['translation'] ?? preferred.toUpperCase();
-      displayCitation = '${scripture.reference} ($translationCode)';
-      didFallback = result['didFallback'] == 'true';
-      requiresDownload = result['requiresDownload'] == 'true';
-    } catch (e, stack) {
-      LoggerService.error(
-        'Error loading scripture for unlocked dialog',
-        error: e,
-        stackTrace: stack,
-        tag: 'GameScreen',
-      );
-    }
-
-    if (!mounted) return;
-
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        final cs = Theme.of(dialogContext).colorScheme;
-        return AlertDialog(
-          backgroundColor: cs.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.spa, color: cs.primary, size: 28),
-              const SizedBox(width: 8),
-              Text(
-                scripture.type == 'starter'
-                    ? 'Starter Scripture!'
-                    : 'Scripture Collected!',
-                style: TextStyle(
-                  color: cs.primary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  scripture.title,
-                  style: TextStyle(
-                    color: cs.onSurface,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                if (resolvedText.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: cs.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: cs.outlineVariant),
-                    ),
-                    child: Text(
-                      resolvedText,
-                      style: TextStyle(
-                        color: cs.onSurface,
-                        fontSize: 15,
-                        fontStyle: FontStyle.italic,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(dialogContext).pop();
-                    context.push('/settings');
-                  },
-                  child: Text(
-                    displayCitation,
-                    style: TextStyle(
-                      color: cs.primary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      decoration: TextDecoration.underline,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                if (didFallback && requiresDownload) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Needs internet once to download $translationCode, then works offline. Showing fallback for now.',
-                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                if (reflectionPrompt != null) ...[
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: cs.primary.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.help_outline, size: 16, color: cs.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            reflectionPrompt,
-                            style: TextStyle(
-                              color: cs.onPrimaryContainer,
-                              fontSize: 13,
-                              fontStyle: FontStyle.italic,
-                              height: 1.3,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Text(
-                  'Added to your Journal under $themeName.',
-                  style: TextStyle(
-                    color: cs.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _goHomeFromLevelComplete();
-              },
-              child: const Text('HOME'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                // Reset to home first: the game screen was reached via go(),
-                // so there is nothing to pop. Back-from-journal must land on
-                // home, never on this stale cleared board. Deep-link into
-                // the journal at this entry.
-                _homeExitRequested = true;
-                context.go('/');
-                context.push(
-                  '/journal?entry=${Uri.encodeComponent(scripture.id)}',
-                );
-              },
-              child: const Text('VIEW JOURNAL'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                // Continue multilevel play — do not land on Home.
-                _continueToNextLevel();
-              },
-              child: const Text('CONTINUE'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _showParableUnlockedDialog(ModuleData module) async {
-    if (!mounted) return;
-
-    ref.read(analyticsServiceProvider).logParableViewed(module.id.toString());
-
-    final parable = module.parable;
-    final title = (parable['title'] as String?)?.trim();
-    final scripture = (parable['scripture'] as String?)?.trim();
-    final reflection = (parable['reflection'] as String?)?.trim();
-
-    String resolvedText = (parable['content'] as String?)?.trim() ?? '';
-    String displayCitation = scripture ?? '';
-
-    if (scripture != null && scripture.isNotEmpty) {
-      try {
-        final preferred = ref.read(preferredTranslationProvider);
-
-        final result = await ref
-            .read(scriptureServiceProvider)
-            .loadScripture(scripture, preferredTranslationId: preferred);
-
-        resolvedText = result['text'] ?? resolvedText;
-        final translationCode =
-            result['translation'] ?? preferred.toUpperCase();
-        displayCitation = '$scripture ($translationCode)';
-      } catch (e, stack) {
-        LoggerService.error(
-          'Error loading scripture for unlocked parable dialog',
-          error: e,
-          stackTrace: stack,
-          tag: 'GameScreen',
-        );
-      }
-    }
-
-    if (!mounted) return;
-
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        final cs = Theme.of(dialogContext).colorScheme;
-        return AlertDialog(
-          backgroundColor: cs.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            title?.isNotEmpty == true ? title! : 'Parable Unlocked',
-            style: TextStyle(
-              color: cs.onSurface,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.menu_book, size: 48),
-                const SizedBox(height: 12),
-                if (module.unlockMessage.trim().isNotEmpty)
-                  Text(
-                    module.unlockMessage,
-                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
-                    textAlign: TextAlign.center,
-                  ),
-                if (displayCitation.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    displayCitation,
-                    style: TextStyle(
-                      color: cs.onSurface,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                if (resolvedText.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    resolvedText,
-                    style: TextStyle(color: cs.onSurface, fontSize: 14),
-                    textAlign: TextAlign.left,
-                  ),
-                ],
-                if (reflection?.isNotEmpty == true) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    reflection!,
-                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
-                    textAlign: TextAlign.left,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _goHomeFromLevelComplete();
-              },
-              child: const Text('HOME'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                // Reset to home first: the game screen was reached via go(),
-                // so there is nothing to pop. Back-from-journal must land on
-                // home, never on this stale cleared board.
-                _homeExitRequested = true;
-                context.go('/');
-                final entry = scripture?.isNotEmpty == true
-                    ? '/journal?entry=${Uri.encodeComponent(scripture!)}'
-                    : '/journal';
-                context.push(entry);
-              },
-              child: const Text('GO TO JOURNAL'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _continueToNextLevel();
-              },
-              child: const Text('CONTINUE'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   Future<void> _loadLevelForGame(GardenGame game) async {
@@ -1097,161 +658,4 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     showGameOverDialog(context, onTryAgain: _restartLevel);
   }
-}
-
-/// [GameEventSink] bridging the Flame engine to [_GameScreenState].
-///
-/// Holds the state (same library, so private members are accessible) instead
-/// of a bag of closures: one named implementation per screen, mockable in
-/// tests via [TestGameEventSink].
-class _GameScreenEventSink implements GameEventSink {
-  _GameScreenEventSink(this._state);
-
-  final _GameScreenState _state;
-
-  ProviderContainer? get _container => _state._providerContainer;
-
-  /// Element-tree-independent provider read (see [_GameScreenState._providerContainer]).
-  /// Falls back to [fallback] when the screen was never attached or the app
-  /// is tearing down. Safe to call from the Flame game loop at any time.
-  T _read<T>(T Function(ProviderContainer container) read, T fallback) {
-    final container = _container;
-    if (container == null) return fallback;
-    try {
-      return read(container);
-    } on StateError {
-      return fallback;
-    }
-  }
-
-  /// Fire-and-forget provider mutation with the same lifecycle safety as
-  /// [_read]. Mutating a live container after unmount is harmless (listeners
-  /// are already closed), and game truth must not depend on widget presence.
-  void _call(void Function(ProviderContainer container) fn) {
-    final container = _container;
-    if (container == null) return;
-    try {
-      fn(container);
-    } on StateError {
-      // App teardown: container disposed; nothing left to update.
-    }
-  }
-
-  @override
-  void onGameLoaded(GardenGame game) {
-    if (!_state.mounted) return;
-    _call((c) => c.read(gameInstanceProvider.notifier).setGame(game));
-    _state._loadLevelForGame(game);
-  }
-
-  @override
-  void onGameRemoved() {
-    if (!_state.mounted) return;
-    _call((c) {
-      if (c.read(gameInstanceProvider) == _state._game) {
-        c.read(gameInstanceProvider.notifier).setGame(null);
-      }
-    });
-  }
-
-  @override
-  void onVineCleared(String vineId) {
-    _call((c) => c.read(vineStatesProvider.notifier).clearVine(vineId));
-  }
-
-  @override
-  void onVineAnimationStateChanged(String vineId, VineAnimationState state) {
-    _call(
-      (c) =>
-          c.read(vineStatesProvider.notifier).setAnimationState(vineId, state),
-    );
-  }
-
-  @override
-  void onVineAttempted(String vineId) {
-    _call((c) => c.read(vineStatesProvider.notifier).markAttempted(vineId));
-  }
-
-  @override
-  void onTapIncrement(int count) {
-    _call((c) => c.read(levelTotalTapsProvider.notifier).add(count));
-  }
-
-  @override
-  void onTapOutsideGrid() {
-    _call((c) => c.read(projectionModeProvider.notifier).clearHints());
-  }
-
-  @override
-  void onBlockedTap(BlockedTapState state) {
-    _call((c) => c.read(blockedTapProvider.notifier).setBlockedTap(state));
-  }
-
-  @override
-  Future<void> onEnsureVineVisible(VineData vine) async {
-    final container = _container;
-    if (container == null) return;
-    try {
-      await container
-          .read(cameraStateProvider.notifier)
-          .ensureVineVisible(vine);
-    } on StateError {
-      // App teardown mid-flight; the pending auto-clear is obsolete.
-    }
-  }
-
-  @override
-  void onHintVine(String vineId) {
-    _call((c) => c.read(projectionModeProvider.notifier).hint(vineId));
-  }
-
-  @override
-  void onClearHints() {
-    _call((c) => c.read(projectionModeProvider.notifier).clearHints());
-  }
-
-  @override
-  void onVineSlideStarted({required int vineLength}) {
-    _call(dispatchVineSlideStarted);
-  }
-
-  @override
-  void onVineSlideEnded({required bool cleared, required int vineLength}) {
-    _call(
-      (c) => dispatchVineSlideEnded(
-        c,
-        cleared: cleared,
-        vineLength: vineLength,
-      ),
-    );
-  }
-
-  @override
-  void onUiTap() {
-    _call(dispatchUiTap);
-  }
-
-  @override
-  bool get useSimpleVines =>
-      _read((c) => c.read(useSimpleVinesProvider), false);
-
-  @override
-  bool get hapticsEnabled =>
-      _read((c) => c.read(hapticsEnabledProvider), false);
-
-  @override
-  bool get isAnyAnimating =>
-      _read((c) => c.read(anyVineAnimatingProvider), false);
-
-  @override
-  bool get debugShowGridCoordinates =>
-      _read((c) => c.read(debugShowGridCoordinatesProvider), false);
-
-  @override
-  bool get debugVineAnimationLogging =>
-      _read((c) => c.read(debugVineAnimationLoggingProvider), false);
-
-  @override
-  VineStyle get vineStyle =>
-      _read((c) => c.read(vineStyleProvider), VineStyle.classic);
 }

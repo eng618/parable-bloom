@@ -9,11 +9,11 @@ Related: [System Architecture](../explanation/architecture.md) · App: `apps/par
 
 - Current phase: Phase 5 (rebuild diet, quick wins) complete
 - Last updated: 2026-10-31
-- Progress: 37 / ~46 items
+- Progress: 38 / ~46 items
 
 ## Phase 0 — Projection Lines Bug Fix (P0, bundled)
 
-Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/presentation/widgets/garden_game.dart:225-234`) only calls `setVisible()`, never `updateVisibility()`, so `ProjectionLinesComponent` (`lib/features/game/presentation/widgets/projection_lines_component.dart:80-91,124`) keeps `_hintedVineIds={} / _showAllVines=false` and `render():124` skips all vines. Data flow upstream (FAB `lib/features/game/presentation/screens/game_screen.dart:391-399`, long-press `lib/features/game/presentation/widgets/grid_component.dart:454-469`, providers `lib/features/game/application/providers/gameplay_state_providers.dart:353-387`) is intact.
+Root cause: `GardenGame.updateProjectionLinesVisibility()` (`lib/features/game/presentation/widgets/garden_game.dart:225-234`) only calls `setVisible()`, never `updateVisibility()`, so `ProjectionLinesComponent` (`lib/features/game/presentation/widgets/projection_lines_component.dart:80-91,124`) keeps `_hintedVineIds={} / _showAllVines=false` and `render():124` skips all vines. Data flow upstream (FAB `lib/features/game/presentation/screens/game_screen.dart:234-242`, long-press `lib/features/game/presentation/widgets/grid_component.dart:454-469`, providers `lib/features/game/application/providers/gameplay_state_providers.dart:353-387`) is intact.
 
 - [x] 0.1 Replace `setVisible()` call with `updateVisibility(visible:, hintedVineIds:, showAllVines:)` in `garden_game.dart:225-234`
 - [x] 0.2 Unified `ProjectionMode` (`showAll` + `hintedVineIds` in one atomic object with value equality) replaces the bool+set provider pair — done
@@ -76,6 +76,7 @@ Performance review found the solver/camera hot paths already optimized (Phases 1
 - [x] 5.5 `CellComponent` debug-coordinate label: per-cell cached `TextPainter` with color-keyed rebuild (was a fresh `TextPainter` + `layout()` per cell per frame in debug mode)
 - [x] 5.6a `VineStatesNotifier` blocking cache is keyed on board occupancy (`isCleared` / clear-animation), not `animationState.index`. A wiggle and a clear-finish reuse the last blocked bits; leaving or re-entering the board still re-solves. Attempted/withered flags stay out of the solver key.
 - [ ] 5.6 Follow-on candidates (evaluation backlog): integer cell keys in `LevelSolverService._isSolvableExact` / `_canVineClearExact` (the per-tap path `getDistanceToBlocker` already uses integer keys; the exact BFS is test/validation only), cloud-sync write debounce, `compute` for first-load JSON parsing
+- [x] 5.7 Screen splits, behavior unchanged. Settings is a composer plus section widgets under `features/settings/presentation/widgets/`. Game pan/pinch lives in `GameBoardGestures`, unlock dialogs are top-level functions in `game_unlock_dialogs.dart`, and `_GameScreenEventSink` stays a `part` of `game_screen.dart` so it can read private screen state. Provider subscriptions, level load, and pause/over/complete dialogs stay on `_GameScreenState`.
 
 ## Verification Checklist (run per phase)
 
@@ -87,6 +88,7 @@ Performance review found the solver/camera hot paths already optimized (Phases 1
 
 _Add newest entries at top._
 
+- `2026-10-31` — 5.7: settings screen and game screen split into focused widgets. Settings section order and the debug/danger flows are unchanged. Game gestures, unlock dialogs, and the event sink moved out of `game_screen.dart`; the sink remains a `part` file. Targeted analyze clean. Settings screen tests, debug level picker, and game screen widget tests: 10/10.
 - `2026-10-31` — Occupancy-keyed blocking cache in `VineStatesNotifier` (5.6a): animation flips that do not change which vines occupy the board skip `isVineBlockedInState`. Startup no longer waits unbounded on anonymous sign-in (2s budget, Hive init overlaps Firebase). Exact-solver string keys, cloud-sync debounce, and isolate JSON parse remain backlog — they are not on the per-frame path.
 
 - `2026-10-16` — Phase 5 rebuild diet landed (quick wins from a fresh performance evaluation): home/journal/guide-overlay/zoom-controls switched to fine-grained `select` watches (see 3.1.1 in `explanation/architecture.md`), debug `TextPainter` cached per cell in `CellComponent`, `GameProgress.firstUncompletedInPlaylist` static helper so Home runs the playlist scan on the selected set. Full suite 283/283 pass, analyze clean, 0 format changes. Phase 5.6 backlog records the solver follow-ons (memo-key granularity, incremental `occupiedAll`, cloud-sync debounce, off-isolate JSON).
