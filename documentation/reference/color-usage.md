@@ -4,10 +4,24 @@
 
 To maintain consistency and enable theme-aware design across the application, all color values must be defined as constants in the appropriate files.
 
+### Garden visual refresh (2026-10-31)
+
+Brand identity shifted from bracelet blue to a **parchment + forest / moonlit soil** palette matching the habit-loop MVP demos.
+
+| Role | Light | Dark |
+| --- | --- | --- |
+| Scaffold | `#F9F3E5` garden cream | `#141914` night soil |
+| Primary | `#344D2F` forest | `#A3B18A` moss |
+| Secondary | `#8DA082` sage | `#8DA082` sage |
+| On-surface | `#2A3328` ink | `#E8EADF` mist |
+| On-surface variant | `#5A6258` muted | `#A8AFA6` muted mist |
+
+Home uses reusable botanical assets under `assets/art/home/` and `assets/art/ornaments/`. Full token table: project store `docs/visual-refresh-palette.md`.
+
 ### Color Const Files
 
 1. **`lib/core/app_theme.dart`** - Primary theme colors
-   - Brand colors (primary, secondary, tertiary)
+   - Brand colors (primary, secondary, tertiary, dark primary seed)
    - Game-specific colors (vines, grid dots, tap effects)
    - Light/dark theme surface colors
    - Semantic colors (success, error)
@@ -44,7 +58,7 @@ The grid dots demonstrate theme-aware color usage with differentiated variants:
 ```dart
 // 1. Define in AppTheme
 static const Color gridDotLight = Color(0x26E2D6C4); // 15% beige
-static const Color gridDotDark = Color(0x263A7DAF); // 15% primary blue
+static const Color gridDotDark = Color(0x26A3B18A); // 15% moss
 
 // 2. Add helper method
 static Color getGridDotColor(Brightness brightness) {
@@ -89,8 +103,8 @@ final tapEffect = extension.tapEffect;
 
 To make blocked/failed vines visually unambiguous across themes, the app reserves the **attempted/failed** color in `AppTheme` and exposes it to renderers via `GardenGame`:
 
-- `AppTheme.vineAttemptedLight` — reserved attempted/error color for **light** theme (soft primary brand blue)
-- `AppTheme.vineAttemptedDark` — reserved attempted/error color for **dark** theme (white)
+- `AppTheme.vineAttemptedLight` — reserved attempted/error color for **light** theme (soft slate)
+- `AppTheme.vineAttemptedDark` — reserved attempted/error color for **dark** theme (soft cream mist)
 - `AppTheme.getVineAttemptedColor(Brightness)` — helper to pick the correct variant
 - `AppThemeExtension.vineAttempted` — theme extension property for attempted color
 
@@ -112,8 +126,8 @@ Rationale:
 
 When a level or tutorial lesson is completed, the app displays a level complete overlay and plays a Flame animation (Pond Ripples or Ripple Fireworks) that utilizes theme-specific coloring:
 
-- **Light Screens**: Renders animations, overlay text ("Level Complete"), congratulations messages, and celebration icons in the soft primary brand blue (`AppTheme.primarySeed`).
-- **Dark Screens**: Renders animations, overlay text, congratulations messages, and celebration icons in the brand green accent color (`AppTheme.secondarySeed`) instead of stark white for a softer, integrated aesthetic.
+- **Light Screens**: Renders animations, overlay text ("Level Complete"), congratulations messages, and celebration icons in forest primary (`AppTheme.primarySeed`).
+- **Dark Screens**: Renders animations, overlay text, congratulations messages, and celebration icons in sage (`AppTheme.secondarySeed`) for a softer moonlit garden accent.
 
 ---
 

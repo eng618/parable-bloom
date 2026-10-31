@@ -84,6 +84,9 @@ flutter:
 
   assets:
     - assets/art/
+    - assets/art/home/
+    - assets/art/ornaments/
+    - assets/art/extras/
     - assets/audio/
     - assets/data/
     - assets/levels/
@@ -95,25 +98,17 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
+  fonts:
+    - family: ParableDisplay
+      fonts:
+        - asset: assets/fonts/ParableDisplay-Regular.ttf
+        - asset: assets/fonts/ParableDisplay-Italic.ttf
+          style: italic
+        - asset: assets/fonts/ParableDisplay-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/ParableDisplay-BoldItalic.ttf
+          weight: 700
+          style: italic
 
 flutter_launcher_icons:
   image_path: assets/art/app_icon_branded.png

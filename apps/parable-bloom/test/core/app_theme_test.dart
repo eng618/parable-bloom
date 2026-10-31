@@ -15,7 +15,7 @@ void main() {
     test('Same colors should have minimum contrast (1.0)', () {
       final white = Colors.white;
       final black = Colors.black;
-      final customColor = const Color(0xFF3A7DAF);
+      final customColor = const Color(0xFF344D2F);
 
       expect(AppTheme.getContrastRatio(white, white), closeTo(1.0, 0.01));
       expect(AppTheme.getContrastRatio(black, black), closeTo(1.0, 0.01));
@@ -24,8 +24,8 @@ void main() {
     });
 
     test('getContrastRatio is commutative', () {
-      final primary = const Color(0xFF3A7DAF);
-      final background = const Color(0xFFF8F5EF);
+      final primary = const Color(0xFF344D2F);
+      final background = const Color(0xFFF9F3E5);
 
       final ratio1 = AppTheme.getContrastRatio(primary, background);
       final ratio2 = AppTheme.getContrastRatio(background, primary);
@@ -59,13 +59,37 @@ void main() {
         'Calculates expected contrast ratios for known WCAG compliancy thresholds',
         () {
       // Verify contrast ratio of specific palette colors
-      final primary = const Color(0xFF3A7DAF); // Brand primary blue
-      final lightBg = const Color(0xFFF8F5EF); // Lightened beige background
+      final primary = const Color(0xFF344D2F); // Forest primary
+      final lightBg = const Color(0xFFF9F3E5); // Garden cream background
 
       final ratio = AppTheme.getContrastRatio(primary, lightBg);
 
-      // Known contrast ratio for #3A7DAF vs #F8F5EF is approx 4.08
-      expect(ratio, closeTo(4.08, 0.05));
+      // Forest on cream should clear WCAG AA for normal text (>= 4.5)
+      expect(ratio, greaterThanOrEqualTo(4.5));
+    });
+
+    test('Dark moss primary contrasts with night soil background', () {
+      final moss = const Color(0xFFA3B18A);
+      final nightSoil = const Color(0xFF141914);
+      final ratio = AppTheme.getContrastRatio(moss, nightSoil);
+      expect(ratio, greaterThanOrEqualTo(4.5));
+    });
+  });
+
+  group('AppTheme garden palette', () {
+    test('light and dark themes expose garden primary seeds', () {
+      expect(AppTheme.primarySeed, const Color(0xFF344D2F));
+      expect(AppTheme.primarySeedDark, const Color(0xFFA3B18A));
+      expect(AppTheme.lightTheme.colorScheme.primary, AppTheme.primarySeed);
+      expect(AppTheme.darkTheme.colorScheme.primary, AppTheme.primarySeedDark);
+      expect(
+        AppTheme.lightTheme.scaffoldBackgroundColor,
+        const Color(0xFFF9F3E5),
+      );
+      expect(
+        AppTheme.darkTheme.scaffoldBackgroundColor,
+        const Color(0xFF141914),
+      );
     });
   });
 }

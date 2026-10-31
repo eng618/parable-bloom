@@ -115,7 +115,7 @@ class GardenGame extends FlameGame with TapCallbacks {
     LoggerService.debug('Constructor called - creating new instance',
         tag: 'GardenGame');
     // Initialize with default theme colors - will be updated by game screen
-    _backgroundColor = const Color(0xFF1A2E3F); // Default dark background
+    _backgroundColor = const Color(0xFF141914); // Default moonlit garden soil
     _tapEffectColor = const Color(0xFFE6E1E5); // Default light for dark theme
     _vineAttemptedColor = const Color(0xFFFFFFFF);
   }
