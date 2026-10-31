@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/service_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
 import '../../../../core/services/logger_service.dart';
+import '../../../../core/services/sfx_controller.dart';
 import '../../domain/entities/level_data.dart';
 import '../../domain/services/level_solver_service.dart';
 import '../../presentation/widgets/garden_game.dart';
@@ -356,6 +360,7 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
       }
 
       ref.read(gameInstanceProvider.notifier).decrementGrace();
+      unawaited(ref.read(sfxControllerProvider).play(GameSfx.graceLoss));
     } else {
       LoggerService.debug(
         '$vineId already attempted, skipping life decrement',

@@ -79,6 +79,18 @@ void main() {
       expect(enabled, isTrue);
     });
 
+    test('should save and retrieve sfx enabled', () async {
+      expect(await repository.getSfxEnabled(), isTrue);
+      await repository.setSfxEnabled(false);
+      expect(await repository.getSfxEnabled(), isFalse);
+    });
+
+    test('should fall back to default sfx setting for invalid stored type',
+        () async {
+      await box.put('sfxEnabled', 'loud');
+      expect(await repository.getSfxEnabled(), isTrue);
+    });
+
     test('should fall back to default board zoom scale for invalid stored type',
         () async {
       await box.put('boardZoomScale', 'zoomed');

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Level-entry camera ease-out: start ~1.22× fit-to-board, ease to resting fit (× board zoom scale) in ~750ms; Reset Zoom returns to fit. Auto-clear pans only when a vine is off-screen (no zoom-in).
+- Gameplay SFX pack (`assets/audio/sfx/`) with slide/rustle, bloom, blocked, grace loss, level complete, and UI tap cues; separate SFX toggle alongside music.
 - Visual refresh palette (parchment cream / forest green light; moonlit soil / moss dark) with Home botanical framing assets and garden ornaments.
 
 ### Changed

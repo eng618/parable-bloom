@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
@@ -17,8 +18,16 @@ class CameraState {
   final double maxZoom;
   final bool isAnimating;
 
-  /// Single source of truth for the upper zoom bound.
+  /// Fit-to-board zoom (padding applied) for the current screen/grid.
+  /// Resting zoom is [fitZoom] × user [boardZoomScaleProvider].
+  final double fitZoom;
+
+  /// Single source of truth for the absolute upper zoom bound floor.
   static const double kMaxZoom = 2.5;
+
+  /// Modest padding so the full board sits inside the viewport with breathing
+  /// room (phones + browser chrome).
+  static const double kFitPadding = 0.9;
 
   const CameraState({
     required this.zoom,
@@ -26,6 +35,7 @@ class CameraState {
     required this.minZoom,
     required this.maxZoom,
     this.isAnimating = false,
+    this.fitZoom = 1.0,
   });
 
   CameraState copyWith({
@@ -34,6 +44,7 @@ class CameraState {
     double? minZoom,
     double? maxZoom,
     bool? isAnimating,
+    double? fitZoom,
   }) {
     return CameraState(
       zoom: zoom ?? this.zoom,
@@ -41,18 +52,19 @@ class CameraState {
       minZoom: minZoom ?? this.minZoom,
       maxZoom: maxZoom ?? this.maxZoom,
       isAnimating: isAnimating ?? this.isAnimating,
+      fitZoom: fitZoom ?? this.fitZoom,
     );
   }
 
   static CameraState defaultState() {
-    // Bounds match updateZoomBounds(): min in (fit * 0.85).clamp(0.3, 1.0),
-    // max is kMaxZoom. Keep them in sync.
+    // Bounds match updateZoomBounds(): min near fit*0.5, max ≥ kMaxZoom.
     return CameraState(
       zoom: 1.0,
       panOffset: vm.Vector2.zero(),
       minZoom: 0.5,
       maxZoom: kMaxZoom,
       isAnimating: false,
+      fitZoom: 1.0,
     );
   }
 
@@ -65,6 +77,7 @@ class CameraState {
           minZoom == other.minZoom &&
           maxZoom == other.maxZoom &&
           isAnimating == other.isAnimating &&
+          fitZoom == other.fitZoom &&
           panOffset.x == other.panOffset.x &&
           panOffset.y == other.panOffset.y;
 
@@ -76,6 +89,7 @@ class CameraState {
         minZoom,
         maxZoom,
         isAnimating,
+        fitZoom,
       );
 }
 
@@ -105,71 +119,108 @@ class CameraStateNotifier extends Notifier<CameraState> {
     return CameraState.defaultState();
   }
 
+  /// Fit-to-board zoom for the given viewport and grid (shared by bounds,
+  /// entry animation, and reset).
+  static double computeFitZoom({
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+    double padding = CameraState.kFitPadding,
+  }) {
+    final gridWidth = GameBoardLayout.boardWidth(gridCols);
+    final gridHeight = GameBoardLayout.boardHeight(gridRows);
+    if (gridWidth <= 0 || gridHeight <= 0) return 1.0;
+    if (screenWidth <= 0 || screenHeight <= 0) return 1.0;
+
+    final zoomToFitWidth = (screenWidth * padding) / gridWidth;
+    final zoomToFitHeight = (screenHeight * padding) / gridHeight;
+    return math.min(zoomToFitWidth, zoomToFitHeight);
+  }
+
+  double _boardZoomScale() => ref.read(boardZoomScaleProvider).value ?? 1.0;
+
+  /// Resting zoom = fit × user scale, clamped to current bounds.
+  double restingZoomFor(double fitZoom) {
+    final scaled = fitZoom * _boardZoomScale();
+    final minZ = state.minZoom > 0 ? state.minZoom : scaled * 0.5;
+    final maxZ = state.maxZoom > 0 ? state.maxZoom : CameraState.kMaxZoom;
+    return scaled.clamp(minZ, maxZ).toDouble();
+  }
+
   void updateZoomBounds({
     required double screenWidth,
     required double screenHeight,
     required int gridCols,
     required int gridRows,
   }) {
-    final gridWidth = GameBoardLayout.boardWidth(gridCols);
-    final gridHeight = GameBoardLayout.boardHeight(gridRows);
+    final fitZoom = computeFitZoom(
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridCols: gridCols,
+      gridRows: gridRows,
+    );
 
-    const padding = 0.9;
-    final zoomToFitWidth = (screenWidth * padding) / gridWidth;
-    final zoomToFitHeight = (screenHeight * padding) / gridHeight;
-    final zoomToFit =
-        zoomToFitWidth < zoomToFitHeight ? zoomToFitWidth : zoomToFitHeight;
-
-    final minZoom = (zoomToFit * 0.85).clamp(0.3, 1.0);
-    final maxZoom = CameraState.kMaxZoom;
+    // Allow the full boardZoomScale range (0.5–2.0) plus a little headroom
+    // for the level-entry ease-out start and pinch gestures.
+    final minZoom = (fitZoom * 0.45).clamp(0.15, fitZoom);
+    final maxZoom = math.max(
+      CameraState.kMaxZoom,
+      fitZoom * 2.0 * AnimationTiming.entryZoomFactor,
+    );
 
     LoggerService.debug(
-      'Updated zoom bounds - min: $minZoom, max: $maxZoom (fit: $zoomToFit)',
+      'Updated zoom bounds - min: $minZoom, max: $maxZoom (fit: $fitZoom)',
       tag: 'CameraStateNotifier',
     );
 
     state = state.copyWith(
-      minZoom: minZoom,
-      maxZoom: maxZoom,
+      minZoom: minZoom.toDouble(),
+      maxZoom: maxZoom.toDouble(),
+      fitZoom: fitZoom,
     );
   }
 
+  /// Once per level entry: start slightly zoomed in, ease out to resting
+  /// fit-zoom (× user boardZoomScale), pan centered.
   void animateToDefaultZoom({
     required double screenWidth,
     required double screenHeight,
     required int gridCols,
     required int gridRows,
   }) {
-    final gridWidth = GameBoardLayout.boardWidth(gridCols);
-    final gridHeight = GameBoardLayout.boardHeight(gridRows);
+    updateZoomBounds(
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridCols: gridCols,
+      gridRows: gridRows,
+    );
 
-    const padding = 0.9;
-    final zoomToFitWidth = (screenWidth * padding) / gridWidth;
-    final zoomToFitHeight = (screenHeight * padding) / gridHeight;
-    final initialZoom =
-        zoomToFitWidth < zoomToFitHeight ? zoomToFitWidth : zoomToFitHeight;
+    final fitZoom = state.fitZoom;
+    final restingZoom = restingZoomFor(fitZoom);
+    final entryZoom = (restingZoom * AnimationTiming.entryZoomFactor)
+        .clamp(state.minZoom, state.maxZoom)
+        .toDouble();
 
-    final boardZoomScale = ref.read(boardZoomScaleProvider).value ?? 1.0;
-
-    _animationStartZoom = initialZoom;
-    _animationTargetZoom = 1.0 * boardZoomScale;
+    _animationStartZoom = entryZoom;
+    _animationTargetZoom = restingZoom;
     _animationStartOffset = vm.Vector2.zero();
     _animationTargetOffset = vm.Vector2.zero();
     _animationProgress = 0.0;
 
     state = state.copyWith(
-      zoom: initialZoom,
+      zoom: entryZoom,
       panOffset: vm.Vector2.zero(),
       isAnimating: true,
     );
 
     LoggerService.debug(
-      'Starting animation from zoom $initialZoom to $_animationTargetZoom',
+      'Starting entry ease-out from zoom $entryZoom to $restingZoom (fit $fitZoom)',
       tag: 'CameraStateNotifier',
     );
 
     if (ref.read(disableAnimationsProvider)) {
-      state = state.copyWith(isAnimating: false, zoom: _animationTargetZoom);
+      state = state.copyWith(isAnimating: false, zoom: restingZoom);
       LoggerService.debug(
         'Animations disabled - skipping animation',
         tag: 'CameraStateNotifier',
@@ -344,14 +395,15 @@ class CameraStateNotifier extends Notifier<CameraState> {
     state = CameraState.defaultState();
   }
 
+  /// Returns to full-board resting zoom (fit × boardZoomScale), centered.
   void resetToCenter() {
     // Take over any running animation rather than ignoring the tap.
     _interruptAnimation();
 
-    final boardZoomScale = ref.read(boardZoomScaleProvider).value ?? 1.0;
+    final resting = restingZoomFor(state.fitZoom);
 
     state = state.copyWith(
-      zoom: 1.0 * boardZoomScale,
+      zoom: resting,
       panOffset: vm.Vector2.zero(),
       isAnimating: false,
     );
@@ -392,6 +444,9 @@ class CameraStateNotifier extends Notifier<CameraState> {
     return completer.future;
   }
 
+  /// Auto-clear helper: keep current zoom (wide view); only pan if the vine
+  /// would be off-screen. Nudges just enough to bring cells into the safe
+  /// margin — does not zoom in or snap-center on the vine.
   Future<void> ensureVineVisible(VineData vine) async {
     final game = ref.read(gameInstanceProvider);
     final level = ref.read(currentLevelProvider);
@@ -416,15 +471,21 @@ class CameraStateNotifier extends Notifier<CameraState> {
       return;
     }
 
-    final vineCenter = _calculateVineCenter(vine, gridRows);
-    final gridWidth = GameBoardLayout.boardWidth(gridCols);
-    final gridHeight = GameBoardLayout.boardHeight(gridRows);
+    final nudge = _panNudgeToRevealVine(
+      vine,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridCols: gridCols,
+      gridRows: gridRows,
+    );
 
-    final targetZoom = state.zoom;
+    if (nudge.x == 0 && nudge.y == 0) {
+      return;
+    }
 
     final targetPanOffset = vm.Vector2(
-      (gridWidth / 2 - vineCenter.x) * targetZoom,
-      (gridHeight / 2 - vineCenter.y) * targetZoom,
+      state.panOffset.x + nudge.x,
+      state.panOffset.y + nudge.y,
     );
 
     final constrainedPanOffset = _constrainPanOffset(
@@ -435,10 +496,60 @@ class CameraStateNotifier extends Notifier<CameraState> {
       gridRows: gridRows,
     );
 
+    // Preserve wide view — never zoom during auto-clear.
     await animateToPosition(
-      targetZoom: targetZoom,
+      targetZoom: state.zoom,
       targetPanOffset: constrainedPanOffset,
     );
+  }
+
+  /// Minimum pan delta (screen space) so every vine cell sits inside the
+  /// safe margin. Prefer nudge-over-center to keep the wide resting view.
+  vm.Vector2 _panNudgeToRevealVine(
+    VineData vine, {
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+  }) {
+    final gridWidth = GameBoardLayout.boardWidth(gridCols) * state.zoom;
+    final gridHeight = GameBoardLayout.boardHeight(gridRows) * state.zoom;
+
+    final centeredX = (screenWidth - gridWidth) / 2;
+    final centeredY = (screenHeight - gridHeight) / 2;
+
+    final gridPosX = centeredX + state.panOffset.x;
+    final gridPosY = centeredY + state.panOffset.y;
+
+    const margin = 40.0;
+    double needDx = 0;
+    double needDy = 0;
+
+    for (final cell in vine.orderedPath) {
+      final x = cell['x']!;
+      final y = cell['y']!;
+      final visualRow = gridRows - 1 - y;
+
+      final localX = GameBoardLayout.cellCenterX(x);
+      final localY = GameBoardLayout.cellCenterY(visualRow);
+
+      final screenX = gridPosX + localX * state.zoom;
+      final screenY = gridPosY + localY * state.zoom;
+
+      if (screenX < margin) {
+        needDx = math.max(needDx, margin - screenX);
+      } else if (screenX > screenWidth - margin) {
+        needDx = math.min(needDx, (screenWidth - margin) - screenX);
+      }
+
+      if (screenY < margin) {
+        needDy = math.max(needDy, margin - screenY);
+      } else if (screenY > screenHeight - margin) {
+        needDy = math.min(needDy, (screenHeight - margin) - screenY);
+      }
+    }
+
+    return vm.Vector2(needDx, needDy);
   }
 
   bool _isVineFullyVisible(
@@ -478,29 +589,6 @@ class CameraStateNotifier extends Notifier<CameraState> {
       }
     }
     return true;
-  }
-
-  vm.Vector2 _calculateVineCenter(VineData vine, int gridRows) {
-    double minX = double.infinity;
-    double maxX = -double.infinity;
-    double minY = double.infinity;
-    double maxY = -double.infinity;
-
-    for (final cell in vine.orderedPath) {
-      final x = cell['x']!;
-      final y = cell['y']!;
-      final visualRow = gridRows - 1 - y;
-
-      final cx = GameBoardLayout.cellCenterX(x);
-      final cy = GameBoardLayout.cellCenterY(visualRow);
-
-      if (cx < minX) minX = cx;
-      if (cx > maxX) maxX = cx;
-      if (cy < minY) minY = cy;
-      if (cy > maxY) maxY = cy;
-    }
-
-    return vm.Vector2((minX + maxX) / 2, (minY + maxY) / 2);
   }
 
   double _pow(double x, int exp) {

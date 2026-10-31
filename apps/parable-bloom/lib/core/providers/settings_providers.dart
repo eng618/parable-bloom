@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/environment_config.dart';
 import '../services/background_audio_controller.dart';
+import '../services/sfx_controller.dart';
 import 'infrastructure_providers.dart';
 import 'service_providers.dart';
 
@@ -67,6 +68,10 @@ final backgroundAudioEnabledProvider =
   BackgroundAudioEnabledNotifier.new,
 );
 
+final sfxEnabledProvider = NotifierProvider<SfxEnabledNotifier, bool>(
+  SfxEnabledNotifier.new,
+);
+
 /// Feature flag: textured vine skins (classic / blossom / ethereal) behind
 /// [vineTexturedSkinsEnabled]. When disabled only the flat/simple style is
 /// available so textured rendering stays a development-only option.
@@ -109,6 +114,20 @@ class BackgroundAudioEnabledNotifier extends Notifier<bool> {
     state = enabled;
     final repository = ref.read(settingsRepositoryProvider);
     await repository.setBackgroundAudioEnabled(enabled);
+  }
+}
+
+class SfxEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final box = ref.watch(hiveBoxProvider);
+    return box.get('sfxEnabled', defaultValue: true) as bool;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setSfxEnabled(enabled);
   }
 }
 
@@ -223,6 +242,23 @@ final backgroundAudioControllerProvider = Provider<BackgroundAudioController>((
   });
 
   unawaited(controller.setEnabled(ref.read(backgroundAudioEnabledProvider)));
+
+  return controller;
+});
+
+final sfxControllerProvider = Provider<SfxController>((ref) {
+  final controller = SfxController();
+
+  ref.onDispose(() {
+    unawaited(controller.dispose());
+  });
+
+  ref.listen<bool>(sfxEnabledProvider, (previous, next) {
+    unawaited(controller.setEnabled(next));
+  });
+
+  unawaited(controller.setEnabled(ref.read(sfxEnabledProvider)));
+  unawaited(controller.ensureLoaded());
 
   return controller;
 });

@@ -13,6 +13,9 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _backgroundAudioEnabledKey = 'backgroundAudioEnabled';
   static const bool _defaultBackgroundAudioEnabled = true;
 
+  static const String _sfxEnabledKey = 'sfxEnabled';
+  static const bool _defaultSfxEnabled = true;
+
   static const String _hapticsEnabledKey = 'hapticsEnabled';
   static const bool _defaultHapticsEnabled = true;
 
@@ -68,6 +71,16 @@ class HiveSettingsRepository implements SettingsRepository {
   @override
   Future<void> setBackgroundAudioEnabled(bool enabled) async {
     await hiveBox.put(_backgroundAudioEnabledKey, enabled);
+  }
+
+  @override
+  Future<bool> getSfxEnabled() async {
+    return _readTypedValue<bool>(_sfxEnabledKey, _defaultSfxEnabled);
+  }
+
+  @override
+  Future<void> setSfxEnabled(bool enabled) async {
+    await hiveBox.put(_sfxEnabledKey, enabled);
   }
 
   @override

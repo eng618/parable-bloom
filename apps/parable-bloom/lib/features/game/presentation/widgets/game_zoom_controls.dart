@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/settings_providers.dart';
+import '../../../../core/services/sfx_controller.dart';
 import '../../application/providers/camera_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
 
@@ -40,6 +44,9 @@ class GameZoomControls extends ConsumerWidget {
               onPressed: zoom >= maxZoom
                   ? null
                   : () {
+                      unawaited(
+                        ref.read(sfxControllerProvider).play(GameSfx.uiTap),
+                      );
                       final newZoom = (zoom + _zoomStep).clamp(
                         minZoom,
                         maxZoom,
@@ -55,6 +62,9 @@ class GameZoomControls extends ConsumerWidget {
               onPressed: zoom <= minZoom
                   ? null
                   : () {
+                      unawaited(
+                        ref.read(sfxControllerProvider).play(GameSfx.uiTap),
+                      );
                       final newZoom = (zoom - _zoomStep).clamp(
                         minZoom,
                         maxZoom,
@@ -67,7 +77,12 @@ class GameZoomControls extends ConsumerWidget {
               icon: const Icon(Icons.center_focus_strong),
               tooltip: 'Reset Zoom',
               splashColor: Colors.transparent,
-              onPressed: notifier.resetToCenter,
+              onPressed: () {
+                unawaited(
+                  ref.read(sfxControllerProvider).play(GameSfx.uiTap),
+                );
+                notifier.resetToCenter();
+              },
             ),
           ],
         ),

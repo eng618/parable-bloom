@@ -30,7 +30,7 @@ type: 'Game Design Document'
   - Once a vine has a registered _Failed Vine Attempt_ and is flagged in state (`hasBeenAttempted == true`), it is queued for automatic clearing.
   - When the player clears the necessary blocker vines (which could be a chain of 2–3 blocker vines), the queued vine dynamically becomes unblocked.
   - As soon as the queued vine has a _Clear Path to Exit_ (and no other vine is actively animating), the auto-clearing sequence triggers:
-    1. **Camera Repositioning**: The camera checks if all cells of the queued vine are fully visible on screen. If any segment is off-screen or within a 40px margin of the screen edge, the camera smoothly pans/zooms to center the vine.
+    1. **Camera Repositioning**: The camera keeps the wide fit-to-board view (no zoom-in). If any segment of the queued vine is off-screen or within a 40px margin, the camera smoothly pans just enough to reveal it.
     2. **Auto-Clear Delay**: The game pauses for a brief 200ms delay to allow the player to register the camera adjustment.
     3. **Slide Out**: The vine automatically plays its slide-out/clear animation and exits the board without requiring another tap from the player.
     4. **Camera State**: The camera remains at its panned position (it does not reset to the default center) unless the entire level board is fully cleared/completed.
@@ -101,7 +101,7 @@ Interactive elements are highlighted dynamically from each vine's head coordinat
   - **Ethereal**: Dark cosmic obsidian wood paths with luminous glowing cyan veins, neon leaves, and a soft cyan outer neon-glow halo underneath.
   - **Simple (Accessibility)**: Clean, sleek solid geometric vector paths with sharp triangular chevron heads and rounded caps, matching modern abstract maze puzzles.
   - Managed by `vineStyleProvider` and toggled via the Settings screen and the Pause Menu.
-- **Board Default Zoom**: A user-configurable setting (0.5x to 2.0x) that adjusts how close the camera starts to the board, improving visibility for different screen sizes and accessibility needs.
+- **Board Default Zoom**: A user-configurable multiplier (0.5x to 2.0x) on fit-to-board resting zoom. On level entry the camera starts slightly zoomed in (~1.22× resting) and eases out to the resting fit view (~750ms). Reset Zoom returns to that resting fit.
 - **Trackpad Panning**: Native support for two-finger swipe/scroll gestures on trackpads (and mouse scroll wheels) to smoothly pan the game board, eliminating the need to click and drag.
 - **Modes**: Adaptive Light and Dark themes that sync with the background imagery.
 
@@ -119,11 +119,15 @@ Colors are used functionally to indicate vine roles and difficulty.
 
 ### Audio
 
-- **Music**: Ambient wind loops, soft nature sounds.
-- **SFX**:
-  - **Slide**: Gentle rustle (leaves moving).
-  - **Bloom**: Soft chime or bell when a vine exits.
-  - **Blocked**: Dull thud or "wilt" sound.
+- **Music**: Ambient wind loops, soft nature sounds (`background.mp3`).
+- **SFX** (toggleable separately; sit on top of music):
+  - **Slide start**: Soft whoosh when a vine begins moving.
+  - **Rustle**: Light looping leaf rustle while a vine slides.
+  - **Bloom**: Short chime on successful clear (warmer flourish for longer vines).
+  - **Blocked / Wilt**: Dull thud + descending tone on a blocked bump.
+  - **Grace loss**: Soft two-tone when a failed attempt costs Grace.
+  - **Level complete**: Warm major flourish.
+  - **UI tap**: Light confirm tick on zoom controls and similar taps.
 
 ### Micro-animations & "Juice" (FEEL)
 

@@ -15,6 +15,12 @@ abstract class SettingsRepository {
   /// Enable/disable background audio.
   Future<void> setBackgroundAudioEnabled(bool enabled);
 
+  /// Whether gameplay/UI sound effects are enabled.
+  Future<bool> getSfxEnabled();
+
+  /// Enable/disable gameplay/UI sound effects.
+  Future<void> setSfxEnabled(bool enabled);
+
   /// Whether haptic feedback is enabled.
   Future<bool> getHapticsEnabled();
 

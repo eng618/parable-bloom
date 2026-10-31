@@ -266,6 +266,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     }
 
     // Update step-by-step animator
+    final wasBlockedReverse = _animator.isBlockedAnimation;
     _animator.update(
       dt: dt,
       grid: parent,
@@ -273,6 +274,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         if (!_bloomRenderer.isShowingBloomEffect) {
           final level = parent.getCurrentLevelData();
           if (level != null) {
+            _emitSlideEndedSfx(cleared: true);
             _bloomRenderer.startBloomEffect(
               vineData: vineData,
               level: level,
@@ -284,6 +286,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       onFinished: _finishAnimation,
       logDebug: _logDebug,
     );
+    if (!wasBlockedReverse && _animator.isBlockedAnimation) {
+      _emitSlideEndedSfx(cleared: false);
+    }
   }
 
   void _updateRail(double dt) {
@@ -309,6 +314,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final update = _slide.update(dt);
     if (update.justReachedBlocker) {
       parent.markVineAttempted(vineData.id);
+      _emitSlideEndedSfx(cleared: false);
     }
     if (update.justExitedBoard && !_bloomRenderer.isShowingBloomEffect) {
       _startRailBloom();
@@ -322,6 +328,16 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   }
 
   bool _railClearFinished = false;
+  bool _slideSfxResolved = false;
+
+  void _emitSlideEndedSfx({required bool cleared}) {
+    if (_slideSfxResolved) return;
+    _slideSfxResolved = true;
+    parent.parent.sink.onVineSlideEnded(
+      cleared: cleared,
+      vineLength: vineData.orderedPath.length,
+    );
+  }
 
   void _startRailBloom() {
     final track = _railTrack;
@@ -329,6 +345,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final level = parent.getCurrentLevelData();
     if (level == null) return;
     final headCell = track.headCellAt(_slide.headArc);
+    _emitSlideEndedSfx(cleared: true);
     _bloomRenderer.startBloomEffect(
       vineData: vineData,
       level: level,
@@ -346,6 +363,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     if (_slide.isAnimating) return;
     final level = parent.getCurrentLevelData();
     if (level == null) return;
+
+    final vineLength = vineData.orderedPath.length;
+    parent.parent.sink.onVineSlideStarted(vineLength: vineLength);
 
     if (!useRailRenderer) {
       _animator.startSlideOut(grid: parent, logDebug: _logDebug);
@@ -367,6 +387,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     );
     _railClearFinished = false;
     _railIdleCacheValid = false;
+    _slideSfxResolved = false;
 
     parent.setVineAnimationState(
       vineData.id,

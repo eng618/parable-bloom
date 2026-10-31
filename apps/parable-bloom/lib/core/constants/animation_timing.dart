@@ -1,6 +1,12 @@
 /// Centralized timing values for gameplay and camera animations.
 class AnimationTiming {
-  static const double cameraTransitionSeconds = 0.8;
+  /// Level-entry ease-out and reset-zoom transitions (~600–900 ms).
+  static const double cameraTransitionSeconds = 0.75;
+
+  /// Start zoom multiplier relative to resting fit-zoom on level entry.
+  /// Camera eases from `resting * entryZoomFactor` down to resting once.
+  static const double entryZoomFactor = 1.22;
+
   static const double vineStepSeconds = 0.05;
   static const double vineBloomSeconds = 0.5;
 
