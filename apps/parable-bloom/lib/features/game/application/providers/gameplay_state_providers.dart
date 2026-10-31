@@ -227,12 +227,17 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
   LevelData? _levelData;
   LevelSolverService? _solverService;
 
-  /// Memoized result of [_calculateVineStates]. The blocked-path simulation
-  /// (up to 300 steps x active vines per vine) is the hottest CPU loop in
-  /// state management, and callers re-run it on every animation-state flip —
-  /// often with unchanged inputs.
+  /// Memoized result of [_calculateVineStates]. Identical inputs return the
+  /// same map instance so listeners can skip work.
   String _lastCalcKey = '';
   Map<String, VineState> _lastCalcResult = const {};
+
+  /// Blocking depends only on which vines still occupy the board. A wiggle
+  /// (`normal` ↔ `animatingBlocked`) and a clear finishing
+  /// (`animatingClear` → `cleared`) stay in the same occupancy class, so
+  /// those flips reuse [_blockedByOccupancy] and skip the solver.
+  String? _lastOccupancyKey;
+  Map<String, bool> _blockedByOccupancy = const {};
 
   @override
   Map<String, VineState> build() {
@@ -242,47 +247,78 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
     return _calculateVineStates(levelData, {});
   }
 
+  /// A vine occupies the board unless it has cleared or its clear animation
+  /// has started. `animatingBlocked` still occupies: the wiggle has not
+  /// moved the vine.
+  bool _occupiesBoard(VineState? vineState) {
+    if (vineState == null) return true;
+    if (vineState.isCleared) return false;
+    final animation = vineState.animationState;
+    return animation != VineAnimationState.animatingClear &&
+        animation != VineAnimationState.cleared;
+  }
+
   Map<String, VineState> _calculateVineStates(
     LevelData? levelData,
     Map<String, VineState> currentStates,
   ) {
     if (levelData == null || _solverService == null) return {};
 
-    // Cheap signature of everything the result depends on: level identity,
-    // per-vine cleared/animation flags (which drive the blocking set), and
-    // the preserved attempted/withered flags.
+    // Full signature keeps identical inputs returning the same map.
+    // Occupancy signature is the only input the solver needs.
     final keyBuffer = StringBuffer(levelData.id)
       ..write('|')
       ..write(levelData.vines.length)
       ..write('|');
+    final occupancyBuffer = StringBuffer(levelData.id)
+      ..write('|')
+      ..write(levelData.vines.length)
+      ..write('|');
     for (final vine in levelData.vines) {
-      final s = currentStates[vine.id];
+      final vineState = currentStates[vine.id];
+      final occupies = _occupiesBoard(vineState);
       keyBuffer
         ..write(vine.id)
-        ..write(s == null
+        ..write(vineState == null
             ? 'n'
-            : '${s.isCleared ? 1 : 0}${s.animationState.index}${s.hasBeenAttempted ? 1 : 0}${s.isWithered ? 1 : 0}')
+            : '${vineState.isCleared ? 1 : 0}${vineState.animationState.index}${vineState.hasBeenAttempted ? 1 : 0}${vineState.isWithered ? 1 : 0}')
+        ..write(';');
+      occupancyBuffer
+        ..write(vine.id)
+        ..write(occupies ? '1' : '0')
         ..write(';');
     }
     final key = keyBuffer.toString();
     if (key == _lastCalcKey) return _lastCalcResult;
 
-    final blockingVineIds = <String>[];
-    for (final vine in levelData.vines) {
-      final currentState = currentStates[vine.id];
-      final isCleared = currentState?.isCleared ?? false;
-      final animationState =
-          currentState?.animationState ?? VineAnimationState.normal;
-
+    final occupancyKey = occupancyBuffer.toString();
+    final Map<String, bool> blocked;
+    if (_lastOccupancyKey == occupancyKey) {
+      blocked = _blockedByOccupancy;
+    } else {
       // A finished clear animation means the vine is gone even if the
       // isCleared flag has not propagated yet (finish notifies animation
       // state before cleared). Counting it as a blocker resurrects it as a
       // ghost and deadlocks neighbors.
-      if (!isCleared &&
-          animationState != VineAnimationState.animatingClear &&
-          animationState != VineAnimationState.cleared) {
-        blockingVineIds.add(vine.id);
+      final blockingVineIds = <String>[
+        for (final vine in levelData.vines)
+          if (_occupiesBoard(currentStates[vine.id])) vine.id,
+      ];
+      final computed = <String, bool>{};
+      for (final vine in levelData.vines) {
+        if (!_occupiesBoard(currentStates[vine.id])) {
+          computed[vine.id] = false;
+          continue;
+        }
+        computed[vine.id] = _solverService!.isVineBlockedInState(
+          levelData,
+          vine.id,
+          blockingVineIds,
+        );
       }
+      _lastOccupancyKey = occupancyKey;
+      _blockedByOccupancy = computed;
+      blocked = computed;
     }
 
     final newStates = <String, VineState>{};
@@ -294,14 +330,13 @@ class VineStatesNotifier extends Notifier<Map<String, VineState>> {
       final hasBeenAttempted = currentState?.hasBeenAttempted ?? false;
       final isWithered = currentState?.isWithered ?? false;
 
-      var isBlocked = false;
-      if (!isCleared && animationState == VineAnimationState.normal) {
-        isBlocked = _solverService!.isVineBlockedInState(
-          levelData,
-          vine.id,
-          blockingVineIds,
-        );
-      }
+      // Only an idle vine publishes isBlocked. A wiggle or an in-flight
+      // clear reports unblocked so input and color treat it as in motion.
+      // The cached bit is restored when the vine returns to normal.
+      final isBlocked =
+          !isCleared && animationState == VineAnimationState.normal
+              ? (blocked[vine.id] ?? false)
+              : false;
 
       newStates[vine.id] = VineState(
         id: vine.id,

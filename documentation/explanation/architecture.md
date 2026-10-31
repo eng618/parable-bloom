@@ -89,7 +89,7 @@ Flame-side rendering bypasses Riverpod notifications entirely for the per-frame 
 ### 3.2 Logic & Solvers
 
 - **`LevelSolver`**: A Breadth-First Search (BFS) solver that validates level solvability and determines blocking relationships.
-- **Blocking Logic**: A vine is "blocked" if its path is obstructed by another vine. This is recalculated dynamically after every move. When a blocked vine is tapped, it registers as a Failed Vine Attempt, which wiggles the vine and queues it. When the blocking obstacles are cleared, the queued vine automatically clears.
+- **Blocking Logic**: A vine is "blocked" if its path is obstructed by another vine. This is recalculated when the set of vines still on the board changes. A wiggle or the tail of a clear animation reuses the last blocking result. When a blocked vine is tapped, it registers as a Failed Vine Attempt, which wiggles the vine and queues it. When the blocking obstacles are cleared, the queued vine automatically clears.
 
 ### 3.3 Visual Effects & Animations (Juice)
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -17,6 +19,10 @@ import 'core/services/logger_service.dart';
 import 'core/services/openpanel_analytics_client.dart';
 
 const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
+
+/// Cold start will not wait longer than this for anonymous sign-in.
+/// The attempt keeps running after the budget; auth listeners apply it.
+const Duration _guestSessionBudget = Duration(seconds: 2);
 
 /// Entry point for Parable Bloom.
 ///
@@ -40,21 +46,23 @@ const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (!_isScreenshotMode) {
-    // Initialize Firebase with FlutterFire-generated options
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  }
-
-  if (!_isScreenshotMode) {
-    // Error reporting (Sentry, all platforms incl. web). No-op without a
-    // SENTRY_DSN dart-define; pass --dart-define=SENTRY_DSN=... in CI.
-    await ErrorReporting.init();
+  // Hive is the offline source of truth and does not depend on the network.
+  // Overlap it with Firebase so a slow auth handshake cannot delay the box
+  // open. Guest sign-in stays off this path: bundled assets cover play
+  // until the session exists.
+  if (_isScreenshotMode) {
+    LoggerService.info('Running in screenshot mode (Firebase disabled)');
+    await Hive.initFlutter();
+  } else {
+    await Future.wait([
+      _initFirebaseAndReporting(),
+      Hive.initFlutter(),
+    ]);
   }
 
   // Pass all uncaught framework errors to the logger (→ Sentry).
   // Works on web too, unlike the previous Crashlytics-only handler.
+  // Installed after Sentry init so the first captured error has a client.
   FlutterError.onError = (details) {
     LoggerService.error(
       'Uncaught Flutter error',
@@ -71,28 +79,19 @@ void main() async {
     return true;
   };
 
-  if (_isScreenshotMode) {
-    LoggerService.info('Running in screenshot mode (Firebase disabled)');
-  } else {
-    LoggerService.info(
-      'Firebase initialized (error reporting via Sentry)',
-    );
-    // Guest session for logged-out users: auth-gated reads (configs_prod)
-    // require request.auth != null, and progress sync keys off the UID.
-    // Non-fatal — bundled assets cover offline use. Requires Anonymous
-    // sign-in enabled in the Firebase console.
-    await _ensureGuestSession();
-  }
-
-  // Initialize Hive
-  await Hive.initFlutter();
   final hiveBox = await Hive.openBox('garden_save');
 
   if (_isScreenshotMode) {
     await _seedScreenshotData(hiveBox);
   }
 
-  // Initialize Analytics (Firebase + OpenPanel self-hosted)
+  // Initialize Analytics (Firebase + OpenPanel self-hosted).
+  // Guest sign-in overlaps this work. Auth-gated reads (configs_prod)
+  // need a session, and progress sync keys off the UID. Bundled assets
+  // cover play when the handshake is slow or unavailable.
+  final Future<void>? guestSession =
+      _isScreenshotMode ? null : _ensureGuestSession();
+
   final AnalyticsService analyticsService;
   if (_isScreenshotMode) {
     analyticsService = AnalyticsService();
@@ -105,6 +104,14 @@ void main() async {
     );
     analyticsService = AnalyticsService(openpanelClient: openpanelClient);
     await analyticsService.init(enabled: !isOptedOut);
+    try {
+      await guestSession!.timeout(_guestSessionBudget);
+    } on TimeoutException {
+      LoggerService.info(
+        'Guest session still pending; continuing offline-first',
+        tag: 'AuthBootstrap',
+      );
+    }
   }
 
   runApp(
@@ -115,6 +122,18 @@ void main() async {
       ],
       child: const ParableBloomApp(),
     ),
+  );
+}
+
+/// Initializes Firebase and Sentry. Sentry is a no-op without a
+/// `SENTRY_DSN` dart-define; pass `--dart-define=SENTRY_DSN=...` in CI.
+Future<void> _initFirebaseAndReporting() async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await ErrorReporting.init();
+  LoggerService.info(
+    'Firebase initialized (error reporting via Sentry)',
   );
 }
 

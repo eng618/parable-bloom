@@ -8,8 +8,8 @@ Related: [System Architecture](../explanation/architecture.md) · App: `apps/par
 ## Status
 
 - Current phase: Phase 5 (rebuild diet, quick wins) complete
-- Last updated: 2026-10-16
-- Progress: 36 / ~46 items
+- Last updated: 2026-10-31
+- Progress: 37 / ~46 items
 
 ## Phase 0 — Projection Lines Bug Fix (P0, bundled)
 
@@ -74,7 +74,8 @@ Performance review found the solver/camera hot paths already optimized (Phases 1
 - [x] 5.3 `TutorialGuideOverlay`: select a tuple of the individual `VineState`s each lesson reads + first-active-vine id (`_firstActiveId` helper inside the select closure — cheap linear scan, no solver calls); full `vineStatesProvider` map is now watched only inside the lesson 4–5 branch that runs the solver-backed `_firstMovableId`, so the blocker-highlight phase no longer rebuilds on every unrelated animation flip
 - [x] 5.4 `GameZoomControls`: select `(zoom, minZoom, maxZoom)` — pan/centering camera writes (~10fps, `panOffset` changes) no longer rebuild the buttons
 - [x] 5.5 `CellComponent` debug-coordinate label: per-cell cached `TextPainter` with color-keyed rebuild (was a fresh `TextPainter` + `layout()` per cell per frame in debug mode)
-- [ ] 5.6 Follow-on candidates (evaluation backlog): `VineStatesNotifier` memo key includes `animationState.index` (re-solves all vines per animation flip — key on cleared/withered flags + explicit invalidation), incremental `occupiedAll` + integer cell keys in `LevelSolverService._isSolvableExact`/`_canVineClearExact` (string keys + per-step map allocations on the UI isolate), cloud-sync write debounce, `compute` for first-load JSON parsing
+- [x] 5.6a `VineStatesNotifier` blocking cache is keyed on board occupancy (`isCleared` / clear-animation), not `animationState.index`. A wiggle and a clear-finish reuse the last blocked bits; leaving or re-entering the board still re-solves. Attempted/withered flags stay out of the solver key.
+- [ ] 5.6 Follow-on candidates (evaluation backlog): integer cell keys in `LevelSolverService._isSolvableExact` / `_canVineClearExact` (the per-tap path `getDistanceToBlocker` already uses integer keys; the exact BFS is test/validation only), cloud-sync write debounce, `compute` for first-load JSON parsing
 
 ## Verification Checklist (run per phase)
 
@@ -85,6 +86,8 @@ Performance review found the solver/camera hot paths already optimized (Phases 1
 ## Progress Log
 
 _Add newest entries at top._
+
+- `2026-10-31` — Occupancy-keyed blocking cache in `VineStatesNotifier` (5.6a): animation flips that do not change which vines occupy the board skip `isVineBlockedInState`. Startup no longer waits unbounded on anonymous sign-in (2s budget, Hive init overlaps Firebase). Exact-solver string keys, cloud-sync debounce, and isolate JSON parse remain backlog — they are not on the per-frame path.
 
 - `2026-10-16` — Phase 5 rebuild diet landed (quick wins from a fresh performance evaluation): home/journal/guide-overlay/zoom-controls switched to fine-grained `select` watches (see 3.1.1 in `explanation/architecture.md`), debug `TextPainter` cached per cell in `CellComponent`, `GameProgress.firstUncompletedInPlaylist` static helper so Home runs the playlist scan on the selected set. Full suite 283/283 pass, analyze clean, 0 format changes. Phase 5.6 backlog records the solver follow-ons (memo-key granularity, incremental `occupiedAll`, cloud-sync debounce, off-isolate JSON).
 

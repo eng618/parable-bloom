@@ -1,3 +1,10 @@
+## Unreleased
+
+### ⚡ Performance
+
+- skip vine blocking solves when an animation flip does not change which vines still occupy the board
+- overlap Hive init with Firebase, and cap anonymous sign-in at 2 seconds so a slow network cannot hold the first frame
+
 ## 1.11.3 (2026-11-01)
 
 ### 🚀 Features
