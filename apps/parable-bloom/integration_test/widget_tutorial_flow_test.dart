@@ -202,8 +202,9 @@ void main() {
     // Pump once to process the completion listener
     await tester.pump();
 
-    // Level complete overlay should show (celebration icon)
-    expect(find.byIcon(Icons.celebration), findsOneWidget);
+    // Tutorials skip Level Complete parchment / encouraging HUD.
+    expect(find.text('Level Complete'), findsNothing);
+    expect(find.byIcon(Icons.celebration), findsNothing);
 
     // Wait for the 2-second delay and lesson advancement
     await tester.pump(const Duration(seconds: 3));
@@ -317,8 +318,9 @@ void main() {
       container.read(levelCompleteProvider.notifier).setComplete(true);
       await tester.pump();
 
-      // Level complete overlay should show (celebration icon)
-      expect(find.byIcon(Icons.celebration), findsOneWidget);
+      // Tutorials skip Level Complete parchment / encouraging HUD.
+      expect(find.text('Level Complete'), findsNothing);
+      expect(find.byIcon(Icons.celebration), findsNothing);
 
       // Wait for the 2-second delay
       await tester.pump(const Duration(seconds: 3));

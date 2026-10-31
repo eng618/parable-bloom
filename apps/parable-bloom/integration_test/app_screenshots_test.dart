@@ -70,7 +70,7 @@ Future<void> _captureStoreListingScreenshots(
 
   await _pumpFor(tester, const Duration(milliseconds: 600));
   expect(find.text('Level Complete'), findsOneWidget);
-  expect(find.byIcon(Icons.celebration), findsOneWidget);
+  expect(find.byIcon(Icons.celebration), findsNothing);
   await _takeScreenshot('03_win_$suffix');
 
   // Allow overlay flow to complete and return to home before journal capture.

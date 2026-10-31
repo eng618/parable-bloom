@@ -124,10 +124,12 @@ Rationale:
 
 ## Level Completion & Ending Animations
 
-When a level or tutorial lesson is completed, the app displays a level complete overlay and plays a Flame animation (Pond Ripples or Ripple Fireworks) that utilizes theme-specific coloring:
+When a level or tutorial lesson is completed, the app displays a parchment level-complete panel (botanical frame + leaf ornaments, shared with Home / session-close) and plays a Flame animation (Pond Ripples or Ripple Fireworks):
 
-- **Light Screens**: Renders animations, overlay text ("Level Complete"), congratulations messages, and celebration icons in forest primary (`AppTheme.primarySeed`).
-- **Dark Screens**: Renders animations, overlay text, congratulations messages, and celebration icons in sage (`AppTheme.secondarySeed`) for a softer moonlit garden accent.
+- **Panel**: `ColorScheme.surface` card over a soft scaffold scrim; parchment grain + `assets/art/home/frame_*` vignette; leaf sprig header and `GardenLeafDivider`.
+- **Title**: Serif "Level Complete" in `ColorScheme.primary` (forest light / moss dark).
+- **Encouraging HUD line**: `GardenEncouragingMessage` — full-width italic serif muted `onSurfaceVariant` (no side leaf flanks; botanical framing stays on the divider). Shown on **main-game** clears only — tutorials skip this parchment/message beat.
+- **Flame FX**: Light screens tint rings with forest primary (`AppTheme.primarySeed`); dark screens use sage (`AppTheme.secondarySeed`).
 
 ---
 
