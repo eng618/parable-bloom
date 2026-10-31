@@ -5,16 +5,25 @@ import '../../../../core/app_theme.dart';
 /// Full-screen "Level Complete" celebration overlay content.
 ///
 /// Pure presentation: the owning screen owns visibility timing, analytics,
-/// and the congratulatory message.
+/// and the congratulatory message. [onHome] is optional so players can leave
+/// intentionally without Pause → Home (session-close may then show on Home).
 class LevelCompleteOverlay extends StatelessWidget {
-  const LevelCompleteOverlay({super.key, required this.message});
+  const LevelCompleteOverlay({
+    super.key,
+    required this.message,
+    this.onHome,
+  });
 
   final String message;
+
+  /// When set, shows a quiet Home control during the celebration beat.
+  final VoidCallback? onHome;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final themeColor = isDark ? AppTheme.secondarySeed : AppTheme.primarySeed;
+    final cs = Theme.of(context).colorScheme;
 
     return Stack(
       children: [
@@ -69,6 +78,20 @@ class LevelCompleteOverlay extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (onHome != null) ...[
+                  const SizedBox(height: 28),
+                  TextButton.icon(
+                    onPressed: onHome,
+                    icon: Icon(Icons.home_rounded, color: cs.onSurfaceVariant),
+                    label: Text(
+                      'Home',
+                      style: TextStyle(
+                        color: cs.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

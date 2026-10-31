@@ -37,6 +37,26 @@ void main() {
       expect(find.text('Level Complete'), findsOneWidget);
       expect(find.text('Well done!'), findsOneWidget);
       expect(find.byIcon(Icons.celebration), findsOneWidget);
+      expect(find.text('Home'), findsNothing);
+    });
+
+    testWidgets('Home button invokes onHome when provided', (tester) async {
+      var homeTapped = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: LevelCompleteOverlay(
+              message: 'Bloom!',
+              onHome: () => homeTapped = true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Home'), findsOneWidget);
+      await tester.tap(find.text('Home'));
+      await tester.pump();
+      expect(homeTapped, isTrue);
     });
   });
 

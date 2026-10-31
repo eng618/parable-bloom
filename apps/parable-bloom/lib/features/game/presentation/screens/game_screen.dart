@@ -44,6 +44,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   late bool _isLevelCompleteOverlayVisible;
   late String _currentCongratulationMessage;
 
+  /// Set when the player intentionally leaves during the complete beat so we
+  /// do not auto-advance into the next level after navigating Home.
+  bool _homeExitRequested = false;
+
   /// Provider container captured in [didChangeDependencies] while the
   /// element is active. The Flame bridge sink reads through it instead of
   /// [WidgetRef.read], whose ancestor lookup throws while the element is
@@ -61,6 +65,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
     _isLevelCompleteOverlayVisible = false;
     _currentCongratulationMessage = '';
+    _homeExitRequested = false;
     _initGame();
     _subscribeToProviders();
 
@@ -190,7 +195,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           SafeArea(
             child: Align(
               alignment: Alignment.topCenter,
-              child: GameHeader(onPause: _showPauseMenu),
+              child: GameHeader(
+                onPause: _showPauseMenu,
+                onHome: _goHomeFromHeader,
+              ),
             ),
           ),
           if (kIsWeb) _buildZoomControls(),
@@ -211,8 +219,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               final currentLevel = ref.read(currentLevelProvider);
               if (currentLevel == null) return;
 
-              final newOffset =
-                  cameraState.panOffset -
+              final newOffset = cameraState.panOffset -
                   vm.Vector2(
                     pointerSignal.scrollDelta.dx,
                     pointerSignal.scrollDelta.dy,
@@ -318,15 +325,44 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           _restartLevel();
         },
         onHome: () {
-          _logLevelQuit();
           if (context.canPop()) context.pop(); // Close dialog
-          context.go('/');
+          _goHomeFromGameplay(logQuit: true);
         },
       ),
     );
   }
 
-  /// Analytics for abandoning a level via the pause menu.
+  /// Dedicated header Home — intentional leave (session-close may show).
+  void _goHomeFromHeader() {
+    if (_isLevelCompleteOverlayVisible) {
+      _goHomeFromLevelComplete();
+      return;
+    }
+    _goHomeFromGameplay(logQuit: true);
+  }
+
+  /// Pause / header Home while a level is in progress.
+  void _goHomeFromGameplay({required bool logQuit}) {
+    _homeExitRequested = true;
+    if (logQuit) _logLevelQuit();
+    if (!mounted) return;
+    context.go('/');
+  }
+
+  /// Home during the level-complete celebration (level already persisted).
+  void _goHomeFromLevelComplete() {
+    _homeExitRequested = true;
+    if (_isLevelCompleteOverlayVisible) {
+      setState(() {
+        _isLevelCompleteOverlayVisible = false;
+      });
+    }
+    ref.read(levelCompleteProvider.notifier).setComplete(false);
+    if (!mounted) return;
+    context.go('/');
+  }
+
+  /// Analytics for abandoning a level via the pause menu or header Home.
   void _logLevelQuit() {
     final currentLevel = ref.read(currentLevelProvider);
     if (currentLevel == null) return;
@@ -335,15 +371,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         ? ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000).round()
         : -1;
     final tapCount = ref.read(levelTotalTapsProvider);
-    final remainingVines = ref
-        .read(vineStatesProvider)
-        .values
-        .where((s) => !s.isCleared)
-        .length;
+    final remainingVines =
+        ref.read(vineStatesProvider).values.where((s) => !s.isCleared).length;
 
-    ref
-        .read(analyticsServiceProvider)
-        .logLevelQuit(
+    ref.read(analyticsServiceProvider).logLevelQuit(
           levelId: currentLevel.id,
           elapsedSeconds: elapsedSeconds,
           taps: tapCount,
@@ -368,12 +399,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   // Confetti implementation removed; celebration handled via in-game ripple effect.
 
   Widget _buildLevelCompleteOverlay() {
-    return LevelCompleteOverlay(message: _currentCongratulationMessage);
+    return LevelCompleteOverlay(
+      message: _currentCongratulationMessage,
+      onHome: _goHomeFromLevelComplete,
+    );
   }
 
   void _showLevelCompleteOverlay() async {
     if (_isLevelCompleteOverlayVisible) return;
 
+    _homeExitRequested = false;
     _currentCongratulationMessage = pickCongratulationMessage();
 
     setState(() {
@@ -391,10 +426,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       }
     });
 
-    // Advance to next level
+    // Persist completion + detect unlocks; default path continues to next level.
     final currentLevel = ref.read(currentLevelProvider);
     ModuleData? completedModule;
     ModuleScripture? newlyUnlockedScripture;
+    final isDebugPlay = ref.read(debugPlayModeProvider);
 
     if (currentLevel != null) {
       List<ModuleData> modules = [];
@@ -416,11 +452,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         );
       }
 
-      final prevUnlockedScriptures = ref
-          .read(gameProgressProvider)
-          .unlockedScriptureIds;
+      final prevUnlockedScriptures =
+          ref.read(gameProgressProvider).unlockedScriptureIds;
 
-      final isDebugPlay = ref.read(debugPlayModeProvider);
       if (!isDebugPlay) {
         await ref
             .read(gameProgressProvider.notifier)
@@ -458,10 +492,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Reset grace for the next level
     ref.read(gameInstanceProvider.notifier).resetGrace();
 
-    // Wait for 2 seconds then navigate back to home OR show parable/scripture unlock.
+    // Wait for celebration beat, then unlock dialog or next level.
     await Future.delayed(AnimationTiming.levelCompleteDelay);
 
-    if (!mounted) return;
+    if (!mounted || _homeExitRequested) return;
 
     // Reset completion flag
     ref.read(levelCompleteProvider.notifier).setComplete(false);
@@ -471,7 +505,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
 
     if (newlyUnlockedScripture != null && completedModule != null) {
-      if (ref.read(debugPlayModeProvider)) {
+      if (isDebugPlay) {
         ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
       }
       await _showScriptureUnlockedDialog(
@@ -482,21 +516,68 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
 
     if (completedModule != null) {
-      // Clear debug selection if active
-      if (ref.read(debugPlayModeProvider)) {
+      if (isDebugPlay) {
         ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
       }
       await _showParableUnlockedDialog(completedModule);
       return;
     }
 
-    // Clear debug selection if active before navigating home
-    if (ref.read(debugPlayModeProvider)) {
+    if (isDebugPlay) {
+      // Debug selected a specific level — return to settings/home path.
       ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
+      if (!mounted || _homeExitRequested) return;
+      context.go('/');
+      return;
     }
 
-    // Navigate back to home screen and clear game screen from stack
-    context.go('/');
+    await _continueToNextLevel();
+  }
+
+  /// Load the next uncompleted level in-place. Playlist exhausted → completed.
+  Future<void> _continueToNextLevel() async {
+    if (!mounted || _homeExitRequested) return;
+
+    final game = _game;
+    if (game == null) {
+      context.go('/');
+      return;
+    }
+
+    List<String> playlist = const [];
+    try {
+      final modules = await ref.read(modulesProvider.future);
+      playlist = modules.expand((m) => m.allLevels).toList();
+    } catch (error, stackTrace) {
+      LoggerService.warn(
+        'Could not load playlist for next-level continue',
+        tag: 'GameScreen',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    if (!mounted || _homeExitRequested) return;
+
+    final progress = ref.read(gameProgressProvider);
+    final nextId = progress.nextUncompletedLevel(playlist);
+    if (nextId == null && playlist.isNotEmpty) {
+      LoggerService.info(
+        'Playlist exhausted after level complete — game completed',
+        tag: 'GameScreen',
+      );
+      ref.read(gameCompletedProvider.notifier).setCompleted(true);
+      return;
+    }
+
+    LoggerService.info(
+      'Continuing to next level after clear',
+      tag: 'GameScreen',
+      metadata: {
+        'next_level': nextId ?? progress.currentLevel,
+      },
+    );
+    await _loadLevelForGame(game);
   }
 
   Future<void> _showScriptureUnlockedDialog(
@@ -535,9 +616,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     } catch (_) {}
 
     try {
-      final result = await ref
-          .read(scriptureServiceProvider)
-          .loadScripture(
+      final result = await ref.read(scriptureServiceProvider).loadScripture(
             scripture.reference,
             preferredTranslationId: preferred,
           );
@@ -690,10 +769,18 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
+                _goHomeFromLevelComplete();
+              },
+              child: const Text('HOME'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
                 // Reset to home first: the game screen was reached via go(),
                 // so there is nothing to pop. Back-from-journal must land on
-                // home (Play loads the next level), never on this stale
-                // cleared board. Deep-link into the journal at this entry.
+                // home, never on this stale cleared board. Deep-link into
+                // the journal at this entry.
+                _homeExitRequested = true;
                 context.go('/');
                 context.push(
                   '/journal?entry=${Uri.encodeComponent(scripture.id)}',
@@ -704,7 +791,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                context.go('/');
+                // Continue multilevel play — do not land on Home.
+                _continueToNextLevel();
               },
               child: const Text('CONTINUE'),
             ),
@@ -817,11 +905,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
+                _goHomeFromLevelComplete();
+              },
+              child: const Text('HOME'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
                 // Reset to home first: the game screen was reached via go(),
                 // so there is nothing to pop. Back-from-journal must land on
-                // home (Play loads the next level), never on this stale
-                // cleared board. Deep-link into the journal at this entry
-                // when we have a reference to match.
+                // home, never on this stale cleared board.
+                _homeExitRequested = true;
                 context.go('/');
                 final entry = scripture?.isNotEmpty == true
                     ? '/journal?entry=${Uri.encodeComponent(scripture!)}'
@@ -833,7 +927,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                context.go('/');
+                _continueToNextLevel();
               },
               child: const Text('CONTINUE'),
             ),
@@ -855,9 +949,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         // levels, migrated IDs) or the registry sources may disagree. Resolve
         // to something loadable before concluding anything about completion.
         // resolveLevelToLoad only returns IDs present in mappings.
-        final resolved = await ref
-            .read(gameProgressProvider.notifier)
-            .resolveLevelToLoad();
+        final resolved =
+            await ref.read(gameProgressProvider.notifier).resolveLevelToLoad();
         if (resolved != null) {
           levelId = resolved;
         }
@@ -943,9 +1036,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ? ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000).round()
           : -1;
 
-      ref
-          .read(analyticsServiceProvider)
-          .logLevelRestart(
+      ref.read(analyticsServiceProvider).logLevelRestart(
             currentLevel.id,
             attempts,
             elapsedSeconds: elapsedSeconds,

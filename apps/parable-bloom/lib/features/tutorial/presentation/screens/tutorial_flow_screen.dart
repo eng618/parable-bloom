@@ -43,6 +43,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   bool _isLevelCompleteOverlayVisible = false;
   String _currentCongratulationMessage = '';
 
+  /// Set when the player intentionally leaves during the complete beat.
+  bool _homeExitRequested = false;
+
   /// Provider container captured in [didChangeDependencies] while the
   /// element is active. The Flame bridge sink reads through it instead of
   /// [WidgetRef.read], whose ancestor lookup throws while the element is
@@ -133,9 +136,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       );
     }
 
-    return ref
-        .watch(lessonProvider(currentLesson))
-        .when(
+    return ref.watch(lessonProvider(currentLesson)).when(
           data: (lesson) {
             // Create or recreate game when lesson changes
             if (_game == null || _game!.currentLessonId != lesson.id) {
@@ -172,11 +173,14 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                   // Game widget
                   _buildGameWidgetWithGestures(),
 
-                  // Game header with pause button and grace display
+                  // Game header with dedicated Home + pause
                   SafeArea(
                     child: Align(
                       alignment: Alignment.topCenter,
-                      child: GameHeader(onPause: _showPauseMenu),
+                      child: GameHeader(
+                        onPause: _showPauseMenu,
+                        onHome: _goHomeFromTutorial,
+                      ),
                     ),
                   ),
 
@@ -251,9 +255,11 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
               color: isCompleted
                   ? Theme.of(context).colorScheme.primary
                   : isCurrent
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : Theme.of(context).colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.5),
+                      ? Theme.of(context).colorScheme.primaryContainer
+                      : Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.5),
               border: isCurrent
                   ? Border.all(
                       color: Theme.of(context).colorScheme.primary,
@@ -277,10 +283,23 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         },
         onHome: () {
           if (context.canPop()) context.pop(); // Close dialog
-          context.go('/');
+          _goHomeFromTutorial();
         },
       ),
     );
+  }
+
+  /// Intentional leave to Home (session-close may show after a complete today).
+  void _goHomeFromTutorial() {
+    _homeExitRequested = true;
+    if (_isLevelCompleteOverlayVisible) {
+      setState(() {
+        _isLevelCompleteOverlayVisible = false;
+      });
+    }
+    ref.read(levelCompleteProvider.notifier).setComplete(false);
+    if (!mounted) return;
+    context.go('/');
   }
 
   void _restartLesson() {
@@ -313,6 +332,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   void _showLevelCompleteOverlay() async {
     if (_isLevelCompleteOverlayVisible) return;
 
+    _homeExitRequested = false;
     _currentCongratulationMessage = pickCongratulationMessage();
 
     setState(() {
@@ -333,7 +353,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     // Wait for 2 seconds then advance to next lesson
     await Future.delayed(AnimationTiming.levelCompleteDelay);
 
-    if (!mounted) return;
+    if (!mounted || _homeExitRequested) return;
 
     setState(() {
       _isLevelCompleteOverlayVisible = false;
@@ -342,14 +362,15 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     // Get current lesson before advancing
     final beforeLesson = ref.read(tutorialProgressProvider).currentLesson;
 
-    final prevUnlockedScriptures = ref
-        .read(gameProgressProvider)
-        .unlockedScriptureIds;
+    final prevUnlockedScriptures =
+        ref.read(gameProgressProvider).unlockedScriptureIds;
 
     // Advance to next lesson
     await ref
         .read(tutorialProgressProvider.notifier)
         .completeLesson(beforeLesson);
+
+    if (!mounted || _homeExitRequested) return;
 
     // Reset completion flags
     ref.read(levelCompleteProvider.notifier).setComplete(false);
@@ -412,31 +433,54 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         .read(habitSessionProvider.notifier)
         .recordLevelComplete(scriptureId: unlockedScripture?.id);
 
+    if (!mounted || _homeExitRequested) return;
+
     if (unlockedScripture != null && completedModule != null) {
       await _showScriptureUnlockedDialog(unlockedScripture, completedModule);
       return;
     }
 
-    // If no scripture is unlocked, but we completed all lessons, pop now!
+    _advanceTutorialAfterComplete(beforeLesson);
+  }
+
+  /// Continue to the next lesson, or Home when the tutorial is finished.
+  void _advanceTutorialAfterComplete(int beforeLesson) {
+    if (!mounted || _homeExitRequested) return;
+
     final after = ref.read(tutorialProgressProvider);
     if (after.allLessonsCompleted) {
-      if (mounted) {
-        LoggerService.info(
-          'All lessons completed - returning to home',
-          tag: 'TutorialFlowScreen',
-        );
-        context.go('/');
-      }
+      LoggerService.info(
+        'All lessons completed - returning to home',
+        tag: 'TutorialFlowScreen',
+      );
+      context.go('/');
       return;
     }
 
-    // Check if we advanced to a new lesson
     if (after.currentLesson != beforeLesson) {
-      // Reset for new lesson
       setState(() {
         _game = null; // Will be recreated in build
       });
     }
+  }
+
+  /// After an unlock dialog CONTINUE — progress already advanced.
+  void _continueTutorialAfterUnlock() {
+    if (!mounted || _homeExitRequested) return;
+
+    final after = ref.read(tutorialProgressProvider);
+    if (after.allLessonsCompleted) {
+      LoggerService.info(
+        'All lessons completed after unlock — returning to home',
+        tag: 'TutorialFlowScreen',
+      );
+      context.go('/');
+      return;
+    }
+
+    setState(() {
+      _game = null; // Will be recreated in build for the next lesson
+    });
   }
 
   Future<void> _showScriptureUnlockedDialog(
@@ -469,9 +513,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     } catch (_) {}
 
     try {
-      final result = await ref
-          .read(scriptureServiceProvider)
-          .loadScripture(
+      final result = await ref.read(scriptureServiceProvider).loadScripture(
             scripture.reference,
             preferredTranslationId: preferred,
           );
@@ -606,6 +648,14 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
+                _goHomeFromTutorial();
+              },
+              child: const Text('HOME'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _homeExitRequested = true;
                 context.go('/');
                 context.push('/journal');
               },
@@ -614,7 +664,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                context.go('/');
+                // Progress already advanced in completeLesson; recreate
+                // the next lesson board when more remain.
+                _continueTutorialAfterUnlock();
               },
               child: const Text('CONTINUE'),
             ),
@@ -627,7 +679,10 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   Widget _buildLevelCompleteOverlay() {
     // Shared widget (same as the game screen, including the title the
     // old inline version was missing).
-    return LevelCompleteOverlay(message: _currentCongratulationMessage);
+    return LevelCompleteOverlay(
+      message: _currentCongratulationMessage,
+      onHome: _goHomeFromTutorial,
+    );
   }
 }
 
