@@ -4,7 +4,7 @@
     "objective": "Learn to select and clear a single vine",
     "instructions": "Tap the vine's cells from head to tail to clear it.",
     "learning_points": [
-        "Tap head → tail",
+        "Tap head \u2192 tail",
         "Clear all cells to finish"
     ],
     "grid_size": [
@@ -15,14 +15,42 @@
     "vines": [
         {
             "id": "vine_1",
-            "head_direction": "right",
+            "head_direction": "left",
             "ordered_path": [
                 {
-                    "x": 3,
-                    "y": 1
+                    "x": 0,
+                    "y": 3
+                },
+                {
+                    "x": 1,
+                    "y": 3
                 },
                 {
                     "x": 2,
+                    "y": 3
+                },
+                {
+                    "x": 3,
+                    "y": 3
+                },
+                {
+                    "x": 3,
+                    "y": 2
+                },
+                {
+                    "x": 2,
+                    "y": 2
+                },
+                {
+                    "x": 1,
+                    "y": 2
+                },
+                {
+                    "x": 0,
+                    "y": 2
+                },
+                {
+                    "x": 0,
                     "y": 1
                 },
                 {
@@ -30,8 +58,28 @@
                     "y": 1
                 },
                 {
-                    "x": 0,
+                    "x": 2,
                     "y": 1
+                },
+                {
+                    "x": 3,
+                    "y": 1
+                },
+                {
+                    "x": 3,
+                    "y": 0
+                },
+                {
+                    "x": 2,
+                    "y": 0
+                },
+                {
+                    "x": 1,
+                    "y": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0
                 }
             ]
         }

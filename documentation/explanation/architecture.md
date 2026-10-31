@@ -26,11 +26,11 @@ The game now features a **separate, immersive lessons system** that teaches core
 
 #### Lessons (1-5)
 
-- **Lesson 1**: Single vine (learn selection mechanics)
-- **Lesson 2**: Multiple independent vines (learn clearing multiple, any order)
-- **Lesson 3**: Blocking mechanics (one vine blocks another)
-- **Lesson 4**: Complex blocking chains (solve multi-vine blocking relationships)
-- **Lesson 5**: Comprehensive puzzle (integrate all mechanics)
+- **Lesson 1**: Single vine filling a small board (learn selection mechanics)
+- **Lesson 2**: Multiple independent vines on a full board (clear in any order)
+- **Lesson 3**: Blocking mechanics on a packed board (one vine blocks another)
+- **Lesson 4**: Complex blocking chains on a full garden (multi-vine dependencies)
+- **Lesson 5**: Near-full grand garden capstone (integrate all mechanics)
 
 #### Features
 

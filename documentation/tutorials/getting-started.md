@@ -76,11 +76,11 @@ Once launched, you will see the welcome screen with garden aesthetics and backgr
 
 Parable Bloom includes 5 introductory lessons that teach players the core arrow puzzle mechanics before they enter the main campaign:
 
-1. **Lesson 1: Single Vine** — Tap a vine to slide it off the grid in the direction of its head.
-2. **Lesson 2: Multiple Independent Vines** — Clear multiple free vines in any order.
-3. **Lesson 3: Blocking Mechanics** — Learn how one vine can block another and how clearing one unblocks others.
-4. **Lesson 4: Blocking Chains** — Trace multi-vine dependencies to find the correct clearing sequence.
-5. **Lesson 5: Comprehensive Puzzle** — Put all mechanics together to achieve a full bloom.
+1. **Lesson 1: Single Vine** — Tap a vine to slide it off a small filled board.
+2. **Lesson 2: Multiple Independent Vines** — Clear multiple free vines on a full board, in any order.
+3. **Lesson 3: Blocking Mechanics** — Learn how one vine can block another on a packed garden.
+4. **Lesson 4: Blocking Chains** — Trace multi-vine dependencies on a fully occupied board.
+5. **Lesson 5: Comprehensive Puzzle** — Put all mechanics together in a near-full grand garden.
 
 > **Tip**: You can replay lessons anytime from the in-game Settings menu.
 

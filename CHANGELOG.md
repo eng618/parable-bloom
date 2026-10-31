@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Visual refresh palette (parchment cream / forest green light; moonlit soil / moss dark) with Home botanical framing assets and session-close ornaments.
 
 ### Changed
+- Tutorial lesson boards densified to match main-game visual occupancy: longer vines / fuller grids (L1 remains a single vine; L2–L4 fully tiled; L5 ~88%). Guide overlay and Lesson 1 tap restriction now read vine heads from layout data instead of hardcoded cells.
 - Fine-grained Riverpod watches on heavy screens: `HomeScreen` selects tutorial/level/completed fields, `JournalScreen` selects unlocked scriptures, `TutorialGuideOverlay` selects only the vine states each lesson reads, `GameZoomControls` selects zoom bounds — unrelated provider writes no longer rebuild these widgets.
 - Added `GameProgress.firstUncompletedInPlaylist(playlist, completedLevels)` static helper; `nextUncompletedLevel` delegates to it.
 - **Vine skin redesign** (rail renderer): textured styles now sample the real

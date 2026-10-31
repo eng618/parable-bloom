@@ -248,7 +248,7 @@ A global `level_mappings` object maps logical gameplay IDs to physical assets.
 
 All levels must pass the strict validator in `tools/level-builder`.
 
-1. **Coverage**: Vine occupancy must meet the difficulty target (see Section 5.1, unified 0.93 for all standard tiers / 0.30 tutorial) with a **5% tolerance** (OccupancyTolerance). Playable coverage (vine cells + masked cells) must reach 100%.
+1. **Coverage**: Vine occupancy must meet the difficulty target (see Section 5.1, unified 0.93 for all standard tiers). Hand-crafted **tutorial lessons** aim for main-game visual density (full or near-full boards; Lesson 1 stays a single vine) while the structural tutorial validator still allows partial occupancy. Playable coverage (vine cells + masked cells) must reach 100% for standard levels.
 2. **Difficulty lock**: Each level's `difficulty` must match the canonical 5×21 progression for its ID (`pkg/common/progression.go`: 5× Seedling, Sprout, Nurturing, Flourishing, then Transcendent challenge per module).
 3. **Solvability**: The level must be solvable within `max_moves`. The validator tries a greedy fast-path first (complete for current mechanics — removing vines only frees cells), then exact BFS/A* (≤24 vines) or heuristic search with a configurable budget (default **2,000,000 states** in `task levels:validate-solvable`).
 4. **Connectivity**: All vine segments must be 4-connected (Manhattan distance = 1). `head_direction` must match head-to-neck vector.
@@ -268,7 +268,7 @@ Source of truth: `pkg/generator/config.DifficultySpecs` + `GridSizeRanges`. Vali
 
 | Difficulty   | Grid Size (W×H) | Vine Count | Avg Length | Occupancy | Grace | Complexity |
 | ------------ | --------------- | ---------- | ---------- | --------- | ----- | ---------- |
-| Tutorial     | 5×8 to 9×12     | 3-8        | 6-10       | 30%       | 3     | tutorial   |
+| Tutorial     | 4×4 to 8×8      | 1-6        | n/a        | ~88–100% (hand-crafted; L1 single vine) | 3     | tutorial   |
 | Seedling     | 6×8 to 9×12     | 4-60       | 8-12       | 93%       | 3     | low        |
 | Sprout       | 9×12 to 12×16   | 8-80       | 8-14       | 93%       | 3     | low        |
 | Nurturing    | 9×16 to 12×20   | 12-100     | 8-14       | 93%       | 3     | medium     |

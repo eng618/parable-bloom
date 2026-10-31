@@ -171,16 +171,25 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
 
     final lessonId = currentLevel.id.replaceAll('lesson_', '');
 
+    Offset? headHighlight(String vineId) {
+      for (final vine in currentLevel.vines) {
+        if (vine.id != vineId || vine.orderedPath.isEmpty) continue;
+        final head = vine.orderedPath.first;
+        return game.getCellScreenPosition(head['x']!, head['y']!);
+      }
+      return null;
+    }
+
     // Determine visual guides and prompt text based on current lesson
     Offset? highlightPosition;
     String promptText = '';
     Color highlightColor = const Color(0xFF6B8E23); // Moss Green default
 
     if (lessonId == '1') {
-      // Lesson 1: Highlight head of vine_1 at (3,1)
+      // Lesson 1: Highlight head of the single vine (layout-driven).
       final vineState = guideVines.vine1;
       if (vineState != null && !vineState.isClearedOrClearing) {
-        highlightPosition = game.getCellScreenPosition(3, 1);
+        highlightPosition = headHighlight('vine_1');
         promptText = "Tap head to slide";
       }
     } else if (lessonId == '2') {
@@ -189,27 +198,24 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
       final activeVineId = guideVines.firstActiveId;
 
       if (activeVineId != null) {
-        final vine = currentLevel.vines.firstWhere((v) => v.id == activeVineId);
-        final head = vine.orderedPath.first;
-        highlightPosition = game.getCellScreenPosition(head['x']!, head['y']!);
+        highlightPosition = headHighlight(activeVineId);
         promptText = "Clear the garden";
       }
     } else if (lessonId == '3') {
-      // Lesson 3: Project vine_1, then clear blocker vine_3 at (3,0),
-      // then blocked vine_2.
+      // Lesson 3: Project vine_1, then clear blocker vine_3, then vine_2.
       final projectState = guideVines.vine1;
       final blockerState = guideVines.vine3;
       final blockedState = guideVines.vine2;
 
       if (projectState != null && !projectState.isClearedOrClearing) {
-        highlightPosition = game.getCellScreenPosition(2, 4);
+        highlightPosition = headHighlight('vine_1');
         promptText = "Long-press for hint path";
       } else if (blockerState != null && !blockerState.isClearedOrClearing) {
-        highlightPosition = game.getCellScreenPosition(3, 0);
+        highlightPosition = headHighlight('vine_3');
         promptText = "Clear blocker first";
         highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
       } else if (blockedState != null && !blockedState.isClearedOrClearing) {
-        highlightPosition = game.getCellScreenPosition(1, 2);
+        highlightPosition = headHighlight('vine_2');
         promptText = "Now clear!";
       }
     } else if (lessonId == '4') {
@@ -217,7 +223,7 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
       final blockerState = guideVines.vine1;
 
       if (blockerState != null && !blockerState.isClearedOrClearing) {
-        highlightPosition = game.getCellScreenPosition(5, 5);
+        highlightPosition = headHighlight('vine_1');
         promptText = "Clear this vine — it traps two others";
         highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
       } else {
@@ -228,30 +234,24 @@ class _TutorialGuideOverlayState extends ConsumerState<TutorialGuideOverlay>
         final targetId =
             _firstMovableId(currentLevel, ref.watch(vineStatesProvider));
         if (targetId != null) {
-          final vine = currentLevel.vines.firstWhere((v) => v.id == targetId);
-          final head = vine.orderedPath.first;
-          highlightPosition =
-              game.getCellScreenPosition(head['x']!, head['y']!);
+          highlightPosition = headHighlight(targetId);
           promptText = "Project, then order";
         }
       }
     } else if (lessonId == '5') {
-      // Lesson 5: Grand garden capstone. Guide toward vine_3 at (6,5):
-      // it traps two others, so clearing it unlocks them.
+      // Lesson 5: Grand garden capstone. Guide toward vine_3 — clearing it
+      // starts the chain that frees two trapped vines.
       final blockerState = guideVines.vine3;
 
       if (blockerState != null && !blockerState.isClearedOrClearing) {
-        highlightPosition = game.getCellScreenPosition(6, 5);
+        highlightPosition = headHighlight('vine_3');
         promptText = "Clear this vine — it traps two others";
         highlightColor = const Color(0xFF4682B4); // Sky Blue for priority
       } else {
         final targetId =
             _firstMovableId(currentLevel, ref.watch(vineStatesProvider));
         if (targetId != null) {
-          final vine = currentLevel.vines.firstWhere((v) => v.id == targetId);
-          final head = vine.orderedPath.first;
-          highlightPosition =
-              game.getCellScreenPosition(head['x']!, head['y']!);
+          highlightPosition = headHighlight(targetId);
           promptText = "Plan the full order";
         }
       }
