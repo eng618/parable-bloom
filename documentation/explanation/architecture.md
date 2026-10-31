@@ -69,7 +69,7 @@ The application uses a reactive architecture where the UI and Game Engine observ
 - **`tutorialProgressProvider`**: Manages lesson progression and completion state
 - **`moduleProgressProvider`**: Tracks the player's progress across modules. Persisted via Hive.
 - **`vineStatesProvider`**: Manages the dynamic state of the board. It uses the `LevelSolver` to calculate which vines are blocked or free to move.
-- **`graceProvider`**: Manages the "Grace" (lives) system.
+- **`graceProvider`**: Manages the "Grace" (lives) system. App-scoped; refilled via `GameInstanceNotifier.resetGrace()` on every main-game level load (`GameScreen._loadLevelForGame`) and every tutorial lesson load (`TutorialFlowScreen` bridge `onGameLoaded`), so depleted hearts never carry across boards (including tutorial→main and in-place next-level continue).
 - **`currentLevelProvider`**: Holds the canonical data for the active level (grid size, vine positions).
 - **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
 - **`boardZoomScaleProvider`**: Manages the user's preferred default board zoom scale (0.5x to 2.0x).

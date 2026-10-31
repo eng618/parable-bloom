@@ -55,4 +55,30 @@ void main() {
     expect(container.read(graceProvider), 1);
     expect(container.read(gameOverProvider), isFalse);
   });
+
+  test(
+    'level/lesson load reset clears depleted tutorial grace for next board',
+    () {
+      // Mirrors GameScreen._loadLevelForGame / Tutorial onGameLoaded:
+      // graceProvider is app-scoped, so a new board must call resetGrace.
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container
+          .read(currentLevelProvider.notifier)
+          .setLevel(level(difficulty: 'tutorial'));
+      container.read(gameInstanceProvider.notifier).resetGrace();
+      for (var i = 0; i < 5; i++) {
+        container.read(gameInstanceProvider.notifier).decrementGrace();
+      }
+      expect(container.read(graceProvider), 1);
+
+      // Advance into main level one (or next lesson): load path resets.
+      container.read(currentLevelProvider.notifier).setLevel(level());
+      container.read(gameInstanceProvider.notifier).resetGrace();
+
+      expect(container.read(graceProvider), 3);
+      expect(container.read(gameOverProvider), isFalse);
+    },
+  );
 }

@@ -979,6 +979,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       ref.read(currentLevelProvider.notifier).setLevel(levelData);
       ref.read(gameCompletedProvider.notifier).setCompleted(false);
 
+      // Grace is app-scoped; always refill on level load so depleted hearts
+      // from a prior board (tutorial→main or in-place next-level continue)
+      // never carry over.
+      ref.read(gameInstanceProvider.notifier).resetGrace();
+
       ref.read(levelTotalTapsProvider.notifier).reset();
       ref.read(levelWrongTapsProvider.notifier).reset();
 

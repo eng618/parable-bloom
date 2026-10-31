@@ -731,6 +731,9 @@ class _TutorialFlowEventSink implements GameEventSink {
     _call((c) => c.read(gameInstanceProvider.notifier).setGame(game));
     final levelData = _lesson.toLevelData();
     _call((c) => c.read(currentLevelProvider.notifier).setLevel(levelData));
+    // Grace is app-scoped; refill on every lesson load so depleted hearts
+    // do not carry across lessons or into the main game.
+    _call((c) => c.read(gameInstanceProvider.notifier).resetGrace());
     _call((c) => c.read(vineStatesProvider.notifier).resetForLevel(levelData));
     _call((c) => c.read(levelCompleteProvider.notifier).setComplete(false));
     _call((c) => c.read(gameCompletedProvider.notifier).setCompleted(false));
