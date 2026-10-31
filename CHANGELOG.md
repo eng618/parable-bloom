@@ -8,9 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Visual refresh palette (parchment cream / forest green light; moonlit soil / moss dark) with Home botanical framing assets and session-close ornaments.
+- Visual refresh palette (parchment cream / forest green light; moonlit soil / moss dark) with Home botanical framing assets and garden ornaments.
 
 ### Changed
+- Habit / retention loop: removed the once-per-day session-close / “come back tomorrow” overlay (and related Hive flags, level-complete habit hooks, and `habit_session_close_*` analytics). Kept next-day Home welcome-back via `habitSessionProvider.recordOpen()` + `habit_day_return`.
 - Tutorial lesson boards densified to match main-game visual occupancy: longer vines / fuller grids (L1 remains a single vine; L2–L4 fully tiled; L5 ~88%). Guide overlay and Lesson 1 tap restriction now read vine heads from layout data instead of hardcoded cells.
 - Tutorial validation now hard-fails self-blocking vines (head exit ray intersects own body) via shared `ValidateStructural` / `ValidateSelfBlocking`; fixed Lesson 4 `vine_1` and Lesson 5 `vine_1` layouts that pointed into their own bodies.
 - Fine-grained Riverpod watches on heavy screens: `HomeScreen` selects tutorial/level/completed fields, `JournalScreen` selects unlocked scriptures, `TutorialGuideOverlay` selects only the vine states each lesson reads, `GameZoomControls` selects zoom bounds — unrelated provider writes no longer rebuild these widgets.
@@ -28,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vine rendering "Vine Rail" redesign behind `vineRenderModeProvider` (`rail` default, `legacy` for A/B): invariant baked track + scalar slide controller, sliding-window vertex strip (indexed triangle grid) for textured styles, and an anti-aliased stroked-path pass for the flat/simple style — draw calls independent of vine length, no per-frame blur, exit fade via per-vertex alpha (textured) or uniform alpha (simple). See `documentation/reference/vine-rendering.md`.
 
 ### Added
-- Soft habit / retention loop (MVP): Home welcome-back after a prior calendar day, once-per-day session-close invite with scripture-aware Journal CTA, local Hive visit timestamps via `habitSessionProvider`, and analytics (`habit_day_return`, `habit_session_close_shown`, `habit_session_close_action`). No streaks or push/local notifications.
+- Soft habit / retention loop (MVP): Home welcome-back after a prior calendar day via local Hive visit timestamps (`habitSessionProvider`) and `habit_day_return` analytics. No session-close overlay, streaks, or push/local notifications.
 - **Withered vine state restored**: a blocked clear attempt now travels `|solver distance|` cells so the head visibly bumps the blocker and returns, then `markVineAttempted` withers the vine for the session — the strip modulates the real texture with warm bark brown (`VineMetrics.witheredColor`), foliage/caps go brown too, and the flat/simple stroke uses the brown (replacing the old dark-blue/white attempted colors). (Root cause: the rail run folded the solver's negative distance to 0, so the bump — and the attempted flag — never happened.)
 - Disk hygiene: `task clean:all` reclaims build/cache disk across Flutter, Nx, Go (`.gotmp`/`.gocache`), Next.js, and the level-builder binary in one shot, printing free-space before/after.
 

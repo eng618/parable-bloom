@@ -25,7 +25,6 @@ import '../../../../core/providers/settings_providers.dart';
 import '../../../game/application/providers/counter_providers.dart';
 import '../../../game/domain/entities/level_data.dart';
 import '../../../journal/application/providers/journal_providers.dart';
-import '../../../home/application/providers/habit_providers.dart';
 import '../../../../core/widgets/garden_loading_view.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
@@ -287,7 +286,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     );
   }
 
-  /// Intentional leave to Home (session-close may show after a complete today).
+  /// Intentional leave to Home.
   void _goHomeFromTutorial() {
     _homeExitRequested = true;
     if (_isLessonAdvanceInFlight) {
@@ -424,11 +423,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         error: e,
       );
     }
-
-    // Soft habit loop: lessons count as a meaningful complete for session-close.
-    ref
-        .read(habitSessionProvider.notifier)
-        .recordLevelComplete(scriptureId: unlockedScripture?.id);
 
     if (!mounted || _homeExitRequested) return;
 

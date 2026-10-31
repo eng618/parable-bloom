@@ -124,7 +124,7 @@ Rationale:
 
 ## Level Completion & Ending Animations
 
-When a level or tutorial lesson is completed, the app displays a parchment level-complete panel (botanical frame + leaf ornaments, shared with Home / session-close) and plays a Flame animation (Pond Ripples or Ripple Fireworks):
+When a level or tutorial lesson is completed, the app displays a parchment level-complete panel (botanical frame + leaf ornaments, shared with Home) and plays a Flame animation (Pond Ripples or Ripple Fireworks):
 
 - **Panel**: `ColorScheme.surface` card over a soft scaffold scrim; parchment grain + `assets/art/home/frame_*` vignette; leaf sprig header and `GardenLeafDivider`.
 - **Title**: Serif "Level Complete" in `ColorScheme.primary` (forest light / moss dark).

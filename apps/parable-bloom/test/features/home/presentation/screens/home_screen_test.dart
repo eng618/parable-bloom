@@ -14,7 +14,7 @@ import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/home/application/providers/habit_providers.dart';
 import 'package:parable_bloom/features/home/presentation/screens/home_screen.dart';
-import 'package:parable_bloom/features/home/presentation/widgets/session_close_sheet.dart';
+import 'package:parable_bloom/features/home/presentation/widgets/welcome_back_messages.dart';
 
 class _FakeAnalyticsService extends AnalyticsService {
   @override
@@ -22,14 +22,6 @@ class _FakeAnalyticsService extends AnalyticsService {
 
   @override
   Future<void> logHabitDayReturn({required int daysSinceLast}) async {}
-
-  @override
-  Future<void> logHabitSessionCloseShown({
-    required bool hadScriptureUnlockToday,
-  }) async {}
-
-  @override
-  Future<void> logHabitSessionCloseAction(String action) async {}
 }
 
 class _FakeBox implements Box<dynamic> {

@@ -85,45 +85,5 @@ void main() {
 
       expect(days, isNull);
     });
-
-    test('session close shows once per day after a level complete', () {
-      final notifier = container.read(habitSessionProvider.notifier);
-      final now = DateTime(2026, 10, 31, 12);
-
-      expect(notifier.shouldShowSessionClose(now: now), isFalse);
-
-      notifier.recordLevelComplete(now: now);
-      expect(notifier.shouldShowSessionClose(now: now), isTrue);
-
-      notifier.markSessionCloseShown(now: now);
-      expect(notifier.shouldShowSessionClose(now: now), isFalse);
-      expect(box.get(kHabitLastCloseShownDateKey), '2026-10-31');
-    });
-
-    test('scripture unlock marks hadScriptureUnlockToday and stores id', () {
-      final notifier = container.read(habitSessionProvider.notifier);
-      final now = DateTime(2026, 10, 31, 12);
-
-      notifier.recordLevelComplete(scriptureId: 'seed_word', now: now);
-      final state = container.read(habitSessionProvider);
-
-      expect(state.hadScriptureUnlockToday, isTrue);
-      expect(state.scriptureIdToday, 'seed_word');
-      expect(box.get(kHabitScriptureIdTodayKey), 'seed_word');
-      expect(box.get(kHabitScriptureUnlockDateKey), '2026-10-31');
-    });
-
-    test('next calendar day allows session close again', () {
-      final notifier = container.read(habitSessionProvider.notifier);
-      final day1 = DateTime(2026, 10, 30, 12);
-      final day2 = DateTime(2026, 10, 31, 12);
-
-      notifier.recordLevelComplete(now: day1);
-      notifier.markSessionCloseShown(now: day1);
-      expect(notifier.shouldShowSessionClose(now: day1), isFalse);
-
-      notifier.recordLevelComplete(now: day2);
-      expect(notifier.shouldShowSessionClose(now: day2), isTrue);
-    });
   });
 }
