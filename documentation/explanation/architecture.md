@@ -73,6 +73,7 @@ The application uses a reactive architecture where the UI and Game Engine observ
 - **`currentLevelProvider`**: Holds the canonical data for the active level (grid size, vine positions).
 - **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
 - **`boardZoomScaleProvider`**: Manages the user's preferred default board zoom scale (0.5x to 2.0x).
+- **`habitSessionProvider`** (`features/home/application/providers/habit_providers.dart`): Soft retention loop — local Hive visit timestamps (`habit_last_session_at`, once-per-day session-close + welcome-back flags). Device-local only (not cloud-synced). Powers Home welcome-back copy and the session-close sheet after level→home; no streaks or notifications.
 
 ### 3.1.1 Fine-Grained Watches
 

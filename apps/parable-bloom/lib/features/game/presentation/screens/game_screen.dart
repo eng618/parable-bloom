@@ -28,6 +28,7 @@ import '../widgets/level_complete_overlay.dart';
 import '../widgets/projection_sync.dart';
 import '../widgets/pause_menu_dialog.dart';
 import '../../../journal/application/providers/journal_providers.dart';
+import '../../../home/application/providers/habit_providers.dart';
 import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import '../../../../core/services/logger_service.dart';
 
@@ -53,8 +54,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   void initState() {
     super.initState();
-    LoggerService.debug('GameScreen init',
-        tag: 'GameScreen', metadata: {'game_is_null': _game == null});
+    LoggerService.debug(
+      'GameScreen init',
+      tag: 'GameScreen',
+      metadata: {'game_is_null': _game == null},
+    );
     _isLevelCompleteOverlayVisible = false;
     _currentCongratulationMessage = '';
     _initGame();
@@ -73,12 +77,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _subscribeToProviders() {
     // Watch for level completion and show overlay
     ref.listenManual(levelCompleteProvider, (previous, next) {
-      LoggerService.debug('levelCompleteProvider changed',
-          tag: 'GameScreen',
-          metadata: {
-            'previous': previous,
-            'next': next,
-          });
+      LoggerService.debug(
+        'levelCompleteProvider changed',
+        tag: 'GameScreen',
+        metadata: {'previous': previous, 'next': next},
+      );
       if (next && (previous == null || !previous)) {
         LoggerService.info('Showing level complete overlay', tag: 'GameScreen');
         _showLevelCompleteOverlay();
@@ -152,8 +155,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _initGame() {
-    LoggerService.debug('Creating new GardenGame instance in initState',
-        tag: 'GameScreen');
+    LoggerService.debug(
+      'Creating new GardenGame instance in initState',
+      tag: 'GameScreen',
+    );
     _game = GardenGame(
       solver: ref.read(levelSolverServiceProvider),
       sink: _GameScreenEventSink(this),
@@ -206,7 +211,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               final currentLevel = ref.read(currentLevelProvider);
               if (currentLevel == null) return;
 
-              final newOffset = cameraState.panOffset -
+              final newOffset =
+                  cameraState.panOffset -
                   vm.Vector2(
                     pointerSignal.scrollDelta.dx,
                     pointerSignal.scrollDelta.dy,
@@ -247,10 +253,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _handleScaleStart(ScaleStartDetails details) {
     final cameraState = ref.read(cameraStateProvider);
     _lastScale = cameraState.zoom;
-    _lastFocalPoint = vm.Vector2(
-      details.focalPoint.dx,
-      details.focalPoint.dy,
-    );
+    _lastFocalPoint = vm.Vector2(details.focalPoint.dx, details.focalPoint.dy);
     _panStartOffset = cameraState.panOffset;
     // Any scale gesture (pinch or single-finger pan) suppresses Flame taps
     // until shortly after the gesture ends: fingers on the board are camera
@@ -332,10 +335,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         ? ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000).round()
         : -1;
     final tapCount = ref.read(levelTotalTapsProvider);
-    final remainingVines =
-        ref.read(vineStatesProvider).values.where((s) => !s.isCleared).length;
+    final remainingVines = ref
+        .read(vineStatesProvider)
+        .values
+        .where((s) => !s.isCleared)
+        .length;
 
-    ref.read(analyticsServiceProvider).logLevelQuit(
+    ref
+        .read(analyticsServiceProvider)
+        .logLevelQuit(
           levelId: currentLevel.id,
           elapsedSeconds: elapsedSeconds,
           taps: tapCount,
@@ -408,8 +416,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         );
       }
 
-      final prevUnlockedScriptures =
-          ref.read(gameProgressProvider).unlockedScriptureIds;
+      final prevUnlockedScriptures = ref
+          .read(gameProgressProvider)
+          .unlockedScriptureIds;
 
       final isDebugPlay = ref.read(debugPlayModeProvider);
       if (!isDebugPlay) {
@@ -417,8 +426,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             .read(gameProgressProvider.notifier)
             .completeLevel(currentLevel.id);
       } else {
-        LoggerService.debug('Debug play — skipping persistence',
-            tag: 'GameScreen', metadata: {'level_id': currentLevel.id});
+        LoggerService.debug(
+          'Debug play — skipping persistence',
+          tag: 'GameScreen',
+          metadata: {'level_id': currentLevel.id},
+        );
       }
 
       final postProgress = ref.read(gameProgressProvider);
@@ -433,6 +445,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             }
           }
         }
+      }
+
+      // Soft habit loop: mark a level complete today (scripture-aware).
+      if (!isDebugPlay) {
+        ref
+            .read(habitSessionProvider.notifier)
+            .recordLevelComplete(scriptureId: newlyUnlockedScripture?.id);
       }
     }
 
@@ -456,7 +475,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
       }
       await _showScriptureUnlockedDialog(
-          newlyUnlockedScripture, completedModule);
+        newlyUnlockedScripture,
+        completedModule,
+      );
       return;
     }
 
@@ -514,7 +535,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     } catch (_) {}
 
     try {
-      final result = await ref.read(scriptureServiceProvider).loadScripture(
+      final result = await ref
+          .read(scriptureServiceProvider)
+          .loadScripture(
             scripture.reference,
             preferredTranslationId: preferred,
           );
@@ -615,10 +638,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Needs internet once to download $translationCode, then works offline. Showing fallback for now.',
-                    style: TextStyle(
-                      color: cs.onSurfaceVariant,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -629,8 +649,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     decoration: BoxDecoration(
                       color: cs.primaryContainer.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8),
-                      border:
-                          Border.all(color: cs.primary.withValues(alpha: 0.2)),
+                      border: Border.all(
+                        color: cs.primary.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -675,7 +696,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 // cleared board. Deep-link into the journal at this entry.
                 context.go('/');
                 context.push(
-                    '/journal?entry=${Uri.encodeComponent(scripture.id)}');
+                  '/journal?entry=${Uri.encodeComponent(scripture.id)}',
+                );
               },
               child: const Text('VIEW JOURNAL'),
             ),
@@ -709,10 +731,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       try {
         final preferred = ref.read(preferredTranslationProvider);
 
-        final result = await ref.read(scriptureServiceProvider).loadScripture(
-              scripture,
-              preferredTranslationId: preferred,
-            );
+        final result = await ref
+            .read(scriptureServiceProvider)
+            .loadScripture(scripture, preferredTranslationId: preferred);
 
         resolvedText = result['text'] ?? resolvedText;
         final translationCode =
@@ -834,8 +855,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         // levels, migrated IDs) or the registry sources may disagree. Resolve
         // to something loadable before concluding anything about completion.
         // resolveLevelToLoad only returns IDs present in mappings.
-        final resolved =
-            await ref.read(gameProgressProvider.notifier).resolveLevelToLoad();
+        final resolved = await ref
+            .read(gameProgressProvider.notifier)
+            .resolveLevelToLoad();
         if (resolved != null) {
           levelId = resolved;
         }
@@ -845,8 +867,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           // Registry failed to load (offline/error): this is a load failure,
           // not a finished game. Same handling as the exception path below.
           LoggerService.error(
-              'Level mappings empty, cannot load $levelId (registry unavailable)',
-              tag: 'GameScreen');
+            'Level mappings empty, cannot load $levelId (registry unavailable)',
+            tag: 'GameScreen',
+          );
           ref.read(gameOverProvider.notifier).setGameOver(true);
         } else {
           ref.read(gameCompletedProvider.notifier).setCompleted(true);
@@ -898,8 +921,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
       game.applyCameraTransform(ref.read(cameraStateProvider));
     } catch (e, stack) {
-      LoggerService.error('Error loading level $levelId on game screen',
-          error: e, stackTrace: stack, tag: 'GameScreen');
+      LoggerService.error(
+        'Error loading level $levelId on game screen',
+        error: e,
+        stackTrace: stack,
+        tag: 'GameScreen',
+      );
       ref.read(gameOverProvider.notifier).setGameOver(true);
     }
   }
@@ -916,7 +943,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ? ((DateTime.now().millisecondsSinceEpoch - startMs) / 1000).round()
           : -1;
 
-      ref.read(analyticsServiceProvider).logLevelRestart(
+      ref
+          .read(analyticsServiceProvider)
+          .logLevelRestart(
             currentLevel.id,
             attempts,
             elapsedSeconds: elapsedSeconds,
@@ -946,17 +975,18 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         );
       }
     }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Level restarted')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Level restarted')));
   }
 
   void _showGameCompletedDialog() {
     showGameCompletedDialog(
       context,
       onBackToHome: () {
-        LoggerService.info('Returning to home from completion dialog',
-            tag: 'GameScreen');
+        LoggerService.info(
+          'Returning to home from completion dialog',
+          tag: 'GameScreen',
+        );
         ref.read(gameCompletedProvider.notifier).setCompleted(false);
         context.go('/');
       },
@@ -1036,8 +1066,10 @@ class _GameScreenEventSink implements GameEventSink {
 
   @override
   void onVineAnimationStateChanged(String vineId, VineAnimationState state) {
-    _call((c) =>
-        c.read(vineStatesProvider.notifier).setAnimationState(vineId, state));
+    _call(
+      (c) =>
+          c.read(vineStatesProvider.notifier).setAnimationState(vineId, state),
+    );
   }
 
   @override

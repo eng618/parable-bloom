@@ -10,8 +10,8 @@ class AnalyticsService {
   AnalyticsService({
     FirebaseAnalytics? analytics,
     OpenpanelAnalyticsClient? openpanelClient,
-  })  : _analytics = analytics,
-        _openpanel = openpanelClient;
+  }) : _analytics = analytics,
+       _openpanel = openpanelClient;
 
   FirebaseAnalytics? get _firebase {
     if (_analytics != null) {
@@ -89,8 +89,11 @@ class AnalyticsService {
     );
   }
 
-  Future<void> logLevelRestart(dynamic levelId, int attempts,
-      {int elapsedSeconds = -1}) async {
+  Future<void> logLevelRestart(
+    dynamic levelId,
+    int attempts, {
+    int elapsedSeconds = -1,
+  }) async {
     final firebase = _firebase;
     if (firebase != null) {
       await firebase.logEvent(
@@ -151,10 +154,7 @@ class AnalyticsService {
     }
     await _trackOpenPanel(
       eventName: 'wrong_tap',
-      properties: {
-        'level_id': levelId,
-        'remaining_lives': remainingLives,
-      },
+      properties: {'level_id': levelId, 'remaining_lives': remainingLives},
     );
   }
 
@@ -238,18 +238,12 @@ class AnalyticsService {
     if (firebase != null) {
       await firebase.logEvent(
         name: 'cloud_sync_unavailable',
-        parameters: {
-          'source': source,
-          'reason': reason,
-        },
+        parameters: {'source': source, 'reason': reason},
       );
     }
     await _trackOpenPanel(
       eventName: 'cloud_sync_unavailable',
-      properties: {
-        'source': source,
-        'reason': reason,
-      },
+      properties: {'source': source, 'reason': reason},
     );
   }
 
@@ -261,10 +255,7 @@ class AnalyticsService {
     if (openpanel == null) {
       return;
     }
-    await openpanel.trackEvent(
-      eventName: eventName,
-      properties: properties,
-    );
+    await openpanel.trackEvent(eventName: eventName, properties: properties);
   }
 
   Future<void> setCollectionEnabled(bool enabled) async {
@@ -278,20 +269,18 @@ class AnalyticsService {
   Future<void> logScreenView(String screenName) async {
     final firebase = _firebase;
     if (firebase != null) {
-      await firebase.logScreenView(
-        screenName: screenName,
-      );
+      await firebase.logScreenView(screenName: screenName);
     }
     await _trackOpenPanel(
       eventName: 'screen_view',
-      properties: {
-        'screen_name': screenName,
-      },
+      properties: {'screen_name': screenName},
     );
   }
 
-  Future<void> logParableViewed(String parableId,
-      {String source = 'game_unlock'}) async {
+  Future<void> logParableViewed(
+    String parableId, {
+    String source = 'game_unlock',
+  }) async {
     final firebase = _firebase;
     if (firebase != null) {
       await firebase.logEvent(
@@ -357,6 +346,59 @@ class AnalyticsService {
         'unlocked_count': unlockedCount,
         'total_count': totalCount,
       },
+    );
+  }
+
+  /// Soft habit loop: player opened Home on a later calendar day.
+  Future<void> logHabitDayReturn({required int daysSinceLast}) async {
+    final firebase = _firebase;
+    if (firebase != null) {
+      await firebase.logEvent(
+        name: 'habit_day_return',
+        parameters: {'days_since_last': daysSinceLast},
+      );
+    }
+    await _trackOpenPanel(
+      eventName: 'habit_day_return',
+      properties: {'days_since_last': daysSinceLast},
+    );
+  }
+
+  /// Soft habit loop: session-close invite shown (at most once per local day).
+  Future<void> logHabitSessionCloseShown({
+    required bool hadScriptureUnlockToday,
+  }) async {
+    final firebase = _firebase;
+    if (firebase != null) {
+      await firebase.logEvent(
+        name: 'habit_session_close_shown',
+        parameters: {
+          'had_scripture_unlock_today': hadScriptureUnlockToday ? 1 : 0,
+        },
+      );
+    }
+    await _trackOpenPanel(
+      eventName: 'habit_session_close_shown',
+      properties: {
+        'had_scripture_unlock_today': hadScriptureUnlockToday ? 1 : 0,
+      },
+    );
+  }
+
+  /// Soft habit loop: player action on the session-close invite.
+  ///
+  /// [action] is one of `done`, `journal`, or `dismiss`.
+  Future<void> logHabitSessionCloseAction(String action) async {
+    final firebase = _firebase;
+    if (firebase != null) {
+      await firebase.logEvent(
+        name: 'habit_session_close_action',
+        parameters: {'action': action},
+      );
+    }
+    await _trackOpenPanel(
+      eventName: 'habit_session_close_action',
+      properties: {'action': action},
     );
   }
 }

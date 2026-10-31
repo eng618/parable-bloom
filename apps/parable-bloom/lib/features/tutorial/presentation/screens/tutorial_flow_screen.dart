@@ -26,6 +26,7 @@ import '../../../../core/providers/settings_providers.dart';
 import '../../../game/application/providers/counter_providers.dart';
 import '../../../game/domain/entities/level_data.dart';
 import '../../../journal/application/providers/journal_providers.dart';
+import '../../../home/application/providers/habit_providers.dart';
 import '../../../../core/widgets/garden_loading_view.dart';
 
 /// Tutorial flow screen that matches the regular game experience.
@@ -63,8 +64,10 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   void _subscribeToProviders() {
     // Listen for level completion
     ref.listenManual<bool>(levelCompleteProvider, (previous, next) {
-      LoggerService.debug('levelCompleteProvider changed $previous -> $next',
-          tag: 'TutorialFlowScreen');
+      LoggerService.debug(
+        'levelCompleteProvider changed $previous -> $next',
+        tag: 'TutorialFlowScreen',
+      );
       if (next && (previous == null || !previous)) {
         _showLevelCompleteOverlay();
       }
@@ -72,8 +75,10 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
     // Listen for game completion (all vines cleared)
     ref.listenManual<bool>(gameCompletedProvider, (previous, next) {
-      LoggerService.debug('gameCompletedProvider changed $previous -> $next',
-          tag: 'TutorialFlowScreen');
+      LoggerService.debug(
+        'gameCompletedProvider changed $previous -> $next',
+        tag: 'TutorialFlowScreen',
+      );
       if (next && (previous == null || !previous)) {
         _showLevelCompleteOverlay();
       }
@@ -124,13 +129,13 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     // Validate lesson number
     if (currentLesson < 1 || currentLesson > LessonData.totalLessons) {
       return Scaffold(
-        body: Center(
-          child: Text('Invalid lesson: $currentLesson'),
-        ),
+        body: Center(child: Text('Invalid lesson: $currentLesson')),
       );
     }
 
-    return ref.watch(lessonProvider(currentLesson)).when(
+    return ref
+        .watch(lessonProvider(currentLesson))
+        .when(
           data: (lesson) {
             // Create or recreate game when lesson changes
             if (_game == null || _game!.currentLessonId != lesson.id) {
@@ -202,9 +207,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
             ),
           ),
           error: (error, stack) => Scaffold(
-            body: Center(
-              child: Text('Error loading lesson: $error'),
-            ),
+            body: Center(child: Text('Error loading lesson: $error')),
           ),
         );
   }
@@ -248,11 +251,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
               color: isCompleted
                   ? Theme.of(context).colorScheme.primary
                   : isCurrent
-                      ? Theme.of(context).colorScheme.primaryContainer
-                      : Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHighest
-                          .withValues(alpha: 0.5),
+                  ? Theme.of(context).colorScheme.primaryContainer
+                  : Theme.of(context).colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
               border: isCurrent
                   ? Border.all(
                       color: Theme.of(context).colorScheme.primary,
@@ -305,9 +306,8 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     setState(() {
       _isLevelCompleteOverlayVisible = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Lesson restarted')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Lesson restarted')));
   }
 
   void _showLevelCompleteOverlay() async {
@@ -342,8 +342,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     // Get current lesson before advancing
     final beforeLesson = ref.read(tutorialProgressProvider).currentLesson;
 
-    final prevUnlockedScriptures =
-        ref.read(gameProgressProvider).unlockedScriptureIds;
+    final prevUnlockedScriptures = ref
+        .read(gameProgressProvider)
+        .unlockedScriptureIds;
 
     // Advance to next lesson
     await ref
@@ -401,9 +402,15 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       }
     } catch (e) {
       LoggerService.error(
-          'Failed to look up unlocked scripture in tutorial completion',
-          error: e);
+        'Failed to look up unlocked scripture in tutorial completion',
+        error: e,
+      );
     }
+
+    // Soft habit loop: lessons count as a meaningful complete for session-close.
+    ref
+        .read(habitSessionProvider.notifier)
+        .recordLevelComplete(scriptureId: unlockedScripture?.id);
 
     if (unlockedScripture != null && completedModule != null) {
       await _showScriptureUnlockedDialog(unlockedScripture, completedModule);
@@ -414,8 +421,10 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     final after = ref.read(tutorialProgressProvider);
     if (after.allLessonsCompleted) {
       if (mounted) {
-        LoggerService.info('All lessons completed - returning to home',
-            tag: 'TutorialFlowScreen');
+        LoggerService.info(
+          'All lessons completed - returning to home',
+          tag: 'TutorialFlowScreen',
+        );
         context.go('/');
       }
       return;
@@ -460,7 +469,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     } catch (_) {}
 
     try {
-      final result = await ref.read(scriptureServiceProvider).loadScripture(
+      final result = await ref
+          .read(scriptureServiceProvider)
+          .loadScripture(
             scripture.reference,
             preferredTranslationId: preferred,
           );
@@ -554,8 +565,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
                     decoration: BoxDecoration(
                       color: cs.primaryContainer.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8),
-                      border:
-                          Border.all(color: cs.primary.withValues(alpha: 0.2)),
+                      border: Border.all(
+                        color: cs.primary.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -675,9 +687,13 @@ class _TutorialFlowEventSink implements GameEventSink {
     _state._syncThemeColors();
 
     final cameraNotifier = _read<CameraStateNotifier?>(
-        (c) => c.read(cameraStateProvider.notifier), null);
-    final cameraState =
-        _read<CameraState?>((c) => c.read(cameraStateProvider), null);
+      (c) => c.read(cameraStateProvider.notifier),
+      null,
+    );
+    final cameraState = _read<CameraState?>(
+      (c) => c.read(cameraStateProvider),
+      null,
+    );
     if (cameraNotifier == null || cameraState == null) return;
     cameraNotifier.updateZoomBounds(
       screenWidth: game.size.x,
@@ -711,8 +727,10 @@ class _TutorialFlowEventSink implements GameEventSink {
 
   @override
   void onVineAnimationStateChanged(String vineId, VineAnimationState state) {
-    _call((c) =>
-        c.read(vineStatesProvider.notifier).setAnimationState(vineId, state));
+    _call(
+      (c) =>
+          c.read(vineStatesProvider.notifier).setAnimationState(vineId, state),
+    );
   }
 
   @override
