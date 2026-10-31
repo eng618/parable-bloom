@@ -58,7 +58,7 @@ graph LR
 - [x] **Account Deletion Flow**: In-app account deletion resets local storage and deletes Firestore cloud documents prior to Firebase Auth user deletion.
 - [x] **Engine Teardown**: Flame `GardenGame` instance initialized in `initState()` and explicitly disposed in `dispose()`.
 - [x] **Crash Fallback & Router Boundaries**: `GoRouter` configured with `errorBuilder` and `ErrorWidget.builder` registered for graceful error recovery.
-- [ ] **Init ordering (P1)**: `main.dart:45-89` initializes Hive after Firebase/auth (network-adjacent delay on offline-first load); progress `initialize()` fires post-frame (`parable_bloom_app.dart:47-49`) so first frame renders defaults. Add timeout + skeleton/await before prod polish.
+- [x] **Init ordering (P1, delivered 2026-10-31)**: Hive init overlaps `Firebase.initializeApp` + Sentry. Anonymous sign-in is capped at 2s (`_guestSessionBudget`); the attempt continues and auth listeners apply a late session. Progress `initialize()` still runs post-frame, but it assigns Hive state before the cloud backfill, so the home button flash is one local read, not a network wait.
 - [x] **Silent catch (delivered 2026-10-15)**: `progress_providers.dart` `syncFromCloud` failure now logs via `LoggerService.warn`.
 - [ ] **Firestore hardening (P2)**: per-user `uid == userId` scoping is correct and `configs_prod` auth-gating works via anonymous guest session (`main.dart:124-140`); dev/preview `configs_*` public-read is intentional. No `request.resource` size/schema checks — compromised client can write large docs (quota/cost).
 
