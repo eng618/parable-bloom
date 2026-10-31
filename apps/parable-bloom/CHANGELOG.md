@@ -11,6 +11,10 @@
 
 ## Unreleased
 
+### 🩹 Fixes
+
+- reset Grace hearts on every main-game level load and tutorial lesson load so depleted lives do not carry across boards (tutorial→main and next-level continue)
+
 ### 🚀 Features
 
 - play flow: after clearing a level, continue to the **next level** by default (encourages multilevel play); dedicated **Home** on the in-game header and level-complete overlay (also on unlock dialogs) so intentional leave still reaches Home → session-close without Pause → Home
