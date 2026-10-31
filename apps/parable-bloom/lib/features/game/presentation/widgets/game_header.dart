@@ -6,27 +6,45 @@ import '../../application/providers/gameplay_state_providers.dart';
 class GameHeader extends ConsumerWidget {
   final VoidCallback onPause;
 
-  const GameHeader({super.key, required this.onPause});
+  /// Optional dedicated Home exit (without opening Pause).
+  final VoidCallback? onHome;
+
+  const GameHeader({super.key, required this.onPause, this.onHome});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final surfaceBg = Theme.of(context).colorScheme.surfaceContainerHighest;
+    final fg = Theme.of(context).colorScheme.onSurface;
+    final iconStyle = IconButton.styleFrom(
+      backgroundColor: surfaceBg,
+      foregroundColor: fg,
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildGraceDisplay(ref, context),
-          IconButton(
-            icon: const Icon(Icons.pause_rounded),
-            onPressed: onPause,
-            splashColor: Colors.transparent,
-            style: IconButton.styleFrom(
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest,
-              foregroundColor: Theme.of(context).colorScheme.onSurface,
-            ),
-            tooltip: 'Pause',
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (onHome != null)
+                IconButton(
+                  icon: const Icon(Icons.home_rounded),
+                  onPressed: onHome,
+                  splashColor: Colors.transparent,
+                  style: iconStyle,
+                  tooltip: 'Home',
+                ),
+              IconButton(
+                icon: const Icon(Icons.pause_rounded),
+                onPressed: onPause,
+                splashColor: Colors.transparent,
+                style: iconStyle,
+                tooltip: 'Pause',
+              ),
+            ],
           ),
         ],
       ),

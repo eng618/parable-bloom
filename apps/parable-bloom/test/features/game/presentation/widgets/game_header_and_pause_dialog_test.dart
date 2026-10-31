@@ -37,11 +37,41 @@ void main() {
       expect(find.byIcon(Icons.favorite), findsNWidgets(2));
       expect(find.byIcon(Icons.favorite_border), findsNWidgets(1));
       expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
+      // Dedicated Home is opt-in via onHome.
+      expect(find.byIcon(Icons.home_rounded), findsNothing);
 
       await tester.tap(find.byIcon(Icons.pause_rounded));
       await tester.pumpAndSettle();
 
       expect(pauseTriggered, isTrue);
+    });
+
+    testWidgets('Dedicated Home button invokes onHome', (tester) async {
+      var homeTriggered = false;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            graceProvider.overrideWith(() => _FakeGraceNotifier(3)),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GameHeader(
+                onPause: () {},
+                onHome: () {
+                  homeTriggered = true;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.home_rounded), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.home_rounded));
+      await tester.pumpAndSettle();
+      expect(homeTriggered, isTrue);
     });
   });
 
