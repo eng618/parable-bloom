@@ -363,42 +363,4 @@ class AnalyticsService {
       properties: {'days_since_last': daysSinceLast},
     );
   }
-
-  /// Soft habit loop: session-close invite shown (at most once per local day).
-  Future<void> logHabitSessionCloseShown({
-    required bool hadScriptureUnlockToday,
-  }) async {
-    final firebase = _firebase;
-    if (firebase != null) {
-      await firebase.logEvent(
-        name: 'habit_session_close_shown',
-        parameters: {
-          'had_scripture_unlock_today': hadScriptureUnlockToday ? 1 : 0,
-        },
-      );
-    }
-    await _trackOpenPanel(
-      eventName: 'habit_session_close_shown',
-      properties: {
-        'had_scripture_unlock_today': hadScriptureUnlockToday ? 1 : 0,
-      },
-    );
-  }
-
-  /// Soft habit loop: player action on the session-close invite.
-  ///
-  /// [action] is one of `done`, `journal`, or `dismiss`.
-  Future<void> logHabitSessionCloseAction(String action) async {
-    final firebase = _firebase;
-    if (firebase != null) {
-      await firebase.logEvent(
-        name: 'habit_session_close_action',
-        parameters: {'action': action},
-      );
-    }
-    await _trackOpenPanel(
-      eventName: 'habit_session_close_action',
-      properties: {'action': action},
-    );
-  }
 }

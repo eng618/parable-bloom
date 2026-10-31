@@ -17,10 +17,14 @@
 
 ### 🚀 Features
 
-- level-complete UI: parchment panel + botanical frame/ornaments matching Home / session-close; encouraging HUD via full-width `GardenEncouragingMessage` (serif italic, no side leaf flanks that crushed long lines); tutorial lessons skip the Level Complete parchment/message beat (soft FX + advance only) — play-flow continue / dedicated Home unchanged
-- play flow: after clearing a level, continue to the **next level** by default (encourages multilevel play); dedicated **Home** on the in-game header and level-complete overlay (also on unlock dialogs) so intentional leave still reaches Home → session-close without Pause → Home
-- soft habit / retention loop: Home welcome-back after a prior calendar day, once-per-day session-close invite (scripture-aware Journal CTA), local Hive visit timestamps, and habit analytics events (`habit_day_return`, `habit_session_close_shown`, `habit_session_close_action`) — no streaks or notifications
-- visual refresh: garden parchment + forest / moonlit-soil palette (light + dark), Home botanical frame + wooden cross hero, session-close ornaments, and reusable `assets/art/home/` + `assets/art/ornaments/` art
+- level-complete UI: parchment panel + botanical frame/ornaments matching Home; encouraging HUD via full-width `GardenEncouragingMessage` (serif italic, no side leaf flanks that crushed long lines); tutorial lessons skip the Level Complete parchment/message beat (soft FX + advance only) — play-flow continue / dedicated Home unchanged
+- play flow: after clearing a level, continue to the **next level** by default (encourages multilevel play); dedicated **Home** on the in-game header and level-complete overlay (also on unlock dialogs) for intentional leave without Pause → Home
+- soft habit / retention loop: Home welcome-back after a prior calendar day, local Hive visit timestamps, and `habit_day_return` analytics — no session-close overlay, streaks, or notifications
+- visual refresh: garden parchment + forest / moonlit-soil palette (light + dark), Home botanical frame + wooden cross hero, garden ornaments, and reusable `assets/art/home/` + `assets/art/ornaments/` art
+
+### 🔥 Removals
+
+- session-close / “come back tomorrow” bottom sheet and related habit close flags, scripture-aware close CTA, `recordLevelComplete` habit hooks, and `habit_session_close_*` analytics
 
 ## 1.11.1 (2026-10-28)
 

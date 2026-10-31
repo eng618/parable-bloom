@@ -28,7 +28,6 @@ import '../widgets/level_complete_overlay.dart';
 import '../widgets/projection_sync.dart';
 import '../widgets/pause_menu_dialog.dart';
 import '../../../journal/application/providers/journal_providers.dart';
-import '../../../home/application/providers/habit_providers.dart';
 import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import '../../../../core/services/logger_service.dart';
 
@@ -332,7 +331,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 
-  /// Dedicated header Home — intentional leave (session-close may show).
+  /// Dedicated header Home — intentional leave to Home.
   void _goHomeFromHeader() {
     if (_isLevelCompleteOverlayVisible) {
       _goHomeFromLevelComplete();
@@ -479,13 +478,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             }
           }
         }
-      }
-
-      // Soft habit loop: mark a level complete today (scripture-aware).
-      if (!isDebugPlay) {
-        ref
-            .read(habitSessionProvider.notifier)
-            .recordLevelComplete(scriptureId: newlyUnlockedScripture?.id);
       }
     }
 

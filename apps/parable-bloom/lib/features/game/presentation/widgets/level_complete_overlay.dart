@@ -8,10 +8,10 @@ import 'garden_encouraging_message.dart';
 ///
 /// Pure presentation: the owning screen owns visibility timing, analytics,
 /// and the congratulatory message. [onHome] is optional so players can leave
-/// intentionally without Pause → Home (session-close may then show on Home).
+/// intentionally without Pause → Home.
 ///
-/// Visual language matches Home / session-close: parchment panel, botanical
-/// ornaments, forest/moss serif titles — not Material celebration chrome.
+/// Visual language matches Home: parchment panel, botanical ornaments,
+/// forest/moss serif titles — not Material celebration chrome.
 class LevelCompleteOverlay extends StatelessWidget {
   const LevelCompleteOverlay({
     super.key,

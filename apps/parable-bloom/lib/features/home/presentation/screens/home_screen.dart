@@ -12,7 +12,7 @@ import '../../../../core/widgets/constrained_page.dart';
 import '../../../../core/widgets/garden_loading_view.dart';
 import '../../../game/domain/entities/game_progress.dart';
 import '../../application/providers/habit_providers.dart';
-import '../widgets/session_close_sheet.dart';
+import '../widgets/welcome_back_messages.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -24,9 +24,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _precached = false;
   bool _habitOpenRecorded = false;
-  bool _sessionCloseScheduled = false;
-  bool _sessionCloseVisible = false;
-  Timer? _sessionCloseTimer;
   String? _welcomeBackLine;
 
   static const _homeAssets = [
@@ -44,14 +41,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(analyticsServiceProvider).logScreenView('Home');
-      _recordHabitOpenAndMaybeScheduleClose();
+      _recordHabitOpen();
     });
-  }
-
-  @override
-  void dispose() {
-    _sessionCloseTimer?.cancel();
-    super.dispose();
   }
 
   @override
@@ -65,7 +56,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  void _recordHabitOpenAndMaybeScheduleClose() {
+  void _recordHabitOpen() {
     if (!mounted || _habitOpenRecorded) return;
     _habitOpenRecorded = true;
 
@@ -85,82 +76,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _welcomeBackLine = pickWelcomeBackMessage();
       });
     }
-
-    _scheduleSessionCloseIfNeeded();
-  }
-
-  void _scheduleSessionCloseIfNeeded() {
-    if (_sessionCloseScheduled || _sessionCloseVisible) return;
-    final habit = ref.read(habitSessionProvider.notifier);
-    if (!habit.shouldShowSessionClose()) return;
-
-    _sessionCloseScheduled = true;
-    _sessionCloseTimer?.cancel();
-    // Brief grace so an immediate Play tap is treated as a continuous session.
-    _sessionCloseTimer = Timer(kSessionClosePlayGrace, () {
-      if (!mounted) return;
-      _showSessionCloseIfStillEligible();
-    });
-  }
-
-  Future<void> _showSessionCloseIfStillEligible() async {
-    if (!mounted || _sessionCloseVisible) return;
-    final habit = ref.read(habitSessionProvider.notifier);
-    if (!habit.shouldShowSessionClose()) return;
-
-    // Home may sit under Journal after scripture "VIEW JOURNAL" (go `/` then
-    // push). Wait until Home is the top route so we never cover reading.
-    final route = ModalRoute.of(context);
-    if (route?.isCurrent != true) {
-      _sessionCloseTimer?.cancel();
-      _sessionCloseTimer = Timer(kSessionClosePlayGrace, () {
-        if (!mounted) return;
-        _showSessionCloseIfStillEligible();
-      });
-      return;
-    }
-
-    final habitState = ref.read(habitSessionProvider);
-    final hadScripture = habitState.hadScriptureUnlockToday;
-    final scriptureId = habitState.scriptureIdToday;
-
-    habit.markSessionCloseShown();
-    _sessionCloseVisible = true;
-
-    unawaited(
-      ref
-          .read(analyticsServiceProvider)
-          .logHabitSessionCloseShown(hadScriptureUnlockToday: hadScripture),
-    );
-
-    final action = await showSessionCloseSheet(
-      context,
-      hadScriptureUnlock: hadScripture,
-    );
-
-    if (!mounted) return;
-    _sessionCloseVisible = false;
-
-    final resolved = action ?? SessionCloseAction.dismiss;
-    unawaited(
-      ref
-          .read(analyticsServiceProvider)
-          .logHabitSessionCloseAction(resolved.name),
-    );
-
-    if (resolved == SessionCloseAction.journal) {
-      if (scriptureId != null && scriptureId.isNotEmpty) {
-        context.push('/journal?entry=${Uri.encodeComponent(scriptureId)}');
-      } else {
-        context.push('/journal');
-      }
-    }
-  }
-
-  void _cancelPendingSessionClose() {
-    _sessionCloseTimer?.cancel();
-    _sessionCloseTimer = null;
-    _sessionCloseScheduled = false;
   }
 
   @override
@@ -177,15 +92,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isReturningDay = ref.watch(
       habitSessionProvider.select((s) => s.isReturningDay),
     );
-
-    // When returning from game/journal with a pending close, (re)schedule.
-    ref.listen(habitSessionProvider, (prev, next) {
-      if (next.completedLevelToday && !next.sessionCloseShownToday) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _scheduleSessionCloseIfNeeded();
-        });
-      }
-    });
 
     final welcomeLine =
         isReturningDay ? (_welcomeBackLine ?? pickWelcomeBackMessage()) : null;
@@ -456,9 +362,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _playNextLevel() async {
-    // Treat a quick Play tap as continuous play — skip today's close invite.
-    _cancelPendingSessionClose();
-
     final gameProgress = ref.read(gameProgressProvider);
 
     if (!gameProgress.tutorialCompleted) {

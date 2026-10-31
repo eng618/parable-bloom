@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Thin rule with a centered leaf-pair ornament (session-close / garden HUD).
+/// Thin rule with a centered leaf-pair ornament (level-complete / garden HUD).
 class GardenLeafDivider extends StatelessWidget {
   const GardenLeafDivider({super.key, this.height = 18});
 
