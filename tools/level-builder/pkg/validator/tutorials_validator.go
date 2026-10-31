@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
@@ -134,6 +135,17 @@ func validateLessonFile(path string) error {
 	// 5. Structure: require max_moves >= 1.
 	if lvl.MaxMoves < 1 {
 		return fmt.Errorf("missing or invalid max_moves in %s", base)
+	}
+
+	// 6. Hard structural gates that also apply to main levels: head/neck
+	// orientation, 4-connectivity, and no self-blocking exit ray (a head must
+	// not point into its own body). Occupancy remains relaxed for tutorials.
+	if errs := ValidateStructural(lvl); len(errs) > 0 {
+		var msgs []string
+		for _, e := range errs {
+			msgs = append(msgs, e.Error())
+		}
+		return fmt.Errorf("structural: %s", strings.Join(msgs, "; "))
 	}
 
 	return nil

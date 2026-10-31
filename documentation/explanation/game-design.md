@@ -72,13 +72,15 @@ The game scales difficulty through grid size, vine count, and blocking complexit
 
 Tutorials run once at game start, separate from main levels. They introduce progressive blocking mechanics through hands-on, tap-driven active learning, fully eliminating word-heavy toast notifications in favor of visual cues.
 
-1. **Lesson 1: Clear the Vine (Basic Movement)**: Shows easy clicking to clear a single horizontal vine. The target head is highlighted with a moss green pulsing circle and a `"Tap head to slide"` micro-prompt; other cell taps are restricted.
-2. **Lesson 2: Clear Multiple Vines (Independence)**: Introduces multiple parallel vines that can be cleared in any order. Gentle shimmer pulses appear on all heads with a `"Clear the garden"` guide.
-3. **Lesson 3: Blocking Mechanics (Obstruction & Priority)**: Teaches blocked path relationships. Tapping a blocked vine wiggles and shows a glowing red dashed **Collision Path** leading to the blocker cell with a floating alert: `"Blocked! Blocker first"`, guiding the user to clear the blocker first.
-4. **Lesson 4: Complex Blocking Chains (Sequence Logic)**: Teaches sequential multi-blocking loops. A thin flowing line traces dependencies on load, guiding the user to start at the free starter vine.
-5. **Lesson 5: Comprehensive Challenge (Capstone)**: Synthesizes all mechanics in a free-play challenge. No instructions are shown on screen, but incorrect blocked taps display the safe collision line and hearts wobble to indicate risk in main levels.
+1. **Lesson 1: Clear the Vine (Basic Movement)**: Shows easy clicking to clear a **single** vine that fills the small board. The target head is highlighted with a moss green pulsing circle and a `"Tap head to slide"` micro-prompt; other cell taps are restricted.
+2. **Lesson 2: Clear Multiple Vines (Independence)**: Introduces multiple independent vines (full-board density) that can be cleared in any order. Gentle shimmer pulses appear on heads with a `"Clear the garden"` guide.
+3. **Lesson 3: Blocking Mechanics (Obstruction & Priority)**: Teaches blocked path relationships on a packed board. Tapping a blocked vine wiggles and shows a glowing red dashed **Collision Path** leading to the blocker cell with a floating alert: `"Blocked! Blocker first"`, guiding the user to clear the blocker first.
+4. **Lesson 4: Complex Blocking Chains (Sequence Logic)**: Teaches sequential multi-blocking on a fully occupied garden. A thin flowing line traces dependencies on load, guiding the user to start at the free key vine.
+5. **Lesson 5: Comprehensive Challenge (Capstone)**: Synthesizes all mechanics in a near-full grand garden. Incorrect blocked taps display the collision line; the guide highlights the key vine that starts the clearing chain.
 
-Interactive elements are highlighted dynamically using global screen coordinate projections from the Flame canvas, with context-sensitive floating glassmorphic prompts anchoring near cells.
+Tutorial boards keep the same teaching concepts as before, but vine length and grid occupancy now match main-game visual density (full or near-full boards) so the jump into Seedling levels does not feel like a different game. A vine head must never point into its own body — that is a hard validation failure for lessons and main levels alike.
+
+Interactive elements are highlighted dynamically from each vine's head coordinates (layout-driven — not hardcoded cells), with context-sensitive floating glassmorphic prompts anchoring near cells.
 
 ### Modules & Narrative
 
