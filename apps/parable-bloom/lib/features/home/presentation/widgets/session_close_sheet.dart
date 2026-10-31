@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/app_theme.dart';
+import '../../../../core/widgets/garden_leaf_divider.dart';
 
 /// Calm session-close titles/bodies (no-verse path).
 const String kSessionCloseNoVerseTitle = 'The garden rests.';
@@ -73,26 +74,7 @@ Future<SessionCloseAction?> showSessionCloseSheet(
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                      child:
-                          Divider(color: cs.outline.withValues(alpha: 0.45))),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Image.asset(
-                      'assets/art/ornaments/leaf_pair.png',
-                      height: 18,
-                      color: cs.secondary,
-                      colorBlendMode: BlendMode.srcIn,
-                      excludeFromSemantics: true,
-                    ),
-                  ),
-                  Expanded(
-                      child:
-                          Divider(color: cs.outline.withValues(alpha: 0.45))),
-                ],
-              ),
+              const GardenLeafDivider(),
               const SizedBox(height: 14),
               Text(
                 body,
