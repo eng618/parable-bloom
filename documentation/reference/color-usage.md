@@ -128,7 +128,7 @@ When a level or tutorial lesson is completed, the app displays a parchment level
 
 - **Panel**: `ColorScheme.surface` card over a soft scaffold scrim; parchment grain + `assets/art/home/frame_*` vignette; leaf sprig header and `GardenLeafDivider`.
 - **Title**: Serif "Level Complete" in `ColorScheme.primary` (forest light / moss dark).
-- **Encouraging HUD line**: `GardenEncouragingMessage` — italic serif muted `onSurfaceVariant`, optional leaf-pair flanks (not Material celebration icons).
+- **Encouraging HUD line**: `GardenEncouragingMessage` — full-width italic serif muted `onSurfaceVariant` (no side leaf flanks; botanical framing stays on the divider). Shown on **main-game** clears only — tutorials skip this parchment/message beat.
 - **Flame FX**: Light screens tint rings with forest primary (`AppTheme.primarySeed`); dark screens use sage (`AppTheme.secondarySeed`).
 
 ---

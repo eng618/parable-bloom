@@ -76,17 +76,21 @@ void main() {
   });
 
   group('GardenEncouragingMessage', () {
-    testWidgets('renders message with leaf flanks by default', (tester) async {
+    testWidgets('renders full-width message without side leaf flanks',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.lightTheme,
           home: const Scaffold(
-            body: GardenEncouragingMessage(message: 'A quiet bloom.'),
+            body: GardenEncouragingMessage(
+              message: 'Blessed are you in Christ!',
+            ),
           ),
         ),
       );
 
-      expect(find.text('A quiet bloom.'), findsOneWidget);
+      expect(find.text('Blessed are you in Christ!'), findsOneWidget);
+      // Side embroideries removed — they crushed long lines mid-word.
       expect(
         find.byWidgetPredicate(
           (w) =>
@@ -94,7 +98,7 @@ void main() {
               w.image is AssetImage &&
               (w.image as AssetImage).assetName.contains('leaf_pair'),
         ),
-        findsNWidgets(2),
+        findsNothing,
       );
     });
   });

@@ -2,21 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/app_theme.dart';
 
-/// Garden-language encouraging line for in-game HUD moments.
+/// Garden-language encouraging line for main-game HUD moments.
 ///
-/// Serif italic muted ink (welcome-back / parchment grammar). Optional small
-/// leaf-pair flanks keep the line tied to botanical ornaments without neon
-/// chrome or Material celebration icons.
+/// Full-width italic serif muted ink (welcome-back / parchment grammar).
+/// Side leaf embroideries are intentionally omitted — they crushed long lines
+/// into mid-word wraps; botanical framing stays on the leaf divider above.
 class GardenEncouragingMessage extends StatelessWidget {
   const GardenEncouragingMessage({
     super.key,
     required this.message,
-    this.showLeafFlanks = true,
     this.textAlign = TextAlign.center,
   });
 
   final String message;
-  final bool showLeafFlanks;
   final TextAlign textAlign;
 
   @override
@@ -41,47 +39,10 @@ class GardenEncouragingMessage extends StatelessWidget {
           height: 1.35,
         );
 
-    final text = Text(
+    return Text(
       message,
       style: style,
       textAlign: textAlign,
-    );
-
-    if (!showLeafFlanks) return text;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        _LeafAccent(color: cs.secondary),
-        const SizedBox(width: 10),
-        Expanded(child: text),
-        const SizedBox(width: 10),
-        _LeafAccent(color: cs.secondary, mirror: true),
-      ],
-    );
-  }
-}
-
-class _LeafAccent extends StatelessWidget {
-  const _LeafAccent({required this.color, this.mirror = false});
-
-  final Color color;
-  final bool mirror;
-
-  @override
-  Widget build(BuildContext context) {
-    final leaf = Image.asset(
-      'assets/art/ornaments/leaf_pair.png',
-      height: 14,
-      color: color,
-      colorBlendMode: BlendMode.srcIn,
-      excludeFromSemantics: true,
-    );
-    if (!mirror) return leaf;
-    return Transform(
-      alignment: Alignment.center,
-      transform: Matrix4.diagonal3Values(-1.0, 1.0, 1.0),
-      child: leaf,
     );
   }
 }

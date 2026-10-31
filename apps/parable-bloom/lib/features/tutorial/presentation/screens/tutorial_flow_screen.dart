@@ -13,7 +13,6 @@ import '../../../game/application/providers/solver_providers.dart';
 import '../../application/providers/tutorial_providers.dart';
 import '../../../game/presentation/widgets/garden_game.dart';
 import '../../../game/presentation/widgets/celebration_effects.dart';
-import '../../../game/presentation/widgets/level_complete_overlay.dart';
 import '../../../game/presentation/widgets/game_event_sink.dart';
 import '../../../game/presentation/widgets/projection_sync.dart';
 import '../../../game/presentation/widgets/game_header.dart';
@@ -40,8 +39,11 @@ class TutorialFlowScreen extends ConsumerStatefulWidget {
 
 class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   GardenGame? _game;
-  bool _isLevelCompleteOverlayVisible = false;
-  String _currentCongratulationMessage = '';
+
+  /// True while the post-clear beat / lesson advance is in flight.
+  /// Tutorials do **not** show the main-game LevelCompleteOverlay or
+  /// encouraging messages between lessons — only soft FX + advance.
+  bool _isLessonAdvanceInFlight = false;
 
   /// Set when the player intentionally leaves during the complete beat.
   bool _homeExitRequested = false;
@@ -72,7 +74,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         tag: 'TutorialFlowScreen',
       );
       if (next && (previous == null || !previous)) {
-        _showLevelCompleteOverlay();
+        _onTutorialLessonCleared();
       }
     });
 
@@ -83,7 +85,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         tag: 'TutorialFlowScreen',
       );
       if (next && (previous == null || !previous)) {
-        _showLevelCompleteOverlay();
+        _onTutorialLessonCleared();
       }
     });
 
@@ -197,10 +199,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
                   // Redesigned progressive tap-based tutorial overlay
                   const TutorialGuideOverlay(),
-
-                  // Level complete overlay
-                  if (_isLevelCompleteOverlayVisible)
-                    _buildLevelCompleteOverlay(),
                 ],
               ),
             );
@@ -292,9 +290,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   /// Intentional leave to Home (session-close may show after a complete today).
   void _goHomeFromTutorial() {
     _homeExitRequested = true;
-    if (_isLevelCompleteOverlayVisible) {
+    if (_isLessonAdvanceInFlight) {
       setState(() {
-        _isLevelCompleteOverlayVisible = false;
+        _isLessonAdvanceInFlight = false;
       });
     }
     ref.read(levelCompleteProvider.notifier).setComplete(false);
@@ -323,25 +321,25 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     });
 
     setState(() {
-      _isLevelCompleteOverlayVisible = false;
+      _isLessonAdvanceInFlight = false;
     });
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('Lesson restarted')));
   }
 
-  void _showLevelCompleteOverlay() async {
-    if (_isLevelCompleteOverlayVisible) return;
+  /// Tutorial lesson cleared: soft board FX only — no Level Complete parchment
+  /// or encouraging HUD (those are main-game only). Then advance the lesson.
+  void _onTutorialLessonCleared() async {
+    if (_isLessonAdvanceInFlight) return;
 
     _homeExitRequested = false;
-    _currentCongratulationMessage = pickCongratulationMessage();
-
     setState(() {
-      _isLevelCompleteOverlayVisible = true;
+      _isLessonAdvanceInFlight = true;
     });
 
-    // Celebration FX, centered on the board.
+    // Soft FX only (no congratulatory copy / LevelCompleteOverlay).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_game != null) {
+      if (_game != null && mounted) {
         spawnCelebrationEffect(
           game: _game!,
           effect: ref.read(celebrationEffectProvider),
@@ -350,13 +348,12 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       }
     });
 
-    // Wait for 2 seconds then advance to next lesson
     await Future.delayed(AnimationTiming.levelCompleteDelay);
 
     if (!mounted || _homeExitRequested) return;
 
     setState(() {
-      _isLevelCompleteOverlayVisible = false;
+      _isLessonAdvanceInFlight = false;
     });
 
     // Get current lesson before advancing
@@ -673,15 +670,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildLevelCompleteOverlay() {
-    // Shared widget (same as the game screen, including the title the
-    // old inline version was missing).
-    return LevelCompleteOverlay(
-      message: _currentCongratulationMessage,
-      onHome: _goHomeFromTutorial,
     );
   }
 }
