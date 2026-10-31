@@ -4,6 +4,7 @@ This document serves as the formal technical reference specification for evaluat
 
 > **Last audit:** 2026-10-14 — `parable-bloom` app `1.9.12+32`, scope **Android + Web**. Verdict: **Conditional GO** (ship after Firebase Hosting ensure lands + one preview-channel and one Play internal-track prove-out). iOS/macOS out of scope (ExportOptions placeholders, `if: false` CI jobs).
 > **Quick wins delivered 2026-10-15:** silent-catch logging, `og:image`/`twitter:image`, hosting security headers, `usesCleartextTraffic="false"`, value-object `==`/`hashCode`, partial-run warning, root CHANGELOG placeholder cleanup.
+> **Shrinking update 2026-10-31:** release R8 minify and resource shrinking are explicit, and a local app bundle proved them. A Play internal-track upload is still outstanding.
 
 ---
 
@@ -32,7 +33,7 @@ graph LR
 - [x] **Static Analysis**: `task flutter:analyze` returns **zero warnings and zero errors** (verified 2026-10-14, `apps/parable-bloom`). Note: `analysis_options.yaml` includes only bare `flutter_lints` with zero custom rules active, so a clean pass is a weak signal.
 - [x] **Go Toolchain Alignment**: Inherits Go `1.27.1` workspace-wide; `task lb:lint`, `task lb:test`, and `task lb:build` pass cleanly.
 - [x] **Dependencies Hygiene**: Production dependencies contain zero test-only packages; `mocktail` and `test` isolated to `dev_dependencies`. `vector_math` pinned to `^2.4.3` (`apps/parable-bloom/pubspec.yaml:48`) — `any` removed 2026-10-14 for reproducible builds.
-- [ ] **Release shrinking (P1)**: `android/app/build.gradle.kts:45-56` declares `proguardFiles` but never sets `isMinifyEnabled` / `isShrinkResources` — releases ship unobfuscated/unshrunk. Enable and prove on internal track before prod.
+- [x] **Release shrinking (P1, local proof 2026-10-31)**: `android/app/build.gradle.kts` release build type sets `isMinifyEnabled` and `isShrinkResources` (both follow `-Pshrink=false` for deferred components). `flutter build appbundle --release` produced `app-release.aab` (82.3MB). R8 8.11.18 wrote `build/app/outputs/mapping/release/mapping.txt` (obfuscated names) and `resources.txt`. Signed with a throwaway local keystore because production `ANDROID_*` credentials were absent. Not uploaded to a Play internal track — do that with the Play signing key before prod. Kotlin Android plugin is `2.4.0` so `compileReleaseKotlin` can read Firebase/Play Services metadata 2.4.0; `jvmTarget` is `kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }`. AGP stayed 8.11.1 and Gradle stayed 8.14.
 - [x] **Value-object hygiene (delivered 2026-10-15)**: `VineState`, `CameraState`, `VineData`, `MaskData`, `LevelData` now implement `==`/`hashCode`.
 
 ### 2. Puzzle Solvability & Level Matrix
@@ -74,7 +75,7 @@ graph LR
 ### 6. Release Pipeline & Platform Hardening
 
 - [x] **Firebase Hosting site ensure (P0 fix, delivered 2026-10-14)**: Firebase stopped auto-creating the default Hosting site on first deploy (enforced Oct 15 2026). `task firebase:hosting:ensure` (`hosting:sites:get || hosting:sites:create parable-bloom --project parable-bloom`) is now a `deps` of `hosting:deploy`, `h:deploy`, and `hosting:channel:deploy` (`.taskfiles/Firebase.yml`); explicit ensure steps added to `.github/workflows/deploy-web.yml` and `publish.yml`; troubleshooting in `documentation/how-to/release-process.md`.
-- [x] **Android signing**: release `signingConfig` + `taskGraph.whenReady` fail-fast on missing `ANDROID_*` env/keystore (`build.gradle.kts:36-43,62-86`) — no debug-key fallback. AD_ID stripped (`AndroidManifest.xml:12-13`); permissions minimal (`INTERNET`, `ACCESS_NETWORK_STATE`).
+- [x] **Android signing**: release `signingConfig` + `taskGraph.whenReady` fail-fast on missing `ANDROID_*` env/keystore (`build.gradle.kts:35-42,75-98`) — no debug-key fallback. AD_ID stripped (`AndroidManifest.xml:12-13`); permissions minimal (`INTERNET`, `ACCESS_NETWORK_STATE`).
 - [x] **Telemetry privacy**: Sentry DSN via `--dart-define` (no hardcoded secret), `sendDefaultPii` unset (false), `tracesSampleRate 0.2` (`error_reporting_service.dart`). Crashlytics breadcrumb dual-sink noted — keep opt-outs in sync.
 - [x] **Web security headers (delivered 2026-10-15)**: `firebase.json` hosting sets `nosniff`, `SAMEORIGIN`, HSTS. CSP intentionally deferred (needs `flutter_bootstrap.js` tuning).
 - [x] **Android hardening (delivered 2026-10-15)**: explicit `usesCleartextTraffic="false"` + `allowBackup="true"`. No `network_security_config.xml` (defaults safe).

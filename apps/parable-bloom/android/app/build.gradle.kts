@@ -19,10 +19,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
     defaultConfig {
         applicationId = "com.garciaericn.parable_bloom"
         // You can update the following values to match your application needs.
@@ -51,11 +47,25 @@ android {
             // CI (publish.yml) provides these via Bitwarden; see
             // documentation/how-to/release-process.md for local setup.
             signingConfig = signingConfigs.getByName("release")
+            // R8 minify + resource shrinking. Flutter 3.47's Gradle plugin
+            // also turns these on for release unless -Pshrink=false (deferred
+            // components only). Set them here so the app file is the source
+            // of truth and a raw Gradle release cannot ship unshrunk.
+            // This block is evaluated after the Flutter plugin's apply().
+            val shrink = (project.findProperty("shrink") as? String)?.toBoolean() ?: true
+            isMinifyEnabled = shrink
+            isShrinkResources = shrink
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 

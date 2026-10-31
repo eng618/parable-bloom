@@ -70,6 +70,12 @@ This document serves as an information-oriented technical reference detailing su
 
 - **Behavior**: `flutter build appbundle --release` runs `:app:minifyReleaseWithR8`, which fails under AGP 8.x strict mode with `Missing class com.google.android.play.core.*` referenced from the Flutter engine (`FlutterPlayStoreSplitApplication`, `PlayStoreDeferredComponentManager`). The app does not use deferred components.
 - **Configuration**: `android/app/proguard-rules.pro` includes `-dontwarn com.google.android.play.core.**` to suppress these engine-only references while keeping R8 shrinking enabled. Do not add a `play:core` dependency to fix this.
+- **Toolchain**: `org.jetbrains.kotlin.android` is `2.4.0`. Older compilers cannot read Kotlin metadata 2.4.0 inside current Firebase and Play Services artifacts, so `compileReleaseKotlin` fails before R8. JVM target lives in `kotlin { compilerOptions }` because Kotlin 2.4 rejects the string `kotlinOptions.jvmTarget` setter.
+
+### Android Release Shrinking
+
+- **Behavior**: Release builds set `isMinifyEnabled` and `isShrinkResources` in `android/app/build.gradle.kts`. Both follow `-Pshrink=false`.
+- **Validation**: 2026-10-31 local `flutter build appbundle --release` wrote `app-release.aab` and R8 8.11.18 mapping plus `resources.txt` under `build/app/outputs/mapping/release/`. The bundle was signed with a throwaway keystore, not the Play key, and was not uploaded.
 
 ### Android Release: AD_ID Permission vs Play Console Declaration
 

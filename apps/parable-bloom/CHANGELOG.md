@@ -5,6 +5,15 @@
 - skip vine blocking solves when an animation flip does not change which vines still occupy the board
 - overlap Hive init with Firebase, and cap anonymous sign-in at 2 seconds so a slow network cannot hold the first frame
 
+### ♻️ Refactor
+
+- split the settings screen and the game screen into focused widgets with the same behavior
+
+### 📦 Build
+
+- shrink Android release builds with R8 minify and resource shrinking
+- compile Android with Kotlin 2.4.0 so current Firebase artifacts build
+
 ## 1.11.0 (2026-10-28)
 
 ### 🚀 Features

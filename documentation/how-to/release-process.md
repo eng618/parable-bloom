@@ -778,6 +778,22 @@ bws secret list
 - Adding a `com.google.android.play:core` dependency is intentionally avoided:
   it is a deprecated monolith the app does not need.
 
+**Problem**: `compileReleaseKotlin` fails because Firebase/Play Services artifacts
+ship Kotlin metadata 2.4.0 and the project compiler is older
+(`Expected 2.2.0, but was 2.4.0`), or Kotlin 2.4 rejects
+`kotlinOptions { jvmTarget = "..." }`.
+
+- Cause: the Android Kotlin plugin version in `android/settings.gradle.kts`
+  must be able to read the metadata in current `firebase_auth` /
+  `firebase_analytics` Android artifacts.
+- Fix: `org.jetbrains.kotlin.android` `2.4.0`, and JVM target via
+  `kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }` in
+  `android/app/build.gradle.kts` (Flutter's current template). Stay on AGP
+  8.11.1 and Gradle 8.14 unless 2.4.0 itself fails. Do not add `play:core`.
+- Release shrinking is explicit (`isMinifyEnabled` / `isShrinkResources`).
+  A local bundle on 2026-10-31 proved R8 8.11.18 plus resource shrinking.
+  That bundle used a throwaway keystore and was not uploaded to Play.
+
 ### Google Play Upload Issues
 
 **Problem**: `supply` fails with `This release includes the
