@@ -30,7 +30,7 @@ class SfxController {
   bool _enabled = true;
   bool _loaded = false;
   bool _unavailable = false;
-  double _volume = 0.85;
+  double _volume = 0.72;
 
   static const Map<GameSfx, String> _assets = {
     GameSfx.vineSlideStart: 'assets/audio/sfx/vine_slide_start.mp3',
@@ -146,8 +146,9 @@ class SfxController {
 
   /// Slide start + light looping rustle while a vine moves.
   Future<void> playVineSlide() async {
-    await play(GameSfx.vineSlideStart);
-    await play(GameSfx.vineRustle, volumeScale: 0.55);
+    await play(GameSfx.vineSlideStart, volumeScale: 0.9);
+    // Keep continuous rustle very quiet under the soft whoosh.
+    await play(GameSfx.vineRustle, volumeScale: 0.35);
   }
 
   Future<void> stopVineMotion() async {
