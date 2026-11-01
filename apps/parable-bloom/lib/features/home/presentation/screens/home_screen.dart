@@ -177,11 +177,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           horizontal: 24,
                           vertical: 16,
                         ),
-                        child: Image.asset(
-                          'assets/art/home/cross_wood.png',
-                          fit: BoxFit.contain,
-                          semanticLabel: 'Wooden cross',
-                        ),
+                        child: _HomeCrossArtwork(isDark: isDark),
                       ),
                     ),
                   ),
@@ -381,5 +377,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _openJournal() {
     context.push('/journal');
+  }
+}
+
+/// Wooden cross with a soft multiply ground shadow so light and dark both read
+/// cleanly (the PNG keeps original silhouette AA; the old white matte plate is
+/// stripped from the asset).
+class _HomeCrossArtwork extends StatelessWidget {
+  const _HomeCrossArtwork({required this.isDark});
+
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _CrossGroundShadowPainter(isDark: isDark),
+      child: Image.asset(
+        'assets/art/home/cross_wood.png',
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
+        semanticLabel: 'Wooden cross',
+      ),
+    );
+  }
+}
+
+/// Soft elliptical contact shadow under the cross, multiplied into the Home
+/// backdrop so it darkens cream and night soil instead of painting a white matte.
+class _CrossGroundShadowPainter extends CustomPainter {
+  const _CrossGroundShadowPainter({required this.isDark});
+
+  final bool isDark;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Anchor near the foot of the contained cross image.
+    final center = Offset(size.width * 0.52, size.height * 0.90);
+    final radii = Offset(size.width * 0.28, size.height * 0.045);
+    final rect = Rect.fromCenter(
+      center: center,
+      width: radii.dx * 2,
+      height: radii.dy * 2,
+    );
+
+    final paint = Paint()
+      ..blendMode = BlendMode.multiply
+      ..color = Color.fromRGBO(18, 14, 10, isDark ? 0.72 : 0.38)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+
+    canvas.drawOval(rect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CrossGroundShadowPainter oldDelegate) {
+    return oldDelegate.isDark != isDark;
   }
 }
