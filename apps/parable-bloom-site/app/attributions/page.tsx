@@ -55,9 +55,8 @@ export default function AttributionsPage() {
   return (
     <article className="page-article animate-fade-in-up">
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <span className="text-4xl">📖</span>
         <div>
-          <h1 className="font-display text-text-primary text-3xl font-bold sm:text-4xl">Scripture Attributions</h1>
+          <h1 className="font-display text-brand text-3xl font-semibold sm:text-4xl">Scripture Attributions</h1>
           <Badge variant="secondary" className="border-brand/20 bg-brand/10 text-brand mt-1">
             Parable Bloom
           </Badge>

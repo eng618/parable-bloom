@@ -12,4 +12,8 @@ module.exports = {
   },
   // Enable static export for fully static builds (for Cloudflare Pages, etc)
   output: 'export',
+  // Static export cannot use the default Image Optimization API.
+  images: {
+    unoptimized: true,
+  },
 };

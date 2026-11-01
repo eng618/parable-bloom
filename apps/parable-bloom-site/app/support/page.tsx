@@ -13,7 +13,12 @@ const faqs = [
   {
     question: 'Which platforms are supported?',
     answer:
-      'Parable Bloom is available on Web (play instantly in your browser) and Android via Google Play. iOS support is coming soon.',
+      'Parable Bloom is available on Web (play instantly in your browser). Android on Google Play and iOS are coming soon.',
+  },
+  {
+    question: 'How many levels are there?',
+    answer:
+      'The garden currently includes 500+ main puzzles across 24 modules, plus 5 guided tutorial lessons that introduce tap-to-slide vine play.',
   },
   {
     question: 'Do I need an internet connection to play?',
@@ -41,9 +46,8 @@ export default function SupportPage() {
   return (
     <article className="page-article animate-fade-in-up">
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <span className="text-4xl">💬</span>
         <div>
-          <h1 className="font-display text-text-primary text-3xl font-bold sm:text-4xl">Support</h1>
+          <h1 className="font-display text-brand text-3xl font-semibold sm:text-4xl">Support</h1>
           <Badge variant="secondary" className="border-brand/20 bg-brand/10 text-brand mt-1">
             Parable Bloom
           </Badge>

@@ -1,11 +1,8 @@
 export default function Loading() {
   return (
-    <div className="flex flex-col items-center gap-4 py-16" aria-busy="true" aria-label="Loading">
-      <span className="animate-float text-5xl" aria-hidden="true">
-        🌿
-      </span>
-      <div className="bg-brand/10 h-2 w-48 animate-pulse rounded-full" />
-      <p className="text-text-secondary text-sm">Loading…</p>
+    <div className="flex flex-col items-center justify-center gap-4 py-24">
+      <div className="font-display text-brand animate-pulse text-lg tracking-wide">Parable Bloom</div>
+      <div className="bg-brand/15 h-2 w-48 animate-pulse rounded-full" />
     </div>
   );
 }

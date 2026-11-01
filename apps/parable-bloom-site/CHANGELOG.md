@@ -1,3 +1,13 @@
+## 0.5.22 (2026-11-01)
+
+### 🚀 Features
+
+- **site:** garden visual refresh — parchment palette, product screenshots, updated level messaging
+
+### 🩹 Fixes
+
+- **site:** defringe botanical art + cream CTA text + platform-card button padding
+
 ## 0.5.21 (2026-11-01)
 
 ### 🚀 Features
