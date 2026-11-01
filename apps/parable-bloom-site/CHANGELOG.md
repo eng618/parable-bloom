@@ -1,3 +1,22 @@
+## 0.5.21 (2026-11-01)
+
+### 🚀 Features
+
+- **game:** level-entry camera ease-out + gameplay SFX pack ([#149](https://github.com/eng618/parable-bloom/pull/149))
+- **tutorial:** densify lesson vines to match gameplay boards ([#147](https://github.com/eng618/parable-bloom/pull/147))
+- **ui:** garden parchment level-complete + encouraging HUD ([#146](https://github.com/eng618/parable-bloom/pull/146))
+- **game:** continue to next level after clear + dedicated Home ([#144](https://github.com/eng618/parable-bloom/pull/144))
+
+### 🩹 Fixes
+
+- **home:** remove white fringe from wooden cross ([#150](https://github.com/eng618/parable-bloom/pull/150))
+- **home:** remove session-close overlay, keep welcome-back ([#148](https://github.com/eng618/parable-bloom/pull/148))
+- **game:** reset Grace hearts on every level/lesson load ([#145](https://github.com/eng618/parable-bloom/pull/145))
+
+### ❤️ Thank You
+
+- Eric Garcia @eng618
+
 ## 0.5.20 (2026-10-31)
 
 ### 🚀 Features
