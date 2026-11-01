@@ -149,3 +149,5 @@ apps/parable-bloom-site/.github/instructions/codacy.instructions.md
 .claude/worktrees
 
 sentry.properties
+
+.claude/settings.local.json
