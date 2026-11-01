@@ -13,7 +13,7 @@
   "devDependencies": {
     "@gv-tech/oxc-config": "^1.3.0",
     "@nx/js": "^23.3.0",
-    "oxfmt": "^0.72.0"
+    "oxfmt": "^0.75.0"
   },
   "packageManager": "bun@1.3.14"
 }
