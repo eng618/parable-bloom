@@ -119,14 +119,28 @@ class SfxController {
     if (player == null) return;
     try {
       await player.stop();
-    } catch (_) {}
+    } catch (e, stack) {
+      LoggerService.warn(
+        'SFX stop failed: ${sfx.name}',
+        error: e,
+        stackTrace: stack,
+        tag: 'SfxController',
+      );
+    }
   }
 
   Future<void> stopAll() async {
-    for (final player in _players.values) {
+    for (final entry in _players.entries) {
       try {
-        await player.stop();
-      } catch (_) {}
+        await entry.value.stop();
+      } catch (e, stack) {
+        LoggerService.warn(
+          'SFX stopAll failed: ${entry.key.name}',
+          error: e,
+          stackTrace: stack,
+          tag: 'SfxController',
+        );
+      }
     }
   }
 

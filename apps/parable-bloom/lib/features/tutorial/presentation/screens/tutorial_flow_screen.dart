@@ -17,6 +17,7 @@ import '../../application/providers/tutorial_providers.dart';
 import '../../../game/presentation/widgets/garden_game.dart';
 import '../../../game/presentation/widgets/celebration_effects.dart';
 import '../../../game/presentation/widgets/game_event_sink.dart';
+import '../../../game/presentation/widgets/game_sfx_bridge.dart';
 import '../../../game/presentation/widgets/projection_sync.dart';
 import '../../../game/presentation/widgets/game_header.dart';
 import '../../../game/presentation/widgets/pause_menu_dialog.dart';
@@ -824,28 +825,23 @@ class _TutorialFlowEventSink implements GameEventSink {
 
   @override
   void onVineSlideStarted({required int vineLength}) {
-    _call((c) {
-      unawaited(c.read(sfxControllerProvider).playVineSlide());
-    });
+    _call(dispatchVineSlideStarted);
   }
 
   @override
   void onVineSlideEnded({required bool cleared, required int vineLength}) {
-    _call((c) {
-      final sfx = c.read(sfxControllerProvider);
-      if (cleared) {
-        unawaited(sfx.playBloom(vineLength: vineLength));
-      } else {
-        unawaited(sfx.playBlocked());
-      }
-    });
+    _call(
+      (c) => dispatchVineSlideEnded(
+        c,
+        cleared: cleared,
+        vineLength: vineLength,
+      ),
+    );
   }
 
   @override
   void onUiTap() {
-    _call((c) {
-      unawaited(c.read(sfxControllerProvider).play(GameSfx.uiTap));
-    });
+    _call(dispatchUiTap);
   }
 
   @override

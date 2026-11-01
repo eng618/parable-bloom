@@ -24,6 +24,7 @@ import '../../application/providers/progress_providers.dart';
 import '../widgets/game_header.dart';
 import '../widgets/celebration_effects.dart';
 import '../widgets/game_event_sink.dart';
+import '../widgets/game_sfx_bridge.dart';
 import '../widgets/game_state_dialogs.dart';
 import '../widgets/game_zoom_controls.dart';
 import '../widgets/garden_game.dart';
@@ -1211,28 +1212,23 @@ class _GameScreenEventSink implements GameEventSink {
 
   @override
   void onVineSlideStarted({required int vineLength}) {
-    _call((c) {
-      unawaited(c.read(sfxControllerProvider).playVineSlide());
-    });
+    _call(dispatchVineSlideStarted);
   }
 
   @override
   void onVineSlideEnded({required bool cleared, required int vineLength}) {
-    _call((c) {
-      final sfx = c.read(sfxControllerProvider);
-      if (cleared) {
-        unawaited(sfx.playBloom(vineLength: vineLength));
-      } else {
-        unawaited(sfx.playBlocked());
-      }
-    });
+    _call(
+      (c) => dispatchVineSlideEnded(
+        c,
+        cleared: cleared,
+        vineLength: vineLength,
+      ),
+    );
   }
 
   @override
   void onUiTap() {
-    _call((c) {
-      unawaited(c.read(sfxControllerProvider).play(GameSfx.uiTap));
-    });
+    _call(dispatchUiTap);
   }
 
   @override
