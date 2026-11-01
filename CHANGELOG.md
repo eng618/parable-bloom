@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Home wooden cross: restored original light-quality silhouette AA on `cross_wood.png`, stripped only the white matte ground plate, and draw a soft `BlendMode.multiply` contact shadow in Flutter so light stays clean and dark no longer shows a white base fringe.
+- Home wooden cross: keep original silhouette AA on `cross_wood.png`, strip the white matte ground plate, recolor residual light/white edge RGB to nearest wood (alpha unchanged) so dark olive no longer shows a light fringe, and draw a soft `BlendMode.multiply` contact shadow in Flutter.
 - macOS & iOS builds: completed the Swift Package Manager migration on **both platforms** (all plugins resolve via SPM; `Podfile`/`Pods`/pod xcconfig includes removed). The old iOS `Podfile` hook forced deployment targets per pod (the project sets 16.0 natively); the old macOS hook forced `MACOSX_DEPLOYMENT_TARGET = 11.0`, rejected by modern Xcode. The `flutterfire upload-crashlytics-symbols` phase now locates the SwiftPM `firebase-ios-sdk` checkout that matches Flutter's build layout and skips gracefully when it is absent, instead of failing the build.
 
 
