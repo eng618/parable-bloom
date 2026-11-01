@@ -274,7 +274,7 @@ a {
   gap: 0.5rem;
   border-radius: 1.125rem;
   background: var(--color-brand);
-  color: #fffbf3;
+  color: #fffbf3 !important;
   padding: 0.8rem 1.4rem;
   font-size: 0.95rem;
   font-weight: 600;
@@ -283,8 +283,22 @@ a {
 
 .cta-primary:hover {
   background: rgb(42 62 38);
+  color: #fffbf3 !important;
   transform: translateY(-2px);
   box-shadow: var(--shadow-grace-hover);
+}
+
+/* Forest primary buttons from the design system must keep cream label text */
+button.bg-brand,
+a.bg-brand,
+.bg-brand[data-slot='button'] {
+  color: #fffbf3;
+}
+
+button.bg-brand:hover,
+a.bg-brand:hover,
+.bg-brand[data-slot='button']:hover {
+  color: #fffbf3;
 }
 
 .cta-secondary {

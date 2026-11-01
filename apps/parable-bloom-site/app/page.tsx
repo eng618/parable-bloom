@@ -85,14 +85,22 @@ export default function HomePage() {
     <div className="flex flex-col gap-16 pb-12 sm:gap-20">
       {/* ── Hero: brand + headline + CTA + dominant product image ── */}
       <section className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden">
-        <div
+        {/* Soft corner sprigs only — punched PNG alpha, no full-bleed frame matte */}
+        <Image
+          src="/art/leaf_sprig.png"
+          alt=""
+          width={120}
+          height={134}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-[0.55]"
-          style={{
-            backgroundImage: "url('/art/frame_light.webp')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
+          className="pointer-events-none absolute top-6 left-2 opacity-80 sm:top-10 sm:left-6"
+        />
+        <Image
+          src="/art/leaf_sprig.png"
+          alt=""
+          width={120}
+          height={134}
+          aria-hidden="true"
+          className="pointer-events-none absolute right-2 bottom-8 scale-x-[-1] opacity-80 sm:right-8 sm:bottom-12"
         />
         <div className="relative mx-auto grid w-full max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-12 lg:py-16">
           <div className="animate-fade-in-up relative z-10 max-w-xl">
@@ -108,7 +116,7 @@ export default function HomePage() {
                 href="https://parable-bloom.web.app/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="cta-primary focus-visible:ring-brand/40 focus-visible:ring-2 focus-visible:outline-none"
+                className="cta-primary focus-visible:ring-brand/40 !text-[#fffbf3] hover:!text-[#fffbf3] focus-visible:ring-2 focus-visible:outline-none"
               >
                 Play on Web
               </Link>
@@ -150,7 +158,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="leaf-divider" aria-hidden="true">
-          <Image src="/art/leaf_pair.webp" alt="" width={72} height={24} className="opacity-80" />
+          <Image src="/art/leaf_pair.png" alt="" width={72} height={24} className="opacity-90" />
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
           {gallery.map((shot, i) => (
@@ -218,7 +226,7 @@ export default function HomePage() {
       {/* ── Closing CTA ── */}
       <section className="animate-fade-in-up relative overflow-hidden rounded-[1.5rem] border border-brand/15 bg-surface px-6 py-10 text-center sm:px-10">
         <Image
-          src="/art/leaf_sprig.webp"
+          src="/art/leaf_sprig.png"
           alt=""
           width={80}
           height={48}
@@ -234,7 +242,7 @@ export default function HomePage() {
             href="https://parable-bloom.web.app/"
             target="_blank"
             rel="noopener noreferrer"
-            className="cta-primary"
+            className="cta-primary !text-[#fffbf3] hover:!text-[#fffbf3]"
           >
             Play on Web
           </Link>

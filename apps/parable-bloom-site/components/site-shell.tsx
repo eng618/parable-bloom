@@ -58,7 +58,7 @@ export default function SiteShell({ children }: SiteShellProps) {
             onClick={() => trackNavigationClick('/', 'header', 'Logo')}
             className="flex shrink-0 items-center gap-2.5 transition-opacity duration-300 hover:opacity-80"
           >
-            <Image src="/art/leaf_sprig.webp" alt="" width={28} height={18} className="opacity-90" aria-hidden="true" />
+            <Image src="/art/leaf_sprig.png" alt="" width={28} height={18} className="opacity-90" aria-hidden="true" />
             <Text variant="h3" as="strong" className="font-display text-brand whitespace-nowrap text-lg sm:text-xl">
               Parable Bloom
             </Text>

@@ -55,22 +55,29 @@ export default function DesignSystemCard({
         <CardDescription className="text-text-secondary text-sm leading-relaxed">{body}</CardDescription>
       </CardContent>
 
-      <CardFooter className="pt-0">
-        {href ? (
-          <Button
-            asChild
-            className="bg-brand hover:bg-brand/90 w-full rounded-[1.125rem] transition-all duration-300 hover:shadow-md"
-            onClick={() => trackCtaClick(title, 'platform_grid', badge)}
-          >
-            <Link href={href} target="_blank" rel="noopener noreferrer">
+      <CardFooter className="!border-brand/10 mt-auto !gap-0 !border-t !bg-transparent !p-0">
+        <div className="w-full px-6 pt-6 pb-6">
+          {href ? (
+            <Button
+              asChild
+              className="bg-brand hover:bg-brand/90 !text-[#fffbf3] hover:!text-[#fffbf3] h-11 w-full rounded-[1.125rem] transition-all duration-300 hover:shadow-md"
+              onClick={() => trackCtaClick(title, 'platform_grid', badge)}
+            >
+              <Link
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="!text-[#fffbf3] hover:!text-[#fffbf3]"
+              >
+                {ctaLabel}
+              </Link>
+            </Button>
+          ) : (
+            <Button disabled className="bg-brand/35 !text-[#fffbf3] h-11 w-full rounded-[1.125rem] opacity-70">
               {ctaLabel}
-            </Link>
-          </Button>
-        ) : (
-          <Button disabled className="w-full rounded-[1.125rem] opacity-60">
-            {ctaLabel}
-          </Button>
-        )}
+            </Button>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );
