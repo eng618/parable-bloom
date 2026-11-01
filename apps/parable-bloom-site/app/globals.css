@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&family=Alegreya+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Source+Sans+3:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 /* Scan @gv-tech/ui-web source so Tailwind v4 generates its utility classes */
@@ -31,57 +31,57 @@
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
 
-  /* ── Parable Bloom brand palette ── */
-  --color-brand: hsl(151deg 66% 27%);
-  --color-brand-soft: hsl(93deg 28% 54%);
-  --color-brand-pale: hsl(93deg 28% 54% / 12%);
-  --color-surface: hsl(0deg 0% 100%);
-  --color-surface-alt: hsl(0deg 0% 96%);
-  --color-bg-top: hsl(40deg 100% 97%);
-  --color-bg-bottom: hsl(151deg 66% 27%);
-  --color-text-primary: hsl(222deg 47% 11%);
-  --color-text-secondary: hsl(215deg 16% 47%);
+  /* ── Garden visual-refresh palette (aligned with AppTheme) ── */
+  --color-brand: #344d2f;
+  --color-brand-soft: #8da082;
+  --color-brand-pale: rgb(141 160 130 / 16%);
+  --color-daisy: #e9c46a;
+  --color-surface: #fffbf3;
+  --color-surface-alt: #f1ebdd;
+  --color-surface-high: #e8e0ce;
+  --color-bg-top: #f9f3e5;
+  --color-bg-bottom: #e8e0ce;
+  --color-text-primary: #2a3328;
+  --color-text-secondary: #5a6258;
 
-  /* Grace shadow */
-  --shadow-grace: 0 18px 40px hsl(151deg 66% 27% / 15%);
-  --shadow-grace-hover: 0 24px 48px hsl(151deg 66% 27% / 22%);
+  /* Soft garden depth */
+  --shadow-grace: 0 18px 40px rgb(52 77 47 / 12%);
+  --shadow-grace-hover: 0 24px 48px rgb(52 77 47 / 18%);
 
-  /* Typography */
-  --font-display: 'Fraunces', georgia, serif;
-  --font-body: 'Alegreya Sans', 'Segoe UI', sans-serif;
+  /* Typography — serif brand/display, calm sans for UI */
+  --font-display: 'Fraunces', georgia, 'Liberation Serif', serif;
+  --font-body: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
 
-  /* Grace transition defaults */
   --duration-grace: 400ms;
   --ease-grace: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Design-system HSL variable definitions ── */
+/* ── Design-system HSL variable definitions (garden cream / forest) ── */
 @layer base {
   :root {
-    --background: 40 100% 97%;
-    --foreground: 222 47% 11%;
-    --primary: 151 66% 27%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 0 0% 92%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 0 0% 89%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 151 66% 27%;
-    --radius: 0.5rem;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --background: 42 63% 94%;
+    --foreground: 109 12% 18%;
+    --primary: 110 24% 24%;
+    --primary-foreground: 40 100% 98%;
+    --secondary: 42 42% 91%;
+    --secondary-foreground: 109 12% 18%;
+    --muted: 36 34% 83%;
+    --muted-foreground: 108 5% 36%;
+    --accent: 98 14% 57%;
+    --accent-foreground: 109 12% 18%;
+    --destructive: 3 71% 41%;
+    --destructive-foreground: 40 100% 98%;
+    --border: 110 16% 40% / 28%;
+    --input: 110 16% 40% / 28%;
+    --ring: 110 24% 24%;
+    --radius: 1.125rem;
+    --card: 40 100% 98%;
+    --card-foreground: 109 12% 18%;
+    --popover: 40 100% 98%;
+    --popover-foreground: 109 12% 18%;
   }
 }
 
-/* ── Base ─────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -97,16 +97,19 @@ body {
 
 body {
   color: var(--color-text-primary);
-  background:
-    radial-gradient(circle at 10% 15%, hsl(0deg 0% 100% / 88%), transparent 42%),
-    radial-gradient(circle at 82% 8%, hsl(93deg 28% 54% / 14%), transparent 45%),
-    linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg-bottom) 100%);
+  background-color: var(--color-bg-top);
+  background-image:
+    linear-gradient(180deg, rgb(249 243 229 / 88%) 0%, rgb(241 235 221 / 92%) 55%, rgb(232 224 206 / 96%) 100%),
+    url('/art/parchment.webp');
+  background-size:
+    auto,
+    480px;
+  background-repeat: repeat;
   font-family: var(--font-body);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Smooth transitions on all interactive elements */
 a,
 button {
   transition:
@@ -123,7 +126,6 @@ a {
   text-decoration: none;
 }
 
-/* ── Animations ───────────────────────────────────────────────── */
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -157,6 +159,18 @@ a {
   }
 }
 
+@keyframes soft-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .animate-fade-in-up {
   animation: fade-in-up 600ms var(--ease-grace) both;
 }
@@ -166,7 +180,11 @@ a {
 }
 
 .animate-float {
-  animation: float 4s ease-in-out infinite;
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-soft-rise {
+  animation: soft-rise 800ms var(--ease-grace) both;
 }
 
 .animation-delay-100 {
@@ -177,19 +195,21 @@ a {
   animation-delay: 200ms;
 }
 
-/* ── Typography helpers ───────────────────────────────────────── */
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
 .font-display {
   font-family: var(--font-display);
 }
 
-/* ── Page article ─────────────────────────────────────────────── */
 .page-article {
-  background: hsl(40deg 100% 97% / 92%);
-  border: 1px solid var(--color-border);
-  border-radius: 18px;
+  background: rgb(255 251 243 / 92%);
+  border: 1px solid rgb(52 77 47 / 14%);
+  border-radius: 1.25rem;
   padding: clamp(1.25rem, 3vw, 2.5rem);
   margin-top: 1rem;
-  backdrop-filter: blur(4px);
+  box-shadow: var(--shadow-grace);
 }
 
 .page-article h1,
@@ -206,10 +226,83 @@ a {
 .page-article a {
   color: var(--color-brand);
   text-decoration: underline;
-  text-decoration-color: hsl(151deg 66% 27% / 40%);
+  text-decoration-color: rgb(52 77 47 / 35%);
   text-underline-offset: 3px;
 }
 
 .page-article a:hover {
   text-decoration-color: var(--color-brand);
+}
+
+/* Phone frame for product screenshots */
+.phone-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.75rem;
+  border: 1px solid rgb(52 77 47 / 18%);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-grace);
+}
+
+.phone-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.leaf-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1.5rem;
+}
+
+.leaf-divider::before,
+.leaf-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  max-width: 7rem;
+  background: rgb(52 77 47 / 22%);
+}
+
+.cta-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 1.125rem;
+  background: var(--color-brand);
+  color: #fffbf3;
+  padding: 0.8rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-grace);
+}
+
+.cta-primary:hover {
+  background: rgb(42 62 38);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-grace-hover);
+}
+
+.cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 1.125rem;
+  border: 1.5px solid rgb(52 77 47 / 55%);
+  background: rgb(255 251 243 / 70%);
+  color: var(--color-brand);
+  padding: 0.8rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.cta-secondary:hover {
+  background: var(--color-surface);
+  border-color: var(--color-brand);
+  transform: translateY(-2px);
 }

@@ -13,8 +13,18 @@ export const metadata: Metadata = {
     default: 'Parable Bloom',
     template: '%s | Parable Bloom',
   },
-  description: 'A Christ-centered arrow puzzle game of faith, scripture, and prayer.',
-  keywords: ['puzzle game', 'christ-centered', 'faith', 'scripture', 'mobile game', 'parable bloom'],
+  description:
+    'A calm Christ-centered arrow puzzle. Clear 500+ garden levels by sliding vines, then meet Scripture and reflection along the way.',
+  keywords: [
+    'puzzle game',
+    'christ-centered',
+    'faith',
+    'scripture',
+    'NET Bible',
+    'mobile game',
+    'parable bloom',
+    'garden puzzle',
+  ],
   icons: {
     icon: [
       { url: '/favicon.ico' },
@@ -25,15 +35,16 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Parable Bloom',
-    description: 'A Christ-centered arrow puzzle game of faith, scripture, and prayer.',
+    description:
+      'A calm Christ-centered arrow puzzle. Clear 500+ garden levels by sliding vines, then meet Scripture and reflection along the way.',
     url: 'https://parable-bloom.pages.dev',
     siteName: 'Parable Bloom',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Parable Bloom - A Serene Faith Journey',
+        alt: 'Parable Bloom — gospel through garden puzzles',
       },
     ],
     locale: 'en_US',
@@ -42,13 +53,14 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Parable Bloom',
-    description: 'A Christ-centered arrow puzzle game of faith, scripture, and prayer.',
-    images: ['/og-image.png'],
+    description:
+      'A calm Christ-centered arrow puzzle. Clear 500+ garden levels by sliding vines, then meet Scripture and reflection along the way.',
+    images: ['/og-image.jpg'],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#177245',
+  themeColor: '#344D2F',
   width: 'device-width',
   initialScale: 1,
 };

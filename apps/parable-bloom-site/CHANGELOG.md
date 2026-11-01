@@ -1,3 +1,9 @@
+## 0.5.22 (2026-11-01)
+
+### 🚀 Features
+
+- **site:** garden visual refresh — parchment palette, product screenshots, updated level messaging
+
 ## 0.5.21 (2026-11-01)
 
 ### 🚀 Features
