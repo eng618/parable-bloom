@@ -8,10 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Gameplay SFX pack (`assets/audio/sfx/`) with slide/rustle, bloom, blocked, grace loss, level complete, and UI tap cues; separate SFX toggle alongside music.
 - Visual refresh palette (parchment cream / forest green light; moonlit soil / moss dark) with Home botanical framing assets and garden ornaments.
 
 ### Changed
+
 - Habit / retention loop: removed the once-per-day session-close / “come back tomorrow” overlay (and related Hive flags, level-complete habit hooks, and `habit_session_close_*` analytics). Kept next-day Home welcome-back via `habitSessionProvider.recordOpen()` + `habit_day_return`.
 - Tutorial lesson boards densified to match main-game visual occupancy: longer vines / fuller grids (L1 remains a single vine; L2–L4 fully tiled; L5 ~88%). Guide overlay and Lesson 1 tap restriction now read vine heads from layout data instead of hardcoded cells.
 - Tutorial validation now hard-fails self-blocking vines (head exit ray intersects own body) via shared `ValidateStructural` / `ValidateSelfBlocking`; fixed Lesson 4 `vine_1` and Lesson 5 `vine_1` layouts that pointed into their own bodies.
@@ -26,15 +28,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   vine; textured tube width is 15px (flat/simple stays 13px).
 
 ### Performance
+
 - Cached the debug-mode cell coordinate `TextPainter` per cell in `CellComponent` (was a fresh `TextPainter` + layout per cell per frame).
 - Vine rendering "Vine Rail" redesign behind `vineRenderModeProvider` (`rail` default, `legacy` for A/B): invariant baked track + scalar slide controller, sliding-window vertex strip (indexed triangle grid) for textured styles, and an anti-aliased stroked-path pass for the flat/simple style — draw calls independent of vine length, no per-frame blur, exit fade via per-vertex alpha (textured) or uniform alpha (simple). See `documentation/reference/vine-rendering.md`.
 
 ### Added
+
 - Soft habit / retention loop (MVP): Home welcome-back after a prior calendar day via local Hive visit timestamps (`habitSessionProvider`) and `habit_day_return` analytics. No session-close overlay, streaks, or push/local notifications.
 - **Withered vine state restored**: a blocked clear attempt now travels `|solver distance|` cells so the head visibly bumps the blocker and returns, then `markVineAttempted` withers the vine for the session — the strip modulates the real texture with warm bark brown (`VineMetrics.witheredColor`), foliage/caps go brown too, and the flat/simple stroke uses the brown (replacing the old dark-blue/white attempted colors). (Root cause: the rail run folded the solver's negative distance to 0, so the bump — and the attempted flag — never happened.)
 - Disk hygiene: `task clean:all` reclaims build/cache disk across Flutter, Nx, Go (`.gotmp`/`.gocache`), Next.js, and the level-builder binary in one shot, printing free-space before/after.
 
 ### Fixed
+
 - macOS & iOS builds: completed the Swift Package Manager migration on **both platforms** (all plugins resolve via SPM; `Podfile`/`Pods`/pod xcconfig includes removed). The old iOS `Podfile` hook forced deployment targets per pod (the project sets 16.0 natively); the old macOS hook forced `MACOSX_DEPLOYMENT_TARGET = 11.0`, rejected by modern Xcode. The `flutterfire upload-crashlytics-symbols` phase now locates the SwiftPM `firebase-ios-sdk` checkout that matches Flutter's build layout and skips gracefully when it is absent, instead of failing the build.
 
 
@@ -47,111 +52,141 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.0] - 2026-02-04
 
 ### Added
+
 - TODO: Document new features
 
 ### Changed
+
 - TODO: Document changes
 
 ### Fixed
+
 - TODO: Document bug fixes
 
 ## [1.2.0] - 2026-02-04
 
 ### Added
+
 - TODO: Document new features
 
 ### Changed
+
 - TODO: Document changes
 
 ### Fixed
+
 - TODO: Document bug fixes
 
 ## [1.1.7] - 2026-01-08
 
 ### Added
+
 - TODO: Document new features
 
 ### Changed
+
 - TODO: Document changes
 
 ### Fixed
+
 - TODO: Document bug fixes
 
 ## [1.1.6] - 2026-01-07
 
 ### Added
+
 - TODO: Document new features
 
 ### Changed
+
 - TODO: Document changes
 
 ### Fixed
+
 - TODO: Document bug fixes
 
 ## [1.1.5] - 2026-01-06
 
 ### Added
+
 - TODO: Document new features
 
 ### Changed
+
 - TODO: Document changes
 
 ### Fixed
+
 - TODO: Document bug fixes
 
 ## [1.1.4] - 2026-01-06
 
 ### Added
+
 - TODO: Document new features
 
 ### Changed
+
 - TODO: Document changes
 
 ### Fixed
+
 - TODO: Document bug fixes
 
 ## [1.1.3] - 2026-01-06
 
 ### Added
+
 - TODO: Document new features
 
 ### Changed
+
 - TODO: Document changes
 
 ### Fixed
+
 - TODO: Document bug fixes
 
 ## [1.1.2] - 2026-01-05
 
 ### Added
+
 - TODO: Document new features
 
 ### Changed
+
 - TODO: Document changes
 
 ### Fixed
+
 - TODO: Document bug fixes
 
 ## [1.1.1] - 2026-01-05
 
 ### Added
+
 - TODO: Document new features
 
 ### Changed
+
 - TODO: Document changes
 
 ### Fixed
+
 - TODO: Document bug fixes
 
 ## [1.1.0] - 2026-01-05
 
 ### Added
+
 - TODO: Document new features
 
 ### Changed
+
 - TODO: Document changes
 
 ### Fixed
+
 - TODO: Document bug fixes
 
 ## [Unreleased]
