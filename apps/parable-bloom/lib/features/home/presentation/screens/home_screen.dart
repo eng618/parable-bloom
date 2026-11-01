@@ -180,6 +180,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Image.asset(
                           'assets/art/home/cross_wood.png',
                           fit: BoxFit.contain,
+                          filterQuality: FilterQuality.medium,
                           semanticLabel: 'Wooden cross',
                         ),
                       ),
