@@ -18,6 +18,7 @@ class PauseMenuDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     final audioEnabled = ref.watch(backgroundAudioEnabledProvider);
+    final sfxEnabled = ref.watch(sfxEnabledProvider);
     final hapticsEnabled = ref.watch(hapticsEnabledProvider);
     final vineStyle = ref.watch(vineStyleProvider);
     final texturedSkinsEnabled = ref.watch(vineTexturedSkinsEnabledProvider);
@@ -26,7 +27,7 @@ class PauseMenuDialog extends ConsumerWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 440),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -49,6 +50,15 @@ class PauseMenuDialog extends ConsumerWidget {
                 onChanged: (val) => ref
                     .read(backgroundAudioEnabledProvider.notifier)
                     .setEnabled(val),
+              ),
+              const SizedBox(height: 12),
+              _buildSettingRow(
+                context,
+                icon: sfxEnabled ? Icons.volume_up : Icons.volume_off,
+                label: 'SFX',
+                value: sfxEnabled,
+                onChanged: (val) =>
+                    ref.read(sfxEnabledProvider.notifier).setEnabled(val),
               ),
               const SizedBox(height: 12),
               _buildSettingRow(

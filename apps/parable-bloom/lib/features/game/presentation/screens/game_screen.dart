@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:go_router/go_router.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -12,6 +14,7 @@ import '../../../../core/widgets/garden_loading_view.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/providers/settings_providers.dart';
+import '../../../../core/services/sfx_controller.dart';
 import '../../application/providers/camera_providers.dart';
 import '../../application/providers/counter_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
@@ -21,6 +24,7 @@ import '../../application/providers/progress_providers.dart';
 import '../widgets/game_header.dart';
 import '../widgets/celebration_effects.dart';
 import '../widgets/game_event_sink.dart';
+import '../widgets/game_sfx_bridge.dart';
 import '../widgets/game_state_dialogs.dart';
 import '../widgets/game_zoom_controls.dart';
 import '../widgets/garden_game.dart';
@@ -88,6 +92,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
       if (next && (previous == null || !previous)) {
         LoggerService.info('Showing level complete overlay', tag: 'GameScreen');
+        unawaited(
+          ref.read(sfxControllerProvider).play(GameSfx.levelComplete),
+        );
         _showLevelCompleteOverlay();
       }
     });
@@ -1201,6 +1208,27 @@ class _GameScreenEventSink implements GameEventSink {
   @override
   void onClearHints() {
     _call((c) => c.read(projectionModeProvider.notifier).clearHints());
+  }
+
+  @override
+  void onVineSlideStarted({required int vineLength}) {
+    _call(dispatchVineSlideStarted);
+  }
+
+  @override
+  void onVineSlideEnded({required bool cleared, required int vineLength}) {
+    _call(
+      (c) => dispatchVineSlideEnded(
+        c,
+        cleared: cleared,
+        vineLength: vineLength,
+      ),
+    );
+  }
+
+  @override
+  void onUiTap() {
+    _call(dispatchUiTap);
   }
 
   @override

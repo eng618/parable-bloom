@@ -88,6 +88,7 @@ flutter:
     - assets/art/ornaments/
     - assets/art/extras/
     - assets/audio/
+    - assets/audio/sfx/
     - assets/data/
     - assets/levels/
     - assets/lessons/

@@ -87,6 +87,7 @@ void main() {
             themeModeProvider.overrideWith(() => _FakeThemeModeNotifier()),
             backgroundAudioEnabledProvider
                 .overrideWith(() => _FakeAudioNotifier()),
+            sfxEnabledProvider.overrideWith(() => _FakeSfxNotifier()),
             hapticsEnabledProvider.overrideWith(() => _FakeHapticsNotifier()),
             vineStyleProvider.overrideWith(() => _FakeVineStyleNotifier()),
           ],
@@ -141,6 +142,15 @@ class _FakeThemeModeNotifier extends Notifier<AppThemeMode>
 
 class _FakeAudioNotifier extends Notifier<bool>
     implements BackgroundAudioEnabledNotifier {
+  @override
+  bool build() => true;
+  @override
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+  }
+}
+
+class _FakeSfxNotifier extends Notifier<bool> implements SfxEnabledNotifier {
   @override
   bool build() => true;
   @override

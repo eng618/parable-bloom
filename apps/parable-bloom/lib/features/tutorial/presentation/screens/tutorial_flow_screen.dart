@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
@@ -6,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/app_theme.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/services/logger_service.dart';
+import '../../../../core/services/sfx_controller.dart';
 import '../../domain/entities/lesson_data.dart';
 import '../../../game/application/providers/camera_providers.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
@@ -14,6 +17,7 @@ import '../../application/providers/tutorial_providers.dart';
 import '../../../game/presentation/widgets/garden_game.dart';
 import '../../../game/presentation/widgets/celebration_effects.dart';
 import '../../../game/presentation/widgets/game_event_sink.dart';
+import '../../../game/presentation/widgets/game_sfx_bridge.dart';
 import '../../../game/presentation/widgets/projection_sync.dart';
 import '../../../game/presentation/widgets/game_header.dart';
 import '../../../game/presentation/widgets/pause_menu_dialog.dart';
@@ -73,6 +77,9 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         tag: 'TutorialFlowScreen',
       );
       if (next && (previous == null || !previous)) {
+        unawaited(
+          ref.read(sfxControllerProvider).play(GameSfx.levelComplete),
+        );
         _onTutorialLessonCleared();
       }
     });
@@ -814,6 +821,27 @@ class _TutorialFlowEventSink implements GameEventSink {
   @override
   void onClearHints() {
     _call((c) => c.read(projectionModeProvider.notifier).clearHints());
+  }
+
+  @override
+  void onVineSlideStarted({required int vineLength}) {
+    _call(dispatchVineSlideStarted);
+  }
+
+  @override
+  void onVineSlideEnded({required bool cleared, required int vineLength}) {
+    _call(
+      (c) => dispatchVineSlideEnded(
+        c,
+        cleared: cleared,
+        vineLength: vineLength,
+      ),
+    );
+  }
+
+  @override
+  void onUiTap() {
+    _call(dispatchUiTap);
   }
 
   @override

@@ -25,6 +25,15 @@ abstract class GameEventSink {
   void onHintVine(String vineId);
   void onClearHints();
 
+  /// Vine slide began (clear or blocked bump).
+  void onVineSlideStarted({required int vineLength});
+
+  /// Vine slide finished; [cleared] distinguishes bloom vs wilt.
+  void onVineSlideEnded({required bool cleared, required int vineLength});
+
+  /// Light UI confirm tap (menus, zoom reset, dialogs).
+  void onUiTap();
+
   bool get useSimpleVines;
   bool get hapticsEnabled;
   bool get isAnyAnimating;
@@ -72,6 +81,15 @@ class TestGameEventSink implements GameEventSink {
 
   @override
   void onClearHints() {}
+
+  @override
+  void onVineSlideStarted({required int vineLength}) {}
+
+  @override
+  void onVineSlideEnded({required bool cleared, required int vineLength}) {}
+
+  @override
+  void onUiTap() {}
 
   @override
   bool get useSimpleVines => false;

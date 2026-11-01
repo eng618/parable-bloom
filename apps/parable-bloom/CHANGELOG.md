@@ -17,6 +17,7 @@
 
 ### 🚀 Features
 
+- gameplay SFX pack: slide/rustle, bloom, blocked, grace loss, level complete, UI taps with Settings/Pause SFX toggle (ambient music unchanged)
 - level-complete UI: parchment panel + botanical frame/ornaments matching Home; encouraging HUD via full-width `GardenEncouragingMessage` (serif italic, no side leaf flanks that crushed long lines); tutorial lessons skip the Level Complete parchment/message beat (soft FX + advance only) — play-flow continue / dedicated Home unchanged
 - play flow: after clearing a level, continue to the **next level** by default (encourages multilevel play); dedicated **Home** on the in-game header and level-complete overlay (also on unlock dialogs) for intentional leave without Pause → Home
 - soft habit / retention loop: Home welcome-back after a prior calendar day, local Hive visit timestamps, and `habit_day_return` analytics — no session-close overlay, streaks, or notifications

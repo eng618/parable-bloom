@@ -39,6 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final backgroundAudioEnabled = ref.watch(backgroundAudioEnabledProvider);
+    final sfxEnabled = ref.watch(sfxEnabledProvider);
     final hapticsEnabled = ref.watch(hapticsEnabledProvider);
     final vineStyle = ref.watch(vineStyleProvider);
     final texturedSkinsEnabled = ref.watch(vineTexturedSkinsEnabledProvider);
@@ -158,6 +159,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 await ref
                     .read(backgroundAudioEnabledProvider.notifier)
                     .setEnabled(value);
+              },
+            ),
+            SwitchListTile(
+              secondary: Icon(
+                sfxEnabled ? Icons.volume_up : Icons.volume_off,
+                color: sfxEnabled
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              title: const Text('Sound Effects'),
+              subtitle: const Text('Vine slides, blooms, taps, and cues'),
+              value: sfxEnabled,
+              onChanged: (value) async {
+                await ref.read(sfxEnabledProvider.notifier).setEnabled(value);
               },
             ),
             SwitchListTile(
