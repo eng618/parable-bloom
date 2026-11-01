@@ -63,6 +63,10 @@ void main() async {
   // Pass all uncaught framework errors to the logger (→ Sentry).
   // Works on web too, unlike the previous Crashlytics-only handler.
   // Installed after Sentry init so the first captured error has a client.
+  // Screenshot runs ignore tooltip pointer-routing noise (it does not
+  // affect the captured frame) and forward every other error to the
+  // integration-test handler. Production keeps the logger as the sink.
+  final originalOnError = FlutterError.onError;
   FlutterError.onError = (details) {
     LoggerService.error(
       'Uncaught Flutter error',
@@ -70,14 +74,23 @@ void main() async {
       stackTrace: details.stack,
       fatal: true,
     );
+    if (!_isScreenshotMode) {
+      return;
+    }
+    if (details.exceptionAsString().contains('RawTooltipState')) {
+      return;
+    }
+    originalOnError?.call(details);
   };
 
-  // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Sentry
-  PlatformDispatcher.instance.onError = (error, stack) {
-    LoggerService.error('Uncaught platform error',
-        error: error, stackTrace: stack, fatal: true);
-    return true;
-  };
+  if (!_isScreenshotMode) {
+    // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Sentry
+    PlatformDispatcher.instance.onError = (error, stack) {
+      LoggerService.error('Uncaught platform error',
+          error: error, stackTrace: stack, fatal: true);
+      return true;
+    };
+  }
 
   final hiveBox = await Hive.openBox('garden_save');
 

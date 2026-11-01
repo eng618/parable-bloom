@@ -11,6 +11,8 @@ import '../../domain/repositories/level_repository.dart';
 
 import '../../../../core/config/environment_config.dart';
 
+const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
+
 class ModuleLoadException implements Exception {
   final String message;
 
@@ -29,32 +31,37 @@ const String kModulesRegistryVersion = '4.0';
 /// Tries Firestore (configs_{env}/modules), falling back to Hive cache, and finally bundled assets.
 final modulesRegistryProvider =
     FutureProvider<Map<String, dynamic>>((ref) async {
-  final firestore = ref.watch(firestoreProvider);
   final box = ref.watch(hiveBoxProvider);
   final configsCollection = EnvironmentConfig.getConfigsCollection();
 
-  // 1. Try Firestore
-  try {
-    final doc = await firestore
-        .collection(configsCollection)
-        .doc('modules')
-        .get()
-        .timeout(const Duration(seconds: 2));
-    if (doc.exists && doc.data() != null) {
-      final data = doc.data()!;
-      final jsonStr = json.encode(data);
-      await box.put('cached_modules_registry', jsonStr);
-      LoggerService.info(
-        'Successfully fetched and cached modules registry from Firestore ($configsCollection/modules)',
+  // 1. Try Firestore. Screenshot captures run with Firebase disabled, so
+  // skip the client entirely and load the bundled registry. Read inside
+  // the try so a missing Firebase app falls through to cache/assets
+  // instead of failing the provider before the fallback.
+  if (!_isScreenshotMode) {
+    try {
+      final firestore = ref.read(firestoreProvider);
+      final doc = await firestore
+          .collection(configsCollection)
+          .doc('modules')
+          .get()
+          .timeout(const Duration(seconds: 2));
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        final jsonStr = json.encode(data);
+        await box.put('cached_modules_registry', jsonStr);
+        LoggerService.info(
+          'Successfully fetched and cached modules registry from Firestore ($configsCollection/modules)',
+          tag: 'modulesRegistryProvider',
+        );
+        return data;
+      }
+    } catch (e) {
+      LoggerService.warn(
+        'Failed to fetch modules registry from Firestore: $e. Falling back to cache/assets.',
         tag: 'modulesRegistryProvider',
       );
-      return data;
     }
-  } catch (e) {
-    LoggerService.warn(
-      'Failed to fetch modules registry from Firestore: $e. Falling back to cache/assets.',
-      tag: 'modulesRegistryProvider',
-    );
   }
 
   // 2. Fallback to Hive cache
@@ -140,9 +147,10 @@ final levelMappingsProvider = FutureProvider<Map<String, String>>((ref) async {
 /// fetch. (A previous sync snapshot could serve an empty mapping table on
 /// cold start, sending every level to Firestore despite bundled assets.)
 final levelRepositoryProvider = FutureProvider<LevelRepository>((ref) async {
-  final firestore = ref.watch(firestoreProvider);
   final mappings = await ref.watch(levelMappingsProvider.future);
   final box = ref.watch(hiveBoxProvider);
+  // Screenshot mode has no Firebase app. Levels resolve from bundled assets.
+  final firestore = _isScreenshotMode ? null : ref.watch(firestoreProvider);
   return DynamicLevelRepository(
     firestore: firestore,
     localMappings: mappings,

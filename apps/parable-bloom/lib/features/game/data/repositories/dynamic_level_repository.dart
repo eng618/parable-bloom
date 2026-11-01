@@ -11,13 +11,15 @@ import '../../domain/repositories/level_repository.dart';
 /// Resilient, offline-first implementation of [LevelRepository].
 /// Combines local assets, local Hive database cache, and Cloud Firestore.
 class DynamicLevelRepository implements LevelRepository {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _firestore;
   final Map<String, String> _localMappings;
   final Box _cacheBox;
   final Map<String, LevelData> _memoryCache = {};
 
+  /// [firestore] is omitted in screenshot mode, where Firebase is disabled
+  /// and every captured level is served from bundled assets.
   DynamicLevelRepository({
-    required FirebaseFirestore firestore,
+    FirebaseFirestore? firestore,
     required Map<String, String> localMappings,
     required Box cacheBox,
   })  : _firestore = firestore,
@@ -90,6 +92,13 @@ class DynamicLevelRepository implements LevelRepository {
     }
 
     // 3. Fetch from Cloud Firestore on cache miss
+    final firestore = _firestore;
+    if (firestore == null) {
+      throw Exception(
+        'Level $levelId is not in local assets or cache, and Firestore is unavailable',
+      );
+    }
+
     final collection = EnvironmentConfig.getLevelsCollection();
     LoggerService.info(
       'Cache miss. Fetching $levelId from Firestore collection: $collection',
@@ -97,7 +106,7 @@ class DynamicLevelRepository implements LevelRepository {
     );
 
     try {
-      final doc = await _firestore.collection(collection).doc(levelId).get();
+      final doc = await firestore.collection(collection).doc(levelId).get();
       if (!doc.exists) {
         LoggerService.error(
           'Level $levelId not found in Firestore collection $collection',

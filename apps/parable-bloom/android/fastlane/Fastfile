@@ -6,6 +6,7 @@ opt_out_usage
 require 'fileutils'
 require 'json'
 require 'shellwords'
+require 'timeout'
 
 default_platform(:android)
 
@@ -165,6 +166,7 @@ platform :android do
     destination_dir = File.expand_path('./screenshots/en-US', __dir__)
 
     FileUtils.mkdir_p(destination_dir)
+    FileUtils.mkdir_p(source_dir)
     FileUtils.rm_f(Dir[File.join(destination_dir, '*.png')])
 
     device_ids = (ENV['ANDROID_SCREENSHOT_DEVICE_IDS'] || '')
@@ -222,13 +224,75 @@ platform :android do
 
       UI.message("📱 Capturing screenshots on #{device_name} (#{device_id})")
       FileUtils.rm_f(Dir[File.join(source_dir, '*.png')])
+      sh("adb -s #{device_id.shellescape} logcat -c")
 
-      sh(
-        "cd #{project_root.shellescape} && flutter drive --driver=#{driver.shellescape} --target=#{target.shellescape} --dart-define=SCREENSHOT_MODE=true -d #{device_id.shellescape}"
+      # binding.takeScreenshot() hangs on the API 37 emulator: converting the
+      # Flutter surface to an image turns the display black and capture never
+      # returns. The test prints SCREENSHOT_READY <name> and holds the frame;
+      # we grab that framebuffer with adb.
+      reader, writer = IO.pipe
+      log_pid = Process.spawn(
+        "adb", "-s", device_id, "logcat", "-v", "brief", "flutter:I", "*:S",
+        out: writer,
+        err: File::NULL
       )
+      writer.close
+      watcher = Thread.new do
+        begin
+          reader.each_line do |line|
+            next unless line =~ /SCREENSHOT_READY ([A-Za-z0-9_.-]+)/
+
+            name = Regexp.last_match(1)
+            dest = File.join(source_dir, "#{name}.png")
+            UI.message("📸 adb screencap #{name}")
+            png = nil
+            begin
+              Timeout.timeout(20) do
+                png = IO.popen(
+                  ["adb", "-s", device_id, "exec-out", "screencap", "-p"],
+                  "rb",
+                  &:read
+                )
+              end
+            rescue Timeout::Error
+              UI.error("screencap timed out for #{name}")
+              next
+            end
+            if $?.success? && png&.start_with?("\x89PNG".b)
+              File.binwrite(dest, png)
+              UI.message("📸 saved #{dest} (#{png.bytesize} bytes)")
+            else
+              UI.error("screencap failed for #{name} (#{png&.bytesize || 0} bytes)")
+            end
+          end
+        rescue IOError
+          # The logcat pipe is closed when the drive step finishes.
+        rescue StandardError => e
+          UI.error("screenshot watcher failed: #{e.class}: #{e.message}")
+        end
+      end
+
+      drive_failed = nil
+      begin
+        sh(
+          "cd #{project_root.shellescape} && flutter drive --driver=#{driver.shellescape} --target=#{target.shellescape} --dart-define=SCREENSHOT_MODE=true -d #{device_id.shellescape}"
+        )
+      rescue => e
+        drive_failed = e
+      ensure
+        Process.kill("TERM", log_pid) rescue nil
+        Process.wait(log_pid) rescue nil
+        reader.close rescue nil
+        watcher.join(3)
+      end
 
       screenshots = Dir[File.join(source_dir, '*.png')].sort
-      UI.user_error!("No screenshots generated in #{source_dir} for #{device_name}") if screenshots.empty?
+      if screenshots.size < 12
+        message = "Expected 12 screenshots in #{source_dir} for #{device_name}, found #{screenshots.size}"
+        message = "#{message}. #{drive_failed.message}" if drive_failed
+        UI.user_error!(message)
+      end
+      UI.important("Flutter drive reported an error after the screenshots were saved") if drive_failed
 
       screenshots.each do |file|
         FileUtils.cp(file, File.join(destination_dir, "#{slug}_#{File.basename(file)}"))

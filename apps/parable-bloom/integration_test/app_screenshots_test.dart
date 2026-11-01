@@ -10,27 +10,27 @@ import 'package:parable_bloom/features/game/presentation/screens/game_screen.dar
 import 'package:parable_bloom/main.dart' as app;
 
 void main() {
-  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() async {
-    // Required on Android before calling takeScreenshot().
-    await binding.convertFlutterSurfaceToImage();
-  });
-
-  testWidgets('capture store listing screenshots - light', (tester) async {
-    await _captureStoreListingScreenshots(
-      tester,
-      themeMode: AppThemeMode.light,
-      suffix: 'light',
-    );
-  });
-
-  testWidgets('capture store listing screenshots - dark', (tester) async {
-    await _captureStoreListingScreenshots(
-      tester,
-      themeMode: AppThemeMode.dark,
-      suffix: 'dark',
-    );
+  testWidgets('capture store listing screenshots', (tester) async {
+    final originalOnError = FlutterError.onError;
+    try {
+      await _captureStoreListingScreenshots(
+        tester,
+        themeMode: AppThemeMode.light,
+        suffix: 'light',
+      );
+      // Stay in this test. A second testWidgets does not see the running app,
+      // so the dark pass only returns home and switches theme.
+      await _captureStoreListingScreenshots(
+        tester,
+        themeMode: AppThemeMode.dark,
+        suffix: 'dark',
+        launchApp: false,
+      );
+    } finally {
+      FlutterError.onError = originalOnError;
+    }
   });
 }
 
@@ -51,11 +51,16 @@ Future<void> _captureStoreListingScreenshots(
   WidgetTester tester, {
   required AppThemeMode themeMode,
   required String suffix,
+  bool launchApp = true,
 }) async {
-  app.main();
-
-  // Use bounded pumping instead of pumpAndSettle because Flame keeps ticking.
-  await _pumpFor(tester, const Duration(seconds: 6));
+  if (launchApp) {
+    app.main();
+    // Use bounded pumping instead of pumpAndSettle because Flame keeps ticking.
+    await _pumpFor(tester, const Duration(seconds: 6));
+  } else {
+    appRouter.go('/');
+    await _pumpFor(tester, const Duration(seconds: 2));
+  }
 
   final playButton = find.textContaining('Play Level');
   expect(playButton, findsOneWidget);
@@ -133,7 +138,14 @@ Future<void> _captureStoreListingScreenshots(
 }
 
 Future<void> _takeScreenshot(WidgetTester tester, String name) async {
-  await IntegrationTestWidgetsFlutterBinding.instance.takeScreenshot(name);
+  // The Android fastlane lane watches logcat for this marker and saves
+  // `adb exec-out screencap`. binding.takeScreenshot() hangs on the API 37
+  // emulator after the surface is converted to an image.
+  //
+  // Hold until that capture finishes so the next scene is not grabbed
+  // by a screencap that is still catching up.
+  debugPrint('SCREENSHOT_READY $name');
+  await _pumpFor(tester, const Duration(seconds: 3));
 }
 
 Future<void> _pumpFor(WidgetTester tester, Duration duration) async {
