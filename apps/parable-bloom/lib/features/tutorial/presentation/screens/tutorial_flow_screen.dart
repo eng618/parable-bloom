@@ -736,20 +736,24 @@ class _TutorialFlowEventSink implements GameEventSink {
       (c) => c.read(cameraStateProvider.notifier),
       null,
     );
-    if (cameraNotifier == null) return;
+    final cameraState = _read<CameraState?>(
+      (c) => c.read(cameraStateProvider),
+      null,
+    );
+    if (cameraNotifier == null || cameraState == null) return;
+    cameraNotifier.updateZoomBounds(
+      screenWidth: game.size.x,
+      screenHeight: game.size.y,
+      gridCols: _lesson.gridWidth,
+      gridRows: _lesson.gridHeight,
+    );
     cameraNotifier.animateToDefaultZoom(
       screenWidth: game.size.x,
       screenHeight: game.size.y,
       gridCols: _lesson.gridWidth,
       gridRows: _lesson.gridHeight,
     );
-    final cameraState = _read<CameraState?>(
-      (c) => c.read(cameraStateProvider),
-      null,
-    );
-    if (cameraState != null) {
-      game.applyCameraTransform(cameraState);
-    }
+    game.applyCameraTransform(cameraState);
   }
 
   @override

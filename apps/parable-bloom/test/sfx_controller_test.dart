@@ -26,4 +26,11 @@ void main() {
     await controller.playBlocked();
     await controller.dispose();
   });
+
+  test('play no-ops without Flutter binding (pure unit tests)', () async {
+    final controller = SfxController();
+    await controller.play(GameSfx.graceLoss);
+    await controller.playVineSlide();
+    await controller.dispose();
+  });
 }

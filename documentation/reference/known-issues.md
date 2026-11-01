@@ -25,7 +25,7 @@ This document serves as an information-oriented technical reference detailing su
 ### 2. Canvas Scaling & Viewport Adaptability
 
 - **Behavior**: Larger puzzle grids (such as the _Transcendent_ tier 16×20 boards) dynamically scale to preserve the playable area on compact mobile displays (e.g., iPhone SE or narrow aspect ratio Android devices).
-- **Control**: Users can manually adjust their preferred board zoom scale multiplier (0.5× to 2.0× on fit-to-board) in the Settings menu at any time.
+- **Control**: Users can manually adjust their preferred board zoom scale (0.5× to 2.0×) in the Settings menu at any time.
 
 ### 3. Offline-First Cloud Synchronization
 

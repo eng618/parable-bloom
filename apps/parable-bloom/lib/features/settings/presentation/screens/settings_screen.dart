@@ -305,7 +305,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Multiplier on fit-to-board resting zoom'),
+            const Text('Adjust how close the camera starts'),
             Slider(
               value: zoom,
               min: 0.5,

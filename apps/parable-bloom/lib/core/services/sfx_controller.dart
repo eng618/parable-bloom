@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
 import 'logger_service.dart';
@@ -16,6 +17,9 @@ enum GameSfx {
 
 /// Lightweight multi-player SFX mixer. One [AudioPlayer] per cue so SFX can
 /// overlap (slide + rustle, bloom over music) without cutting ambient audio.
+///
+/// Pure unit tests without [WidgetsFlutterBinding] no-op instead of asserting
+/// on the binary messenger.
 class SfxController {
   SfxController({
     AudioPlayer Function()? playerFactory,
@@ -25,6 +29,7 @@ class SfxController {
   final Map<GameSfx, AudioPlayer> _players = {};
   bool _enabled = true;
   bool _loaded = false;
+  bool _unavailable = false;
   double _volume = 0.85;
 
   static const Map<GameSfx, String> _assets = {
@@ -55,7 +60,15 @@ class SfxController {
   }
 
   Future<void> ensureLoaded() async {
-    if (_loaded) return;
+    if (_loaded || _unavailable) return;
+
+    // No Flutter binding → no platform channels (pure unit tests).
+    if (BindingBase.debugBindingType() == null) {
+      _unavailable = true;
+      _loaded = true;
+      return;
+    }
+
     for (final entry in _assets.entries) {
       try {
         final player = _playerFactory();
@@ -81,8 +94,9 @@ class SfxController {
     GameSfx sfx, {
     double? volumeScale,
   }) async {
-    if (!_enabled) return;
+    if (!_enabled || _unavailable) return;
     await ensureLoaded();
+    if (_unavailable) return;
     final player = _players[sfx];
     if (player == null) return;
     try {

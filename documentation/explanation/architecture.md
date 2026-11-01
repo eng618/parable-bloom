@@ -72,8 +72,7 @@ The application uses a reactive architecture where the UI and Game Engine observ
 - **`graceProvider`**: Manages the "Grace" (lives) system. App-scoped; refilled via `GameInstanceNotifier.resetGrace()` on every main-game level load (`GameScreen._loadLevelForGame`) and every tutorial lesson load (`TutorialFlowScreen` bridge `onGameLoaded`), so depleted hearts never carry across boards (including tutorial→main and in-place next-level continue).
 - **`currentLevelProvider`**: Holds the canonical data for the active level (grid size, vine positions).
 - **`gameInstanceProvider`**: Bridges the Flutter widget tree with the Flame `GardenGame` instance.
-- **`boardZoomScaleProvider`**: Multiplier (0.5x–2.0x) on fit-to-board resting zoom.
-- **`sfxEnabledProvider` / `sfxControllerProvider`**: Gameplay/UI sound effects layered over ambient music.
+- **`boardZoomScaleProvider`**: Manages the user's preferred default board zoom scale (0.5x to 2.0x).
 - **`habitSessionProvider`** (`features/home/application/providers/habit_providers.dart`): Soft retention loop — local Hive visit timestamps (`habit_last_session_at`, `habit_return_day`). Device-local only (not cloud-synced). On Home open, detects a prior-calendar-day visit and shows a one-line welcome-back under the brand title. No session-close overlay, streaks, or notifications.
 
 ### 3.1.1 Fine-Grained Watches
@@ -98,7 +97,7 @@ The game implements several high-performance visual systems within the Flame `Po
 
 - **Tap Feedback**: `TapEffectComponent` handles the visual pulse and particle effects on user interaction.
 - **Particle System**: `TapEffectComponent` and `VineComponent` (bloom) utilize custom particle emitters. Clear animations use staggered ring expansions and radiating "dust" particles to celebrate level completion.
-- **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera. Level entry eases from a slight zoom-in down to fit-to-board resting zoom (× `boardZoomScale`). Auto-clear may pan to reveal an off-screen vine but never zooms in.
+- **Camera Notifier**: `CameraStateNotifier` (Riverpod) manages state for the Flame camera, allowing consistent zoom/pan transitions triggered by both game logic and user input. It supports auto-focusing on specific vines if they are off-screen or near the boundaries during the auto-clearing sequence.
 - **Vine Styles (Vine Rail renderer)**: `VineComponent` owns per-vine logic, animation state, and the invariant rail track; a single `VineLayerComponent` draws all vines in one batched pass. The active renderer is the **"Vine Rail"** architecture (see `reference/vine-rendering.md`); the legacy per-frame Path painter remains selectable via `vineRenderModeProvider` for A/B regression:
   - **Grid Compaction**: Visual layout is compacted (52px cells with 42px spacing) to reduce white space and create a dense, satisfying board.
   - **Visual Profiles**: Uniform 13px thin-tube core (`VineMetrics.tubeWidth`) for every style, with corner rounding (12px radius) baked once into an invariant track polyline so corners never pop during animation.
@@ -120,8 +119,8 @@ We use **Hive** for immediate, offline-capable storage. Key persisted settings i
 
 - **Theme Mode**: System, Light, or Dark.
 - **Vines Style**: Classic, Cherry Blossom, Ethereal, or Simple.
-- **Board Zoom Scale**: Multiplier on fit-to-board resting zoom.
-- **Audio/Haptics**: Individual toggles for music, SFX, and vibration.
+- **Board Zoom Scale**: The default camera zoom level for the board.
+- **Audio/Haptics**: Individual toggles for sound and vibration.
 
 - **Boxes**: `game_progress`, `settings`.
 - **Sync**: `GameProgressNotifier` writes to Hive synchronously to ensure no data loss.
