@@ -15,7 +15,7 @@
     "validate": "node ./scripts/validate.mjs"
   },
   "dependencies": {
-    "@gv-tech/design-tokens": "^2.28.0",
+    "@gv-tech/design-tokens": "^2.29.0",
     "@gv-tech/ui-core": "^2.29.0",
     "@gv-tech/ui-web": "2.28.0",
     "@openpanel/nextjs": "^1.5.1",
