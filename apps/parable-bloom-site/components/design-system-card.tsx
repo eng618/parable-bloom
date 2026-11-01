@@ -56,7 +56,7 @@ export default function DesignSystemCard({
       </CardContent>
 
       <CardFooter className="!border-brand/10 mt-auto !gap-0 !border-t !bg-transparent !p-0">
-        <div className="w-full px-6 pt-6 pb-6">
+        <div className="w-full px-6 pt-8 pb-6">
           {href ? (
             <Button
               asChild
