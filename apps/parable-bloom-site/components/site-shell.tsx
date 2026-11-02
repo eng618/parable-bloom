@@ -58,7 +58,7 @@ function NavLink({
         onNavigate?.();
       }}
       className={cn(
-        'rounded-xl px-3 py-1.5 text-sm font-semibold transition-all duration-300',
+        'rounded-xl px-3 py-1.5 text-sm font-semibold whitespace-nowrap transition-all duration-300',
         isActive ? 'bg-brand/10 text-brand' : 'text-text-secondary hover:bg-brand-pale hover:text-brand',
         className,
       )}
@@ -88,18 +88,18 @@ export default function SiteShell({ children }: SiteShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="grid min-h-screen grid-rows-[auto_1fr_auto]">
+    <div className="grid min-h-screen grid-rows-[auto_1fr_auto] overflow-x-clip">
       <header
         className="border-brand/10 bg-bg-top/85 sticky top-0 z-40 border-b backdrop-blur-md transition-all duration-300"
         aria-label="Main navigation"
       >
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex w-full max-w-6xl min-w-0 items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <BrandMark />
 
-          {/* Wide screens: single-row horizontal nav (no wrap / no cutoff) */}
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Site navigation">
+          {/* Wide screens only: single-row horizontal nav (needs ~xl to fit Delete Account) */}
+          <nav className="hidden min-w-0 flex-nowrap items-center gap-1 xl:flex" aria-label="Site navigation">
             {navItems.map((item) => (
-              <NavLink key={item.href} href={item.href} label={item.label} />
+              <NavLink key={item.href} href={item.href} label={item.label} className="xl:px-3" />
             ))}
           </nav>
 
@@ -110,7 +110,7 @@ export default function SiteShell({ children }: SiteShellProps) {
                 type="button"
                 variant="outline"
                 size="icon"
-                className="border-brand/40 bg-surface text-brand hover:bg-brand/10 hover:text-brand size-10 shrink-0 lg:hidden"
+                className="border-brand/40 bg-surface text-brand hover:bg-brand/10 hover:text-brand size-10 shrink-0 xl:hidden"
                 aria-label="Open menu"
               >
                 <MenuIcon className="size-5" aria-hidden="true" />

@@ -1,3 +1,9 @@
+## 0.5.23 (2026-11-02)
+
+### 🩹 Fixes
+
+- **site:** responsive header — hamburger drawer below xl, horizontal nav when room
+
 ## 0.5.22 (2026-11-01)
 
 ### 🚀 Features
@@ -6,7 +12,6 @@
 
 ### 🩹 Fixes
 
-- **site:** responsive header — hamburger drawer below lg, horizontal nav when room
 - **site:** defringe botanical art + cream CTA text + platform-card button padding
 
 ## 0.5.21 (2026-11-01)
