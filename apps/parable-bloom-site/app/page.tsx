@@ -84,7 +84,8 @@ export default function HomePage() {
   return (
     <div className="flex flex-col gap-16 pb-12 sm:gap-20">
       {/* ── Hero: brand + headline + CTA + dominant product image ── */}
-      <section className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden">
+      {/* Break out of main padding without w-screen (avoids horizontal overflow / clipped header) */}
+      <section className="relative -mx-4 overflow-hidden sm:-mx-6">
         {/* Soft corner sprigs only — punched PNG alpha, no full-bleed frame matte */}
         <Image
           src="/art/leaf_sprig.png"

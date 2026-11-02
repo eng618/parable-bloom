@@ -1,3 +1,9 @@
+## 0.5.23 (2026-11-02)
+
+### 🩹 Fixes
+
+- **site:** responsive header — hamburger drawer below xl, horizontal nav when room
+
 ## 0.5.22 (2026-11-01)
 
 ### 🚀 Features
