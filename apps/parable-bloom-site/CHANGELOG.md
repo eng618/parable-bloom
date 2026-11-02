@@ -6,6 +6,7 @@
 
 ### 🩹 Fixes
 
+- **site:** responsive header — hamburger drawer below lg, horizontal nav when room
 - **site:** defringe botanical art + cream CTA text + platform-card button padding
 
 ## 0.5.21 (2026-11-01)
