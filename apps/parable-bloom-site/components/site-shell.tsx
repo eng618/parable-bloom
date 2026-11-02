@@ -132,7 +132,9 @@ export default function SiteShell({ children }: SiteShellProps) {
                     key={item.href}
                     href={item.href}
                     label={item.label}
-                    onNavigate={() => setMenuOpen(false)}
+                    onNavigate={() => {
+                      setMenuOpen(false);
+                    }}
                     className="w-full px-4 py-3 text-base"
                   />
                 ))}
