@@ -29,13 +29,22 @@ final biblicalThemesRegistryProvider =
         .timeout(const Duration(seconds: 2));
     if (doc.exists && doc.data() != null) {
       final data = doc.data()!;
-      final jsonStr = json.encode(data);
-      await box.put('cached_biblical_themes_registry', jsonStr);
+      // Same gate as the Hive cache. A fast Firestore response used to
+      // replace the bundled lesson_5 starter with a stale trigger, so
+      // finishing the tutorial left the journal entry sealed.
+      if (data['version']?.toString() == kBiblicalThemesVersion) {
+        final jsonStr = json.encode(data);
+        await box.put('cached_biblical_themes_registry', jsonStr);
+        LoggerService.info(
+          'Fetched and cached biblical themes from Firestore ($configsCollection/biblical_themes)',
+          tag: 'biblicalThemesRegistryProvider',
+        );
+        return data;
+      }
       LoggerService.info(
-        'Fetched and cached biblical themes from Firestore ($configsCollection/biblical_themes)',
+        'Ignoring remote biblical themes version ${data['version']} (expected $kBiblicalThemesVersion)',
         tag: 'biblicalThemesRegistryProvider',
       );
-      return data;
     }
   } catch (e) {
     LoggerService.warn(

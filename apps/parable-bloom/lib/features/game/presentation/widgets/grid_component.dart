@@ -418,22 +418,6 @@ class GridComponent extends PositionComponent
 
     if (clickedVine == null) return;
 
-    // Gesture restrictions for progressive tutorial
-    if (level.difficulty == 'tutorial') {
-      if (level.id == 'lesson_1') {
-        // Lesson 1: Only allow tapping vine_1's head (layout-driven).
-        final head = clickedVine.orderedPath.isNotEmpty
-            ? clickedVine.orderedPath.first
-            : null;
-        if (clickedVine.id != 'vine_1' ||
-            head == null ||
-            col != head['x'] ||
-            row != head['y']) {
-          return;
-        }
-      }
-    }
-
     final state = _vineStates[clickedVine.id];
     if (state == null || state.isCleared) return;
 

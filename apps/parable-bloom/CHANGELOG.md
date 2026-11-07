@@ -1,5 +1,10 @@
 ## Unreleased
 
+### 🩹 Fixes
+
+- **tutorial:** lesson 1 slides when any cell of the vine is tapped
+- **journal:** finishing the tutorial unlocks the starter scripture entry
+
 ### ⚡ Performance
 
 - skip vine blocking solves when an animation flip does not change which vines still occupy the board

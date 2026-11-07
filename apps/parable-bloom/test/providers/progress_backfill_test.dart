@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
 import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
+import 'package:parable_bloom/features/journal/application/providers/journal_providers.dart';
+import 'package:parable_bloom/features/journal/domain/entities/journal_theme.dart';
 import 'package:parable_bloom/features/game/domain/entities/game_progress.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/domain/entities/cloud_sync_state.dart';
@@ -70,6 +72,8 @@ void main() {
           hiveBoxProvider.overrideWithValue(_FakeBox() as Box),
           analyticsServiceProvider.overrideWithValue(_FakeAnalytics()),
           modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
+          journalThemesProvider
+              .overrideWith((ref) async => const <JournalTheme>[]),
           scriptureServiceProvider.overrideWithValue(_FakeScriptureService()),
         ],
       );
@@ -110,6 +114,8 @@ void main() {
           hiveBoxProvider.overrideWithValue(_FakeBox() as Box),
           analyticsServiceProvider.overrideWithValue(_FakeAnalytics()),
           modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
+          journalThemesProvider
+              .overrideWith((ref) async => const <JournalTheme>[]),
           scriptureServiceProvider.overrideWithValue(_FakeScriptureService()),
         ],
       );
@@ -147,6 +153,8 @@ void main() {
           hiveBoxProvider.overrideWithValue(_FakeBox() as Box),
           analyticsServiceProvider.overrideWithValue(_FakeAnalytics()),
           modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
+          journalThemesProvider
+              .overrideWith((ref) async => const <JournalTheme>[]),
           scriptureServiceProvider.overrideWithValue(_FakeScriptureService()),
         ],
       );
@@ -154,11 +162,13 @@ void main() {
       await container.read(gameProgressProvider.notifier).initialize();
       var progress = container.read(gameProgressProvider);
 
-      // Pre-selected translation is preserved
+      // Pre-selected translation is preserved. The finished tutorial also
+      // backfills the lesson_1 starter without replacing that translation.
       expect(progress.unlockedTranslations['seed_micro_1'], equals('web'));
-
-      expect(progress.unlockedTranslations['seed_micro_1'], equals('web'));
-      expect(progress.unlockedScriptureIds.length, equals(1));
+      expect(progress.unlockedScriptureIds,
+          containsAll(['seed_micro_1', 'seed_starter']));
+      expect(progress.unlockedTranslations['seed_starter'], isNotNull);
+      expect(progress.unlockedTranslations['seed_starter'], isNot('web'));
     });
 
     test(
@@ -184,6 +194,8 @@ void main() {
           hiveBoxProvider.overrideWithValue(_FakeBox() as Box),
           analyticsServiceProvider.overrideWithValue(_FakeAnalytics()),
           modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
+          journalThemesProvider
+              .overrideWith((ref) async => const <JournalTheme>[]),
           scriptureServiceProvider.overrideWithValue(_FakeScriptureService()),
         ],
       );
@@ -204,6 +216,102 @@ void main() {
       // Verify module is now considered completed and parable translation is backfilled
       expect(progress.isModuleCompleted(1, mockModules), isTrue);
       expect(progress.unlockedTranslations.containsKey('1'), isTrue);
+    });
+
+    test(
+        'finishing the tutorial unlocks the journal passage for a legacy trigger',
+        () async {
+      final themes = [
+        const JournalTheme(
+          id: 'growth',
+          name: 'Spiritual Growth',
+          description: '',
+          icon: 'spa',
+          passages: [
+            JournalPassage(
+              id: 'growth_seed_word',
+              themeId: 'growth',
+              title: 'The Seed is the Word',
+              reference: 'Luke 8:11',
+              type: 'starter',
+              triggerLevel: 'lesson_10',
+              reflectionPrompts: [],
+            ),
+          ],
+        ),
+      ];
+      final container = ProviderContainer(
+        overrides: [
+          gameProgressRepositoryProvider.overrideWithValue(fakeRepo),
+          hiveBoxProvider.overrideWithValue(_FakeBox() as Box),
+          analyticsServiceProvider.overrideWithValue(_FakeAnalytics()),
+          modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
+          journalThemesProvider.overrideWith((ref) async => themes),
+          scriptureServiceProvider.overrideWithValue(_FakeScriptureService()),
+        ],
+      );
+
+      await container.read(gameProgressProvider.notifier).initialize();
+      await container.read(gameProgressProvider.notifier).completeLesson(
+            lessonId: 'lesson_5',
+            nextLesson: null,
+            allLessonsCompleted: true,
+          );
+
+      final progress = container.read(gameProgressProvider);
+      expect(progress.tutorialCompleted, isTrue);
+      expect(
+        progress.unlockedScriptureIds,
+        containsAll(['seed_starter', 'growth_seed_word']),
+      );
+    });
+
+    test('backfill copies a module scripture unlock onto the journal passage',
+        () async {
+      fakeRepo.saveProgress(
+        GameProgress.initial().copyWith(
+          completedLessons: {'lesson_5'},
+          lessonCompleted: true,
+          tutorialCompleted: true,
+          unlockedScriptureIds: {'seed_starter'},
+          unlockedTranslations: {'seed_starter': 'kjv'},
+        ),
+      );
+      final themes = [
+        const JournalTheme(
+          id: 'growth',
+          name: 'Spiritual Growth',
+          description: '',
+          icon: 'spa',
+          passages: [
+            JournalPassage(
+              id: 'growth_seed_word',
+              themeId: 'growth',
+              title: 'The Seed is the Word',
+              reference: 'Luke 8:11',
+              type: 'starter',
+              triggerLevel: 'lvl_m99_99',
+              reflectionPrompts: [],
+            ),
+          ],
+        ),
+      ];
+      final container = ProviderContainer(
+        overrides: [
+          gameProgressRepositoryProvider.overrideWithValue(fakeRepo),
+          hiveBoxProvider.overrideWithValue(_FakeBox() as Box),
+          analyticsServiceProvider.overrideWithValue(_FakeAnalytics()),
+          modulesProvider.overrideWithValue(AsyncValue.data(mockModules)),
+          journalThemesProvider.overrideWith((ref) async => themes),
+          scriptureServiceProvider.overrideWithValue(_FakeScriptureService()),
+        ],
+      );
+
+      await container.read(gameProgressProvider.notifier).initialize();
+      final progress = container.read(gameProgressProvider);
+
+      expect(progress.unlockedScriptureIds, contains('growth_seed_word'));
+      expect(progress.unlockedTranslations['seed_starter'], 'kjv');
     });
   });
 }

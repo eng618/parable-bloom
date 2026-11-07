@@ -2,10 +2,10 @@
     "id": 1,
     "title": "Lesson 1: Clear the Vine",
     "objective": "Learn to select and clear a single vine",
-    "instructions": "Tap the vine's cells from head to tail to clear it.",
+    "instructions": "Tap anywhere on the vine to slide it off the board.",
     "learning_points": [
-        "Tap head \u2192 tail",
-        "Clear all cells to finish"
+        "Any cell of the vine works",
+        "One tap slides it away"
     ],
     "grid_size": [
         4,

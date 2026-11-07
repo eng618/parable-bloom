@@ -61,6 +61,51 @@ class GameProgress {
     );
   }
 
+  /// Lesson ids that have meant "the tutorial is finished" across registry
+  /// versions. The journal copy treats all three as "Unlocks after Tutorial".
+  static const Set<String> tutorialCompletionTriggers = {
+    'lesson_1',
+    'lesson_5',
+    'lesson_10',
+  };
+
+  /// True once the tutorial has been finished, including saves that only
+  /// recorded the final lesson id or the legacy flag.
+  bool get tutorialFinished =>
+      lessonCompleted ||
+      tutorialCompleted ||
+      completedLessons.contains('lesson_${LessonData.totalLessons}');
+
+  /// Whether [trigger] has been earned by lesson completion, level
+  /// completion, or finishing the tutorial (any historical tutorial trigger).
+  bool satisfiesScriptureTrigger(String trigger) => passageIsUnlocked(
+        unlockedIds: unlockedScriptureIds,
+        completedLessons: completedLessons,
+        completedLevels: completedLevels,
+        tutorialFinished: tutorialFinished,
+        passageId: '',
+        triggerLevel: trigger,
+      );
+
+  /// Journal passages open when their own id was stored, or when progress
+  /// has already earned their trigger. The second check covers the
+  /// `seed_starter` / `growth_seed_word` split and older tutorial triggers.
+  static bool passageIsUnlocked({
+    required Set<String> unlockedIds,
+    required Set<String> completedLessons,
+    required Set<String> completedLevels,
+    required bool tutorialFinished,
+    required String passageId,
+    required String triggerLevel,
+  }) {
+    if (passageId.isNotEmpty && unlockedIds.contains(passageId)) return true;
+    if (triggerLevel.isEmpty) return false;
+    if (completedLessons.contains(triggerLevel)) return true;
+    if (completedLevels.contains(triggerLevel)) return true;
+    return tutorialFinished &&
+        tutorialCompletionTriggers.contains(triggerLevel);
+  }
+
   factory GameProgress.initial() {
     return GameProgress(
       currentLesson: 'lesson_1',

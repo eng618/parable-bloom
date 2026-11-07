@@ -12,10 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gameplay SFX pack (`assets/audio/sfx/`) with slide/rustle, bloom, blocked, grace loss, level complete, and UI tap cues; separate SFX toggle alongside music.
 - Visual refresh palette (parchment cream / forest green light; moonlit soil / moss dark) with Home botanical framing assets and garden ornaments.
 
+### Fixed
+
+- Lesson 1 accepts a tap on any cell of its vine. The head highlight and `"Tap head to slide"` prompt stay as the guide.
+- Finishing the tutorial unlocks the starter journal entry (`growth_seed_word` / Luke 8:11) even when an older registry used `lesson_1` or `lesson_10`, or only the module id `seed_starter` was stored. Remote module and theme registries that are not the current schema version are ignored.
+
 ### Changed
 
 - Habit / retention loop: removed the once-per-day session-close / “come back tomorrow” overlay (and related Hive flags, level-complete habit hooks, and `habit_session_close_*` analytics). Kept next-day Home welcome-back via `habitSessionProvider.recordOpen()` + `habit_day_return`.
-- Tutorial lesson boards densified to match main-game visual occupancy: longer vines / fuller grids (L1 remains a single vine; L2–L4 fully tiled; L5 ~88%). Guide overlay and Lesson 1 tap restriction now read vine heads from layout data instead of hardcoded cells.
+- Tutorial lesson boards densified to match main-game visual occupancy: longer vines / fuller grids (L1 remains a single vine; L2–L4 fully tiled; L5 ~88%). Guide overlay highlights read vine heads from layout data instead of hardcoded cells.
 - Tutorial validation now hard-fails self-blocking vines (head exit ray intersects own body) via shared `ValidateStructural` / `ValidateSelfBlocking`; fixed Lesson 4 `vine_1` and Lesson 5 `vine_1` layouts that pointed into their own bodies.
 - Fine-grained Riverpod watches on heavy screens: `HomeScreen` selects tutorial/level/completed fields, `JournalScreen` selects unlocked scriptures, `TutorialGuideOverlay` selects only the vine states each lesson reads, `GameZoomControls` selects zoom bounds — unrelated provider writes no longer rebuild these widgets.
 - Added `GameProgress.firstUncompletedInPlaylist(playlist, completedLevels)` static helper; `nextUncompletedLevel` delegates to it.

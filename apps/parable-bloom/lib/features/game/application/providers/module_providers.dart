@@ -48,13 +48,22 @@ final modulesRegistryProvider =
           .timeout(const Duration(seconds: 2));
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
-        final jsonStr = json.encode(data);
-        await box.put('cached_modules_registry', jsonStr);
+        // Same gate as the Hive cache. A fast network used to prefer a
+        // pre-migration remote doc (old lesson triggers) over bundled
+        // assets, so tutorial completion unlocked nothing in the journal.
+        if (data['version']?.toString() == kModulesRegistryVersion) {
+          final jsonStr = json.encode(data);
+          await box.put('cached_modules_registry', jsonStr);
+          LoggerService.info(
+            'Successfully fetched and cached modules registry from Firestore ($configsCollection/modules)',
+            tag: 'modulesRegistryProvider',
+          );
+          return data;
+        }
         LoggerService.info(
-          'Successfully fetched and cached modules registry from Firestore ($configsCollection/modules)',
+          'Ignoring remote modules registry version ${data['version']} (expected $kModulesRegistryVersion)',
           tag: 'modulesRegistryProvider',
         );
-        return data;
       }
     } catch (e) {
       LoggerService.warn(

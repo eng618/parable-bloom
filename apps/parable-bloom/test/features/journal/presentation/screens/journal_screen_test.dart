@@ -101,6 +101,54 @@ void main() {
       expect(find.textContaining('Hebrews 11:1'), findsNothing);
     });
 
+    testWidgets(
+        'Finished tutorial opens a legacy starter without its passage id',
+        (tester) async {
+      const legacyThemes = [
+        JournalTheme(
+          id: 'growth',
+          name: 'Spiritual Growth',
+          description: '',
+          icon: 'spa',
+          passages: [
+            JournalPassage(
+              id: 'growth_seed_word',
+              themeId: 'growth',
+              title: 'The Seed is the Word',
+              reference: 'Luke 8:11',
+              type: 'starter',
+              triggerLevel: 'lesson_10',
+              reflectionPrompts: ['What soil is your heart?'],
+            ),
+          ],
+        ),
+      ];
+      final progress = GameProgress.initial().copyWith(
+        completedLessons: {'lesson_5'},
+        lessonCompleted: true,
+        tutorialCompleted: true,
+        unlockedScriptureIds: {'seed_starter'},
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            analyticsServiceProvider.overrideWithValue(_FakeAnalyticsService()),
+            scriptureServiceProvider.overrideWithValue(_FakeScriptureService()),
+            gameProgressProvider
+                .overrideWith(() => _FakeProgressNotifier(progress)),
+            journalThemesProvider
+                .overrideWithValue(const AsyncValue.data(legacyThemes)),
+          ],
+          child: const MaterialApp(home: JournalScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('The Seed is the Word'), findsOneWidget);
+      expect(find.text('Locked Scripture'), findsNothing);
+    });
+
     testWidgets('Unlocked entry card opens reading sheet', (tester) async {
       final progress = GameProgress.initial().copyWith(
         unlockedScriptureIds: {'faith_1'},

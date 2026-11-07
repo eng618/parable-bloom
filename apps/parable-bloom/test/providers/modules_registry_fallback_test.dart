@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
 import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
+import 'package:parable_bloom/features/journal/application/providers/journal_providers.dart';
 
 /// Firestore mock simulating an anonymous client hitting the auth-gated
 /// `configs_prod` rules (`allow read: if request.auth != null`).
@@ -155,6 +156,7 @@ void main() {
 
     test('Firestore success stays primary and refreshes the cache', () async {
       final ota = {
+        'version': '4.0',
         'modules': [
           {'id': 'ota-module'},
         ],
@@ -179,6 +181,75 @@ void main() {
       expect((json.decode(cachedStr!) as Map)['modules'], [
         {'id': 'ota-module'},
       ]);
+    });
+
+    test('stale remote registry falls through to bundled assets', () async {
+      final stale = {
+        'version': '3.0',
+        'modules': [
+          {'id': 'stale-remote'},
+        ],
+      };
+      final container = ProviderContainer(
+        overrides: [
+          firestoreProvider.overrideWithValue(_SuccessFirestore(stale)),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final registry = await container.read(modulesRegistryProvider.future);
+      expect((registry['modules'] as List), hasLength(24));
+      expect(
+        container.read(hiveBoxProvider).get('cached_modules_registry'),
+        isNull,
+      );
+    });
+  });
+
+  group('biblicalThemesRegistryProvider version gate', () {
+    test('current remote registry is used', () async {
+      final ota = {
+        'version': '2.0',
+        'themes': [
+          {'id': 'ota-theme'},
+        ],
+      };
+      final container = ProviderContainer(
+        overrides: [
+          firestoreProvider.overrideWithValue(_SuccessFirestore(ota)),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final registry =
+          await container.read(biblicalThemesRegistryProvider.future);
+      expect(registry['themes'], [
+        {'id': 'ota-theme'},
+      ]);
+    });
+
+    test('stale remote themes fall through to bundled assets', () async {
+      final stale = {
+        'version': '1.0',
+        'themes': [
+          {'id': 'stale-theme'},
+        ],
+      };
+      final container = ProviderContainer(
+        overrides: [
+          firestoreProvider.overrideWithValue(_SuccessFirestore(stale)),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final registry =
+          await container.read(biblicalThemesRegistryProvider.future);
+      final themes = registry['themes'] as List;
+      expect(themes.first['id'], 'growth');
+      expect(
+        container.read(hiveBoxProvider).get('cached_biblical_themes_registry'),
+        isNull,
+      );
     });
   });
 }

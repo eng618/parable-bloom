@@ -9,6 +9,40 @@ void main() {
       expect(p1, equals(p2));
     });
 
+    test('a finished tutorial satisfies every historical tutorial trigger', () {
+      final finished = GameProgress.initial().copyWith(
+        completedLessons: {'lesson_5'},
+        lessonCompleted: true,
+        tutorialCompleted: true,
+      );
+
+      expect(finished.satisfiesScriptureTrigger('lesson_5'), isTrue);
+      expect(finished.satisfiesScriptureTrigger('lesson_1'), isTrue);
+      expect(finished.satisfiesScriptureTrigger('lesson_10'), isTrue);
+      expect(finished.satisfiesScriptureTrigger('lvl_m01_05'), isFalse);
+      expect(
+        GameProgress.passageIsUnlocked(
+          unlockedIds: {'seed_starter'},
+          completedLessons: finished.completedLessons,
+          completedLevels: finished.completedLevels,
+          tutorialFinished: finished.tutorialFinished,
+          passageId: 'growth_seed_word',
+          triggerLevel: 'lesson_10',
+        ),
+        isTrue,
+      );
+    });
+
+    test('an in-progress tutorial does not satisfy a later lesson trigger', () {
+      final mid = GameProgress.initial().copyWith(
+        completedLessons: {'lesson_1'},
+      );
+
+      expect(mid.tutorialFinished, isFalse);
+      expect(mid.satisfiesScriptureTrigger('lesson_1'), isTrue);
+      expect(mid.satisfiesScriptureTrigger('lesson_5'), isFalse);
+    });
+
     test('changing tutorialCompleted should make objects unequal', () {
       final p1 = GameProgress.initial();
       final p2 = p1.copyWith(tutorialCompleted: true);

@@ -42,6 +42,35 @@ LevelData _blockingLevel() => LevelData(
       mask: MaskData(mode: 'show-all', points: const []),
     );
 
+/// Lesson 1 used to ignore every tap except the head cell.
+LevelData _lesson1() => LevelData(
+      id: 'lesson_1',
+      name: 'Lesson 1',
+      difficulty: 'tutorial',
+      gridWidth: 4,
+      gridHeight: 4,
+      vines: [
+        VineData(
+          id: 'vine_1',
+          headDirection: 'left',
+          orderedPath: [
+            {'x': 0, 'y': 3},
+            {'x': 1, 'y': 3},
+            {'x': 2, 'y': 3},
+          ],
+        ),
+      ],
+      maxMoves: 1,
+      minMoves: 1,
+      complexity: 'tutorial',
+      grace: 3,
+      mask: MaskData(mode: 'show-all', points: const []),
+    );
+
+Map<String, VineState> _lesson1States() => {
+      'vine_1': VineState(id: 'vine_1', isBlocked: false, isCleared: false),
+    };
+
 Map<String, VineState> _freshStates() => {
       'v1': VineState(id: 'v1', isBlocked: false, isCleared: false),
       'v2': VineState(id: 'v2', isBlocked: true, isCleared: false),
@@ -98,6 +127,50 @@ void main() {
         VineAnimationState.animatingClear,
       );
       expect(grid.getCurrentVineState('v2')!.hasBeenAttempted, isFalse);
+    });
+  });
+
+  group('Lesson 1 vine taps', () {
+    Future<GridComponent> lessonGrid() async {
+      final game = _TestGame();
+      await game.onLoad();
+      final grid = game.grid;
+      await grid.onLoad();
+      grid.setLevelData(_lesson1(), _lesson1States());
+      return grid;
+    }
+
+    test('a body cell slides the vine', () async {
+      final grid = await lessonGrid();
+
+      grid.handleCellTap(3, 1); // body at (x=1, y=3), head is (0, 3)
+
+      expect(
+        grid.getCurrentVineState('vine_1')!.animationState,
+        VineAnimationState.animatingClear,
+      );
+    });
+
+    test('the head still slides the vine', () async {
+      final grid = await lessonGrid();
+
+      grid.handleCellTap(3, 0); // head at (x=0, y=3)
+
+      expect(
+        grid.getCurrentVineState('vine_1')!.animationState,
+        VineAnimationState.animatingClear,
+      );
+    });
+
+    test('an empty cell does not slide the vine', () async {
+      final grid = await lessonGrid();
+
+      grid.handleCellTap(0, 0);
+
+      expect(
+        grid.getCurrentVineState('vine_1')!.animationState,
+        VineAnimationState.normal,
+      );
     });
   });
 }

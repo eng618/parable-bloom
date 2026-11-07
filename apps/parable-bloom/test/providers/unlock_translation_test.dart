@@ -5,6 +5,8 @@ import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
 import 'package:parable_bloom/core/providers/service_providers.dart';
 import 'package:parable_bloom/core/services/scripture_service.dart';
 import 'package:parable_bloom/features/game/application/providers/module_providers.dart';
+import 'package:parable_bloom/features/journal/application/providers/journal_providers.dart';
+import 'package:parable_bloom/features/journal/domain/entities/journal_theme.dart';
 import 'package:parable_bloom/features/game/application/providers/progress_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 
@@ -65,6 +67,8 @@ void main() {
           (ref) => ref.watch(localGameProgressRepositoryProvider),
         ),
         modulesProvider.overrideWith((ref) async => [_module()]),
+        journalThemesProvider
+            .overrideWith((ref) async => const <JournalTheme>[]),
         scriptureServiceProvider.overrideWithValue(service),
       ],
     );
@@ -98,6 +102,8 @@ void main() {
           (ref) => ref.watch(localGameProgressRepositoryProvider),
         ),
         modulesProvider.overrideWith((ref) async => [_module()]),
+        journalThemesProvider
+            .overrideWith((ref) async => const <JournalTheme>[]),
         scriptureServiceProvider.overrideWithValue(service),
       ],
     );

@@ -409,8 +409,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         onViewJournal: () {
           _homeExitRequested = true;
           context.go('/');
+          // Reference, not the module id: the journal passage id
+          // (`growth_seed_word`) differs from `seed_starter`, and the
+          // journal resolves deep links by reference.
+          final entryKey = scripture.reference.isNotEmpty
+              ? scripture.reference
+              : scripture.id;
           context.push(
-            '/journal?entry=${Uri.encodeComponent(scripture.id)}',
+            '/journal?entry=${Uri.encodeComponent(entryKey)}',
           );
         },
         onContinue: _continueToNextLevel,

@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../../game/application/providers/progress_providers.dart";
+import "../../../game/domain/entities/game_progress.dart";
 import "../../../../core/providers/service_providers.dart";
 import "../../../../core/providers/settings_providers.dart";
 import "../../../../core/widgets/constrained_page.dart";
@@ -78,10 +79,10 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
   /// context isn't available yet.
   Future<void> _scrollAndOpenEntry(
     List<JournalTheme> themes,
-    Set<String> unlockedScriptureIds,
+    bool Function(JournalPassage passage) isUnlocked,
   ) async {
     final passage = _findPassage(themes, widget.initialPassageId!);
-    if (passage == null || !unlockedScriptureIds.contains(passage.id)) return;
+    if (passage == null || !isUnlocked(passage)) return;
 
     final key = _entryKeys[passage.id];
     if (key == null || key.currentContext == null) {
@@ -103,10 +104,26 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
   @override
   Widget build(BuildContext context) {
     final themesAsync = ref.watch(journalThemesProvider);
-    // Select only the set the journal reads; unrelated GameProgress writes
-    // (level completions, currentLevel pointer) don't rebuild the list.
-    final unlockedScriptureIds =
-        ref.watch(gameProgressProvider.select((p) => p.unlockedScriptureIds));
+    // Unlock fields only. Unrelated GameProgress writes (currentLevel, notes)
+    // do not rebuild the list. A finished tutorial opens the starter passage
+    // even when the stored id is the module scripture (`seed_starter`) rather
+    // than the journal passage (`growth_seed_word`).
+    final unlock = ref.watch(gameProgressProvider.select(
+      (p) => (
+        ids: p.unlockedScriptureIds,
+        lessons: p.completedLessons,
+        levels: p.completedLevels,
+        tutorialFinished: p.tutorialFinished,
+      ),
+    ));
+    bool isUnlocked(JournalPassage passage) => GameProgress.passageIsUnlocked(
+          unlockedIds: unlock.ids,
+          completedLessons: unlock.lessons,
+          completedLevels: unlock.levels,
+          tutorialFinished: unlock.tutorialFinished,
+          passageId: passage.id,
+          triggerLevel: passage.triggerLevel,
+        );
     final preferred = ref.watch(preferredTranslationProvider).toUpperCase();
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -146,7 +163,10 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 ref.read(analyticsServiceProvider).logJournalOpened(
                       initialTab: "All",
-                      unlockedCount: unlockedScriptureIds.length,
+                      unlockedCount: themes
+                          .expand((t) => t.passages)
+                          .where(isUnlocked)
+                          .length,
                     );
               });
             }
@@ -155,7 +175,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
             // scrolling can resolve each entry's BuildContext by id.
             for (final theme in themes) {
               for (final passage in theme.passages) {
-                if (unlockedScriptureIds.contains(passage.id)) {
+                if (isUnlocked(passage)) {
                   _entryKeys.putIfAbsent(passage.id, () => GlobalKey());
                 }
               }
@@ -166,14 +186,12 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               _deepLinkHandled = true;
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) return;
-                _scrollAndOpenEntry(themes, unlockedScriptureIds);
+                _scrollAndOpenEntry(themes, isUnlocked);
               });
             }
 
-            final totalUnlocked = themes
-                .expand((t) => t.passages)
-                .where((p) => unlockedScriptureIds.contains(p.id))
-                .length;
+            final totalUnlocked =
+                themes.expand((t) => t.passages).where(isUnlocked).length;
             final totalPassages =
                 themes.fold<int>(0, (sum, t) => sum + t.passages.length);
 
@@ -218,9 +236,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                   const SizedBox(height: 16),
                   ...themes.asMap().entries.map((entry) {
                     final theme = entry.value;
-                    final unlockedCount = theme.passages
-                        .where((p) => unlockedScriptureIds.contains(p.id))
-                        .length;
+                    final unlockedCount =
+                        theme.passages.where(isUnlocked).length;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -232,9 +249,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                         const SizedBox(height: 8),
                         ...theme.passages.asMap().entries.map((passageEntry) {
                           final passage = passageEntry.value;
-                          final isUnlocked =
-                              unlockedScriptureIds.contains(passage.id);
-                          if (isUnlocked) {
+                          if (isUnlocked(passage)) {
                             return ScrapbookEntry(
                               key: _entryKeys[passage.id],
                               passage: passage,

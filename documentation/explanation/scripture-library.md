@@ -48,9 +48,9 @@ graph TD
 
 ### 2.1 Starter Scripture
 
-- **Trigger**: Immediately upon completing the tutorial (Lesson 5).
+- **Trigger**: Immediately upon completing the tutorial (Lesson 5). Older registries used `lesson_1` or `lesson_10` for the same moment; a finished tutorial satisfies all three.
 - **Purpose**: Instantly rewards the player and establishes scripture collection early in the user lifecycle.
-- **First Scripture**: `Luke 8:11` ("The seed is the word of God").
+- **First Scripture**: `Luke 8:11` ("The seed is the word of God"). The journal passage id is `growth_seed_word`. The module registry still lists the same verse as `seed_starter`. Completing the tutorial writes both ids, and the journal also opens the passage when only the module id was stored.
 
 ### 2.2 Micro-Verses
 
@@ -79,7 +79,7 @@ To support existing users who completed levels in prior versions (including lega
   - Identifies the user's highest completed level index or current level index in the playlist (`effectiveMaxIndex`).
   - Backfills any missing level IDs from index `0` up to `effectiveMaxIndex` in `completedLevels`, ensuring complete module fulfillment.
 - **Biblical Themes & Scripture Backfill**:
-  - Unlocks any eligible micro-verses or starter scriptures in `unlockedScriptureIds` whose trigger levels fall on or before `effectiveMaxIndex`.
+  - Unlocks any eligible micro-verses or starter scriptures in `unlockedScriptureIds` whose trigger levels fall on or before `effectiveMaxIndex`, plus the starter journal passage when the tutorial is already finished. A backfill that overlaps a lesson completion merges into the newer save instead of replacing it.
   - Checks completed modules (`progress.isModuleCompleted()`) and automatically populates missing parable translations in `unlockedTranslations`.
 - **Idempotence**: Preserves user-customized translations, avoid duplicate entries, and acts as a safe no-op once data is aligned.
 
