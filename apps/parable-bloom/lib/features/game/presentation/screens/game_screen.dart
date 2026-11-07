@@ -180,10 +180,20 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   void dispose() {
     LoggerService.debug('GameScreen dispose', tag: 'GameScreen');
-    if (ref.read(gameInstanceProvider) == _game) {
-      ref.read(gameInstanceProvider.notifier).setGame(null);
-    }
+    // WidgetRef.read throws once this element is unmounting (PARABLE-BLOOM-A
+    // / B). The container captured while the element was active is safe.
+    final container = _providerContainer;
+    final game = _game;
     _game = null;
+    if (container != null) {
+      try {
+        if (container.read(gameInstanceProvider) == game) {
+          container.read(gameInstanceProvider.notifier).setGame(null);
+        }
+      } on StateError {
+        // App teardown already disposed the container.
+      }
+    }
     super.dispose();
   }
 

@@ -79,12 +79,7 @@ class SfxController {
         }
         _players[entry.key] = player;
       } catch (e, stack) {
-        LoggerService.warn(
-          'Failed to load SFX ${entry.key.name}',
-          error: e,
-          stackTrace: stack,
-          tag: 'SfxController',
-        );
+        _logSfxIssue('Failed to load SFX ${entry.key.name}', e, stack);
       }
     }
     _loaded = true;
@@ -105,12 +100,7 @@ class SfxController {
       await player.seek(Duration.zero);
       await player.play();
     } catch (e, stack) {
-      LoggerService.warn(
-        'SFX play failed: ${sfx.name}',
-        error: e,
-        stackTrace: stack,
-        tag: 'SfxController',
-      );
+      _logSfxIssue('SFX play failed: ${sfx.name}', e, stack);
     }
   }
 
@@ -120,12 +110,7 @@ class SfxController {
     try {
       await player.stop();
     } catch (e, stack) {
-      LoggerService.warn(
-        'SFX stop failed: ${sfx.name}',
-        error: e,
-        stackTrace: stack,
-        tag: 'SfxController',
-      );
+      _logSfxIssue('SFX stop failed: ${sfx.name}', e, stack);
     }
   }
 
@@ -134,12 +119,7 @@ class SfxController {
       try {
         await entry.value.stop();
       } catch (e, stack) {
-        LoggerService.warn(
-          'SFX stopAll failed: ${entry.key.name}',
-          error: e,
-          stackTrace: stack,
-          tag: 'SfxController',
-        );
+        _logSfxIssue('SFX stopAll failed: ${entry.key.name}', e, stack);
       }
     }
   }
@@ -168,6 +148,22 @@ class SfxController {
   Future<void> playBlocked() async {
     await stopVineMotion();
     await play(GameSfx.vineBlocked);
+  }
+
+  /// A newer load cancelling this one is normal (navigation, cue overlap).
+  /// just_audio reports that as [PlayerInterruptedException]
+  /// ("Loading interrupted").
+  void _logSfxIssue(String message, Object error, StackTrace stack) {
+    if (error is PlayerInterruptedException) {
+      LoggerService.debug(message, tag: 'SfxController');
+      return;
+    }
+    LoggerService.warn(
+      message,
+      error: error,
+      stackTrace: stack,
+      tag: 'SfxController',
+    );
   }
 
   Future<void> dispose() async {

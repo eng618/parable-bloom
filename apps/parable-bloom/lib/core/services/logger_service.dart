@@ -63,14 +63,13 @@ class LoggerService {
     }
 
     _safeCrashlyticsLog(formattedMessage);
-    if (error != null) {
-      _reportError(error, stackTrace);
-    }
   }
 
   /// Log a warning message.
   ///
   /// Appears in console in dev and as a breadcrumb in Crashlytics.
+  /// Expected failures such as cloud timeouts and retries belong here.
+  /// [LoggerService.error] is what opens a Sentry issue.
   static void warn(
     String message, {
     String? tag,
@@ -88,9 +87,6 @@ class LoggerService {
     }
 
     _safeCrashlyticsLog(formattedMessage);
-    if (error != null) {
-      _reportError(error, stackTrace);
-    }
   }
 
   /// Log a debug message.

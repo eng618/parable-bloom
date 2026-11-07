@@ -104,8 +104,7 @@ final modulesRegistryProvider =
 
   // 3. Fallback to bundled assets
   try {
-    final jsonString = await rootBundle.loadString('assets/data/modules.json');
-    final data = json.decode(jsonString) as Map<String, dynamic>;
+    final data = await _loadBundledModulesRegistry();
     LoggerService.info(
       'Loaded modules registry from bundled assets/data/modules.json',
       tag: 'modulesRegistryProvider',
@@ -141,14 +140,69 @@ final modulesProvider = FutureProvider<List<ModuleData>>((ref) async {
 final levelMappingsProvider = FutureProvider<Map<String, String>>((ref) async {
   try {
     final registry = await ref.watch(modulesRegistryProvider.future);
-    final mappings = Map<String, String>.from(registry['level_mappings'] ?? {});
-    return mappings;
+    final fromRegistry = _parseLevelMappings(registry['level_mappings']);
+    final bundled = _parseLevelMappings(
+      (await _loadBundledModulesRegistry())['level_mappings'],
+    );
+    if (fromRegistry.isEmpty) {
+      if (bundled.isNotEmpty) {
+        LoggerService.warn(
+          'Registry level_mappings missing or empty; using ${bundled.length} bundled mappings',
+          tag: 'levelMappingsProvider',
+        );
+      }
+      return bundled;
+    }
+
+    // Registry paths win per key. Bundled keys stay when the registry omits
+    // them, so a partial or empty OTA/cache document cannot hide shipped levels.
+    final merged = {...bundled, ...fromRegistry};
+    final filled = bundled.keys.where((key) => !fromRegistry.containsKey(key));
+    if (filled.isNotEmpty) {
+      LoggerService.info(
+        'Added ${filled.length} bundled level mappings missing from the registry',
+        tag: 'levelMappingsProvider',
+      );
+    }
+    return merged;
   } catch (e, stack) {
     LoggerService.error('Error parsing level mappings from modules registry',
         error: e, stackTrace: stack, tag: 'levelMappingsProvider');
-    return {};
+    try {
+      return _parseLevelMappings(
+        (await _loadBundledModulesRegistry())['level_mappings'],
+      );
+    } catch (fallbackError, fallbackStack) {
+      LoggerService.error(
+        'Bundled level mappings unavailable',
+        error: fallbackError,
+        stackTrace: fallbackStack,
+        tag: 'levelMappingsProvider',
+      );
+      return {};
+    }
   }
 });
+
+/// String-to-string entries only. Non-string values are skipped so one bad
+/// entry cannot blank the table.
+Map<String, String> _parseLevelMappings(dynamic raw) {
+  if (raw is! Map) return {};
+  final mappings = <String, String>{};
+  for (final entry in raw.entries) {
+    final key = entry.key;
+    final value = entry.value;
+    if (key is! String || value is! String) continue;
+    if (key.isEmpty || value.isEmpty) continue;
+    mappings[key] = value;
+  }
+  return mappings;
+}
+
+Future<Map<String, dynamic>> _loadBundledModulesRegistry() async {
+  final jsonString = await rootBundle.loadString('assets/data/modules.json');
+  return json.decode(jsonString) as Map<String, dynamic>;
+}
 
 /// Exposes the canonical [LevelRepository] instance.
 ///

@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Lesson 1 accepts a tap on any cell of its vine. The head highlight and `"Tap head to slide"` prompt stay as the guide.
 - Finishing the tutorial unlocks the starter journal entry (`growth_seed_word` / Luke 8:11) even when an older registry used `lesson_1` or `lesson_10`, or only the module id `seed_starter` was stored. Remote module and theme registries that are not the current schema version are ignored.
+- Leaving a level clears the game instance from the provider container captured while the screen was active, so unmount no longer throws `Using "ref" when a widget is about to or has been unmounted`.
+- Cloud-sync timeouts and interrupted audio loads stay on warning breadcrumbs. Sentry issues are opened from `LoggerService.error`.
+- Bundled `level_mappings` stay in effect when a cached or remote modules registry has a missing, empty, or partial map. Registry entries still override the same key.
 
 ### Changed
 

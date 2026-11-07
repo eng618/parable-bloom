@@ -4,6 +4,9 @@
 
 - **tutorial:** lesson 1 slides when any cell of the vine is tapped
 - **journal:** finishing the tutorial unlocks the starter scripture entry
+- **game:** leaving a level no longer reads `ref` after the screen unmounts
+- **sentry:** cloud timeouts and interrupted audio loads are recorded as warnings
+- **levels:** bundled level mappings fill in when a registry map is empty or partial
 
 ### ⚡ Performance
 

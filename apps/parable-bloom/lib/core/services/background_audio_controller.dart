@@ -29,6 +29,13 @@ class BackgroundAudioController {
         await _player.setLoopMode(LoopMode.one);
         _loaded = true;
       } catch (e, stack) {
+        if (e is PlayerInterruptedException) {
+          LoggerService.debug(
+            "Background audio load interrupted",
+            tag: 'BackgroundAudioController',
+          );
+          return;
+        }
         LoggerService.error("Failed to load background audio asset",
             error: e, stackTrace: stack, tag: 'BackgroundAudioController');
         return;
@@ -44,6 +51,7 @@ class BackgroundAudioController {
     try {
       await _player.play();
     } catch (e, stack) {
+      if (e is PlayerInterruptedException) return;
       LoggerService.warn("Background audio play failed",
           error: e, stackTrace: stack, tag: 'BackgroundAudioController');
     }
@@ -57,6 +65,7 @@ class BackgroundAudioController {
     try {
       await _player.play();
     } catch (e, stack) {
+      if (e is PlayerInterruptedException) return;
       LoggerService.warn("Background audio play failed after interaction",
           error: e, stackTrace: stack, tag: 'BackgroundAudioController');
     }

@@ -206,6 +206,58 @@ void main() {
     });
   });
 
+  group('levelMappingsProvider bundled fallback', () {
+    test('empty cached mappings still expose bundled level files', () async {
+      final cached = {
+        'version': '4.0',
+        'modules': [
+          {'id': 'cached-module'},
+        ],
+        'level_mappings': <String, dynamic>{},
+      };
+      final container = ProviderContainer(
+        overrides: [firestoreProvider.overrideWithValue(_DeniedFirestore())],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(hiveBoxProvider).put(
+            'cached_modules_registry',
+            json.encode(cached),
+          );
+
+      final mappings = await container.read(levelMappingsProvider.future);
+      expect(mappings['lesson_1'], 'lessons/lesson_1.json');
+      expect(mappings['lvl_m01_01'], 'levels/level_1.json');
+      expect(mappings.length, greaterThan(10));
+    });
+
+    test('partial remote mappings override a key and keep bundled keys',
+        () async {
+      final ota = {
+        'version': '4.0',
+        'modules': [
+          {'id': 'ota-module'},
+        ],
+        'level_mappings': <String, dynamic>{
+          'lvl_m01_01': 'levels/custom.json',
+          'bad': 1,
+        },
+      };
+      final container = ProviderContainer(
+        overrides: [
+          firestoreProvider.overrideWithValue(_SuccessFirestore(ota)),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final mappings = await container.read(levelMappingsProvider.future);
+      expect(mappings['lvl_m01_01'], 'levels/custom.json');
+      expect(mappings['lesson_1'], 'lessons/lesson_1.json');
+      expect(mappings.containsKey('bad'), isFalse);
+      expect(mappings.length, greaterThan(10));
+    });
+  });
+
   group('biblicalThemesRegistryProvider version gate', () {
     test('current remote registry is used', () async {
       final ota = {

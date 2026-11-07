@@ -368,7 +368,7 @@ graph TD
     Firestore -->|Stores in cache| Hive
 ```
 
-1. **Asset Bundle Check**: If the logical key exists in `modules.json`'s `level_mappings` and is bundled inside the assets, it is loaded instantly from `rootBundle`.
+1. **Asset Bundle Check**: If the logical key exists in `modules.json`'s `level_mappings` and is bundled inside the assets, it is loaded instantly from `rootBundle`. The table the game uses is the bundled map with the active registry laid over it: a registry entry replaces the same key, and a missing, empty, or partial `level_mappings` object leaves the shipped levels addressable. A non-string entry is skipped.
 2. **Local Hive Cache Check**: If not bundled, the repository checks the local Hive box under the key `'cached_level_${levelId}'`.
 3. **Cloud Firestore Fetch**: If there is a cache miss, it queries the `levels_{env}` collection on Firestore (where `{env}` is dynamically resolved to `dev`, `preview`, or `prod` depending on the running target). Upon a successful download, the level JSON is immediately mirrored into the local Hive box to support subsequent offline play.
 
