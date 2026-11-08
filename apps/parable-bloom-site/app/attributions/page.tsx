@@ -86,7 +86,7 @@ const audioCredits: AudioCredit[] = [
     name: 'Nature Sounds Pack by Antoinemax',
     credit: 'Antoinemax',
     license: 'CC-BY 4.0',
-    notice: 'Ambient loops, foliage, footsteps, and streams.',
+    notice: 'Foliage rustles used while vines move.',
     infoUrl: 'https://opengameart.org/content/nature-sounds-pack',
     licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
   },
