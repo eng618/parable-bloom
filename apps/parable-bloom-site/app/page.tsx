@@ -153,8 +153,8 @@ export default function HomePage() {
           <div>
             <h2 className="font-display text-text-primary text-2xl font-semibold sm:text-3xl">Inside the garden</h2>
             <p className="text-text-secondary mt-2 max-w-xl text-base">
-              Home, puzzles, level blooms, and a Scripture journal — one calm visual language from first open to next-day
-              welcome-back.
+              Home, puzzles, level blooms, and a Scripture journal — one calm visual language from first open to
+              next-day welcome-back.
             </p>
           </div>
         </div>
@@ -163,11 +163,7 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
           {gallery.map((shot, i) => (
-            <figure
-              key={shot.src}
-              className="animate-fade-in-up"
-              style={{ animationDelay: `${i * 90}ms` }}
-            >
+            <figure key={shot.src} className="animate-fade-in-up" style={{ animationDelay: `${i * 90}ms` }}>
               <div className="phone-frame">
                 <Image src={shot.src} alt={shot.alt} width={540} height={1100} className="h-auto w-full" />
               </div>
@@ -203,9 +199,7 @@ export default function HomePage() {
 
       {/* ── Features ── */}
       <section aria-label="Game features">
-        <h2 className="font-display text-text-primary mb-2 text-2xl font-semibold sm:text-3xl">
-          Peace in the puzzle
-        </h2>
+        <h2 className="font-display text-text-primary mb-2 text-2xl font-semibold sm:text-3xl">Peace in the puzzle</h2>
         <p className="text-text-secondary mb-8 max-w-2xl">
           Premium, easy, habit-forming gospel-through-games — short sessions that leave room for Scripture and
           reflection.
@@ -225,7 +219,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Closing CTA ── */}
-      <section className="animate-fade-in-up relative overflow-hidden rounded-[1.5rem] border border-brand/15 bg-surface px-6 py-10 text-center sm:px-10">
+      <section className="animate-fade-in-up border-brand/15 bg-surface relative overflow-hidden rounded-[1.5rem] border px-6 py-10 text-center sm:px-10">
         <Image
           src="/art/leaf_sprig.png"
           alt=""

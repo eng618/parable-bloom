@@ -101,9 +101,7 @@ body {
   background-image:
     linear-gradient(180deg, rgb(249 243 229 / 88%) 0%, rgb(241 235 221 / 92%) 55%, rgb(232 224 206 / 96%) 100%),
     url('/art/parchment.webp');
-  background-size:
-    auto,
-    480px;
+  background-size: auto, 480px;
   background-repeat: repeat;
   font-family: var(--font-body);
   line-height: 1.6;

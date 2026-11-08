@@ -5,9 +5,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Scripture Attributions',
+  title: 'Attributions',
   description:
-    'Bible translation licenses and attributions for Parable Bloom. NET Bible is the default; WEB, BSB, and KJV are also supported.',
+    'Audio, asset, and Bible translation licenses for Parable Bloom. NET Bible is the default; WEB, BSB, and KJV are also supported.',
 };
 
 // Keep in sync with apps/parable-bloom/assets/data/scripture_metadata.json
@@ -51,12 +51,53 @@ const translations = [
   },
 ];
 
+type AudioCredit = {
+  name: string;
+  credit: string;
+  license: string;
+  notice: string;
+  infoUrl?: string;
+  licenseUrl?: string;
+};
+
+const audioCredits: AudioCredit[] = [
+  {
+    name: 'Background music',
+    credit: 'ViraMiller',
+    license: 'CC BY 4.0',
+    notice: 'Garden ambience used as the in-app background loop.',
+    infoUrl: 'https://freesound.org/people/ViraMiller/sounds/744064/',
+    licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+  },
+  {
+    name: 'Original gameplay SFX',
+    credit: 'Eric Garcia (GVTech)',
+    license: 'Copyright © 2026 Eric Garcia (GVTech). All rights reserved.',
+    notice: 'Slide, rustle, bloom, blocked, grace loss, level complete, and UI tap cues authored for Parable Bloom.',
+  },
+  {
+    name: 'Case Portman UI SFX (Free Sample Pack)',
+    credit: '“Case Portman Audio”',
+    license: 'Royalty-free. Commercial use allowed. Credit required.',
+    notice: 'Soft UI sounds for menus, pause, clicks, and confirms.',
+    infoUrl: 'https://caseportman.itch.io/cute-cozy-ui-sfx-free-sample-pack',
+  },
+  {
+    name: 'Nature Sounds Pack by Antoinemax',
+    credit: 'Antoinemax',
+    license: 'CC-BY 4.0',
+    notice: 'Ambient loops, foliage, footsteps, and streams.',
+    infoUrl: 'https://opengameart.org/content/nature-sounds-pack',
+    licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+  },
+];
+
 export default function AttributionsPage() {
   return (
     <article className="page-article animate-fade-in-up">
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div>
-          <h1 className="font-display text-brand text-3xl font-semibold sm:text-4xl">Scripture Attributions</h1>
+          <h1 className="font-display text-brand text-3xl font-semibold sm:text-4xl">Attributions</h1>
           <Badge variant="secondary" className="border-brand/20 bg-brand/10 text-brand mt-1">
             Parable Bloom
           </Badge>
@@ -65,7 +106,52 @@ export default function AttributionsPage() {
 
       <Separator className="mb-6 opacity-40" />
 
+      <section className="mb-8">
+        <h2 className="font-display text-text-primary mb-3 text-xl font-semibold">Audio & Assets</h2>
+        <div className="space-y-4">
+          {audioCredits.map((credit) => (
+            <div key={credit.name} className="border-border/40 bg-bg-card rounded-2xl border p-5">
+              <h3 className="font-display text-text-primary mb-2 text-lg font-semibold">{credit.name}</h3>
+              <Text variant="body" className="text-text-secondary mb-1">
+                Credit: {credit.credit}
+              </Text>
+              <Text variant="body" className="text-text-secondary mb-2">
+                License: {credit.license}
+              </Text>
+              <Text variant="body" className="text-text-secondary mb-2 italic">
+                {credit.notice}
+              </Text>
+              {credit.infoUrl ? (
+                <Text variant="body" className="mb-1">
+                  <a
+                    href={credit.infoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand decoration-brand/40 hover:decoration-brand underline underline-offset-2 transition-colors"
+                  >
+                    Source
+                  </a>
+                </Text>
+              ) : null}
+              {credit.licenseUrl ? (
+                <Text variant="body">
+                  <a
+                    href={credit.licenseUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand decoration-brand/40 hover:decoration-brand underline underline-offset-2 transition-colors"
+                  >
+                    License details
+                  </a>
+                </Text>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="mb-6">
+        <h2 className="font-display text-text-primary mb-3 text-xl font-semibold">Scripture</h2>
         <Text variant="body" className="text-text-secondary">
           Parable Bloom is free and shows a single preferred translation everywhere in the app (change it in Settings →
           Scripture). The app bundle ships NET + KJV only to stay small; WEB and BSB download once on demand, then work
@@ -77,9 +163,9 @@ export default function AttributionsPage() {
         {translations.map((t) => (
           <div key={t.abbr} className="border-border/40 bg-bg-card rounded-2xl border p-5">
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <h2 className="font-display text-text-primary text-lg font-semibold">
+              <h3 className="font-display text-text-primary text-lg font-semibold">
                 {t.name} ({t.abbr})
-              </h2>
+              </h3>
               {t.badge ? (
                 <Badge variant="secondary" className="border-brand/20 bg-brand/10 text-brand">
                   {t.badge}

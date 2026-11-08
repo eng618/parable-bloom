@@ -33,11 +33,11 @@ class SfxController {
   double _volume = 0.72;
 
   static const Map<GameSfx, String> _assets = {
-    GameSfx.vineSlideStart: 'assets/audio/sfx/vine_slide_start.mp3',
-    GameSfx.vineRustle: 'assets/audio/sfx/vine_rustle.mp3',
-    GameSfx.vineBloom: 'assets/audio/sfx/vine_bloom.mp3',
-    GameSfx.vineBloomLong: 'assets/audio/sfx/vine_bloom_long.mp3',
-    GameSfx.vineBlocked: 'assets/audio/sfx/vine_blocked.mp3',
+    GameSfx.vineSlideStart: 'assets/audio/sfx/vines/vine_slide_start.mp3',
+    GameSfx.vineRustle: 'assets/audio/sfx/vines/vine_rustle.mp3',
+    GameSfx.vineBloom: 'assets/audio/sfx/vines/vine_bloom.mp3',
+    GameSfx.vineBloomLong: 'assets/audio/sfx/vines/vine_bloom_long.mp3',
+    GameSfx.vineBlocked: 'assets/audio/sfx/vines/vine_blocked.mp3',
     GameSfx.graceLoss: 'assets/audio/sfx/grace_loss.mp3',
     GameSfx.levelComplete: 'assets/audio/sfx/level_complete.mp3',
     GameSfx.uiTap: 'assets/audio/sfx/ui_tap.mp3',

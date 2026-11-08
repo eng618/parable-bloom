@@ -1,3 +1,9 @@
+## Unreleased
+
+### 🚀 Features
+
+- **site:** audio and asset credits on `/attributions` for Case Portman UI SFX and the Antoinemax Nature Sounds Pack, alongside the existing scripture notices
+
 ## 0.5.23 (2026-11-02)
 
 ### 🩹 Fixes

@@ -89,6 +89,10 @@ flutter:
     - assets/art/extras/
     - assets/audio/
     - assets/audio/sfx/
+    # Flutter does not recurse into asset directories.
+    - assets/audio/sfx/ui/
+    - assets/audio/sfx/nature/
+    - assets/audio/sfx/vines/
     - assets/data/
     - assets/levels/
     - assets/lessons/

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Case Portman UI SFX (credit: “Case Portman Audio”) and the Antoinemax Nature Sounds Pack (CC-BY 4.0) organized under `assets/audio/sfx/{ui,nature,vines}`. Credits are on the site `/attributions` page and in Settings → About. Existing vine cues moved to `sfx/vines/`; they are not wired into new playback yet.
 - Gameplay SFX pack (`assets/audio/sfx/`) with slide/rustle, bloom, blocked, grace loss, level complete, and UI tap cues; separate SFX toggle alongside music.
 - Visual refresh palette (parchment cream / forest green light; moonlit soil / moss dark) with Home botanical framing assets and garden ornaments.
 

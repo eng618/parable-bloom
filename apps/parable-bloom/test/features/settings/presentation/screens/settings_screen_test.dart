@@ -124,6 +124,32 @@ void main() {
       expect(find.text('Version'), findsOneWidget);
       expect(find.text('1.8.2+19'), findsOneWidget);
     });
+
+    testWidgets('Opens audio credits from About', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(createSettingsScreen());
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Audio credits'),
+        500,
+        scrollable: find.byType(Scrollable),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Audio credits'));
+      await tester.pumpAndSettle();
+
+      expect(
+          find.text('Case Portman UI SFX (Free Sample Pack)'), findsOneWidget);
+      expect(find.textContaining('Case Portman Audio'), findsOneWidget);
+      expect(find.text('Nature Sounds Pack by Antoinemax'), findsOneWidget);
+      expect(find.textContaining('CC-BY 4.0'), findsOneWidget);
+    });
   });
 }
 

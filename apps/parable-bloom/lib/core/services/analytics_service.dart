@@ -10,8 +10,8 @@ class AnalyticsService {
   AnalyticsService({
     FirebaseAnalytics? analytics,
     OpenpanelAnalyticsClient? openpanelClient,
-  }) : _analytics = analytics,
-       _openpanel = openpanelClient;
+  })  : _analytics = analytics,
+        _openpanel = openpanelClient;
 
   FirebaseAnalytics? get _firebase {
     if (_analytics != null) {

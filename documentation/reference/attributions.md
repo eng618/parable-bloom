@@ -2,10 +2,16 @@
 
 ## Audio
 
-| Asset                         | Source                                                   | License                                                    |
-| ----------------------------- | -------------------------------------------------------- | ---------------------------------------------------------- |
-| `assets/audio/background.mp3` | <https://freesound.org/people/ViraMiller/sounds/744064/> | CC BY 4.0 (<https://creativecommons.org/licenses/by/4.0/>) |
-| `assets/audio/sfx/*.mp3`      | Original procedural SFX authored for Parable Bloom       | Copyright © 2026 Eric Garcia (GVTech). All rights reserved. |
+Paths are under `apps/parable-bloom/`.
+
+| Asset                                                                                                          | Source                                                                                                                                | License                                                     |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `assets/audio/background.mp3`                                                                                  | [ViraMiller on Freesound](https://freesound.org/people/ViraMiller/sounds/744064/)                                                     | CC BY 4.0 (<https://creativecommons.org/licenses/by/4.0/>)  |
+| `assets/audio/sfx/grace_loss.mp3`, `level_complete.mp3`, `ui_tap.mp3`, and `assets/audio/sfx/vines/vine_*.mp3` | Original procedural SFX authored for Parable Bloom                                                                                    | Copyright © 2026 Eric Garcia (GVTech). All rights reserved. |
+| `assets/audio/sfx/ui/`                                                                                         | [Case Portman UI SFX (Free Sample Pack)](https://caseportman.itch.io/cute-cozy-ui-sfx-free-sample-pack). Credit: “Case Portman Audio” | Royalty-free. Commercial use allowed. Attribution required. |
+| `assets/audio/sfx/nature/` and `assets/audio/sfx/vines/vine_foliage_rustle_*.wav`                              | [Nature Sounds Pack by Antoinemax](https://opengameart.org/content/nature-sounds-pack)                                                | CC-BY 4.0 (<https://creativecommons.org/licenses/by/4.0/>)  |
+
+Foliage clips from the Nature Sounds Pack live in `sfx/vines/` so they can be used later for vine rustle. They are not wired into playback yet. The in-app list is Settings → About → Audio credits. The website mirrors these notices at `/attributions`.
 
 ## Fonts
 

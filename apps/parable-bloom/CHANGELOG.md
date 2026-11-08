@@ -1,5 +1,9 @@
 ## Unreleased
 
+### 🚀 Features
+
+- **audio:** organize Case Portman UI SFX and the Antoinemax Nature Sounds Pack under `assets/audio/sfx/`, and list their credits in Settings → About
+
 ### 🩹 Fixes
 
 - **tutorial:** lesson 1 slides when any cell of the vine is tapped

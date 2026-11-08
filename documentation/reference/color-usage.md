@@ -8,13 +8,13 @@ To maintain consistency and enable theme-aware design across the application, al
 
 Brand identity shifted from bracelet blue to a **parchment + forest / moonlit soil** palette matching the habit-loop MVP demos.
 
-| Role | Light | Dark |
-| --- | --- | --- |
-| Scaffold | `#F9F3E5` garden cream | `#141914` night soil |
-| Primary | `#344D2F` forest | `#A3B18A` moss |
-| Secondary | `#8DA082` sage | `#8DA082` sage |
-| On-surface | `#2A3328` ink | `#E8EADF` mist |
-| On-surface variant | `#5A6258` muted | `#A8AFA6` muted mist |
+| Role               | Light                  | Dark                 |
+| ------------------ | ---------------------- | -------------------- |
+| Scaffold           | `#F9F3E5` garden cream | `#141914` night soil |
+| Primary            | `#344D2F` forest       | `#A3B18A` moss       |
+| Secondary          | `#8DA082` sage         | `#8DA082` sage       |
+| On-surface         | `#2A3328` ink          | `#E8EADF` mist       |
+| On-surface variant | `#5A6258` muted        | `#A8AFA6` muted mist |
 
 Home uses reusable botanical assets under `assets/art/home/` and `assets/art/ornaments/`. Full token table: project store `docs/visual-refresh-palette.md`.
 

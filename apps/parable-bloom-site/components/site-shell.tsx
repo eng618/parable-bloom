@@ -1,14 +1,7 @@
 'use client';
 
 import { Button } from '@gv-tech/ui-web/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@gv-tech/ui-web/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@gv-tech/ui-web/sheet';
 import { SupportFab } from '@gv-tech/ui-web/support-fab';
 import { Text } from '@gv-tech/ui-web/text';
 import { MenuIcon } from 'lucide-react';
@@ -77,7 +70,7 @@ function BrandMark() {
       className="flex shrink-0 items-center gap-2.5 transition-opacity duration-300 hover:opacity-80"
     >
       <Image src="/art/leaf_sprig.png" alt="" width={28} height={18} className="opacity-90" aria-hidden="true" />
-      <Text variant="h3" as="strong" className="font-display text-brand whitespace-nowrap text-lg sm:text-xl">
+      <Text variant="h3" as="strong" className="font-display text-brand text-lg whitespace-nowrap sm:text-xl">
         Parable Bloom
       </Text>
     </Link>
@@ -116,15 +109,10 @@ export default function SiteShell({ children }: SiteShellProps) {
                 <MenuIcon className="size-5" aria-hidden="true" />
               </Button>
             </SheetTrigger>
-            <SheetContent
-              side="right"
-              className="bg-surface border-brand/15 w-[min(100%,20rem)] gap-0 p-0"
-            >
+            <SheetContent side="right" className="bg-surface border-brand/15 w-[min(100%,20rem)] gap-0 p-0">
               <SheetHeader className="border-brand/10 border-b px-5 py-4 text-left">
                 <SheetTitle className="font-display text-brand text-xl">Parable Bloom</SheetTitle>
-                <SheetDescription className="text-text-secondary text-sm">
-                  Navigate the garden site.
-                </SheetDescription>
+                <SheetDescription className="text-text-secondary text-sm">Navigate the garden site.</SheetDescription>
               </SheetHeader>
               <nav className="flex flex-col gap-1 p-4" aria-label="Mobile site navigation">
                 {navItems.map((item) => (
@@ -146,7 +134,7 @@ export default function SiteShell({ children }: SiteShellProps) {
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">{children}</main>
 
-      <footer className="bg-brand border-t border-brand/20 py-10 text-center">
+      <footer className="bg-brand border-brand/20 border-t py-10 text-center">
         <Text variant="caption" className="text-surface/85 font-display text-sm tracking-wide">
           © {currentYear} GVTech. All rights reserved.
         </Text>

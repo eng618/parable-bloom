@@ -35,7 +35,7 @@ export default function DesignSystemCard({
   return (
     <Card
       className={cn(
-        'animate-fade-in-up group border-brand/15 hover:border-brand/35 hover:shadow-grace flex flex-col overflow-hidden bg-surface/90 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1',
+        'animate-fade-in-up group border-brand/15 hover:border-brand/35 hover:shadow-grace bg-surface/90 flex flex-col overflow-hidden backdrop-blur-sm transition-all duration-300 hover:-translate-y-1',
       )}
       style={{ animationDelay: `${animationDelay}ms` }}
     >
@@ -60,7 +60,7 @@ export default function DesignSystemCard({
           {href ? (
             <Button
               asChild
-              className="bg-brand hover:bg-brand/90 !text-[#fffbf3] hover:!text-[#fffbf3] h-11 w-full rounded-[1.125rem] transition-all duration-300 hover:shadow-md"
+              className="bg-brand hover:bg-brand/90 h-11 w-full rounded-[1.125rem] !text-[#fffbf3] transition-all duration-300 hover:!text-[#fffbf3] hover:shadow-md"
               onClick={() => trackCtaClick(title, 'platform_grid', badge)}
             >
               <Link
@@ -73,7 +73,7 @@ export default function DesignSystemCard({
               </Link>
             </Button>
           ) : (
-            <Button disabled className="bg-brand/35 !text-[#fffbf3] h-11 w-full rounded-[1.125rem] opacity-70">
+            <Button disabled className="bg-brand/35 h-11 w-full rounded-[1.125rem] !text-[#fffbf3] opacity-70">
               {ctaLabel}
             </Button>
           )}

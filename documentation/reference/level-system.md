@@ -252,7 +252,7 @@ All levels must pass the strict validator in `tools/level-builder`.
 2. **Difficulty lock**: Each level's `difficulty` must match the canonical 5×21 progression for its ID (`pkg/common/progression.go`: 5× Seedling, Sprout, Nurturing, Flourishing, then Transcendent challenge per module).
 3. **Solvability**: The level must be solvable within `max_moves`. The validator tries a greedy fast-path first (complete for current mechanics — removing vines only frees cells), then exact BFS/A* (≤24 vines) or heuristic search with a configurable budget (default **2,000,000 states** in `task levels:validate-solvable`).
 4. **Connectivity**: All vine segments must be 4-connected (Manhattan distance = 1). `head_direction` must match head-to-neck vector.
-4b. **No Self-Blocking Head**: The straight exit ray from a vine's head in `head_direction` to the grid edge must not intersect any segment of that same vine. A head may not point into its own body (hard fail in both `validate` and `validate-tutorials` via `ValidateSelfBlocking`).
+   4b. **No Self-Blocking Head**: The straight exit ray from a vine's head in `head_direction` to the grid edge must not intersect any segment of that same vine. A head may not point into its own body (hard fail in both `validate` and `validate-tutorials` via `ValidateSelfBlocking`).
 5. **No Overlaps**: No two vine segments may share a coordinate.
 6. **Minimum Length**: All vines must have at least 2 cells.
 7. **No Coverage Gaps**: While 100% vine occupancy is not required, any cells not occupied by vines must be explicitly masked out. The validator issues a **warning** for uncovered, unmasked cells.
@@ -267,14 +267,14 @@ The `batch` command in `tools/level-builder` is the primary level generation sys
 
 Source of truth: `pkg/generator/config.DifficultySpecs` + `GridSizeRanges`. Validator enforces the stricter of the spec occupancy and `common.MinCoverageForDifficulty`.
 
-| Difficulty   | Grid Size (W×H) | Vine Count | Avg Length | Occupancy | Grace | Complexity |
-| ------------ | --------------- | ---------- | ---------- | --------- | ----- | ---------- |
+| Difficulty   | Grid Size (W×H) | Vine Count | Avg Length | Occupancy                               | Grace | Complexity |
+| ------------ | --------------- | ---------- | ---------- | --------------------------------------- | ----- | ---------- |
 | Tutorial     | 4×4 to 8×8      | 1-6        | n/a        | ~88–100% (hand-crafted; L1 single vine) | 3     | tutorial   |
-| Seedling     | 6×8 to 9×12     | 4-60       | 8-12       | 93%       | 3     | low        |
-| Sprout       | 9×12 to 12×16   | 8-80       | 8-14       | 93%       | 3     | low        |
-| Nurturing    | 9×16 to 12×20   | 12-100     | 8-14       | 93%       | 3     | medium     |
-| Flourishing  | 12×20 to 16×24  | 15-150     | 10-16      | 93%       | 3     | high       |
-| Transcendent | 16×28 to 24×40  | 15-200     | 12-18      | 93%       | 4     | extreme    |
+| Seedling     | 6×8 to 9×12     | 4-60       | 8-12       | 93%                                     | 3     | low        |
+| Sprout       | 9×12 to 12×16   | 8-80       | 8-14       | 93%                                     | 3     | low        |
+| Nurturing    | 9×16 to 12×20   | 12-100     | 8-14       | 93%                                     | 3     | medium     |
+| Flourishing  | 12×20 to 16×24  | 15-150     | 10-16      | 93%                                     | 3     | high       |
+| Transcendent | 16×28 to 24×40  | 15-200     | 12-18      | 93%                                     | 4     | extreme    |
 
 ### 5.2 Direction-First Placement Algorithm
 
