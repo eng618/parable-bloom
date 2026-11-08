@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/service_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
 
 /// Version row and third-party audio credits.
 class SettingsAboutSection extends ConsumerWidget {
@@ -36,7 +39,14 @@ class SettingsAboutSection extends ConsumerWidget {
           title: const Text('Audio credits'),
           subtitle: const Text('Music and sound effect licenses'),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => _showAudioCreditsSheet(context),
+          onTap: () {
+            unawaited(ref.read(sfxControllerProvider).playMenuOpen());
+            unawaited(
+              _showAudioCreditsSheet(context).whenComplete(() {
+                unawaited(ref.read(sfxControllerProvider).playMenuClose());
+              }),
+            );
+          },
         ),
       ],
     );
@@ -78,8 +88,8 @@ const List<_AudioCredit> _audioCredits = [
   ),
 ];
 
-void _showAudioCreditsSheet(BuildContext context) {
-  showModalBottomSheet<void>(
+Future<void> _showAudioCreditsSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,

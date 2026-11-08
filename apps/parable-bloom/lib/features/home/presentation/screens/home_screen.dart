@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/settings_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../../core/app_theme.dart';
@@ -358,6 +359,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _playNextLevel() async {
+    unawaited(ref.read(sfxControllerProvider).playConfirm());
     final gameProgress = ref.read(gameProgressProvider);
 
     if (!gameProgress.tutorialCompleted) {

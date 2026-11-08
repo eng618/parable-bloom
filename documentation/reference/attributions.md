@@ -11,7 +11,7 @@ Paths are under `apps/parable-bloom/`.
 | `assets/audio/sfx/ui/`                                                                                         | [Case Portman UI SFX (Free Sample Pack)](https://caseportman.itch.io/cute-cozy-ui-sfx-free-sample-pack). Credit: “Case Portman Audio” | Royalty-free. Commercial use allowed. Attribution required. |
 | `assets/audio/sfx/nature/` and `assets/audio/sfx/vines/vine_foliage_rustle_*.wav`                              | [Nature Sounds Pack by Antoinemax](https://opengameart.org/content/nature-sounds-pack)                                                | CC-BY 4.0 (<https://creativecommons.org/licenses/by/4.0/>)  |
 
-Foliage clips from the Nature Sounds Pack live in `sfx/vines/` so they can be used later for vine rustle. They are not wired into playback yet. The in-app list is Settings → About → Audio credits. The website mirrors these notices at `/attributions`.
+`vine_foliage_rustle_01.wav` loops quietly under a vine slide, and `vine_foliage_rustle_02.wav` is a short swell under the level-clear chime. Case Portman clips play for menu open and close (`ui_menu_open.wav`, `ui_menu_close.wav`), taps (`ui_clicked_in.wav`), confirms (`ui_confirm.wav`), and cancels (`ui_cancel.wav`). The older `ui_tap.mp3` and `vine_rustle.mp3` files stay in the bundle and are not the cues currently played. Nature ambient loops are not mixed under `background.mp3`. The in-app list is Settings → About → Audio credits. The website mirrors these notices at `/attributions`.
 
 ## Fonts
 

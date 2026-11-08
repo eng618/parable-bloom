@@ -43,7 +43,7 @@ class SettingsAudioSection extends ConsumerWidget {
                   ).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
           title: const Text('Sound Effects'),
-          subtitle: const Text('Vine slides, blooms, taps, and cues'),
+          subtitle: const Text('Vine slides, blooms, menus, and taps'),
           value: sfxEnabled,
           onChanged: (value) async {
             await ref.read(sfxEnabledProvider.notifier).setEnabled(value);

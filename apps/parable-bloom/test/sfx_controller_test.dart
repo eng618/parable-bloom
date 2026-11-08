@@ -17,8 +17,42 @@ void main() {
           'vineBlocked',
           'graceLoss',
           'levelComplete',
+          'levelSwell',
           'uiTap',
+          'uiMenuOpen',
+          'uiMenuClose',
+          'uiConfirm',
+          'uiCancel',
         ]));
+  });
+
+  test('organized cues load the soft UI and foliage files', () async {
+    final created = <_FakeSfxPlayer>[];
+    final controller = SfxController(playerFactory: () {
+      final player = _FakeSfxPlayer();
+      created.add(player);
+      return player;
+    });
+
+    await controller.play(GameSfx.uiMenuOpen);
+    final paths = created.expand((player) => player.loads).toSet();
+    expect(paths, contains('assets/audio/sfx/ui/ui_menu_open.wav'));
+    expect(paths, contains('assets/audio/sfx/ui/ui_menu_close.wav'));
+    expect(paths, contains('assets/audio/sfx/ui/ui_clicked_in.wav'));
+    expect(paths, contains('assets/audio/sfx/ui/ui_confirm.wav'));
+    expect(paths, contains('assets/audio/sfx/ui/ui_cancel.wav'));
+    expect(paths, contains('assets/audio/sfx/vines/vine_slide_start.mp3'));
+    expect(
+        paths, contains('assets/audio/sfx/vines/vine_foliage_rustle_01.wav'));
+    expect(
+        paths, contains('assets/audio/sfx/vines/vine_foliage_rustle_02.wav'));
+    expect(paths, contains('assets/audio/sfx/vines/vine_bloom.mp3'));
+    expect(paths, contains('assets/audio/sfx/vines/vine_blocked.mp3'));
+    expect(paths, contains('assets/audio/sfx/grace_loss.mp3'));
+    expect(paths, contains('assets/audio/sfx/level_complete.mp3'));
+    expect(paths, isNot(contains('assets/audio/sfx/ui_tap.mp3')));
+    expect(paths, isNot(contains('assets/audio/sfx/vines/vine_rustle.mp3')));
+    await controller.dispose();
   });
 
   test('disabled controller skips play without throwing', () async {

@@ -15,7 +15,12 @@ enum GameSfx {
   vineBlocked,
   graceLoss,
   levelComplete,
+  levelSwell,
   uiTap,
+  uiMenuOpen,
+  uiMenuClose,
+  uiConfirm,
+  uiCancel,
 }
 
 /// Lightweight multi-player SFX mixer. One player per cue so SFX can
@@ -45,14 +50,38 @@ class SfxController {
 
   static const Map<GameSfx, String> _assets = {
     GameSfx.vineSlideStart: 'assets/audio/sfx/vines/vine_slide_start.mp3',
-    GameSfx.vineRustle: 'assets/audio/sfx/vines/vine_rustle.mp3',
+    GameSfx.vineRustle: 'assets/audio/sfx/vines/vine_foliage_rustle_01.wav',
     GameSfx.vineBloom: 'assets/audio/sfx/vines/vine_bloom.mp3',
     GameSfx.vineBloomLong: 'assets/audio/sfx/vines/vine_bloom_long.mp3',
     GameSfx.vineBlocked: 'assets/audio/sfx/vines/vine_blocked.mp3',
     GameSfx.graceLoss: 'assets/audio/sfx/grace_loss.mp3',
     GameSfx.levelComplete: 'assets/audio/sfx/level_complete.mp3',
-    GameSfx.uiTap: 'assets/audio/sfx/ui_tap.mp3',
+    GameSfx.levelSwell: 'assets/audio/sfx/vines/vine_foliage_rustle_02.wav',
+    GameSfx.uiTap: 'assets/audio/sfx/ui/ui_clicked_in.wav',
+    GameSfx.uiMenuOpen: 'assets/audio/sfx/ui/ui_menu_open.wav',
+    GameSfx.uiMenuClose: 'assets/audio/sfx/ui/ui_menu_close.wav',
+    GameSfx.uiConfirm: 'assets/audio/sfx/ui/ui_confirm.wav',
+    GameSfx.uiCancel: 'assets/audio/sfx/ui/ui_cancel.wav',
   };
+
+  /// Per-cue gain under the master SFX volume. UI stays quieter than vines.
+  static const Map<GameSfx, double> _defaultScales = {
+    GameSfx.vineSlideStart: 0.82,
+    GameSfx.vineRustle: 0.2,
+    GameSfx.vineBloom: 0.7,
+    GameSfx.vineBloomLong: 0.7,
+    GameSfx.vineBlocked: 0.55,
+    GameSfx.graceLoss: 0.58,
+    GameSfx.levelComplete: 0.66,
+    GameSfx.levelSwell: 0.16,
+    GameSfx.uiTap: 0.38,
+    GameSfx.uiMenuOpen: 0.5,
+    GameSfx.uiMenuClose: 0.46,
+    GameSfx.uiConfirm: 0.42,
+    GameSfx.uiCancel: 0.38,
+  };
+
+  static const Set<GameSfx> _looping = {GameSfx.vineRustle};
 
   bool get enabled => _enabled;
 
@@ -88,8 +117,8 @@ class SfxController {
       final player = _playerFactory();
       try {
         await player.loadAsset(entry.value);
-        await player.setVolume(_volume);
-        if (entry.key == GameSfx.vineRustle) {
+        await player.setVolume(_volume * (_defaultScales[entry.key] ?? 1.0));
+        if (_looping.contains(entry.key)) {
           await player.setLooping(true);
         }
         _players[entry.key] = player;
@@ -143,7 +172,7 @@ class SfxController {
     final player = _players[sfx];
     if (player == null) return;
     try {
-      final scale = (volumeScale ?? 1.0).clamp(0.0, 1.0);
+      final scale = (volumeScale ?? _defaultScales[sfx] ?? 1.0).clamp(0.0, 1.0);
       await player.setVolume(_volume * scale);
       if (_playGeneration[sfx] != generation) return;
       await player.seekToStart();
@@ -174,11 +203,28 @@ class SfxController {
     }
   }
 
-  /// Slide start + light looping rustle while a vine moves.
+  /// Slide start plus a quiet looping foliage rustle while a vine moves.
   Future<void> playVineSlide() async {
-    await play(GameSfx.vineSlideStart, volumeScale: 0.9);
-    // Keep continuous rustle very quiet under the soft whoosh.
-    await play(GameSfx.vineRustle, volumeScale: 0.35);
+    await Future.wait([
+      play(GameSfx.vineSlideStart),
+      play(GameSfx.vineRustle),
+    ]);
+  }
+
+  Future<void> playMenuOpen() => play(GameSfx.uiMenuOpen);
+
+  Future<void> playMenuClose() => play(GameSfx.uiMenuClose);
+
+  Future<void> playConfirm() => play(GameSfx.uiConfirm);
+
+  Future<void> playCancel() => play(GameSfx.uiCancel);
+
+  /// Existing clear chime with a short, quiet foliage swell underneath.
+  Future<void> playLevelComplete() async {
+    await Future.wait([
+      play(GameSfx.levelComplete),
+      play(GameSfx.levelSwell),
+    ]);
   }
 
   Future<void> stopVineMotion() async {

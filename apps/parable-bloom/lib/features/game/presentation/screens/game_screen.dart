@@ -10,7 +10,6 @@ import '../../../../core/constants/animation_timing.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/providers/settings_providers.dart';
-import '../../../../core/services/sfx_controller.dart';
 import '../../application/providers/camera_providers.dart';
 import '../../application/providers/counter_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
@@ -91,9 +90,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
       if (next && (previous == null || !previous)) {
         LoggerService.info('Showing level complete overlay', tag: 'GameScreen');
-        unawaited(
-          ref.read(sfxControllerProvider).play(GameSfx.levelComplete),
-        );
+        unawaited(ref.read(sfxControllerProvider).playLevelComplete());
         _showLevelCompleteOverlay();
       }
     });
@@ -224,6 +221,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _showPauseMenu() {
+    unawaited(ref.read(sfxControllerProvider).playMenuOpen());
     showDialog(
       context: context,
       builder: (context) => PauseMenuDialog(
@@ -236,13 +234,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           _goHomeFromGameplay(logQuit: true);
         },
       ),
-    );
+    ).whenComplete(() {
+      if (!mounted) return;
+      unawaited(ref.read(sfxControllerProvider).playMenuClose());
+    });
   }
 
   /// Dedicated header Home — intentional leave to Home.
+  ///
+  /// The header already played the cancel cue. Skip a second one when the
+  /// level-complete overlay is up, since that path plays it itself.
   void _goHomeFromHeader() {
     if (_isLevelCompleteOverlayVisible) {
-      _goHomeFromLevelComplete();
+      _goHomeFromLevelComplete(playSound: false);
       return;
     }
     _goHomeFromGameplay(logQuit: true);
@@ -257,7 +261,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   /// Home during the level-complete celebration (level already persisted).
-  void _goHomeFromLevelComplete() {
+  void _goHomeFromLevelComplete({bool playSound = true}) {
+    if (playSound) {
+      unawaited(ref.read(sfxControllerProvider).playCancel());
+    }
     _homeExitRequested = true;
     if (_isLevelCompleteOverlayVisible) {
       setState(() {

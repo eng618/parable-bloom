@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/settings_providers.dart';
 import '../../application/providers/gameplay_state_providers.dart';
 
 class GameHeader extends ConsumerWidget {
@@ -32,7 +35,10 @@ class GameHeader extends ConsumerWidget {
               if (onHome != null)
                 IconButton(
                   icon: const Icon(Icons.home_rounded),
-                  onPressed: onHome,
+                  onPressed: () {
+                    unawaited(ref.read(sfxControllerProvider).playCancel());
+                    onHome?.call();
+                  },
                   splashColor: Colors.transparent,
                   style: iconStyle,
                   tooltip: 'Home',

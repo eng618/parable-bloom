@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/app_theme.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/services/logger_service.dart';
-import '../../../../core/services/sfx_controller.dart';
 import '../../domain/entities/lesson_data.dart';
 import '../../../game/application/providers/camera_providers.dart';
 import '../../../game/application/providers/gameplay_state_providers.dart';
@@ -77,9 +76,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         tag: 'TutorialFlowScreen',
       );
       if (next && (previous == null || !previous)) {
-        unawaited(
-          ref.read(sfxControllerProvider).play(GameSfx.levelComplete),
-        );
+        unawaited(ref.read(sfxControllerProvider).playLevelComplete());
         _onTutorialLessonCleared();
       }
     });
@@ -278,6 +275,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   }
 
   void _showPauseMenu() {
+    unawaited(ref.read(sfxControllerProvider).playMenuOpen());
     showDialog(
       context: context,
       builder: (context) => PauseMenuDialog(
@@ -290,7 +288,10 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
           _goHomeFromTutorial();
         },
       ),
-    );
+    ).whenComplete(() {
+      if (!mounted) return;
+      unawaited(ref.read(sfxControllerProvider).playMenuClose());
+    });
   }
 
   /// Intentional leave to Home.
@@ -662,6 +663,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
+                unawaited(ref.read(sfxControllerProvider).playConfirm());
                 // Progress already advanced in completeLesson; recreate
                 // the next lesson board when more remain.
                 _continueTutorialAfterUnlock();

@@ -1,3 +1,5 @@
+import "dart:async";
+
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
@@ -39,7 +41,9 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     super.initState();
     _scrollController = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       ref.read(analyticsServiceProvider).logScreenView("Journal");
+      unawaited(ref.read(sfxControllerProvider).playMenuOpen());
     });
   }
 
@@ -50,12 +54,16 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
   void _openEntry(BuildContext context, JournalPassage passage) {
+    unawaited(ref.read(sfxControllerProvider).playMenuOpen());
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => JournalEntrySheet(passage: passage),
-    );
+    ).whenComplete(() {
+      if (!mounted) return;
+      unawaited(ref.read(sfxControllerProvider).playMenuClose());
+    });
   }
 
   /// Find a passage by id (preferred), falling back to reference so parable
@@ -128,146 +136,152 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Journal"),
-        backgroundColor: cs.surfaceContainerHighest,
-      ),
-      body: ConstrainedPage(
-        child: themesAsync.when(
-          loading: () => const GardenLoadingView(message: "Opening journal…"),
-          error: (error, _) => Center(child: Text("Error: $error")),
-          data: (themes) {
-            if (themes.isEmpty) {
-              return Center(
-                child: Semantics(
-                  label: "No journal entries yet",
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("No blooms yet", style: textTheme.titleMedium),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Complete levels to unlock scripture and parables.",
-                        style: textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) return;
+        unawaited(ref.read(sfxControllerProvider).playMenuClose());
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Journal"),
+          backgroundColor: cs.surfaceContainerHighest,
+        ),
+        body: ConstrainedPage(
+          child: themesAsync.when(
+            loading: () => const GardenLoadingView(message: "Opening journal…"),
+            error: (error, _) => Center(child: Text("Error: $error")),
+            data: (themes) {
+              if (themes.isEmpty) {
+                return Center(
+                  child: Semantics(
+                    label: "No journal entries yet",
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("No blooms yet", style: textTheme.titleMedium),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Complete levels to unlock scripture and parables.",
+                          style: textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }
+                );
+              }
 
-            if (!_loggedOpen) {
-              _loggedOpen = true;
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                ref.read(analyticsServiceProvider).logJournalOpened(
-                      initialTab: "All",
-                      unlockedCount: themes
-                          .expand((t) => t.passages)
-                          .where(isUnlocked)
-                          .length,
-                    );
-              });
-            }
+              if (!_loggedOpen) {
+                _loggedOpen = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ref.read(analyticsServiceProvider).logJournalOpened(
+                        initialTab: "All",
+                        unlockedCount: themes
+                            .expand((t) => t.passages)
+                            .where(isUnlocked)
+                            .length,
+                      );
+                });
+              }
 
-            // Pre-populate entry keys for every unlocked passage so deep-link
-            // scrolling can resolve each entry's BuildContext by id.
-            for (final theme in themes) {
-              for (final passage in theme.passages) {
-                if (isUnlocked(passage)) {
-                  _entryKeys.putIfAbsent(passage.id, () => GlobalKey());
+              // Pre-populate entry keys for every unlocked passage so deep-link
+              // scrolling can resolve each entry's BuildContext by id.
+              for (final theme in themes) {
+                for (final passage in theme.passages) {
+                  if (isUnlocked(passage)) {
+                    _entryKeys.putIfAbsent(passage.id, () => GlobalKey());
+                  }
                 }
               }
-            }
 
-            // Deep link: scroll the entry into view, then open its sheet.
-            if (widget.initialPassageId != null && !_deepLinkHandled) {
-              _deepLinkHandled = true;
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!mounted) return;
-                _scrollAndOpenEntry(themes, isUnlocked);
-              });
-            }
+              // Deep link: scroll the entry into view, then open its sheet.
+              if (widget.initialPassageId != null && !_deepLinkHandled) {
+                _deepLinkHandled = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  _scrollAndOpenEntry(themes, isUnlocked);
+                });
+              }
 
-            final totalUnlocked =
-                themes.expand((t) => t.passages).where(isUnlocked).length;
-            final totalPassages =
-                themes.fold<int>(0, (sum, t) => sum + t.passages.length);
+              final totalUnlocked =
+                  themes.expand((t) => t.passages).where(isUnlocked).length;
+              final totalPassages =
+                  themes.fold<int>(0, (sum, t) => sum + t.passages.length);
 
-            return SingleChildScrollView(
-              controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: cs.primary.withValues(alpha: 0.2),
+              return SingleChildScrollView(
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.menu_book_outlined,
-                          color: cs.primary,
-                          size: 20,
+                      decoration: BoxDecoration(
+                        color: cs.primaryContainer.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: cs.primary.withValues(alpha: 0.2),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            "A growing collection · $totalUnlocked / $totalPassages Collected",
-                            style: textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.menu_book_outlined,
+                            color: cs.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "A growing collection · $totalUnlocked / $totalPassages Collected",
+                              style: textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  ...themes.asMap().entries.map((entry) {
-                    final theme = entry.value;
-                    final unlockedCount =
-                        theme.passages.where(isUnlocked).length;
+                    const SizedBox(height: 16),
+                    ...themes.asMap().entries.map((entry) {
+                      final theme = entry.value;
+                      final unlockedCount =
+                          theme.passages.where(isUnlocked).length;
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        ChapterDivider(
-                          theme: theme,
-                          unlockedCount: unlockedCount,
-                        ),
-                        const SizedBox(height: 8),
-                        ...theme.passages.asMap().entries.map((passageEntry) {
-                          final passage = passageEntry.value;
-                          if (isUnlocked(passage)) {
-                            return ScrapbookEntry(
-                              key: _entryKeys[passage.id],
-                              passage: passage,
-                              translationCode: preferred,
-                              index: passageEntry.key,
-                              onTap: () => _openEntry(context, passage),
-                            );
-                          }
-                          return SealedEnvelope(passage: passage);
-                        }),
-                        const SizedBox(height: 20),
-                      ],
-                    );
-                  }),
-                ],
-              ),
-            );
-          },
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ChapterDivider(
+                            theme: theme,
+                            unlockedCount: unlockedCount,
+                          ),
+                          const SizedBox(height: 8),
+                          ...theme.passages.asMap().entries.map((passageEntry) {
+                            final passage = passageEntry.value;
+                            if (isUnlocked(passage)) {
+                              return ScrapbookEntry(
+                                key: _entryKeys[passage.id],
+                                passage: passage,
+                                translationCode: preferred,
+                                index: passageEntry.key,
+                                onTap: () => _openEntry(context, passage),
+                              );
+                            }
+                            return SealedEnvelope(passage: passage);
+                          }),
+                          const SizedBox(height: 20),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

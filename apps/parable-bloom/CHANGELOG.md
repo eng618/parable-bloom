@@ -2,6 +2,7 @@
 
 ### 🚀 Features
 
+- **audio:** play soft Case Portman cues for menu open and close, taps, confirms, and cancels, plus a quiet foliage rustle under vine slides and level clears
 - **audio:** organize Case Portman UI SFX and the Antoinemax Nature Sounds Pack under `assets/audio/sfx/`, and list their credits in Settings → About
 
 ### 🩹 Fixes

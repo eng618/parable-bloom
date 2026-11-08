@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +29,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       ref.read(analyticsServiceProvider).logScreenView('Settings');
+      unawaited(ref.read(sfxControllerProvider).playMenuOpen());
     });
   }
 
@@ -36,41 +40,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final showDebugTools =
         kDebugMode || ref.watch(debugUiEnabledForTestsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-      ),
-      body: ConstrainedPage(
-        child: ListView(
-          children: [
-            const SizedBox(height: 16),
-            const SettingsSectionHeader('Account'),
-            const SettingsAccountSection(),
-            const Divider(),
-            const SettingsSectionHeader('Appearance'),
-            const SettingsAppearanceSection(),
-            const Divider(),
-            const SettingsSectionHeader('Scripture'),
-            const SettingsScriptureSection(),
-            const Divider(),
-            const SettingsSectionHeader('Audio & Haptics'),
-            const SettingsAudioSection(),
-            const Divider(),
-            const SettingsSectionHeader('Data & Sync'),
-            const SettingsDataSyncSection(),
-            const Divider(),
-            const SettingsSectionHeader('About'),
-            const SettingsAboutSection(),
-            const Divider(),
-            if (showDebugTools) ...[
-              const SettingsSectionHeader('Debug'),
-              const SettingsDebugSection(),
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) return;
+        unawaited(ref.read(sfxControllerProvider).playMenuClose());
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Settings'),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+        ),
+        body: ConstrainedPage(
+          child: ListView(
+            children: [
+              const SizedBox(height: 16),
+              const SettingsSectionHeader('Account'),
+              const SettingsAccountSection(),
               const Divider(),
+              const SettingsSectionHeader('Appearance'),
+              const SettingsAppearanceSection(),
+              const Divider(),
+              const SettingsSectionHeader('Scripture'),
+              const SettingsScriptureSection(),
+              const Divider(),
+              const SettingsSectionHeader('Audio & Haptics'),
+              const SettingsAudioSection(),
+              const Divider(),
+              const SettingsSectionHeader('Data & Sync'),
+              const SettingsDataSyncSection(),
+              const Divider(),
+              const SettingsSectionHeader('About'),
+              const SettingsAboutSection(),
+              const Divider(),
+              if (showDebugTools) ...[
+                const SettingsSectionHeader('Debug'),
+                const SettingsDebugSection(),
+                const Divider(),
+              ],
+              const SettingsSectionHeader('Danger Zone'),
+              const SettingsDangerSection(),
             ],
-            const SettingsSectionHeader('Danger Zone'),
-            const SettingsDangerSection(),
-          ],
+          ),
         ),
       ),
     );
