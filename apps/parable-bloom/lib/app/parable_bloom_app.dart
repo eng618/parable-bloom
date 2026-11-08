@@ -27,14 +27,16 @@ class ParableBloomApp extends ConsumerStatefulWidget {
 
 class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     with WidgetsBindingObserver {
-  bool _didReceiveInteraction = false;
   bool _wasOnline = true;
   StreamSubscription<dynamic>? _connectivitySubscription;
 
   void _onPointerDown(PointerDownEvent _) {
-    if (_didReceiveInteraction) return;
-    _didReceiveInteraction = true;
-    ref.read(backgroundAudioControllerProvider).notifyUserInteraction();
+    // Keep forwarding until the loop has started. The controller ignores
+    // calls once playback is running, and remembers a gesture that arrives
+    // while the file is still loading.
+    unawaited(
+      ref.read(backgroundAudioControllerProvider).notifyUserInteraction(),
+    );
   }
 
   @override
@@ -125,12 +127,15 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     final controller = ref.read(backgroundAudioControllerProvider);
+    // `inactive` is a transient state (control center, notification shade,
+    // app-switcher peek). Stopping music there races the load and cuts the
+    // loop. Pause only once the app is actually in the background.
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
-      controller.setEnabled(false);
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      unawaited(controller.setSuspended(true));
     } else if (state == AppLifecycleState.resumed) {
-      final enabled = ref.read(backgroundAudioEnabledProvider);
-      controller.setEnabled(enabled);
+      unawaited(controller.setSuspended(false));
     }
   }
 

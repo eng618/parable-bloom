@@ -19,8 +19,8 @@ This document serves as an information-oriented technical reference detailing su
 
 ### 1. Web Audio Autoplay Policies
 
-- **Behavior**: Modern web browsers restrict audio playback until a direct user gesture (tap/click) occurs on the document.
-- **Handling**: `BackgroundAudioController` automatically buffers initialization and resumes audio playback smoothly upon the first user interaction on the canvas.
+- **Behavior**: Modern web browsers restrict audio playback until a direct user gesture (tap/click) occurs on the document. `assets/audio/background.mp3` is a 320 kbps, 48 kHz, ~2.7 minute loop (~6.5 MB), so the first tap often happens while that file is still loading.
+- **Handling**: `BackgroundAudioController` loads the loop without playing it, remembers the first gesture even if it arrives during that load, and starts playback when both the file and a gesture are ready. A later gesture is still accepted if the browser rejects `play`. Leaving the app pauses the player in place (`pause`) on `paused`, `hidden`, and `detached`. `inactive` does not stop the music. The user's music toggle stays separate from that suspension.
 
 ### 2. Canvas Scaling & Viewport Adaptability
 

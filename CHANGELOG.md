@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Background music keeps playing through an interrupted load, a web tap that lands while `background.mp3` is still loading, and transient `inactive` lifecycle states. Leaving the app pauses the loop instead of tearing the player down. Retriggered sound effects no longer cancel the cue that was about to play.
 - Lesson 1 accepts a tap on any cell of its vine. The head highlight and `"Tap head to slide"` prompt stay as the guide.
 - Finishing the tutorial unlocks the starter journal entry (`growth_seed_word` / Luke 8:11) even when an older registry used `lesson_1` or `lesson_10`, or only the module id `seed_starter` was stored. Remote module and theme registries that are not the current schema version are ignored.
 - Leaving a level clears the game instance from the provider container captured while the screen was active, so unmount no longer throws `Using "ref" when a widget is about to or has been unmounted`.

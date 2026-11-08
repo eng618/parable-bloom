@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
+import 'asset_audio_player.dart';
 import 'logger_service.dart';
 
 /// Gameplay / UI sound effects that sit on top of ambient music.
@@ -15,20 +18,28 @@ enum GameSfx {
   uiTap,
 }
 
-/// Lightweight multi-player SFX mixer. One [AudioPlayer] per cue so SFX can
+/// Lightweight multi-player SFX mixer. One player per cue so SFX can
 /// overlap (slide + rustle, bloom over music) without cutting ambient audio.
 ///
+/// Plays of the same cue are queued and only the latest one runs, so a
+/// retrigger during seek does not cancel itself into silence. A load that
+/// [just_audio] interrupts is retried on the next play.
+///
 /// Pure unit tests without [WidgetsFlutterBinding] no-op instead of asserting
-/// on the binary messenger.
+/// on the binary messenger, unless a [playerFactory] is injected.
 class SfxController {
   SfxController({
-    AudioPlayer Function()? playerFactory,
-  }) : _playerFactory = playerFactory ?? AudioPlayer.new;
+    AssetAudioPlayer Function()? playerFactory,
+  })  : _playerFactory = playerFactory ?? JustAudioAssetPlayer.new,
+        _platformPlayers = playerFactory == null;
 
-  final AudioPlayer Function() _playerFactory;
-  final Map<GameSfx, AudioPlayer> _players = {};
+  final AssetAudioPlayer Function() _playerFactory;
+  final bool _platformPlayers;
+  final Map<GameSfx, AssetAudioPlayer> _players = {};
+  final Map<GameSfx, Future<void>> _playTails = {};
+  final Map<GameSfx, int> _playGeneration = {};
+  final Set<GameSfx> _unrecoverable = {};
   bool _enabled = true;
-  bool _loaded = false;
   bool _unavailable = false;
   double _volume = 0.72;
 
@@ -60,44 +71,83 @@ class SfxController {
   }
 
   Future<void> ensureLoaded() async {
-    if (_loaded || _unavailable) return;
+    if (_unavailable) return;
+    if (_players.length == _assets.length) return;
 
     // No Flutter binding → no platform channels (pure unit tests).
-    if (BindingBase.debugBindingType() == null) {
+    if (_platformPlayers && BindingBase.debugBindingType() == null) {
       _unavailable = true;
-      _loaded = true;
       return;
     }
 
     for (final entry in _assets.entries) {
+      if (_players.containsKey(entry.key) ||
+          _unrecoverable.contains(entry.key)) {
+        continue;
+      }
+      final player = _playerFactory();
       try {
-        final player = _playerFactory();
-        await player.setAsset(entry.value);
+        await player.loadAsset(entry.value);
         await player.setVolume(_volume);
         if (entry.key == GameSfx.vineRustle) {
-          await player.setLoopMode(LoopMode.one);
+          await player.setLooping(true);
         }
         _players[entry.key] = player;
+      } on PlayerInterruptedException {
+        await _disposeQuietly(player);
+        LoggerService.debug(
+          'SFX load interrupted: ${entry.key.name}',
+          tag: 'SfxController',
+        );
       } catch (e, stack) {
+        await _disposeQuietly(player);
+        _unrecoverable.add(entry.key);
         _logSfxIssue('Failed to load SFX ${entry.key.name}', e, stack);
       }
     }
-    _loaded = true;
   }
 
   Future<void> play(
     GameSfx sfx, {
     double? volumeScale,
-  }) async {
-    if (!_enabled || _unavailable) return;
+  }) {
+    if (!_enabled || _unavailable || _unrecoverable.contains(sfx)) {
+      return Future<void>.value();
+    }
+    final generation = (_playGeneration[sfx] ?? 0) + 1;
+    _playGeneration[sfx] = generation;
+    final previous = _playTails[sfx] ?? Future<void>.value();
+    final done = Completer<void>();
+    previous.whenComplete(() async {
+      try {
+        await _playLatest(sfx, generation, volumeScale);
+        if (!done.isCompleted) done.complete();
+      } catch (error, stack) {
+        if (!done.isCompleted) done.completeError(error, stack);
+      }
+    });
+    _playTails[sfx] = done.future;
+    return done.future;
+  }
+
+  Future<void> _playLatest(
+    GameSfx sfx,
+    int generation,
+    double? volumeScale,
+  ) async {
+    if (!_enabled || _playGeneration[sfx] != generation) return;
     await ensureLoaded();
-    if (_unavailable) return;
+    if (!_enabled || _unavailable || _playGeneration[sfx] != generation) {
+      return;
+    }
     final player = _players[sfx];
     if (player == null) return;
     try {
       final scale = (volumeScale ?? 1.0).clamp(0.0, 1.0);
       await player.setVolume(_volume * scale);
-      await player.seek(Duration.zero);
+      if (_playGeneration[sfx] != generation) return;
+      await player.seekToStart();
+      if (_playGeneration[sfx] != generation) return;
       await player.play();
     } catch (e, stack) {
       _logSfxIssue('SFX play failed: ${sfx.name}', e, stack);
@@ -168,9 +218,17 @@ class SfxController {
 
   Future<void> dispose() async {
     for (final player in _players.values) {
-      await player.dispose();
+      await _disposeQuietly(player);
     }
     _players.clear();
-    _loaded = false;
+    _playTails.clear();
+  }
+
+  Future<void> _disposeQuietly(AssetAudioPlayer player) async {
+    try {
+      await player.dispose();
+    } catch (e, stack) {
+      _logSfxIssue('SFX dispose failed', e, stack);
+    }
   }
 }

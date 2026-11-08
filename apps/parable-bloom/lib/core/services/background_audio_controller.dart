@@ -1,77 +1,188 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:just_audio/just_audio.dart';
 
+import 'asset_audio_player.dart';
 import 'logger_service.dart';
-import "package:just_audio/just_audio.dart";
 
+/// Looping garden music.
+///
+/// Playback commands are queued so a load cannot finish after the listener
+/// has turned music off, and an interrupted load is retried instead of
+/// sticking until the next settings toggle. On web the first gesture is
+/// remembered even when it arrives while [background.mp3] is still loading.
+///
+/// App lifecycle should call [setSuspended], not [setEnabled]. [setEnabled]
+/// is the user's music preference. Suspending pauses the decoder in place;
+/// [AudioPlayer.stop] would release it and force another load on resume.
 class BackgroundAudioController {
-  final AudioPlayer _player;
+  BackgroundAudioController({
+    AssetAudioPlayer? player,
+    bool? isWeb,
+  })  : _player = player ?? JustAudioAssetPlayer(),
+        _isWeb = isWeb ?? kIsWeb;
+
+  static const String assetPath = 'assets/audio/background.mp3';
+
+  final AssetAudioPlayer _player;
+  final bool _isWeb;
+
   bool _enabled = false;
+  bool _suspended = false;
   bool _loaded = false;
-  // On web, autoplay is blocked until first user interaction.
-  bool _awaitingInteraction = false;
+  bool _loadFailed = false;
+  bool _userInteracted = false;
+  bool _playbackStarted = false;
+  bool _interactionQueued = false;
+  Future<void> _tail = Future<void>.value();
 
-  BackgroundAudioController({AudioPlayer? player})
-      : _player = player ?? AudioPlayer();
-
-  Future<void> setEnabled(bool enabled) async {
-    if (_enabled == enabled) return;
+  /// User preference. Does not release the decoder.
+  Future<void> setEnabled(bool enabled) {
     _enabled = enabled;
+    if (!enabled) {
+      _playbackStarted = false;
+    } else {
+      _loadFailed = false;
+    }
+    return _enqueue(() async {
+      if (!_enabled) {
+        await _safePause();
+        return;
+      }
+      await _startIfAllowed();
+    });
+  }
 
-    if (!_enabled) {
-      _awaitingInteraction = false;
-      await _player.stop();
+  /// Pause while the app is backgrounded. The preference in [setEnabled]
+  /// stays as the user left it.
+  Future<void> setSuspended(bool suspended) {
+    _suspended = suspended;
+    if (suspended) {
+      _playbackStarted = false;
+    }
+    return _enqueue(() async {
+      if (_suspended) {
+        await _safePause();
+        return;
+      }
+      await _startIfAllowed();
+    });
+  }
+
+  /// Web autoplay unlock. Safe to call before the asset has loaded, and
+  /// again if the browser later rejects [play].
+  Future<void> notifyUserInteraction() {
+    _userInteracted = true;
+    if (_playbackStarted && _enabled && !_suspended) {
+      return Future<void>.value();
+    }
+    if (_interactionQueued) return Future<void>.value();
+    _interactionQueued = true;
+    return _enqueue(() async {
+      _interactionQueued = false;
+      await _startIfAllowed();
+    });
+  }
+
+  Future<void> dispose() {
+    _enabled = false;
+    _playbackStarted = false;
+    return _enqueue(_player.dispose);
+  }
+
+  Future<void> _enqueue(Future<void> Function() action) {
+    final done = Completer<void>();
+    _tail.whenComplete(() async {
+      try {
+        await action();
+        if (!done.isCompleted) done.complete();
+      } catch (error, stack) {
+        if (!done.isCompleted) done.completeError(error, stack);
+      }
+    });
+    _tail = done.future;
+    return done.future;
+  }
+
+  Future<void> _startIfAllowed() async {
+    if (!_enabled || _suspended || _playbackStarted) return;
+    if (_isWeb && !_userInteracted) {
+      await _ensureLoaded();
       return;
     }
+    await _ensureLoaded();
+    if (!_loaded || !_enabled || _suspended || _playbackStarted) return;
+    if (_isWeb && !_userInteracted) return;
 
-    if (!_loaded) {
+    _playbackStarted = true;
+    try {
+      await _player.play();
+    } catch (e, stack) {
+      _playbackStarted = false;
+      if (e is PlayerInterruptedException) {
+        LoggerService.debug(
+          'Background audio play interrupted',
+          tag: 'BackgroundAudioController',
+        );
+        return;
+      }
+      if (_isWeb) {
+        // The browser can reject play until a later gesture.
+        _userInteracted = false;
+      }
+      LoggerService.warn(
+        'Background audio play failed',
+        error: e,
+        stackTrace: stack,
+        tag: 'BackgroundAudioController',
+      );
+    }
+  }
+
+  Future<void> _ensureLoaded() async {
+    if (_loaded || _loadFailed) return;
+    for (var attempt = 0; attempt < 2; attempt++) {
       try {
-        await _player.setAsset("assets/audio/background.mp3");
-        await _player.setLoopMode(LoopMode.one);
+        await _player.loadAsset(assetPath);
+        await _player.setLooping(true);
         _loaded = true;
+        return;
+      } on PlayerInterruptedException {
+        // A newer load cancelled this one. Try once more, then wait for
+        // the next play request to call here again.
       } catch (e, stack) {
-        if (e is PlayerInterruptedException) {
-          LoggerService.debug(
-            "Background audio load interrupted",
-            tag: 'BackgroundAudioController',
-          );
-          return;
-        }
-        LoggerService.error("Failed to load background audio asset",
-            error: e, stackTrace: stack, tag: 'BackgroundAudioController');
+        _loadFailed = true;
+        LoggerService.error(
+          'Failed to load background audio asset',
+          error: e,
+          stackTrace: stack,
+          tag: 'BackgroundAudioController',
+        );
         return;
       }
     }
-
-    // On web, defer play until the user first interacts with the page.
-    if (kIsWeb) {
-      _awaitingInteraction = true;
-      return;
-    }
-
-    try {
-      await _player.play();
-    } catch (e, stack) {
-      if (e is PlayerInterruptedException) return;
-      LoggerService.warn("Background audio play failed",
-          error: e, stackTrace: stack, tag: 'BackgroundAudioController');
-    }
+    LoggerService.debug(
+      'Background audio load interrupted',
+      tag: 'BackgroundAudioController',
+    );
   }
 
-  /// Called on the first pointer-down event on web.
-  /// Starts playback if audio was enabled but held back by autoplay policy.
-  Future<void> notifyUserInteraction() async {
-    if (!_awaitingInteraction || !_enabled) return;
-    _awaitingInteraction = false;
+  Future<void> _safePause() async {
     try {
-      await _player.play();
+      await _player.pause();
+    } on PlayerInterruptedException {
+      LoggerService.debug(
+        'Background audio pause interrupted',
+        tag: 'BackgroundAudioController',
+      );
     } catch (e, stack) {
-      if (e is PlayerInterruptedException) return;
-      LoggerService.warn("Background audio play failed after interaction",
-          error: e, stackTrace: stack, tag: 'BackgroundAudioController');
+      LoggerService.warn(
+        'Background audio pause failed',
+        error: e,
+        stackTrace: stack,
+        tag: 'BackgroundAudioController',
+      );
     }
-  }
-
-  Future<void> dispose() async {
-    await _player.dispose();
   }
 }

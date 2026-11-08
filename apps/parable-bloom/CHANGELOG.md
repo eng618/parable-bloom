@@ -6,6 +6,7 @@
 
 ### 🩹 Fixes
 
+- **audio:** background music survives an interrupted load, a web tap that arrives while the file is still loading, and a brief `inactive` lifecycle. Backgrounding pauses the loop instead of releasing the decoder. SFX retriggers no longer cancel themselves into silence.
 - **tutorial:** lesson 1 slides when any cell of the vine is tapped
 - **journal:** finishing the tutorial unlocks the starter scripture entry
 - **game:** leaving a level no longer reads `ref` after the screen unmounts
