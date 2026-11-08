@@ -1,3 +1,29 @@
+## 1.11.4 (2026-11-08)
+
+### 🚀 Features
+
+- **audio:** optimize audio assets and update playback details ([fae017f](https://github.com/eng618/parable-bloom/commit/fae017f))
+- **audio:** enhance SFX integration and playback for UI interactions ([c086f5a](https://github.com/eng618/parable-bloom/commit/c086f5a))
+- **audio:** organize and add new sound effects, update audio credits ([d960838](https://github.com/eng618/parable-bloom/commit/d960838))
+- introduce CI monitoring and self-healing subagent skills ([2bf7a26](https://github.com/eng618/parable-bloom/commit/2bf7a26))
+- add new Nx Cloud CI monitoring and cache investigation skills ([8751290](https://github.com/eng618/parable-bloom/commit/8751290))
+- expand Play Store screenshot integration test suites and documentation ([a169e47](https://github.com/eng618/parable-bloom/commit/a169e47))
+
+### 🩹 Fixes
+
+- **audio:** enhance background music handling and SFX playback ([8633a71](https://github.com/eng618/parable-bloom/commit/8633a71))
+- **game:** improve level handling and audio logging ([cf0798c](https://github.com/eng618/parable-bloom/commit/cf0798c))
+- **tutorial:** allow tapping any cell on Lesson 1 vine to slide it off the board and unlock starter journal entry upon tutorial completion ([7449174](https://github.com/eng618/parable-bloom/commit/7449174))
+- enhance Play Store screenshot functionality by loading module registry and levels from bundled assets when Firebase is disabled, ensuring successful screenshot capture on Android ([883c053](https://github.com/eng618/parable-bloom/commit/883c053))
+
+### 🔥 Performance
+
+- optimize vine solver memoization and overlap app initialization tasks ([61428fb](https://github.com/eng618/parable-bloom/commit/61428fb))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.11.3 (2026-11-01)
 
 ### 🚀 Features
