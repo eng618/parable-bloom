@@ -23,6 +23,7 @@
 - [ ] Update **Release Notes** (`<en-US>` tags) from `app-metadata-v1.8.md`.
 - [ ] Ensure **Screenshots** and **Feature Graphic** are up to date.
 - [ ] **Data safety** form: declare Firebase Analytics (usage data) + Crashlytics (crash logs), encrypted in transit, deletion via in-app/web flow. Still pending in Console.
+- [ ] **App access / Sign-in details**: declare that cloud sync is restricted. Name `Cloud sync test account`. Username `test+playreview@gventrueshq.com`. Password is in `~/.parable-bloom/play-reviewer-account.txt` (not in git). Paste the steps from `documentation/how-to/store-onboarding.md`. No 2FA.
 - [ ] **Financial features**: declare "My app doesn't provide any financial features".
 
 ## Release Management

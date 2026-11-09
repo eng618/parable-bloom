@@ -23,9 +23,13 @@ abstract class AssetAudioPlayer {
 }
 
 /// [just_audio] adapter. One instance owns one [AudioPlayer].
+///
+/// Interruptions stay off. The app pauses when it is hidden, paused, or
+/// detached. just_audio's own handler calls `play()` again when a focus gain
+/// arrives, which restarts the loop after the garden has left the screen.
 class JustAudioAssetPlayer implements AssetAudioPlayer {
   JustAudioAssetPlayer({AudioPlayer? player})
-      : _player = player ?? AudioPlayer();
+      : _player = player ?? AudioPlayer(handleInterruptions: false);
 
   final AudioPlayer _player;
 

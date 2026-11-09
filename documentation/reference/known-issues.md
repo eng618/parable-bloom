@@ -20,14 +20,19 @@ This document serves as an information-oriented technical reference detailing su
 ### 1. Web Audio Autoplay Policies
 
 - **Behavior**: Modern web browsers restrict audio playback until a direct user gesture (tap/click) occurs on the document. `assets/audio/background.mp3` is a 128 kbps, 44.1 kHz, ~2.7 minute loop (~2.5 MB), so a first tap can still arrive while that file is loading.
-- **Handling**: `BackgroundAudioController` loads the loop without playing it, remembers the first gesture even if it arrives during that load, and starts playback when both the file and a gesture are ready. A later gesture is still accepted if the browser rejects `play`. Leaving the app pauses the player in place (`pause`) on `paused`, `hidden`, and `detached`. `inactive` does not stop the music. The user's music toggle stays separate from that suspension.
+- **Handling**: `BackgroundAudioController` loads the loop without playing it, remembers the first gesture even if it arrives during that load, and starts playback when both the file and a gesture are ready. A later gesture is still accepted if the browser rejects `play`. Leaving the app pauses the player in place (`pause`) on `paused`, `hidden`, and `detached`, stops sound effects, and releases the audio session. `inactive` does not stop the music. The user's music toggle stays separate from that suspension. `play()` is not awaited: on Android, just_audio completes that future only when playback ends or the player is paused, and a loop never ends.
 
-### 2. Canvas Scaling & Viewport Adaptability
+### 2. Android music and sound effects
+
+- **Behavior**: The music player and every cue share one audio session. just_audio's default is exclusive media focus (`USAGE_MEDIA`, `AUDIOFOCUS_GAIN`) applied on the first `play()`. That configuration lands while other players are loading, and ExoPlayer drops short cues when audio attributes change mid-load. The default interruption handler also calls `play()` again on a later focus gain.
+- **Handling**: `GardenAudioSession` configures the session before any player exists: Android `USAGE_GAME` with music content type, focus gain, and `androidWillPauseWhenDucked: false`. iOS stays `AVAudioSessionCategory.playback`. Players are created with `handleInterruptions: false`. Both controllers are read from `ParableBloomApp.initState`, because Flutter does not deliver the initial `resumed` state and the first lifecycle callback is usually the transition to background. Screenshot mode does not start audio.
+
+### 3. Canvas Scaling & Viewport Adaptability
 
 - **Behavior**: Larger puzzle grids (such as the _Transcendent_ tier 16×20 boards) dynamically scale to preserve the playable area on compact mobile displays (e.g., iPhone SE or narrow aspect ratio Android devices).
 - **Control**: Users can manually adjust their preferred board zoom scale (0.5× to 2.0×) in the Settings menu at any time.
 
-### 3. Offline-First Cloud Synchronization
+### 4. Offline-First Cloud Synchronization
 
 - **Behavior**: Game progress is stored locally in `Hive` and synchronizes asynchronously with Cloud `Firestore` when network connectivity is detected.
 - **Merge Strategy**: When an anonymous guest player signs in with a permanent account, local progress merges seamlessly with cloud progress records using maximum level completion timestamps.

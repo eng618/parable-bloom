@@ -80,6 +80,21 @@ void main() {
     expect(player.pauses, greaterThan(0));
     await controller.dispose();
   });
+
+  test('suspend pauses even when play never completes', () async {
+    final player = _FakePlayer()..hangPlay = true;
+    final controller = BackgroundAudioController(player: player, isWeb: false);
+
+    await controller.setEnabled(true);
+    expect(player.plays, 1);
+
+    await controller.setSuspended(true);
+    expect(player.pauses, greaterThan(0));
+
+    await controller.setSuspended(false);
+    expect(player.plays, 2);
+    await controller.dispose();
+  });
 }
 
 class _Gate {
@@ -107,6 +122,7 @@ class _FakePlayer implements AssetAudioPlayer {
   int plays = 0;
   int pauses = 0;
   bool failLoadOnce = false;
+  bool hangPlay = false;
 
   @override
   Future<void> loadAsset(String assetPath) async {
@@ -129,8 +145,10 @@ class _FakePlayer implements AssetAudioPlayer {
   Future<void> seekToStart() async {}
 
   @override
-  Future<void> play() async {
+  Future<void> play() {
     plays++;
+    if (hangPlay) return Completer<void>().future;
+    return Future<void>.value();
   }
 
   @override

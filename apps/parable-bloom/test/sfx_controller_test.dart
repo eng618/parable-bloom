@@ -109,22 +109,80 @@ void main() {
     expect(player.plays, 1);
     await controller.dispose();
   });
+
+  test('overlapping ensureLoaded uses one player per cue', () async {
+    final created = <_FakeSfxPlayer>[];
+    final gate = Completer<void>();
+    final controller = SfxController(playerFactory: () {
+      final player = _FakeSfxPlayer(onLoad: () => gate.future);
+      created.add(player);
+      return player;
+    });
+
+    final first = controller.ensureLoaded();
+    final second = controller.ensureLoaded();
+    expect(second, same(first));
+    expect(created, isNotEmpty);
+    gate.complete();
+    await first;
+
+    expect(created.length, GameSfx.values.length);
+    await controller.dispose();
+  });
+
+  test('a play that never finishes does not block stop or another play',
+      () async {
+    final created = <_FakeSfxPlayer>[];
+    final controller = SfxController(playerFactory: () {
+      final player = _FakeSfxPlayer()..hangPlay = true;
+      created.add(player);
+      return player;
+    });
+
+    await controller.play(GameSfx.uiTap);
+    await controller.stop(GameSfx.uiTap);
+    final played = created.singleWhere((player) => player.plays > 0);
+    expect(played.stops, 1);
+
+    await controller.play(GameSfx.uiTap);
+    expect(played.plays, 2);
+    await controller.dispose();
+  });
+
+  test('suspended controller does not play', () async {
+    final player = _FakeSfxPlayer();
+    final controller = SfxController(playerFactory: () => player);
+
+    await controller.setSuspended(true);
+    await controller.play(GameSfx.uiTap);
+    expect(player.plays, 0);
+
+    await controller.setSuspended(false);
+    await controller.play(GameSfx.uiTap);
+    expect(player.plays, 1);
+    await controller.dispose();
+  });
 }
 
 class _FakeSfxPlayer implements AssetAudioPlayer {
-  _FakeSfxPlayer({this.onSeek});
+  _FakeSfxPlayer({this.onSeek, this.onLoad});
 
   final Future<void> Function()? onSeek;
+  final Future<void> Function()? onLoad;
   final Completer<void> _seekStarted = Completer<void>();
   final List<String> loads = [];
   int plays = 0;
+  int stops = 0;
   bool failLoadOnce = false;
+  bool hangPlay = false;
 
   Future<void> get seekStarted => _seekStarted.future;
 
   @override
   Future<void> loadAsset(String assetPath) async {
     loads.add(assetPath);
+    final onLoad = this.onLoad;
+    if (onLoad != null) await onLoad();
     if (failLoadOnce) {
       failLoadOnce = false;
       throw PlayerInterruptedException('Loading interrupted');
@@ -145,15 +203,19 @@ class _FakeSfxPlayer implements AssetAudioPlayer {
   }
 
   @override
-  Future<void> play() async {
+  Future<void> play() {
     plays++;
+    if (hangPlay) return Completer<void>().future;
+    return Future<void>.value();
   }
 
   @override
   Future<void> pause() async {}
 
   @override
-  Future<void> stop() async {}
+  Future<void> stop() async {
+    stops++;
+  }
 
   @override
   Future<void> dispose() async {}

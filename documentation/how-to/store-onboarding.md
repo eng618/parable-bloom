@@ -4,15 +4,26 @@ This document tracks the required setup steps for releasing Parable Bloom on the
 
 ## Google Play Console: "Set up your app"
 
-Status: **8 of 11 complete** (as of initial setup)
+Status: **7 of 11 complete** (App access is open again until the reviewer credentials are pasted into Play Console)
 
 ### Let us know about the content of your app
 
 - [x] **Set privacy policy**
   - **URL**: `https://parable-bloom.pages.dev/privacy`
   - _(Legal pages live on the marketing site at `parable-bloom.pages.dev`; the game itself is hosted at `parable-bloom.web.app`.)_
-- [x] **App access**
-  - **Status**: All functionality is available without special access.
+- [ ] **App access** (Play Console: Policy and programs → App content → App access / Sign-in details)
+  - **Status**: Gameplay works as a guest. Cloud sync needs the reviewer account below. Declare that some functionality is restricted, then add one instruction set. Do not commit the password.
+  - **Username**: `test+playreview@gventrueshq.com`
+  - **Password**: `~/.parable-bloom/play-reviewer-account.txt` (mode 600). Firebase project `parable-bloom`, uid `VcnXu5rUYyPMPlWGmXXrHBAoP6U2`, display name "Play Reviewer". No 2FA and no email-verification step. Play Console name field: `Cloud sync test account`. Password-reset mail delivers to `test@gventrueshq.com` when plus-addressing is on.
+  - **Other instructions**:
+    1. Open the app. Playing does not require sign-in.
+    2. On the home screen, tap Settings.
+    3. Tap Sign In / Sign Up.
+    4. Stay on Sign In. Do not tap Create a new account.
+    5. Enter the username and password, then tap Sign In.
+    6. Cloud Sync turns on by itself. Settings should show "Signed in as" that email, and Cloud Sync as connected.
+    7. If a progress dialog appears, tap Use Cloud Save.
+    8. The same account does not expire and can be reused for every review.
 - [x] **Ads**
   - **Status**: No, my app does not contain ads. _(Update this if you integrate AdMob later)_
 - [x] **Content rating**

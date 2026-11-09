@@ -24,6 +24,6 @@
 
 ## Review Submission
 
-- [ ] Review App Review Information (Contact info, demo account credentials if required).
+- [ ] Review App Review Information (Contact info, demo account credentials if required). Reuse the Play reviewer account in `documentation/how-to/store-onboarding.md`. Password stays in `~/.parable-bloom/play-reviewer-account.txt`.
 - [ ] Choose release method (Manually release, Automatically release, Automatically release after date).
 - [ ] Click **Submit for Review**.

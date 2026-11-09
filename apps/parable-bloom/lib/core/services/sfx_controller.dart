@@ -30,6 +30,10 @@ enum GameSfx {
 /// retrigger during seek does not cancel itself into silence. A load that
 /// [just_audio] interrupts is retried on the next play.
 ///
+/// [AssetAudioPlayer.play] is not awaited. On Android that future stays
+/// pending until the cue ends or the player is paused, and the looping
+/// foliage rustle never ends. Waiting would freeze later plays of that cue.
+///
 /// Pure unit tests without [WidgetsFlutterBinding] no-op instead of asserting
 /// on the binary messenger, unless a [playerFactory] is injected.
 class SfxController {
@@ -45,8 +49,10 @@ class SfxController {
   final Map<GameSfx, int> _playGeneration = {};
   final Set<GameSfx> _unrecoverable = {};
   bool _enabled = true;
+  bool _suspended = false;
   bool _unavailable = false;
   double _volume = 0.72;
+  Future<void>? _loadTail;
 
   static const Map<GameSfx, String> _assets = {
     GameSfx.vineSlideStart: 'assets/audio/sfx/vines/vine_slide_start.mp3',
@@ -92,6 +98,16 @@ class SfxController {
     }
   }
 
+  /// Pause cues while the app is backgrounded. The preference in [setEnabled]
+  /// stays as the user left it. The looping foliage rustle is stopped here
+  /// so it does not keep playing after the garden leaves the screen.
+  Future<void> setSuspended(bool suspended) async {
+    _suspended = suspended;
+    if (suspended) {
+      await stopAll();
+    }
+  }
+
   Future<void> setVolume(double volume) async {
     _volume = volume.clamp(0.0, 1.0);
     for (final player in _players.values) {
@@ -99,10 +115,16 @@ class SfxController {
     }
   }
 
-  Future<void> ensureLoaded() async {
-    if (_unavailable) return;
-    if (_players.length == _assets.length) return;
+  Future<void> ensureLoaded() {
+    if (_unavailable || _players.length == _assets.length) {
+      return Future<void>.value();
+    }
+    return _loadTail ??= _loadAll().whenComplete(() {
+      _loadTail = null;
+    });
+  }
 
+  Future<void> _loadAll() async {
     // No Flutter binding → no platform channels (pure unit tests).
     if (_platformPlayers && BindingBase.debugBindingType() == null) {
       _unavailable = true;
@@ -140,7 +162,10 @@ class SfxController {
     GameSfx sfx, {
     double? volumeScale,
   }) {
-    if (!_enabled || _unavailable || _unrecoverable.contains(sfx)) {
+    if (!_enabled ||
+        _suspended ||
+        _unavailable ||
+        _unrecoverable.contains(sfx)) {
       return Future<void>.value();
     }
     final generation = (_playGeneration[sfx] ?? 0) + 1;
@@ -164,9 +189,12 @@ class SfxController {
     int generation,
     double? volumeScale,
   ) async {
-    if (!_enabled || _playGeneration[sfx] != generation) return;
+    if (!_enabled || _suspended || _playGeneration[sfx] != generation) return;
     await ensureLoaded();
-    if (!_enabled || _unavailable || _playGeneration[sfx] != generation) {
+    if (!_enabled ||
+        _suspended ||
+        _unavailable ||
+        _playGeneration[sfx] != generation) {
       return;
     }
     final player = _players[sfx];
@@ -174,10 +202,17 @@ class SfxController {
     try {
       final scale = (volumeScale ?? _defaultScales[sfx] ?? 1.0).clamp(0.0, 1.0);
       await player.setVolume(_volume * scale);
-      if (_playGeneration[sfx] != generation) return;
+      if (_playGeneration[sfx] != generation || _suspended) return;
       await player.seekToStart();
-      if (_playGeneration[sfx] != generation) return;
-      await player.play();
+      if (_playGeneration[sfx] != generation || _suspended) return;
+      unawaited(
+        player.play().then<void>(
+          (_) {},
+          onError: (Object error, StackTrace stack) {
+            _logSfxIssue('SFX play failed: ${sfx.name}', error, stack);
+          },
+        ),
+      );
     } catch (e, stack) {
       _logSfxIssue('SFX play failed: ${sfx.name}', e, stack);
     }

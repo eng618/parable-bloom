@@ -35,6 +35,9 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   just_audio: ^0.10.5
+  # Direct so the app configures the session before just_audio's default
+  # exclusive media focus. Already brought in by just_audio.
+  audio_session: ^0.2.2
   riverpod: ^3.0.3
   flutter_riverpod: ^3.0.3
   firebase_core: ^5.1.0

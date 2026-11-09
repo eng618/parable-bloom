@@ -12,6 +12,7 @@ import '../features/game/application/providers/progress_providers.dart';
 import '../core/providers/infrastructure_providers.dart';
 import '../core/providers/settings_providers.dart';
 import '../core/routes/app_router.dart';
+import '../core/services/garden_audio_session.dart';
 import '../core/services/logger_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import '../l10n/app_localizations.dart';
@@ -29,6 +30,7 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
     with WidgetsBindingObserver {
   bool _wasOnline = true;
   StreamSubscription<dynamic>? _connectivitySubscription;
+  Future<void> _audioSuspensionTail = Future<void>.value();
 
   void _onPointerDown(PointerDownEvent _) {
     // Keep forwarding until the loop has started. The controller ignores
@@ -42,6 +44,14 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
   @override
   void initState() {
     super.initState();
+    // Warm music and SFX before the lifecycle observer. Flutter does not
+    // deliver the initial resumed state, so the first callback is usually
+    // the transition to background. Creating the players there starts the
+    // loop as the app leaves the screen.
+    if (!_isScreenshotMode) {
+      ref.read(backgroundAudioControllerProvider);
+      ref.read(sfxControllerProvider);
+    }
     WidgetsBinding.instance.addObserver(this);
     if (!_isScreenshotMode) {
       unawaited(_initializeConnectivitySync());
@@ -126,17 +136,48 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    final controller = ref.read(backgroundAudioControllerProvider);
+    if (_isScreenshotMode) return;
     // `inactive` is a transient state (control center, notification shade,
     // app-switcher peek). Stopping music there races the load and cuts the
     // loop. Pause only once the app is actually in the background.
-    if (state == AppLifecycleState.paused ||
+    final suspended = state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
-        state == AppLifecycleState.detached) {
-      unawaited(controller.setSuspended(true));
-    } else if (state == AppLifecycleState.resumed) {
-      unawaited(controller.setSuspended(false));
+        state == AppLifecycleState.detached;
+    if (!suspended && state != AppLifecycleState.resumed) return;
+    // hidden and paused arrive back to back, and a fast return to the app
+    // can resume before the earlier release finishes. Run them in order so
+    // the last lifecycle state is the one that keeps focus.
+    _audioSuspensionTail = _audioSuspensionTail.then((_) {
+      return _applyAudioSuspension(suspended);
+    }).catchError((Object error, StackTrace stack) {
+      LoggerService.warn(
+        'Audio lifecycle update failed',
+        error: error,
+        stackTrace: stack,
+        tag: 'App',
+      );
+    });
+  }
+
+  /// Pauses the loop and stops cues, then releases audio focus. Focus is
+  /// taken again before resume so playback starts while the garden is visible.
+  Future<void> _applyAudioSuspension(bool suspended) async {
+    if (!mounted) return;
+    final music = ref.read(backgroundAudioControllerProvider);
+    final sfx = ref.read(sfxControllerProvider);
+    if (suspended) {
+      await Future.wait([
+        music.setSuspended(true),
+        sfx.setSuspended(true),
+      ]);
+      if (!mounted) return;
+      await GardenAudioSession.setActive(false);
+      return;
     }
+    await GardenAudioSession.setActive(true);
+    if (!mounted) return;
+    await sfx.setSuspended(false);
+    await music.setSuspended(false);
   }
 
   @override

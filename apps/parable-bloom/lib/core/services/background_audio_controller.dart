@@ -16,6 +16,11 @@ import 'logger_service.dart';
 /// App lifecycle should call [setSuspended], not [setEnabled]. [setEnabled]
 /// is the user's music preference. Suspending pauses the decoder in place;
 /// [AudioPlayer.stop] would release it and force another load on resume.
+///
+/// [AssetAudioPlayer.play] is not awaited. On Android, just_audio completes
+/// that future only when playback ends or someone pauses, and a loop never
+/// ends. Waiting would leave [setSuspended] stuck behind it, so the loop
+/// keeps playing after the app leaves the screen.
 class BackgroundAudioController {
   BackgroundAudioController({
     AssetAudioPlayer? player,
@@ -35,6 +40,7 @@ class BackgroundAudioController {
   bool _userInteracted = false;
   bool _playbackStarted = false;
   bool _interactionQueued = false;
+  int _playGeneration = 0;
   Future<void> _tail = Future<void>.value();
 
   /// User preference. Does not release the decoder.
@@ -59,7 +65,10 @@ class BackgroundAudioController {
   Future<void> setSuspended(bool suspended) {
     _suspended = suspended;
     if (suspended) {
+      // Drop the in-flight start so a late play error cannot clear a
+      // later resume, and cannot mark the loop as running while paused.
       _playbackStarted = false;
+      _playGeneration++;
     }
     return _enqueue(() async {
       if (_suspended) {
@@ -88,6 +97,7 @@ class BackgroundAudioController {
   Future<void> dispose() {
     _enabled = false;
     _playbackStarted = false;
+    _playGeneration++;
     return _enqueue(_player.dispose);
   }
 
@@ -115,29 +125,34 @@ class BackgroundAudioController {
     if (!_loaded || !_enabled || _suspended || _playbackStarted) return;
     if (_isWeb && !_userInteracted) return;
 
+    final generation = ++_playGeneration;
     _playbackStarted = true;
-    try {
-      await _player.play();
-    } catch (e, stack) {
-      _playbackStarted = false;
-      if (e is PlayerInterruptedException) {
-        LoggerService.debug(
-          'Background audio play interrupted',
-          tag: 'BackgroundAudioController',
-        );
-        return;
-      }
-      if (_isWeb) {
-        // The browser can reject play until a later gesture.
-        _userInteracted = false;
-      }
-      LoggerService.warn(
-        'Background audio play failed',
-        error: e,
-        stackTrace: stack,
-        tag: 'BackgroundAudioController',
-      );
-    }
+    unawaited(
+      _player.play().then<void>(
+        (_) {},
+        onError: (Object error, StackTrace stack) {
+          if (generation != _playGeneration) return;
+          _playbackStarted = false;
+          if (error is PlayerInterruptedException) {
+            LoggerService.debug(
+              'Background audio play interrupted',
+              tag: 'BackgroundAudioController',
+            );
+            return;
+          }
+          if (_isWeb) {
+            // The browser can reject play until a later gesture.
+            _userInteracted = false;
+          }
+          LoggerService.warn(
+            'Background audio play failed',
+            error: error,
+            stackTrace: stack,
+            tag: 'BackgroundAudioController',
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _ensureLoaded() async {
