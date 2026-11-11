@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Garden music and sound effects play through `flutter_soloud` (one mixer, voices over FFI). A tap no longer seeks a separate `just_audio` player. The music loop streams from disk. Effect clips stay in memory. Web stays on the main-thread SoLoud build so Firebase Auth popups keep working.
 - Shipped audio is about 3.3 MB. Played UI cues are 16-bit 44.1 kHz mono WAV without the embedded cover image, and `background.mp3` is 128 kbps 44.1 kHz. Unused Case Portman clips and nature ambients, footsteps, and streams live in `apps/parable-bloom/audio-source/` and are not bundled.
 - Gameplay SFX pack (`assets/audio/sfx/`) with slide/rustle, bloom, blocked, grace loss, level complete, and UI tap cues; separate SFX toggle alongside music.
 - Visual refresh palette (parchment cream / forest green light; moonlit soil / moss dark) with Home botanical framing assets and garden ornaments.

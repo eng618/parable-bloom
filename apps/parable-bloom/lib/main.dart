@@ -16,6 +16,7 @@ import 'core/providers/service_providers.dart';
 import 'core/services/analytics_service.dart';
 import 'core/services/error_reporting_service.dart';
 import 'core/services/garden_audio_session.dart';
+import 'core/services/soloud_garden_audio_engine.dart';
 import 'core/services/logger_service.dart';
 import 'core/services/openpanel_analytics_client.dart';
 
@@ -128,11 +129,12 @@ void main() async {
     }
   }
 
-  // Session attributes have to be in place before the first AudioPlayer
-  // is constructed. The default just_audio session is exclusive media
-  // focus, which drops sound effects and lets the loop start late.
+  // Session attributes have to be in place before SoLoud opens its
+  // output. The engine is initialized unmanaged on Android so this
+  // game usage is the one that sticks. Screenshot mode stays silent.
   if (!_isScreenshotMode) {
     await GardenAudioSession.ensureConfigured();
+    await SoloudGardenAudioEngine.ensureInitialized();
   }
 
   runApp(

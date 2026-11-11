@@ -34,9 +34,11 @@ dependencies:
   flame: ^1.35.1
   hive: ^2.2.3
   hive_flutter: ^1.1.0
-  just_audio: ^0.10.5
-  # Direct so the app configures the session before just_audio's default
-  # exclusive media focus. Already brought in by just_audio.
+  # Game mixer. One engine, voices over FFI. just_audio's per-cue players
+  # were seeking through ExoPlayer/AVPlayer on every tap.
+  flutter_soloud: ^5.2.3
+  # Session is configured before SoLoud.init. SoLoud is left unmanaged on
+  # Android so this usage (game) is the one that sticks.
   audio_session: ^0.2.2
   riverpod: ^3.0.3
   flutter_riverpod: ^3.0.3
@@ -147,3 +149,9 @@ sentry:
   dart_symbol_map_path: build/app/obfuscation.map.json
   project: parable-bloom
   org: garcia-ventures
+
+# Shipped cues are MP3 and WAV. Drop Ogg/Vorbis/Opus/FLAC from the binary.
+hooks:
+  user_defines:
+    flutter_soloud:
+      no_xiph_libs: true

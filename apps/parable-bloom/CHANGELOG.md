@@ -43,6 +43,7 @@
 
 ### ⚡ Performance
 
+- **audio:** play music and sound effects through `flutter_soloud` so a cue starts as a voice instead of seeking a `just_audio` player. The loop streams from disk. Short cues are decoded once. Ogg, Vorbis, Opus, and FLAC stay out of the binary.
 - **audio:** ship the played UI cues as small 16-bit WAVs and the music loop as 128 kbps MP3. Unused Case Portman and nature clips stay in `audio-source/` and out of the app binary.
 - skip vine blocking solves when an animation flip does not change which vines still occupy the board
 - overlap Hive init with Firebase, and cap anonymous sign-in at 2 seconds so a slow network cannot hold the first frame

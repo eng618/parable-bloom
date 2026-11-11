@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:just_audio/just_audio.dart';
 
-import 'asset_audio_player.dart';
+import 'garden_audio_engine.dart';
 import 'logger_service.dart';
+import 'soloud_garden_audio_engine.dart';
 
 /// Gameplay / UI sound effects that sit on top of ambient music.
 enum GameSfx {
@@ -23,28 +23,26 @@ enum GameSfx {
   uiCancel,
 }
 
-/// Lightweight multi-player SFX mixer. One player per cue so SFX can
-/// overlap (slide + rustle, bloom over music) without cutting ambient audio.
+/// Sound effects mixed as voices of clips loaded once.
 ///
-/// Plays of the same cue are queued and only the latest one runs, so a
-/// retrigger during seek does not cancel itself into silence. A load that
-/// [just_audio] interrupts is retried on the next play.
+/// One-shot cues overlap, including a second tap of the same cue. The
+/// foliage rustle is the only loop: a new play stops the previous voice
+/// so the loops do not stack.
 ///
-/// [AssetAudioPlayer.play] is not awaited. On Android that future stays
-/// pending until the cue ends or the player is paused, and the looping
-/// foliage rustle never ends. Waiting would freeze later plays of that cue.
+/// [GardenAudioEngine.play] returns the voice immediately, so a cue that
+/// is still audible does not block the next one.
 ///
-/// Pure unit tests without [WidgetsFlutterBinding] no-op instead of asserting
-/// on the binary messenger, unless a [playerFactory] is injected.
+/// Pure unit tests without [WidgetsFlutterBinding] no-op instead of
+/// touching the engine, unless an [engine] is injected.
 class SfxController {
   SfxController({
-    AssetAudioPlayer Function()? playerFactory,
-  })  : _playerFactory = playerFactory ?? JustAudioAssetPlayer.new,
-        _platformPlayers = playerFactory == null;
+    GardenAudioEngine? engine,
+  }) : _engine = engine;
 
-  final AssetAudioPlayer Function() _playerFactory;
-  final bool _platformPlayers;
-  final Map<GameSfx, AssetAudioPlayer> _players = {};
+  final GardenAudioEngine? _engine;
+  GardenAudioEngine? _resolved;
+  final Map<GameSfx, GardenAudioClip> _clips = {};
+  final Map<GameSfx, List<GardenAudioVoice>> _voices = {};
   final Map<GameSfx, Future<void>> _playTails = {};
   final Map<GameSfx, int> _playGeneration = {};
   final Set<GameSfx> _unrecoverable = {};
@@ -98,9 +96,9 @@ class SfxController {
     }
   }
 
-  /// Pause cues while the app is backgrounded. The preference in [setEnabled]
-  /// stays as the user left it. The looping foliage rustle is stopped here
-  /// so it does not keep playing after the garden leaves the screen.
+  /// Stop cues while the app is backgrounded. The preference in [setEnabled]
+  /// stays as the user left it. The looping foliage rustle stops here so it
+  /// does not keep playing after the garden leaves the screen.
   Future<void> setSuspended(bool suspended) async {
     _suspended = suspended;
     if (suspended) {
@@ -110,13 +108,19 @@ class SfxController {
 
   Future<void> setVolume(double volume) async {
     _volume = volume.clamp(0.0, 1.0);
-    for (final player in _players.values) {
-      await player.setVolume(_volume);
+    final engine = _engineForPlay();
+    if (engine == null) return;
+    for (final entry in _voices.entries) {
+      final gain = _gain(entry.key, null);
+      for (final voice in entry.value) {
+        engine.setVolume(voice, gain);
+      }
     }
   }
 
   Future<void> ensureLoaded() {
-    if (_unavailable || _players.length == _assets.length) {
+    if (_unavailable ||
+        _clips.length + _unrecoverable.length == _assets.length) {
       return Future<void>.value();
     }
     return _loadTail ??= _loadAll().whenComplete(() {
@@ -125,33 +129,32 @@ class SfxController {
   }
 
   Future<void> _loadAll() async {
-    // No Flutter binding → no platform channels (pure unit tests).
-    if (_platformPlayers && BindingBase.debugBindingType() == null) {
+    final engine = _engineForPlay();
+    if (engine == null) {
       _unavailable = true;
       return;
     }
 
     for (final entry in _assets.entries) {
-      if (_players.containsKey(entry.key) ||
-          _unrecoverable.contains(entry.key)) {
+      if (_unavailable) return;
+      if (_clips.containsKey(entry.key) || _unrecoverable.contains(entry.key)) {
         continue;
       }
-      final player = _playerFactory();
       try {
-        await player.loadAsset(entry.value);
-        await player.setVolume(_volume * (_defaultScales[entry.key] ?? 1.0));
-        if (_looping.contains(entry.key)) {
-          await player.setLooping(true);
-        }
-        _players[entry.key] = player;
-      } on PlayerInterruptedException {
-        await _disposeQuietly(player);
+        _clips[entry.key] = await engine.load(entry.value, stream: false);
+      } on GardenAudioLoadInterrupted {
         LoggerService.debug(
           'SFX load interrupted: ${entry.key.name}',
           tag: 'SfxController',
         );
+      } on GardenAudioEngineUnavailable {
+        _unavailable = true;
+        LoggerService.warn(
+          'SFX engine unavailable',
+          tag: 'SfxController',
+        );
+        return;
       } catch (e, stack) {
-        await _disposeQuietly(player);
         _unrecoverable.add(entry.key);
         _logSfxIssue('Failed to load SFX ${entry.key.name}', e, stack);
       }
@@ -168,8 +171,9 @@ class SfxController {
         _unrecoverable.contains(sfx)) {
       return Future<void>.value();
     }
-    final generation = (_playGeneration[sfx] ?? 0) + 1;
-    _playGeneration[sfx] = generation;
+    // Stop and suspend bump the generation. A second tap of the same
+    // one-shot must not, or the first voice is cancelled before it starts.
+    final generation = _generation(sfx);
     final previous = _playTails[sfx] ?? Future<void>.value();
     final done = Completer<void>();
     previous.whenComplete(() async {
@@ -189,29 +193,38 @@ class SfxController {
     int generation,
     double? volumeScale,
   ) async {
-    if (!_enabled || _suspended || _playGeneration[sfx] != generation) return;
+    if (!_enabled || _suspended || _generation(sfx) != generation) return;
     await ensureLoaded();
     if (!_enabled ||
         _suspended ||
         _unavailable ||
-        _playGeneration[sfx] != generation) {
+        _generation(sfx) != generation) {
       return;
     }
-    final player = _players[sfx];
-    if (player == null) return;
+    final clip = _clips[sfx];
+    final engine = _engineForPlay();
+    if (clip == null || engine == null) return;
+    if (_looping.contains(sfx)) {
+      await _stopVoices(sfx);
+      if (!_enabled || _suspended || _generation(sfx) != generation) {
+        return;
+      }
+    }
     try {
-      final scale = (volumeScale ?? _defaultScales[sfx] ?? 1.0).clamp(0.0, 1.0);
-      await player.setVolume(_volume * scale);
-      if (_playGeneration[sfx] != generation || _suspended) return;
-      await player.seekToStart();
-      if (_playGeneration[sfx] != generation || _suspended) return;
-      unawaited(
-        player.play().then<void>(
-          (_) {},
-          onError: (Object error, StackTrace stack) {
-            _logSfxIssue('SFX play failed: ${sfx.name}', error, stack);
-          },
-        ),
+      final voice = engine.play(
+        clip,
+        volume: _gain(sfx, volumeScale),
+        looping: _looping.contains(sfx),
+      );
+      if (_generation(sfx) != generation || _suspended || !_enabled) {
+        await engine.stop(voice);
+        return;
+      }
+      (_voices[sfx] ??= <GardenAudioVoice>[]).add(voice);
+    } on GardenAudioPlayRejected {
+      LoggerService.debug(
+        'SFX play rejected: ${sfx.name}',
+        tag: 'SfxController',
       );
     } catch (e, stack) {
       _logSfxIssue('SFX play failed: ${sfx.name}', e, stack);
@@ -219,22 +232,16 @@ class SfxController {
   }
 
   Future<void> stop(GameSfx sfx) async {
-    final player = _players[sfx];
-    if (player == null) return;
-    try {
-      await player.stop();
-    } catch (e, stack) {
-      _logSfxIssue('SFX stop failed: ${sfx.name}', e, stack);
-    }
+    _playGeneration[sfx] = (_playGeneration[sfx] ?? 0) + 1;
+    await _stopVoices(sfx);
   }
 
   Future<void> stopAll() async {
-    for (final entry in _players.entries) {
-      try {
-        await entry.value.stop();
-      } catch (e, stack) {
-        _logSfxIssue('SFX stopAll failed: ${entry.key.name}', e, stack);
-      }
+    for (final sfx in _assets.keys) {
+      _playGeneration[sfx] = (_playGeneration[sfx] ?? 0) + 1;
+    }
+    for (final sfx in _voices.keys.toList()) {
+      await _stopVoices(sfx);
     }
   }
 
@@ -281,11 +288,50 @@ class SfxController {
     await play(GameSfx.vineBlocked);
   }
 
-  /// A newer load cancelling this one is normal (navigation, cue overlap).
-  /// just_audio reports that as [PlayerInterruptedException]
-  /// ("Loading interrupted").
+  Future<void> dispose() async {
+    await stopAll();
+    final engine = _engineForPlay();
+    final clips = List<GardenAudioClip>.of(_clips.values);
+    _clips.clear();
+    _voices.clear();
+    _playTails.clear();
+    if (engine == null) return;
+    for (final clip in clips) {
+      await engine.disposeClip(clip);
+    }
+  }
+
+  int _generation(GameSfx sfx) => _playGeneration[sfx] ?? 0;
+
+  double _gain(GameSfx sfx, double? volumeScale) {
+    final scale = (volumeScale ?? _defaultScales[sfx] ?? 1.0).clamp(0.0, 1.0);
+    return _volume * scale;
+  }
+
+  GardenAudioEngine? _engineForPlay() {
+    if (_engine != null) return _engine;
+    if (_unavailable) return _resolved;
+    if (BindingBase.debugBindingType() == null) return null;
+    return _resolved ??= SoloudGardenAudioEngine();
+  }
+
+  Future<void> _stopVoices(GameSfx sfx) async {
+    final voices = _voices.remove(sfx);
+    if (voices == null || voices.isEmpty) return;
+    final engine = _engineForPlay();
+    if (engine == null) return;
+    for (final voice in voices) {
+      try {
+        await engine.stop(voice);
+      } catch (e, stack) {
+        _logSfxIssue('SFX stop failed: ${sfx.name}', e, stack);
+      }
+    }
+  }
+
   void _logSfxIssue(String message, Object error, StackTrace stack) {
-    if (error is PlayerInterruptedException) {
+    if (error is GardenAudioLoadInterrupted ||
+        error is GardenAudioPlayRejected) {
       LoggerService.debug(message, tag: 'SfxController');
       return;
     }
@@ -295,21 +341,5 @@ class SfxController {
       stackTrace: stack,
       tag: 'SfxController',
     );
-  }
-
-  Future<void> dispose() async {
-    for (final player in _players.values) {
-      await _disposeQuietly(player);
-    }
-    _players.clear();
-    _playTails.clear();
-  }
-
-  Future<void> _disposeQuietly(AssetAudioPlayer player) async {
-    try {
-      await player.dispose();
-    } catch (e, stack) {
-      _logSfxIssue('SFX dispose failed', e, stack);
-    }
   }
 }

@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:just_audio/just_audio.dart';
+import 'package:flutter/foundation.dart' show BindingBase, kIsWeb;
 
-import 'asset_audio_player.dart';
+import 'garden_audio_engine.dart';
 import 'logger_service.dart';
+import 'soloud_garden_audio_engine.dart';
 
 /// Looping garden music.
 ///
@@ -14,46 +14,45 @@ import 'logger_service.dart';
 /// remembered even when it arrives while [background.mp3] is still loading.
 ///
 /// App lifecycle should call [setSuspended], not [setEnabled]. [setEnabled]
-/// is the user's music preference. Suspending pauses the decoder in place;
-/// [AudioPlayer.stop] would release it and force another load on resume.
+/// is the user's music preference. Suspending pauses the voice in place.
+/// The clip stays loaded, so resume does not seek and does not start a
+/// second loop.
 ///
-/// [AssetAudioPlayer.play] is not awaited. On Android, just_audio completes
-/// that future only when playback ends or someone pauses, and a loop never
-/// ends. Waiting would leave [setSuspended] stuck behind it, so the loop
-/// keeps playing after the app leaves the screen.
+/// [GardenAudioEngine.play] is not awaited for the length of the loop. It
+/// returns the voice immediately.
 class BackgroundAudioController {
   BackgroundAudioController({
-    AssetAudioPlayer? player,
+    GardenAudioEngine? engine,
     bool? isWeb,
-  })  : _player = player ?? JustAudioAssetPlayer(),
+  })  : _engine = engine,
         _isWeb = isWeb ?? kIsWeb;
 
   static const String assetPath = 'assets/audio/background.mp3';
 
-  final AssetAudioPlayer _player;
+  final GardenAudioEngine? _engine;
   final bool _isWeb;
 
+  GardenAudioEngine? _resolved;
+  GardenAudioClip? _clip;
+  GardenAudioVoice? _voice;
+  bool _voicePaused = false;
   bool _enabled = false;
   bool _suspended = false;
   bool _loaded = false;
   bool _loadFailed = false;
   bool _userInteracted = false;
-  bool _playbackStarted = false;
   bool _interactionQueued = false;
-  int _playGeneration = 0;
   Future<void> _tail = Future<void>.value();
 
-  /// User preference. Does not release the decoder.
+  /// User preference. Does not release the clip.
   Future<void> setEnabled(bool enabled) {
     _enabled = enabled;
-    if (!enabled) {
-      _playbackStarted = false;
-    } else {
+    if (enabled) {
       _loadFailed = false;
     }
     return _enqueue(() async {
-      if (!_enabled) {
-        await _safePause();
+      if (!_enabled || _suspended) {
+        _pauseVoice();
         return;
       }
       await _startIfAllowed();
@@ -64,15 +63,9 @@ class BackgroundAudioController {
   /// stays as the user left it.
   Future<void> setSuspended(bool suspended) {
     _suspended = suspended;
-    if (suspended) {
-      // Drop the in-flight start so a late play error cannot clear a
-      // later resume, and cannot mark the loop as running while paused.
-      _playbackStarted = false;
-      _playGeneration++;
-    }
     return _enqueue(() async {
-      if (_suspended) {
-        await _safePause();
+      if (_suspended || !_enabled) {
+        _pauseVoice();
         return;
       }
       await _startIfAllowed();
@@ -83,7 +76,7 @@ class BackgroundAudioController {
   /// again if the browser later rejects [play].
   Future<void> notifyUserInteraction() {
     _userInteracted = true;
-    if (_playbackStarted && _enabled && !_suspended) {
+    if (_voice != null && _enabled && !_suspended) {
       return Future<void>.value();
     }
     if (_interactionQueued) return Future<void>.value();
@@ -96,9 +89,29 @@ class BackgroundAudioController {
 
   Future<void> dispose() {
     _enabled = false;
-    _playbackStarted = false;
-    _playGeneration++;
-    return _enqueue(_player.dispose);
+    _suspended = true;
+    return _enqueue(() async {
+      final engine = _activeEngine();
+      final voice = _voice;
+      final clip = _clip;
+      _voice = null;
+      _clip = null;
+      _voicePaused = false;
+      _loaded = false;
+      if (engine == null) return;
+      if (voice != null) {
+        await engine.stop(voice);
+      }
+      if (clip != null) {
+        await engine.disposeClip(clip);
+      }
+    });
+  }
+
+  GardenAudioEngine? _activeEngine() {
+    if (_engine != null) return _engine;
+    if (BindingBase.debugBindingType() == null) return null;
+    return _resolved ??= SoloudGardenAudioEngine();
   }
 
   Future<void> _enqueue(Future<void> Function() action) {
@@ -116,56 +129,90 @@ class BackgroundAudioController {
   }
 
   Future<void> _startIfAllowed() async {
-    if (!_enabled || _suspended || _playbackStarted) return;
+    if (!_enabled || _suspended) return;
     if (_isWeb && !_userInteracted) {
       await _ensureLoaded();
       return;
     }
     await _ensureLoaded();
-    if (!_loaded || !_enabled || _suspended || _playbackStarted) return;
+    if (!_loaded || !_enabled || _suspended) return;
     if (_isWeb && !_userInteracted) return;
 
-    final generation = ++_playGeneration;
-    _playbackStarted = true;
-    unawaited(
-      _player.play().then<void>(
-        (_) {},
-        onError: (Object error, StackTrace stack) {
-          if (generation != _playGeneration) return;
-          _playbackStarted = false;
-          if (error is PlayerInterruptedException) {
-            LoggerService.debug(
-              'Background audio play interrupted',
-              tag: 'BackgroundAudioController',
-            );
-            return;
-          }
-          if (_isWeb) {
-            // The browser can reject play until a later gesture.
-            _userInteracted = false;
-          }
-          LoggerService.warn(
-            'Background audio play failed',
-            error: error,
-            stackTrace: stack,
-            tag: 'BackgroundAudioController',
-          );
-        },
-      ),
-    );
+    final engine = _activeEngine();
+    final clip = _clip;
+    if (engine == null || clip == null) return;
+
+    final existing = _voice;
+    if (existing != null) {
+      if (!_voicePaused) return;
+      try {
+        engine.resume(existing);
+        _voicePaused = false;
+      } catch (error, stack) {
+        LoggerService.warn(
+          'Background audio resume failed',
+          error: error,
+          stackTrace: stack,
+          tag: 'BackgroundAudioController',
+        );
+      }
+      return;
+    }
+
+    try {
+      _voice = engine.play(
+        clip,
+        volume: 1,
+        looping: true,
+        protect: true,
+      );
+      _voicePaused = false;
+    } on GardenAudioPlayRejected {
+      _voice = null;
+      if (_isWeb) {
+        // The browser can reject play until a later gesture.
+        _userInteracted = false;
+      }
+      LoggerService.debug(
+        'Background audio play rejected',
+        tag: 'BackgroundAudioController',
+      );
+    } catch (error, stack) {
+      _voice = null;
+      if (_isWeb) {
+        _userInteracted = false;
+      }
+      LoggerService.warn(
+        'Background audio play failed',
+        error: error,
+        stackTrace: stack,
+        tag: 'BackgroundAudioController',
+      );
+    }
   }
 
   Future<void> _ensureLoaded() async {
     if (_loaded || _loadFailed) return;
+    final engine = _activeEngine();
+    if (engine == null) {
+      _loadFailed = true;
+      return;
+    }
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
-        await _player.loadAsset(assetPath);
-        await _player.setLooping(true);
+        _clip = await engine.load(assetPath, stream: true);
         _loaded = true;
         return;
-      } on PlayerInterruptedException {
+      } on GardenAudioLoadInterrupted {
         // A newer load cancelled this one. Try once more, then wait for
         // the next play request to call here again.
+      } on GardenAudioEngineUnavailable {
+        _loadFailed = true;
+        LoggerService.warn(
+          'Background audio engine unavailable',
+          tag: 'BackgroundAudioController',
+        );
+        return;
       } catch (e, stack) {
         _loadFailed = true;
         LoggerService.error(
@@ -183,14 +230,13 @@ class BackgroundAudioController {
     );
   }
 
-  Future<void> _safePause() async {
+  void _pauseVoice() {
+    final engine = _activeEngine();
+    final voice = _voice;
+    if (engine == null || voice == null || _voicePaused) return;
     try {
-      await _player.pause();
-    } on PlayerInterruptedException {
-      LoggerService.debug(
-        'Background audio pause interrupted',
-        tag: 'BackgroundAudioController',
-      );
+      engine.pause(voice);
+      _voicePaused = true;
     } catch (e, stack) {
       LoggerService.warn(
         'Background audio pause failed',

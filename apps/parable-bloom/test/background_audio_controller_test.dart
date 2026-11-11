@@ -1,15 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:parable_bloom/core/services/asset_audio_player.dart';
 import 'package:parable_bloom/core/services/background_audio_controller.dart';
+import 'package:parable_bloom/core/services/garden_audio_engine.dart';
 
 void main() {
   test('web gesture during load still starts the loop', () async {
     final gate = _Gate();
-    final player = _FakePlayer(onLoad: (_) => gate.wait());
-    final controller = BackgroundAudioController(player: player, isWeb: true);
+    final engine = _FakeEngine(onLoad: () => gate.wait());
+    final controller = BackgroundAudioController(engine: engine, isWeb: true);
 
     final enabling = controller.setEnabled(true);
     await gate.entered;
@@ -18,28 +17,44 @@ void main() {
     await enabling;
     await interaction;
 
-    expect(player.loads, [BackgroundAudioController.assetPath]);
-    expect(player.plays, 1);
+    expect(engine.loads, [BackgroundAudioController.assetPath]);
+    expect(engine.streams.single, isTrue);
+    expect(engine.plays, 1);
+    expect(engine.loopingPlays, 1);
+    expect(engine.protectedPlays, 1);
     await controller.dispose();
   });
 
   test('web does not play until a gesture', () async {
-    final player = _FakePlayer();
-    final controller = BackgroundAudioController(player: player, isWeb: true);
+    final engine = _FakeEngine();
+    final controller = BackgroundAudioController(engine: engine, isWeb: true);
 
     await controller.setEnabled(true);
-    expect(player.plays, 0);
-    expect(player.loads, [BackgroundAudioController.assetPath]);
+    expect(engine.plays, 0);
+    expect(engine.loads, [BackgroundAudioController.assetPath]);
 
     await controller.notifyUserInteraction();
-    expect(player.plays, 1);
+    expect(engine.plays, 1);
+    await controller.dispose();
+  });
+
+  test('a rejected web play is retried on the next gesture', () async {
+    final engine = _FakeEngine()..rejectNextPlay = true;
+    final controller = BackgroundAudioController(engine: engine, isWeb: true);
+
+    await controller.setEnabled(true);
+    await controller.notifyUserInteraction();
+    expect(engine.plays, 0);
+
+    await controller.notifyUserInteraction();
+    expect(engine.plays, 1);
     await controller.dispose();
   });
 
   test('turning music off during load does not start playback', () async {
     final gate = _Gate();
-    final player = _FakePlayer(onLoad: (_) => gate.wait());
-    final controller = BackgroundAudioController(player: player, isWeb: false);
+    final engine = _FakeEngine(onLoad: () => gate.wait());
+    final controller = BackgroundAudioController(engine: engine, isWeb: false);
 
     final enabling = controller.setEnabled(true);
     await gate.entered;
@@ -48,51 +63,49 @@ void main() {
     await enabling;
     await disabling;
 
-    expect(player.plays, 0);
-    expect(player.pauses, greaterThan(0));
+    expect(engine.plays, 0);
     await controller.dispose();
   });
 
   test('interrupted load is retried and then plays', () async {
-    final player = _FakePlayer()..failLoadOnce = true;
-    final controller = BackgroundAudioController(player: player, isWeb: false);
+    final engine = _FakeEngine()..failLoadOnce = true;
+    final controller = BackgroundAudioController(engine: engine, isWeb: false);
 
     await controller.setEnabled(true);
 
-    expect(player.loads, [
+    expect(engine.loads, [
       BackgroundAudioController.assetPath,
       BackgroundAudioController.assetPath,
     ]);
-    expect(player.plays, 1);
+    expect(engine.plays, 1);
     await controller.dispose();
   });
 
-  test('backgrounding pauses and resume continues without a new gesture',
+  test('backgrounding pauses the same voice and resume does not reload',
       () async {
-    final player = _FakePlayer();
-    final controller = BackgroundAudioController(player: player, isWeb: false);
+    final engine = _FakeEngine();
+    final controller = BackgroundAudioController(engine: engine, isWeb: false);
 
     await controller.setEnabled(true);
     await controller.setSuspended(true);
     await controller.setSuspended(false);
 
-    expect(player.plays, 2);
-    expect(player.pauses, greaterThan(0));
+    expect(engine.plays, 1);
+    expect(engine.pauses, 1);
+    expect(engine.resumes, 1);
+    expect(engine.loads, [BackgroundAudioController.assetPath]);
     await controller.dispose();
   });
 
-  test('suspend pauses even when play never completes', () async {
-    final player = _FakePlayer()..hangPlay = true;
-    final controller = BackgroundAudioController(player: player, isWeb: false);
+  test('enabling music twice does not start a second loop', () async {
+    final engine = _FakeEngine();
+    final controller = BackgroundAudioController(engine: engine, isWeb: false);
 
     await controller.setEnabled(true);
-    expect(player.plays, 1);
+    await controller.setEnabled(true);
 
-    await controller.setSuspended(true);
-    expect(player.pauses, greaterThan(0));
-
-    await controller.setSuspended(false);
-    expect(player.plays, 2);
+    expect(engine.plays, 1);
+    expect(engine.pauses, 0);
     await controller.dispose();
   });
 }
@@ -113,52 +126,69 @@ class _Gate {
   }
 }
 
-class _FakePlayer implements AssetAudioPlayer {
-  _FakePlayer({Future<void> Function(_FakePlayer player)? onLoad})
-      : _onLoad = onLoad;
+class _FakeEngine implements GardenAudioEngine {
+  _FakeEngine({Future<void> Function()? onLoad}) : _onLoad = onLoad;
 
-  final Future<void> Function(_FakePlayer player)? _onLoad;
+  final Future<void> Function()? _onLoad;
   final List<String> loads = [];
+  final List<bool> streams = [];
   int plays = 0;
   int pauses = 0;
+  int resumes = 0;
+  int loopingPlays = 0;
+  int protectedPlays = 0;
   bool failLoadOnce = false;
-  bool hangPlay = false;
+  bool rejectNextPlay = false;
 
   @override
-  Future<void> loadAsset(String assetPath) async {
+  Future<GardenAudioClip> load(
+    String assetPath, {
+    required bool stream,
+  }) async {
     loads.add(assetPath);
+    streams.add(stream);
     final onLoad = _onLoad;
-    if (onLoad != null) await onLoad(this);
+    if (onLoad != null) await onLoad();
     if (failLoadOnce) {
       failLoadOnce = false;
-      throw PlayerInterruptedException('Loading interrupted');
+      throw const GardenAudioLoadInterrupted();
     }
+    return GardenAudioClip();
   }
 
   @override
-  Future<void> setVolume(double volume) async {}
-
-  @override
-  Future<void> setLooping(bool looping) async {}
-
-  @override
-  Future<void> seekToStart() async {}
-
-  @override
-  Future<void> play() {
+  GardenAudioVoice play(
+    GardenAudioClip clip, {
+    required double volume,
+    required bool looping,
+    bool protect = false,
+  }) {
+    if (rejectNextPlay) {
+      rejectNextPlay = false;
+      throw const GardenAudioPlayRejected();
+    }
     plays++;
-    if (hangPlay) return Completer<void>().future;
-    return Future<void>.value();
+    if (looping) loopingPlays++;
+    if (protect) protectedPlays++;
+    return GardenAudioVoice();
   }
 
   @override
-  Future<void> pause() async {
+  void setVolume(GardenAudioVoice voice, double volume) {}
+
+  @override
+  void pause(GardenAudioVoice voice) {
     pauses++;
   }
 
   @override
-  Future<void> stop() async {}
+  void resume(GardenAudioVoice voice) {
+    resumes++;
+  }
 
   @override
-  Future<void> dispose() async {}
+  Future<void> stop(GardenAudioVoice voice) async {}
+
+  @override
+  Future<void> disposeClip(GardenAudioClip clip) async {}
 }

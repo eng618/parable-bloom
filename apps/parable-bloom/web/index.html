@@ -53,6 +53,13 @@
 
   </head>
   <body>
+    <!--
+      SoLoud's web loader. Parser-blocking so it runs before Flutter
+      boots. Cross-origin isolation is intentionally not set: that would
+      enable the AudioWorklet build and break Firebase Auth popups.
+      Without those headers the main-thread build is used.
+    -->
+    <script src="assets/packages/flutter_soloud/web/init_soloud.js"></script>
     <script src="flutter_bootstrap.js" async></script>
   </body>
 </html>

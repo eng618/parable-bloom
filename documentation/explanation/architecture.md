@@ -318,7 +318,7 @@ The Flutter app follows a **feature-first structure with explicit app-shell and 
 - Feature-owned provider orchestration belongs in `features/<feature>/application/` when it is not shared across features. Examples: tutorial lesson loading and progression providers live under `features/tutorial/application/providers/`, auth session/service providers live under `features/auth/application/providers/`, and game-owned state such as camera, counters, solver/module loading, gameplay state, and progress orchestration lives under `features/game/application/providers/`.
 - `lib/features/<feature>/`: The default home for user-facing product behavior. A feature owns its own `data`, `domain`, `presentation`, and optional `application` layers.
 - `lib/providers/`: Canonical Riverpod modules that are intentionally shared across features. This folder is reserved for provider families that are consumed by multiple feature slices or are required by the app shell; feature-local provider modules should not remain here for convenience.
-- `lib/services/`: Shared infrastructure services with process-wide scope, such as logging, analytics, or audio controllers.
+- `lib/core/services/`: Shared infrastructure with process-wide scope, such as logging, analytics, and audio. Music and sound effects go through one `flutter_soloud` engine (`SoloudGardenAudioEngine`). `BackgroundAudioController` and `SfxController` own the music preference, backgrounding, and the web gesture. They do not own a media player per cue.
 
 #### Expectations moving forward
 

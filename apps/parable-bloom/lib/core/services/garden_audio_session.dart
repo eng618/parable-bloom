@@ -5,10 +5,9 @@ import 'logger_service.dart';
 
 /// One audio session for the music loop and every sound effect.
 ///
-/// Configured before any player exists. just_audio otherwise applies
-/// [AudioSessionConfiguration.music] on the first `play()`, which is exclusive
-/// media focus, and pushes those attributes onto players that are already
-/// loading. ExoPlayer drops short cues when attributes change mid-load.
+/// Configured before `SoloudGardenAudioEngine.ensureInitialized`. SoLoud
+/// is left unmanaged on Android so it does not replace this usage with
+/// media playback. Exclusive media focus drops short cues.
 class GardenAudioSession {
   GardenAudioSession._();
 
