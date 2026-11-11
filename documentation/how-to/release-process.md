@@ -786,13 +786,18 @@ ship Kotlin metadata 2.4.0 and the project compiler is older
 - Cause: the Android Kotlin plugin version in `android/settings.gradle.kts`
   must be able to read the metadata in current `firebase_auth` /
   `firebase_analytics` Android artifacts.
-- Fix: `org.jetbrains.kotlin.android` `2.4.0`, and JVM target via
+- Fix: `org.jetbrains.kotlin.android` `2.4.21`, and JVM target via
   `kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }` in
-  `android/app/build.gradle.kts` (Flutter's current template). Stay on AGP
-  8.11.1 and Gradle 8.14 unless 2.4.0 itself fails. Do not add `play:core`.
+  `android/app/build.gradle.kts`. Do not add `play:core`.
+- Flutter stable rejects Gradle below 9.3.1 and AGP below 9.1.1. The wrapper
+  is Gradle 9.5.0 and `com.android.application` is 9.3.1 (AGP 9.3 requires
+  Gradle 9.5). `android/gradle.properties` keeps `android.newDsl=false` and
+  `android.builtInKotlin=false` so the existing `android {}` block and the
+  Kotlin plugin still apply. Google services is 4.5.0 and the Crashlytics
+  Gradle plugin is 3.0.8; Crashlytics 2.x does not apply on AGP 9.
 - Release shrinking is explicit (`isMinifyEnabled` / `isShrinkResources`).
-  A local bundle on 2026-10-31 proved R8 8.11.18 plus resource shrinking.
-  That bundle used a throwaway keystore and was not uploaded to Play.
+  A local bundle on 2026-10-31 proved R8 shrinking on the previous AGP 8.11
+  toolchain. That bundle used a throwaway keystore and was not uploaded to Play.
 
 ### Google Play Upload Issues
 
