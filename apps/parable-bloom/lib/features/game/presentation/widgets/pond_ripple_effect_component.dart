@@ -1,5 +1,5 @@
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:parable_bloom/core/constants/animation_timing.dart';
 

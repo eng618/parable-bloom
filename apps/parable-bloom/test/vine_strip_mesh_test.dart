@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parable_bloom/core/game_board_layout.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';

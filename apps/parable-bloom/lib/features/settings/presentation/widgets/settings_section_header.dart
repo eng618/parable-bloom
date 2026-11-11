@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Section title used by the settings list.
 class SettingsSectionHeader extends StatelessWidget {

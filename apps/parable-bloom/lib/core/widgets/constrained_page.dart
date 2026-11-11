@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Caps content width on wide screens (desktop/web) so text screens don't
 /// sprawl edge-to-edge in landscape. Below [maxWidth] it behaves like a

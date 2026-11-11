@@ -1,3 +1,8 @@
 arb-dir: lib/l10n
 template-arb-file: app_en.arb
 output-localization-file: app_localizations.dart
+# gen-l10n still emits GlobalMaterialLocalizations and
+# GlobalCupertinoLocalizations from flutter_localizations. Flutter stable
+# deprecates those symbols, and pub get regenerates this file. The app
+# registers the material_ui and cupertino_ui delegates itself.
+header: "// ignore_for_file: deprecated_member_use"

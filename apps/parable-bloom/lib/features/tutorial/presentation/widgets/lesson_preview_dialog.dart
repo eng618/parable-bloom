@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../domain/entities/lesson_data.dart';
 
 class LessonPreviewDialog extends StatelessWidget {

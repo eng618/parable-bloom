@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:parable_bloom/core/game_board_layout.dart';
 import 'package:parable_bloom/core/providers/settings_providers.dart'

@@ -6,7 +6,7 @@
 /// leaves ~29px of breathing room between parallel vines.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:parable_bloom/core/providers/settings_providers.dart'
     show VineStyle;

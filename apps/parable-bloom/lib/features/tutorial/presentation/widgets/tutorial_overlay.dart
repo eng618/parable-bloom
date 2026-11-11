@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A simple, dismissable instruction overlay for tutorial levels.
 /// Shows the lesson objective/instruction at the top of the screen.

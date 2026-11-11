@@ -57,6 +57,9 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   sentry_flutter: ^10.1.0
+  material_ui: ^1.11.0
+  cupertino_ui: ^1.1.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

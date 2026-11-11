@@ -328,6 +328,7 @@ The Flutter app follows a **feature-first structure with explicit app-shell and 
 - `lib/app/` may depend on features; features should not depend on `lib/app/`.
 - If a concept starts feature-local and later becomes shared, promote it deliberately into `core/`, `providers/`, or `services/` rather than creating parallel copies.
 - Avoid compatibility barrel files that re-export unrelated modules just for convenience. Tests and app code should import the specific provider/entity modules they actually use.
+- Material widgets come from `package:material_ui/material_ui.dart`. Flutter stable deprecates `package:flutter/material.dart`, and `flutter analyze --fatal-infos` fails on that import. `GlobalCupertinoLocalizations` comes from `package:cupertino_ui/cupertino_ui.dart`. `GlobalWidgetsLocalizations` stays in `flutter_localizations`.
 
 #### Preferred feature shape
 

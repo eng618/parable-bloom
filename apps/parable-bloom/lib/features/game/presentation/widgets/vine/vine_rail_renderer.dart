@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:parable_bloom/core/providers/settings_providers.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
