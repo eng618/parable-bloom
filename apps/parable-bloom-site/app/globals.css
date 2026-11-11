@@ -43,6 +43,9 @@
   --color-bg-bottom: #e8e0ce;
   --color-text-primary: #2a3328;
   --color-text-secondary: #5a6258;
+  --color-on-brand: #fffbf3;
+  --color-footer: #344d2f;
+  --color-on-footer: #fffbf3;
 
   /* Soft garden depth */
   --shadow-grace: 0 18px 40px rgb(52 77 47 / 12%);
@@ -82,6 +85,42 @@
   }
 }
 
+/* Moonlit soil. Matches AppTheme.darkTheme. System theme applies .dark on html. */
+html.dark {
+  --color-brand: #a3b18a;
+  --color-brand-soft: #8da082;
+  --color-brand-pale: rgb(163 177 138 / 16%);
+  --color-surface: #1e241e;
+  --color-surface-alt: #2a312a;
+  --color-surface-high: #353d35;
+  --color-bg-top: #141914;
+  --color-bg-bottom: #1e241e;
+  --color-text-primary: #e8eadf;
+  --color-text-secondary: #a8afa6;
+  --color-on-brand: #141914;
+  --color-footer: #101410;
+  --shadow-grace: 0 18px 40px rgb(0 0 0 / 36%);
+  --shadow-grace-hover: 0 24px 48px rgb(0 0 0 / 48%);
+
+  --background: 120 11% 9%;
+  --foreground: 71 18% 90%;
+  --primary: 82 20% 62%;
+  --primary-foreground: 120 11% 9%;
+  --secondary: 120 8% 18%;
+  --secondary-foreground: 71 18% 90%;
+  --muted: 120 7% 22%;
+  --muted-foreground: 107 5% 67%;
+  --accent: 82 20% 62%;
+  --accent-foreground: 120 11% 9%;
+  --border: 82 12% 46% / 32%;
+  --input: 82 12% 46% / 32%;
+  --ring: 82 20% 62%;
+  --card: 120 9% 13%;
+  --card-foreground: 71 18% 90%;
+  --popover: 120 9% 13%;
+  --popover-foreground: 71 18% 90%;
+}
+
 *,
 *::before,
 *::after {
@@ -106,6 +145,12 @@ body {
   font-family: var(--font-body);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+html.dark body {
+  background-image:
+    linear-gradient(180deg, rgb(20 25 20 / 94%) 0%, rgb(30 36 30 / 95%) 55%, rgb(42 49 42 / 96%) 100%),
+    url('/art/parchment.webp');
 }
 
 a,
@@ -224,8 +269,8 @@ a {
 }
 
 .page-article {
-  background: rgb(255 251 243 / 92%);
-  border: 1px solid rgb(52 77 47 / 14%);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 18%, transparent);
   border-radius: 1.25rem;
   padding: clamp(1.25rem, 3vw, 2.5rem);
   margin-top: 1rem;
@@ -246,7 +291,7 @@ a {
 .page-article a {
   color: var(--color-brand);
   text-decoration: underline;
-  text-decoration-color: rgb(52 77 47 / 35%);
+  text-decoration-color: color-mix(in srgb, var(--color-brand) 35%, transparent);
   text-underline-offset: 3px;
 }
 
@@ -257,7 +302,7 @@ a {
 /* Shared device window. Every product shot uses this shell, so height and bezel match. */
 .phone-shot {
   border-radius: 2rem;
-  border: 1px solid rgb(52 77 47 / 18%);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 28%, transparent);
   background: var(--color-surface);
   box-shadow: var(--shadow-grace);
   padding: 0.5rem;
@@ -269,7 +314,7 @@ a {
   border-radius: 1.55rem;
   aspect-ratio: 9 / 19.5;
   background: #f6f0e4;
-  box-shadow: inset 0 0 0 1px rgb(52 77 47 / 8%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand) 12%, transparent);
 }
 
 .leaf-divider {
@@ -286,7 +331,7 @@ a {
   height: 1px;
   flex: 1;
   max-width: 7rem;
-  background: rgb(52 77 47 / 22%);
+  background: color-mix(in srgb, var(--color-brand) 28%, transparent);
 }
 
 .cta-primary {
@@ -296,7 +341,7 @@ a {
   gap: 0.5rem;
   border-radius: 1.125rem;
   background: var(--color-brand);
-  color: #fffbf3 !important;
+  color: var(--color-on-brand) !important;
   padding: 0.8rem 1.4rem;
   font-size: 0.95rem;
   font-weight: 600;
@@ -304,23 +349,26 @@ a {
 }
 
 .cta-primary:hover {
-  background: rgb(42 62 38);
-  color: #fffbf3 !important;
+  background: color-mix(in srgb, var(--color-brand) 82%, black);
+  color: var(--color-on-brand) !important;
   transform: translateY(-2px);
   box-shadow: var(--shadow-grace-hover);
 }
 
-/* Forest primary buttons from the design system must keep cream label text */
+html.dark .cta-primary:hover {
+  background: color-mix(in srgb, var(--color-brand) 78%, white);
+}
+
 button.bg-brand,
 a.bg-brand,
 .bg-brand[data-slot='button'] {
-  color: #fffbf3;
+  color: var(--color-on-brand);
 }
 
 button.bg-brand:hover,
 a.bg-brand:hover,
 .bg-brand[data-slot='button']:hover {
-  color: #fffbf3;
+  color: var(--color-on-brand);
 }
 
 .cta-secondary {
@@ -329,8 +377,8 @@ a.bg-brand:hover,
   justify-content: center;
   gap: 0.5rem;
   border-radius: 1.125rem;
-  border: 1.5px solid rgb(52 77 47 / 55%);
-  background: rgb(255 251 243 / 70%);
+  border: 1.5px solid color-mix(in srgb, var(--color-brand) 55%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
   color: var(--color-brand);
   padding: 0.8rem 1.4rem;
   font-size: 0.95rem;

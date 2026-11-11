@@ -33,6 +33,7 @@
 
 - **site:** audio and asset credits on `/attributions` for Case Portman UI SFX and the Antoinemax Nature Sounds Pack, alongside the existing scripture notices
 - **site:** home gallery uses one phone window for every screenshot, sections reveal as they enter, and a leaf trail follows the pointer. Motion stays off when reduced motion is requested.
+- **site:** header theme menu with light, dark, and system. System is the default. Dark uses the moonlit soil palette.
 
 ## 0.5.23 (2026-11-02)
 

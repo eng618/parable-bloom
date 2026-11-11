@@ -121,7 +121,7 @@ export default function HomePage() {
                 href="https://parable-bloom.web.app/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="cta-primary focus-visible:ring-brand/40 !text-[#fffbf3] hover:!text-[#fffbf3] focus-visible:ring-2 focus-visible:outline-none"
+                className="cta-primary focus-visible:ring-brand/40 !text-on-brand hover:!text-on-brand focus-visible:ring-2 focus-visible:outline-none"
               >
                 Play on Web
               </Link>
@@ -234,7 +234,7 @@ export default function HomePage() {
             href="https://parable-bloom.web.app/"
             target="_blank"
             rel="noopener noreferrer"
-            className="cta-primary !text-[#fffbf3] hover:!text-[#fffbf3]"
+            className="cta-primary !text-on-brand hover:!text-on-brand"
           >
             Play on Web
           </Link>

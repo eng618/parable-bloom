@@ -60,7 +60,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#344D2F',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#F9F3E5' },
+    { media: '(prefers-color-scheme: dark)', color: '#141914' },
+  ],
   width: 'device-width',
   initialScale: 1,
 };
@@ -71,7 +74,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className="light" style={{ colorScheme: 'light' }} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body>
         <UiThemeProvider>
           <SiteShell>{children}</SiteShell>

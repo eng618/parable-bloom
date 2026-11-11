@@ -11,6 +11,7 @@ import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 
 import LeafTrail from '@/components/leaf-trail';
+import ThemeMenu from '@/components/theme-menu';
 import { trackNavigationClick } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
@@ -98,53 +99,57 @@ export default function SiteShell({ children }: SiteShellProps) {
             ))}
           </nav>
 
-          {/* Phone + tablet / narrow desktop: hamburger + sheet drawer */}
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-            <SheetTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="border-brand/40 bg-surface text-brand hover:bg-brand/10 hover:text-brand size-10 shrink-0 xl:hidden"
-                aria-label="Open menu"
-              >
-                <MenuIcon className="size-5" aria-hidden="true" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="bg-surface border-brand/15 w-[min(100%,20rem)] gap-0 p-0">
-              <SheetHeader className="border-brand/10 border-b px-5 py-4 text-left">
-                <SheetTitle className="font-display text-brand text-xl">Parable Bloom</SheetTitle>
-                <SheetDescription className="text-text-secondary text-sm">Navigate the garden site.</SheetDescription>
-              </SheetHeader>
-              <nav className="flex flex-col gap-1 p-4" aria-label="Mobile site navigation">
-                {navItems.map((item) => (
-                  <NavLink
-                    key={item.href}
-                    href={item.href}
-                    label={item.label}
-                    onNavigate={() => {
-                      setMenuOpen(false);
-                    }}
-                    className="w-full px-4 py-3 text-base"
-                  />
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
+          <div className="flex shrink-0 items-center gap-2">
+            <ThemeMenu />
+
+            {/* Phone + tablet / narrow desktop: hamburger + sheet drawer */}
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="border-brand/40 bg-surface text-brand hover:bg-brand/10 hover:text-brand size-10 shrink-0 xl:hidden"
+                  aria-label="Open menu"
+                >
+                  <MenuIcon className="size-5" aria-hidden="true" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="bg-surface border-brand/15 w-[min(100%,20rem)] gap-0 p-0">
+                <SheetHeader className="border-brand/10 border-b px-5 py-4 text-left">
+                  <SheetTitle className="font-display text-brand text-xl">Parable Bloom</SheetTitle>
+                  <SheetDescription className="text-text-secondary text-sm">Navigate the garden site.</SheetDescription>
+                </SheetHeader>
+                <nav className="flex flex-col gap-1 p-4" aria-label="Mobile site navigation">
+                  {navItems.map((item) => (
+                    <NavLink
+                      key={item.href}
+                      href={item.href}
+                      label={item.label}
+                      onNavigate={() => {
+                        setMenuOpen(false);
+                      }}
+                      className="w-full px-4 py-3 text-base"
+                    />
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">{children}</main>
 
-      <footer className="bg-brand border-brand/20 border-t py-10 text-center">
-        <Text variant="caption" className="text-surface/85 font-display text-sm tracking-wide">
+      <footer className="bg-footer border-brand/20 border-t py-10 text-center">
+        <Text variant="caption" className="text-on-footer/85 font-display text-sm tracking-wide">
           © {currentYear} GVTech. All rights reserved.
         </Text>
-        <div className="text-surface/65 mt-3 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
+        <div className="text-on-footer/65 mt-3 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
           <Link
             href="/privacy"
             onClick={() => trackNavigationClick('/privacy', 'footer', 'Privacy Policy')}
-            className="hover:text-surface transition-colors"
+            className="hover:text-on-footer transition-colors"
           >
             Privacy Policy
           </Link>
@@ -152,7 +157,7 @@ export default function SiteShell({ children }: SiteShellProps) {
           <Link
             href="/attributions"
             onClick={() => trackNavigationClick('/attributions', 'footer', 'Attributions')}
-            className="hover:text-surface transition-colors"
+            className="hover:text-on-footer transition-colors"
           >
             Attributions
           </Link>
@@ -160,7 +165,7 @@ export default function SiteShell({ children }: SiteShellProps) {
           <Link
             href="/support"
             onClick={() => trackNavigationClick('/support', 'footer', 'Support')}
-            className="hover:text-surface transition-colors"
+            className="hover:text-on-footer transition-colors"
           >
             Support
           </Link>
@@ -168,7 +173,7 @@ export default function SiteShell({ children }: SiteShellProps) {
           <Link
             href="/terms"
             onClick={() => trackNavigationClick('/terms', 'footer', 'Terms of Service')}
-            className="hover:text-surface transition-colors"
+            className="hover:text-on-footer transition-colors"
           >
             Terms of Service
           </Link>

@@ -57,20 +57,20 @@ export default function DesignSystemCard({
           {href ? (
             <Button
               asChild
-              className="bg-brand hover:bg-brand/90 h-11 w-full rounded-[1.125rem] !text-[#fffbf3] transition-all duration-300 hover:!text-[#fffbf3] hover:shadow-md"
+              className="bg-brand hover:bg-brand/90 !text-on-brand hover:!text-on-brand h-11 w-full rounded-[1.125rem] transition-all duration-300 hover:shadow-md"
               onClick={() => trackCtaClick(title, 'platform_grid', badge)}
             >
               <Link
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="!text-[#fffbf3] hover:!text-[#fffbf3]"
+                className="!text-on-brand hover:!text-on-brand"
               >
                 {ctaLabel}
               </Link>
             </Button>
           ) : (
-            <Button disabled className="bg-brand/35 h-11 w-full rounded-[1.125rem] !text-[#fffbf3] opacity-70">
+            <Button disabled className="bg-brand/35 !text-on-brand h-11 w-full rounded-[1.125rem] opacity-70">
               {ctaLabel}
             </Button>
           )}
