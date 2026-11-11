@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Pinch-to-zoom keeps the board point under the fingers in place. Moving the pinch also drags the board, including while zoom is at its limit.
 - Android background music now starts while the garden is visible and stops when the app leaves the screen. The loop is no longer started by the first background transition, and a `play()` that never finishes can no longer block pause. Sound effects share a game audio session with the loop instead of exclusive media focus, and a cue load runs once even if preload and the first tap overlap.
 - Background music keeps playing through an interrupted load, a web tap that lands while `background.mp3` is still loading, and transient `inactive` lifecycle states. Leaving the app pauses the loop instead of tearing the player down. Retriggered sound effects no longer cancel the cue that was about to play.
 - Lesson 1 accepts a tap on any cell of its vine. The head highlight and `"Tap head to slide"` prompt stay as the guide.

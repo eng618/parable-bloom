@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import 'package:parable_bloom/core/game_board_layout.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/application/providers/camera_providers.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
@@ -134,5 +135,70 @@ void main() {
 
     // The camera should remain at zero offset since it is already visible
     expect(container.read(cameraStateProvider).panOffset, vm.Vector2.zero());
+  });
+
+  test('applyGestureTransform publishes zoom and pan in one write', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final seen = <CameraState>[];
+    container.listen<CameraState>(
+      cameraStateProvider,
+      (_, next) => seen.add(next),
+    );
+
+    container.read(cameraStateProvider.notifier).applyGestureTransform(
+          zoom: 1.6,
+          panOffset: vm.Vector2(18, -9),
+          screenWidth: 800,
+          screenHeight: 600,
+          gridCols: 8,
+          gridRows: 8,
+        );
+
+    expect(seen, hasLength(1));
+    expect(seen.single.zoom, 1.6);
+    expect(seen.single.panOffset.x, closeTo(18, 0.001));
+    expect(seen.single.panOffset.y, closeTo(-9, 0.001));
+  });
+
+  test('applyGestureTransform limits pan at the destination zoom', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(cameraStateProvider.notifier);
+
+    // On a 400px screen the pan cap is 20% of the scaled board while the
+    // board still fits. Zoom 2 of a 4×4 board still fits, so a 60px pan is
+    // inside the new cap and outside the zoom-1 cap.
+    notifier.applyGestureTransform(
+      zoom: 2.0,
+      panOffset: vm.Vector2(60, 0),
+      screenWidth: 400,
+      screenHeight: 400,
+      gridCols: 4,
+      gridRows: 4,
+    );
+    expect(container.read(cameraStateProvider).zoom, 2.0);
+    expect(
+      container.read(cameraStateProvider).panOffset.x,
+      closeTo(60, 0.001),
+    );
+
+    // Zoom 0.5 shrinks the cap. Using the previous zoom would have left
+    // the 60px pan in place.
+    notifier.applyGestureTransform(
+      zoom: 0.5,
+      panOffset: vm.Vector2(60, 0),
+      screenWidth: 400,
+      screenHeight: 400,
+      gridCols: 4,
+      gridRows: 4,
+    );
+    final tightened = container.read(cameraStateProvider);
+    expect(tightened.zoom, 0.5);
+    expect(
+      tightened.panOffset.x,
+      closeTo(GameBoardLayout.boardWidth(4) * 0.5 * 0.2, 0.001),
+    );
   });
 }

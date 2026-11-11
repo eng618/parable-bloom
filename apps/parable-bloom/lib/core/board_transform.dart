@@ -29,6 +29,35 @@ class BoardTransform {
     );
   }
 
+  /// Pan that keeps the board point under the gesture-start focal point
+  /// ([focalX0], [focalY0]) fixed while zoom goes from [zoom0] to [zoom1],
+  /// then follows the focal point to ([focalX], [focalY]).
+  ///
+  /// The board is placed by [boardPosition], so a zoom with an unchanged pan
+  /// scales around the screen center. A pinch away from center has to move
+  /// the pan in the same update or the cells under the fingers slide away.
+  /// A ratio of 1 is a one-finger drag. Board size cancels out of the formula.
+  static ({double x, double y}) panForAnchoredZoom({
+    required double zoom0,
+    required double panX0,
+    required double panY0,
+    required double zoom1,
+    required double focalX0,
+    required double focalY0,
+    required double focalX,
+    required double focalY,
+    required double screenWidth,
+    required double screenHeight,
+  }) {
+    final ratio = zoom0 == 0 ? 1.0 : zoom1 / zoom0;
+    final centerX = screenWidth / 2;
+    final centerY = screenHeight / 2;
+    return (
+      x: panX0 * ratio + (focalX0 - centerX) * (1 - ratio) + (focalX - focalX0),
+      y: panY0 * ratio + (focalY0 - centerY) * (1 - ratio) + (focalY - focalY0),
+    );
+  }
+
   /// Screen-space center of grid cell ([x], [y] with y=0 at the bottom),
   /// given the board's top-left ([boardX], [boardY]) and zoom.
   static ({double x, double y}) cellCenter({

@@ -38,6 +38,181 @@ void main() {
       expect(pos.y, (600 - GameBoardLayout.boardHeight(4) * 2) / 2 - 5);
     });
 
+    test('panForAnchoredZoom with ratio 1 is a one-finger drag', () {
+      final pan = BoardTransform.panForAnchoredZoom(
+        zoom0: 1.4,
+        panX0: 20,
+        panY0: -8,
+        zoom1: 1.4,
+        focalX0: 100,
+        focalY0: 220,
+        focalX: 112,
+        focalY: 213,
+        screenWidth: 390,
+        screenHeight: 844,
+      );
+
+      expect(pan.x, 32);
+      expect(pan.y, -15);
+    });
+
+    test('stationary off-center pinch keeps the board point under the fingers',
+        () {
+      const cols = 6;
+      const rows = 8;
+      const screenWidth = 390.0;
+      const screenHeight = 844.0;
+      const zoom0 = 1.0;
+      const panX0 = 12.0;
+      const panY0 = -30.0;
+      const focalX = 300.0;
+      const focalY = 180.0;
+
+      final origin0 = BoardTransform.boardPosition(
+        cols: cols,
+        rows: rows,
+        zoom: zoom0,
+        panX: panX0,
+        panY: panY0,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+      final localX = (focalX - origin0.x) / zoom0;
+      final localY = (focalY - origin0.y) / zoom0;
+
+      const zoom1 = 2.0;
+      final pan = BoardTransform.panForAnchoredZoom(
+        zoom0: zoom0,
+        panX0: panX0,
+        panY0: panY0,
+        zoom1: zoom1,
+        focalX0: focalX,
+        focalY0: focalY,
+        focalX: focalX,
+        focalY: focalY,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+      final origin1 = BoardTransform.boardPosition(
+        cols: cols,
+        rows: rows,
+        zoom: zoom1,
+        panX: pan.x,
+        panY: pan.y,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+
+      expect(origin1.x + localX * zoom1, closeTo(focalX, 0.001));
+      expect(origin1.y + localY * zoom1, closeTo(focalY, 0.001));
+    });
+
+    test('pinch-drag lands the original board point on the new focal point',
+        () {
+      const cols = 6;
+      const rows = 8;
+      const screenWidth = 390.0;
+      const screenHeight = 844.0;
+      const zoom0 = 1.2;
+      const panX0 = -16.0;
+      const panY0 = 24.0;
+      const focalX0 = 80.0;
+      const focalY0 = 640.0;
+      const focalX = 140.0;
+      const focalY = 590.0;
+
+      final origin0 = BoardTransform.boardPosition(
+        cols: cols,
+        rows: rows,
+        zoom: zoom0,
+        panX: panX0,
+        panY: panY0,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+      final localX = (focalX0 - origin0.x) / zoom0;
+      final localY = (focalY0 - origin0.y) / zoom0;
+
+      const zoom1 = 1.8;
+      final pan = BoardTransform.panForAnchoredZoom(
+        zoom0: zoom0,
+        panX0: panX0,
+        panY0: panY0,
+        zoom1: zoom1,
+        focalX0: focalX0,
+        focalY0: focalY0,
+        focalX: focalX,
+        focalY: focalY,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+      final origin1 = BoardTransform.boardPosition(
+        cols: cols,
+        rows: rows,
+        zoom: zoom1,
+        panX: pan.x,
+        panY: pan.y,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+
+      expect(origin1.x + localX * zoom1, closeTo(focalX, 0.001));
+      expect(origin1.y + localY * zoom1, closeTo(focalY, 0.001));
+    });
+
+    test('center pinch scales an existing pan and holds the center point', () {
+      const cols = 4;
+      const rows = 4;
+      const screenWidth = 400.0;
+      const screenHeight = 800.0;
+      const zoom0 = 1.0;
+      const panX0 = 50.0;
+      const panY0 = -30.0;
+      const focalX = screenWidth / 2;
+      const focalY = screenHeight / 2;
+
+      final origin0 = BoardTransform.boardPosition(
+        cols: cols,
+        rows: rows,
+        zoom: zoom0,
+        panX: panX0,
+        panY: panY0,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+      final localX = (focalX - origin0.x) / zoom0;
+      final localY = (focalY - origin0.y) / zoom0;
+
+      const zoom1 = 2.0;
+      final pan = BoardTransform.panForAnchoredZoom(
+        zoom0: zoom0,
+        panX0: panX0,
+        panY0: panY0,
+        zoom1: zoom1,
+        focalX0: focalX,
+        focalY0: focalY,
+        focalX: focalX,
+        focalY: focalY,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+
+      expect(pan.x, closeTo(panX0 * zoom1 / zoom0, 0.001));
+      expect(pan.y, closeTo(panY0 * zoom1 / zoom0, 0.001));
+
+      final origin1 = BoardTransform.boardPosition(
+        cols: cols,
+        rows: rows,
+        zoom: zoom1,
+        panX: pan.x,
+        panY: pan.y,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+      expect(origin1.x + localX * zoom1, closeTo(focalX, 0.001));
+      expect(origin1.y + localY * zoom1, closeTo(focalY, 0.001));
+    });
+
     test('cellCenter matches manual grid math (y=0 at bottom)', () {
       const zoom = 1.5;
       const boardX = 100.0;

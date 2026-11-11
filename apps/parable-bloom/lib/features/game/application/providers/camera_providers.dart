@@ -285,6 +285,39 @@ class CameraStateNotifier extends Notifier<CameraState> {
     state = state.copyWith(zoom: clampedZoom, isAnimating: false);
   }
 
+  /// One camera write for a pinch or drag. Zoom and pan land together so
+  /// Flame never paints a center-anchored zoom frame before the pan that
+  /// keeps the pinch point still. [panOffset] is constrained at the clamped
+  /// zoom, not the zoom from before this gesture frame.
+  void applyGestureTransform({
+    required double zoom,
+    required vm.Vector2 panOffset,
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+  }) {
+    if (state.isAnimating) {
+      _interruptAnimation();
+    }
+
+    final clampedZoom = zoom.clamp(state.minZoom, state.maxZoom).toDouble();
+    final constrainedOffset = _constrainPanOffset(
+      panOffset,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridCols: gridCols,
+      gridRows: gridRows,
+      zoom: clampedZoom,
+    );
+
+    state = state.copyWith(
+      zoom: clampedZoom,
+      panOffset: constrainedOffset,
+      isAnimating: false,
+    );
+  }
+
   void updatePanOffset(
     vm.Vector2 newOffset, {
     required double screenWidth,
@@ -314,9 +347,11 @@ class CameraStateNotifier extends Notifier<CameraState> {
     required double screenHeight,
     required int gridCols,
     required int gridRows,
+    double? zoom,
   }) {
-    final gridWidth = GameBoardLayout.boardWidth(gridCols) * state.zoom;
-    final gridHeight = GameBoardLayout.boardHeight(gridRows) * state.zoom;
+    final effectiveZoom = zoom ?? state.zoom;
+    final gridWidth = GameBoardLayout.boardWidth(gridCols) * effectiveZoom;
+    final gridHeight = GameBoardLayout.boardHeight(gridRows) * effectiveZoom;
 
     const visibleThreshold = 0.2;
     final maxOffsetX = screenWidth > gridWidth
