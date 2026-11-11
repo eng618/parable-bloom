@@ -1,3 +1,16 @@
+## 0.5.25 (2026-11-11)
+
+### 🚀 Features
+
+- **audio:** integrate flutter_soloud for audio playback and optimize asset management ([aae5136](https://github.com/eng618/parable-bloom/commit/aae5136))
+- **site:** implement theme menu and enhance styling for dark mode ([d2f1f9e](https://github.com/eng618/parable-bloom/commit/d2f1f9e))
+- **site:** enhance home gallery and add reveal animations ([94c7165](https://github.com/eng618/parable-bloom/commit/94c7165))
+- **audio:** enhance audio session management and playback behavior ([adad82a](https://github.com/eng618/parable-bloom/commit/adad82a))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 0.5.24 (2026-11-08)
 
 ### 🚀 Features

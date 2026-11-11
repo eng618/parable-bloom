@@ -1,3 +1,14 @@
+## 1.11.5 (2026-11-11)
+
+### 🚀 Features
+
+- **audio:** integrate flutter_soloud for audio playback and optimize asset management ([aae5136](https://github.com/eng618/parable-bloom/commit/aae5136))
+- **audio:** enhance audio session management and playback behavior ([adad82a](https://github.com/eng618/parable-bloom/commit/adad82a))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.11.4 (2026-11-08)
 
 ### 🚀 Features
