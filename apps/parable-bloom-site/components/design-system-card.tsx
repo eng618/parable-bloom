@@ -15,7 +15,6 @@ type DesignSystemCardProps = {
   href?: string;
   ctaLabel?: string;
   badge?: string;
-  animationDelay?: number;
 };
 
 const badgeStyleMap: Record<string, string> = {
@@ -30,14 +29,12 @@ export default function DesignSystemCard({
   href,
   ctaLabel = 'Open',
   badge,
-  animationDelay = 0,
 }: DesignSystemCardProps) {
   return (
     <Card
       className={cn(
-        'animate-fade-in-up group border-brand/15 hover:border-brand/35 hover:shadow-grace bg-surface/90 flex flex-col overflow-hidden backdrop-blur-sm transition-all duration-300 hover:-translate-y-1',
+        'group border-brand/15 hover:border-brand/35 hover:shadow-grace bg-surface/90 flex h-full flex-col overflow-hidden backdrop-blur-sm transition-all duration-300 hover:-translate-y-1',
       )}
-      style={{ animationDelay: `${animationDelay}ms` }}
     >
       <CardHeader className="pb-2">
         <div className="mb-2 flex items-start justify-between gap-2">

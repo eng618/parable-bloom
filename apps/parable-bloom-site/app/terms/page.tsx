@@ -2,6 +2,9 @@ import { Text } from '@gv-tech/ui-web/text';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import LeafDivider from '@/components/leaf-divider';
+import Reveal from '@/components/reveal';
+
 export const metadata: Metadata = {
   title: 'Terms of Service',
   description: 'Read the terms of service for Parable Bloom, outlining usage rights and responsibilities.',
@@ -9,8 +12,9 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <article className="page-article animate-fade-in-up">
+    <Reveal as="article" className="page-article">
       <Text variant="h1">Terms of Service</Text>
+      <LeafDivider />
       <Text variant="body">
         <strong>Effective Date:</strong> February 04, 2026
       </Text>
@@ -109,6 +113,6 @@ export default function TermsPage() {
         <strong>Email</strong>:{' '}
         <a href="mailto:parablebloom.support@garciaericn.com">parablebloom.support@garciaericn.com</a>
       </Text>
-    </article>
+    </Reveal>
   );
 }

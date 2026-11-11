@@ -1,7 +1,9 @@
 import { Badge } from '@gv-tech/ui-web/badge';
-import { Separator } from '@gv-tech/ui-web/separator';
 import { Text } from '@gv-tech/ui-web/text';
 import type { Metadata } from 'next';
+
+import LeafDivider from '@/components/leaf-divider';
+import Reveal from '@/components/reveal';
 
 export const metadata: Metadata = {
   title: 'About',
@@ -11,8 +13,8 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <article className="page-article animate-fade-in-up">
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+    <Reveal as="article" className="page-article">
+      <div className="flex flex-wrap items-center gap-3">
         <div>
           <h1 className="font-display text-brand text-3xl font-semibold sm:text-4xl">About</h1>
           <Badge variant="secondary" className="border-brand/20 bg-brand/10 text-brand mt-2">
@@ -21,7 +23,7 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <Separator className="mb-6 opacity-40" />
+      <LeafDivider />
 
       <section className="mb-6">
         <h2 className="font-display text-text-primary mb-3 text-xl font-semibold">Overview</h2>
@@ -106,6 +108,6 @@ export default function AboutPage() {
           </li>
         </ul>
       </section>
-    </article>
+    </Reveal>
   );
 }

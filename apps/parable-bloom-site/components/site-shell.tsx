@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 
+import LeafTrail from '@/components/leaf-trail';
 import { trackNavigationClick } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
@@ -82,6 +83,7 @@ export default function SiteShell({ children }: SiteShellProps) {
 
   return (
     <div className="grid min-h-screen grid-rows-[auto_1fr_auto] overflow-x-clip">
+      <LeafTrail />
       <header
         className="border-brand/10 bg-bg-top/85 sticky top-0 z-40 border-b backdrop-blur-md transition-all duration-300"
         aria-label="Main navigation"

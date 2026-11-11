@@ -2,6 +2,9 @@ import { Text } from '@gv-tech/ui-web/text';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import LeafDivider from '@/components/leaf-divider';
+import Reveal from '@/components/reveal';
+
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description: 'Read the privacy policy for Parable Bloom, detailing how we collect, use, and protect your data.',
@@ -9,8 +12,9 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <article className="page-article animate-fade-in-up">
+    <Reveal as="article" className="page-article">
       <Text variant="h1">Privacy Policy</Text>
+      <LeafDivider />
       <Text variant="body">
         <strong>Effective Date:</strong> February 04, 2026
       </Text>
@@ -171,6 +175,6 @@ export default function PrivacyPage() {
         <strong>Email</strong>:{' '}
         <a href="mailto:parablebloom.support@garciaericn.com">parablebloom.support@garciaericn.com</a>
       </Text>
-    </article>
+    </Reveal>
   );
 }

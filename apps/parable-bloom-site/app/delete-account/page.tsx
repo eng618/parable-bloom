@@ -1,6 +1,9 @@
 import { Text } from '@gv-tech/ui-web/text';
 import type { Metadata } from 'next';
 
+import LeafDivider from '@/components/leaf-divider';
+import Reveal from '@/components/reveal';
+
 export const metadata: Metadata = {
   title: 'Delete Account',
   description: 'Instructions on how to delete your Parable Bloom account and associated data.',
@@ -9,8 +12,9 @@ export const metadata: Metadata = {
 
 export default function DeleteAccountPage() {
   return (
-    <article className="page-article animate-fade-in-up">
+    <Reveal as="article" className="page-article">
       <Text variant="h1">Deleting Your Parable Bloom Account</Text>
+      <LeafDivider />
       <Text variant="body">
         We respect your data privacy. If you wish to delete your account and all associated data, choose one of the
         following options.
@@ -53,6 +57,6 @@ export default function DeleteAccountPage() {
           Bloom account. We will process your request and permanently delete your data within 30 days.
         </em>
       </Text>
-    </article>
+    </Reveal>
   );
 }

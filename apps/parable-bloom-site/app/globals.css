@@ -153,7 +153,7 @@ a {
   }
 
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-4px);
   }
 }
 
@@ -178,7 +178,29 @@ a {
 }
 
 .animate-float {
-  animation: float 5s ease-in-out infinite;
+  animation: float 7s ease-in-out infinite;
+}
+
+.reveal-hidden {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.reveal-shown {
+  animation: fade-in-up 800ms var(--ease-grace) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-hidden,
+  .reveal-shown,
+  .animate-fade-in-up,
+  .animate-fade-in,
+  .animate-float,
+  .animate-soft-rise {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 .animate-soft-rise {
@@ -232,20 +254,22 @@ a {
   text-decoration-color: var(--color-brand);
 }
 
-/* Phone frame for product screenshots */
-.phone-frame {
-  position: relative;
-  overflow: hidden;
-  border-radius: 1.75rem;
+/* Shared device window. Every product shot uses this shell, so height and bezel match. */
+.phone-shot {
+  border-radius: 2rem;
   border: 1px solid rgb(52 77 47 / 18%);
   background: var(--color-surface);
   box-shadow: var(--shadow-grace);
+  padding: 0.5rem;
 }
 
-.phone-frame img {
-  display: block;
-  width: 100%;
-  height: auto;
+.phone-shot-screen {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.55rem;
+  aspect-ratio: 9 / 19.5;
+  background: #f6f0e4;
+  box-shadow: inset 0 0 0 1px rgb(52 77 47 / 8%);
 }
 
 .leaf-divider {
