@@ -14,6 +14,10 @@ const routes = [
     lastModified: '2026-01-11',
   },
   {
+    path: '/attributions',
+    lastModified: '2026-11-12',
+  },
+  {
     path: '/support',
     lastModified: '2026-09-04',
   },

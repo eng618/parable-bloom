@@ -8,6 +8,7 @@ import Reveal from '@/components/reveal';
 export const metadata: Metadata = {
   title: 'Terms of Service',
   description: 'Read the terms of service for Parable Bloom, outlining usage rights and responsibilities.',
+  alternates: { canonical: '/terms' },
 };
 
 export default function TermsPage() {

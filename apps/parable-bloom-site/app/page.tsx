@@ -7,6 +7,7 @@ import DesignSystemCard from '@/components/design-system-card';
 import LeafDivider from '@/components/leaf-divider';
 import PhoneShot from '@/components/phone-shot';
 import Reveal from '@/components/reveal';
+import { playStoreUrl, siteJsonLd } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: { absolute: 'Parable Bloom' },
@@ -28,7 +29,7 @@ const platforms = [
     marker: 'Android',
     title: 'Android',
     body: 'Join the open test on Google Play and install the Android app.',
-    href: 'https://play.google.com/store/apps/details?id=com.garciaericn.parable_bloom',
+    href: playStoreUrl,
     ctaLabel: 'Get on Google Play',
     badge: 'Available',
   },
@@ -91,6 +92,7 @@ const features = [
 export default function HomePage() {
   return (
     <div className="flex flex-col gap-16 pb-12 sm:gap-20">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />
       <section className="relative -mx-4 overflow-hidden sm:-mx-6">
         <Image
           src="/art/leaf_sprig.png"
@@ -127,7 +129,7 @@ export default function HomePage() {
                 Play on Web
               </Link>
               <Link
-                href="https://play.google.com/store/apps/details?id=com.garciaericn.parable_bloom"
+                href={playStoreUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="cta-secondary focus-visible:ring-brand/30 focus-visible:ring-2 focus-visible:outline-none"

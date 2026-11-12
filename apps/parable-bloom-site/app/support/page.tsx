@@ -9,6 +9,7 @@ import Reveal from '@/components/reveal';
 export const metadata: Metadata = {
   title: 'Support',
   description: 'Get help with Parable Bloom: contact support, FAQs, and links to privacy, terms, and account deletion.',
+  alternates: { canonical: '/support' },
 };
 
 const faqs = [

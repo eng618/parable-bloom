@@ -4,11 +4,13 @@ import type { Metadata } from 'next';
 
 import LeafDivider from '@/components/leaf-divider';
 import Reveal from '@/components/reveal';
+import { playStoreUrl } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'About',
   description:
     'Learn about Parable Bloom — a calm Christ-centered arrow puzzle with 500+ garden levels, Scripture journal, and offline play.',
+  alternates: { canonical: '/about' },
 };
 
 export default function AboutPage() {
@@ -71,7 +73,7 @@ export default function AboutPage() {
           <li>
             <Text variant="body">
               <a
-                href="https://play.google.com/store/apps/details?id=com.garciaericn.parable_bloom"
+                href={playStoreUrl}
                 className="text-brand decoration-brand/40 hover:decoration-brand underline underline-offset-2 transition-colors"
               >
                 Get it on Google Play

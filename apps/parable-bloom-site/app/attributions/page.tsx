@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: 'Attributions',
   description:
     'Audio, asset, and Bible translation licenses for Parable Bloom. NET Bible is the default; WEB, BSB, and KJV are also supported.',
+  alternates: { canonical: '/attributions' },
 };
 
 // Keep in sync with apps/parable-bloom/assets/data/scripture_metadata.json
