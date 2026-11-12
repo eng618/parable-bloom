@@ -76,7 +76,7 @@ export default function AboutPage() {
               >
                 Get it on Google Play
               </a>{' '}
-              <span className="text-text-secondary">(Coming Soon)</span>
+              <span className="text-text-secondary">(open testing)</span>
             </Text>
           </li>
         </ul>

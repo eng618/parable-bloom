@@ -15,7 +15,7 @@ const faqs = [
   {
     question: 'Which platforms are supported?',
     answer:
-      'Parable Bloom is available on Web (play instantly in your browser). Android on Google Play and iOS are coming soon.',
+      'Parable Bloom is available on the web, and on Google Play for Android open testing. iOS is coming soon.',
   },
   {
     question: 'How many levels are there?',

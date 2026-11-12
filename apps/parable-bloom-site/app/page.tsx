@@ -26,10 +26,10 @@ const platforms = [
   {
     marker: 'Android',
     title: 'Android',
-    body: 'The full mobile experience on Google Play.',
+    body: 'Join the open test on Google Play and install the Android app.',
     href: 'https://play.google.com/store/apps/details?id=com.garciaericn.parable_bloom',
     ctaLabel: 'Get on Google Play',
-    badge: 'Coming Soon',
+    badge: 'Available',
   },
   {
     marker: 'iOS',
@@ -174,7 +174,7 @@ export default function HomePage() {
         <Reveal>
           <h2 className="font-display text-text-primary mb-2 text-2xl font-semibold sm:text-3xl">Where to play</h2>
           <p className="text-text-secondary mb-6 max-w-xl">
-            Start in the browser today. Mobile store listings follow as releases land.
+            Play in the browser, or join the Android open test on Google Play. iOS is still on the way.
           </p>
         </Reveal>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
