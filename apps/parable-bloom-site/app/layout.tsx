@@ -4,17 +4,17 @@ import type { ReactNode } from 'react';
 import OpenpanelProvider from '@/components/openpanel-provider';
 import SiteShell from '@/components/site-shell';
 import UiThemeProvider from '@/components/ui-theme-provider';
+import { shareImageAlt, siteDescription, siteName, siteUrl } from '@/lib/site';
 
 import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://parable-bloom.pages.dev'),
+  metadataBase: new URL(siteUrl),
   title: {
-    default: 'Parable Bloom',
-    template: '%s | Parable Bloom',
+    default: siteName,
+    template: `%s | ${siteName}`,
   },
-  description:
-    'A calm Christ-centered arrow puzzle. Clear 500+ garden levels by sliding vines, then meet Scripture and reflection along the way.',
+  description: siteDescription,
   keywords: [
     'puzzle game',
     'christ-centered',
@@ -34,17 +34,21 @@ export const metadata: Metadata = {
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
   },
   openGraph: {
-    title: 'Parable Bloom',
-    description:
-      'A calm Christ-centered arrow puzzle. Clear 500+ garden levels by sliding vines, then meet Scripture and reflection along the way.',
-    url: 'https://parable-bloom.pages.dev',
-    siteName: 'Parable Bloom',
+    siteName,
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Parable Bloom — gospel through garden puzzles',
+        alt: shareImageAlt,
+        type: 'image/jpeg',
+      },
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 1200,
+        alt: shareImageAlt,
+        type: 'image/png',
       },
     ],
     locale: 'en_US',
@@ -52,10 +56,14 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Parable Bloom',
-    description:
-      'A calm Christ-centered arrow puzzle. Clear 500+ garden levels by sliding vines, then meet Scripture and reflection along the way.',
-    images: ['/og-image.jpg'],
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: shareImageAlt,
+      },
+    ],
   },
 };
 

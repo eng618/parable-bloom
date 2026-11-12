@@ -9,9 +9,10 @@ import PhoneShot from '@/components/phone-shot';
 import Reveal from '@/components/reveal';
 
 export const metadata: Metadata = {
-  title: 'Parable Bloom',
+  title: { absolute: 'Parable Bloom' },
   description:
     'A calm Christ-centered arrow puzzle. Clear 500+ garden levels by sliding vines, then meet Scripture and reflection along the way.',
+  alternates: { canonical: '/' },
 };
 
 const platforms = [

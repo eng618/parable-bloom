@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const siteUrl = 'https://parable-bloom.pages.dev';
+import { siteUrl } from '@/lib/site';
 
 export const dynamic = 'force-static';
 
