@@ -1,3 +1,14 @@
+## 0.5.26 (2026-11-12)
+
+### 🚀 Features
+
+- update Flutter imports to use material_ui and cupertino_ui packages ([d090d58](https://github.com/eng618/parable-bloom/commit/d090d58))
+- **gestures:** implement anchored zoom and pan functionality for improved user interaction ([197a6c0](https://github.com/eng618/parable-bloom/commit/197a6c0))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 0.5.25 (2026-11-11)
 
 ### 🚀 Features
