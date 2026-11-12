@@ -156,7 +156,9 @@ jobs:
         uses: actions/setup-java@v6.1.0
         with:
           distribution: "zulu"
-          java-version: "17"
+          # AGP 9.3 lint calls List.removeLast(), which exists only on JDK 21.
+          # The app still compiles to JVM 17.
+          java-version: "21"
 
       - name: Fetch secrets from Bitwarden
         if: matrix.platform == 'android'

@@ -795,6 +795,11 @@ ship Kotlin metadata 2.4.0 and the project compiler is older
   `android.builtInKotlin=false` so the existing `android {}` block and the
   Kotlin plugin still apply. Google services is 4.5.0 and the Crashlytics
   Gradle plugin is 3.0.8; Crashlytics 2.x does not apply on AGP 9.
+- The publish workflow runs Gradle on Zulu JDK 21. AGP 9.3's release lint
+  (`:firebase_core:lintVitalAnalyzeRelease`) calls `java.util.List.removeLast()`
+  inside its bundled Java parser, and that method is absent on JDK 17, so the
+  task crashes with `NoSuchMethodError`. The app's own bytecode target stays
+  `JvmTarget.JVM_17`.
 - Release shrinking is explicit (`isMinifyEnabled` / `isShrinkResources`).
   A local bundle on 2026-10-31 proved R8 shrinking on the previous AGP 8.11
   toolchain. That bundle used a throwaway keystore and was not uploaded to Play.
