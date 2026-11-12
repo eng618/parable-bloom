@@ -1,3 +1,15 @@
+## 0.5.27 (2026-11-12)
+
+### 🚀 Features
+
+- **marketing:** update Android availability and messaging on the site ([4b9c918](https://github.com/eng618/parable-bloom/commit/4b9c918))
+- **icons:** update marketing site icons to use current app icon ([d295ced](https://github.com/eng618/parable-bloom/commit/d295ced))
+- **documentation:** add custom domains guide for gventureshq.com ([4ba313a](https://github.com/eng618/parable-bloom/commit/4ba313a))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 0.5.26 (2026-11-12)
 
 ### 🚀 Features
