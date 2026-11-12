@@ -17,14 +17,21 @@ Step-by-step procedure for preparing and releasing new versions across platforms
 - Fastlane execution and CI/CD pipelines.
 - Bitwarden Secrets Manager (`bws`) credential injection.
 
-### 2. [Store Onboarding Checklist](store-onboarding.md)
+### 2. [Public hosts on gventureshq.com](custom-domains.md)
+
+Attach the existing deploys to the parent domain:
+
+- Marketing site on Cloudflare Pages at `parablebloom.gventureshq.com`.
+- Game on Firebase Hosting at `play.parablebloom.gventureshq.com`.
+
+### 3. [Store Onboarding Checklist](store-onboarding.md)
 
 Step-by-step instructions for App Store Connect and Google Play Console release preparation:
 
 - Data safety, privacy policy, and content rating questionnaires.
 - Category selection and store listing prerequisites.
 
-### 3. [Level Generation and Resilience Management](level-generation.md)
+### 4. [Level Generation and Resilience Management](level-generation.md)
 
 How to generate, render, validate, and repair puzzle levels:
 
@@ -32,7 +39,7 @@ How to generate, render, validate, and repair puzzle levels:
 - Handling generator resilience, backtracking, and circuit breakers.
 - Recovering and repairing corrupted level JSON files.
 
-### 4. [App Store Listings & Marketing](app-store-listings/README.md)
+### 5. [App Store Listings & Marketing](app-store-listings/README.md)
 
 Guides for preparing store listings, marketing copy, and screenshots:
 
@@ -41,7 +48,7 @@ Guides for preparing store listings, marketing copy, and screenshots:
 - [Marketing](app-store-listings/marketing.md)
 - [Visual Assets](app-store-listings/visual-assets.md)
 
-### 5. [Flutter Architecture Improvement Plan](flutter-architecture-improvement-plan.md)
+### 6. [Flutter Architecture Improvement Plan](flutter-architecture-improvement-plan.md)
 
 Living checklist tracking the projection-lines bug fix plus Flutter/Flame performance, UX smoothness, and maintainability work:
 

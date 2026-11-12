@@ -38,6 +38,7 @@ _Learning-oriented lessons that take newcomers by the hand to get up and running
 _Task-oriented recipes for accomplishing specific real-world tasks._
 
 - **[Automated Release Process](how-to/release-process.md)** — Conventional Commits, Nx Release, Fastlane, Bitwarden Secrets Manager (`bws`).
+- **[Public hosts on gventureshq.com](how-to/custom-domains.md)** — Cloudflare Pages for the marketing site, Firebase Hosting for the game.
 - **[Store Onboarding](how-to/store-onboarding.md)** — App Store Connect and Google Play Console onboarding questions & setup.
 - **[Level Generation & Repair](how-to/level-generation.md)** — Generating, rendering, validating, and repairing levels with Go CLI tooling.
 - **[App Store Listings & ASO](how-to/app-store-listings/README.md)** — Metadata, visual asset guides, marketing copy, and compliance checklists.
