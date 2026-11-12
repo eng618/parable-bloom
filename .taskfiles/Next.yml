@@ -9,15 +9,30 @@ tasks:
       # separate `task` processes, and concurrent `bun install`s race on
       # node_modules and the bun cache (ENOENT copy failures). mkdir is
       # atomic on POSIX, so this mutex works on Linux and macOS (no flock).
+      # Task's shell has errexit on. A failing `rmdir` (lock already gone)
+      # used to abort the task after a successful install, with the error
+      # hidden by `2>/dev/null`. `set +e` keeps that from failing CI.
+      # The stamp skips repeat installs once this bun.lock is in place.
       # If a killed install leaves the lock behind, delete
       # /tmp/parable-bloom-site-bun-install.lock and re-run.
       - |
+        set +e
         lock="/tmp/parable-bloom-site-bun-install.lock"
         while ! mkdir "$lock" 2>/dev/null; do sleep 1; done
+        stamp="node_modules/.parable-bun-stamp"
+        sum="$(cksum < bun.lock)"
+        if [ -n "$sum" ] && [ -f "$stamp" ] && [ "$(cat "$stamp")" = "$sum" ]; then
+          rmdir "$lock" 2>/dev/null
+          exit 0
+        fi
         bun install
         rc=$?
+        if [ "$rc" -eq 0 ] && [ -n "$sum" ]; then
+          mkdir -p node_modules
+          printf '%s\n' "$sum" > "$stamp"
+        fi
         rmdir "$lock" 2>/dev/null
-        exit $rc
+        exit "$rc"
 
   dev:
     desc: Start Next.js development server for the site
