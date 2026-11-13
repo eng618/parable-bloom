@@ -149,6 +149,9 @@ abstract class ProgressRepository {
 **Auto-Sync Behavior**:
 When a user explicitly creates an account, links an anonymous account to an email/password, or signs into an existing account, **Cloud Sync** is automatically enabled for their local device. This ensures their progres is synchronized seamlessly without requiring manual opt-in from the settings menu.
 
+**Web sign-in and password managers**:
+Flutter paints `TextFormField` on a canvas. On the web the engine mounts a real HTML input only for the focused field, and its other autofill proxies are 0×0 or placed off-screen. Extension password managers such as Bitwarden skip any control shorter than 10px or outside the viewport, then report that the page cannot be autofilled. The web sign-in screen (`AuthCredentialFields`) therefore renders visible HTML email and password inputs (`autocomplete="username"` / `"current-password"`, or `"email"` / `"new-password"` when creating an account). Those inputs leave the scene while a dialog covers the sign-in route, because a platform view paints in front of the canvas. iOS, Android, and desktop keep Flutter fields in an `AutofillGroup` with the same hints.
+
 **Reactive Cloud Sync Providers**:
 To prevent stale caching and out-of-sync UI states when users log in or out, we expose several reactive Riverpod providers:
 

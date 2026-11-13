@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import '../../../game/domain/entities/cloud_sync_state.dart';
 import '../../../game/domain/entities/game_progress.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/widgets/constrained_page.dart';
+import '../widgets/auth_credential_fields.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -20,7 +22,7 @@ class AuthScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _fieldsKey = GlobalKey<AuthCredentialFieldsState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -44,7 +46,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_isLoading) return;
+    if (!(_fieldsKey.currentState?.validate() ?? false)) return;
 
     setState(() {
       _isLoading = true;
@@ -97,6 +100,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               automatic: false,
             );
       }
+
+      // Ask the platform password manager to offer saving this login.
+      TextInput.finishAutofillContext();
 
       // If successful, close the screen
       if (mounted) {
@@ -220,11 +226,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: emailController,
+                    autofillHints: const [AutofillHints.email],
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
                   ),
                   if (isSending) ...[
                     const SizedBox(height: 16),
@@ -319,95 +327,70 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_errorMessage != null) ...[
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _errorMessage!,
-                            style: TextStyle(color: Colors.red.shade900),
-                            textAlign: TextAlign.center,
-                          ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_errorMessage != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(height: 16),
-                      ],
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.email),
+                        child: Text(
+                          _errorMessage!,
+                          style: TextStyle(color: Colors.red.shade900),
+                          textAlign: TextAlign.center,
                         ),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value == null ||
-                              value.isEmpty ||
-                              !value.contains('@')) {
-                            return 'Please enter a valid email address.';
-                          }
-                          return null;
-                        },
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        decoration: const InputDecoration(
-                          labelText: 'Password',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.lock),
-                        ),
-                        obscureText: true,
-                        validator: (value) {
-                          if (value == null || value.length < 6) {
-                            return 'Password must be at least 6 characters.';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      if (_isLogin)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _showForgotPasswordDialog,
-                            child: const Text('Forgot Password?'),
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-                      if (_isLoading)
-                        const CircularProgressIndicator()
-                      else
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            FilledButton(
-                              onPressed: _submit,
-                              child: Text(_isLogin ? 'Sign In' : 'Sign Up'),
-                            ),
-                            const SizedBox(height: 16),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _isLogin = !_isLogin;
-                                  _errorMessage = null;
-                                });
-                              },
-                              child: Text(_isLogin
-                                  ? 'Create a new account'
-                                  : 'I already have an account'),
-                            ),
-                          ],
-                        ),
                     ],
-                  ),
+                    AuthCredentialFields(
+                      key: _fieldsKey,
+                      emailController: _emailController,
+                      passwordController: _passwordController,
+                      isLogin: _isLogin,
+                      enabled: !_isLoading,
+                      // Dialogs paint in the canvas. On the web the credential
+                      // inputs are a platform view in front of that canvas.
+                      visible: ModalRoute.of(context)?.isCurrent != false,
+                      onSubmit: _submit,
+                    ),
+                    const SizedBox(height: 16),
+                    if (_isLogin)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _showForgotPasswordDialog,
+                          child: const Text('Forgot Password?'),
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+                    if (_isLoading)
+                      const CircularProgressIndicator()
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          FilledButton(
+                            onPressed: () => _fieldsKey.currentState?.submit(),
+                            child: Text(_isLogin ? 'Sign In' : 'Sign Up'),
+                          ),
+                          const SizedBox(height: 16),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isLogin = !_isLogin;
+                                _errorMessage = null;
+                              });
+                            },
+                            child: Text(_isLogin
+                                ? 'Create a new account'
+                                : 'I already have an account'),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
               ),
             ),

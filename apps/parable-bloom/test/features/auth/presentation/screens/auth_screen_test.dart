@@ -180,6 +180,55 @@ void main() {
       );
     }
 
+    testWidgets('rejects an empty sign-in before contacting auth',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createAuthScreen());
+
+      await tester.tap(find.byType(FilledButton));
+      await tester.pump();
+
+      expect(find.text('Please enter a valid email address.'), findsOneWidget);
+      expect(testGameProgressNotifier.enableCalled, isFalse);
+    });
+
+    testWidgets('exposes password-manager autofill hints',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createAuthScreen());
+
+      final email = tester.widget<TextField>(find.byType(TextField).first);
+      final password = tester.widget<TextField>(find.byType(TextField).last);
+      expect(email.autofillHints, [AutofillHints.username]);
+      expect(password.autofillHints, [AutofillHints.password]);
+      expect(password.obscureText, isTrue);
+
+      await tester.tap(find.text('Create a new account'));
+      await tester.pump();
+
+      final signupEmail =
+          tester.widget<TextField>(find.byType(TextField).first);
+      final signupPassword =
+          tester.widget<TextField>(find.byType(TextField).last);
+      expect(signupEmail.autofillHints, [AutofillHints.email]);
+      expect(signupPassword.autofillHints, [AutofillHints.newPassword]);
+    });
+
+    testWidgets('hides credential fields while a dialog covers sign-in',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createAuthScreen());
+
+      await tester.tap(find.text('Forgot Password?'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Reset Password'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Reset Password'), findsNothing);
+      expect(find.byType(TextField), findsNWidgets(2));
+    });
+
     testWidgets('Shows invalid email error when Firebase throws invalid-email',
         (WidgetTester tester) async {
       mockAuthService.throwException(FirebaseAuthException(
