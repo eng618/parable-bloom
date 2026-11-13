@@ -225,8 +225,9 @@ Instead of using `debugPrint` or `print`, all modules should use `LoggerService`
 - **Environment Awareness**:
   - In **Development/Preview**: Logs are printed to the console using `debugPrint`.
   - In **All Environments**:
-    - Errors (`LoggerService.error`) are reported to **Firebase Crashlytics**.
-    - Info and Warn logs are added as **Crashlytics Breadcrumbs** to provide context for potential crashes.
+    - Errors (`LoggerService.error`) are reported to **Sentry**.
+    - Warnings stay breadcrumbs. Transient cloud timeouts and retries use `warn`, so a slow Firestore write does not open a Sentry issue.
+    - Info and Warn logs are added as **Crashlytics Breadcrumbs** on mobile to provide context for potential crashes.
 - **Traceability**: Support for optional `tag` and `metadata` to help filter and understand logs.
 
 > **Test-friendly behavior**
@@ -248,8 +249,9 @@ Instead of using `debugPrint` or `print`, all modules should use `LoggerService`
 
 ### 5.2 Error Reporting Standards
 
-- **Try-Catch Blocks**: All caught exceptions that indicate a failure in a core process (e.g., auth, sync, asset loading) MUST be reported using `LoggerService.error`.
-- **Uncaught Errors**: Initialized in `main.dart`, `FlutterError.onError` and `PlatformDispatcher.instance.onError` are configured to capture and report all uncaught exceptions to Crashlytics.
+- **Try-Catch Blocks**: Caught failures in a core process (auth, sync, asset loading) use `LoggerService.error`. Expected transient cloud timeouts and retries use `LoggerService.warn`.
+- **Uncaught Errors**: Initialized in `main.dart`, `FlutterError.onError` and `PlatformDispatcher.instance.onError` report uncaught exceptions through `LoggerService.error` (Sentry).
+- **Widget lifetime**: After an `await`, a `Consumer` must not call `ref` unless `context.mounted` is true. `State.mounted` stays true through `dispose`. Long cloud calls capture a `ProviderContainer` before the await and invalidate through that.
 - **Asynchronous Errors**: All asynchronous errors in `main` or background tasks are captured and reported as fatal errors when appropriate.
 
 ---

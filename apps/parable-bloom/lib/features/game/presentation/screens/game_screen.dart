@@ -56,6 +56,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   /// [State.mounted] is still true.
   ProviderContainer? _providerContainer;
 
+  /// [State.mounted] stays true for the whole [dispose] call. Riverpod
+  /// rejects [ref] as soon as the element is defunct (PARABLE-BLOOM-A/B/E/F),
+  /// so frame callbacks and work that resumes after an await must check this
+  /// before touching [ref] or [BuildContext].
+  bool get _refAlive => mounted && context.mounted;
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +77,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     _subscribeToProviders();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_refAlive) return;
       ref.read(analyticsServiceProvider).logScreenView('Gameplay');
     });
   }
@@ -235,7 +242,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         },
       ),
     ).whenComplete(() {
-      if (!mounted) return;
+      if (!_refAlive) return;
       unawaited(ref.read(sfxControllerProvider).playMenuClose());
     });
   }
@@ -256,23 +263,30 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _goHomeFromGameplay({required bool logQuit}) {
     _homeExitRequested = true;
     if (logQuit) _logLevelQuit();
-    if (!mounted) return;
+    if (!_refAlive) return;
     context.go('/');
   }
 
   /// Home during the level-complete celebration (level already persisted).
   void _goHomeFromLevelComplete({bool playSound = true}) {
-    if (playSound) {
+    if (playSound && _refAlive) {
       unawaited(ref.read(sfxControllerProvider).playCancel());
     }
     _homeExitRequested = true;
-    if (_isLevelCompleteOverlayVisible) {
+    if (_isLevelCompleteOverlayVisible && _refAlive) {
       setState(() {
         _isLevelCompleteOverlayVisible = false;
       });
     }
-    ref.read(levelCompleteProvider.notifier).setComplete(false);
-    if (!mounted) return;
+    final container = _providerContainer;
+    if (container != null) {
+      try {
+        container.read(levelCompleteProvider.notifier).setComplete(false);
+      } on StateError {
+        // App teardown already disposed the container.
+      }
+    }
+    if (!_refAlive) return;
     context.go('/');
   }
 
@@ -320,7 +334,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _showLevelCompleteOverlay() async {
-    if (_isLevelCompleteOverlayVisible) return;
+    if (_isLevelCompleteOverlayVisible || !_refAlive) return;
+    final container = _providerContainer;
+    if (container == null) return;
 
     _homeExitRequested = false;
     _currentCongratulationMessage = pickCongratulationMessage();
@@ -329,33 +345,47 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _isLevelCompleteOverlayVisible = true;
     });
 
-    // Celebration FX, centered on the board.
+    // Celebration FX, centered on the board. The callback runs after this
+    // frame's unmount pass, so [ref] is unsafe if the player already left.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_game != null) {
+      final game = _game;
+      if (!_refAlive || game == null) return;
+      try {
         spawnCelebrationEffect(
-          game: _game!,
-          effect: ref.read(celebrationEffectProvider),
+          game: game,
+          effect: container.read(celebrationEffectProvider),
           isDark: Theme.of(context).brightness == Brightness.dark,
         );
+      } on StateError {
+        // App teardown already disposed the container.
       }
     });
 
-    // Persist completion + detect unlocks; default path continues to next level.
-    final currentLevel = ref.read(currentLevelProvider);
+    // Persist completion through the container. Home can pop this screen
+    // during the module lookup, and [ref] throws once the element is gone.
+    LevelData? currentLevel;
+    var isDebugPlay = false;
+    try {
+      currentLevel = container.read(currentLevelProvider);
+      isDebugPlay = container.read(debugPlayModeProvider);
+    } on StateError {
+      return;
+    }
     ModuleData? completedModule;
     ModuleScripture? newlyUnlockedScripture;
-    final isDebugPlay = ref.read(debugPlayModeProvider);
 
     if (currentLevel != null) {
       List<ModuleData> modules = [];
       try {
-        modules = await ref.read(modulesProvider.future);
+        modules = await container.read(modulesProvider.future);
         for (final m in modules) {
           if (m.endLevel == currentLevel.id) {
             completedModule = m;
             break;
           }
         }
+      } on StateError {
+        return;
       } catch (error, stackTrace) {
         LoggerService.warn(
           'Skipping module completion lookup due to module load failure',
@@ -366,43 +396,51 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         );
       }
 
-      final prevUnlockedScriptures =
-          ref.read(gameProgressProvider).unlockedScriptureIds;
+      try {
+        final prevUnlockedScriptures =
+            container.read(gameProgressProvider).unlockedScriptureIds;
 
-      if (!isDebugPlay) {
-        await ref
-            .read(gameProgressProvider.notifier)
-            .completeLevel(currentLevel.id);
-      } else {
-        LoggerService.debug(
-          'Debug play — skipping persistence',
-          tag: 'GameScreen',
-          metadata: {'level_id': currentLevel.id},
-        );
-      }
+        if (!isDebugPlay) {
+          await container
+              .read(gameProgressProvider.notifier)
+              .completeLevel(currentLevel.id);
+        } else {
+          LoggerService.debug(
+            'Debug play — skipping persistence',
+            tag: 'GameScreen',
+            metadata: {'level_id': currentLevel.id},
+          );
+        }
 
-      final postProgress = ref.read(gameProgressProvider);
-      if (modules.isNotEmpty) {
-        for (final m in modules) {
-          for (final s in m.scriptures) {
-            if (!prevUnlockedScriptures.contains(s.id) &&
-                postProgress.unlockedScriptureIds.contains(s.id)) {
-              newlyUnlockedScripture = s;
-              completedModule = m; // Associate for the dialog
-              break;
+        final postProgress = container.read(gameProgressProvider);
+        if (modules.isNotEmpty) {
+          for (final m in modules) {
+            for (final s in m.scriptures) {
+              if (!prevUnlockedScriptures.contains(s.id) &&
+                  postProgress.unlockedScriptureIds.contains(s.id)) {
+                newlyUnlockedScripture = s;
+                completedModule = m; // Associate for the dialog
+                break;
+              }
             }
           }
         }
+        container.read(gameInstanceProvider.notifier).resetGrace();
+      } on StateError {
+        return;
+      }
+    } else {
+      try {
+        container.read(gameInstanceProvider.notifier).resetGrace();
+      } on StateError {
+        return;
       }
     }
-
-    // Reset grace for the next level
-    ref.read(gameInstanceProvider.notifier).resetGrace();
 
     // Wait for celebration beat, then unlock dialog or next level.
     await Future.delayed(AnimationTiming.levelCompleteDelay);
 
-    if (!mounted || _homeExitRequested) return;
+    if (!mounted || !context.mounted || _homeExitRequested) return;
 
     // Reset completion flag
     ref.read(levelCompleteProvider.notifier).setComplete(false);
@@ -466,7 +504,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (isDebugPlay) {
       // Debug selected a specific level — return to settings/home path.
       ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
-      if (!mounted || _homeExitRequested) return;
+      if (!mounted || !context.mounted || _homeExitRequested) return;
       context.go('/');
       return;
     }
@@ -476,7 +514,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   /// Load the next uncompleted level in-place. Playlist exhausted → completed.
   Future<void> _continueToNextLevel() async {
-    if (!mounted || _homeExitRequested) return;
+    if (!_refAlive || _homeExitRequested) return;
 
     final game = _game;
     if (game == null) {
@@ -497,7 +535,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
     }
 
-    if (!mounted || _homeExitRequested) return;
+    if (!_refAlive || _homeExitRequested) return;
 
     final progress = ref.read(gameProgressProvider);
     final nextId = progress.nextUncompletedLevel(playlist);
@@ -521,12 +559,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Future<void> _loadLevelForGame(GardenGame game) async {
+    if (!_refAlive) return;
     final debugSelected = ref.read(debugSelectedLevelProvider);
     final gameProgress = ref.read(gameProgressProvider);
     var levelId = debugSelected ?? gameProgress.currentLevel;
 
     try {
       final mappings = await ref.read(levelMappingsProvider.future);
+      if (!_refAlive) return;
       if (!mappings.containsKey(levelId) && debugSelected == null) {
         // The persisted pointer may predate the current playlist (new cloud
         // levels, migrated IDs) or the registry sources may disagree. Resolve
@@ -534,6 +574,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         // resolveLevelToLoad only returns IDs present in mappings.
         final resolved =
             await ref.read(gameProgressProvider.notifier).resolveLevelToLoad();
+        if (!_refAlive) return;
         if (resolved != null) {
           levelId = resolved;
         }
@@ -554,6 +595,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       }
 
       final levelData = await ref.read(levelDataProvider(levelId).future);
+      if (!_refAlive) return;
 
       // Capture before setLevel: a fresh level starts the attempt count at
       // 1, a reloaded same level keeps counting. (Reading after setLevel
@@ -608,6 +650,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         stackTrace: stack,
         tag: 'GameScreen',
       );
+      if (!_refAlive) return;
       ref.read(gameOverProvider.notifier).setGameOver(true);
     }
   }
@@ -662,6 +705,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     showGameCompletedDialog(
       context,
       onBackToHome: () {
+        if (!_refAlive) return;
         LoggerService.info(
           'Returning to home from completion dialog',
           tag: 'GameScreen',

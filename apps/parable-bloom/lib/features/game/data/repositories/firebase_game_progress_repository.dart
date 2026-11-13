@@ -84,9 +84,8 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     if (await isCloudSyncEnabled() && _userId != null) {
       // Fire and forget - if it fails, we'll catch it on next sync
       // We don't await this to keep UI responsive, but we could if we wanted validation
-      syncToCloud().catchError((e, stack) {
-        LoggerService.error('Auto-sync failed',
-            error: e, stackTrace: stack, tag: 'FirebaseGameProgressRepository');
+      syncToCloud().catchError((Object e, StackTrace stack) {
+        _logCloudFailure('Auto-sync failed', e, stack);
       });
     }
   }
@@ -173,9 +172,9 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
       LoggerService.info('Sync to cloud successful',
           tag: 'FirebaseGameProgressRepository');
     } catch (e, stack) {
-      LoggerService.error('Sync to cloud failed',
-          error: e, stackTrace: stack, tag: 'FirebaseGameProgressRepository');
-      // Rethrow? No, fail silently but log.
+      // Timeouts are expected on a slow link. Logging them as errors opened
+      // Sentry issues PARABLE-BLOOM-C/G/J for a retry that already gave up.
+      _logCloudFailure('Sync to cloud failed', e, stack);
     }
   }
 
@@ -197,8 +196,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
         await _saveLocalProgress(conflict.cloudProgress!, updateSyncTime: true);
       }
     } catch (e, stack) {
-      LoggerService.error('Sync from cloud failed',
-          error: e, stackTrace: stack, tag: 'FirebaseGameProgressRepository');
+      _logCloudFailure('Sync from cloud failed', e, stack);
     }
   }
 
@@ -538,7 +536,7 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
     if (!conflict.cloudHasData) {
       final userId = _userId;
       if (userId != null && !_isAnonymousUser) {
-        await _saveCloudProgress(userId, conflict.localProgress);
+        await _pushCloudProgress(userId, conflict.localProgress);
       }
       return;
     }
@@ -553,6 +551,34 @@ class FirebaseGameProgressRepository implements GameProgressRepository {
       return;
     }
 
-    await _saveCloudProgress(userId, conflict.localProgress);
+    await _pushCloudProgress(userId, conflict.localProgress);
+  }
+
+  /// Push that retries transient failures and does not surface them.
+  /// Local Hive remains the source of truth when the write does not land.
+  Future<void> _pushCloudProgress(String userId, GameProgress progress) async {
+    try {
+      await _saveCloudProgressWithRetry(userId, progress);
+    } catch (error, stackTrace) {
+      _logCloudFailure('Cloud progress push failed', error, stackTrace);
+    }
+  }
+
+  void _logCloudFailure(String message, Object error, StackTrace stackTrace) {
+    if (_isTransientCloudError(error)) {
+      LoggerService.warn(
+        message,
+        error: error,
+        stackTrace: stackTrace,
+        tag: 'FirebaseGameProgressRepository',
+      );
+      return;
+    }
+    LoggerService.error(
+      message,
+      error: error,
+      stackTrace: stackTrace,
+      tag: 'FirebaseGameProgressRepository',
+    );
   }
 }

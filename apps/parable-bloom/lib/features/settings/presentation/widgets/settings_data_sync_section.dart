@@ -55,9 +55,16 @@ class _CloudSyncTile extends ConsumerWidget {
               subtitle: Text(_syncSubtitleForAvailability(availability)),
               value: isEnabled,
               onChanged: (value) async {
-                final notifier = ref.read(gameProgressProvider.notifier);
+                // Captured while the tile is mounted. enableCloudSync can
+                // outlive this element (8s cloud timeout), and WidgetRef
+                // throws once it is gone (PARABLE-BLOOM-H).
+                final container = ProviderScope.containerOf(
+                  context,
+                  listen: false,
+                );
+                final notifier = container.read(gameProgressProvider.notifier);
                 if (value && !availability.isAvailable) {
-                  await ref
+                  await container
                       .read(analyticsServiceProvider)
                       .logCloudSyncUnavailable(
                         source: 'settings_toggle',
@@ -90,8 +97,8 @@ class _CloudSyncTile extends ConsumerWidget {
                 } else {
                   await notifier.disableCloudSync();
                 }
-                ref.invalidate(cloudSyncEnabledProvider);
-                ref.invalidate(cloudSyncAvailabilityProvider);
+                container.invalidate(cloudSyncEnabledProvider);
+                container.invalidate(cloudSyncAvailabilityProvider);
               },
             ),
             loading: () => const ListTile(

@@ -74,10 +74,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         }
       }
 
+      if (!mounted) return;
       final progressNotifier = ref.read(gameProgressProvider.notifier);
       await progressNotifier.enableCloudSync();
+      if (!mounted) return;
 
       final conflict = await progressNotifier.inspectSyncConflict();
+      if (!mounted) return;
       if (conflict.type != SyncConflictType.none) {
         await ref.read(analyticsServiceProvider).logSyncConflictDetected(
               source: 'auth',
@@ -89,10 +92,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
       if (conflict.requiresUserDecision && mounted) {
         final resolution = await _showSyncConflictDialog(conflict);
-        if (resolution == null) {
+        if (resolution == null || !mounted) {
           return;
         }
         await progressNotifier.resolveSyncConflict(resolution);
+        if (!mounted) return;
         await ref.read(analyticsServiceProvider).logSyncConflictResolved(
               source: 'auth',
               conflictType: conflict.type.name,

@@ -57,6 +57,10 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
   /// [State.mounted] is still true.
   ProviderContainer? _providerContainer;
 
+  /// [State.mounted] stays true through [dispose]. Riverpod rejects [ref]
+  /// once the element is defunct, including frame callbacks after Home.
+  bool get _refAlive => mounted && context.mounted;
+
   @override
   void initState() {
     super.initState();
@@ -346,18 +350,18 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
     // Soft FX only (no congratulatory copy / LevelCompleteOverlay).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_game != null && mounted) {
-        spawnCelebrationEffect(
-          game: _game!,
-          effect: ref.read(celebrationEffectProvider),
-          isDark: Theme.of(context).brightness == Brightness.dark,
-        );
-      }
+      final game = _game;
+      if (!_refAlive || game == null) return;
+      spawnCelebrationEffect(
+        game: game,
+        effect: ref.read(celebrationEffectProvider),
+        isDark: Theme.of(context).brightness == Brightness.dark,
+      );
     });
 
     await Future.delayed(AnimationTiming.levelCompleteDelay);
 
-    if (!mounted || _homeExitRequested) return;
+    if (!_refAlive || _homeExitRequested) return;
 
     setState(() {
       _isLessonAdvanceInFlight = false;
@@ -374,7 +378,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         .read(tutorialProgressProvider.notifier)
         .completeLesson(beforeLesson);
 
-    if (!mounted || _homeExitRequested) return;
+    if (!_refAlive || _homeExitRequested) return;
 
     // Reset completion flags
     ref.read(levelCompleteProvider.notifier).setComplete(false);
@@ -386,6 +390,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
     try {
       final modules = await ref.read(modulesProvider.future);
+      if (!_refAlive || _homeExitRequested) return;
       for (final m in modules) {
         for (final s in m.scriptures) {
           if (!prevUnlockedScriptures.contains(s.id) &&
@@ -399,6 +404,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
       if (unlockedScripture == null) {
         final themes = await ref.read(journalThemesProvider.future);
+        if (!_refAlive || _homeExitRequested) return;
         for (final theme in themes) {
           for (final passage in theme.passages) {
             if (!prevUnlockedScriptures.contains(passage.id) &&
@@ -432,7 +438,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       );
     }
 
-    if (!mounted || _homeExitRequested) return;
+    if (!_refAlive || _homeExitRequested) return;
 
     if (unlockedScripture != null && completedModule != null) {
       await _showScriptureUnlockedDialog(unlockedScripture, completedModule);
@@ -444,7 +450,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
   /// Continue to the next lesson, or Home when the tutorial is finished.
   void _advanceTutorialAfterComplete(int beforeLesson) {
-    if (!mounted || _homeExitRequested) return;
+    if (!_refAlive || _homeExitRequested) return;
 
     final after = ref.read(tutorialProgressProvider);
     if (after.allLessonsCompleted) {
@@ -465,7 +471,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
 
   /// After an unlock dialog CONTINUE — progress already advanced.
   void _continueTutorialAfterUnlock() {
-    if (!mounted || _homeExitRequested) return;
+    if (!_refAlive || _homeExitRequested) return;
 
     final after = ref.read(tutorialProgressProvider);
     if (after.allLessonsCompleted) {
@@ -486,7 +492,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     ModuleScripture scripture,
     ModuleData module,
   ) async {
-    if (!mounted) return;
+    if (!_refAlive) return;
 
     final preferred = ref.read(preferredTranslationProvider);
 
@@ -529,7 +535,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       );
     }
 
-    if (!mounted) return;
+    if (!mounted || !context.mounted) return;
 
     await showDialog<void>(
       context: context,

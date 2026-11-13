@@ -766,5 +766,40 @@ void main() {
       expect(writeAttempts, 1);
       expect(await repository.getLastSyncTime(), isNotNull);
     });
+
+    test('resolveSyncConflict keepLocal survives a cloud write timeout',
+        () async {
+      repository = FirebaseGameProgressRepository(
+        box,
+        mockFirestore,
+        mockAuth,
+        cloudWriteTimeout: const Duration(milliseconds: 10),
+        cloudRetryDelay: Duration.zero,
+      );
+
+      final local = GameProgress.initial().copyWith(
+        currentLevel: 'lvl_m01_05',
+        completedLevels: {
+          'lvl_m01_01',
+          'lvl_m01_02',
+          'lvl_m01_03',
+          'lvl_m01_04'
+        },
+      );
+      await repository.saveProgress(local);
+
+      when(() => mockSnapshot.exists).thenReturn(false);
+      when(() => mockSnapshot.data()).thenReturn(null);
+      when(() => mockSubDoc.set(any())).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+      });
+
+      await expectLater(
+        repository.resolveSyncConflict(SyncConflictResolution.keepLocal),
+        completes,
+      );
+      expect(await repository.getLastSyncTime(), isNull);
+      expect((await repository.getProgress()).currentLevel, 'lvl_m01_05');
+    });
   });
 }
