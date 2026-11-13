@@ -1,3 +1,18 @@
+## 0.5.28 (2026-11-13)
+
+### 🚀 Features
+
+- **marketing:** enhance SEO and structured data across public pages ([1a5da4e](https://github.com/eng618/parable-bloom/commit/1a5da4e))
+- **marketing:** enhance site metadata and update image assets ([e5fe6f8](https://github.com/eng618/parable-bloom/commit/e5fe6f8))
+
+### 🩹 Fixes
+
+- **taskfiles:** improve bun install locking mechanism ([8b63b5a](https://github.com/eng618/parable-bloom/commit/8b63b5a))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 0.5.27 (2026-11-12)
 
 ### 🚀 Features
