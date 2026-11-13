@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 
 import LeafDivider from '@/components/leaf-divider';
 import Reveal from '@/components/reveal';
-import { playStoreUrl } from '@/lib/site';
+import { playStoreUrl, playUrl } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'About',
@@ -62,7 +62,7 @@ export default function AboutPage() {
           <li>
             <Text variant="body">
               <a
-                href="https://parable-bloom.web.app/"
+                href={playUrl}
                 className="text-brand decoration-brand/40 hover:decoration-brand underline underline-offset-2 transition-colors"
               >
                 Play on Web

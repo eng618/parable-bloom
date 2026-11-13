@@ -7,7 +7,7 @@ import DesignSystemCard from '@/components/design-system-card';
 import LeafDivider from '@/components/leaf-divider';
 import PhoneShot from '@/components/phone-shot';
 import Reveal from '@/components/reveal';
-import { playStoreUrl, siteJsonLd } from '@/lib/site';
+import { playStoreUrl, playUrl, siteJsonLd } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: { absolute: 'Parable Bloom' },
@@ -21,7 +21,7 @@ const platforms = [
     marker: 'Web',
     title: 'Play on Web',
     body: 'Open the garden in your browser — no download required.',
-    href: 'https://parable-bloom.web.app/',
+    href: playUrl,
     ctaLabel: 'Play Now',
     badge: 'Available',
   },
@@ -121,7 +121,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="https://parable-bloom.web.app/"
+                href={playUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="cta-primary focus-visible:ring-brand/40 !text-on-brand hover:!text-on-brand focus-visible:ring-2 focus-visible:outline-none"
@@ -234,7 +234,7 @@ export default function HomePage() {
         </Text>
         <div className="flex flex-wrap justify-center gap-3">
           <Link
-            href="https://parable-bloom.web.app/"
+            href={playUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="cta-primary !text-on-brand hover:!text-on-brand"

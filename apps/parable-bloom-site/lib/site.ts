@@ -1,6 +1,9 @@
 /** Public marketing host. Share tags and the sitemap use this origin. */
 export const siteUrl = 'https://parablebloom.gventureshq.com';
 
+/** Browser game. Firebase Hosting serves this name; the marketing site links here. */
+export const playUrl = 'https://play.parablebloom.gventureshq.com/';
+
 export const siteName = 'Parable Bloom';
 
 export const siteDescription =
