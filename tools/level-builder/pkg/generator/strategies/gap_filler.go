@@ -49,7 +49,7 @@ func (f *GapFiller) FillGaps(
 		})
 
 		for _, head := range candidates {
-			if _, occ := currentOccupied[fmt.Sprintf("%d,%d", head.X, head.Y)]; occ {
+			if _, occ := currentOccupied[common.PointKey(head)]; occ {
 				continue
 			}
 
@@ -64,7 +64,7 @@ func (f *GapFiller) FillGaps(
 			if ok {
 				newVines = append(newVines, vine)
 				for _, p := range vine.OrderedPath {
-					currentOccupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = vine.ID
+					currentOccupied[common.PointKey(p)] = vine.ID
 				}
 				vineIDCounter++
 			}
@@ -92,7 +92,7 @@ func (f *GapFiller) FillGaps(
 		})
 
 		for _, head := range candidates {
-			if _, occ := currentOccupied[fmt.Sprintf("%d,%d", head.X, head.Y)]; occ {
+			if _, occ := currentOccupied[common.PointKey(head)]; occ {
 				continue
 			}
 
@@ -100,7 +100,7 @@ func (f *GapFiller) FillGaps(
 			if ok {
 				newVines = append(newVines, vine)
 				for _, p := range vine.OrderedPath {
-					currentOccupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = vine.ID
+					currentOccupied[common.PointKey(p)] = vine.ID
 				}
 				vineIDCounter++
 				madeProgress = true
@@ -123,7 +123,7 @@ func (f *GapFiller) findEmptyCells(occupied map[string]string) []model.Point {
 	var empty []model.Point
 	for y := 0; y < f.h; y++ {
 		for x := 0; x < f.w; x++ {
-			if _, occ := occupied[fmt.Sprintf("%d,%d", x, y)]; !occ {
+			if _, occ := occupied[common.PointKey(model.Point{X: x, Y: y})]; !occ {
 				empty = append(empty, model.Point{X: x, Y: y})
 			}
 		}
@@ -162,7 +162,7 @@ func (f *GapFiller) growMultiCellFiller(head model.Point, targetLen int, occupie
 		dx, dy := common.DeltaForDirection(headDir)
 		ex, ey := head.X+dx, head.Y+dy
 		for ex >= 0 && ex < f.w && ey >= 0 && ey < f.h {
-			forbidden[fmt.Sprintf("%d,%d", ex, ey)] = true
+			forbidden[common.PointKey(model.Point{X: ex, Y: ey})] = true
 			ex += dx
 			ey += dy
 		}
@@ -180,10 +180,10 @@ func (f *GapFiller) growMultiCellFiller(head model.Point, targetLen int, occupie
 		if neck.X < 0 || neck.X >= f.w || neck.Y < 0 || neck.Y >= f.h {
 			continue
 		}
-		if _, occ := occupied[fmt.Sprintf("%d,%d", neck.X, neck.Y)]; occ {
+		if _, occ := occupied[common.PointKey(neck)]; occ {
 			continue
 		}
-		if forbidden[fmt.Sprintf("%d,%d", neck.X, neck.Y)] {
+		if forbidden[common.PointKey(neck)] {
 			continue
 		}
 
@@ -205,7 +205,7 @@ func (f *GapFiller) growMultiCellFiller(head model.Point, targetLen int, occupie
 						break
 					}
 				}
-				if !inPath && !forbidden[fmt.Sprintf("%d,%d", n.X, n.Y)] {
+				if !inPath && !forbidden[common.PointKey(n)] {
 					validNeighbors = append(validNeighbors, n)
 				}
 			}
@@ -267,7 +267,7 @@ func (f *GapFiller) getFreeNeighbors(p model.Point, occupied map[string]string) 
 	for _, d := range deltas {
 		nx, ny := p.X+d.X, p.Y+d.Y
 		if nx >= 0 && nx < f.w && ny >= 0 && ny < f.h {
-			if _, occ := occupied[fmt.Sprintf("%d,%d", nx, ny)]; !occ {
+			if _, occ := occupied[common.PointKey(model.Point{X: nx, Y: ny})]; !occ {
 				neighbors = append(neighbors, model.Point{X: nx, Y: ny})
 			}
 		}

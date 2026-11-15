@@ -1,9 +1,9 @@
 package strategies
 
 import (
-	"fmt"
 	"math/rand"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
@@ -34,7 +34,7 @@ func (s *LegacyTilingStrategy) PlaceVines(cfg config.GenerationConfig, rng *rand
 	occupied := make(map[string]string)
 	for _, v := range vines {
 		for _, p := range v.OrderedPath {
-			key := fmt.Sprintf("%d,%d", p.X, p.Y)
+			key := common.PointKey(p)
 			occupied[key] = v.ID
 		}
 	}
@@ -80,7 +80,7 @@ func (s *LegacyClearableStrategy) PlaceVines(cfg config.GenerationConfig, rng *r
 	occupied := make(map[string]string)
 	for _, v := range vines {
 		for _, p := range v.OrderedPath {
-			key := fmt.Sprintf("%d,%d", p.X, p.Y)
+			key := common.PointKey(p)
 			occupied[key] = v.ID
 		}
 	}
@@ -110,7 +110,7 @@ func (s *LegacySolverAwareStrategy) PlaceVines(cfg config.GenerationConfig, rng 
 	occupied := make(map[string]string)
 	for _, v := range vines {
 		for _, p := range v.OrderedPath {
-			key := fmt.Sprintf("%d,%d", p.X, p.Y)
+			key := common.PointKey(p)
 			occupied[key] = v.ID
 		}
 	}

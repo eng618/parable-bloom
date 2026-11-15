@@ -11,8 +11,10 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
 )
 
-// BenchmarkStructuralValidation measures structural validation performance
-func BenchmarkStructuralValidation(b *testing.B) {
+// BenchmarkStructuralCorpus measures structural validation of every shipped level.
+// It is not part of task lb:bench. A normal bench filter skips it so b.N does not
+// reload the asset corpus.
+func BenchmarkStructuralCorpus(b *testing.B) {
 	levelsDir, err := common.LevelsDir()
 	if err != nil {
 		b.Fatalf("Failed to resolve levels directory: %v", err)

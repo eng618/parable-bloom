@@ -348,7 +348,7 @@ func ClearableFirstPlacement(
 							continue
 						}
 						// Keep extension
-						occupied[fmt.Sprintf("%d,%d", n.X, n.Y)] = true
+						occupied[common.PointKey(n)] = true
 						lengthCounts[len(vine.OrderedPath)]++
 						extended = true
 						break // Only extend once per pass per vine
@@ -368,7 +368,7 @@ func ClearableFirstPlacement(
 							}
 						}
 
-						occupied[fmt.Sprintf("%d,%d", n.X, n.Y)] = true
+						occupied[common.PointKey(n)] = true
 						lengthCounts[len(vine.OrderedPath)]++
 						extended = true
 						break
@@ -400,7 +400,7 @@ func ClearableFirstPlacement(
 		occupiedMap := make(map[string]string)
 		for _, v := range vines {
 			for _, p := range v.OrderedPath {
-				occupiedMap[fmt.Sprintf("%d,%d", p.X, p.Y)] = v.ID
+				occupiedMap[common.PointKey(p)] = v.ID
 			}
 		}
 
@@ -427,7 +427,7 @@ func ClearableFirstPlacement(
 				case "down":
 					ty--
 				}
-				if occupiedMap[fmt.Sprintf("%d,%d", tx, ty)] == a.ID {
+				if occupiedMap[common.PointKey(model.Point{X: tx, Y: ty})] == a.ID {
 					blockingGraph[a.ID] = append(blockingGraph[a.ID], b.ID)
 				}
 			}
@@ -449,7 +449,7 @@ func pickRandomSeed(gridSize []int, occupied map[string]bool, rng *rand.Rand) mo
 	for i := 0; i < maxAttempts; i++ {
 		x := rng.Intn(w)
 		y := rng.Intn(h)
-		key := fmt.Sprintf("%d,%d", x, y)
+		key := common.PointKey(model.Point{X: x, Y: y})
 		if !occupied[key] {
 			return model.Point{X: x, Y: y}
 		}
@@ -469,7 +469,7 @@ func pickRandomSeedWithPreference(gridSize []int, occupied map[string]bool, rng 
 	for i := 0; i < 60; i++ {
 		x := rng.Intn(w)
 		y := rng.Intn(h)
-		key := fmt.Sprintf("%d,%d", x, y)
+		key := common.PointKey(model.Point{X: x, Y: y})
 		if occupied[key] {
 			continue
 		}
@@ -480,7 +480,7 @@ func pickRandomSeedWithPreference(gridSize []int, occupied map[string]bool, rng 
 			nx := x + n[0]
 			ny := y + n[1]
 			if nx >= 0 && nx < w && ny >= 0 && ny < h {
-				k := fmt.Sprintf("%d,%d", nx, ny)
+				k := common.PointKey(model.Point{X: nx, Y: ny})
 				if !occupied[k] {
 					score++
 				}
@@ -562,7 +562,7 @@ func pickDirectionalSeed(occupied map[string]bool, gridSize []int, dir string, r
 			if !onEdge {
 				continue
 			}
-			key := fmt.Sprintf("%d,%d", x, y)
+			key := common.PointKey(model.Point{X: x, Y: y})
 			if occupied[key] {
 				continue
 			}
@@ -570,7 +570,7 @@ func pickDirectionalSeed(occupied map[string]bool, gridSize []int, dir string, r
 			if nx < 0 || ny < 0 || nx >= w || ny >= h {
 				continue
 			}
-			if occupied[fmt.Sprintf("%d,%d", nx, ny)] {
+			if occupied[common.PointKey(model.Point{X: nx, Y: ny})] {
 				continue
 			}
 			candidates = append(candidates, model.Point{X: x, Y: y})
@@ -666,7 +666,7 @@ func getUnoccupiedNeighbors(pt model.Point, w, h int, occupied map[string]bool) 
 	for _, d := range deltas {
 		nx, ny := pt.X+d.dx, pt.Y+d.dy
 		if nx >= 0 && nx < w && ny >= 0 && ny < h {
-			if !occupied[fmt.Sprintf("%d,%d", nx, ny)] {
+			if !occupied[common.PointKey(model.Point{X: nx, Y: ny})] {
 				neighbors = append(neighbors, model.Point{X: nx, Y: ny})
 			}
 		}

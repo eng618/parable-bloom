@@ -20,7 +20,7 @@ func ExtendIntoGaps(vines []model.Vine, occupied map[string]string, w, h int, rn
 		occupied = make(map[string]string)
 		for _, v := range vines {
 			for _, p := range v.OrderedPath {
-				occupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = v.ID
+				occupied[common.PointKey(p)] = v.ID
 			}
 		}
 	}
@@ -93,7 +93,7 @@ func tryExtendVine(vines []model.Vine, idx int, occupied map[string]string, w, h
 	}
 
 	for _, next := range neighbors {
-		key := fmt.Sprintf("%d,%d", next.X, next.Y)
+		key := common.PointKey(next)
 		vines[idx].OrderedPath = append(vines[idx].OrderedPath, next)
 		occupied[key] = vines[idx].ID
 		// Greedy slides a vine forward and will accept a body that sits on
@@ -115,7 +115,7 @@ func freeNeighbors(p model.Point, w, h int, occupied map[string]string) []model.
 		if nx < 0 || ny < 0 || nx >= w || ny >= h {
 			continue
 		}
-		if _, occ := occupied[fmt.Sprintf("%d,%d", nx, ny)]; occ {
+		if _, occ := occupied[common.PointKey(model.Point{X: nx, Y: ny})]; occ {
 			continue
 		}
 		out = append(out, model.Point{X: nx, Y: ny})
@@ -145,13 +145,13 @@ func vineSelfBlocks(vine model.Vine, w, h int) bool {
 	ray := map[string]bool{}
 	x, y := head.X+dx, head.Y+dy
 	for x >= 0 && x < w && y >= 0 && y < h {
-		ray[fmt.Sprintf("%d,%d", x, y)] = true
+		ray[common.PointKey(model.Point{X: x, Y: y})] = true
 		x += dx
 		y += dy
 	}
 	for i := 1; i < len(vine.OrderedPath); i++ {
 		p := vine.OrderedPath[i]
-		if ray[fmt.Sprintf("%d,%d", p.X, p.Y)] {
+		if ray[common.PointKey(p)] {
 			return true
 		}
 	}
@@ -205,8 +205,8 @@ func AbsorbPockets(vines []model.Vine, occupied map[string]string, w, h int, min
 				continue
 			}
 			vines = append(vines, vine)
-			occupied[fmt.Sprintf("%d,%d", head.X, head.Y)] = vine.ID
-			occupied[fmt.Sprintf("%d,%d", neck.X, neck.Y)] = vine.ID
+			occupied[common.PointKey(head)] = vine.ID
+			occupied[common.PointKey(neck)] = vine.ID
 			nextID++
 			placed = true
 			break
@@ -222,7 +222,7 @@ func emptyCount(occupied map[string]string, w, h int) int {
 	n := 0
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			if _, occ := occupied[fmt.Sprintf("%d,%d", x, y)]; !occ {
+			if _, occ := occupied[common.PointKey(model.Point{X: x, Y: y})]; !occ {
 				n++
 			}
 		}
@@ -234,7 +234,7 @@ func nextPocket(occupied map[string]string, w, h int, failed map[string]bool) (m
 	deltas := []model.Point{{X: 1, Y: 0}, {X: -1, Y: 0}, {X: 0, Y: 1}, {X: 0, Y: -1}}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			if _, occ := occupied[fmt.Sprintf("%d,%d", x, y)]; occ {
+			if _, occ := occupied[common.PointKey(model.Point{X: x, Y: y})]; occ {
 				continue
 			}
 			a := model.Point{X: x, Y: y}
@@ -243,7 +243,7 @@ func nextPocket(occupied map[string]string, w, h int, failed map[string]bool) (m
 				if b.X < 0 || b.Y < 0 || b.X >= w || b.Y >= h {
 					continue
 				}
-				if _, occ := occupied[fmt.Sprintf("%d,%d", b.X, b.Y)]; occ {
+				if _, occ := occupied[common.PointKey(b)]; occ {
 					continue
 				}
 				if failed[pocketKey(a, b)] {

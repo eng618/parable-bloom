@@ -218,7 +218,7 @@ func (p *DirectionFirstPlacer) growDirectionFirstVine(
 		// Start path with head
 		path := []model.Point{*seed}
 		localOccupied := make(map[string]string)
-		localOccupied[fmt.Sprintf("%d,%d", seed.X, seed.Y)] = vineID
+		localOccupied[common.PointKey(*seed)] = vineID
 
 		// Grow the vine body
 		for len(path) < targetLen {
@@ -231,7 +231,7 @@ func (p *DirectionFirstPlacer) growDirectionFirstVine(
 				dx, dy := common.DeltaForDirection(growDir)
 				cand := model.Point{X: current.X + dx, Y: current.Y + dy}
 				if cand.X >= 0 && cand.X < w && cand.Y >= 0 && cand.Y < h {
-					key := fmt.Sprintf("%d,%d", cand.X, cand.Y)
+					key := common.PointKey(cand)
 					if _, globallyOcc := occupied[key]; !globallyOcc {
 						next = &cand
 					}
@@ -246,7 +246,7 @@ func (p *DirectionFirstPlacer) growDirectionFirstVine(
 			}
 
 			path = append(path, *next)
-			localOccupied[fmt.Sprintf("%d,%d", next.X, next.Y)] = vineID
+			localOccupied[common.PointKey(*next)] = vineID
 		}
 
 		// Reject vines under the tier length floor. A short accept fills
@@ -281,7 +281,7 @@ func isEdgeCell(x, y, w, h int) bool {
 
 // isCandidateCell checks if a cell is available and has a free neighbor
 func (p *DirectionFirstPlacer) isCandidateCell(x, y, w, h int, occupied map[string]string) bool {
-	key := fmt.Sprintf("%d,%d", x, y)
+	key := common.PointKey(model.Point{X: x, Y: y})
 	if _, isOccupied := occupied[key]; isOccupied {
 		return false
 	}
@@ -375,7 +375,7 @@ func (p *DirectionFirstPlacer) hasFreeNeighbor(x, y, w, h int, occupied map[stri
 	for _, d := range deltas {
 		nx, ny := x+d.dx, y+d.dy
 		if nx >= 0 && nx < w && ny >= 0 && ny < h {
-			key := fmt.Sprintf("%d,%d", nx, ny)
+			key := common.PointKey(model.Point{X: nx, Y: ny})
 			if _, isOccupied := occupied[key]; !isOccupied {
 				return true
 			}
@@ -474,7 +474,7 @@ func (p *DirectionFirstPlacer) getAvailableNeighbors(pos model.Point, w, h int, 
 	for _, d := range deltas {
 		nx, ny := pos.X+d.dx, pos.Y+d.dy
 		if nx >= 0 && nx < w && ny >= 0 && ny < h {
-			key := fmt.Sprintf("%d,%d", nx, ny)
+			key := common.PointKey(model.Point{X: nx, Y: ny})
 			_, globallyOccupied := globalOccupied[key]
 			_, locallyOccupied := localOccupied[key]
 			if !globallyOccupied && !locallyOccupied {
@@ -535,7 +535,7 @@ func (p *DirectionFirstPlacer) extendVines(
 			// Add to vine path only when the ray stays clear of this vine
 			// and the board is still greedy-solvable.
 			vine.OrderedPath = append(vine.OrderedPath, next)
-			key := fmt.Sprintf("%d,%d", next.X, next.Y)
+			key := common.PointKey(next)
 			occupied[key] = vine.ID
 			if vineSelfBlocks(*vine, w, h) || !greedySolvable(result, w, h) {
 				vine.OrderedPath = vine.OrderedPath[:len(vine.OrderedPath)-1]
@@ -596,7 +596,7 @@ func (p *DirectionFirstPlacer) createFillerVines(
 		combined := mergeOccupied(occupied, fillerOccupied)
 		neighbors := p.getAvailableNeighbors(*seed, w, h, combined, nil)
 		if len(neighbors) == 0 {
-			fillerOccupied[fmt.Sprintf("%d,%d", seed.X, seed.Y)] = "skip"
+			fillerOccupied[common.PointKey(*seed)] = "skip"
 			continue
 		}
 
@@ -638,8 +638,8 @@ func (p *DirectionFirstPlacer) buildFillerVine(
 	}
 
 	newOccupied := map[string]string{
-		fmt.Sprintf("%d,%d", seed.X, seed.Y):         vineID,
-		fmt.Sprintf("%d,%d", neighbor.X, neighbor.Y): vineID,
+		common.PointKey(*seed):    vineID,
+		common.PointKey(neighbor): vineID,
 	}
 	return vine, newOccupied
 }
@@ -659,7 +659,7 @@ func (p *DirectionFirstPlacer) collectFillerCandidates(w, h int, combined map[st
 	var candidates []model.Point
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			key := fmt.Sprintf("%d,%d", x, y)
+			key := common.PointKey(model.Point{X: x, Y: y})
 			if _, occ := combined[key]; occ {
 				continue
 			}

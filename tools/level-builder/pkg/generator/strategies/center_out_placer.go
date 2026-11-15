@@ -29,6 +29,7 @@ func (p *CenterOutPlacer) PlaceVines(config config.GenerationConfig, rng *rand.R
 
 	var vines []model.Vine
 	var coverage float64
+	maxVines := vineCountCap(config.Difficulty)
 
 	// Use strict LIFO for large levels to guarantee solvability.
 	// For small levels, relax strictness to allow heuristic backtracking, relying on validator.
@@ -36,6 +37,9 @@ func (p *CenterOutPlacer) PlaceVines(config config.GenerationConfig, rng *rand.R
 
 	// Phase 1: Place vines from center outward with LIFO guarantee
 	for _, targetLen := range targetLengths {
+		if maxVines > 0 && len(vines) >= maxVines {
+			break
+		}
 		// Use dynamic ID based on current placed vines to avoid duplicates
 		vineID := fmt.Sprintf("vine_%d", len(vines)+1)
 
@@ -83,11 +87,19 @@ func (p *CenterOutPlacer) PlaceVines(config config.GenerationConfig, rng *rand.R
 		}
 	}
 
-	// Phase 2: Fill remaining gaps with 2-cell filler vines (LIFO guaranteed)
+	// Phase 2: Fill remaining gaps with 2-cell filler vines (LIFO guaranteed).
+	// The length list is capped, but this loop used to keep adding pairs
+	// until coverage. That overshoots the difficulty's vine-count max.
 	coverage = float64(len(occupied)) / float64(totalCells)
-	if coverage < config.MinCoverage {
+	fillerBudget := 0
+	allowFiller := maxVines == 0
+	if maxVines > 0 && len(vines) < maxVines {
+		fillerBudget = maxVines - len(vines)
+		allowFiller = true
+	}
+	if coverage < config.MinCoverage && allowFiller {
 		common.Verbose("Coverage %.1f%% below target %.1f%%, adding filler vines...", coverage*100, config.MinCoverage*100)
-		fillerVines, fillerOccupied := p.createFillerVines(vines, occupied, w, h, config.MinCoverage, rng)
+		fillerVines, fillerOccupied := p.createFillerVines(vines, occupied, w, h, config.MinCoverage, fillerBudget, rng)
 		vines = append(vines, fillerVines...)
 		for k, v := range fillerOccupied {
 			occupied[k] = v
@@ -156,7 +168,7 @@ func (p *CenterOutPlacer) chooseCenterSeed(w, h int, occupied map[string]string,
 	var candidates []model.Point
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			key := fmt.Sprintf("%d,%d", x, y)
+			key := common.PointKey(model.Point{X: x, Y: y})
 			if _, occ := occupied[key]; occ {
 				continue
 			}
@@ -230,7 +242,7 @@ func (p *CenterOutPlacer) growVineBody(
 ) (model.Vine, map[string]string) {
 	localOccupied := make(map[string]string)
 	path := []model.Point{head}
-	localOccupied[fmt.Sprintf("%d,%d", head.X, head.Y)] = vineID
+	localOccupied[common.PointKey(head)] = vineID
 
 	// Place neck (must be opposite to head direction)
 	growDir := common.OppositeDirection(headDir)
@@ -240,7 +252,7 @@ func (p *CenterOutPlacer) growVineBody(
 	}
 
 	path = append(path, neck)
-	localOccupied[fmt.Sprintf("%d,%d", neck.X, neck.Y)] = vineID
+	localOccupied[common.PointKey(neck)] = vineID
 
 	// Grow remaining body segments
 	// Calculate forbidden cells (Head's exit path)
@@ -248,7 +260,7 @@ func (p *CenterOutPlacer) growVineBody(
 	dx, dy := common.DeltaForDirection(headDir)
 	ex, ey := head.X+dx, head.Y+dy
 	for ex >= 0 && ex < w && ey >= 0 && ey < h {
-		forbidden[fmt.Sprintf("%d,%d", ex, ey)] = true
+		forbidden[common.PointKey(model.Point{X: ex, Y: ey})] = true
 		ex += dx
 		ey += dy
 	}
@@ -283,7 +295,7 @@ func (p *CenterOutPlacer) placeNeck(head model.Point, growDir string, w, h int, 
 		return model.Point{}, false
 	}
 
-	neckKey := fmt.Sprintf("%d,%d", neck.X, neck.Y)
+	neckKey := common.PointKey(neck)
 	if _, occupied := globalOccupied[neckKey]; occupied {
 		return model.Point{}, false
 	}
@@ -315,7 +327,7 @@ func (p *CenterOutPlacer) growRemainingBody(
 			break
 		}
 		path = append(path, *next)
-		ctx.localOccupied[fmt.Sprintf("%d,%d", next.X, next.Y)] = ctx.vineID
+		ctx.localOccupied[common.PointKey(*next)] = ctx.vineID
 		current = *next
 	}
 	return path
@@ -332,7 +344,7 @@ func (p *CenterOutPlacer) chooseNextGrowthCell(
 	// Pre-filter neighbors to avoid forbidden cells (exit path)
 	var validNeighbors []model.Point
 	for _, n := range neighbors {
-		if !ctx.forbidden[fmt.Sprintf("%d,%d", n.X, n.Y)] {
+		if !ctx.forbidden[common.PointKey(n)] {
 			validNeighbors = append(validNeighbors, n)
 		}
 	}
@@ -357,9 +369,9 @@ func (p *CenterOutPlacer) chooseNextGrowthCell(
 	for _, n := range neighbors {
 		// Verify this move doesn't disconnect the grid
 		// Temporarily mark n as occupied
-		ctx.localOccupied[fmt.Sprintf("%d,%d", n.X, n.Y)] = ctx.vineID
+		ctx.localOccupied[common.PointKey(n)] = ctx.vineID
 		newReachable := p.countReachableEmptyCells(ctx.w, ctx.h, ctx.globalOccupied, ctx.localOccupied)
-		delete(ctx.localOccupied, fmt.Sprintf("%d,%d", n.X, n.Y))
+		delete(ctx.localOccupied, common.PointKey(n))
 
 		// If we lose more than 1 reachable cell (the one we just took), we caused a disconnect
 		if newReachable < baselineReachable-1 {
@@ -413,11 +425,11 @@ func (p *CenterOutPlacer) countReachableEmptyCells(w, h int, globalOccupied, loc
 		p1, p2 := model.Point{X: x, Y: 0}, model.Point{X: x, Y: h - 1}
 		if !p.isOccupied(p1, globalOccupied, localOccupied) {
 			queue = append(queue, p1)
-			visited[fmt.Sprintf("%d,%d", x, 0)] = true
+			visited[common.PointKey(model.Point{X: x, Y: 0})] = true
 		}
 		if !p.isOccupied(p2, globalOccupied, localOccupied) {
 			queue = append(queue, p2)
-			visited[fmt.Sprintf("%d,%d", x, h-1)] = true
+			visited[common.PointKey(model.Point{X: x, Y: h - 1})] = true
 		}
 	}
 	for y := 1; y < h-1; y++ {
@@ -428,7 +440,7 @@ func (p *CenterOutPlacer) countReachableEmptyCells(w, h int, globalOccupied, loc
 		}
 		if !p.isOccupied(p2, globalOccupied, localOccupied) {
 			queue = append(queue, p2)
-			visited[fmt.Sprintf("%d,%d", w-1, y)] = true
+			visited[common.PointKey(model.Point{X: w - 1, Y: y})] = true
 		}
 	}
 
@@ -443,7 +455,7 @@ func (p *CenterOutPlacer) countReachableEmptyCells(w, h int, globalOccupied, loc
 		for _, d := range deltas {
 			nx, ny := curr.X+d.dx, curr.Y+d.dy
 			if nx >= 0 && nx < w && ny >= 0 && ny < h {
-				key := fmt.Sprintf("%d,%d", nx, ny)
+				key := common.PointKey(model.Point{X: nx, Y: ny})
 				if !visited[key] && !p.isOccupied(model.Point{X: nx, Y: ny}, globalOccupied, localOccupied) {
 					visited[key] = true
 					queue = append(queue, model.Point{X: nx, Y: ny})
@@ -455,7 +467,7 @@ func (p *CenterOutPlacer) countReachableEmptyCells(w, h int, globalOccupied, loc
 }
 
 func (p *CenterOutPlacer) isOccupied(pt model.Point, global, local map[string]string) bool {
-	key := fmt.Sprintf("%d,%d", pt.X, pt.Y)
+	key := common.PointKey(pt)
 	_, g := global[key]
 	_, l := local[key]
 	return g || l
@@ -469,7 +481,7 @@ func (p *CenterOutPlacer) getAvailableNeighbors(pos model.Point, w, h int, globa
 	for _, d := range deltas {
 		nx, ny := pos.X+d.dx, pos.Y+d.dy
 		if nx >= 0 && nx < w && ny >= 0 && ny < h {
-			key := fmt.Sprintf("%d,%d", nx, ny)
+			key := common.PointKey(model.Point{X: nx, Y: ny})
 			_, globallyOcc := globalOccupied[key]
 			_, locallyOcc := localOccupied[key]
 			if !globallyOcc && !locallyOcc {
@@ -487,13 +499,23 @@ func (p *CenterOutPlacer) hasFreeNeighbor(x, y, w, h int, occupied map[string]st
 	for _, d := range deltas {
 		nx, ny := x+d.dx, y+d.dy
 		if nx >= 0 && nx < w && ny >= 0 && ny < h {
-			key := fmt.Sprintf("%d,%d", nx, ny)
+			key := common.PointKey(model.Point{X: nx, Y: ny})
 			if _, occ := occupied[key]; !occ {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+// vineCountCap is the difficulty's maximum vine count.
+// Zero means the difficulty is unknown and the placer does not cap.
+func vineCountCap(difficulty string) int {
+	spec, ok := config.DifficultySpecs[difficulty]
+	if !ok || spec.VineCountRange[1] <= 0 {
+		return 0
+	}
+	return spec.VineCountRange[1]
 }
 
 // calculateVineLengths computes target lengths based on difficulty
@@ -513,6 +535,10 @@ func (p *CenterOutPlacer) calculateVineLengths(genConfig config.GenerationConfig
 	vineCount := targetFill / avgLen
 	if vineCount < genConfig.VineCount {
 		vineCount = genConfig.VineCount
+	}
+	// A requested count above the difficulty max still has to fit the band.
+	if cap := vineCountCap(genConfig.Difficulty); cap > 0 && vineCount > cap {
+		vineCount = cap
 	}
 
 	// Generate lengths with variance
@@ -541,6 +567,7 @@ func (p *CenterOutPlacer) createFillerVines(
 	occupied map[string]string,
 	w, h int,
 	targetCoverage float64,
+	maxVines int,
 	rng *rand.Rand,
 ) ([]model.Vine, map[string]string) {
 	targetCells := int(float64(w*h) * targetCoverage)
@@ -558,7 +585,7 @@ func (p *CenterOutPlacer) createFillerVines(
 	}
 
 	// Phase 1: LIFO-guaranteed fillers (heads with clear exit)
-	vines1, occ1, _ := p.fillWithLIFOGuarantee(fillerID, occupied, w, h, targetCells, rng)
+	vines1, occ1, _ := p.fillWithLIFOGuarantee(fillerID, occupied, w, h, targetCells, maxVines, rng)
 	fillerVines = append(fillerVines, vines1...)
 	for k, v := range occ1 {
 		fillerOccupied[k] = v
@@ -573,6 +600,7 @@ func (p *CenterOutPlacer) fillWithLIFOGuarantee(
 	occupied map[string]string,
 	w, h int,
 	targetCells int,
+	maxVines int,
 	rng *rand.Rand,
 ) ([]model.Vine, map[string]string, int) {
 	vines := []model.Vine{}
@@ -582,6 +610,10 @@ func (p *CenterOutPlacer) fillWithLIFOGuarantee(
 	lastCoverage := len(occupied)
 
 	for i := 0; i < maxIterations; i++ {
+		// maxVines <= 0 means the difficulty has no cap.
+		if maxVines > 0 && len(vines) >= maxVines {
+			break
+		}
 		combined := mergeOccupied(occupied, fillerOccupied)
 		currentCoverage := len(combined)
 
@@ -623,11 +655,11 @@ func (p *CenterOutPlacer) collectEdgeCells(w, h int, occupied map[string]string)
 
 	// Top and bottom edges
 	for x := 0; x < w; x++ {
-		topKey := fmt.Sprintf("%d,%d", x, h-1)
+		topKey := common.PointKey(model.Point{X: x, Y: h - 1})
 		if _, occ := occupied[topKey]; !occ {
 			edgeCells = append(edgeCells, edgeCandidate{model.Point{X: x, Y: h - 1}, "up"})
 		}
-		bottomKey := fmt.Sprintf("%d,%d", x, 0)
+		bottomKey := common.PointKey(model.Point{X: x, Y: 0})
 		if _, occ := occupied[bottomKey]; !occ {
 			edgeCells = append(edgeCells, edgeCandidate{model.Point{X: x, Y: 0}, "down"})
 		}
@@ -635,11 +667,11 @@ func (p *CenterOutPlacer) collectEdgeCells(w, h int, occupied map[string]string)
 
 	// Left and right edges
 	for y := 0; y < h; y++ {
-		leftKey := fmt.Sprintf("%d,%d", 0, y)
+		leftKey := common.PointKey(model.Point{X: 0, Y: y})
 		if _, occ := occupied[leftKey]; !occ {
 			edgeCells = append(edgeCells, edgeCandidate{model.Point{X: 0, Y: y}, "left"})
 		}
-		rightKey := fmt.Sprintf("%d,%d", w-1, y)
+		rightKey := common.PointKey(model.Point{X: w - 1, Y: y})
 		if _, occ := occupied[rightKey]; !occ {
 			edgeCells = append(edgeCells, edgeCandidate{model.Point{X: w - 1, Y: y}, "right"})
 		}
@@ -690,12 +722,12 @@ func (p *CenterOutPlacer) tryCreateEdgeVine(
 		return model.Vine{}, nil
 	}
 
-	neckKey := fmt.Sprintf("%d,%d", neck.X, neck.Y)
+	neckKey := common.PointKey(neck)
 	if _, occ := occupied[neckKey]; occ {
 		return model.Vine{}, nil
 	}
 
-	headKey := fmt.Sprintf("%d,%d", head.X, head.Y)
+	headKey := common.PointKey(head)
 	vineOccupied := map[string]string{
 		headKey: vineID,
 		neckKey: vineID,
@@ -719,7 +751,7 @@ func (p *CenterOutPlacer) tryPlaceFillerVine(
 	var emptyCells []model.Point
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			key := fmt.Sprintf("%d,%d", x, y)
+			key := common.PointKey(model.Point{X: x, Y: y})
 			if _, occ := occupied[key]; !occ {
 				emptyCells = append(emptyCells, model.Point{X: x, Y: y})
 			}
@@ -756,8 +788,8 @@ func (p *CenterOutPlacer) tryPlaceFillerVine(
 			}
 
 			// Valid placement found
-			headKey := fmt.Sprintf("%d,%d", head.X, head.Y)
-			neckKey := fmt.Sprintf("%d,%d", neck.X, neck.Y)
+			headKey := common.PointKey(head)
+			neckKey := common.PointKey(neck)
 
 			vineOccupied := map[string]string{
 				headKey: vineID,

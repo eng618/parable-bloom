@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `task lb:bench` times one generation of the opener, the last flourishing board, and the boss, and times the greedy solver on those boards. The center-out fallback stops at the tier's vine-count cap. A coverage miss that still returned vines no longer writes a failure dump. Shipped levels are unchanged.
 - Level generation walks sealed pockets into the vines that border them, and a seed now picks head direction in a fixed order. Newly generated boards still have to pass the ladder contract before they are written. Shipped levels are unchanged.
 - Marketing site favicon, apple touch icon, and Chrome icons use the current wooden-cross app icon.
 - The marketing site marks Android as available for Google Play open testing. iOS stays coming soon.

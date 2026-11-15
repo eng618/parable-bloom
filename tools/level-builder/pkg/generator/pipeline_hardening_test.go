@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
@@ -65,5 +66,32 @@ func TestComplexityDelegatesToCommon(t *testing.T) {
 		if got := a.complexityForDifficulty(d); got == "" {
 			t.Fatalf("empty complexity for %s", d)
 		}
+	}
+}
+
+func TestPlacementFailureNeedsDump(t *testing.T) {
+	coverage := fmt.Errorf("insufficient coverage: got 90.0%%, need 93.0%%+")
+	if placementFailureNeedsDump(10, coverage) {
+		t.Fatal("coverage miss with vines should not dump")
+	}
+	if !placementFailureNeedsDump(1, coverage) {
+		t.Fatal("fewer than 2 vines should dump")
+	}
+	if !placementFailureNeedsDump(0, fmt.Errorf("could not place vine")) {
+		t.Fatal("empty placement should dump")
+	}
+	cases := []string{
+		"placement produced circular blocking (detected before returning)",
+		"initial tiling produced unsolvable level",
+		"vine is self-blocking",
+		"structural validation failed: 2 errors",
+	}
+	for _, msg := range cases {
+		if !placementFailureNeedsDump(8, fmt.Errorf("%s", msg)) {
+			t.Fatalf("expected dump for %q", msg)
+		}
+	}
+	if placementFailureNeedsDump(8, nil) {
+		t.Fatal("nil error should not dump")
 	}
 }

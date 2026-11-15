@@ -15,6 +15,10 @@ task levels:validate
 # Variety report for the shipped corpus (informational; does not fail old grids)
 task levels:variety
 
+# Time one generation of the opener, the last flourishing board, and the boss,
+# and time the greedy solver on those boards
+task lb:bench
+
 # Validate all levels with exact solvability checks (A* / BFS search)
 task levels:validate-solvable
 

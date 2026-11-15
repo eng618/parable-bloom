@@ -84,7 +84,7 @@ type pathBorder struct {
 func bordersOf(comp []model.Point, vines []model.Vine) []pathBorder {
 	holes := map[string]bool{}
 	for _, p := range comp {
-		holes[cellKey(p)] = true
+		holes[common.PointKey(p)] = true
 	}
 	var out []pathBorder
 	seen := map[string]bool{}
@@ -109,7 +109,7 @@ func bordersOf(comp []model.Point, vines []model.Vine) []pathBorder {
 
 func touches(p model.Point, holes map[string]bool) bool {
 	for _, d := range []model.Point{{X: 1}, {X: -1}, {Y: 1}, {Y: -1}} {
-		if holes[cellKey(model.Point{X: p.X + d.X, Y: p.Y + d.Y})] {
+		if holes[common.PointKey(model.Point{X: p.X + d.X, Y: p.Y + d.Y})] {
 			return true
 		}
 	}
@@ -128,11 +128,11 @@ func sealBorder(vines []model.Vine, occupied map[string]string, w, h int, rng *r
 
 	occ := cloneOcc(occupied)
 	for _, p := range suffix {
-		delete(occ, cellKey(p))
+		delete(occ, common.PointKey(p))
 	}
 	holes := map[string]bool{}
 	for _, p := range comp {
-		holes[cellKey(p)] = true
+		holes[common.PointKey(p)] = true
 	}
 	room := growthRoom(vines, len(suffix), maxAvg, w*h)
 	if room < 1 {
@@ -145,7 +145,7 @@ func sealBorder(vines []model.Vine, occupied map[string]string, w, h int, rng *r
 	}
 	vines[b.vine].OrderedPath = append(append([]model.Point{}, base...), added...)
 	for _, p := range added {
-		occ[cellKey(p)] = vines[b.vine].ID
+		occ[common.PointKey(p)] = vines[b.vine].ID
 	}
 	vines, occ = ExtendIntoGaps(vines, occ, w, h, rng, maxAvg)
 	if emptyCount(occ, w, h) >= before || !sealAccept(vines, w, h, minAvg, maxAvg, minFree, maxFree, requireBlocked) || !greedySolvable(vines, w, h) {
@@ -166,7 +166,7 @@ func coverPocket(base []model.Point, vine model.Vine, occ map[string]string, hol
 	empties := 0
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			if _, ok := occ[fmt.Sprintf("%d,%d", x, y)]; !ok {
+			if _, ok := occ[common.PointKey(model.Point{X: x, Y: y})]; !ok {
 				empties++
 			}
 		}
@@ -195,8 +195,8 @@ func coverPocket(base []model.Point, vine model.Vine, occ map[string]string, hol
 		tail := path[len(path)-1]
 		neigh := freeNeighbors(tail, w, h, occ)
 		sort.SliceStable(neigh, func(i, j int) bool {
-			hi := holes[cellKey(neigh[i])]
-			hj := holes[cellKey(neigh[j])]
+			hi := holes[common.PointKey(neigh[i])]
+			hj := holes[common.PointKey(neigh[j])]
 			if hi != hj {
 				return hi
 			}
@@ -206,7 +206,7 @@ func coverPocket(base []model.Point, vine model.Vine, occ map[string]string, hol
 			return neigh[i].Y < neigh[j].Y
 		})
 		for _, n := range neigh {
-			k := cellKey(n)
+			k := common.PointKey(n)
 			next := make([]model.Point, len(path)+1)
 			copy(next, path)
 			next[len(path)] = n
@@ -241,8 +241,8 @@ func greedyCover(base []model.Point, vine model.Vine, occ map[string]string, hol
 			break
 		}
 		sort.SliceStable(neigh, func(i, j int) bool {
-			hi := holes[cellKey(neigh[i])]
-			hj := holes[cellKey(neigh[j])]
+			hi := holes[common.PointKey(neigh[i])]
+			hj := holes[common.PointKey(neigh[j])]
 			if hi != hj {
 				return hi
 			}
@@ -255,7 +255,7 @@ func greedyCover(base []model.Point, vine model.Vine, occ map[string]string, hol
 			if vineSelfBlocks(vine, w, h) {
 				continue
 			}
-			occ[cellKey(n)] = vine.ID
+			occ[common.PointKey(n)] = vine.ID
 			path = next
 			added = append(added, n)
 			placed = true
@@ -267,14 +267,14 @@ func greedyCover(base []model.Point, vine model.Vine, occ map[string]string, hol
 	}
 	covered := false
 	for _, p := range added {
-		if holes[cellKey(p)] {
+		if holes[common.PointKey(p)] {
 			covered = true
 			break
 		}
 	}
 	if !covered {
 		for _, p := range added {
-			delete(occ, cellKey(p))
+			delete(occ, common.PointKey(p))
 		}
 		return nil
 	}
@@ -343,7 +343,7 @@ func countFreeHeads(vines []model.Vine, w, h int) int {
 	occ := map[string]bool{}
 	for _, v := range vines {
 		for _, p := range v.OrderedPath {
-			occ[cellKey(p)] = true
+			occ[common.PointKey(p)] = true
 		}
 	}
 	free := 0
@@ -367,7 +367,7 @@ func countFreeHeads(vines []model.Vine, w, h int) int {
 		x, y := v.OrderedPath[0].X+dx, v.OrderedPath[0].Y+dy
 		clear := true
 		for x >= 0 && x < w && y >= 0 && y < h {
-			if occ[fmt.Sprintf("%d,%d", x, y)] {
+			if occ[common.PointKey(model.Point{X: x, Y: y})] {
 				clear = false
 				break
 			}
@@ -407,7 +407,7 @@ func emptyComponents(occupied map[string]string, w, h int) [][]model.Point {
 	var comps [][]model.Point
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			key := fmt.Sprintf("%d,%d", x, y)
+			key := common.PointKey(model.Point{X: x, Y: y})
 			if _, ok := occupied[key]; ok || seen[key] {
 				continue
 			}
@@ -423,7 +423,7 @@ func emptyComponents(occupied map[string]string, w, h int) [][]model.Point {
 					if n.X < 0 || n.Y < 0 || n.X >= w || n.Y >= h {
 						continue
 					}
-					nk := cellKey(n)
+					nk := common.PointKey(n)
 					if seen[nk] {
 						continue
 					}
@@ -460,8 +460,4 @@ func cloneOcc(in map[string]string) map[string]string {
 		out[k] = v
 	}
 	return out
-}
-
-func cellKey(p model.Point) string {
-	return fmt.Sprintf("%d,%d", p.X, p.Y)
 }

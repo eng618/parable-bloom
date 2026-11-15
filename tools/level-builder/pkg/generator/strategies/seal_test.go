@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 )
 
@@ -24,7 +25,7 @@ func TestSealHolesPullsPocketOffTheTail(t *testing.T) {
 	vine := model.Vine{ID: "vine_1", HeadDirection: "left", OrderedPath: path}
 	occ := map[string]string{}
 	for _, p := range path {
-		occ[cellKey(p)] = vine.ID
+		occ[common.PointKey(p)] = vine.ID
 	}
 	vines := []model.Vine{vine}
 	rng := rand.New(rand.NewSource(1))
@@ -49,7 +50,7 @@ func TestSealHolesLeavesAFullBoardAlone(t *testing.T) {
 	}
 	occ := map[string]string{}
 	for _, p := range vine.OrderedPath {
-		occ[cellKey(p)] = vine.ID
+		occ[common.PointKey(p)] = vine.ID
 	}
 	before := len(vine.OrderedPath)
 	vines, _ := SealHoles([]model.Vine{vine}, occ, 2, 2, rand.New(rand.NewSource(1)), 1, 0, 30)

@@ -28,7 +28,7 @@ func backtrackVines(vines []model.Vine, occupied map[string]string, count int) (
 	// Remove their cells from occupied
 	for _, vine := range toRemove {
 		for _, pt := range vine.OrderedPath {
-			key := fmt.Sprintf("%d,%d", pt.X, pt.Y)
+			key := common.PointKey(pt)
 			delete(occupied, key)
 		}
 	}

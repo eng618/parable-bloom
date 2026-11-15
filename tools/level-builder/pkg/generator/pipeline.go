@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	math_rand "math/rand"
+	"strings"
 	"time"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
@@ -53,14 +54,12 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 	assembler := &LevelAssembler{}
 
 	// 2. Initial Placement Phase
-	// Using "CenterOutPlacer" because it guarantees LIFO solvability by construction
 	vines, occupied, err := placer.PlaceVines(cfg, rng, &stats)
 	// Note: PlaceVines internally handles backtracking for primary vines.
-	// If it returns error, it failed even after retries.
+	// A coverage miss can still return vines. The pipeline extends, fills,
+	// and masks those. Only a real placement failure is dumped.
 	if err != nil {
-		// If no failure dump was written by the placer (e.g. DirectionFirst doesn't use backtracking helper),
-		// write one now to ensure we have a deterministic record of the failure.
-		if stats.DumpsProduced == 0 {
+		if placementFailureNeedsDump(len(vines), err) && stats.DumpsProduced == 0 {
 			_ = strategies.WriteFailureDump(cfg, seed, 0, err.Error(), vines, occupied, &stats)
 		}
 
@@ -117,7 +116,7 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 			}
 			vines = append(vines, fv)
 			for _, p := range fv.OrderedPath {
-				occupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = fv.ID
+				occupied[common.PointKey(p)] = fv.ID
 			}
 			accepted++
 		}
@@ -159,6 +158,26 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 	stats.GridCoverage = float64(len(finalOccupied)) / float64(cfg.GridWidth*cfg.GridHeight)
 
 	return level, stats, nil
+}
+
+// placementFailureNeedsDump reports whether a placer error should be written
+// to disk. Fewer than two vines cannot be repaired. A circular, unsolvable,
+// self-blocking, or structural failure is dumped even when vines came back.
+// A coverage or contract miss with vines is not dumped; recovery continues.
+func placementFailureNeedsDump(vineCount int, err error) bool {
+	if err == nil {
+		return false
+	}
+	if vineCount < 2 {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	for _, needle := range []string{"circular", "unsolvable", "self-blocking", "structural"} {
+		if strings.Contains(msg, needle) {
+			return true
+		}
+	}
+	return false
 }
 
 func shortVineShare(vines []model.Vine) float64 {

@@ -98,7 +98,14 @@ tasks:
     cmds:
       - go test ./pkg/generator/strategies -run TestLIFOBacktrackingProducesDumpsAndSucceeds -v -count=1
       - go test ./pkg/generator/strategies -run TestAttemptLocalBacktrackRecovers -v -count=1
+      - go test ./pkg/batch -run TestSampleModuleShape -count=1
       - go test ./pkg/... ./cmd/... -count=1
+
+  bench:
+    desc: Time one generation of the opener, the last flourishing board, and the boss, plus the greedy solver on those boards
+    dir: tools/level-builder
+    cmds:
+      - go test ./pkg/batch -bench='BenchmarkGenerateRobust|BenchmarkGreedySolvable' -benchmem -benchtime=1x -run=^$ -count=1
 
   # -----------------------------------------------------------------------------
   # Linting
