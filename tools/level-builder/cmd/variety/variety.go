@@ -60,9 +60,9 @@ func runVariety(cmd *cobra.Command, args []string) error {
 	}
 
 	out := cmd.OutOrStdout()
-	fmt.Fprintf(out, "Variety report for %s (%d levels)\n", dir, len(matches))
+	_, _ = fmt.Fprintf(out, "Variety report for %s (%d levels)\n", dir, len(matches))
 	if !enforce {
-		fmt.Fprintln(out, "Informational only. Pass --enforce to apply the new-ladder contract.")
+		_, _ = fmt.Fprintln(out, "Informational only. Pass --enforce to apply the new-ladder contract.")
 	}
 
 	type tierSum struct {
@@ -111,18 +111,18 @@ func runVariety(cmd *cobra.Command, args []string) error {
 			if err := metrics.CheckContract(lvl, q); err != nil {
 				failures++
 				sum.failures++
-				fmt.Fprintf(out, "  level %d: %v\n", lvl.ID, err)
+				_, _ = fmt.Fprintf(out, "  level %d: %v\n", lvl.ID, err)
 			}
 		}
 	}
 
-	fmt.Fprintln(out, "tier            n  grids  vines  avgLen  short  mask  free")
+	_, _ = fmt.Fprintln(out, "tier            n  grids  vines  avgLen  short  mask  free")
 	for _, tier := range order {
 		sum := sums[tier]
 		if sum == nil || sum.n == 0 {
 			continue
 		}
-		fmt.Fprintf(out, "%-14s %3d  %5d  %5.1f  %6.1f  %5.0f%% %5.1f%% %5.0f%%\n",
+		_, _ = fmt.Fprintf(out, "%-14s %3d  %5d  %5.1f  %6.1f  %5.0f%% %5.1f%% %5.0f%%\n",
 			tier, sum.n, len(sum.grids),
 			float64(sum.vines)/float64(sum.n),
 			sum.length/float64(sum.n),

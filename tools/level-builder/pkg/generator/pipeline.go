@@ -128,7 +128,8 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 	vines, finalBeforeMask := strategies.ExtendIntoGaps(vines, occupied, cfg.GridWidth, cfg.GridHeight, rng, maxAvg)
 	occupied = finalBeforeMask
 	vines, occupied = strategies.AbsorbPockets(vines, occupied, cfg.GridWidth, cfg.GridHeight, minAvg)
-	vines, occupied = strategies.SealHoles(vines, occupied, cfg.GridWidth, cfg.GridHeight, rng, cfg.LevelID, minAvg, maxAvg)
+	// Occupancy is rebuilt from the vines after IDs are sanitized.
+	vines, _ = strategies.SealHoles(vines, occupied, cfg.GridWidth, cfg.GridHeight, rng, cfg.LevelID, minAvg, maxAvg)
 
 	// 5. Sanitize Phase
 	// Ensure unique IDs before final assembly
