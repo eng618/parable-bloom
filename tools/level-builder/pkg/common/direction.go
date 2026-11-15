@@ -95,6 +95,30 @@ func ChooseExitDirection(pos model.Point, gridWidth, gridHeight int) string {
 	return bestDir
 }
 
+// FarthestExitDirection aims a head at the farthest edge.
+// Later slots use this so fewer vines are free on the first look.
+func FarthestExitDirection(pos model.Point, gridWidth, gridHeight int) string {
+	distLeft := pos.X
+	distRight := gridWidth - 1 - pos.X
+	distDown := pos.Y
+	distUp := gridHeight - 1 - pos.Y
+
+	maxDist := distLeft
+	bestDir := DirLeft
+	if distRight > maxDist {
+		maxDist = distRight
+		bestDir = DirRight
+	}
+	if distDown > maxDist {
+		maxDist = distDown
+		bestDir = DirDown
+	}
+	if distUp > maxDist {
+		bestDir = DirUp
+	}
+	return bestDir
+}
+
 // IsValidDirection returns true if the string is a valid direction
 func IsValidDirection(dir string) bool {
 	return dir == DirUp || dir == DirDown || dir == DirLeft || dir == DirRight

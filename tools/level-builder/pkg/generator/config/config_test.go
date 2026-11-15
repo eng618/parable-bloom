@@ -2,6 +2,8 @@ package config
 
 import (
 	"testing"
+
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 )
 
 func TestDifficultySpecs(t *testing.T) {
@@ -47,6 +49,21 @@ func TestGridSizeRanges(t *testing.T) {
 		}
 		if sizes.MinH > sizes.MaxH {
 			t.Errorf("Invalid height range for %s: %d-%d", tier, sizes.MinH, sizes.MaxH)
+		}
+	}
+}
+
+func TestScheduleFitsRanges(t *testing.T) {
+	for id := 1; id <= common.LevelsPerModule; id++ {
+		w, h := common.ExpectedGrid(id)
+		tier := common.ExpectedDifficulty(id)
+		sizes, ok := GridSizeRanges[tier]
+		if !ok {
+			t.Fatalf("no grid range for %s", tier)
+		}
+		if w < sizes.MinW || w > sizes.MaxW || h < sizes.MinH || h > sizes.MaxH {
+			t.Errorf("level %d %s grid %dx%d outside range %d-%d x %d-%d",
+				id, tier, w, h, sizes.MinW, sizes.MaxW, sizes.MinH, sizes.MaxH)
 		}
 	}
 }

@@ -75,8 +75,16 @@ func (f *GapFiller) FillGaps(
 		}
 	}
 
-	// Phase 2: Fill remaining small gaps with 2-cell vines (standard fallback)
+	// Phase 2: 2-cell vines only while more than 3% of the board is empty.
+	// The rest can be masked. This keeps a mask budget instead of a field of pairs.
+	holeBudget := int(float64(f.w*f.h) * 0.03)
+	if holeBudget < 1 {
+		holeBudget = 1
+	}
 	for pass := 0; pass < 3; pass++ {
+		if len(f.findEmptyCells(currentOccupied)) <= holeBudget {
+			break
+		}
 		madeProgress := false
 		candidates := f.findEmptyCells(currentOccupied)
 		f.rng.Shuffle(len(candidates), func(i, j int) {

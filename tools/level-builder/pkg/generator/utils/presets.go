@@ -5,6 +5,91 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 )
 
+// ProfileForSlot returns the variety profile for a tier slot.
+// Slot 0 is the short, mostly-free opener. Later slots wind more and
+// aim fewer heads straight off the board. The boss matches slot 4.
+func ProfileForSlot(difficulty string, slot int, challenge bool) config.VarietyProfile {
+	profile := GetPresetProfile(difficulty)
+	if challenge {
+		slot = 4
+	}
+	if slot < 0 {
+		slot = 0
+	}
+	if slot > 4 {
+		slot = 4
+	}
+
+	switch slot {
+	case 0:
+		profile.TurnMix = 0.35
+		profile.RegionBias = "edge"
+		profile.FreeHeadBias = 0.85
+		profile.LengthMix = map[string]float64{"short": 0.1, "medium": 0.35, "long": 0.55}
+	case 1:
+		profile.TurnMix = 0.45
+		profile.RegionBias = "balanced"
+		profile.FreeHeadBias = 0.7
+		profile.LengthMix = map[string]float64{"short": 0.1, "medium": 0.4, "long": 0.5}
+	case 2:
+		profile.TurnMix = 0.4
+		profile.RegionBias = "center"
+		profile.FreeHeadBias = 0.55
+		profile.LengthMix = map[string]float64{"short": 0.1, "medium": 0.35, "long": 0.55}
+	case 3:
+		profile.TurnMix = 0.25
+		profile.RegionBias = "edge"
+		profile.FreeHeadBias = 0.35
+		profile.LengthMix = map[string]float64{"short": 0.05, "medium": 0.25, "long": 0.7}
+	default:
+		profile.TurnMix = 0.7
+		profile.RegionBias = "balanced"
+		profile.FreeHeadBias = 0.2
+		profile.LengthMix = map[string]float64{"short": 0.05, "medium": 0.3, "long": 0.65}
+	}
+	return profile
+}
+
+// AnchorRatioForSlot is the clearable-first share of outward edge anchors.
+// Early slots keep more immediately free vines. Later slots and the boss do not.
+func AnchorRatioForSlot(slot int, challenge bool) float64 {
+	if challenge {
+		return 0.12
+	}
+	switch slot {
+	case 0:
+		return 0.45
+	case 1:
+		return 0.35
+	case 2:
+		return 0.25
+	case 3:
+		return 0.18
+	default:
+		return 0.12
+	}
+}
+
+// MotifForSlot picks the placement strategy and the motif name recorded in stats.
+// Slot 3 and 4 reuse existing strategies with a different profile.
+func MotifForSlot(slot int, challenge bool) (strategy string, motif string) {
+	if challenge {
+		return config.StrategyLegacyClearable, "boss-knot"
+	}
+	switch slot {
+	case 0:
+		return config.StrategyLegacyClearable, "edge-anchor"
+	case 1:
+		return config.StrategyDirectionFirst, "direction-first"
+	case 2:
+		return config.StrategyCenterOut, "center-out"
+	case 3:
+		return config.StrategyLegacyClearable, "border-frame"
+	default:
+		return config.StrategyDirectionFirst, "winding"
+	}
+}
+
 // GetPresetProfile returns a VarietyProfile tuned for the given difficulty tier.
 func GetPresetProfile(difficulty string) config.VarietyProfile {
 	spec := config.DifficultySpecs[difficulty]
@@ -82,8 +167,8 @@ func DefaultGridSize(difficulty string) []int {
 	return []int{w, h}
 }
 
-// GridSizeForLevel returns the appropriate grid size for a level ID.
+// GridSizeForLevel returns the scheduled grid for a level ID.
 func GridSizeForLevel(levelID int) []int {
-	difficulty := common.ExpectedDifficulty(levelID)
-	return DefaultGridSize(difficulty)
+	w, h := common.ExpectedGrid(levelID)
+	return []int{w, h}
 }

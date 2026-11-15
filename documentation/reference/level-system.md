@@ -261,20 +261,22 @@ All levels must pass the strict validator in `tools/level-builder`.
 
 ## 5. Level Generation (canonical pipeline)
 
-The `batch` command in `tools/level-builder` is the primary level generation system. It generates 21 levels per module following the canonical 5×21 progression (`pkg/common/progression.go`, the single source of truth shared by generator, batch, and validator): 5× Seedling, Sprout, Nurturing, Flourishing, then a Transcendent challenge. Generation runs through the robust pipeline (`pkg/generator/pipeline.go`): registry strategy placement → gap filling → ID sanitization → masking → assembly, with per-level acceptance gates (structural + solvable + 100% playable coverage + quality: vine-count range, multi-color palette, length variety).
+The `batch` command in `tools/level-builder` is the primary level generation system. It generates 21 levels per module following the canonical 5×21 progression (`pkg/common/progression.go`, the single source of truth shared by generator, batch, and validator): 5× Seedling, Sprout, Nurturing, Flourishing, then a Transcendent challenge. Each of those five levels has its own grid in `ExpectedGrid`. Generation runs through the robust pipeline (`pkg/generator/pipeline.go`): motif placement → extend existing tails → gap filling inside a 3% mask budget → walk sealed pockets into bordering vines → ID sanitization → masking → assembly. A candidate is written only when it passes structural rules, greedy solvability, 100% playable coverage, and `metrics.CheckContract`.
 
 ### 5.1 Difficulty Specifications
 
 Source of truth: `pkg/generator/config.DifficultySpecs` + `GridSizeRanges`. Validator enforces the stricter of the spec occupancy and `common.MinCoverageForDifficulty`.
 
-| Difficulty   | Grid Size (W×H) | Vine Count | Avg Length | Occupancy                               | Grace | Complexity |
-| ------------ | --------------- | ---------- | ---------- | --------------------------------------- | ----- | ---------- |
-| Tutorial     | 4×4 to 8×8      | 1-6        | n/a        | ~88–100% (hand-crafted; L1 single vine) | 3     | tutorial   |
-| Seedling     | 6×8 to 9×12     | 4-60       | 8-12       | 93%                                     | 3     | low        |
-| Sprout       | 9×12 to 12×16   | 8-80       | 8-14       | 93%                                     | 3     | low        |
-| Nurturing    | 9×16 to 12×20   | 12-100     | 8-14       | 93%                                     | 3     | medium     |
-| Flourishing  | 12×20 to 16×24  | 15-150     | 10-16      | 93%                                     | 3     | high       |
-| Transcendent | 16×28 to 24×40  | 15-200     | 12-18      | 93%                                     | 4     | extreme    |
+These bands are what the generator accepts for a new level. The shipped `assets/levels/` files still use the previous single midpoint per tier (Seedling 7×10, Sprout 10×14, Nurturing 10×18, Flourishing 14×22, Transcendent 20×34). `task levels:validate` checks those files. `task levels:variety` reports them and does not fail them. `variety --enforce` is for a directory produced by the new schedule.
+
+| Difficulty   | Grid schedule (W×H)                                      | Vine Count | Avg Length | Occupancy | Grace | Complexity |
+| ------------ | -------------------------------------------------------- | ---------- | ---------- | --------- | ----- | ---------- |
+| Tutorial     | 5×8 to 9×12 (hand-authored)                              | 3-8        | 6-10       | 30%+      | 3     | tutorial   |
+| Seedling     | 9×12, 9×14, 10×14, 10×16, 12×16                          | 14-24      | 7-12       | 93%+      | 3     | low        |
+| Sprout       | 12×16, 12×18, 14×18, 14×20, 14×22                        | 20-32      | 8-14       | 93%+      | 3     | low        |
+| Nurturing    | 14×20, 14×22, 16×22, 16×24, 16×26                        | 26-40      | 9-16       | 93%+      | 3     | medium     |
+| Flourishing  | 16×24, 16×26, 18×26, 18×28, 18×30                        | 34-52      | 10-16      | 93%+      | 3     | high       |
+| Transcendent | 22×36                                                    | 55-80      | 12-18      | 93%+      | 4     | extreme    |
 
 ### 5.2 Direction-First Placement Algorithm
 
@@ -306,11 +308,15 @@ This approach significantly improves generation success rate compared to full re
 
 Reference levels for each difficulty tier are bundled in [`apps/parable-bloom/assets/levels/`](../../apps/parable-bloom/assets/levels/) (canonical 5×21 layout — module 1 shown):
 
-- **Seedling (Level 1)**: [`level_1.json`](../../apps/parable-bloom/assets/levels/level_1.json) - 7×10 grid, 12 vines
-- **Sprout (Level 6)**: [`level_6.json`](../../apps/parable-bloom/assets/levels/level_6.json) - 10×14 grid
-- **Nurturing (Level 11)**: [`level_11.json`](../../apps/parable-bloom/assets/levels/level_11.json) - 10×18 grid
-- **Flourishing (Level 16)**: [`level_16.json`](../../apps/parable-bloom/assets/levels/level_16.json) - 14×22 grid
-- **Transcendent challenge (Level 21)**: [`level_21.json`](../../apps/parable-bloom/assets/levels/level_21.json) - 20×34 grid, 4 Grace
+Shipped module 1 still uses the previous midpoint grids:
+
+- **Seedling (Level 1)**: [`level_1.json`](../../apps/parable-bloom/assets/levels/level_1.json) — 7×10 grid, 12 vines
+- **Sprout (Level 6)**: [`level_6.json`](../../apps/parable-bloom/assets/levels/level_6.json) — 10×14 grid
+- **Nurturing (Level 11)**: [`level_11.json`](../../apps/parable-bloom/assets/levels/level_11.json) — 10×18 grid
+- **Flourishing (Level 16)**: [`level_16.json`](../../apps/parable-bloom/assets/levels/level_16.json) — 14×22 grid
+- **Transcendent challenge (Level 21)**: [`level_21.json`](../../apps/parable-bloom/assets/levels/level_21.json) — 20×34 grid, 4 Grace
+
+The next generation of those IDs is 9×12, 12×16, 14×20, 16×24, and 22×36.
 
 ## 6. Tooling
 

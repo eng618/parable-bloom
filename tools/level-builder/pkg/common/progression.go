@@ -57,3 +57,41 @@ func IndexInModule(levelID int) int {
 func IsChallengeLevel(levelID int) bool {
 	return IndexInModule(levelID) == LevelsPerModule-1
 }
+
+// tierGrids is the raised board schedule. Five sizes per tier, one boss size.
+// The same schedule repeats in every module. Widths stay near boards the
+// camera already fits; the boss grows one step past today's 20×34.
+var tierGrids = map[string][][2]int{
+	"Seedling":     {{9, 12}, {9, 14}, {10, 14}, {10, 16}, {12, 16}},
+	"Sprout":       {{12, 16}, {12, 18}, {14, 18}, {14, 20}, {14, 22}},
+	"Nurturing":    {{14, 20}, {14, 22}, {16, 22}, {16, 24}, {16, 26}},
+	"Flourishing":  {{16, 24}, {16, 26}, {18, 26}, {18, 28}, {18, 30}},
+	"Transcendent": {{22, 36}},
+}
+
+// SlotInTier returns the 0-based index within the five levels of a tier.
+// The Transcendent boss is slot 0 of its own one-size schedule.
+func SlotInTier(levelID int) int {
+	idx := IndexInModule(levelID)
+	if idx < 0 {
+		return 0
+	}
+	if idx >= 20 {
+		return 0
+	}
+	return idx % 5
+}
+
+// ExpectedGrid returns the scheduled width and height for a level ID.
+func ExpectedGrid(levelID int) (int, int) {
+	difficulty := ExpectedDifficulty(levelID)
+	sizes := tierGrids[difficulty]
+	if len(sizes) == 0 {
+		return 9, 12
+	}
+	slot := SlotInTier(levelID)
+	if slot >= len(sizes) {
+		slot = len(sizes) - 1
+	}
+	return sizes[slot][0], sizes[slot][1]
+}

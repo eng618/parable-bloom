@@ -2,6 +2,7 @@ package strategies
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
@@ -145,8 +146,13 @@ func (a *DFSBlockingAnalyzer) detectCircularBlocking(graph map[string][]string) 
 		return false
 	}
 
-	// Check each node for cycles
+	// Sorted IDs keep the first reported cycle stable across process runs.
+	ids := make([]string, 0, len(graph))
 	for nodeID := range graph {
+		ids = append(ids, nodeID)
+	}
+	sort.Strings(ids)
+	for _, nodeID := range ids {
 		if !visited[nodeID] {
 			if hasCycle(nodeID, []string{}) {
 				return true, circularChains

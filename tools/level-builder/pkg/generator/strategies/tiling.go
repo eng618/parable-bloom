@@ -167,6 +167,13 @@ func TileGridIntoVines(
 	return vines, mask, nil
 }
 
+func chooseHeadForProfile(seed model.Point, gridSize []int, profile config.VarietyProfile, rng *rand.Rand) string {
+	if profile.FreeHeadBias > 0 && profile.FreeHeadBias < 1 && rng.Float64() >= profile.FreeHeadBias {
+		return common.FarthestExitDirection(seed, gridSize[0], gridSize[1])
+	}
+	return utils.ChooseExitDirection(seed, gridSize, profile.DirBalance, rng)
+}
+
 // GrowFromSeed attempts to grow a vine starting from seed, avoiding occupied cells.
 // It returns the vine and the updated occupancy map on success.
 func GrowFromSeed(
@@ -183,7 +190,7 @@ func GrowFromSeed(
 
 	// DIRECTION-FIRST APPROACH: Choose head direction before growing vine
 	// This dramatically improves solvability by ensuring vines point toward exits
-	desiredHeadDir := utils.ChooseExitDirection(seed, gridSize, profile.DirBalance, rng)
+	desiredHeadDir := chooseHeadForProfile(seed, gridSize, profile, rng)
 	headDx, headDy := utils.DeltaForDirection(desiredHeadDir)
 
 	// Start path with seed as the head
@@ -304,7 +311,13 @@ func GrowFromSeed(
 					nextDy := n.Y - curr.Y
 
 					if dx == nextDx && dy == nextDy {
-						scored[i].score += 0.5 // Small bonus for straight continuation
+						bonus := 0.5
+						if profile.TurnMix > 0 {
+							bonus = 1.0 - profile.TurnMix
+						}
+						scored[i].score += bonus
+					} else if profile.TurnMix > 0 {
+						scored[i].score += profile.TurnMix * 0.5
 					}
 
 					// Add randomness to prevent deterministic patterns

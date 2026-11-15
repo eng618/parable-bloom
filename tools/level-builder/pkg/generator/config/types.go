@@ -45,6 +45,15 @@ type GenerationConfig struct {
 	BacktrackWindow      int    // How many previous vines to remove when attempting local recovery (default 3)
 	MaxBacktrackAttempts int    // How many local backtrack retries to attempt per failure (default 2)
 	DumpDir              string // Directory to write deterministic failure dumps (if empty, defaults to tools/level-builder/failing_dumps)
+
+	// Slot is the 0-based index within the five levels of this tier.
+	Slot int
+	// Motif is the requested layout family for this slot (edge-anchor, winding, ...).
+	Motif string
+	// Profile tunes bend, region, and how often heads start free.
+	Profile VarietyProfile
+	// AnchorRatio is the clearable-first edge-anchor share. 0 means the placer default.
+	AnchorRatio float64
 }
 
 // GenerationStats tracks performance and quality metrics

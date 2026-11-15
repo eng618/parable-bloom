@@ -79,7 +79,14 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 		}
 	}
 
-	// 3. Aggressive Fill Phase
+	// 3. Extend existing tails into empty cells before spawning new vines.
+	maxAvg := 18.0
+	if spec, ok := config.DifficultySpecs[cfg.Difficulty]; ok && spec.AvgLengthRange[1] > 0 {
+		maxAvg = float64(spec.AvgLengthRange[1])
+	}
+	vines, occupied = strategies.ExtendIntoGaps(vines, occupied, cfg.GridWidth, cfg.GridHeight, rng, maxAvg)
+
+	// 4. Aggressive Fill Phase
 	// Identify next available vine ID (robust to malformed IDs)
 	nextVineID := 1
 	for _, v := range vines {
@@ -89,18 +96,41 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 	}
 
 	common.Verbose("Starting Aggressive Fill Phase...")
-	fillerVines, fillerOccupied := gapFiller.FillGaps(nextVineID, occupied)
-
-	// Merge filler vines
-	vines = append(vines, fillerVines...)
-	for k, v := range fillerOccupied {
-		occupied[k] = v
+	// New filler vines are short. Skip them when they would pull a board
+	// that already meets the length floor back under the band. Masking
+	// covers a small remainder; a field of pairs does not.
+	minAvg := 0.0
+	if spec, ok := config.DifficultySpecs[cfg.Difficulty]; ok && spec.AvgLengthRange[0] > 0 {
+		minAvg = float64(spec.AvgLengthRange[0])
+	}
+	avgNow := meanVineLength(vines)
+	if minAvg <= 0 || avgNow+1e-9 >= minAvg {
+		fillerVines, _ := gapFiller.FillGaps(nextVineID, occupied)
+		accepted := 0
+		for _, fv := range fillerVines {
+			trial := append(append([]model.Vine{}, vines...), fv)
+			if minAvg > 0 && meanVineLength(trial)+1e-9 < minAvg {
+				break
+			}
+			if shortVineShare(trial) > 0.15+1e-9 {
+				break
+			}
+			vines = append(vines, fv)
+			for _, p := range fv.OrderedPath {
+				occupied[fmt.Sprintf("%d,%d", p.X, p.Y)] = fv.ID
+			}
+			accepted++
+		}
+		common.Verbose("Added %d filler vines. Total coverage: %d/%d",
+			accepted, len(occupied), cfg.GridWidth*cfg.GridHeight)
 	}
 
-	common.Verbose("Added %d filler vines. Total coverage: %d/%d",
-		len(fillerVines), len(occupied), cfg.GridWidth*cfg.GridHeight)
+	vines, finalBeforeMask := strategies.ExtendIntoGaps(vines, occupied, cfg.GridWidth, cfg.GridHeight, rng, maxAvg)
+	occupied = finalBeforeMask
+	vines, occupied = strategies.AbsorbPockets(vines, occupied, cfg.GridWidth, cfg.GridHeight, minAvg)
+	vines, occupied = strategies.SealHoles(vines, occupied, cfg.GridWidth, cfg.GridHeight, rng, cfg.LevelID, minAvg, maxAvg)
 
-	// 4. Sanitize Phase
+	// 5. Sanitize Phase
 	// Ensure unique IDs before final assembly
 	vines = ensureUniqueVineIDs(vines)
 
@@ -112,7 +142,7 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 		}
 	}
 
-	// 5. Mandatory Masking Phase
+	// 6. Mandatory Masking Phase
 	// Any cell not in finalOccupied MUST be masked to ensure 100% playable coverage
 	var mask *model.Mask
 	emptyCells := findEmptyCells(cfg.GridWidth, cfg.GridHeight, finalOccupied)
@@ -121,13 +151,37 @@ func GenerateRobust(cfg config.GenerationConfig) (model.Level, config.Generation
 		mask = &model.Mask{Mode: "hide", Points: emptyCells}
 	}
 
-	// 6. Assembly
+	// 7. Assembly
 	level := assembler.AssembleLevel(cfg, vines, mask, seed)
 
 	stats.GenerationTime = time.Since(startTime)
 	stats.GridCoverage = float64(len(finalOccupied)) / float64(cfg.GridWidth*cfg.GridHeight)
 
 	return level, stats, nil
+}
+
+func shortVineShare(vines []model.Vine) float64 {
+	if len(vines) == 0 {
+		return 0
+	}
+	n := 0
+	for _, v := range vines {
+		if len(v.OrderedPath) <= 3 {
+			n++
+		}
+	}
+	return float64(n) / float64(len(vines))
+}
+
+func meanVineLength(vines []model.Vine) float64 {
+	if len(vines) == 0 {
+		return 0
+	}
+	total := 0
+	for _, v := range vines {
+		total += len(v.OrderedPath)
+	}
+	return float64(total) / float64(len(vines))
 }
 
 func findEmptyCells(w, h int, occupied map[string]string) []model.Point {

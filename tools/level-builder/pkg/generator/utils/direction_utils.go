@@ -30,30 +30,32 @@ func ChooseExitDirection(seed model.Point, gridSize []int, dirBalance map[string
 	weights["down"] = 1.0 / float64(distToBottom+1)
 	weights["up"] = 1.0 / float64(distToTop+1)
 
+	// Fixed order so a seed does not depend on map iteration.
+	// Same tie break as common.ChooseExitDirection: left, right, down, up.
+	directions := []string{"left", "right", "down", "up"}
+
 	// Apply dirBalance preferences (if any)
-	for dir, balance := range dirBalance {
-		if w, exists := weights[dir]; exists {
-			weights[dir] = w * balance
+	for _, dir := range directions {
+		if balance, ok := dirBalance[dir]; ok {
+			weights[dir] = weights[dir] * balance
 		}
 	}
 
 	// Weighted random selection
 	totalWeight := 0.0
-	for _, w := range weights {
-		totalWeight += w
+	for _, dir := range directions {
+		totalWeight += weights[dir]
 	}
 
 	if totalWeight == 0 {
-		// Fallback to random direction
-		directions := []string{"right", "left", "up", "down"}
 		return directions[rng.Intn(len(directions))]
 	}
 
 	roll := rng.Float64() * totalWeight
 	cumulative := 0.0
 
-	for dir, weight := range weights {
-		cumulative += weight
+	for _, dir := range directions {
+		cumulative += weights[dir]
 		if roll < cumulative {
 			return dir
 		}

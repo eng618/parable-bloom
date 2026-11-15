@@ -52,7 +52,10 @@ func (s *LegacyClearableStrategy) PlaceVines(cfg config.GenerationConfig, rng *r
 		// Fallback
 		spec = config.DifficultySpecs["Seedling"]
 	}
-	profile := utils.GetPresetProfile(cfg.Difficulty)
+	profile := cfg.Profile
+	if len(profile.LengthMix) == 0 {
+		profile = utils.GetPresetProfile(cfg.Difficulty)
+	}
 	genCfg := utils.GetGeneratorConfigForDifficulty(cfg.Difficulty)
 	gridSize := []int{cfg.GridWidth, cfg.GridHeight}
 
@@ -60,11 +63,17 @@ func (s *LegacyClearableStrategy) PlaceVines(cfg config.GenerationConfig, rng *r
 	// We can use cfg.Seed or just rng.Int63()
 	seed := rng.Int63()
 
-	// Anchor ratio - usually 0.3 in legacy code, but adaptive. Use default 0.3 for now.
-	anchorRatio := 0.3
+	anchorRatio := cfg.AnchorRatio
+	if anchorRatio <= 0 {
+		anchorRatio = 0.3
+	}
+	coverageTarget := spec.MinGridOccupancy
+	if cfg.MinCoverage > coverageTarget {
+		coverageTarget = cfg.MinCoverage
+	}
 
-	vines, err := ClearableFirstPlacement(gridSize, spec, profile, genCfg, seed, anchorRatio, spec.MinGridOccupancy, true)
-	if err != nil {
+	vines, err := ClearableFirstPlacement(gridSize, spec, profile, genCfg, seed, anchorRatio, coverageTarget, true)
+	if err != nil && len(vines) < 2 {
 		return nil, nil, err
 	}
 
@@ -75,7 +84,7 @@ func (s *LegacyClearableStrategy) PlaceVines(cfg config.GenerationConfig, rng *r
 			occupied[key] = v.ID
 		}
 	}
-	return vines, occupied, nil
+	return vines, occupied, err
 }
 
 // StrategyLegacySolverAware wraps the old SolverAwarePlacement algorithm

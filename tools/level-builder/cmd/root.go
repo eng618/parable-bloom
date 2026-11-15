@@ -16,6 +16,7 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/stats"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/tutorials"
 	"github.com/eng618/parable-bloom/tools/level-builder/cmd/validate"
+	"github.com/eng618/parable-bloom/tools/level-builder/cmd/variety"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/common"
 )
 
@@ -97,6 +98,7 @@ func init() {
 	rootCmd.AddCommand(clean.GetCommand())
 	rootCmd.AddCommand(tutorials.GetCommand())
 	rootCmd.AddCommand(stats.GetCommand())
+	rootCmd.AddCommand(variety.GetCommand())
 }
 
 // parseWorkers parses the workers flag value

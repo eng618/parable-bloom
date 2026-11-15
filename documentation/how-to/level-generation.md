@@ -12,6 +12,9 @@ The project provides Taskfile shortcuts for standard level operations:
 # Validate all existing levels
 task levels:validate
 
+# Variety report for the shipped corpus (informational; does not fail old grids)
+task levels:variety
+
 # Validate all levels with exact solvability checks (A* / BFS search)
 task levels:validate-solvable
 
@@ -29,8 +32,16 @@ Levels are generated per module (21 levels each; modules 1–5 shipped with
 105 levels, modules 6–24 registered for the 504-level cloud set)
 following the canonical 21-per-module progression (`tools/level-builder/pkg/common/progression.go`):
 5× Seedling, Sprout, Nurturing, Flourishing, then a Transcendent challenge.
-Every level must pass acceptance gates (structural + solvable + 100% playable
-coverage + quality) before it is written.
+Each of the five levels in a tier has its own grid, and the batch rotates a
+motif (edge anchors, direction-first, center-out, a long border, then a
+winding board). If that motif misses the contract, the batch tries the other
+placers and records which one won.
+Every newly generated level must pass acceptance gates before it is written:
+structural rules, greedy solvability, 100% playable coverage, and the
+new-ladder contract (scheduled grid, vine count, average length, short-vine
+share at most 15%, mask at most 3%, four-way head balance, and a free-vine
+share that falls from the first slot of a tier to the last). The files already
+in `assets/levels/` stay on the previous midpoint grids until a regeneration.
 
 ```bash
 # Canonical flow: generate modules 1-5 (Levels 1-105) with the batch generator

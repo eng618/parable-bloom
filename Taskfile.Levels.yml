@@ -19,6 +19,12 @@ tasks:
     cmds:
       - go run . validate --check-solvable=false
 
+  variety:
+    desc: Print a variety report for shipped levels (informational; does not fail the old corpus)
+    dir: tools/level-builder
+    cmds:
+      - go run . variety
+
   validate:
     desc: Validate existing levels and modules using the Go tool
     dir: tools/level-builder

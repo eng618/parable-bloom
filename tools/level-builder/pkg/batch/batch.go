@@ -12,6 +12,7 @@ import (
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/config"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/metrics"
+	"github.com/eng618/parable-bloom/tools/level-builder/pkg/generator/utils"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/model"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/ui"
 	"github.com/eng618/parable-bloom/tools/level-builder/pkg/validator"
@@ -193,12 +194,14 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config, spin *
 
 	strategiesToTry := []string{}
 
-	// Determine primary strategy
+	// Primary motif, then the other placers. A slot that cannot pass the
+	// contract still has a solvable fallback. Stats record which one won.
 	primary := determineStrategy(levelID, difficulty, batchCfg)
 	strategiesToTry = append(strategiesToTry, primary)
-
-	if primary != config.StrategyCenterOut {
-		strategiesToTry = append(strategiesToTry, config.StrategyCenterOut)
+	for _, extra := range []string{config.StrategyLegacyClearable, config.StrategyCenterOut, config.StrategyDirectionFirst} {
+		if extra != primary {
+			strategiesToTry = append(strategiesToTry, extra)
+		}
 	}
 
 	const maxRetriesPerStrategy = 20
@@ -234,6 +237,9 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config, spin *
 
 			// Generate
 			level, stats, err = generateLevel(genCfg)
+			if err != nil {
+				spin.LogWarning("  Placement failed for level %d (%s): %v", levelID, strat, err)
+			}
 
 			// Validate (difficulty lock + structural + solvable + coverage + quality)
 			valid := false
@@ -248,6 +254,13 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config, spin *
 					acceptedQuality = q
 				} else {
 					spin.LogWarning("  Validation failed for level %d (%s): %v", levelID, strat, valErr)
+				}
+			}
+
+			if valid {
+				if werr := generator.SaveLevel(level, genCfg); werr != nil {
+					spin.LogWarning("  Write failed for level %d (%s): %v", levelID, strat, werr)
+					valid = false
 				}
 			}
 
@@ -281,10 +294,16 @@ success:
 	// Optionally write per-level stats JSON to StatsOut directory
 	if batchCfg.StatsOut != "" {
 		_ = os.MkdirAll(batchCfg.StatsOut, 0o755)
+		wonMotif := genCfg.Motif
+		if genCfg.Strategy != primary {
+			wonMotif = genCfg.Strategy
+		}
 		statsObj := map[string]interface{}{
 			"level_id":             levelID,
 			"difficulty":           difficulty,
 			"strategy":             genCfg.Strategy,
+			"motif":                wonMotif,
+			"requested_motif":      genCfg.Motif,
 			"seed":                 genCfg.Seed,
 			"grid":                 []int{genCfg.GridWidth, genCfg.GridHeight},
 			"coverage":             result.Coverage,
@@ -321,20 +340,15 @@ func buildGenerationConfig(levelID int, difficulty string, batchCfg Config) (con
 		return config.GenerationConfig{}, fmt.Errorf("unknown difficulty: %s", difficulty)
 	}
 
-	gridRange, ok := config.GridSizeRanges[difficulty]
-	if !ok {
-		return config.GenerationConfig{}, fmt.Errorf("no grid size config for difficulty: %s", difficulty)
-	}
-
-	gridWidth := (gridRange.MinW + gridRange.MaxW) / 2
-	gridHeight := (gridRange.MinH + gridRange.MaxH) / 2
+	gridWidth, gridHeight := common.ExpectedGrid(levelID)
 	if gridWidth < 2 || gridHeight < 2 {
 		return config.GenerationConfig{}, fmt.Errorf("invalid grid size computed for %s", difficulty)
 	}
 
 	totalCells := gridWidth * gridHeight
-	// Enforce 100% coverage for all levels as per Design Doc
-	targetCoverage := 1.0
+	// Placers stop at 97% vine occupancy. The pipeline masks the rest so
+	// playable coverage stays 100% without a field of 2-cell fillers.
+	targetCoverage := 0.97
 	vineCount := computeVineCount(spec, totalCells, targetCoverage)
 	maxMoves := vineCount * 2
 
@@ -346,6 +360,12 @@ func buildGenerationConfig(levelID int, difficulty string, batchCfg Config) (con
 		maxBackAttempts = 6
 	}
 
+	slot := common.SlotInTier(levelID)
+	challenge := common.IsChallengeLevel(levelID)
+	strategy, motif := utils.MotifForSlot(slot, challenge)
+	if chosen := determineStrategy(levelID, difficulty, batchCfg); chosen != "" {
+		strategy = chosen
+	}
 	genCfg := config.GenerationConfig{
 		LevelID:              levelID,
 		GridWidth:            gridWidth,
@@ -358,20 +378,23 @@ func buildGenerationConfig(levelID int, difficulty string, batchCfg Config) (con
 		Overwrite:            batchCfg.Overwrite,
 		MinCoverage:          targetCoverage,
 		Difficulty:           difficulty,
-		Strategy:             determineStrategy(levelID, difficulty, batchCfg),
+		Strategy:             strategy,
 		BacktrackWindow:      backtrackWindow,
 		MaxBacktrackAttempts: maxBackAttempts,
+		Slot:                 slot,
+		Motif:                motif,
+		Profile:              utils.ProfileForSlot(difficulty, slot, challenge),
+		AnchorRatio:          utils.AnchorRatioForSlot(slot, challenge),
 	}
 
-	// Apply global MinCoverage override if provided (0 = no override)
+	// An explicit override replaces the 97% stop target. Zero keeps it.
+	// Do not fall back to 100%: placers treat a miss as a hard abort and
+	// the pipeline never gets vines to extend, fill, and mask.
 	if batchCfg.MinCoverage > 0 {
 		if batchCfg.MinCoverage < 0.0 || batchCfg.MinCoverage > 1.0 {
 			return config.GenerationConfig{}, fmt.Errorf("invalid MinCoverage override: %v", batchCfg.MinCoverage)
 		}
 		genCfg.MinCoverage = batchCfg.MinCoverage
-	} else {
-		// Default to 1.0 if no override
-		genCfg.MinCoverage = 1.0
 	}
 
 	if batchCfg.DumpDir != "" {
@@ -408,26 +431,20 @@ func computeVineCount(spec config.DifficultySpec, totalCells int, targetCoverage
 }
 
 func generateLevel(genConfig config.GenerationConfig) (model.Level, config.GenerationStats, error) {
-	return generator.GenerateLevel(genConfig)
+	// Validate before writing. GenerateLevel would persist a rejected
+	// board and the next seed would stop on "file already exists".
+	return generator.GenerateRobust(genConfig)
 }
 
 func determineStrategy(levelID int, difficulty string, batchCfg Config) string {
-	// If explicit strategy override provided, use it
 	if batchCfg.Strategy != "" {
 		return batchCfg.Strategy
 	}
-
-	// Honor explicit LIFO requests with center-out (strongest solvability
-	// guarantee). Transcendent intentionally uses legacy-clearable as primary
-	// (center-out fallback still applies): benchmarked Sep 2026, center-out
-	// collapses to ~60% vine occupancy on 20x34 grids (spec: 93%), while
-	// legacy-clearable clears 93.5%+ on attempt 1 with 6-color variety.
 	if batchCfg.UseLIFO {
 		return config.StrategyCenterOut
 	}
-
-	// Default: optimized clearable-first for high coverage >95%
-	return config.StrategyLegacyClearable
+	strategy, _ := utils.MotifForSlot(common.SlotInTier(levelID), common.IsChallengeLevel(levelID))
+	return strategy
 }
 
 func validateGeneratedLevel(level model.Level, minCoverage float64) (float64, metrics.QualityReport, error) {
@@ -482,27 +499,8 @@ func checkDifficultyLock(levelID int, expectedDifficulty string, level model.Lev
 	return nil
 }
 
-// checkQuality rejects degenerate output: monochrome when multi-color expected,
-// flat vine lengths, or vine counts outside the difficulty spec.
+// checkQuality applies the new-ladder contract. Blocking depth stays telemetry:
+// the recorded chain does not match DifficultySpecs.MaxBlockingDepth.
 func checkQuality(level model.Level, q metrics.QualityReport) error {
-	spec, ok := config.DifficultySpecs[level.Difficulty]
-	if !ok {
-		return nil
-	}
-	if len(level.Vines) < spec.VineCountRange[0] || len(level.Vines) > spec.VineCountRange[1] {
-		return fmt.Errorf("vine count %d outside spec range %v for %s", len(level.Vines), spec.VineCountRange, level.Difficulty)
-	}
-	if spec.ColorCountRange[1] > 1 && q.DistinctColors < 2 && len(level.Vines) >= 4 {
-		return fmt.Errorf("degenerate palette: only %d distinct color(s) for %s (expected >1)", q.DistinctColors, level.Difficulty)
-	}
-	if len(level.Vines) >= 6 && q.LengthVariety < 2 {
-		return fmt.Errorf("degenerate shapes: length variety %d (min %d, max %d) for %s", q.LengthVariety, q.MinVineLength, q.MaxVineLength, level.Difficulty)
-	}
-	// Note: q.BlockingDepth is recorded as telemetry only (see stats JSON).
-	// First-step blocking chains measure 1-8 on the current 105-level corpus
-	// (Seedling avg ~3.2, Transcendent avg ~5.2) while DifficultySpecs caps read
-	// 0-4 under a different notion of depth, so enforcing spec caps here would
-	// reject healthy generator output. Revisit once solver-search depth (not
-	// first-step chains) is the metric.
-	return nil
+	return metrics.CheckContract(level, q)
 }

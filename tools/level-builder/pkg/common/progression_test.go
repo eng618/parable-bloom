@@ -42,3 +42,51 @@ func TestModuleMapping(t *testing.T) {
 		t.Errorf("level 20 should not be challenge")
 	}
 }
+
+func TestExpectedGridSchedule(t *testing.T) {
+	cases := []struct {
+		id   int
+		w, h int
+		slot int
+		tier string
+	}{
+		{1, 9, 12, 0, "Seedling"},
+		{5, 12, 16, 4, "Seedling"},
+		{6, 12, 16, 0, "Sprout"},
+		{10, 14, 22, 4, "Sprout"},
+		{11, 14, 20, 0, "Nurturing"},
+		{15, 16, 26, 4, "Nurturing"},
+		{16, 16, 24, 0, "Flourishing"},
+		{20, 18, 30, 4, "Flourishing"},
+		{21, 22, 36, 0, "Transcendent"},
+		{22, 9, 12, 0, "Seedling"},
+		{504, 22, 36, 0, "Transcendent"},
+	}
+	seen := map[[2]int]int{}
+	for _, tc := range cases {
+		if got := SlotInTier(tc.id); got != tc.slot {
+			t.Errorf("SlotInTier(%d)=%d want %d", tc.id, got, tc.slot)
+		}
+		w, h := ExpectedGrid(tc.id)
+		if w != tc.w || h != tc.h {
+			t.Errorf("ExpectedGrid(%d)=%dx%d want %dx%d", tc.id, w, h, tc.w, tc.h)
+		}
+		if ExpectedDifficulty(tc.id) != tc.tier {
+			t.Errorf("difficulty(%d)=%s want %s", tc.id, ExpectedDifficulty(tc.id), tc.tier)
+		}
+		seen[[2]int{w, h}]++
+	}
+	// The five seedling boards in a module are different shapes.
+	var seedling [][2]int
+	for id := 1; id <= 5; id++ {
+		w, h := ExpectedGrid(id)
+		seedling = append(seedling, [2]int{w, h})
+	}
+	for i := 0; i < len(seedling); i++ {
+		for j := i + 1; j < len(seedling); j++ {
+			if seedling[i] == seedling[j] {
+				t.Errorf("seedling slots %d and %d share grid %v", i, j, seedling[i])
+			}
+		}
+	}
+}

@@ -58,15 +58,21 @@ type: 'Game Design Document'
 
 ### Difficulty Tiers
 
-The game scales difficulty through grid size, vine count, and blocking complexity.
+The game scales difficulty through grid size, vine length, and how many vines are free on the first look.
 
-| Tier             | Grid Size      | Vine Count | Avg Length | Complexity       | Blocking Depth |
-| ---------------- | -------------- | ---------- | ---------- | ---------------- | -------------- |
-| **Seedling**     | 6×8 to 8×10    | 6-8        | 6-8        | Linear, no loops | 0-1            |
-| **Sprout**       | 8×10 to 10×12  | 10-14      | 5-7        | Simple chains    | 1-2            |
-| **Nurturing**    | 10×14 to 12×16 | 18-28      | 4-6        | Multi-chains     | 2-3            |
-| **Flourishing**  | 12×16 to 16×20 | 36-50      | 3-5        | Deep blocking    | 3-4            |
-| **Transcendent** | 16×24+         | 60+        | 2-4        | Cascading locks  | 4+             |
+A module is 21 levels. A short sitting should clear two to four of them, not most of the module. The first level of a tier is the short one: a larger board than the previous tier's opener, with most vines still free. Each of the next four levels steps the board up and frees fewer vines. The Transcendent boss is one longer piece, not a second session by itself. There is no timer. Grace stays 3, and 4 on the boss.
+
+The generator cannot measure minutes. It uses board size, average vine length, and the share of vines whose exit is open. Newly generated levels follow the schedule in `pkg/common/progression.go`. The files in `assets/levels/` are still the older midpoint boards (Seedling 7×10 through Transcendent 20×34) until that corpus is regenerated.
+
+| Tier | Slots (W×H) | Vines | Avg length |
+| --- | --- | --- | --- |
+| **Seedling** | 9×12, 9×14, 10×14, 10×16, 12×16 | 14–24 | 7–12 |
+| **Sprout** | 12×16, 12×18, 14×18, 14×20, 14×22 | 20–32 | 8–14 |
+| **Nurturing** | 14×20, 14×22, 16×22, 16×24, 16×26 | 26–40 | 9–16 |
+| **Flourishing** | 16×24, 16×26, 18×26, 18×28, 18×30 | 34–52 | 10–16 |
+| **Transcendent** | 22×36 | 55–80 | 12–18 |
+
+Color still does not encode role. The generator assigns colors round-robin. Moss, gold, and purple do not yet mean "free", "quick", or "deep chain".
 
 ### Tutorial Strategy (Pre-Level Redesign)
 

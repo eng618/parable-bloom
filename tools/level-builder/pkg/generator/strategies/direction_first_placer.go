@@ -13,7 +13,13 @@ import (
 // DirectionFirstPlacer implements VinePlacementStrategy using direction-first growth.
 // This approach picks the exit direction first (toward nearest edge), then grows
 // the vine body backward from the head, ensuring solvability-friendly layouts.
-type DirectionFirstPlacer struct{}
+type DirectionFirstPlacer struct {
+	turnMix      float64
+	freeHeadBias float64
+	minAccept    int
+	vineTarget   int
+	dirCounts    map[string]int
+}
 
 // PlacementResult contains the result of a placement operation
 type PlacementResult struct {
@@ -32,6 +38,17 @@ type VinePlacementStats struct {
 
 // PlaceVines places vines using direction-first strategy with extension passes
 func (p *DirectionFirstPlacer) PlaceVines(config config.GenerationConfig, rng *rand.Rand, stats *config.GenerationStats) ([]model.Vine, map[string]string, error) {
+	p.turnMix = config.Profile.TurnMix
+	p.freeHeadBias = config.Profile.FreeHeadBias
+	if p.freeHeadBias <= 0 {
+		p.freeHeadBias = 1
+	}
+	p.minAccept = lengthFloorFor(config.Difficulty)
+	p.vineTarget = config.VineCount
+	if p.vineTarget < 8 {
+		p.vineTarget = 8
+	}
+	p.dirCounts = map[string]int{"up": 0, "down": 0, "left": 0, "right": 0}
 	w, h := config.GridWidth, config.GridHeight
 	totalCells := w * h
 
@@ -58,6 +75,7 @@ func (p *DirectionFirstPlacer) PlaceVines(config config.GenerationConfig, rng *r
 		}
 
 		vines = append(vines, vine)
+		p.dirCounts[vine.HeadDirection]++
 		for k, v := range newOccupied {
 			occupied[k] = v
 		}
@@ -73,8 +91,10 @@ func (p *DirectionFirstPlacer) PlaceVines(config config.GenerationConfig, rng *r
 		coverage = float64(len(occupied)) / float64(totalCells)
 	}
 
-	// Phase 3: Fill gaps with small filler vines (minimum 2 cells)
-	if coverage < config.MinCoverage {
+	// Phase 3: Fill gaps with small filler vines (minimum 2 cells).
+	// Skip this once a tier has a length floor. Pairs pull the average
+	// under the band; the pipeline extends tails and masks the rest.
+	if coverage < config.MinCoverage && p.minAccept <= 2 {
 		common.Verbose("Coverage %.1f%% still below target, adding filler vines...", coverage*100)
 		fillerVines, fillerOccupied := p.createFillerVines(vines, occupied, w, h, config.MinCoverage, rng)
 		vines = append(vines, fillerVines...)
@@ -88,11 +108,43 @@ func (p *DirectionFirstPlacer) PlaceVines(config config.GenerationConfig, rng *r
 	occupiedCount := len(occupied)
 	common.Verbose("Final coverage: %d/%d cells (%.1f%%)", occupiedCount, totalCells, coverage*100)
 
-	if coverage < config.MinCoverage {
-		return nil, nil, fmt.Errorf("insufficient coverage: %.1f%% (need ≥%.0f%%)", coverage*100, config.MinCoverage*100)
+	// Aim at MinCoverage. Accept the design floor so a shortfall still
+	// reaches the pipeline. Below the floor, keep the vines when there
+	// are enough for the pipeline to recover.
+	floor := occupancyFloor(config.Difficulty, config.MinCoverage)
+	if coverage < floor {
+		err := fmt.Errorf("insufficient coverage: %.1f%% (need ≥%.0f%%)", coverage*100, floor*100)
+		if len(vines) >= 2 {
+			return vines, occupied, err
+		}
+		return nil, nil, err
 	}
 
 	return vines, occupied, nil
+}
+
+// occupancyFloor is the hard minimum a placer may treat as success.
+// MinCoverage is the aim. The pipeline fills and masks the gap between them.
+func occupancyFloor(difficulty string, aim float64) float64 {
+	spec, ok := config.DifficultySpecs[difficulty]
+	if !ok || spec.MinGridOccupancy <= 0 || spec.MinGridOccupancy >= aim {
+		return aim
+	}
+	return spec.MinGridOccupancy
+}
+
+// lengthFloorFor is the shortest vine a tier may keep. Lengths of 3 and
+// below count as short vines in the generation contract.
+func lengthFloorFor(difficulty string) int {
+	spec, ok := config.DifficultySpecs[difficulty]
+	if !ok || spec.AvgLengthRange[0] < 6 {
+		return 2
+	}
+	floor := spec.AvgLengthRange[0] - 2
+	if floor < 4 {
+		floor = 4
+	}
+	return floor
 }
 
 // calculateVineLengths computes target lengths based on difficulty specs
@@ -104,18 +156,16 @@ func (p *DirectionFirstPlacer) calculateVineLengths(config config.GenerationConf
 
 	// Average length per vine
 	avgLength := targetCells / config.VineCount
-	if avgLength < 2 {
-		avgLength = 2 // Minimum length
+	minLength := lengthFloorFor(config.Difficulty)
+	if avgLength < minLength {
+		avgLength = minLength
 	}
-
-	// Create variety in lengths (some short, some long)
-	minLength := 2 // Hard minimum
 	maxLength := avgLength * 2
 	if maxLength > totalCells/4 {
 		maxLength = totalCells / 4
 	}
-	if maxLength < 3 {
-		maxLength = 3
+	if maxLength < minLength {
+		maxLength = minLength
 	}
 
 	lengths := make([]int, config.VineCount)
@@ -159,8 +209,7 @@ func (p *DirectionFirstPlacer) growDirectionFirstVine(
 			continue
 		}
 
-		// Determine head direction toward nearest edge
-		headDirection := common.ChooseExitDirection(*seed, w, h)
+		headDirection := p.chooseHeadDirection(*seed, w, h, rng)
 
 		// The head is at the seed position
 		// We grow the body BACKWARD (opposite to head direction)
@@ -200,15 +249,23 @@ func (p *DirectionFirstPlacer) growDirectionFirstVine(
 			localOccupied[fmt.Sprintf("%d,%d", next.X, next.Y)] = vineID
 		}
 
-		// Validate minimum length (2 cells)
-		if len(path) < 2 {
-			continue // Try another seed
+		// Reject vines under the tier length floor. A short accept fills
+		// the board with pairs and the average never reaches the band.
+		need := p.minAccept
+		if need < 2 {
+			need = 2
+		}
+		if len(path) < need {
+			continue
 		}
 
 		vine := model.Vine{
 			ID:            vineID,
 			HeadDirection: headDirection,
 			OrderedPath:   path,
+		}
+		if vineSelfBlocks(vine, w, h) {
+			continue
 		}
 
 		return vine, localOccupied, nil
@@ -251,8 +308,27 @@ func (p *DirectionFirstPlacer) collectCandidateCells(w, h int, occupied map[stri
 	return corner, edge, interior
 }
 
+func (p *DirectionFirstPlacer) chooseHeadDirection(seed model.Point, w, h int, rng *rand.Rand) string {
+	if dir := directionDeficit(p.dirCounts, p.vineTarget); dir != "" {
+		return dir
+	}
+	if p.freeHeadBias >= 1 || rng.Float64() < p.freeHeadBias {
+		return common.ChooseExitDirection(seed, w, h)
+	}
+	return common.FarthestExitDirection(seed, w, h)
+}
+
 // chooseSeed finds a suitable starting cell for a new vine
 func (p *DirectionFirstPlacer) chooseSeed(w, h int, occupied map[string]string, rng *rand.Rand) *model.Point {
+	// Openers pin a missing direction to its edge so the head is free.
+	// Later slots only steer the direction, leaving the ray blocked.
+	if p.freeHeadBias >= 0.5 {
+		if dir := directionDeficit(p.dirCounts, p.vineTarget); dir != "" {
+			if seed := p.seedForDirection(dir, w, h, occupied, rng); seed != nil {
+				return seed
+			}
+		}
+	}
 	cornerCandidates, edgeCandidates, interiorCandidates := p.collectCandidateCells(w, h, occupied)
 
 	// Prefer corners (90% chance if available)
@@ -275,6 +351,18 @@ func (p *DirectionFirstPlacer) chooseSeed(w, h int, occupied map[string]string, 
 	}
 
 	return nil
+}
+
+func (p *DirectionFirstPlacer) seedForDirection(dir string, w, h int, occupied map[string]string, rng *rand.Rand) *model.Point {
+	occ := make(map[string]bool, len(occupied))
+	for k := range occupied {
+		occ[k] = true
+	}
+	pt, ok := pickDirectionalSeed(occ, []int{w, h}, dir, rng)
+	if !ok {
+		return nil
+	}
+	return &pt
 }
 
 func (p *DirectionFirstPlacer) isCornerCell(x, y, w, h int) bool {
@@ -313,15 +401,22 @@ func (p *DirectionFirstPlacer) scoreNeighbor(
 	score := 0.0
 	dir := common.DirectionFromPoints(current, neighbor)
 
-	// Prefer the growth direction (opposite to head)
-	if dir == preferredDir {
-		score += 1.5 // Balanced preference for forward growth
+	straightBonus := 1.5
+	turnBonus := 1.5
+	if p.turnMix > 0 {
+		straightBonus = 2.0 * (1 - p.turnMix)
+		turnBonus = 2.0 * p.turnMix
 	}
 
-	// Balanced turn preference for winding paths
+	// Prefer the growth direction (opposite to head)
+	if dir == preferredDir {
+		score += straightBonus
+	}
+
+	// Turn preference. A higher TurnMix winds the vine instead of running straight.
 	for _, perpDir := range common.PerpendicularDirections(preferredDir) {
 		if dir == perpDir {
-			score += 1.5 // Balanced (creates winding without trapping)
+			score += turnBonus
 			break
 		}
 	}
@@ -437,10 +532,16 @@ func (p *DirectionFirstPlacer) extendVines(
 			// Pick a random neighbor
 			next := neighbors[rng.Intn(len(neighbors))]
 
-			// Add to vine path
+			// Add to vine path only when the ray stays clear of this vine
+			// and the board is still greedy-solvable.
 			vine.OrderedPath = append(vine.OrderedPath, next)
 			key := fmt.Sprintf("%d,%d", next.X, next.Y)
 			occupied[key] = vine.ID
+			if vineSelfBlocks(*vine, w, h) || !greedySolvable(result, w, h) {
+				vine.OrderedPath = vine.OrderedPath[:len(vine.OrderedPath)-1]
+				delete(occupied, key)
+				continue
+			}
 			extended = true
 		}
 

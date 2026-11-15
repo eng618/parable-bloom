@@ -2,21 +2,19 @@
 
 Purpose
 
-- Fill remaining empty cells to reach `MinCoverage` after placing LIFO vines.
+- Raise coverage after the primary placer without covering the board in 2-cell vines.
 
 Behavior
 
-- Use LIFO-guaranteed 2-cell filler vines when possible (`fillWithLIFOGuarantee`).
-- Fall back to `fillWithoutLIFOGuarantee` for any remaining cells.
-- After filler phase completes, perform a solvability check; if unsolvable attempt recovery steps.
+1. `ExtendIntoGaps` appends empty neighbors onto existing tails. Short vines are extended first. Each append is kept only when the greedy solver still passes. Growth stops once average length reaches the tier maximum.
+2. `GapFiller` then places vines of length 3–5 into what remains. The pipeline keeps that prefix only while average length stays inside the tier band and short vines stay at or below 15%.
+3. 2-cell vines are a last resort, and only while more than 3% of the board is empty. The rest is masked so playable coverage stays 100%.
+4. A second extend pass lengthens the new fillers into any cell they can reach. An extension that would lay the vine across its own exit ray is discarded. The greedy solver slides a vine forward and would keep that shape; the structural check will not.
+5. Adjacent holes that are still over the 3% mask budget become 2-cell vines when the length band, the short-vine cap, and the greedy solver still hold.
+6. Pockets that do not touch a tail are walked into by the vine that borders them. The vine retracts to that border cell, covers the pocket, and other tails may reclaim the freed cells. The walk is kept only when the mask shrinks and the length band, short-vine cap, free-vine share, and greedy solver still hold.
 
-Filler-aware incremental checks
+Batch validation runs before the level file is written. A rejected attempt does not block the next seed.
 
-- When fillers are added during recovery the generator now adds them _incrementally_ and runs a cheap incremental solvability check (`IsLikelySolvablePartial`) for each candidate filler.
-- Fillers that cause a hopeless or clearly-unsolvable state are skipped, reducing the likelihood of creating irreparable high-coverage dead states.
+`IsLikelySolvablePartial` is a unit-tested approximation that only inspects the cell in front of a head. The pipeline does not use it. Acceptance uses `common.Solver.IsSolvableGreedy`, which walks the full exit ray. That greedy check is complete for the current rules.
 
-Testing
-
-- Unit tests that validate `fillWithLIFOGuarantee` preserves LIFO exit guarantees.
-- Integration tests that exercise filler behavior during end-to-end generation and assert either solvability or appropriate dumps.
-- New integration behavior is covered by recovery tests which assert skipped filler logs and successful recovery where possible.
+The batch gate (`metrics.CheckContract`) then rejects a candidate whose short-vine share is above 15% or whose mask is above 3% of the grid.

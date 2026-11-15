@@ -20,6 +20,12 @@ func GenerateLevel(cfg config.GenerationConfig) (model.Level, config.GenerationS
 	return level, stats, nil
 }
 
+// SaveLevel writes a level that already passed validation.
+// Batch uses this so a rejected attempt does not block the next seed.
+func SaveLevel(level model.Level, cfg config.GenerationConfig) error {
+	return writeLevelToFile(level, cfg)
+}
+
 // GenerateLevelLIFO is now a wrapper for GenerateRobust.
 func GenerateLevelLIFO(cfg config.GenerationConfig) (model.Level, config.GenerationStats, error) {
 	if cfg.Strategy == "" {

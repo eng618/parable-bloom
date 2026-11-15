@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Level generation walks sealed pockets into the vines that border them, and a seed now picks head direction in a fixed order. Newly generated boards still have to pass the ladder contract before they are written. Shipped levels are unchanged.
 - Marketing site favicon, apple touch icon, and Chrome icons use the current wooden-cross app icon.
 - The marketing site marks Android as available for Google Play open testing. iOS stays coming soon.
 - Marketing link previews use a branded 1200×630 card and a square companion, and the canonical host is `parablebloom.gventureshq.com`.
