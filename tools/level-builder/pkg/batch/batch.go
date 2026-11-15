@@ -204,7 +204,9 @@ func generateSingleLevel(levelID int, difficulty string, batchCfg Config, spin *
 		}
 	}
 
-	const maxRetriesPerStrategy = 20
+	// Most slots pass early. A later seed can be the one that lands inside
+	// the mask budget and the head-direction balance, so keep searching.
+	maxRetriesPerStrategy := 60
 
 	for _, strat := range strategiesToTry {
 		for retry := 0; retry < maxRetriesPerStrategy; retry++ {

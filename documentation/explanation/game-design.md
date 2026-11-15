@@ -62,7 +62,7 @@ The game scales difficulty through grid size, vine length, and how many vines ar
 
 A module is 21 levels. A short sitting should clear two to four of them, not most of the module. The first level of a tier is the short one: a larger board than the previous tier's opener, with most vines still free. Each of the next four levels steps the board up and frees fewer vines. The Transcendent boss is one longer piece, not a second session by itself. There is no timer. Grace stays 3, and 4 on the boss.
 
-The generator cannot measure minutes. It uses board size, average vine length, and the share of vines whose exit is open. Newly generated levels follow the schedule in `pkg/common/progression.go`. The files in `assets/levels/` are still the older midpoint boards (Seedling 7×10 through Transcendent 20×34) until that corpus is regenerated.
+The generator cannot measure minutes. It uses board size, average vine length, and the share of vines whose exit is open. The files in `assets/levels/` follow the schedule in `pkg/common/progression.go`.
 
 | Tier | Slots (W×H) | Vines | Avg length |
 | --- | --- | --- | --- |

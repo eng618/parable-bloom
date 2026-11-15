@@ -267,7 +267,7 @@ The `batch` command in `tools/level-builder` is the primary level generation sys
 
 Source of truth: `pkg/generator/config.DifficultySpecs` + `GridSizeRanges`. Validator enforces the stricter of the spec occupancy and `common.MinCoverageForDifficulty`.
 
-These bands are what the generator accepts for a new level. The shipped `assets/levels/` files still use the previous single midpoint per tier (Seedling 7×10, Sprout 10×14, Nurturing 10×18, Flourishing 14×22, Transcendent 20×34). `task levels:validate` checks those files. `task levels:variety` reports them and does not fail them. `variety --enforce` is for a directory produced by the new schedule.
+These bands are what the generator accepts, and the shipped `assets/levels/` files follow this schedule. `task levels:validate` checks those files. `task levels:variety` reports them. `variety --enforce` fails a file that misses the contract.
 
 | Difficulty   | Grid schedule (W×H)                                      | Vine Count | Avg Length | Occupancy | Grace | Complexity |
 | ------------ | -------------------------------------------------------- | ---------- | ---------- | --------- | ----- | ---------- |
@@ -308,15 +308,13 @@ This approach significantly improves generation success rate compared to full re
 
 Reference levels for each difficulty tier are bundled in [`apps/parable-bloom/assets/levels/`](../../apps/parable-bloom/assets/levels/) (canonical 5×21 layout — module 1 shown):
 
-Shipped module 1 still uses the previous midpoint grids:
+Module 1 uses the schedule:
 
-- **Seedling (Level 1)**: [`level_1.json`](../../apps/parable-bloom/assets/levels/level_1.json) — 7×10 grid, 12 vines
-- **Sprout (Level 6)**: [`level_6.json`](../../apps/parable-bloom/assets/levels/level_6.json) — 10×14 grid
-- **Nurturing (Level 11)**: [`level_11.json`](../../apps/parable-bloom/assets/levels/level_11.json) — 10×18 grid
-- **Flourishing (Level 16)**: [`level_16.json`](../../apps/parable-bloom/assets/levels/level_16.json) — 14×22 grid
-- **Transcendent challenge (Level 21)**: [`level_21.json`](../../apps/parable-bloom/assets/levels/level_21.json) — 20×34 grid, 4 Grace
-
-The next generation of those IDs is 9×12, 12×16, 14×20, 16×24, and 22×36.
+- **Seedling (Level 1)**: [`level_1.json`](../../apps/parable-bloom/assets/levels/level_1.json) — 9×12 grid
+- **Sprout (Level 6)**: [`level_6.json`](../../apps/parable-bloom/assets/levels/level_6.json) — 12×16 grid
+- **Nurturing (Level 11)**: [`level_11.json`](../../apps/parable-bloom/assets/levels/level_11.json) — 14×20 grid
+- **Flourishing (Level 16)**: [`level_16.json`](../../apps/parable-bloom/assets/levels/level_16.json) — 16×24 grid
+- **Transcendent challenge (Level 21)**: [`level_21.json`](../../apps/parable-bloom/assets/levels/level_21.json) — 22×36 grid, 4 Grace
 
 ## 6. Tooling
 

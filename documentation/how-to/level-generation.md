@@ -12,7 +12,7 @@ The project provides Taskfile shortcuts for standard level operations:
 # Validate all existing levels
 task levels:validate
 
-# Variety report for the shipped corpus (informational; does not fail old grids)
+# Variety report for the shipped corpus (informational; exits 0 unless --enforce)
 task levels:variety
 
 # Time one generation of the opener, the last flourishing board, and the boss,
@@ -32,8 +32,8 @@ task levels:generate:all
 
 ### Generating Module Batches (canonical flow)
 
-Levels are generated per module (21 levels each; modules 1–5 shipped with
-105 levels, modules 6–24 registered for the 504-level cloud set)
+Levels are generated per module (21 levels each; modules 1–24, 504 levels,
+shipped in `assets/levels/`)
 following the canonical 21-per-module progression (`tools/level-builder/pkg/common/progression.go`):
 5× Seedling, Sprout, Nurturing, Flourishing, then a Transcendent challenge.
 Each of the five levels in a tier has its own grid, and the batch rotates a
@@ -44,8 +44,8 @@ Every newly generated level must pass acceptance gates before it is written:
 structural rules, greedy solvability, 100% playable coverage, and the
 new-ladder contract (scheduled grid, vine count, average length, short-vine
 share at most 15%, mask at most 3%, four-way head balance, and a free-vine
-share that falls from the first slot of a tier to the last). The files already
-in `assets/levels/` stay on the previous midpoint grids until a regeneration.
+share that falls from the first slot of a tier to the last). The files in
+`assets/levels/` are on that schedule.
 
 ```bash
 # Canonical flow: generate modules 1-5 (Levels 1-105) with the batch generator

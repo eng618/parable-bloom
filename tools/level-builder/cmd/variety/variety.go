@@ -24,9 +24,8 @@ var varietyCmd = &cobra.Command{
 	Short: "Report grid, length, mask, and free-vine shape for a level directory",
 	Long: `Print a per-tier variety report for level JSON files.
 
-The report is informational. The shipped corpus still uses the old
-midpoint grids, so this command exits 0 unless --enforce is set.
---enforce applies the new-ladder contract and is for newly generated levels.`,
+The report is informational and exits 0 unless --enforce is set.
+--enforce applies the ladder contract to every file in the directory.`,
 	RunE: runVariety,
 }
 

@@ -63,14 +63,22 @@ func sealOnce(vines []model.Vine, occupied map[string]string, w, h int, rng *ran
 			}
 			return borders[i].vine < borders[j].vine
 		})
+		local := 0
 		for _, b := range borders {
-			if tried >= 10 {
-				return false
+			// The first borders of a large pocket often fail the length or
+			// free-share check. Keep looking, including later pockets, or a
+			// board a few cells over the mask budget never moves.
+			if local >= 24 || tried >= 80 {
+				break
 			}
+			local++
 			tried++
 			if sealBorder(vines, occupied, w, h, rng, b, comp, minAvg, maxAvg, minFree, maxFree, requireBlocked) {
 				return true
 			}
+		}
+		if tried >= 80 {
+			break
 		}
 	}
 	return false

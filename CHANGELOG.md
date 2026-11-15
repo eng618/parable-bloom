@@ -14,8 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `task lb:bench` times one generation of the opener, the last flourishing board, and the boss, and times the greedy solver on those boards. The center-out fallback stops at the tier's vine-count cap. A coverage miss that still returned vines no longer writes a failure dump. Shipped levels are unchanged.
-- Level generation walks sealed pockets into the vines that border them, and a seed now picks head direction in a fixed order. Newly generated boards still have to pass the ladder contract before they are written. Shipped levels are unchanged.
+- All 504 shipped levels now use the tier grid schedule, from Seedling 9×12 through the 22×36 Transcendent boss. Progress stays keyed by level id. The previous boards are the earliest 2026-11-15 snapshot of each module under `assets/levels_backup/`.
+- `task lb:bench` times one generation of the opener, the last flourishing board, and the boss, and times the greedy solver on those boards. The center-out fallback stops at the tier's vine-count cap. A coverage miss that still returned vines no longer writes a failure dump.
+- Level generation walks sealed pockets into the vines that border them, keeps searching past the first borders, and tries 60 seeds before giving up on a placer. A seed picks head direction in a fixed order. A board is written only after it passes the ladder contract.
 - Marketing site favicon, apple touch icon, and Chrome icons use the current wooden-cross app icon.
 - The marketing site marks Android as available for Google Play open testing. iOS stays coming soon.
 - Marketing link previews use a branded 1200×630 card and a square companion, and the canonical host is `parablebloom.gventureshq.com`.
