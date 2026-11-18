@@ -71,6 +71,7 @@ class GridComponent extends PositionComponent
   int get vineCount => _vineComponents.length;
 
   bool _isAutoClearingInProgress = false;
+  bool _autoClearQueued = false;
 
   /// Shared solver instance. Injected so per-tap distance checks reuse one
   /// (stateless) service instead of allocating a fresh one per call.
@@ -302,6 +303,18 @@ class GridComponent extends PositionComponent
     return cached.contains((x, y));
   }
 
+  /// True when every other vine has already left the board. The vine that
+  /// empties the board uses the slower ending cruise. This reads the mirror,
+  /// which drops a vine at the start of its clear, before the slide finishes.
+  bool isLastOccupiedVine(String vineId) {
+    if (!_vineStates.containsKey(vineId)) return false;
+    for (final entry in _vineStates.entries) {
+      if (entry.key == vineId) continue;
+      if (!entry.value.isClearedOrClearing) return false;
+    }
+    return true;
+  }
+
   List<String> getActiveVineIds() {
     return _vineStates.entries
         .where(
@@ -487,16 +500,26 @@ class GridComponent extends PositionComponent
   }
 
   void _processAutoClearing() async {
-    if (_isAutoClearingInProgress) return;
+    if (_isAutoClearingInProgress) {
+      // slideOut publishes animatingClear before this call returns, which
+      // re-enters through the provider. Remember to scan again so the next
+      // free vine can start while the first is still sliding.
+      _autoClearQueued = true;
+      return;
+    }
 
     final level = _currentLevel;
     if (level == null) return;
 
-    // Check if any vine is currently animating
-    final isAnyAnimating = parent.sink.isAnyAnimating;
-    if (isAnyAnimating) {
+    // A clearing vine is already off the board. Waiting for its slide would
+    // make a slower exit block the next auto-clear. A blocked wiggle still
+    // occupies its cells, and the camera move would fight it.
+    final wiggleInProgress = _vineStates.values.any(
+      (state) => state.animationState == VineAnimationState.animatingBlocked,
+    );
+    if (wiggleInProgress) {
       LoggerService.debug(
-        'Auto-clear deferred: another vine is still animating',
+        'Auto-clear deferred: a vine is still wiggling against a block',
         tag: 'GridComponent',
       );
       return;
@@ -552,6 +575,10 @@ class GridComponent extends PositionComponent
       );
     } finally {
       _isAutoClearingInProgress = false;
+      if (_autoClearQueued) {
+        _autoClearQueued = false;
+        _processAutoClearing();
+      }
     }
   }
 }

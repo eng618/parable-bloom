@@ -367,8 +367,14 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final vineLength = vineData.orderedPath.length;
     parent.parent.sink.onVineSlideStarted(vineLength: vineLength);
 
+    final isLastVine = parent.isLastOccupiedVine(vineData.id);
+
     if (!useRailRenderer) {
-      _animator.startSlideOut(grid: parent, logDebug: _logDebug);
+      _animator.startSlideOut(
+        grid: parent,
+        logDebug: _logDebug,
+        isLastVine: isLastVine,
+      );
       return;
     }
 
@@ -384,6 +390,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       track: _railTrack!,
       approachSteps: approachSteps,
       isClear: rawDistance > 0,
+      isLastVine: isLastVine && rawDistance > 0,
     );
     _railClearFinished = false;
     _railIdleCacheValid = false;

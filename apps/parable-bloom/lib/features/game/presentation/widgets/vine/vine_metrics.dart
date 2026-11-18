@@ -8,6 +8,7 @@ library;
 
 import 'package:material_ui/material_ui.dart';
 
+import 'package:parable_bloom/core/constants/animation_timing.dart';
 import 'package:parable_bloom/core/providers/settings_providers.dart'
     show VineStyle;
 
@@ -75,10 +76,17 @@ class VineMetrics {
     return 3;
   }
 
-  /// Per-cell slide time. Long clears use the fast step so total clear time
-  /// stays snappy (~1s worst case) instead of scaling linearly with length.
+  /// Per-cell time for a blocked wiggle. Long bumps stay on the fast step
+  /// so a mistake returns home quickly. Successful clears do not use this;
+  /// they cruise at [cruiseSecondsPerCell].
   static double stepDurationFor(int totalSteps) =>
       totalSteps > 12 ? 0.035 : 0.06;
+
+  /// Seconds per cell for a clearing slide. The last vine on the board
+  /// uses the slower ending cruise.
+  static double cruiseSecondsPerCell({required bool isLastVine}) => isLastVine
+      ? AnimationTiming.vineLastCruiseSecondsPerCell
+      : AnimationTiming.vineCruiseSecondsPerCell;
 
   /// Arc length of the exit fade band (world px). After the head crosses
   /// the board edge (see [VineTrack.exitArc]), per-vertex alpha ramps 1→0

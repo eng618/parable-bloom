@@ -32,6 +32,17 @@ String pickCongratulationMessage(
   return messages[DateTime.now().millisecondsSinceEpoch % messages.length];
 }
 
+/// How long [effect] can still be on screen after [spawnCelebrationEffect].
+/// The lesson advance waits this long so the next board does not cut it off.
+Duration celebrationLifetime(CelebrationEffect effect) {
+  final seconds = switch (effect) {
+    CelebrationEffect.pondRipples => AnimationTiming.pondRippleSeconds,
+    CelebrationEffect.rippleFireworks =>
+      AnimationTiming.fireworksLifetimeSeconds,
+  };
+  return Duration(milliseconds: (seconds * 1000).round());
+}
+
 /// Spawns the selected celebration FX centered on [game].
 /// Shared by the game and tutorial screens (previously literal-identical
 /// switch statements in both).

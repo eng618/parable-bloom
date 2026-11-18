@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parable_bloom/core/constants/animation_timing.dart';
 import 'package:parable_bloom/core/game_board_layout.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_slide_controller.dart';
@@ -71,13 +72,77 @@ void main() {
       expect(advanced, greaterThan(8));
     });
 
-    test('adaptive pacing keeps long clears snappy', () {
-      final controller = VineSlideController.idle();
+    test(
+        'clear cruise is slower than the blocked step, and the last vine is slower still',
+        () {
       final track = buildTrack();
-      controller.startRun(track: track, approachSteps: 2, isClear: true);
-      // plannedSteps = 2 approach + 3 length + 6 = 11 → matches the legacy
-      // step-duration contract (only >12 steps pick the fast pace).
-      expect(controller.stepDuration, 0.06);
+      final mid = VineSlideController.idle()
+        ..startRun(track: track, approachSteps: 2, isClear: true);
+      final last = VineSlideController.idle()
+        ..startRun(
+          track: track,
+          approachSteps: 2,
+          isClear: true,
+          isLastVine: true,
+        );
+
+      expect(mid.stepDuration, AnimationTiming.vineCruiseSecondsPerCell);
+      expect(last.stepDuration, AnimationTiming.vineLastCruiseSecondsPerCell);
+      expect(last.plannedDuration, greaterThan(mid.plannedDuration * 1.3));
+      // The old short-vine step was 0.06s. Cruise must not regress to that.
+      expect(mid.stepDuration, greaterThan(0.06));
+    });
+
+    test(
+        'a long tail speeds up only after the head leaves, and the run stays within the cap',
+        () {
+      const cols = 12;
+      final cells = <Map<String, int>>[];
+      for (var y = 3; y >= 0; y--) {
+        if (y.isEven) {
+          for (var x = 0; x < cols; x++) {
+            cells.add({'x': x, 'y': y});
+          }
+        } else {
+          for (var x = cols - 1; x >= 0; x--) {
+            cells.add({'x': x, 'y': y});
+          }
+        }
+      }
+      final ordered = cells.reversed.toList();
+      final track = VineTrack.build(
+        orderedPath: ordered,
+        headDirection: 'right',
+        gridWidth: cols,
+        gridHeight: 4,
+        extensionArc: 80 * pitch,
+      );
+      final controller = VineSlideController.idle()
+        ..startRun(track: track, approachSteps: 0, isClear: true);
+
+      expect(
+        controller.plannedDuration,
+        closeTo(AnimationTiming.vineClearCapSeconds, 0.05),
+      );
+
+      // The approach to the edge keeps the cruise. At 90% of the time it
+      // takes the head to reach the edge, the head is still on that approach.
+      final cruiseSpeed = pitch / AnimationTiming.vineCruiseSecondsPerCell;
+      final onScreenSeconds = track.exitTriggerArc / cruiseSpeed;
+      var elapsed = 0.0;
+      const dt = 1 / 120;
+      while (controller.isAnimating && elapsed < onScreenSeconds * 0.9) {
+        controller.update(dt);
+        elapsed += dt;
+      }
+      expect(controller.headArc, lessThan(track.exitTriggerArc));
+
+      while (controller.isAnimating && elapsed < onScreenSeconds + 0.2) {
+        controller.update(dt);
+        elapsed += dt;
+      }
+      expect(controller.headArc, greaterThanOrEqualTo(track.exitTriggerArc));
+      expect(elapsed, lessThan(AnimationTiming.vineClearCapSeconds));
     });
   });
 
@@ -94,6 +159,7 @@ void main() {
       final reached = updates.where((u) => u.justReachedBlocker);
       expect(reached, hasLength(1));
       expect(controller.approachArc, closeTo(2 * pitch, 0.5));
+      expect(controller.stepDuration, 0.06);
 
       final returned = updates.where((u) => u.justReturnedHome);
       expect(returned, hasLength(1));

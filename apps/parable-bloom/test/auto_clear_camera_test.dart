@@ -158,4 +158,62 @@ void main() {
       contains('v2:${VineAnimationState.cleared}'),
     );
   });
+
+  test('auto-clear runs while another vine is still sliding off', () async {
+    final (grid, sink) = await _grid();
+    sink.animating = true;
+    grid.setLevelData(_level(), {
+      'v1': VineState(id: 'v1', isBlocked: false, isCleared: false),
+      'v2': VineState(id: 'v2', isBlocked: true, isCleared: false),
+    });
+
+    grid.setLevelData(_level(), {
+      'v1': VineState(
+        id: 'v1',
+        isBlocked: false,
+        isCleared: false,
+        animationState: VineAnimationState.animatingClear,
+      ),
+      'v2': VineState(
+        id: 'v2',
+        isBlocked: false,
+        isCleared: false,
+        hasBeenAttempted: true,
+        animationState: VineAnimationState.normal,
+      ),
+    });
+
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    expect(sink.ensureVisibleCalls, ['v2']);
+  });
+
+  test('auto-clear waits while a blocked wiggle still occupies the board',
+      () async {
+    final (grid, sink) = await _grid();
+    grid.setLevelData(_level(), {
+      'v1': VineState(id: 'v1', isBlocked: false, isCleared: false),
+      'v2': VineState(id: 'v2', isBlocked: true, isCleared: false),
+    });
+
+    grid.setLevelData(_level(), {
+      'v1': VineState(
+        id: 'v1',
+        isBlocked: false,
+        isCleared: false,
+        hasBeenAttempted: true,
+        animationState: VineAnimationState.normal,
+      ),
+      'v2': VineState(
+        id: 'v2',
+        isBlocked: false,
+        isCleared: false,
+        animationState: VineAnimationState.animatingBlocked,
+      ),
+    });
+
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    expect(sink.ensureVisibleCalls, isEmpty);
+  });
 }

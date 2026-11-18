@@ -23,6 +23,7 @@ class VineAnimator {
   bool canClearThisRun = false;
   double animationTimer = 0.0;
   double stepDuration = AnimationTiming.vineStepSeconds;
+  bool _tailCompressed = false;
 
   /// Interpolated slide segment for clear animations: [_segFrom] and [_segTo]
   /// are flat [x0,y0,...] grid snapshots; the renderer lerps between them
@@ -98,6 +99,7 @@ class VineAnimator {
   void startSlideOut({
     required GridComponent grid,
     required void Function(String message) logDebug,
+    bool isLastVine = false,
   }) {
     if (isAnimating) return;
     isAnimating = true;
@@ -118,8 +120,10 @@ class VineAnimator {
           vineData.orderedPath.length +
           extraOffScreenSteps;
       willClearAfterAnimation = true;
-      // Adaptive pacing: long clears step faster so total time stays snappy.
-      stepDuration = VineMetrics.stepDurationFor(totalAnimationSteps);
+      // Cruise, not the old "longer is faster" step. The off-screen tail
+      // may compress later so a very long vine still releases the win card.
+      stepDuration = VineMetrics.cruiseSecondsPerCell(isLastVine: isLastVine);
+      _tailCompressed = false;
       _segFrom = null;
       _segTo = null;
 
@@ -189,6 +193,7 @@ class VineAnimator {
         advanced = true;
 
         if (hasExitedVisibleGrid(grid.getCurrentLevelData())) {
+          _compressTail();
           onHeadExitedGrid();
         }
 
@@ -282,6 +287,21 @@ class VineAnimator {
     }
 
     return true;
+  }
+
+  /// After the head leaves the board, shorten the remaining steps so the
+  /// whole clear stays within [AnimationTiming.vineClearCapSeconds].
+  /// Steps already taken keep the cruise.
+  void _compressTail() {
+    if (_tailCompressed) return;
+    _tailCompressed = true;
+    final remaining = totalAnimationSteps - currentAnimationStep;
+    if (remaining <= 0) return;
+    final elapsed = currentAnimationStep * stepDuration;
+    final budget = AnimationTiming.vineClearCapSeconds - elapsed;
+    if (budget >= remaining * stepDuration) return;
+    final compressed = budget <= 0 ? 0.02 : budget / remaining;
+    stepDuration = compressed < 0.016 ? 0.016 : compressed;
   }
 
   /// Start a new interpolated segment from the current committed position.
@@ -411,6 +431,7 @@ class VineAnimator {
     maxForwardStepsThisRun = 0;
     canClearThisRun = false;
     animationTimer = 0.0;
+    _tailCompressed = false;
     _segFrom = null;
     _segTo = null;
   }

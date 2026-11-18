@@ -48,14 +48,21 @@ final class VineSlideController {
   double _approachArc = 0;
   double _clearEndArc = 0;
   double _exitTriggerArc = 0;
+  double _easeStartArc = 0;
   bool _isClearRun = false;
   bool _onReturnLeg = false;
 
   double _legTimer = 0;
   double _legDuration = 0;
+  double _cruiseEndTime = 0;
+  double _easeEndTime = 0;
   VineCurve _curve = _easeInOutSine;
 
   double _stepDuration = AnimationTiming.vineStepSeconds;
+
+  /// Planned length of the current leg, in seconds. For a clear this is the
+  /// whole exit, including a tail that may have been sped up to the cap.
+  double get plannedDuration => _legDuration;
 
   // Mirror the legacy animator fields the grid layer reads.
   bool get isAnimating => _phase != Phase.idle;
@@ -71,14 +78,24 @@ final class VineSlideController {
   static double _easeInOutSine(double t) =>
       (-(math.cos(math.pi * t) - 1) / 2).toDouble();
 
+  /// Distance-normalized deceleration. Starts near cruise speed and ends
+  /// slower, so the head settles off the edge instead of whipping through.
+  static double _decelerate(double t) {
+    final raw = t - 0.3 * t * t;
+    return raw / 0.7;
+  }
+
   /// Starts a run on [track].
   ///
   /// [approachSteps] is the solver's distance-to-blocker in cells.
   /// [isClear] mirrors the legacy `canClearThisRun`.
+  /// [isLastVine] selects the slower ending cruise. Occupancy is unchanged
+  /// by either rate: the vine has already left the solver's board.
   void startRun({
     required VineTrack track,
     required int approachSteps,
     required bool isClear,
+    bool isLastVine = false,
   }) {
     reset();
     final pitch = GameBoardLayout.pointSpacing.toDouble();
@@ -86,34 +103,52 @@ final class VineSlideController {
     _isClearRun = isClear;
     _approachArc = approachSteps.clamp(0, 4096) * pitch;
     _exitTriggerArc = track.exitTriggerArc;
+    _phase = Phase.running;
+    _legTimer = 0;
+    _onReturnLeg = false;
 
-    // Adaptive pacing (same contract as VineMetrics.stepDurationFor).
+    if (isClear) {
+      final cruise = VineMetrics.cruiseSecondsPerCell(isLastVine: isLastVine);
+      _stepDuration = cruise;
+      final cruiseSpeed = pitch / cruise;
+      _clearEndArc =
+          track.exitArc + track.windowLength + VineMetrics.exitFadeArc;
+      if (_clearEndArc < _exitTriggerArc) _clearEndArc = _exitTriggerArc;
+
+      final easeBand = AnimationTiming.vineEdgeSettleCells * pitch;
+      _easeStartArc = math.max(0.0, _exitTriggerArc - easeBand);
+      _cruiseEndTime = _easeStartArc / cruiseSpeed;
+      final easeDist = math.max(0.0, _exitTriggerArc - _easeStartArc);
+      _easeEndTime = _cruiseEndTime + easeDist / cruiseSpeed;
+
+      final tailDist = math.max(0.0, _clearEndArc - _exitTriggerArc);
+      var tailTime = tailDist / cruiseSpeed;
+      final cap = AnimationTiming.vineClearCapSeconds;
+      // Speed only the off-screen tail. If the approach to the edge is
+      // already longer than the cap, keep the cruise and let the run run long.
+      if (_easeEndTime + tailTime > cap && tailDist > 0 && _easeEndTime < cap) {
+        tailTime = cap - _easeEndTime;
+      }
+      _legDuration = _easeEndTime + tailTime;
+      _curve = _easeInOutSine;
+      return;
+    }
+
+    // Blocked bumps keep the fast step. A mistake should return home quickly.
     final plannedSteps =
         approachSteps + (track.windowLength / pitch).ceil() + 6;
     _stepDuration = VineMetrics.stepDurationFor(plannedSteps);
-    final speed = pitch / _stepDuration; // px per second
+    final speed = pitch / _stepDuration;
 
-    _phase = Phase.running;
-    if (isClear) {
-      _clearEndArc =
-          track.exitArc + track.windowLength + VineMetrics.exitFadeArc;
-      _legDuration = _clearEndArc / speed;
-      _legTimer = 0;
-      _curve = _easeInOutSine;
-      _onReturnLeg = false;
-    } else if (_approachArc > 0) {
+    if (_approachArc > 0) {
       _clearEndArc = _approachArc;
       _legDuration = _approachArc / speed;
-      _legTimer = 0;
       _curve = _easeOutCubic;
-      _onReturnLeg = false;
     } else {
       // Nothing to move: report an instantly finished, no-op run.
       _clearEndArc = 0;
       _legDuration = 0;
-      _legTimer = 0;
       _curve = _easeOutCubic;
-      _onReturnLeg = false;
     }
   }
 
@@ -128,14 +163,18 @@ final class VineSlideController {
         (_legDuration <= 0) ? 1.0 : (_legTimer / _legDuration).clamp(0.0, 1.0);
 
     if (_isClearRun) {
-      _headArc = _curve(t) * _clearEndArc;
-      if (prevHeadArc < _exitTriggerArc && _headArc >= _exitTriggerArc) {
-        result.justExitedBoard = true;
-      }
-      if (t >= 1.0) {
+      if (_legDuration <= 0 || _legTimer >= _legDuration) {
         _headArc = _clearEndArc;
+        if (prevHeadArc < _exitTriggerArc && _headArc >= _exitTriggerArc) {
+          result.justExitedBoard = true;
+        }
         result.justFinished = true;
         _stop();
+        return result;
+      }
+      _headArc = _clearArcAt(_legTimer);
+      if (prevHeadArc < _exitTriggerArc && _headArc >= _exitTriggerArc) {
+        result.justExitedBoard = true;
       }
       return result;
     }
@@ -164,6 +203,25 @@ final class VineSlideController {
     return result;
   }
 
+  /// Cruise to the settle band, decelerate across the edge, then linear
+  /// (possibly sped-up) travel for the off-screen tail.
+  double _clearArcAt(double elapsed) {
+    if (elapsed <= _cruiseEndTime) {
+      if (_cruiseEndTime <= 1e-9) return _easeStartArc;
+      return _easeStartArc * (elapsed / _cruiseEndTime);
+    }
+    if (elapsed <= _easeEndTime) {
+      final span = _easeEndTime - _cruiseEndTime;
+      if (span <= 1e-9) return _exitTriggerArc;
+      final t = ((elapsed - _cruiseEndTime) / span).clamp(0.0, 1.0);
+      return _easeStartArc + (_exitTriggerArc - _easeStartArc) * _decelerate(t);
+    }
+    final span = _legDuration - _easeEndTime;
+    if (span <= 1e-9) return _clearEndArc;
+    final t = ((elapsed - _easeEndTime) / span).clamp(0.0, 1.0);
+    return _exitTriggerArc + (_clearEndArc - _exitTriggerArc) * t;
+  }
+
   void _stop() {
     _phase = Phase.idle;
   }
@@ -175,10 +233,13 @@ final class VineSlideController {
     _approachArc = 0;
     _clearEndArc = 0;
     _exitTriggerArc = 0;
+    _easeStartArc = 0;
     _isClearRun = false;
     _onReturnLeg = false;
     _legTimer = 0;
     _legDuration = 0;
+    _cruiseEndTime = 0;
+    _easeEndTime = 0;
   }
 }
 

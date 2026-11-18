@@ -3,9 +3,12 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:parable_bloom/core/constants/animation_timing.dart';
 
+import 'celebration_visual.dart';
+
 /// A subtle pond ripple celebration effect.
 /// Renders concentric rings that expand and fade with slight staggering.
-class PondRippleEffectComponent extends PositionComponent {
+class PondRippleEffectComponent extends PositionComponent
+    with CelebrationVisual {
   final int ringCount;
   final double maxRadius;
   final double duration; // total animation duration in seconds

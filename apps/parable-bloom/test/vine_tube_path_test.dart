@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parable_bloom/core/constants/animation_timing.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_tube_path.dart';
 
@@ -113,9 +114,17 @@ void main() {
       );
     });
 
-    test('adaptive step duration keeps long clears snappy', () {
+    test('blocked wiggles stay fast and clears cruise', () {
       expect(VineMetrics.stepDurationFor(5), 0.06);
       expect(VineMetrics.stepDurationFor(20), 0.035);
+      expect(
+        VineMetrics.cruiseSecondsPerCell(isLastVine: false),
+        AnimationTiming.vineCruiseSecondsPerCell,
+      );
+      expect(
+        VineMetrics.cruiseSecondsPerCell(isLastVine: true),
+        greaterThan(VineMetrics.cruiseSecondsPerCell(isLastVine: false)),
+      );
     });
   });
 }

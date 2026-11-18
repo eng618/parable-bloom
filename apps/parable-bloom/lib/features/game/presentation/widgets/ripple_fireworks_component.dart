@@ -6,9 +6,12 @@ import 'package:material_ui/material_ui.dart';
 import 'pond_ripple_effect_component.dart';
 import 'package:parable_bloom/core/constants/animation_timing.dart';
 
+import 'celebration_visual.dart';
+
 /// Spawns a set of subtle "fireworks" that travel from the bottom
 /// toward random points and create small pond ripple effects on impact.
-class RippleFireworksComponent extends Component with HasGameReference {
+class RippleFireworksComponent extends Component
+    with HasGameReference, CelebrationVisual {
   final int count;
   final double duration; // total span of launches (seconds)
   final double minRippleRadius;
@@ -131,7 +134,7 @@ class _ScheduledFirework {
   });
 }
 
-class _FireworkProjectile extends PositionComponent {
+class _FireworkProjectile extends PositionComponent with CelebrationVisual {
   final Vector2 start;
   final Vector2 target;
   final double travelTime;

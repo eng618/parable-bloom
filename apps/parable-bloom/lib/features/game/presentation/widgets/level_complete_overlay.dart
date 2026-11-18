@@ -1,14 +1,16 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/app_theme.dart';
+import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/widgets/garden_leaf_divider.dart';
 import 'garden_encouraging_message.dart';
 
 /// Full-screen "Level Complete" celebration overlay content.
 ///
 /// Pure presentation: the owning screen owns visibility timing, analytics,
-/// and the congratulatory message. [onHome] is optional so players can leave
-/// intentionally without Pause → Home.
+/// and the congratulatory message. [onContinue] is the call to action and
+/// skips the rest of the hold. [onHome] stays a quiet control so players
+/// can leave without Pause → Home.
 ///
 /// Visual language matches Home: parchment panel, botanical ornaments,
 /// forest/moss serif titles — not Material celebration chrome.
@@ -16,10 +18,14 @@ class LevelCompleteOverlay extends StatelessWidget {
   const LevelCompleteOverlay({
     super.key,
     required this.message,
+    this.onContinue,
     this.onHome,
   });
 
   final String message;
+
+  /// When set, shows the primary Continue action. Skips the remaining hold.
+  final VoidCallback? onContinue;
 
   /// When set, shows a quiet Home control during the celebration beat.
   final VoidCallback? onHome;
@@ -39,7 +45,9 @@ class LevelCompleteOverlay extends StatelessWidget {
         // Soft soil/parchment scrim so the garden still peeks through.
         Positioned.fill(
           child: ColoredBox(
-            color: theme.scaffoldBackgroundColor.withValues(alpha: 0.72),
+            color: theme.scaffoldBackgroundColor.withValues(
+              alpha: AnimationTiming.levelCompleteScrimOpacity,
+            ),
           ),
         ),
         // Faint botanical frame (same assets as Home).
@@ -116,8 +124,27 @@ class LevelCompleteOverlay extends StatelessWidget {
                           const GardenLeafDivider(),
                           const SizedBox(height: 16),
                           GardenEncouragingMessage(message: message),
-                          if (onHome != null) ...[
+                          if (onContinue != null) ...[
                             const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: onContinue,
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              child: const Text(
+                                'Continue',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: AppTheme.displayFontFamily,
+                                  fontFamilyFallback:
+                                      AppTheme.displayFontFallback,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (onHome != null) ...[
+                            SizedBox(height: onContinue != null ? 4 : 24),
                             TextButton.icon(
                               onPressed: onHome,
                               icon: Icon(

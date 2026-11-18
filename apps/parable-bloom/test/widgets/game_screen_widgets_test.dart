@@ -43,6 +43,7 @@ void main() {
       expect(find.byType(GardenEncouragingMessage), findsOneWidget);
       expect(find.byIcon(Icons.celebration), findsNothing);
       expect(find.text('Home'), findsNothing);
+      expect(find.text('Continue'), findsNothing);
       expect(
         find.byWidgetPredicate(
           (w) =>
@@ -72,6 +73,30 @@ void main() {
       await tester.tap(find.text('Home'));
       await tester.pump();
       expect(homeTapped, isTrue);
+    });
+
+    testWidgets('Continue is the call to action and Home stays quiet',
+        (tester) async {
+      var continued = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(
+            body: LevelCompleteOverlay(
+              message: 'Bloom!',
+              onContinue: () => continued = true,
+              onHome: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.widgetWithText(ElevatedButton, 'Continue'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Home'), findsOneWidget);
+
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      expect(continued, isTrue);
     });
   });
 

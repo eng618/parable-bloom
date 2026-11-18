@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parable_bloom/core/constants/animation_timing.dart';
+import 'package:parable_bloom/features/game/application/providers/solver_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 
@@ -122,9 +124,25 @@ void main() {
       notifier.setAnimationState('v1', VineAnimationState.animatingClear);
 
       // During clear animation, v1 must stop blocking other vines.
+      // The visual cruise is much longer than a frame; occupancy does not
+      // wait for it. A second tap solves against a board v1 has already left.
       expect(notifier.state['v1']!.animationState,
           VineAnimationState.animatingClear);
       expect(notifier.state['v2']!.isBlocked, isFalse);
+      expect(
+        AnimationTiming.vineLastCruiseSecondsPerCell,
+        greaterThan(0.2),
+      );
+      final active = [
+        for (final entry in notifier.state.entries)
+          if (!entry.value.isClearedOrClearing) entry.key,
+      ];
+      expect(active, isNot(contains('v1')));
+      final solver = container.read(levelSolverServiceProvider);
+      expect(
+        solver.getDistanceToBlocker(level, 'v2', active),
+        greaterThan(0),
+      );
 
       // Simulate rapid second tap sequence while first vine is still animating.
       notifier.setAnimationState('v2', VineAnimationState.animatingBlocked);

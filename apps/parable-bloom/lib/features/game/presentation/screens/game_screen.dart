@@ -44,6 +44,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   GardenGame? _game;
   late bool _isLevelCompleteOverlayVisible;
   late String _currentCongratulationMessage;
+  bool _levelCeremonyInFlight = false;
+  bool _levelContinueRequested = false;
+  Completer<void> _levelContinueGate = Completer<void>();
+  double _levelCompleteOpacity = 0;
+  Duration _levelCompleteFade = AnimationTiming.levelCompleteFadeIn;
+  double _boardOpacity = 1;
+  Duration _boardFade = Duration.zero;
 
   /// Set when the player intentionally leaves during the complete beat so we
   /// do not auto-advance into the next level after navigating Home.
@@ -96,8 +103,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         metadata: {'previous': previous, 'next': next},
       );
       if (next && (previous == null || !previous)) {
-        LoggerService.info('Showing level complete overlay', tag: 'GameScreen');
-        unawaited(ref.read(sfxControllerProvider).playLevelComplete());
+        LoggerService.info(
+          'Level clear committed — ceremony waits for the last vine',
+          tag: 'GameScreen',
+        );
         _showLevelCompleteOverlay();
       }
     });
@@ -210,7 +219,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       floatingActionButton: _buildProjectionLinesFAB(),
       body: Stack(
         children: [
-          GameBoardGestures(game: _game!),
+          AnimatedOpacity(
+            opacity: _boardOpacity,
+            duration: _boardFade,
+            curve: Curves.easeInOut,
+            child: GameBoardGestures(game: _game!),
+          ),
           SafeArea(
             child: Align(
               alignment: Alignment.topCenter,
@@ -221,7 +235,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ),
           ),
           if (kIsWeb) _buildZoomControls(),
-          if (_isLevelCompleteOverlayVisible) _buildLevelCompleteOverlay(),
+          if (_isLevelCompleteOverlayVisible)
+            AnimatedOpacity(
+              opacity: _levelCompleteOpacity,
+              duration: _levelCompleteFade,
+              curve: Curves.easeInOut,
+              child: IgnorePointer(
+                ignoring: _levelCompleteOpacity < 0.05,
+                child: _buildLevelCompleteOverlay(),
+              ),
+            ),
         ],
       ),
     );
@@ -329,37 +352,49 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Widget _buildLevelCompleteOverlay() {
     return LevelCompleteOverlay(
       message: _currentCongratulationMessage,
+      onContinue: _continueFromLevelComplete,
       onHome: _goHomeFromLevelComplete,
     );
   }
 
+  /// Skip the rest of the win-card hold. The ceremony keeps going from the
+  /// same place the timer would have: next level, or an unlock dialog.
+  void _continueFromLevelComplete() {
+    if (!_refAlive || _levelContinueRequested || _homeExitRequested) return;
+    _levelContinueRequested = true;
+    unawaited(ref.read(sfxControllerProvider).playConfirm());
+    if (!_levelContinueGate.isCompleted) _levelContinueGate.complete();
+  }
+
+  /// Resolves when [duration] elapses, or as soon as Continue is tapped.
+  Future<void> _waitUnlessContinuing(Duration duration) {
+    if (_levelContinueRequested) return Future<void>.value();
+    return Future.any<void>([
+      Future<void>.delayed(duration),
+      _levelContinueGate.future,
+    ]);
+  }
+
   void _showLevelCompleteOverlay() async {
-    if (_isLevelCompleteOverlayVisible || !_refAlive) return;
+    if (_levelCeremonyInFlight || !_refAlive) return;
     final container = _providerContainer;
     if (container == null) return;
 
+    _levelCeremonyInFlight = true;
+    try {
+      await _runLevelCompleteCeremony(container);
+    } finally {
+      _levelCeremonyInFlight = false;
+    }
+  }
+
+  Future<void> _runLevelCompleteCeremony(ProviderContainer container) async {
     _homeExitRequested = false;
+    _levelContinueRequested = false;
+    if (_levelContinueGate.isCompleted) {
+      _levelContinueGate = Completer<void>();
+    }
     _currentCongratulationMessage = pickCongratulationMessage();
-
-    setState(() {
-      _isLevelCompleteOverlayVisible = true;
-    });
-
-    // Celebration FX, centered on the board. The callback runs after this
-    // frame's unmount pass, so [ref] is unsafe if the player already left.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final game = _game;
-      if (!_refAlive || game == null) return;
-      try {
-        spawnCelebrationEffect(
-          game: game,
-          effect: container.read(celebrationEffectProvider),
-          isDark: Theme.of(context).brightness == Brightness.dark,
-        );
-      } on StateError {
-        // App teardown already disposed the container.
-      }
-    });
 
     // Persist completion through the container. Home can pop this screen
     // during the module lookup, and [ref] throws once the element is gone.
@@ -437,17 +472,93 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       }
     }
 
-    // Wait for celebration beat, then unlock dialog or next level.
-    await Future.delayed(AnimationTiming.levelCompleteDelay);
-
+    // The clear is already saved. Keep the board open until the last vine
+    // has left, then give the line and the celebration their own beat.
+    await waitUntilVinesSettled(
+      isAlive: () => _refAlive && !_homeExitRequested,
+      isAnimating: () => container.read(anyVineAnimatingProvider),
+    );
     if (!mounted || !context.mounted || _homeExitRequested) return;
 
-    // Reset completion flag
-    ref.read(levelCompleteProvider.notifier).setComplete(false);
+    await Future.delayed(AnimationTiming.levelCompleteBreath);
+    if (!mounted || !context.mounted || _homeExitRequested) return;
+
+    setState(() {
+      _levelCompleteFade = AnimationTiming.levelCompleteFadeIn;
+      _isLevelCompleteOverlayVisible = true;
+      _levelCompleteOpacity = 0;
+    });
+    final cardShown = Completer<void>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!cardShown.isCompleted) cardShown.complete();
+    });
+    await cardShown.future;
+    if (!mounted || !context.mounted || _homeExitRequested) return;
+
+    setState(() => _levelCompleteOpacity = 1);
+    try {
+      unawaited(container.read(sfxControllerProvider).playLevelComplete());
+      final game = _game;
+      if (game != null) {
+        spawnCelebrationEffect(
+          game: game,
+          effect: container.read(celebrationEffectProvider),
+          isDark: Theme.of(context).brightness == Brightness.dark,
+        );
+      }
+    } on StateError {
+      return;
+    }
+
+    await _waitUnlessContinuing(AnimationTiming.levelCompleteFadeIn);
+    if (!mounted || !context.mounted || _homeExitRequested) return;
+    await _waitUnlessContinuing(AnimationTiming.levelCompleteReadHold);
+    if (!mounted || !context.mounted || _homeExitRequested) return;
+
+    try {
+      container.read(levelCompleteProvider.notifier).setComplete(false);
+    } on StateError {
+      return;
+    }
+
+    final autoAdvance = newlyUnlockedScripture == null &&
+        completedModule == null &&
+        !isDebugPlay;
+    if (autoAdvance) {
+      // Hide the cleared board, swap in the next level, then fade the card
+      // away onto it. The swap itself stays invisible.
+      setState(() {
+        _boardFade = Duration.zero;
+        _boardOpacity = 0;
+      });
+      final boardHidden = Completer<void>();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!boardHidden.isCompleted) boardHidden.complete();
+      });
+      await boardHidden.future;
+      if (!mounted || !context.mounted || _homeExitRequested) return;
+      await _continueToNextLevel();
+      if (!mounted || !context.mounted || _homeExitRequested) return;
+    }
+
+    _game?.clearCelebrationEffects();
+    if (!mounted) return;
+    setState(() {
+      _levelCompleteFade = AnimationTiming.levelCompleteFadeOut;
+      _levelCompleteOpacity = 0;
+      if (autoAdvance) {
+        _boardFade = AnimationTiming.levelCompleteFadeOut;
+        _boardOpacity = 1;
+      }
+    });
+    await Future.delayed(AnimationTiming.levelCompleteFadeOut);
+    if (!mounted || !context.mounted || _homeExitRequested) return;
 
     setState(() {
       _isLevelCompleteOverlayVisible = false;
     });
+
+    if (autoAdvance) return;
 
     if (newlyUnlockedScripture != null && completedModule != null) {
       final scripture = newlyUnlockedScripture;
@@ -506,10 +617,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       ref.read(debugSelectedLevelProvider.notifier).setLevel(null);
       if (!mounted || !context.mounted || _homeExitRequested) return;
       context.go('/');
-      return;
     }
-
-    await _continueToNextLevel();
   }
 
   /// Load the next uncompleted level in-place. Playlist exhausted → completed.
@@ -559,7 +667,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Future<void> _loadLevelForGame(GardenGame game) async {
-    if (!_refAlive) return;
+    if (!_refAlive || _homeExitRequested) return;
     final debugSelected = ref.read(debugSelectedLevelProvider);
     final gameProgress = ref.read(gameProgressProvider);
     var levelId = debugSelected ?? gameProgress.currentLevel;

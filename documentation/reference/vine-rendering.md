@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-10-26: real trellis+ivy texture with body-pinned wrap UVs; baked sine-coil atlas removed)
+Date: 2026-10-19 (last updated 2026-11-18: win-card Continue skips the hold)
 
 ## Why a redesign
 
@@ -144,11 +144,24 @@ DPI-independent pass:
 
 ### VineSlideController (phases)
 
-- **Clear run**: single global ease (`easeInOutSine`) `s: 0 → exitArc +
-  windowLength + exitFadeArc`; one smooth velocity profile, no per-step
-  easing. Adaptive pacing keeps the legacy `VineMetrics.stepDurationFor`
-  contract (>12 planned steps → 0.035s). `justExitedBoard` fires once at
-  `exitTriggerArc` (bloom parity with the legacy head-exit check).
+- **Clear run**: cruise at `AnimationTiming.vineCruiseSecondsPerCell`
+  (0.16s per cell, about 260 px/s). The vine that empties the board uses
+  `vineLastCruiseSecondsPerCell` (0.24s). Motion is linear until the last
+  1.5 cells, then decelerates as the head crosses `exitTriggerArc`. After
+  the head has left, the off-screen tail may speed up so the whole clear
+  stays within `vineClearCapSeconds` (2.8s). The approach to the edge never
+  speeds up. `justExitedBoard` still fires once at `exitTriggerArc`.
+  Occupancy drops when the clear is validated, at the start of the slide,
+  so a slower exit does not keep the vine on the board.
+- **Win beat**: the level-complete card waits until no vine is animating,
+  holds a short breath on the empty garden, then fades in. The encouraging
+  line stays up for `levelCompleteReadHold` (3.2s). Continue skips the
+  rest of that hold and takes the same next step the timer would.
+  Pond ripples and
+  fireworks are budgeted to finish inside that hold. The next board loads
+  under the card, celebration components are removed, and the card fades
+  out onto the new level. Lessons skip the card and wait out the effect
+  lifetime instead.
 - **Blocked run**: eased forward to `approachArc` (the solver's
   `getDistanceToBlocker` remains the single blocking truth), then eased back
   home; `justReachedBlocker` maps to `markVineAttempted`,
@@ -195,7 +208,7 @@ A blocked clear attempt is a stateful swap, driven by solver truth:
 `13px` flat tube (`VineMetrics.tubeWidth`), `12px` corner radius, `42px`
 lane pitch, `8px` sample spacing, `2px` feather, `63px` exit fade, `15px`
 textured tube width, `63px` skin tile length (1.5 cells per vine coil),
-adaptive step pacing — asserted in `test/vine_track_test.dart`,
+blocked-wiggle step pacing and the clear cruise — asserted in `test/vine_track_test.dart`,
 `test/vine_strip_mesh_test.dart`, `test/vine_slide_controller_test.dart`.
 Per-frame cost is benchmarked in `test/vine_rail_benchmark_test.dart` (a
 60-cell multi-turn bind must write + rebuild its strip — and rebuild its

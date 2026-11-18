@@ -15,6 +15,7 @@ import '../../application/providers/camera_providers.dart' show CameraState;
 import '../../application/providers/gameplay_state_providers.dart'
     show VineState, VineAnimationState;
 import '../../domain/services/level_solver_service.dart';
+import 'celebration_visual.dart';
 import 'game_event_sink.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
@@ -356,6 +357,14 @@ class GardenGame extends FlameGame with TapCallbacks {
     add(projectionLines);
 
     _isGridInitialized = true;
+  }
+
+  /// Drops in-flight win visuals so they cannot paint on the next board.
+  void clearCelebrationEffects() {
+    final visuals = children.whereType<CelebrationVisual>().toList();
+    for (final visual in visuals) {
+      visual.removeFromParent();
+    }
   }
 
   /// Start or load a level with the given level data and current states

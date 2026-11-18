@@ -80,7 +80,6 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
         tag: 'TutorialFlowScreen',
       );
       if (next && (previous == null || !previous)) {
-        unawaited(ref.read(sfxControllerProvider).playLevelComplete());
         _onTutorialLessonCleared();
       }
     });
@@ -344,24 +343,44 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     if (_isLessonAdvanceInFlight) return;
 
     _homeExitRequested = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     setState(() {
       _isLessonAdvanceInFlight = true;
     });
 
-    // Soft FX only (no congratulatory copy / LevelCompleteOverlay).
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final game = _game;
-      if (!_refAlive || game == null) return;
-      spawnCelebrationEffect(
-        game: game,
-        effect: ref.read(celebrationEffectProvider),
-        isDark: Theme.of(context).brightness == Brightness.dark,
-      );
-    });
+    // Let the vine leave before the soft FX. No parchment card on lessons.
+    await waitUntilVinesSettled(
+      isAlive: () => _refAlive && !_homeExitRequested,
+      isAnimating: () => ref.read(anyVineAnimatingProvider),
+    );
+    if (!_refAlive || _homeExitRequested) return;
 
-    await Future.delayed(AnimationTiming.levelCompleteDelay);
+    await Future.delayed(AnimationTiming.levelCompleteBreath);
+    if (!_refAlive || _homeExitRequested) return;
+
+    CelebrationEffect effect = CelebrationEffect.rippleFireworks;
+    try {
+      effect = ref.read(celebrationEffectProvider);
+      final game = _game;
+      if (game != null) {
+        spawnCelebrationEffect(
+          game: game,
+          effect: effect,
+          isDark: isDark,
+        );
+      }
+      unawaited(ref.read(sfxControllerProvider).playLevelComplete());
+    } on StateError {
+      if (mounted) {
+        setState(() => _isLessonAdvanceInFlight = false);
+      }
+      return;
+    }
+
+    await Future.delayed(celebrationLifetime(effect));
 
     if (!_refAlive || _homeExitRequested) return;
+    _game?.clearCelebrationEffects();
 
     setState(() {
       _isLessonAdvanceInFlight = false;
