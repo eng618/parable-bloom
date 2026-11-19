@@ -91,21 +91,17 @@ void main() {
   });
 
   group('VineTrack fade', () {
-    test('fade alpha stays 1 inside the board', () {
+    test('clearing vines stay opaque past the board edge', () {
       final track = buildTrack();
       expect(track.fadeAlphaAt(0), 1.0);
       expect(track.fadeAlphaAt(track.exitArc), 1.0);
-    });
-
-    test('fade alpha ramps to 0 across the exit band', () {
-      final track = buildTrack();
-      final mid = track.exitArc + VineMetrics.exitFadeArc / 2;
-      expect(track.fadeAlphaAt(mid), inExclusiveRange(0.0, 1.0));
-      expect(track.fadeAlphaAt(track.exitArc + VineMetrics.exitFadeArc),
-          closeTo(0.0, 1e-9));
       expect(
-        track.fadeAlphaAt(track.exitArc + VineMetrics.exitFadeArc * 2),
-        closeTo(0.0, 1e-9),
+        track.fadeAlphaAt(track.exitArc + VineMetrics.exitFadeArc),
+        1.0,
+      );
+      expect(
+        track.fadeAlphaAt(track.exitArc + VineMetrics.exitFadeArc * 4),
+        1.0,
       );
     });
   });

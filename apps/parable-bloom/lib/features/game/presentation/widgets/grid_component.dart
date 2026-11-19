@@ -280,6 +280,22 @@ class GridComponent extends PositionComponent
     }
   }
 
+  /// Visible window in board-local pixels, including the margin around the
+  /// grid. Null until the first camera frame has a real screen size.
+  Rect? boardSpaceViewport() {
+    if (_screenWidth <= 0 || _screenHeight <= 0) return null;
+    final zoom = scale.x;
+    if (zoom.abs() < 1e-6) return null;
+    final bounds = BoardTransform.viewportInBoardSpace(
+      zoom: zoom,
+      boardX: position.x,
+      boardY: position.y,
+      screenWidth: _screenWidth,
+      screenHeight: _screenHeight,
+    );
+    return Rect.fromLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom);
+  }
+
   @override
   void update(double dt) {
     super.update(dt);

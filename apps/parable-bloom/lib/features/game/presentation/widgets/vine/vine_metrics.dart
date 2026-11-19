@@ -88,10 +88,10 @@ class VineMetrics {
       ? AnimationTiming.vineLastCruiseSecondsPerCell
       : AnimationTiming.vineCruiseSecondsPerCell;
 
-  /// Arc length of the exit fade band (world px). After the head crosses
-  /// the board edge (see [VineTrack.exitArc]), per-vertex alpha ramps 1→0
-  /// across this distance — the rail renderer's replacement for unclipped
-  /// travel + late culling.
+  /// Extra travel past the board edge when the viewport size is unknown.
+  ///
+  /// Clearing vines no longer fade. With a live camera they run until the
+  /// tail leaves the screen. This pad is only the fallback distance.
   static const double exitFadeArc = 63.0;
 
   /// Width of the baked strip-edge feather (per side, world px). Replaces

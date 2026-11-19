@@ -144,6 +144,44 @@ void main() {
       expect(controller.headArc, greaterThanOrEqualTo(track.exitTriggerArc));
       expect(elapsed, lessThan(AnimationTiming.vineClearCapSeconds));
     });
+
+    test('a viewport exit cruises until the tail leaves the screen', () {
+      final track = buildTrack();
+      const tailClear = 640.0;
+      final controller = VineSlideController.idle()
+        ..startRun(
+          track: track,
+          approachSteps: 2,
+          isClear: true,
+          tailClearArc: tailClear,
+        );
+
+      final end = tailClear + track.windowLength;
+      final cruiseSpeed = pitch / AnimationTiming.vineCruiseSecondsPerCell;
+      expect(controller.plannedDuration, closeTo(end / cruiseSpeed, 0.02));
+      expect(
+        controller.plannedDuration,
+        greaterThan(AnimationTiming.vineClearCapSeconds),
+      );
+
+      // The head reaches the board edge on the cruise clock, not a sped-up one.
+      var elapsed = 0.0;
+      var exited = 0;
+      const dt = 1 / 120;
+      final edgeTime = track.exitTriggerArc / cruiseSpeed;
+      while (controller.isAnimating && elapsed < edgeTime) {
+        final update = controller.update(dt);
+        if (update.justExitedBoard) exited++;
+        elapsed += dt;
+      }
+      expect(controller.headArc, closeTo(track.exitTriggerArc, 4));
+
+      final updates = runToFinish(controller);
+      exited += updates.where((u) => u.justExitedBoard).length;
+      expect(controller.headArc, closeTo(end, 0.5));
+      expect(exited, 1);
+      expect(updates.where((u) => u.justFinished), hasLength(1));
+    });
   });
 
   group('blocked run', () {

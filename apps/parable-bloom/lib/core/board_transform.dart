@@ -75,6 +75,59 @@ class BoardTransform {
     );
   }
 
+  /// Viewport rectangle in board-local pixels.
+  ///
+  /// Inverse of [boardPosition]: a board point maps to screen as
+  /// `board + point * zoom`. The visible screen is `[0, screen]` in that
+  /// space, so dividing back by zoom yields the board-space window the
+  /// player can actually see, including the margin around the grid.
+  static ({double left, double top, double right, double bottom})
+      viewportInBoardSpace({
+    required double zoom,
+    required double boardX,
+    required double boardY,
+    required double screenWidth,
+    required double screenHeight,
+  }) {
+    final z = zoom.abs() < 1e-6 ? 1.0 : zoom;
+    final left = -boardX / z;
+    final top = -boardY / z;
+    return (
+      left: left,
+      top: top,
+      right: left + screenWidth / z,
+      bottom: top + screenHeight / z,
+    );
+  }
+
+  /// Signed distance from ([headX], [headY]) to the viewport edge along
+  /// [direction], in the same space as the rect.
+  ///
+  /// Positive means the edge is still ahead. Negative means the point is
+  /// already past the edge. Unknown directions return 0.
+  static double distanceToViewportEdge({
+    required double headX,
+    required double headY,
+    required String direction,
+    required double left,
+    required double top,
+    required double right,
+    required double bottom,
+  }) {
+    switch (direction) {
+      case 'right':
+        return right - headX;
+      case 'left':
+        return headX - left;
+      case 'down':
+        return bottom - headY;
+      case 'up':
+        return headY - top;
+      default:
+        return 0;
+    }
+  }
+
   /// Viewport edge hit by the axis-aligned ray from ([headX], [headY])
   /// along [direction] (`up`/`down`/`left`/`right`), within the viewport
   /// rect ([left], [top], [right], [bottom]) expressed in the same space.

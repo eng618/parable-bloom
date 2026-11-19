@@ -31,9 +31,9 @@ typedef VineCurve = double Function(double t);
 /// profile), each phase eases *globally*, so velocity is smooth across the
 /// whole run and the vine reads as one continuous object.
 ///
-/// - Clearing run: head slides from arc 0, crossing [VineTrack.exitArc]
-///   (fade begins) and [VineTrack.exitTriggerArc] (bloom), then stops once
-///   the tail has fully faded out.
+/// - Clearing run: head slides from arc 0 at cruise speed, blooms at
+///   [VineTrack.exitTriggerArc], and keeps going at full opacity until the
+///   tail has left the viewport. There is no fade at the board edge.
 /// - Blocked run: forward to `approachArc` (eased into the wall), then back
 ///   to 0.
 final class VineSlideController {
@@ -91,11 +91,17 @@ final class VineSlideController {
   /// [isClear] mirrors the legacy `canClearThisRun`.
   /// [isLastVine] selects the slower ending cruise. Occupancy is unchanged
   /// by either rate: the vine has already left the solver's board.
+  ///
+  /// [tailClearArc] is the track arc the tail must reach to be off the
+  /// screen. When set, the whole exit cruises there with no fade and no
+  /// time cap — the margin around the grid is still on screen. When null,
+  /// the run ends a short pad past the board and may compress that pad.
   void startRun({
     required VineTrack track,
     required int approachSteps,
     required bool isClear,
     bool isLastVine = false,
+    double? tailClearArc,
   }) {
     reset();
     final pitch = GameBoardLayout.pointSpacing.toDouble();
@@ -111,9 +117,23 @@ final class VineSlideController {
       final cruise = VineMetrics.cruiseSecondsPerCell(isLastVine: isLastVine);
       _stepDuration = cruise;
       final cruiseSpeed = pitch / cruise;
-      _clearEndArc =
-          track.exitArc + track.windowLength + VineMetrics.exitFadeArc;
+      final tailTarget =
+          tailClearArc ?? (track.exitArc + VineMetrics.exitFadeArc);
+      _clearEndArc = tailTarget + track.windowLength;
       if (_clearEndArc < _exitTriggerArc) _clearEndArc = _exitTriggerArc;
+
+      // A known viewport means every pixel of this run is still on screen
+      // until the last moment. Cruise the whole way. Do not ease at the
+      // grid edge and then accelerate across the margin, and do not compress
+      // the body while the player can still see it.
+      if (tailClearArc != null) {
+        _easeStartArc = _clearEndArc;
+        _cruiseEndTime = _clearEndArc / cruiseSpeed;
+        _easeEndTime = _cruiseEndTime;
+        _legDuration = _cruiseEndTime;
+        _curve = _easeInOutSine;
+        return;
+      }
 
       final easeBand = AnimationTiming.vineEdgeSettleCells * pitch;
       _easeStartArc = math.max(0.0, _exitTriggerArc - easeBand);
@@ -124,8 +144,9 @@ final class VineSlideController {
       final tailDist = math.max(0.0, _clearEndArc - _exitTriggerArc);
       var tailTime = tailDist / cruiseSpeed;
       final cap = AnimationTiming.vineClearCapSeconds;
-      // Speed only the off-screen tail. If the approach to the edge is
-      // already longer than the cap, keep the cruise and let the run run long.
+      // Speed only the off-board pad used when no viewport is known.
+      // If the approach to the edge is already longer than the cap, keep
+      // the cruise and let the run run long.
       if (_easeEndTime + tailTime > cap && tailDist > 0 && _easeEndTime < cap) {
         tailTime = cap - _easeEndTime;
       }

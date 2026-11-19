@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-11-18: win-card Continue skips the hold)
+Date: 2026-10-19 (last updated 2026-11-18: vines slide off the viewport, fully opaque)
 
 ## Why a redesign
 
@@ -58,8 +58,10 @@ lib/features/game/presentation/widgets/
 - Arc `0` sits at the head cell center; negative arcs run back to the tail;
   positive arcs are off-board extension. `windowLength` = baked tail→head
   arc: a moving vine is exactly a window of this length.
-- `exitArc` (fade start, board edge) and `exitTriggerArc` (one full cell
-  beyond the edge — the bloom trigger) are derived from board geometry.
+- `exitArc` (board edge) and `exitTriggerArc` (one full cell beyond the
+  edge — the bloom trigger) are derived from board geometry. Neither starts
+  a fade. The vine stays opaque and keeps sliding until its tail leaves the
+  viewport.
 
 ### Sliding window + vertex strip
 
@@ -77,10 +79,9 @@ lib/features/game/presentation/widgets/
   plus a two-triangles-per-quad index list), not a chained triangle strip —
   a strip chain across a 6-column row is almost all degenerate triangles
   and renders as hollow dashes. Foliage quads use the same indexed form.
-- Per-vertex colors encode tint × fade alpha. The exit fade ramps 1→0 across
-  `VineMetrics.exitFadeArc` (63px) past the board edge, replacing the
-  unclipped "draw until fully off-screen" travel and making frustum culling
-  valid again.
+- Per-vertex colors encode tint. A clearing vine does not fade: it is drawn
+  until the tail has left the viewport, then the component is removed.
+  Idle vines are still culled to the board rect.
 - Tube width varies by style: `VineMetrics.tubeWidth` (13px) for the flat
   vector stroke, `VineMetrics.texturedTubeWidth` (15px) for the textured
   skins — the wrapped-vine pattern needs the extra width to read.
@@ -137,22 +138,22 @@ DPI-independent pass:
   join, flat tint, no shader/blur) + one solid `VineTubePath.buildArrowHead`
   triangle at the head. Tail cap coverage comes free from the round stroke
   cap.
-- Exit fade is uniform: the whole vine's alpha follows the head through the
-  `exitFadeArc` band (`tint × fadeAlphaAt(headArc)`), instead of a
-  per-vertex gradient. Tail and head vacate simultaneously, so the slide-out
-  reads as one object dimming as it leaves.
+- The stroke stays at full alpha for the whole exit. Tail and head vacate
+  together, as one rigid vine, and keep going across the margin around the
+  grid until the tail has left the screen.
 
 ### VineSlideController (phases)
 
 - **Clear run**: cruise at `AnimationTiming.vineCruiseSecondsPerCell`
   (0.16s per cell, about 260 px/s). The vine that empties the board uses
-  `vineLastCruiseSecondsPerCell` (0.24s). Motion is linear until the last
-  1.5 cells, then decelerates as the head crosses `exitTriggerArc`. After
-  the head has left, the off-screen tail may speed up so the whole clear
-  stays within `vineClearCapSeconds` (2.8s). The approach to the edge never
-  speeds up. `justExitedBoard` still fires once at `exitTriggerArc`.
-  Occupancy drops when the clear is validated, at the start of the slide,
-  so a slower exit does not keep the vine on the board.
+  `vineLastCruiseSecondsPerCell` (0.24s). With a live camera the cruise is
+  constant until the tail leaves the viewport, including the margin around
+  the grid, and that visible travel is not sped up. `justExitedBoard` still
+  fires once at `exitTriggerArc` (the bloom). Occupancy drops when the clear
+  is validated, at the start of the slide, so a longer exit does not keep
+  the vine on the board. When the viewport size is unknown, the run still
+  ends a short pad past the board and may compress that pad to
+  `vineClearCapSeconds` (2.8s).
 - **Win beat**: the level-complete card waits until no vine is animating,
   holds a short breath on the empty garden, then fades in. The encouraging
   line stays up for `levelCompleteReadHold` (3.2s). Continue skips the

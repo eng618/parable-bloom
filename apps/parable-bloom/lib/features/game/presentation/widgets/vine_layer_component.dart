@@ -102,9 +102,9 @@ class VineLayerComponent extends PositionComponent
     final vineCount = grid.vineCount;
 
     // Cull margin: textured tube half-width + feather + arrow head extent.
-    // Uses the widest tube so textured styles never clip; applies to idle
-    // vines only: clearing vines exit through the fade band and their
-    // components disappear immediately after the bloom completes.
+    // Uses the widest tube so textured styles never clip. Idle vines only:
+    // a clearing vine is drawn at full opacity until its tail leaves the
+    // viewport, then the component is removed.
     const cullPad = VineMetrics.texturedTubeWidth * 2;
     final boardRect = Rect.fromLTWH(
       -cullPad,

@@ -31,8 +31,10 @@ class VineTrack {
   /// Grid-space head direction ('right', 'left', 'up', 'down').
   final String headDirection;
 
-  /// Arc where the head center visually crosses the board edge (where the
-  /// exit fade begins).
+  /// Arc where the head center visually crosses the board edge.
+  ///
+  /// This is board geometry only. The vine stays fully opaque past it and
+  /// keeps sliding until the tail leaves the viewport.
   final double exitArc;
 
   /// Arc where the head center is one full cell beyond the edge: the bloom
@@ -158,14 +160,12 @@ class VineTrack {
     }
   }
 
-  /// Fade alpha for a track point at [trackArc]: fully visible inside the
-  /// board, ramping to 0 across the exit fade band.
-  double fadeAlphaAt(double trackArc) {
-    if (trackArc <= exitArc) return 1.0;
-    final fadeOut =
-        ((trackArc - exitArc) / VineMetrics.exitFadeArc).clamp(0.0, 1.0);
-    return 1.0 - fadeOut;
-  }
+  /// Opacity of a track point at [trackArc].
+  ///
+  /// Always 1. A clearing vine slides off the viewport at full strength and
+  /// is removed once the tail has left the screen. Fading at [exitArc] hid
+  /// the body while it was still in the margin around the grid.
+  double fadeAlphaAt(double trackArc) => 1.0;
 
   /// Builds the centerline [Path] for the sliding window
   /// `[headArc - windowLength, headArc]` from the baked fine polyline.
@@ -393,7 +393,7 @@ class VineTrack {
       track.sampleNormals[i * 2] = -ty;
       track.sampleNormals[i * 2 + 1] = tx;
 
-      // Fade alpha is static per sample (arc in track space).
+      // Opacity is static per sample. Clears stay fully opaque.
       final trackArc = fineArc - headCum;
       track.sampleAlpha[i] = track.fadeAlphaAt(trackArc).toDouble();
     }

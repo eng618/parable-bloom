@@ -232,6 +232,69 @@ void main() {
       expect(center.y, boardY + GameBoardLayout.cellCenterY(visualRow) * zoom);
     });
 
+    test('viewportInBoardSpace includes the margin around a centered board',
+        () {
+      const screenWidth = 800.0;
+      const screenHeight = 600.0;
+      final pos = BoardTransform.boardPosition(
+        cols: 4,
+        rows: 4,
+        zoom: 1,
+        panX: 0,
+        panY: 0,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+      final view = BoardTransform.viewportInBoardSpace(
+        zoom: 1,
+        boardX: pos.x,
+        boardY: pos.y,
+        screenWidth: screenWidth,
+        screenHeight: screenHeight,
+      );
+
+      expect(view.left, closeTo(-pos.x, 1e-9));
+      expect(view.right, greaterThan(GameBoardLayout.boardWidth(4)));
+      final headX = GameBoardLayout.cellCenterX(2);
+      final margin = BoardTransform.distanceToViewportEdge(
+        headX: headX,
+        headY: GameBoardLayout.cellCenterY(0),
+        direction: 'right',
+        left: view.left,
+        top: view.top,
+        right: view.right,
+        bottom: view.bottom,
+      );
+      expect(margin, greaterThan(GameBoardLayout.boardWidth(4) - headX));
+    });
+
+    test('distanceToViewportEdge is signed along the exit ray', () {
+      expect(
+        BoardTransform.distanceToViewportEdge(
+          headX: 900,
+          headY: 100,
+          direction: 'right',
+          left: 0,
+          top: 0,
+          right: 800,
+          bottom: 600,
+        ),
+        -100,
+      );
+      expect(
+        BoardTransform.distanceToViewportEdge(
+          headX: 100,
+          headY: 40,
+          direction: 'up',
+          left: 0,
+          top: 0,
+          right: 800,
+          bottom: 600,
+        ),
+        40,
+      );
+    });
+
     group('projectToViewportEdge', () {
       test('each direction reaches its viewport edge', () {
         const l = 0.0, t = 0.0, r = 800.0, b = 600.0;

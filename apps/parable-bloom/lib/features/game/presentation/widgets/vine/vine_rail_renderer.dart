@@ -81,7 +81,7 @@ class VineRailRenderer {
     // `drawVertices` never reaches vector-crisp edges (no AA on any
     // backend), so the flat/simple style strokes the baked centerline
     // instead: round cap + round join, solid tint, plus a solid triangle
-    // head. Whole-vine alpha follows the head through the exit fade band.
+    // head. The vine stays fully opaque until it has left the viewport.
     if (useSimpleVines) {
       final alpha = track.fadeAlphaAt(headArc);
       final color = tubeTint.withValues(alpha: tubeTint.a * alpha);

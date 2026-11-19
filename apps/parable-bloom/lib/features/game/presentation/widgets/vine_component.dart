@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:parable_bloom/core/board_transform.dart';
 import 'package:parable_bloom/core/game_board_layout.dart';
 import 'package:parable_bloom/core/providers/settings_providers.dart'
     show VineStyle;
@@ -384,13 +385,20 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // absolute distance so the head visibly reaches the blocker before
     // returning (legacy animator used `rawDistance.abs()` here too).
     final approachSteps = rawDistance.abs().clamp(0, 4096);
-    _buildRailTrack(extensionArc: _railExtensionArrangement(approachSteps));
+    final tailClearArc = rawDistance > 0 ? _viewportTailClearArc() : null;
+    _buildRailTrack(
+      extensionArc: _railExtensionArrangement(
+        approachSteps,
+        tailClearArc: tailClearArc,
+      ),
+    );
 
     _slide.startRun(
       track: _railTrack!,
       approachSteps: approachSteps,
       isClear: rawDistance > 0,
       isLastVine: isLastVine && rawDistance > 0,
+      tailClearArc: tailClearArc,
     );
     _railClearFinished = false;
     _railIdleCacheValid = false;
@@ -409,15 +417,53 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     );
   }
 
-  /// Arc length reserved beyond the head cell for the off-screen exit,
-  /// mirroring the legacy step-plan (`approach + length + 6` cells).
-  double _railExtensionArrangement(int approachSteps) {
+  /// Track arc the tail must reach before the vine has left the screen.
+  ///
+  /// Measured from the head cell along the exit ray, in board pixels.
+  /// Includes the dark margin around the grid. Null before the camera has
+  /// a screen size; the slide then uses the short off-board pad.
+  double? _viewportTailClearArc() {
+    final level = parent.getCurrentLevelData();
+    final viewport = parent.boardSpaceViewport();
+    if (level == null || viewport == null || vineData.orderedPath.isEmpty) {
+      return null;
+    }
+    final head = vineData.orderedPath.first;
+    final visualRow = level.gridHeight - 1 - (head['y'] ?? 0);
+    final raw = BoardTransform.distanceToViewportEdge(
+      headX: GameBoardLayout.cellCenterX(head['x'] ?? 0),
+      headY: GameBoardLayout.cellCenterY(visualRow),
+      direction: vineData.headDirection,
+      left: viewport.left,
+      top: viewport.top,
+      right: viewport.right,
+      bottom: viewport.bottom,
+    );
+    // Caps and leaves sit outside the centerline. Push past the edge so
+    // the last pixel is gone before the component is removed.
+    const margin = VineMetrics.texturedTubeWidth * 2;
+    final ahead = raw < 0 ? 0.0 : raw;
+    return ahead + margin;
+  }
+
+  /// Arc length reserved beyond the head cell for the exit slide.
+  ///
+  /// Blocked bumps keep the short legacy pad. A clear must reach
+  /// [tailClearArc] plus the body, so the tail can follow the head all the
+  /// way off the viewport.
+  double _railExtensionArrangement(
+    int approachSteps, {
+    double? tailClearArc,
+  }) {
     const pitch = GameBoardLayout.pointSpacing;
     final trackProbe = _railTrack;
-    final windowSteps = trackProbe == null
-        ? (vineData.orderedPath.length - 1).toDouble()
-        : trackProbe.windowLength / pitch;
-    return (approachSteps + windowSteps + 7) * pitch;
+    final window = trackProbe == null
+        ? (vineData.orderedPath.length - 1) * pitch
+        : trackProbe.windowLength;
+    final legacy = (approachSteps + window / pitch + 7) * pitch;
+    if (tailClearArc == null) return legacy;
+    final needed = tailClearArc + window + pitch * 2;
+    return needed > legacy ? needed : legacy;
   }
 
   /// Solver-backed distance to the blocker for this vine (same body as the
