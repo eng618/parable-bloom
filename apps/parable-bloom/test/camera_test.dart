@@ -310,6 +310,193 @@ void main() {
     expect(state.zoom, 1.1);
   });
 
+  LevelData vineLevel(int cols, int rows, List<VineData> vines) => LevelData(
+        id: 'vines_${cols}_$rows',
+        name: 'Vines',
+        difficulty: 'Seed',
+        gridWidth: cols,
+        gridHeight: rows,
+        vines: vines,
+        maxMoves: vines.length,
+        minMoves: 1,
+        complexity: 'low',
+        grace: 3,
+        mask: MaskData(mode: 'show-all', points: const []),
+      );
+
+  VineData singleCell(String id, int x, int y) => VineData(
+        id: id,
+        headDirection: 'right',
+        orderedPath: [
+          {'x': x, 'y': y},
+        ],
+      );
+
+  test('frameRemainingVines pans to vines outside the view', () async {
+    final game = MockGardenGame(Vector2(800, 600));
+    final container = ProviderContainer(
+      overrides: [
+        disableAnimationsProvider.overrideWithValue(true),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(gameInstanceProvider.notifier).setGame(game);
+    container.read(currentLevelProvider.notifier).setLevel(
+          vineLevel(20, 20, [singleCell('far', 19, 19)]),
+        );
+    container.read(vineStatesProvider);
+
+    final notifier = container.read(cameraStateProvider.notifier);
+    notifier.updateZoomBounds(
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 20,
+      gridRows: 20,
+    );
+    notifier.resetToCenter();
+
+    await notifier.frameRemainingVines();
+
+    final state = container.read(cameraStateProvider);
+    expect(state.zoom, 1);
+    expect(state.panOffset.x.abs() + state.panOffset.y.abs(), greaterThan(1));
+    expect(state.isAnimating, isFalse);
+  });
+
+  test('frameRemainingVines stays put when a vine is already in view',
+      () async {
+    final game = MockGardenGame(Vector2(800, 600));
+    final container = ProviderContainer(
+      overrides: [
+        disableAnimationsProvider.overrideWithValue(true),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(gameInstanceProvider.notifier).setGame(game);
+    container.read(currentLevelProvider.notifier).setLevel(
+          vineLevel(10, 10, [singleCell('mid', 5, 5)]),
+        );
+    container.read(vineStatesProvider);
+
+    final notifier = container.read(cameraStateProvider.notifier);
+    notifier.updateZoomBounds(
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 10,
+      gridRows: 10,
+    );
+    notifier.resetToCenter();
+    notifier.updatePanOffset(
+      vm.Vector2(40, 0),
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 10,
+      gridRows: 10,
+    );
+
+    await notifier.frameRemainingVines();
+
+    final state = container.read(cameraStateProvider);
+    expect(state.zoom, 1);
+    expect(state.panOffset.x, closeTo(40, 0.001));
+    expect(state.panOffset.y, closeTo(0, 0.001));
+  });
+
+  test('frameRemainingVines zooms out to fit a spread group', () async {
+    final game = MockGardenGame(Vector2(800, 600));
+    final container = ProviderContainer(
+      overrides: [
+        disableAnimationsProvider.overrideWithValue(true),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(gameInstanceProvider.notifier).setGame(game);
+    container.read(currentLevelProvider.notifier).setLevel(
+          vineLevel(20, 20, [
+            singleCell('a', 0, 0),
+            singleCell('b', 19, 19),
+          ]),
+        );
+    container.read(vineStatesProvider);
+
+    final notifier = container.read(cameraStateProvider.notifier);
+    notifier.updateZoomBounds(
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 20,
+      gridRows: 20,
+    );
+    notifier.updateZoom(1.5);
+
+    await notifier.frameRemainingVines();
+
+    final state = container.read(cameraStateProvider);
+    expect(state.zoom, lessThan(1.5));
+    expect(state.zoom, greaterThan(0.3));
+    expect(state.panOffset.x.abs(), lessThan(1));
+    expect(state.panOffset.y.abs(), lessThan(1));
+  });
+
+  test('frameRemainingVines does nothing after the level is complete',
+      () async {
+    final game = MockGardenGame(Vector2(800, 600));
+    final container = ProviderContainer(
+      overrides: [
+        disableAnimationsProvider.overrideWithValue(true),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(gameInstanceProvider.notifier).setGame(game);
+    container.read(currentLevelProvider.notifier).setLevel(
+          vineLevel(20, 20, [singleCell('far', 19, 19)]),
+        );
+    container.read(vineStatesProvider);
+    container.read(levelCompleteProvider.notifier).setComplete(true);
+
+    final notifier = container.read(cameraStateProvider.notifier);
+    notifier.resetToCenter();
+    await notifier.frameRemainingVines();
+
+    final state = container.read(cameraStateProvider);
+    expect(state.zoom, 1);
+    expect(state.panOffset, vm.Vector2.zero());
+  });
+
+  test('frameRemainingVines leaves an in-flight camera move alone', () async {
+    final game = MockGardenGame(Vector2(800, 600));
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    container.read(gameInstanceProvider.notifier).setGame(game);
+    container.read(currentLevelProvider.notifier).setLevel(
+          vineLevel(20, 20, [singleCell('far', 19, 19)]),
+        );
+    container.read(vineStatesProvider);
+
+    final notifier = container.read(cameraStateProvider.notifier);
+    final first = notifier.animateToPosition(
+      targetZoom: 1.4,
+      targetPanOffset: vm.Vector2(12, 0),
+    );
+    var firstDone = false;
+    first.whenComplete(() => firstDone = true);
+
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    await notifier.frameRemainingVines().timeout(const Duration(seconds: 1));
+
+    expect(firstDone, isFalse);
+    expect(container.read(cameraStateProvider).isAnimating, isTrue);
+
+    notifier.updateZoom(1.2);
+    await first.timeout(const Duration(seconds: 2));
+    expect(container.read(cameraStateProvider).zoom, 1.2);
+    expect(container.read(cameraStateProvider).isAnimating, isFalse);
+  });
+
   test('frameEntireBoard takes over an in-flight camera move', () async {
     final game = MockGardenGame(Vector2(800, 600));
     final container = ProviderContainer();

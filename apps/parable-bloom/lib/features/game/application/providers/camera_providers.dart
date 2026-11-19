@@ -535,6 +535,94 @@ class CameraStateNotifier extends Notifier<CameraState> {
     );
   }
 
+  /// Pans, and zooms out only when it has to, so the vines still on the
+  /// board sit in the middle of the view.
+  ///
+  /// Used when a slide or wiggle has finished and the grid in view is empty.
+  /// Keeps the current zoom when the group already fits, matching the pan
+  /// that brings a freed vine on screen before it clears. Does nothing when
+  /// a vine is already in view, the level is over, a gesture is in progress,
+  /// or another camera move is running.
+  Future<void> frameRemainingVines() {
+    if (state.isAnimating) return Future<void>.value();
+    if (ref.read(levelCompleteProvider)) return Future<void>.value();
+
+    final game = ref.read(gameInstanceProvider);
+    final level = ref.read(currentLevelProvider);
+    if (game == null || level == null) return Future<void>.value();
+    if (game.shouldSuppressTaps) return Future<void>.value();
+
+    final screenWidth = game.size.x;
+    final screenHeight = game.size.y;
+    if (screenWidth <= 0 || screenHeight <= 0) return Future<void>.value();
+
+    final states = ref.read(vineStatesProvider);
+    final remaining = <VineData>[];
+    for (final vine in level.vines) {
+      final vineState = states[vine.id];
+      if (vineState != null && vineState.isClearedOrClearing) continue;
+      if (vine.orderedPath.isEmpty) continue;
+      remaining.add(vine);
+    }
+    if (remaining.isEmpty) return Future<void>.value();
+
+    final gridCols = level.gridWidth;
+    final gridRows = level.gridHeight;
+    if (_anyVineOnScreen(
+      remaining,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridCols: gridCols,
+      gridRows: gridRows,
+    )) {
+      return Future<void>.value();
+    }
+
+    final bounds = _vineBounds(remaining, gridRows);
+    if (bounds == null) return Future<void>.value();
+
+    final clusterWidth = (bounds.maxX - bounds.minX) + GameBoardLayout.cellSize;
+    final clusterHeight =
+        (bounds.maxY - bounds.minY) + GameBoardLayout.cellSize;
+    final fitZoom = BoardTransform.zoomToFit(
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridWidth: clusterWidth,
+      gridHeight: clusterHeight,
+      padding: AnimationTiming.levelCompleteBoardPadding,
+    );
+    // Never zoom in. A tight group keeps the zoom the player already has.
+    var targetZoom = state.zoom;
+    if (fitZoom < targetZoom) targetZoom = fitZoom;
+    targetZoom = targetZoom.clamp(state.minZoom, state.maxZoom).toDouble();
+
+    final gridWidth = GameBoardLayout.boardWidth(gridCols);
+    final gridHeight = GameBoardLayout.boardHeight(gridRows);
+    final centerX = (bounds.minX + bounds.maxX) / 2;
+    final centerY = (bounds.minY + bounds.maxY) / 2;
+    final targetPanOffset = _constrainPanOffset(
+      vm.Vector2(
+        (gridWidth / 2 - centerX) * targetZoom,
+        (gridHeight / 2 - centerY) * targetZoom,
+      ),
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridCols: gridCols,
+      gridRows: gridRows,
+      zoom: targetZoom,
+    );
+
+    final alreadyFramed = (state.zoom - targetZoom).abs() <= 0.001 &&
+        (state.panOffset.x - targetPanOffset.x).abs() <= 1 &&
+        (state.panOffset.y - targetPanOffset.y).abs() <= 1;
+    if (alreadyFramed) return Future<void>.value();
+
+    return animateToPosition(
+      targetZoom: targetZoom,
+      targetPanOffset: targetPanOffset,
+    );
+  }
+
   bool _isVineFullyVisible(
     VineData vine, {
     required double screenWidth,
@@ -572,6 +660,67 @@ class CameraStateNotifier extends Notifier<CameraState> {
       }
     }
     return true;
+  }
+
+  /// True when any cell center of [vines] lies on the screen. A vine peeking
+  /// into the view counts, so the camera stays until the view is actually empty.
+  bool _anyVineOnScreen(
+    List<VineData> vines, {
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+  }) {
+    final gridWidth = GameBoardLayout.boardWidth(gridCols) * state.zoom;
+    final gridHeight = GameBoardLayout.boardHeight(gridRows) * state.zoom;
+    final gridPosX = (screenWidth - gridWidth) / 2 + state.panOffset.x;
+    final gridPosY = (screenHeight - gridHeight) / 2 + state.panOffset.y;
+
+    for (final vine in vines) {
+      for (final cell in vine.orderedPath) {
+        final x = cell['x']!;
+        final y = cell['y']!;
+        final visualRow = gridRows - 1 - y;
+        final screenX = gridPosX + GameBoardLayout.cellCenterX(x) * state.zoom;
+        final screenY =
+            gridPosY + GameBoardLayout.cellCenterY(visualRow) * state.zoom;
+        if (screenX >= 0 &&
+            screenX <= screenWidth &&
+            screenY >= 0 &&
+            screenY <= screenHeight) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  ({double minX, double minY, double maxX, double maxY})? _vineBounds(
+    List<VineData> vines,
+    int gridRows,
+  ) {
+    var minX = double.infinity;
+    var maxX = -double.infinity;
+    var minY = double.infinity;
+    var maxY = -double.infinity;
+    var found = false;
+
+    for (final vine in vines) {
+      for (final cell in vine.orderedPath) {
+        final x = cell['x']!;
+        final y = cell['y']!;
+        final visualRow = gridRows - 1 - y;
+        final cx = GameBoardLayout.cellCenterX(x);
+        final cy = GameBoardLayout.cellCenterY(visualRow);
+        if (cx < minX) minX = cx;
+        if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy;
+        if (cy > maxY) maxY = cy;
+        found = true;
+      }
+    }
+    if (!found) return null;
+    return (minX: minX, minY: minY, maxX: maxX, maxY: maxY);
   }
 
   vm.Vector2 _calculateVineCenter(VineData vine, int gridRows) {

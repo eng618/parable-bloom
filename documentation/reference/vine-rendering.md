@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-11-18: last vine pulls the camera out to the whole grid)
+Date: 2026-10-19 (last updated 2026-11-18: empty view eases the camera onto the remaining vines)
 
 ## Why a redesign
 
@@ -169,6 +169,12 @@ DPI-independent pass:
   hold. The next board loads under the card, celebration components are
   removed, and the card fades out onto the new level. Lessons skip the
   card and wait out the effect lifetime instead.
+- **Empty view**: when a slide or wiggle finishes and no vine remains in the
+  grid the player can see, the camera eases to the vines still on the board
+  (`frameRemainingVines`). It keeps the current zoom when that group fits,
+  and zooms out only far enough to bring the group on screen. A vine already
+  in view, the level-complete pull-back, and an in-progress gesture or
+  camera move leave the view where it is.
 - **Blocked run**: eased forward to `approachArc` (the solver's
   `getDistanceToBlocker` remains the single blocking truth), then eased back
   home; `justReachedBlocker` maps to `markVineAttempted`,

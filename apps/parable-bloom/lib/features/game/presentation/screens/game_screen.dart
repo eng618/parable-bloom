@@ -149,6 +149,20 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     ref.listenManual(anyVineAnimatingProvider, (previous, next) {
       syncProjectionLines(ref, _game);
+      // The vines that were on screen have left. Ease over to whatever
+      // is still on the board. The level-complete pull-back owns the
+      // last vine, and a gesture keeps the view the player chose.
+      if (previous != true || next) return;
+      final container = _providerContainer;
+      if (container == null || !_refAlive) return;
+      try {
+        if (container.read(levelCompleteProvider)) return;
+        unawaited(
+          container.read(cameraStateProvider.notifier).frameRemainingVines(),
+        );
+      } on StateError {
+        // Screen is gone.
+      }
     });
   }
 
