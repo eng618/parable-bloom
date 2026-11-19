@@ -72,9 +72,7 @@ void main() {
       expect(advanced, greaterThan(8));
     });
 
-    test(
-        'clear cruise is slower than the blocked step, and the last vine is slower still',
-        () {
+    test('clear cruise follows vineSpeed, and the last vine is slower', () {
       final track = buildTrack();
       final mid = VineSlideController.idle()
         ..startRun(track: track, approachSteps: 2, isClear: true);
@@ -86,11 +84,11 @@ void main() {
           isLastVine: true,
         );
 
-      expect(mid.stepDuration, AnimationTiming.vineCruiseSecondsPerCell);
-      expect(last.stepDuration, AnimationTiming.vineLastCruiseSecondsPerCell);
-      expect(last.plannedDuration, greaterThan(mid.plannedDuration * 1.3));
-      // The old short-vine step was 0.06s. Cruise must not regress to that.
-      expect(mid.stepDuration, greaterThan(0.06));
+      expect(mid.stepDuration, closeTo(0.16 / AnimationTiming.vineSpeed, 1e-9));
+      expect(
+          last.stepDuration, closeTo(0.24 / AnimationTiming.vineSpeed, 1e-9));
+      expect(last.stepDuration, greaterThan(mid.stepDuration));
+      expect(last.plannedDuration, greaterThan(mid.plannedDuration));
     });
 
     test(
@@ -158,10 +156,12 @@ void main() {
 
       final end = tailClear + track.windowLength;
       final cruiseSpeed = pitch / AnimationTiming.vineCruiseSecondsPerCell;
+      // A known viewport ignores the clear cap. Duration is the cruise
+      // clock for the whole exit, including when that is shorter than the cap.
       expect(controller.plannedDuration, closeTo(end / cruiseSpeed, 0.02));
       expect(
         controller.plannedDuration,
-        greaterThan(AnimationTiming.vineClearCapSeconds),
+        isNot(closeTo(AnimationTiming.vineClearCapSeconds, 0.05)),
       );
 
       // The head reaches the board edge on the cruise clock, not a sped-up one.

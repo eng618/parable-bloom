@@ -6,14 +6,27 @@ class AnimationTiming {
   static const double vineStepSeconds = 0.05;
   static const double vineBloomSeconds = 0.5;
 
-  /// On-screen cruise for a clear that does not empty the board.
-  /// About 260 px/s at the 42px lane pitch — slow enough to read, fast
-  /// enough that a chain of taps still feels responsive.
-  static const double vineCruiseSecondsPerCell = 0.16;
+  /// How fast a clearing vine travels. This is the only number to change.
+  ///
+  /// `1` is the original cruise (0.16s per cell, about 260 px/s). `2` is
+  /// twice that fast. The vine that empties the board stays a little slower
+  /// than a mid-level clear, at the same rate. Blocked wiggles ignore this.
+  /// Hot restart after editing it. Zero or negative falls back to `1`.
+  static const double vineSpeed = 2;
 
-  /// Cruise for the vine that empties the board. The final exit is the
-  /// ending beat, so it lingers longer than a mid-level clear.
-  static const double vineLastCruiseSecondsPerCell = 0.24;
+  /// On-screen cruise at [vineSpeed] `1`.
+  static const double _vineCruiseBaseSecondsPerCell = 0.16;
+
+  /// Ending cruise at [vineSpeed] `1`.
+  static const double _vineLastCruiseBaseSecondsPerCell = 0.24;
+
+  static double get _vineSpeedScale => vineSpeed <= 0 ? 1.0 : vineSpeed;
+
+  static double get vineCruiseSecondsPerCell =>
+      _vineCruiseBaseSecondsPerCell / _vineSpeedScale;
+
+  static double get vineLastCruiseSecondsPerCell =>
+      _vineLastCruiseBaseSecondsPerCell / _vineSpeedScale;
 
   /// Cells of gentle deceleration as the head crosses the board edge.
   static const double vineEdgeSettleCells = 1.5;

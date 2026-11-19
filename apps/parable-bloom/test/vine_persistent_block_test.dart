@@ -131,7 +131,7 @@ void main() {
       expect(notifier.state['v2']!.isBlocked, isFalse);
       expect(
         AnimationTiming.vineLastCruiseSecondsPerCell,
-        greaterThan(0.2),
+        greaterThan(1 / 60),
       );
       final active = [
         for (final entry in notifier.state.entries)

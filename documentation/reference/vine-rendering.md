@@ -144,15 +144,17 @@ DPI-independent pass:
 
 ### VineSlideController (phases)
 
-- **Clear run**: cruise at `AnimationTiming.vineCruiseSecondsPerCell`
-  (0.16s per cell, about 260 px/s). The vine that empties the board uses
-  `vineLastCruiseSecondsPerCell` (0.24s). With a live camera the cruise is
-  constant until the tail leaves the viewport, including the margin around
-  the grid, and that visible travel is not sped up. `justExitedBoard` still
-  fires once at `exitTriggerArc` (the bloom). Occupancy drops when the clear
-  is validated, at the start of the slide, so a longer exit does not keep
-  the vine on the board. When the viewport size is unknown, the run still
-  ends a short pad past the board and may compress that pad to
+- **Clear run**: cruise at `AnimationTiming.vineCruiseSecondsPerCell`.
+  Retune the whole exit with `AnimationTiming.vineSpeed` in
+  `animation_timing.dart` (`1` is 0.16s per cell, about 260 px/s; `2` is
+  twice that). The vine that empties the board uses
+  `vineLastCruiseSecondsPerCell` (0.24s at speed `1`, scaled by the same
+  rate). With a live camera the cruise is constant until the tail leaves
+  the viewport, including the margin around the grid. `justExitedBoard`
+  still fires once at `exitTriggerArc` (the bloom). Occupancy drops when
+  the clear is validated, at the start of the slide, so a longer exit does
+  not keep the vine on the board. When the viewport size is unknown, the
+  run still ends a short pad past the board and may compress that pad to
   `vineClearCapSeconds` (2.8s).
 - **Win beat**: the level-complete card waits until no vine is animating,
   holds a short breath on the empty garden, then fades in. The encouraging
