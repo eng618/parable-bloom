@@ -53,21 +53,22 @@ Home uses reusable botanical assets under `assets/art/home/` and `assets/art/orn
 
 ### Example: Grid Dot Colors
 
-The grid dots demonstrate theme-aware color usage with differentiated variants:
+Grid dots follow the theme. Light mode is ink at 55% so the speck stays visible on garden cream and on the light wood plate. Dark mode keeps the beige speck that already reads on night soil. Moss at the same alpha sinks into that soil, so it is not the dark-mode dot.
 
 ```dart
 // 1. Define in AppTheme
-static const Color gridDotLight = Color(0x26E2D6C4); // 15% beige
-static const Color gridDotDark = Color(0x26A3B18A); // 15% moss
+static const Color gridDotLight = Color(0x8C2A3328); // 55% ink
+static const Color gridDotDark = Color(0x26E2D6C4); // 15% beige
 
-// 2. Add helper method
+// 2. Helper for brightness-based selection
 static Color getGridDotColor(Brightness brightness) {
   return brightness == Brightness.dark ? gridDotDark : gridDotLight;
 }
-
-// 3. Use in components via theme extension
-final gridDotColor = Theme.of(context).extension<AppThemeExtension>()!.gridDot;
 ```
+
+`GameScreen` and the tutorial flow pass `AppThemeExtension.gridDot` into `GardenGame.updateThemeColors`. `GridComponent.update` copies that color onto the shared dot paint once per frame. `CellComponent.render` does not call `Theme.of`.
+
+A clearing vine throbs each grid dot once, growing and settling, as its tail uncovers that cell. The trail is the old vine plus every cell straight ahead until the tail leaves the board. A blocked wiggle does not. Masked-out cells stay undrawn.
 
 ### Example: Semantic Colors
 

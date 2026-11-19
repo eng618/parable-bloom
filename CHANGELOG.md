@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Grid dots follow the light and dark theme. Light mode uses an ink speck that stays visible on the cream garden. Dark mode keeps the beige speck. When a vine clears, each dot throbs once as the tail uncovers it, along the whole trail the tail travels, including cells the vine never sat on. A blocked vine does not.
 - Settings no longer has a board default zoom. A level eases out onto the whole grid, including when you leave and come back. The reset control returns to that same view.
 - When the vines in view have left and others remain, the camera eases over to those vines. It keeps the current zoom unless the group needs a wider frame. The end-of-level pull-back still frames the empty board.
 - Clearing vines cruise off the board instead of whipping away. Pace is `AnimationTiming.vineSpeed` (`1` is 0.16s per cell, `2` is twice as fast; the vine that empties the board stays a little slower). The vine leaves the solver the moment the clear is valid, so later taps do not wait on the slide. It stays fully opaque and keeps sliding across the margin around the grid until the tail has left the screen. When that last vine starts to leave, the camera eases out and centers on the whole empty grid. The win card waits until the vine has left and that frame has settled, holds the encouraging line for 3.2s, and loads the next board only after the celebration finishes. Continue on that card skips the rest of the hold. Home stays the quiet control.

@@ -55,11 +55,14 @@ class AppTheme {
         : vineAttemptedLight;
   }
 
-  /// Grid dot color (light mode) - subtle parchment tint
-  static const Color gridDotLight = Color(0x26E2D6C4); // 15% beige
+  /// Grid dot on garden cream. Ink at 55% reads on parchment and on the
+  /// light wood plate. Beige at 15% sat on the same hue as the cream and
+  /// disappeared.
+  static const Color gridDotLight = Color(0x8C2A3328);
 
-  /// Grid dot color (dark mode) - subtle moss tint
-  static const Color gridDotDark = Color(0x26A3B18A); // 15% moss
+  /// Grid dot on night soil. Beige at 15% is the speck that already reads
+  /// in dark mode. Moss at the same alpha sinks into the soil.
+  static const Color gridDotDark = Color(0x26E2D6C4);
 
   /// Get grid dot color based on brightness
   static Color getGridDotColor(Brightness brightness) {

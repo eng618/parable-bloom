@@ -44,6 +44,9 @@ class AnimationTiming {
   /// The approach to the edge always keeps the cruise above.
   static const double vineClearCapSeconds = 2.8;
 
+  /// One-shot scale throb when a clearing vine uncovers a grid dot.
+  static const double gridDotPulseSeconds = 0.42;
+
   /// Tap ripple ring lifespan.
   static const double tapEffectSeconds = 0.4;
 

@@ -14,6 +14,7 @@ import 'package:parable_bloom/features/game/application/providers/gameplay_state
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/grid_component.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_animator.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_dot_reveal.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_bloom_renderer.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_foliage_atlas.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
@@ -62,6 +63,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   // ---- Rail state -------------------------------------------------------
   final VineSlideController _slide = VineSlideController.idle();
   VineSlideController get slide => _slide;
+
+  /// Cells whose dots have already throbbed on this vine's clear.
+  final VineDotReveal _dotReveal = VineDotReveal();
 
   VineTrack? _railTrack;
   VineTrack? get railTrack => _railTrack;
@@ -313,6 +317,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     }
 
     final update = _slide.update(dt);
+    // Measure the tail after this step, including the frame the run ends.
+    // A blocked wiggle leaves the cursor where it is.
+    _pulseUncoveredDots();
     if (update.justReachedBlocker) {
       parent.markVineAttempted(vineData.id);
       _emitSlideEndedSfx(cleared: false);
@@ -330,6 +337,25 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
 
   bool _railClearFinished = false;
   bool _slideSfxResolved = false;
+
+  /// Throbs each grid dot once, as the clearing tail uncovers it.
+  ///
+  /// That includes cells the vine never occupied, along the straight run
+  /// the tail takes off the board.
+  ///
+  /// The legacy painter has no track arc, so this stays on the rail path.
+  void _pulseUncoveredDots() {
+    final track = _railTrack;
+    if (track == null || !_slide.isClearRun) return;
+    final uncovered = _dotReveal.takeNewlyUncovered(
+      track.pathCells,
+      _slide.headArc - track.windowLength,
+      clearing: true,
+    );
+    for (final cell in uncovered) {
+      parent.pulseCell(cell.x, cell.y);
+    }
+  }
 
   void _emitSlideEndedSfx({required bool cleared}) {
     if (_slideSfxResolved) return;
@@ -395,6 +421,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       ),
     );
 
+    _dotReveal.reset();
     _slide.startRun(
       track: _railTrack!,
       approachSteps: approachSteps,

@@ -5,6 +5,21 @@ import 'dart:ui';
 import 'package:parable_bloom/core/game_board_layout.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
 
+/// One grid cell the clearing tail passes, and where it sits on the track.
+///
+/// Arc 0 is the head cell center. Negative arcs run back along the vine.
+/// Positive arcs continue straight in the head direction, across cells the
+/// vine never occupied, until the ray leaves the board.
+class VinePathCell {
+  const VinePathCell(this.x, this.y, this.arc);
+
+  final int x;
+  final int y;
+
+  /// Track arc of this cell's center.
+  final double arc;
+}
+
 /// Fixed centerline geometry ("rail") for one vine.
 ///
 /// A clearing vine is a rigid shape sliding along an invariant track: the
@@ -24,6 +39,11 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metri
 class VineTrack {
   /// Uniform sample spacing along the track (world px).
   static const double spacing = 8.0;
+
+  /// How far past a cell center the tail center must travel before the
+  /// dot is clear of the tube cap. Cap radius plus the dot's own radius.
+  static const double dotUncoverMargin =
+      VineMetrics.texturedTubeWidth / 2 + GameBoardLayout.gridDotRadius;
 
   final int gridWidth;
   final int gridHeight;
@@ -72,6 +92,9 @@ class VineTrack {
   /// resampling grid starts at the tail vertex, so the head cell center sits
   /// at fineArc = headArcOffset = track arc 0).
   final double headArcOffset;
+
+  /// Cells the tail passes, tail to head, then straight on across the board.
+  late final List<VinePathCell> pathCells;
 
   VineTrack._({
     required this.gridWidth,
@@ -347,6 +370,35 @@ class VineTrack {
       headCellY: headCellY,
       headArcOffset: headCum,
     );
+    // Tail → head, then the rest of the grid along the exit. The tail
+    // keeps traveling after it leaves the cells the vine used to cover.
+    // Arc 0 is the head; the tail cell sits at -windowLength. Each cell
+    // past the head is one lane pitch further along the straight ray.
+    final bodyCells = <VinePathCell>[
+      for (final cell in orderedPath.reversed)
+        VinePathCell(
+          cell['x'] ?? 0,
+          cell['y'] ?? 0,
+          _cumAtPoint(fine, cum, center(cell)) - headCum,
+        ),
+    ];
+    final seen = <(int, int)>{
+      for (final cell in bodyCells) (cell.x, cell.y),
+    };
+    final exitCells = <VinePathCell>[];
+    final step = _headStep(headDirection);
+    var x = headCellX + step.$1;
+    var y = headCellY + step.$2;
+    var stepsPastHead = 1;
+    while (x >= 0 && y >= 0 && x < gridWidth && y < gridHeight) {
+      if (seen.add((x, y))) {
+        exitCells.add(VinePathCell(x, y, stepsPastHead * dpitch));
+      }
+      x += step.$1;
+      y += step.$2;
+      stepsPastHead++;
+    }
+    track.pathCells = [...bodyCells, ...exitCells];
 
     // Bake the fine centerline onto the track (exact path geometry for the
     // stroked-path simple render pass).
@@ -399,6 +451,21 @@ class VineTrack {
     }
 
     return track;
+  }
+
+  /// One grid step in [headDirection]. Up increases y; y = 0 is the bottom.
+  static (int, int) _headStep(String headDirection) {
+    switch (headDirection) {
+      case 'left':
+        return (-1, 0);
+      case 'up':
+        return (0, 1);
+      case 'down':
+        return (0, -1);
+      case 'right':
+      default:
+        return (1, 0);
+    }
   }
 
   /// Cumulative fine-arc of the closest fine vertex to [p].

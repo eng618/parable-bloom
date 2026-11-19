@@ -188,6 +188,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       AppTheme.getGridBackground(Theme.of(context).brightness),
       tapEffectColor: extension.tapEffect,
       vineAttemptedColor: extension.vineAttempted,
+      gridDotColor: extension.gridDot,
     );
   }
 

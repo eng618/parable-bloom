@@ -3,6 +3,7 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/app_theme.dart';
 import '../../../../core/game_board_layout.dart';
 import '../../../../core/board_transform.dart';
 import '../../../../core/constants/animation_timing.dart';
@@ -106,6 +107,7 @@ class GardenGame extends FlameGame with TapCallbacks {
   late Color _backgroundColor;
   late Color _tapEffectColor;
   late Color _vineAttemptedColor;
+  Color _gridDotColor = AppTheme.gridDotDark;
 
   /// Which vine renderer the batched vine layer uses (rail = track +
   /// vertex-strip renderer; legacy = per-frame Path painter).
@@ -138,9 +140,10 @@ class GardenGame extends FlameGame with TapCallbacks {
     Color gridColor, {
     Color? tapEffectColor,
     Color? vineAttemptedColor,
+    Color? gridDotColor,
   }) {
     LoggerService.debug(
-      'updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor, tap=$tapEffectColor, vineAttempted=$vineAttemptedColor',
+      'updateThemeColors: bg=$backgroundColor, surface=$surfaceColor, grid=$gridColor, tap=$tapEffectColor, vineAttempted=$vineAttemptedColor, dot=$gridDotColor',
       tag: 'GardenGame',
     );
     _backgroundColor = backgroundColor;
@@ -149,6 +152,9 @@ class GardenGame extends FlameGame with TapCallbacks {
     }
     if (vineAttemptedColor != null) {
       _vineAttemptedColor = vineAttemptedColor;
+    }
+    if (gridDotColor != null) {
+      _gridDotColor = gridDotColor;
     }
 
     if (_gameBackground != null) {
@@ -199,6 +205,9 @@ class GardenGame extends FlameGame with TapCallbacks {
 
   /// Expose current vine-attempted color for renderers (VineComponent)
   Color get vineAttemptedColor => _vineAttemptedColor;
+
+  /// Grid-dot color for the active theme. Cells read this once per frame.
+  Color get gridDotColor => _gridDotColor;
 
   /// Expose whether simple vines are enabled
   bool get useSimpleVines => sink.useSimpleVines;

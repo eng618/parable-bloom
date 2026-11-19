@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/app_theme.dart';
 import '../../../../core/game_board_layout.dart';
 import '../../../../core/board_transform.dart';
 import '../../../../core/constants/animation_timing.dart';
@@ -13,6 +14,7 @@ import '../../application/providers/gameplay_state_providers.dart';
 import '../../../game/domain/services/level_solver_service.dart';
 import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart';
 import 'garden_game.dart';
+import 'grid_dot_pulse.dart';
 import 'vine_component.dart';
 import 'vine_layer_component.dart';
 
@@ -317,6 +319,22 @@ class GridComponent extends PositionComponent
     // Cache the debug flag once per frame: CellComponent.render runs per
     // cell per frame and must not hit Riverpod 100x/frame.
     debugCoordinatesCached = parent.sink.debugShowGridCoordinates;
+    // One shared paint for every cell. Theme changes are rare; skip the
+    // write when the color is already applied.
+    CellComponent.applyDotColor(parent.gridDotColor);
+  }
+
+  /// Starts the one-shot size throb on the dot at ([x], [y]).
+  ///
+  /// A masked-out cell stays undrawn, so it does not throb. A dot that
+  /// has already throbbed does not start again.
+  void pulseCell(int x, int y) {
+    if (x < 0 || y < 0 || x >= cols || y >= rows) return;
+    if (!isCellVisibleCached(x, y)) return;
+    if (y >= cells.length) return;
+    final row = cells[y];
+    if (x >= row.length) return;
+    row[x].pulse();
   }
 
   /// Fast visibility check backed by the per-level cache built in
@@ -620,11 +638,23 @@ class CellComponent extends RectangleComponent
   final int gridY;
   bool _isLongPressed = false;
 
-  /// Shared dot paint: the beige tint is identical in both themes, so one
-  /// instance serves all cells instead of one allocation per cell per frame.
+  /// Shared dot paint. The color is swapped when the theme changes, in
+  /// [applyDotColor], so cells do not read the theme while they draw.
   static final Paint _dotPaint = Paint()
-    ..color = const Color(0x26E2D6C4)
+    ..color = AppTheme.gridDotDark
     ..style = PaintingStyle.fill;
+
+  static Color _appliedDotColor = AppTheme.gridDotDark;
+
+  /// Dot color currently on [_dotPaint]. Dark until the game syncs a theme.
+  static Color get dotColor => _appliedDotColor;
+
+  /// Points [_dotPaint] at [color] when it differs from the applied color.
+  static void applyDotColor(Color color) {
+    if (color == _appliedDotColor) return;
+    _appliedDotColor = color;
+    _dotPaint.color = color;
+  }
 
   static final Paint _transparentPaint = Paint()..color = Colors.transparent;
 
@@ -632,6 +662,24 @@ class CellComponent extends RectangleComponent
   /// (gridX/gridY are fixed per cell; only a theme change relayouts).
   TextPainter? _debugCoordinatePainter;
   Color? _debugCoordinateColor;
+
+  /// Seconds into the uncover throb. Negative means the dot is at rest.
+  double _pulseElapsed = -1;
+
+  /// True after this dot has throbbed once. A second clear does not replay it.
+  bool _pulsePlayed = false;
+
+  /// Current radius scale. 1 at rest, peaking mid-throb.
+  double get dotScale =>
+      _pulseElapsed < 0 ? 1 : GridDotPulse.scaleAt(_pulseElapsed);
+
+  /// Starts the uncover throb. A dot already throbbing, or one that has
+  /// finished, stays on its current timeline.
+  void pulse() {
+    if (_pulsePlayed) return;
+    _pulsePlayed = true;
+    _pulseElapsed = 0;
+  }
 
   CellComponent({
     required this.gridX,
@@ -642,6 +690,16 @@ class CellComponent extends RectangleComponent
           paint: _transparentPaint,
           anchor: Anchor.topLeft,
         );
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (_pulseElapsed < 0) return;
+    _pulseElapsed += dt;
+    if (_pulseElapsed >= GridDotPulse.duration) {
+      _pulseElapsed = -1;
+    }
+  }
 
   @override
   void render(Canvas canvas) {
@@ -657,7 +715,7 @@ class CellComponent extends RectangleComponent
     // allocation; avoids the Rect allocation of size.toRect().center).
     canvas.drawCircle(
       Offset(size.x / 2, size.y / 2),
-      GameBoardLayout.gridDotRadius,
+      GameBoardLayout.gridDotRadius * dotScale,
       _dotPaint,
     );
 

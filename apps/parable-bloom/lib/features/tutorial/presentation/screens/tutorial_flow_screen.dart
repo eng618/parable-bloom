@@ -128,6 +128,7 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       AppTheme.getGridBackground(Theme.of(context).brightness),
       tapEffectColor: extension.tapEffect,
       vineAttemptedColor: extension.vineAttempted,
+      gridDotColor: extension.gridDot,
     );
   }
 
