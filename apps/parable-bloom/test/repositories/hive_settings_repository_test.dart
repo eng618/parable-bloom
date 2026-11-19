@@ -90,14 +90,5 @@ void main() {
       await box.put('sfxEnabled', 'loud');
       expect(await repository.getSfxEnabled(), isTrue);
     });
-
-    test('should fall back to default board zoom scale for invalid stored type',
-        () async {
-      await box.put('boardZoomScale', 'zoomed');
-
-      final scale = await repository.getBoardZoomScale();
-
-      expect(scale, 1.0);
-    });
   });
 }

@@ -18,25 +18,6 @@ SetOptions optionsSetMerge() => SetOptions(merge: true);
 
 enum AppThemeMode { light, dark, system }
 
-final boardZoomScaleProvider =
-    AsyncNotifierProvider<BoardZoomScaleNotifier, double>(
-  BoardZoomScaleNotifier.new,
-);
-
-class BoardZoomScaleNotifier extends AsyncNotifier<double> {
-  @override
-  Future<double> build() async {
-    final repository = ref.watch(settingsRepositoryProvider);
-    return repository.getBoardZoomScale();
-  }
-
-  Future<void> setScale(double scale) async {
-    final repository = ref.read(settingsRepositoryProvider);
-    await repository.setBoardZoomScale(scale);
-    state = AsyncValue.data(scale);
-  }
-}
-
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, AppThemeMode>(
   ThemeModeNotifier.new,
 );

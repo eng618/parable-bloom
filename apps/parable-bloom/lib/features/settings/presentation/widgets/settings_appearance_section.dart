@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/settings_providers.dart';
 
-/// Theme, default board zoom, and vine style.
+/// Theme and vine style.
 class SettingsAppearanceSection extends ConsumerWidget {
   const SettingsAppearanceSection({super.key});
 
@@ -21,7 +21,6 @@ class SettingsAppearanceSection extends ConsumerWidget {
           subtitle: Text(_themeLabel(themeMode)),
           onTap: () => _showThemeDialog(context, ref, themeMode),
         ),
-        _BoardZoomTile(),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Column(
@@ -99,49 +98,6 @@ class SettingsAppearanceSection extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _BoardZoomTile extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final zoomAsync = ref.watch(boardZoomScaleProvider);
-
-    return zoomAsync.when(
-      data: (zoom) => ListTile(
-        leading: Icon(
-          Icons.zoom_in,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        title: const Text('Board Default Zoom'),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Adjust how close the camera starts'),
-            Slider(
-              value: zoom,
-              min: 0.5,
-              max: 2.0,
-              divisions: 15,
-              label: '${zoom.toStringAsFixed(1)}x',
-              onChanged: (value) async {
-                await ref.read(boardZoomScaleProvider.notifier).setScale(value);
-              },
-            ),
-          ],
-        ),
-      ),
-      loading: () => const ListTile(
-        leading: Icon(Icons.zoom_in),
-        title: Text('Board Default Zoom'),
-        subtitle: LinearProgressIndicator(),
-      ),
-      error: (e, s) => ListTile(
-        leading: const Icon(Icons.error),
-        title: const Text('Board Default Zoom Error'),
-        subtitle: Text(e.toString()),
-      ),
     );
   }
 }

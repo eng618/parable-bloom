@@ -215,7 +215,8 @@ Future<void> _prepareZoomedOutGameplayShot(WidgetTester tester) async {
 
   final container = ProviderScope.containerOf(tester.element(gameScreen));
 
-  // Wait for intro camera animation to finish before overriding zoom.
+  // The level opens already framed on the whole board. Wait only if a
+  // leftover camera move is still running.
   for (var i = 0; i < 20; i++) {
     final cameraState = container.read(cameraStateProvider);
     if (!cameraState.isAnimating) {
@@ -225,8 +226,6 @@ Future<void> _prepareZoomedOutGameplayShot(WidgetTester tester) async {
   }
 
   final cameraNotifier = container.read(cameraStateProvider.notifier);
-  final cameraState = container.read(cameraStateProvider);
   cameraNotifier.resetToCenter();
-  cameraNotifier.updateZoom(cameraState.minZoom);
   await tester.pump(const Duration(milliseconds: 300));
 }

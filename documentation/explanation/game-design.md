@@ -1,7 +1,7 @@
 ---
 title: 'Parable Bloom – Game Design Document'
 version: '4.0'
-last_updated: '2026-01-03'
+last_updated: '2026-11-19'
 status: 'Active'
 type: 'Game Design Document'
 ---
@@ -107,7 +107,7 @@ Interactive elements are highlighted dynamically from each vine's head coordinat
   - **Ethereal**: Dark cosmic obsidian wood paths with luminous glowing cyan veins, neon leaves, and a soft cyan outer neon-glow halo underneath.
   - **Simple (Accessibility)**: Clean, sleek solid geometric vector paths with sharp triangular chevron heads and rounded caps, matching modern abstract maze puzzles.
   - Managed by `vineStyleProvider` and toggled via the Settings screen and the Pause Menu.
-- **Board Default Zoom**: A user-configurable setting (0.5x to 2.0x) that adjusts how close the camera starts to the board, improving visibility for different screen sizes and accessibility needs.
+- **Opening view**: A level eases out onto the whole grid, including when you leave and come back. Pinch and the on-screen zoom controls still move the camera during play, and the reset control returns to that opening frame.
 - **Trackpad Panning**: Native support for two-finger swipe/scroll gestures on trackpads (and mouse scroll wheels) to smoothly pan the game board, eliminating the need to click and drag.
 - **Modes**: Adaptive Light and Dark themes that sync with the background imagery.
 

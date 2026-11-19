@@ -24,9 +24,6 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _vineStyleKey = 'vineStyle';
   static const String _defaultVineStyle = 'classic';
 
-  static const String _boardZoomScaleKey = 'boardZoomScale';
-  static const double _defaultBoardZoomScale = 1.0;
-
   static const String _preferredTranslationKey = 'preferredTranslationId';
   static const String _defaultPreferredTranslation = 'net';
 
@@ -119,16 +116,6 @@ class HiveSettingsRepository implements SettingsRepository {
   @override
   Future<void> setVineStyle(String style) async {
     await hiveBox.put(_vineStyleKey, style);
-  }
-
-  @override
-  Future<double> getBoardZoomScale() async {
-    return _readTypedValue<double>(_boardZoomScaleKey, _defaultBoardZoomScale);
-  }
-
-  @override
-  Future<void> setBoardZoomScale(double scale) async {
-    await hiveBox.put(_boardZoomScaleKey, scale);
   }
 
   @override

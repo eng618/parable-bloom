@@ -6,7 +6,6 @@ import 'package:vector_math/vector_math_64.dart' as vm;
 import '../../../../core/board_transform.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/game_board_layout.dart';
-import '../../../../core/providers/settings_providers.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../domain/entities/level_data.dart';
 import 'gameplay_state_providers.dart';
@@ -94,8 +93,9 @@ class CameraStateNotifier extends Notifier<CameraState> {
   double _animationProgress = 0.0;
   double _animationDurationSeconds = AnimationTiming.cameraTransitionSeconds;
 
-  /// Intro and play-bounds fit. The end-of-level frame uses
-  /// [AnimationTiming.levelCompleteBoardPadding] instead.
+  /// Play-bounds fit, and the slightly closer start of the level-open ease.
+  /// The ease settles on [AnimationTiming.levelCompleteBoardPadding].
+  static const double _levelOpenZoomIn = 1.08;
   static const double _playFitPadding = 0.9;
 
   @override
@@ -126,7 +126,16 @@ class CameraStateNotifier extends Notifier<CameraState> {
       padding: _playFitPadding,
     );
 
-    final minZoom = (zoomToFit * 0.85).clamp(0.3, 1.0);
+    var minZoom = (zoomToFit * 0.85).clamp(0.3, 1.0);
+    final wholeBoard = BoardTransform.levelCompleteFrame(
+      cols: gridCols,
+      rows: gridRows,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+    ).zoom;
+    if (wholeBoard.isFinite && wholeBoard > 0 && wholeBoard < minZoom) {
+      minZoom = wholeBoard;
+    }
     final maxZoom = CameraState.kMaxZoom;
 
     LoggerService.debug(
@@ -140,6 +149,12 @@ class CameraStateNotifier extends Notifier<CameraState> {
     );
   }
 
+  /// Eases out onto the whole board, centered.
+  ///
+  /// A level opens this way, including a return visit whose camera is
+  /// already on that frame. The ease starts a little closer than the
+  /// frame so the pull-back is visible, and it ignores a leftover close
+  /// zoom. The reset control still jumps straight to the frame.
   void animateToDefaultZoom({
     required double screenWidth,
     required double screenHeight,
@@ -149,45 +164,114 @@ class CameraStateNotifier extends Notifier<CameraState> {
     _interruptAnimation();
     _animationDurationSeconds = AnimationTiming.cameraTransitionSeconds;
 
-    final gridWidth = GameBoardLayout.boardWidth(gridCols);
-    final gridHeight = GameBoardLayout.boardHeight(gridRows);
-    final initialZoom = BoardTransform.zoomToFit(
+    if (screenWidth <= 0 ||
+        screenHeight <= 0 ||
+        gridCols <= 0 ||
+        gridRows <= 0) {
+      state = state.copyWith(
+        panOffset: vm.Vector2.zero(),
+        isAnimating: false,
+      );
+      return;
+    }
+
+    final targetZoom = _wholeBoardZoom(
       screenWidth: screenWidth,
       screenHeight: screenHeight,
-      gridWidth: gridWidth,
-      gridHeight: gridHeight,
-      padding: _playFitPadding,
+      gridCols: gridCols,
+      gridRows: gridRows,
+    );
+    final startZoom = _levelOpenStartZoom(
+      targetZoom: targetZoom,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridCols: gridCols,
+      gridRows: gridRows,
     );
 
-    final boardZoomScale = ref.read(boardZoomScaleProvider).value ?? 1.0;
-
-    _animationStartZoom = initialZoom;
-    _animationTargetZoom = 1.0 * boardZoomScale;
+    _animationStartZoom = startZoom;
+    _animationTargetZoom = targetZoom;
     _animationStartOffset = vm.Vector2.zero();
     _animationTargetOffset = vm.Vector2.zero();
     _animationProgress = 0.0;
 
-    state = state.copyWith(
-      zoom: initialZoom,
-      panOffset: vm.Vector2.zero(),
-      isAnimating: true,
-    );
-
-    LoggerService.debug(
-      'Starting animation from zoom $initialZoom to $_animationTargetZoom',
-      tag: 'CameraStateNotifier',
-    );
-
-    if (ref.read(disableAnimationsProvider)) {
-      state = state.copyWith(isAnimating: false, zoom: _animationTargetZoom);
+    final alreadyFramed = (startZoom - targetZoom).abs() <= 0.001;
+    if (alreadyFramed || ref.read(disableAnimationsProvider)) {
+      state = state.copyWith(
+        zoom: targetZoom,
+        panOffset: vm.Vector2.zero(),
+        isAnimating: false,
+      );
       LoggerService.debug(
-        'Animations disabled - skipping animation',
+        'Opened on the whole board at zoom $targetZoom',
         tag: 'CameraStateNotifier',
       );
       return;
     }
 
+    state = state.copyWith(
+      zoom: startZoom,
+      panOffset: vm.Vector2.zero(),
+      isAnimating: true,
+    );
+    LoggerService.debug(
+      'Easing out from zoom $startZoom to $targetZoom',
+      tag: 'CameraStateNotifier',
+    );
     _runAnimation();
+  }
+
+  /// Zoom the level-open ease starts from. The play fit is a little closer
+  /// than the whole-board frame. When that fit is not closer, nudge in by
+  /// [_levelOpenZoomIn] and stay inside the max zoom.
+  double _levelOpenStartZoom({
+    required double targetZoom,
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+  }) {
+    var start = BoardTransform.zoomToFit(
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridWidth: GameBoardLayout.boardWidth(gridCols),
+      gridHeight: GameBoardLayout.boardHeight(gridRows),
+      padding: _playFitPadding,
+    );
+    if (start > state.maxZoom) start = state.maxZoom;
+    if (start <= targetZoom + 0.001) {
+      start = targetZoom * _levelOpenZoomIn;
+      if (start > state.maxZoom) start = state.maxZoom;
+    }
+    return start;
+  }
+
+  /// Zoom that shows the whole grid. Lowers [CameraState.minZoom] when that
+  /// fit sits under the play floor, and never goes above the max zoom.
+  /// Returns the current zoom when the screen or the grid has no size.
+  double _wholeBoardZoom({
+    required double screenWidth,
+    required double screenHeight,
+    required int gridCols,
+    required int gridRows,
+  }) {
+    if (screenWidth <= 0 ||
+        screenHeight <= 0 ||
+        gridCols <= 0 ||
+        gridRows <= 0) {
+      return state.zoom;
+    }
+    final fit = BoardTransform.levelCompleteFrame(
+      cols: gridCols,
+      rows: gridRows,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+    ).zoom;
+    if (!fit.isFinite || fit <= 0) return state.zoom;
+    if (fit < state.minZoom) {
+      state = state.copyWith(minZoom: fit);
+    }
+    return fit.clamp(state.minZoom, state.maxZoom).toDouble();
   }
 
   /// Shared 60fps interpolation driver. Per-tick values go straight to Flame
@@ -393,10 +477,17 @@ class CameraStateNotifier extends Notifier<CameraState> {
     // Take over any running animation rather than ignoring the tap.
     _interruptAnimation();
 
-    final boardZoomScale = ref.read(boardZoomScaleProvider).value ?? 1.0;
+    final game = ref.read(gameInstanceProvider);
+    final level = ref.read(currentLevelProvider);
+    final targetZoom = _wholeBoardZoom(
+      screenWidth: game?.size.x ?? 0,
+      screenHeight: game?.size.y ?? 0,
+      gridCols: level?.gridWidth ?? 0,
+      gridRows: level?.gridHeight ?? 0,
+    );
 
     state = state.copyWith(
-      zoom: 1.0 * boardZoomScale,
+      zoom: targetZoom,
       panOffset: vm.Vector2.zero(),
       isAnimating: false,
     );

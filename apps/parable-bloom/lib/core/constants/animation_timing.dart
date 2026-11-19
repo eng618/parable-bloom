@@ -6,8 +6,9 @@ class AnimationTiming {
   /// centered while that vine is still on its way off the screen.
   static const double levelCompleteCameraSeconds = 1.2;
 
-  /// Fit padding for that pull-back. Looser than the 0.9 intro fit so the
-  /// grid stays clear of the header.
+  /// Fit padding for the whole-board frame. A level opens on this frame,
+  /// and the last vine eases back to it. Loose enough that the grid stays
+  /// clear of the header.
   static const double levelCompleteBoardPadding = 0.82;
 
   /// Legacy blocked-wiggle step. Successful clears use [vineCruiseSecondsPerCell].

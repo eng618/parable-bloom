@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-11-18: empty view eases the camera onto the remaining vines)
+Date: 2026-10-19 (last updated 2026-11-19: a level eases out onto the whole grid)
 
 ## Why a redesign
 
@@ -156,6 +156,11 @@ DPI-independent pass:
   not keep the vine on the board. When the viewport size is unknown, the
   run still ends a short pad past the board and may compress that pad to
   `vineClearCapSeconds` (2.8s).
+- **Level open**: the camera eases out onto the whole grid
+  (`animateToDefaultZoom`, about 0.8s, the same frame as the end-of-level
+  pull-back). The ease starts a little closer than that frame, including
+  when a return visit is already sitting on it, and it does not resume a
+  leftover close zoom. The reset control jumps back to that frame.
 - **Win beat**: when the last vine starts to leave, the camera eases out
   and centers (`frameEntireBoard`, `levelCompleteCameraSeconds`, about
   1.2s) so the whole empty grid is visible and clear of the header. That

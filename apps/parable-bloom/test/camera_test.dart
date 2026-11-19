@@ -69,11 +69,12 @@ void main() {
       gridRows: 20,
     );
 
-    // Set initial centered camera state
-    cameraNotifier.resetToCenter();
+    // The level opens on the whole board, which would include this corner.
+    // Zoom in so the vine sits outside the view.
+    cameraNotifier.updateZoom(1);
     expect(container.read(cameraStateProvider).panOffset, vm.Vector2.zero());
 
-    // Call ensureVineVisible for v1 which is in the top-right corner, off-screen under default view + margin
+    // Call ensureVineVisible for v1 which is in the top-right corner, off-screen under this zoom + margin
     await cameraNotifier.ensureVineVisible(level.vines.first);
 
     // The camera should have panned to center the vine
@@ -217,6 +218,119 @@ void main() {
         mask: MaskData(mode: 'show-all', points: const []),
       );
 
+  test('animateToDefaultZoom opens on the whole board', () {
+    final container = ProviderContainer(
+      overrides: [
+        disableAnimationsProvider.overrideWithValue(true),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final notifier = container.read(cameraStateProvider.notifier);
+    notifier.updateZoom(1.8);
+    notifier.animateToDefaultZoom(
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 20,
+      gridRows: 20,
+    );
+
+    final expected = BoardTransform.levelCompleteFrame(
+      cols: 20,
+      rows: 20,
+      screenWidth: 800,
+      screenHeight: 600,
+    ).zoom;
+    final state = container.read(cameraStateProvider);
+    expect(state.zoom, closeTo(expected, 0.001));
+    expect(state.zoom, lessThan(1));
+    expect(state.panOffset, vm.Vector2.zero());
+    expect(state.isAnimating, isFalse);
+    expect(state.minZoom, lessThanOrEqualTo(state.zoom));
+  });
+
+  test('animateToDefaultZoom eases out onto the whole board', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final target = BoardTransform.levelCompleteFrame(
+      cols: 20,
+      rows: 20,
+      screenWidth: 800,
+      screenHeight: 600,
+    ).zoom;
+    final notifier = container.read(cameraStateProvider.notifier);
+    // A return visit can still be holding a close zoom from the last play.
+    notifier.updateZoom(1.8);
+    notifier.animateToDefaultZoom(
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 20,
+      gridRows: 20,
+    );
+
+    final opening = container.read(cameraStateProvider);
+    expect(opening.isAnimating, isTrue);
+    expect(opening.zoom, greaterThan(target));
+    expect(opening.zoom, lessThan(1.8));
+    expect(opening.panOffset, vm.Vector2.zero());
+
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+    final settled = container.read(cameraStateProvider);
+    expect(settled.isAnimating, isFalse);
+    expect(settled.zoom, closeTo(target, 0.001));
+    expect(settled.panOffset, vm.Vector2.zero());
+  });
+
+  test('animateToDefaultZoom keeps a small board inside the max zoom', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    container.read(cameraStateProvider.notifier).animateToDefaultZoom(
+          screenWidth: 800,
+          screenHeight: 600,
+          gridCols: 4,
+          gridRows: 4,
+        );
+
+    final state = container.read(cameraStateProvider);
+    expect(state.zoom, BoardTransform.maxCameraZoom);
+    expect(state.panOffset, vm.Vector2.zero());
+    expect(state.isAnimating, isFalse);
+  });
+
+  test('resetToCenter returns to the whole board', () {
+    final game = MockGardenGame(Vector2(800, 600));
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    container.read(gameInstanceProvider.notifier).setGame(game);
+    container.read(currentLevelProvider.notifier).setLevel(frameBoard(20, 20));
+
+    final notifier = container.read(cameraStateProvider.notifier);
+    notifier.updateZoom(1.8);
+    notifier.updatePanOffset(
+      vm.Vector2(30, -20),
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 20,
+      gridRows: 20,
+    );
+    notifier.resetToCenter();
+
+    final expected = BoardTransform.levelCompleteFrame(
+      cols: 20,
+      rows: 20,
+      screenWidth: 800,
+      screenHeight: 600,
+    ).zoom;
+    final state = container.read(cameraStateProvider);
+    expect(state.zoom, closeTo(expected, 0.001));
+    expect(state.panOffset, vm.Vector2.zero());
+    expect(state.isAnimating, isFalse);
+  });
+
   test('frameEntireBoard does nothing without a game', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -241,6 +355,14 @@ void main() {
     container.read(gameInstanceProvider.notifier).setGame(game);
     container.read(currentLevelProvider.notifier).setLevel(frameBoard(40, 40));
 
+    final frame = BoardTransform.levelCompleteFrame(
+      cols: 40,
+      rows: 40,
+      screenWidth: 800,
+      screenHeight: 600,
+    );
+    expect(frame.zoom, lessThan(0.3));
+
     final notifier = container.read(cameraStateProvider.notifier);
     notifier.updateZoomBounds(
       screenWidth: 800,
@@ -248,7 +370,10 @@ void main() {
       gridCols: 40,
       gridRows: 40,
     );
-    expect(container.read(cameraStateProvider).minZoom, 0.3);
+    expect(
+      container.read(cameraStateProvider).minZoom,
+      closeTo(frame.zoom, 1e-9),
+    );
     notifier.updatePanOffset(
       vm.Vector2(80, -40),
       screenWidth: 800,
@@ -259,14 +384,7 @@ void main() {
 
     await notifier.frameEntireBoard();
 
-    final frame = BoardTransform.levelCompleteFrame(
-      cols: 40,
-      rows: 40,
-      screenWidth: 800,
-      screenHeight: 600,
-    );
     final state = container.read(cameraStateProvider);
-    expect(frame.zoom, lessThan(0.3));
     expect(state.zoom, closeTo(frame.zoom, 1e-9));
     expect(state.minZoom, closeTo(frame.zoom, 1e-9));
     expect(state.panOffset.x, closeTo(0, 1e-9));
@@ -354,7 +472,7 @@ void main() {
       gridCols: 20,
       gridRows: 20,
     );
-    notifier.resetToCenter();
+    notifier.updateZoom(1);
 
     await notifier.frameRemainingVines();
 
@@ -387,7 +505,7 @@ void main() {
       gridCols: 10,
       gridRows: 10,
     );
-    notifier.resetToCenter();
+    notifier.updateZoom(1);
     notifier.updatePanOffset(
       vm.Vector2(40, 0),
       screenWidth: 800,
@@ -458,7 +576,7 @@ void main() {
     container.read(levelCompleteProvider.notifier).setComplete(true);
 
     final notifier = container.read(cameraStateProvider.notifier);
-    notifier.resetToCenter();
+    notifier.updateZoom(1);
     await notifier.frameRemainingVines();
 
     final state = container.read(cameraStateProvider);
