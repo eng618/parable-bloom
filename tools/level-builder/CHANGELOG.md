@@ -1,3 +1,25 @@
+## 1.11.9 (2026-11-19)
+
+### 🚀 Features
+
+- **camera:** remove board zoom scale and enhance camera behavior ([1e4374e](https://github.com/eng618/parable-bloom/commit/1e4374e))
+- **camera:** implement smooth camera transition to remaining vines after clears ([ef38dda](https://github.com/eng618/parable-bloom/commit/ef38dda))
+- **animation:** enhance level completion camera behavior and vine exit dynamics ([b338d57](https://github.com/eng618/parable-bloom/commit/b338d57))
+- **vine-rendering:** enhance vine exit behavior and viewport handling ([063eca5](https://github.com/eng618/parable-bloom/commit/063eca5))
+- **levels:** update level configurations and enhance generation mechanics ([a0dfafc](https://github.com/eng618/parable-bloom/commit/a0dfafc))
+- **level-builder:** introduce benchmarking for level generation and solver performance ([025756e](https://github.com/eng618/parable-bloom/commit/025756e))
+- **marketing:** update web play links and enhance site metadata ([ac403cd](https://github.com/eng618/parable-bloom/commit/ac403cd))
+- **auth:** implement web and native credential fields for sign-in ([2e91e82](https://github.com/eng618/parable-bloom/commit/2e91e82))
+
+### 🩹 Fixes
+
+- **variety:** improve output handling in variety report generation ([4d391fc](https://github.com/eng618/parable-bloom/commit/4d391fc))
+- **sync:** enhance cloud sync handling and error logging ([2f9561b](https://github.com/eng618/parable-bloom/commit/2f9561b))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 1.11.8 (2026-11-13)
 
 ### 🚀 Features
