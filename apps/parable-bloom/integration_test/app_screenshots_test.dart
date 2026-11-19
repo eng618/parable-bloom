@@ -93,7 +93,8 @@ Future<void> _captureStoreListingScreenshots(
   _clearAllVines(gameContainer);
   gameContainer.read(levelCompleteProvider.notifier).setComplete(true);
 
-  await _pumpFor(tester, const Duration(milliseconds: 600));
+  // The win card waits for the pull-back (~1.2s) and a short breath.
+  await _pumpFor(tester, const Duration(milliseconds: 2200));
   expect(find.text('Level Complete'), findsOneWidget);
   expect(find.byIcon(Icons.celebration), findsNothing);
   await _takeScreenshot(tester, '03_win_$suffix');

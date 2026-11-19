@@ -385,7 +385,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     // absolute distance so the head visibly reaches the blocker before
     // returning (legacy animator used `rawDistance.abs()` here too).
     final approachSteps = rawDistance.abs().clamp(0, 4096);
-    final tailClearArc = rawDistance > 0 ? _viewportTailClearArc() : null;
+    final tailClearArc = rawDistance > 0
+        ? _viewportTailClearArc(includeFramedBoard: isLastVine)
+        : null;
     _buildRailTrack(
       extensionArc: _railExtensionArrangement(
         approachSteps,
@@ -422,12 +424,25 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   /// Measured from the head cell along the exit ray, in board pixels.
   /// Includes the dark margin around the grid. Null before the camera has
   /// a screen size; the slide then uses the short off-board pad.
-  double? _viewportTailClearArc() {
+  ///
+  /// [includeFramedBoard] also measures the centered whole-board frame and
+  /// keeps the farther edge. The last vine uses that so a zoom-out does not
+  /// remove it while it is still on screen.
+  double? _viewportTailClearArc({bool includeFramedBoard = false}) {
     final level = parent.getCurrentLevelData();
-    final viewport = parent.boardSpaceViewport();
-    if (level == null || viewport == null || vineData.orderedPath.isEmpty) {
-      return null;
-    }
+    if (level == null || vineData.orderedPath.isEmpty) return null;
+
+    final current = _clearArcForViewport(parent.boardSpaceViewport(), level);
+    if (!includeFramedBoard) return current;
+
+    final framed = _clearArcForViewport(parent.framedBoardViewport(), level);
+    if (current == null) return framed;
+    if (framed == null) return current;
+    return current > framed ? current : framed;
+  }
+
+  double? _clearArcForViewport(Rect? viewport, LevelData level) {
+    if (viewport == null || vineData.orderedPath.isEmpty) return null;
     final head = vineData.orderedPath.first;
     final visualRow = level.gridHeight - 1 - (head['y'] ?? 0);
     final raw = BoardTransform.distanceToViewportEdge(

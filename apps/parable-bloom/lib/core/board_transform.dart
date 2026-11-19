@@ -1,3 +1,4 @@
+import 'constants/animation_timing.dart';
 import 'game_board_layout.dart';
 
 /// Single source of truth for board placement math.
@@ -9,6 +10,84 @@ import 'game_board_layout.dart';
 /// Pure Dart (doubles/records only) so it stays testable without Flame.
 class BoardTransform {
   const BoardTransform._();
+
+  /// Upper camera zoom. CameraState.kMaxZoom uses this same value.
+  static const double maxCameraZoom = 2.5;
+
+  /// Scale that fits the board inside the screen with [padding] (1 = flush).
+  ///
+  /// Returns `1` when the screen or the board has no size.
+  static double zoomToFit({
+    required double screenWidth,
+    required double screenHeight,
+    required double gridWidth,
+    required double gridHeight,
+    required double padding,
+  }) {
+    if (screenWidth <= 0 ||
+        screenHeight <= 0 ||
+        gridWidth <= 0 ||
+        gridHeight <= 0 ||
+        padding <= 0) {
+      return 1;
+    }
+    final zoomToFitWidth = (screenWidth * padding) / gridWidth;
+    final zoomToFitHeight = (screenHeight * padding) / gridHeight;
+    final fit =
+        zoomToFitWidth < zoomToFitHeight ? zoomToFitWidth : zoomToFitHeight;
+    if (!fit.isFinite || fit <= 0) return 1;
+    return fit;
+  }
+
+  /// Camera that shows the whole board, centered, at the end of a level.
+  ///
+  /// Zoom is [zoomToFit] at [AnimationTiming.levelCompleteBoardPadding],
+  /// and never above [maxCameraZoom]. The play-time minimum is lowered to
+  /// this zoom by the camera notifier, so it is not applied here. Pan is 0.
+  static ({
+    double zoom,
+    double left,
+    double top,
+    double right,
+    double bottom,
+  }) levelCompleteFrame({
+    required int cols,
+    required int rows,
+    required double screenWidth,
+    required double screenHeight,
+  }) {
+    var zoom = zoomToFit(
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridWidth: GameBoardLayout.boardWidth(cols),
+      gridHeight: GameBoardLayout.boardHeight(rows),
+      padding: AnimationTiming.levelCompleteBoardPadding,
+    );
+    if (zoom > maxCameraZoom) zoom = maxCameraZoom;
+    final pos = boardPosition(
+      cols: cols,
+      rows: rows,
+      zoom: zoom,
+      panX: 0,
+      panY: 0,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+    );
+    final view = viewportInBoardSpace(
+      zoom: zoom,
+      boardX: pos.x,
+      boardY: pos.y,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+    );
+    return (
+      zoom: zoom,
+      left: view.left,
+      top: view.top,
+      right: view.right,
+      bottom: view.bottom,
+    );
+  }
 
   /// Top-left board position in screen space for the centered + panned
   /// layout used by [GridComponent] and [ProjectionLinesComponent].

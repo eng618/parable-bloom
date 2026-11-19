@@ -118,9 +118,11 @@ void main() {
       final controller = VineSlideController.idle()
         ..startRun(track: track, approachSteps: 0, isClear: true);
 
+      // A faster cruise can finish under the cap. The cap still bounds the
+      // run, and only the off-screen tail is allowed to shrink to meet it.
       expect(
         controller.plannedDuration,
-        closeTo(AnimationTiming.vineClearCapSeconds, 0.05),
+        lessThanOrEqualTo(AnimationTiming.vineClearCapSeconds + 1e-6),
       );
 
       // The approach to the edge keeps the cruise. At 90% of the time it

@@ -396,6 +396,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
     _currentCongratulationMessage = pickCongratulationMessage();
 
+    // The last vine is already leaving. Pull the camera out now, in
+    // parallel with saving the clear, so the empty grid opens up while
+    // that vine is still on screen.
+    Future<void> frameBoard = Future<void>.value();
+    try {
+      frameBoard =
+          container.read(cameraStateProvider.notifier).frameEntireBoard();
+    } on StateError {
+      return;
+    }
+
     // Persist completion through the container. Home can pop this screen
     // during the module lookup, and [ref] throws once the element is gone.
     LevelData? currentLevel;
@@ -473,12 +484,23 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
 
     // The clear is already saved. Keep the board open until the last vine
-    // has left, then give the line and the celebration their own beat.
+    // has left and the empty grid is framed, then give the line and the
+    // celebration their own beat.
     await waitUntilVinesSettled(
       isAlive: () => _refAlive && !_homeExitRequested,
       isAnimating: () => container.read(anyVineAnimatingProvider),
     );
     if (!mounted || !context.mounted || _homeExitRequested) return;
+
+    await frameBoard;
+    if (!mounted || !context.mounted || _homeExitRequested) return;
+    try {
+      // Restart clears this. A pinch only resolves the camera future, and
+      // the card should still appear.
+      if (!container.read(levelCompleteProvider)) return;
+    } on StateError {
+      return;
+    }
 
     await Future.delayed(AnimationTiming.levelCompleteBreath);
     if (!mounted || !context.mounted || _homeExitRequested) return;

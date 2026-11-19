@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-11-18: vines slide off the viewport, fully opaque)
+Date: 2026-10-19 (last updated 2026-11-18: last vine pulls the camera out to the whole grid)
 
 ## Why a redesign
 
@@ -156,15 +156,19 @@ DPI-independent pass:
   not keep the vine on the board. When the viewport size is unknown, the
   run still ends a short pad past the board and may compress that pad to
   `vineClearCapSeconds` (2.8s).
-- **Win beat**: the level-complete card waits until no vine is animating,
-  holds a short breath on the empty garden, then fades in. The encouraging
-  line stays up for `levelCompleteReadHold` (3.2s). Continue skips the
-  rest of that hold and takes the same next step the timer would.
-  Pond ripples and
-  fireworks are budgeted to finish inside that hold. The next board loads
-  under the card, celebration components are removed, and the card fades
-  out onto the new level. Lessons skip the card and wait out the effect
-  lifetime instead.
+- **Win beat**: when the last vine starts to leave, the camera eases out
+  and centers (`frameEntireBoard`, `levelCompleteCameraSeconds`, about
+  1.2s) so the whole empty grid is visible and clear of the header. That
+  vine's exit is the farther of the live viewport and that framed view, so
+  the pull-back does not remove it while it is still on screen. The
+  level-complete card waits until the vine has left and the board is
+  framed, holds a short breath on the empty garden, then fades in. The
+  encouraging line stays up for `levelCompleteReadHold` (3.2s). Continue
+  skips the rest of that hold and takes the same next step the timer
+  would. Pond ripples and fireworks are budgeted to finish inside that
+  hold. The next board loads under the card, celebration components are
+  removed, and the card fades out onto the new level. Lessons skip the
+  card and wait out the effect lifetime instead.
 - **Blocked run**: eased forward to `approachArc` (the solver's
   `getDistanceToBlocker` remains the single blocking truth), then eased back
   home; `justReachedBlocker` maps to `markVineAttempted`,

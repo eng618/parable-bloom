@@ -54,6 +54,27 @@ void main() {
       expect(notifications, lessThan(15));
     });
 
+    test('animateToPosition honors a caller duration', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final started = DateTime.now();
+      await container.read(cameraStateProvider.notifier).animateToPosition(
+            targetZoom: 1.4,
+            targetPanOffset: vm.Vector2.zero(),
+            durationSeconds: 0.05,
+          );
+
+      expect(
+        DateTime.now().difference(started),
+        lessThan(const Duration(milliseconds: 400)),
+      );
+      final state = container.read(cameraStateProvider);
+      expect(state.isAnimating, isFalse);
+      expect(state.zoom, closeTo(1.4, 0.001));
+      expect(state.panOffset, vm.Vector2.zero());
+    });
+
     test('resetToCenter works during animation', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);

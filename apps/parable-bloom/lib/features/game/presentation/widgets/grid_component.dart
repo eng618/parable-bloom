@@ -296,6 +296,21 @@ class GridComponent extends PositionComponent
     return Rect.fromLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom);
   }
 
+  /// Window the level-complete camera will settle on: the whole grid,
+  /// centered. Null until the screen size is known. The last vine measures
+  /// its exit against this so the pull-back does not swallow it.
+  Rect? framedBoardViewport() {
+    if (_screenWidth <= 0 || _screenHeight <= 0) return null;
+    final frame = BoardTransform.levelCompleteFrame(
+      cols: cols,
+      rows: rows,
+      screenWidth: _screenWidth,
+      screenHeight: _screenHeight,
+    );
+    if (frame.zoom.abs() < 1e-6) return null;
+    return Rect.fromLTRB(frame.left, frame.top, frame.right, frame.bottom);
+  }
+
   @override
   void update(double dt) {
     super.update(dt);

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import 'package:parable_bloom/core/board_transform.dart';
 import 'package:parable_bloom/core/game_board_layout.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/application/providers/camera_providers.dart';
@@ -200,5 +201,134 @@ void main() {
       tightened.panOffset.x,
       closeTo(GameBoardLayout.boardWidth(4) * 0.5 * 0.2, 0.001),
     );
+  });
+
+  LevelData frameBoard(int cols, int rows) => LevelData(
+        id: 'frame_$cols',
+        name: 'Frame',
+        difficulty: 'Seed',
+        gridWidth: cols,
+        gridHeight: rows,
+        vines: const [],
+        maxMoves: 1,
+        minMoves: 1,
+        complexity: 'low',
+        grace: 3,
+        mask: MaskData(mode: 'show-all', points: const []),
+      );
+
+  test('frameEntireBoard does nothing without a game', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(cameraStateProvider.notifier).frameEntireBoard();
+
+    final state = container.read(cameraStateProvider);
+    expect(state.zoom, 1);
+    expect(state.isAnimating, isFalse);
+    expect(state.panOffset, vm.Vector2.zero());
+  });
+
+  test('frameEntireBoard fits a board below the play zoom floor', () async {
+    final game = MockGardenGame(Vector2(800, 600));
+    final container = ProviderContainer(
+      overrides: [
+        disableAnimationsProvider.overrideWithValue(true),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(gameInstanceProvider.notifier).setGame(game);
+    container.read(currentLevelProvider.notifier).setLevel(frameBoard(40, 40));
+
+    final notifier = container.read(cameraStateProvider.notifier);
+    notifier.updateZoomBounds(
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 40,
+      gridRows: 40,
+    );
+    expect(container.read(cameraStateProvider).minZoom, 0.3);
+    notifier.updatePanOffset(
+      vm.Vector2(80, -40),
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 40,
+      gridRows: 40,
+    );
+
+    await notifier.frameEntireBoard();
+
+    final frame = BoardTransform.levelCompleteFrame(
+      cols: 40,
+      rows: 40,
+      screenWidth: 800,
+      screenHeight: 600,
+    );
+    final state = container.read(cameraStateProvider);
+    expect(frame.zoom, lessThan(0.3));
+    expect(state.zoom, closeTo(frame.zoom, 1e-9));
+    expect(state.minZoom, closeTo(frame.zoom, 1e-9));
+    expect(state.panOffset.x, closeTo(0, 1e-9));
+    expect(state.panOffset.y, closeTo(0, 1e-9));
+    expect(state.isAnimating, isFalse);
+
+    var writes = 0;
+    container.listen<CameraState>(
+      cameraStateProvider,
+      (_, __) => writes++,
+    );
+    await notifier.frameEntireBoard();
+    expect(writes, 0);
+  });
+
+  test('a gesture takes over the level-complete frame', () async {
+    final game = MockGardenGame(Vector2(800, 600));
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    container.read(gameInstanceProvider.notifier).setGame(game);
+    container.read(currentLevelProvider.notifier).setLevel(frameBoard(40, 40));
+
+    final notifier = container.read(cameraStateProvider.notifier);
+    notifier.updateZoomBounds(
+      screenWidth: 800,
+      screenHeight: 600,
+      gridCols: 40,
+      gridRows: 40,
+    );
+
+    final framed = notifier.frameEntireBoard();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(container.read(cameraStateProvider).isAnimating, isTrue);
+
+    notifier.updateZoom(1.1);
+    await framed.timeout(const Duration(seconds: 2));
+
+    final state = container.read(cameraStateProvider);
+    expect(state.isAnimating, isFalse);
+    expect(state.zoom, 1.1);
+  });
+
+  test('frameEntireBoard takes over an in-flight camera move', () async {
+    final game = MockGardenGame(Vector2(800, 600));
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    container.read(gameInstanceProvider.notifier).setGame(game);
+    container.read(currentLevelProvider.notifier).setLevel(frameBoard(40, 40));
+    final notifier = container.read(cameraStateProvider.notifier);
+
+    final first = notifier.animateToPosition(
+      targetZoom: 1.8,
+      targetPanOffset: vm.Vector2(40, 10),
+    );
+    final framed = notifier.frameEntireBoard();
+    await first.timeout(const Duration(milliseconds: 500));
+
+    notifier.updateZoom(1.25);
+    await framed.timeout(const Duration(seconds: 2));
+    expect(container.read(cameraStateProvider).zoom, 1.25);
+    expect(container.read(cameraStateProvider).isAnimating, isFalse);
   });
 }

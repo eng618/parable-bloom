@@ -268,6 +268,57 @@ void main() {
       expect(margin, greaterThan(GameBoardLayout.boardWidth(4) - headX));
     });
 
+    test('zoomToFit uses the tighter axis and rejects an empty screen', () {
+      final width = GameBoardLayout.boardWidth(10);
+      final height = GameBoardLayout.boardHeight(4);
+      final fit = BoardTransform.zoomToFit(
+        screenWidth: 800,
+        screenHeight: 600,
+        gridWidth: width,
+        gridHeight: height,
+        padding: 0.82,
+      );
+      final byWidth = (800 * 0.82) / width;
+      final byHeight = (600 * 0.82) / height;
+      expect(fit, closeTo(byWidth < byHeight ? byWidth : byHeight, 1e-9));
+      expect(
+        BoardTransform.zoomToFit(
+          screenWidth: 0,
+          screenHeight: 600,
+          gridWidth: width,
+          gridHeight: height,
+          padding: 0.82,
+        ),
+        1,
+      );
+    });
+
+    test('levelCompleteFrame shows the whole board and caps zoom', () {
+      final huge = BoardTransform.levelCompleteFrame(
+        cols: 40,
+        rows: 40,
+        screenWidth: 800,
+        screenHeight: 600,
+      );
+      expect(huge.zoom, lessThan(0.3));
+      expect(huge.left, lessThan(0));
+      expect(huge.top, lessThan(0));
+      expect(huge.right, greaterThan(GameBoardLayout.boardWidth(40)));
+      expect(huge.bottom, greaterThan(GameBoardLayout.boardHeight(40)));
+
+      final tiny = BoardTransform.levelCompleteFrame(
+        cols: 2,
+        rows: 2,
+        screenWidth: 800,
+        screenHeight: 600,
+      );
+      expect(tiny.zoom, BoardTransform.maxCameraZoom);
+      expect(tiny.left, lessThan(0));
+      expect(tiny.top, lessThan(0));
+      expect(tiny.right, greaterThan(GameBoardLayout.boardWidth(2)));
+      expect(tiny.bottom, greaterThan(GameBoardLayout.boardHeight(2)));
+    });
+
     test('distanceToViewportEdge is signed along the exit ray', () {
       expect(
         BoardTransform.distanceToViewportEdge(

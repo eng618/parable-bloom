@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import '../../../../core/board_transform.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/game_board_layout.dart';
 import '../../../../core/providers/settings_providers.dart';
@@ -18,7 +19,7 @@ class CameraState {
   final bool isAnimating;
 
   /// Single source of truth for the upper zoom bound.
-  static const double kMaxZoom = 2.5;
+  static const double kMaxZoom = BoardTransform.maxCameraZoom;
 
   const CameraState({
     required this.zoom,
@@ -91,8 +92,11 @@ class CameraStateNotifier extends Notifier<CameraState> {
   vm.Vector2 _animationStartOffset = vm.Vector2.zero();
   vm.Vector2 _animationTargetOffset = vm.Vector2.zero();
   double _animationProgress = 0.0;
-  static const double _animationDurationSeconds =
-      AnimationTiming.cameraTransitionSeconds;
+  double _animationDurationSeconds = AnimationTiming.cameraTransitionSeconds;
+
+  /// Intro and play-bounds fit. The end-of-level frame uses
+  /// [AnimationTiming.levelCompleteBoardPadding] instead.
+  static const double _playFitPadding = 0.9;
 
   @override
   CameraState build() {
@@ -114,11 +118,13 @@ class CameraStateNotifier extends Notifier<CameraState> {
     final gridWidth = GameBoardLayout.boardWidth(gridCols);
     final gridHeight = GameBoardLayout.boardHeight(gridRows);
 
-    const padding = 0.9;
-    final zoomToFitWidth = (screenWidth * padding) / gridWidth;
-    final zoomToFitHeight = (screenHeight * padding) / gridHeight;
-    final zoomToFit =
-        zoomToFitWidth < zoomToFitHeight ? zoomToFitWidth : zoomToFitHeight;
+    final zoomToFit = BoardTransform.zoomToFit(
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridWidth: gridWidth,
+      gridHeight: gridHeight,
+      padding: _playFitPadding,
+    );
 
     final minZoom = (zoomToFit * 0.85).clamp(0.3, 1.0);
     final maxZoom = CameraState.kMaxZoom;
@@ -140,14 +146,18 @@ class CameraStateNotifier extends Notifier<CameraState> {
     required int gridCols,
     required int gridRows,
   }) {
+    _interruptAnimation();
+    _animationDurationSeconds = AnimationTiming.cameraTransitionSeconds;
+
     final gridWidth = GameBoardLayout.boardWidth(gridCols);
     final gridHeight = GameBoardLayout.boardHeight(gridRows);
-
-    const padding = 0.9;
-    final zoomToFitWidth = (screenWidth * padding) / gridWidth;
-    final zoomToFitHeight = (screenHeight * padding) / gridHeight;
-    final initialZoom =
-        zoomToFitWidth < zoomToFitHeight ? zoomToFitWidth : zoomToFitHeight;
+    final initialZoom = BoardTransform.zoomToFit(
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      gridWidth: gridWidth,
+      gridHeight: gridHeight,
+      padding: _playFitPadding,
+    );
 
     final boardZoomScale = ref.read(boardZoomScaleProvider).value ?? 1.0;
 
@@ -392,11 +402,60 @@ class CameraStateNotifier extends Notifier<CameraState> {
     );
   }
 
+  /// Eases out and centers so the whole board is on screen.
+  ///
+  /// Starts immediately. A gesture still takes over, and that resolves the
+  /// returned future. Does nothing when there is no board to frame, or when
+  /// the camera is already there.
+  Future<void> frameEntireBoard() {
+    final game = ref.read(gameInstanceProvider);
+    final level = ref.read(currentLevelProvider);
+    if (game == null || level == null) return Future<void>.value();
+
+    final screenWidth = game.size.x;
+    final screenHeight = game.size.y;
+    if (screenWidth <= 0 || screenHeight <= 0) return Future<void>.value();
+    if (level.gridWidth <= 0 || level.gridHeight <= 0) {
+      return Future<void>.value();
+    }
+
+    final fit = BoardTransform.levelCompleteFrame(
+      cols: level.gridWidth,
+      rows: level.gridHeight,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+    ).zoom;
+    if (!fit.isFinite || fit <= 0) return Future<void>.value();
+
+    var minZoom = state.minZoom;
+    if (fit < minZoom) {
+      minZoom = fit;
+      state = state.copyWith(minZoom: minZoom);
+    }
+    final targetZoom = fit.clamp(minZoom, state.maxZoom).toDouble();
+
+    final alreadyFramed = !state.isAnimating &&
+        (state.zoom - targetZoom).abs() <= 0.001 &&
+        state.panOffset.x.abs() <= 1 &&
+        state.panOffset.y.abs() <= 1;
+    if (alreadyFramed) return Future<void>.value();
+
+    return animateToPosition(
+      targetZoom: targetZoom,
+      targetPanOffset: vm.Vector2.zero(),
+      durationSeconds: AnimationTiming.levelCompleteCameraSeconds,
+    );
+  }
+
   Future<void> animateToPosition({
     required double targetZoom,
     required vm.Vector2 targetPanOffset,
+    double? durationSeconds,
   }) {
+    _interruptAnimation();
     final completer = Completer<void>();
+    _animationDurationSeconds =
+        durationSeconds ?? AnimationTiming.cameraTransitionSeconds;
     _animationStartZoom = state.zoom;
     _animationTargetZoom = targetZoom.clamp(state.minZoom, state.maxZoom);
     _animationStartOffset = state.panOffset;

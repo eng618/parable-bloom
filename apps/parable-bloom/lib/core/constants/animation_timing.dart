@@ -2,6 +2,14 @@
 class AnimationTiming {
   static const double cameraTransitionSeconds = 0.8;
 
+  /// Pull-back when the last vine starts to leave, so the empty grid is
+  /// centered while that vine is still on its way off the screen.
+  static const double levelCompleteCameraSeconds = 1.2;
+
+  /// Fit padding for that pull-back. Looser than the 0.9 intro fit so the
+  /// grid stays clear of the header.
+  static const double levelCompleteBoardPadding = 0.82;
+
   /// Legacy blocked-wiggle step. Successful clears use [vineCruiseSecondsPerCell].
   static const double vineStepSeconds = 0.05;
   static const double vineBloomSeconds = 0.5;
@@ -12,7 +20,7 @@ class AnimationTiming {
   /// twice that fast. The vine that empties the board stays a little slower
   /// than a mid-level clear, at the same rate. Blocked wiggles ignore this.
   /// Hot restart after editing it. Zero or negative falls back to `1`.
-  static const double vineSpeed = 2;
+  static const double vineSpeed = 3;
 
   /// On-screen cruise at [vineSpeed] `1`.
   static const double _vineCruiseBaseSecondsPerCell = 0.16;
