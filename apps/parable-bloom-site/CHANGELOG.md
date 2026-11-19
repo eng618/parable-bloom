@@ -1,3 +1,13 @@
+## 0.5.30 (2026-11-19)
+
+### 🚀 Features
+
+- **grid:** enhance grid dot behavior and theme integration ([b547d32](https://github.com/eng618/parable-bloom/commit/b547d32))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 0.5.29 (2026-11-19)
 
 ### 🚀 Features
