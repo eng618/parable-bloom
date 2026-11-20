@@ -654,12 +654,13 @@ The project uses GitHub Actions for continuous integration and deployment, manag
 
 ### 10.3 Production Releases
 
-- **Workflow**: `.github/workflows/publish.yml`
+- **Versioning**: `.github/workflows/release.yml` runs every Monday at 15:00 UTC, and on a manual run. When `main` has commits after the latest `v*` tag, one conventional-commit specifier is applied to the game, the site, and the level builder together. The workflow syncs `pubspec.yaml`, commits to `main`, and pushes tags. An empty week exits successfully. The workflow does not open a pull request.
+- **Publishing**: `.github/workflows/publish.yml`
 - **Trigger**: Version tags matching `v*` (Game) or `level-builder-v*` (Tool).
 - **Tasks**:
   - Generates production `firebase_options.dart` via FlutterFire CLI.
   - Signed Android builds (`.aab`) with Bitwarden Secrets Manager integration.
-  - Web production build and manual release tagging.
+  - Web production build and Play upload for the game tag. Level-builder tags upload release binaries.
 
 ### 10.4 Nx Caching
 

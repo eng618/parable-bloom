@@ -13,11 +13,13 @@ Parable Bloom uses a fully automated release pipeline that:
 - ✅ Builds Web (Firebase Hosting), Linux & Windows (orchestrated via Task/Nx)
 - ✅ Auto-uploads Android to Google Play Console via Fastlane
 - ✅ Supports automated iOS screenshot capture and upload via Fastlane Snapshot
-- ✅ Creates automated GitHub releases via Nx Release
+- ✅ Creates release tags from Nx Release, which start the publish workflow
 - ⏳ iOS support temporarily disabled (awaiting Apple Developer account setup)
 - ⏳ macOS support temporarily disabled (build issues to resolve later)
 
-**Trigger**: Git tag matching `v*` pattern (e.g., `v1.0.0+1`, `v1.2.3-beta+5`). Tags include build number for reproducibility.
+**Versioning**: `.github/workflows/release.yml` runs every Monday at 15:00 UTC, and whenever someone starts it by hand. If `main` has commits after the latest `v*` tag, Nx versions the projects from conventional commits, syncs `pubspec.yaml`, commits to `main`, and pushes the tags. A week with nothing new finishes successfully.
+
+**Publish trigger**: A git tag matching `v*` (game) or `level-builder-v*` (level builder). The publish workflow is `.github/workflows/publish.yml`.
 
 ---
 
@@ -384,27 +386,25 @@ Version format in `pubspec.yaml`: `MAJOR.MINOR.PATCH+BUILD_NUMBER`
 
 The project uses **Nx Release** organized into three project-specific groups:
 
-1. **`parable-bloom`**: Game app. Tags: `v*`. The release workflow automatically runs `scripts/bump_version.dart` after versioning to sync the version to `pubspec.yaml`.
-2. **`parable-bloom-site`**: Next.js marketing and policy site. Tags: `parable-bloom-site-v*`.
+1. **`parable-bloom`**: Game app. Tags: `v*`. The release workflow runs `scripts/bump_version.dart` after versioning to sync that semver into `pubspec.yaml` and increment the `+build` suffix.
+2. **`parable-bloom-site`**: Next.js marketing and policy site. Tags: `parable-bloom-site-v*`. The site is still `0.x`, so Nx treats a breaking change as a minor bump and a feature as a patch bump.
 3. **`level-builder`**: Go CLI tool. Tags: `level-builder-v*`.
 
-Usage:
+`.github/workflows/release.yml` is the release. It does not open a pull request.
+
+- Monday 15:00 UTC, the workflow runs on its own.
+- Actions → Release → Run workflow runs the same release sooner. The optional specifier (`patch`, `minor`, `major`, or an exact `x.y.z`) overrides conventional commits for that run.
+- If `main` is already at the latest `v*` tag, the job logs that there is nothing to release and exits successfully.
+- Otherwise one specifier is chosen from conventional commits since the latest `v*` tag. `feat` bumps minor, any other commit bumps patch, and `feat!` or a `BREAKING CHANGE:` footer bumps major. That same specifier is applied to `parable-bloom`, `parable-bloom-site`, and `level-builder`. A release that only touched the game still versions the site and the level builder, so the packages stay aligned. The site is still `0.x`, so Nx steps that specifier down for the site: major becomes minor, and minor becomes patch.
+- The current version comes from that release tag. Nx requires the git tag when the bump comes from conventional commits. If `package.json` is ahead of every tag on `main`, the workflow creates a local tag for the manifest version and does not push it, so the next bump does not start from an older tag.
+- One `chore: release` commit is pushed to `main`. `RELEASE_PLEASE_TOKEN` must be allowed to push through branch protection. The job fails if that push is rejected.
+- Each new version is then pushed as its own tag. `publish.yml` runs once per tag.
+
+Preview the next release without writing files or tags. This uses the same shared specifier as the workflow:
 
 ```bash
-# Bump patch version for all projects
-bunx nx release --specifier patch --yes
-
-# Bump minor version for just the game
-bunx nx release --specifier minor --projects parable-bloom --yes
+task release:bump
 ```
-
-The automated process (managed by the `release.yml` workflow):
-
-1. Calculates new versions based on Conventional Commits or provided specifier.
-2. Updates `package.json` files.
-3. Identifies the new version and runs `scripts/bump_version.dart` for the game app to sync with `pubspec.yaml`.
-4. Generates the `CHANGELOG.md`.
-5. Creates git commits and project-specific tags.
 
 ### Manual Version Update (Not Recommended)
 
@@ -581,52 +581,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Release Workflow
 
-### Local Release Process (Manual)
+### Local preview
 
-1. **Ensure clean working tree**:
-
-   ```bash
-   git status
-   git checkout develop
-   git pull origin develop
-   ```
-
-2. **Run tests and validation**:
-
-   ```bash
-   task validate
-   flutter test
-   ```
-
-3. **Bump version** (via Nx):
-
-   ```bash
-   # Dry-run to see what will happen
-   bunx nx release --dry-run
-
-   # Bump version (independent for each project)
-   bunx nx release --yes
-   ```
-
-   The automated process:
-   1. Calculates new versions based on Conventional Commits.
-   2. Updates `package.json` files and syncs to `pubspec.yaml` via hooks (game only).
-   3. Generates the `CHANGELOG.md` for each project.
-   4. Creates a single git commit and project-specific tags (e.g., `v1.3.1`, `parable-bloom-site-v1.0.1`).
-
-4. **Push to GitHub**:
-
-   ```bash
-   git push origin develop --tags
-   ```
-
-5. **GitHub Actions release triggers automatically** when tag is pushed matching `v*` pattern. No PR merge needed.
+`task release:bump` previews the next release. Every package gets the same specifier. It does not commit or tag. To ship before Monday, run the Release workflow from the Actions tab.
 
 ### Automated Release Process (CI/CD)
 
-**Trigger**: Git tag pushed matching `v*` pattern (e.g., `v1.0.0+1`, `v1.2.3-beta+5`)
+**Versioning workflow** (`.github/workflows/release.yml`): Monday 15:00 UTC, or a manual run. See [Automated Version Bumping](#automated-version-bumping).
 
-**Workflow** (`.github/workflows/release.yml`):
+**Publish trigger**: Git tag matching `v*` (game) or `level-builder-v*` (level builder).
+
+**Workflow** (`.github/workflows/publish.yml`):
 
 #### Job: firebase-config (ubuntu-latest)
 

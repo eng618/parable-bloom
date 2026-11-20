@@ -1,154 +1,276 @@
 name: Release
 
 on:
+  schedule:
+    # Monday 15:00 UTC. An empty week exits successfully.
+    - cron: "0 15 * * 1"
   workflow_dispatch:
     inputs:
       specifier:
-        description: "Semver specifier (patch, minor, major, build) or exact version"
+        description: "Optional semver override (patch, minor, major, or exact version). Leave empty to use conventional commits."
         required: false
-        default: "patch"
+        default: ""
         type: string
-      dry-run:
-        description: "Dry run (do not push changes)"
-        required: false
-        default: false
-        type: boolean
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          fetch-tags: true
+          ref: main
+          # A tag created with the default GITHUB_TOKEN does not start publish.yml.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
+      - name: Decide whether to release
+        id: gate
+        run: |
+          set -euo pipefail
+          latest=""
+          while IFS= read -r tag; do
+            if printf '%s\n' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+              latest=$tag
+              break
+            fi
+          done < <(git tag -l 'v*' --sort=-v:refname)
+          if [ -n "$latest" ] && git merge-base --is-ancestor "$latest" HEAD && [ "$(git rev-list --count "${latest}..HEAD")" = "0" ]; then
+            echo "Nothing to release. ${latest} already points at HEAD."
+            echo "mode=skip" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          subject=$(git log -1 --pretty=%s)
+          app_version=$(git show HEAD:apps/parable-bloom/package.json | sed -n 's/^  "version": "\([^"]*\)".*/\1/p')
+          if [ "$subject" = "chore: release" ] && [ -n "$app_version" ] && ! git rev-parse --verify --quiet "refs/tags/v${app_version}" >/dev/null; then
+            echo "Release commit is on main without v${app_version}. Pushing missing tags only."
+            echo "mode=tags-only" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -n "$latest" ]; then
+            echo "Commits exist after ${latest}."
+          else
+            echo "No stable v* tag found. Releasing."
+          fi
+          echo "mode=release" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js
+        if: steps.gate.outputs.mode == 'release'
         uses: actions/setup-node@v7
         with:
           node-version: 24
 
       - name: Set up Bun
+        if: steps.gate.outputs.mode == 'release'
         uses: oven-sh/setup-bun@v2
         with:
           # Pinned to the repo toolchain (.tool-versions). See ci.yml.
           bun-version: 1.3.14
 
       - name: Restore Bun cache
+        if: steps.gate.outputs.mode == 'release'
         uses: actions/cache/restore@v6
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-1.3.14-${{ hashFiles('**/bun.lockb', '**/bun.lock') }}
 
-      - name: Cache Nx
-        uses: actions/cache@v6
-        with:
-          path: .nx/cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('bun.lockb', 'bun.lock', 'nx.json') }}-${{ github.run_id }}
-            ${{ runner.os }}-nx-${{ hashFiles('bun.lockb', 'bun.lock', 'nx.json') }}-
-            ${{ runner.os }}-nx-
-
       - name: Install dependencies
+        if: steps.gate.outputs.mode == 'release'
         run: bun install
 
-      - name: Install Task
-        uses: go-task/setup-task@v2
-        with:
-          version: 3.x
-
       - name: Set up Flutter
+        if: steps.gate.outputs.mode == 'release'
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
           cache: true
 
       - name: Sync workspace dependencies
+        if: steps.gate.outputs.mode == 'release'
         run: flutter pub get
 
-      - name: Configure Git
+      - name: Version, commit, and tag
+        if: steps.gate.outputs.mode == 'release'
+        env:
+          RELEASE_SPECIFIER: ${{ github.event.inputs.specifier || '' }}
         run: |
+          set -euo pipefail
+
+          if [ -n "$RELEASE_SPECIFIER" ] && ! printf '%s' "$RELEASE_SPECIFIER" | grep -Eq '^(patch|minor|major|prepatch|preminor|premajor|prerelease|[0-9]+\.[0-9]+\.[0-9]+)$'; then
+            echo "Invalid specifier: $RELEASE_SPECIFIER"
+            exit 1
+          fi
+
+          app_before=$(node -p "require('./apps/parable-bloom/package.json').version")
+          site_before=$(node -p "require('./apps/parable-bloom-site/package.json').version")
+          tool_before=$(node -p "require('./tools/level-builder/package.json').version")
+
+          # Nx reads the current version from the release tag. When package.json
+          # is ahead of every tag on main, add a local tag at the manifest
+          # version and do not push it. Pushing it would publish that version.
+          version_is_at_least() {
+            node -e '
+              const parse = (value) => value.split(".").map(Number);
+              const [left, right] = process.argv.slice(1).map(parse);
+              for (let i = 0; i < 3; i++) {
+                const a = left[i] || 0;
+                const b = right[i] || 0;
+                if (a !== b) process.exit(a >= b ? 0 : 1);
+              }
+              process.exit(0);
+            ' "$1" "$2"
+          }
+
+          ensure_local_baseline() {
+            local file="$1"
+            local prefix="$2"
+            local version
+            version=$(node -p "require('./${file}').version")
+            local exact="${prefix}${version}"
+            if git rev-parse --verify --quiet "refs/tags/${exact}" >/dev/null; then
+              return 0
+            fi
+
+            local latest=""
+            while IFS= read -r tag; do
+              if printf '%s\n' "$tag" | grep -Eq "^${prefix}[0-9]+\.[0-9]+\.[0-9]+$"; then
+                if git merge-base --is-ancestor "$tag" HEAD; then
+                  latest=$tag
+                  break
+                fi
+              fi
+            done < <(git tag -l "${prefix}*" --sort=-v:refname)
+
+            if [ -n "$latest" ]; then
+              local latest_version="${latest#"$prefix"}"
+              if version_is_at_least "$latest_version" "$version"; then
+                return 0
+              fi
+            fi
+
+            local commit
+            commit=$(git log -1 --format=%H -S "\"version\": \"${version}\"" -- "$file" || true)
+            if [ -z "$commit" ] || ! git merge-base --is-ancestor "$commit" HEAD; then
+              echo "${file} is ${version}, and ${exact} is not on main. Refusing to version from an older tag."
+              exit 1
+            fi
+
+            git tag "$exact" "$commit"
+            echo "Created local baseline ${exact} at ${commit}. It is not pushed."
+          }
+
+          ensure_local_baseline apps/parable-bloom/package.json v
+          ensure_local_baseline apps/parable-bloom-site/package.json parable-bloom-site-v
+          ensure_local_baseline tools/level-builder/package.json level-builder-v
+
+          # One specifier for every package. A change in only one project still
+          # versions the game, the site, and the level builder together.
+          if [ -z "$RELEASE_SPECIFIER" ]; then
+            RELEASE_SPECIFIER=$(bash scripts/resolve_release_specifier.sh)
+          fi
+          if [ "$RELEASE_SPECIFIER" = "none" ]; then
+            echo "Nothing to release."
+            exit 0
+          fi
+          echo "Applying ${RELEASE_SPECIFIER} to parable-bloom, parable-bloom-site, and level-builder."
+          bunx nx release "$RELEASE_SPECIFIER" --skip-publish
+
+          app_after=$(node -p "require('./apps/parable-bloom/package.json').version")
+
+          if [ "$app_after" != "$app_before" ]; then
+            dart run scripts/bump_version.dart --set "$app_after" --no-commit --no-changelog
+          fi
+
+          files=(
+            apps/parable-bloom/package.json
+            apps/parable-bloom/pubspec.yaml
+            apps/parable-bloom/CHANGELOG.md
+            apps/parable-bloom-site/package.json
+            apps/parable-bloom-site/CHANGELOG.md
+            tools/level-builder/package.json
+            tools/level-builder/CHANGELOG.md
+          )
+          for file in "${files[@]}"; do
+            if [ -e "$file" ]; then
+              git add -- "$file"
+            fi
+          done
+
+          if git diff --cached --quiet; then
+            echo "Nothing to release."
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: release"
+          # RELEASE_PLEASE_TOKEN must be allowed to push to main. This job does not open a pull request.
+          git push origin HEAD:main
 
-      - name: Run Nx Release
+          site_after=$(node -p "require('./apps/parable-bloom-site/package.json').version")
+          tool_after=$(node -p "require('./tools/level-builder/package.json').version")
+
+          push_tag() {
+            local tag="$1"
+            if git rev-parse --verify --quiet "refs/tags/${tag}" >/dev/null; then
+              echo "Skip ${tag} (already exists)"
+              return 0
+            fi
+            git tag "$tag"
+            git push origin "refs/tags/${tag}"
+            echo "Pushed ${tag}"
+          }
+
+          if [ "$app_after" != "$app_before" ]; then
+            push_tag "v${app_after}"
+          fi
+          if [ "$site_after" != "$site_before" ]; then
+            push_tag "parable-bloom-site-v${site_after}"
+          fi
+          if [ "$tool_after" != "$tool_before" ]; then
+            push_tag "level-builder-v${tool_after}"
+          fi
+
+      - name: Push missing release tags
+        if: steps.gate.outputs.mode == 'tags-only'
         run: |
-          SPECIFIER="${{ github.event.inputs.specifier }}"
-          EXTRA_ARGS=""
-          if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
-            EXTRA_ARGS="--dry-run"
-          fi
+          set -euo pipefail
 
-          if [ "$SPECIFIER" == "build" ]; then
-            echo "🚀 Bumping build number only..."
-            BUMP_ARGS="--build"
-            if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
-              BUMP_ARGS="$BUMP_ARGS --dry-run"
+          push_tag_for() {
+            local file="$1"
+            local prefix="$2"
+            if ! git show --name-only --pretty=format: HEAD | grep -qx "$file"; then
+              echo "Skip ${file} (not in this release commit)"
+              return 0
             fi
-            dart run scripts/bump_version.dart $BUMP_ARGS
-          else
-            # Run Nx Release to handle versioning, changelog, and tagging
-            bunx nx release --specifier $SPECIFIER --skip-publish $EXTRA_ARGS
-
-            # Extract the new version from the project manifest
-            NEW_VERSION=$(node -p "require('./apps/parable-bloom/package.json').version")
-            echo "📦 New version identified from Nx: $NEW_VERSION"
-
-            # Sync the version to pubspec.yaml using the Dart script
-            # We skip commit/tagging here as tagging $NEW_VERSION would conflict with the tag just created by Nx
-            BUMP_ARGS="--set $NEW_VERSION --no-commit --no-changelog"
-            if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
-              BUMP_ARGS="$BUMP_ARGS --dry-run"
+            local version
+            version=$(git show "HEAD:${file}" | sed -n 's/^  "version": "\([^"]*\)".*/\1/p')
+            if [ -z "$version" ]; then
+              echo "Could not read version from ${file}"
+              exit 1
             fi
-
-            echo "🔄 Syncing version $NEW_VERSION to pubspec.yaml..."
-            dart run scripts/bump_version.dart $BUMP_ARGS
-
-            # If not a dry run, commit the pubspec.yaml change
-            if [ "${{ github.event.inputs.dry-run }}" == "false" ]; then
-              git add apps/parable-bloom/pubspec.yaml
-              git commit -m "chore: sync flutter version to $NEW_VERSION" || echo "No changes to commit"
+            local tag="${prefix}${version}"
+            if git rev-parse --verify --quiet "refs/tags/${tag}" >/dev/null; then
+              echo "Skip ${tag} (already exists)"
+              return 0
             fi
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+            git tag "$tag"
+            git push origin "refs/tags/${tag}"
+            echo "Pushed ${tag}"
+          }
 
-      - name: Push Changes
-        if: github.event.inputs.dry-run == 'false'
-        run: |
-          # Try to push to main. If it fails, fallback to a PR.
-          if git push origin HEAD:main --tags; then
-            echo "✅ Successfully pushed to main"
-          else
-            echo "⚠️  Push to main failed (likely due to branch protection)."
-            echo "📦 Pushing to a new release branch and creating a pull request..."
-            
-            # Use the version from parable-bloom for the branch name
-            PV=$(node -p "require('./apps/parable-bloom/package.json').version")
-            PR_BRANCH="release/v$PV-$(date +%s)"
-            
-            git checkout -b "$PR_BRANCH"
-            git push origin "$PR_BRANCH" --tags
-            
-            gh pr create --title "release: v$PV" \
-                         --body "Automated release sync for v$PV. 
-                         
-                         This PR contains the version bump and changelog updates that couldn't be pushed directly to \`main\` due to branch protection rules.
-                         
-                         **Note for Squash Mergers:** The git tag (\`v$PV\`) is already pushed and points to the commit in this branch. Even after squash merging and branch deletion, the tag will remain in the repository history." \
-                         --base main \
-                         --head "$PR_BRANCH"
-            
-            echo "🚀 PR created successfully."
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          push_tag_for apps/parable-bloom/package.json v
+          push_tag_for apps/parable-bloom-site/package.json parable-bloom-site-v
+          push_tag_for tools/level-builder/package.json level-builder-v

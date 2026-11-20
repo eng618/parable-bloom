@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Weekly releases run from `.github/workflows/release.yml`. Monday 15:00 UTC, or a manual run, versions the game, the site, and the level builder together when commits have landed since the latest `v*` tag. One conventional-commit specifier is applied to all three, `pubspec.yaml` is synced, and the release tags are pushed. A week with nothing new finishes successfully and does not release.
 - Grid dots follow the light and dark theme. Light mode uses an ink speck that stays visible on the cream garden. Dark mode keeps the beige speck. When a vine clears, each dot throbs once as the tail uncovers it, along the whole trail the tail travels, including cells the vine never sat on. A blocked vine does not.
 - Settings no longer has a board default zoom. A level eases out onto the whole grid, including when you leave and come back. The reset control returns to that same view.
 - When the vines in view have left and others remain, the camera eases over to those vines. It keeps the current zoom unless the group needs a wider frame. The end-of-level pull-back still frames the empty board.
