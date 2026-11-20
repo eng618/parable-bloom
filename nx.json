@@ -42,15 +42,68 @@
     }
   },
   "release": {
+    "git": {
+      "commit": false,
+      "tag": false,
+      "push": false
+    },
     "version": {
-      "currentVersionResolver": "disk"
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk",
+      "specifierSource": "conventional-commits"
+    },
+    "conventionalCommits": {
+      "useCommitScope": false,
+      "types": {
+        "feat": {
+          "semverBump": "minor",
+          "changelog": { "hidden": false }
+        },
+        "fix": {
+          "semverBump": "patch",
+          "changelog": { "hidden": false }
+        },
+        "perf": {
+          "semverBump": "patch",
+          "changelog": { "hidden": false }
+        },
+        "refactor": {
+          "semverBump": "patch",
+          "changelog": { "hidden": false }
+        },
+        "docs": {
+          "semverBump": "patch",
+          "changelog": { "hidden": false }
+        },
+        "style": {
+          "semverBump": "patch",
+          "changelog": { "hidden": false }
+        },
+        "test": {
+          "semverBump": "patch",
+          "changelog": { "hidden": false }
+        },
+        "build": {
+          "semverBump": "patch",
+          "changelog": { "hidden": false }
+        },
+        "ci": {
+          "semverBump": "patch",
+          "changelog": { "hidden": false }
+        },
+        "chore": {
+          "semverBump": "patch",
+          "changelog": { "hidden": false }
+        },
+        "revert": {
+          "semverBump": "patch",
+          "changelog": { "hidden": false }
+        }
+      }
     },
     "groups": {
       "parable-bloom": {
         "projects": ["parable-bloom"],
-        "version": {
-          "currentVersionResolver": "disk"
-        },
         "changelog": {
           "automaticFromRef": true
         },
@@ -60,9 +113,6 @@
       },
       "parable-bloom-site": {
         "projects": ["parable-bloom-site"],
-        "version": {
-          "currentVersionResolver": "disk"
-        },
         "changelog": {
           "automaticFromRef": true
         },
@@ -72,9 +122,6 @@
       },
       "level-builder": {
         "projects": ["level-builder"],
-        "version": {
-          "currentVersionResolver": "disk"
-        },
         "changelog": {
           "automaticFromRef": true
         },

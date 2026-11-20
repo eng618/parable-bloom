@@ -1,24 +1,20 @@
 version: "3"
 
 tasks:
-  _ensure:main:
-    internal: true
-    silent: true
-    cmds:
-      - |
-        BRANCH=$(git branch --show-current)
-        if [ "$BRANCH" != "main" ]; then
-          echo "❌ Error: Version bumping and tagging must be performed on the 'main' branch (current: $BRANCH)"
-          exit 1
-        fi
   # -----------------------------------------------------------------------------
   # Versioning
 
   bump:
-    desc: Bump versions and generate changelog (via nx release)
-    deps: [_ensure:main]
+    desc: Preview the next release. Every package gets the same specifier. Does not commit or tag.
     cmds:
-      - bunx nx release --yes
+      - |
+        spec=$(bash scripts/resolve_release_specifier.sh)
+        if [ "$spec" = "none" ]; then
+          echo "Nothing to release."
+          exit 0
+        fi
+        echo "Applying ${spec} to parable-bloom, parable-bloom-site, and level-builder."
+        bunx nx release "$spec" --dry-run --skip-publish
 
   # -----------------------------------------------------------------------------
   # Changelog Management
