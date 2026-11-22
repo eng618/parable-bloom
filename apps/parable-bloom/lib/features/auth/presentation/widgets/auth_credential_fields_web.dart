@@ -1,9 +1,11 @@
 import 'dart:js_interop';
 import 'dart:ui_web' as ui_web;
 
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:web/web.dart' as web;
 
+import 'auth_credential_keys.dart';
 import 'auth_field_validation.dart';
 
 /// View type for the sign-in platform view. One factory serves every visit.
@@ -23,6 +25,11 @@ final Map<int, _AuthFieldDom> _domByViewId = <int, _AuthFieldDom>{};
 /// Bitwarden skips any control under 10px or outside the viewport, then reports
 /// that it cannot autofill the page. These inputs stay visible for the life of
 /// the screen, with the autocomplete tokens those extensions look for.
+///
+/// Flutter takes Tab on the window before the browser can move between these
+/// inputs, so the fields move focus themselves. Tab and Shift+Tab walk email,
+/// password, then the next Flutter control. Arrow Up, Arrow Down, and the
+/// platform previous and next keys switch between the two fields.
 class AuthCredentialFields extends StatefulWidget {
   const AuthCredentialFields({
     super.key,
@@ -56,10 +63,16 @@ class AuthCredentialFieldsState extends State<AuthCredentialFields> {
   web.Element? _platformViewHost;
   web.MutationObserver? _ariaObserver;
 
+  /// Set when the framework key handler already moved focus for this event.
+  /// The DOM listener still runs, because Flutter does not stop propagation.
+  bool _skipDomKey = false;
+
   late final JSFunction _emailInputListener = _handleEmailInput.toJS;
   late final JSFunction _passwordInputListener = _handlePasswordInput.toJS;
   late final JSFunction _emailKeyListener = _handleEmailKeyDown.toJS;
+  late final JSFunction _passwordKeyListener = _handlePasswordKeyDown.toJS;
   late final JSFunction _submitListener = _handleSubmit.toJS;
+  late final OnKeyEventCallback _earlyKeyHandler = _handleEarlyKey;
 
   @override
   void initState() {
@@ -67,6 +80,7 @@ class AuthCredentialFieldsState extends State<AuthCredentialFields> {
     _ensureFactory();
     widget.emailController.addListener(_onEmailController);
     widget.passwordController.addListener(_onPasswordController);
+    FocusManager.instance.addEarlyKeyEventHandler(_earlyKeyHandler);
   }
 
   @override
@@ -101,6 +115,7 @@ class AuthCredentialFieldsState extends State<AuthCredentialFields> {
 
   @override
   void dispose() {
+    FocusManager.instance.removeEarlyKeyEventHandler(_earlyKeyHandler);
     widget.emailController.removeListener(_onEmailController);
     widget.passwordController.removeListener(_onPasswordController);
     final dom = _dom;
@@ -110,6 +125,7 @@ class AuthCredentialFieldsState extends State<AuthCredentialFields> {
       dom.password.removeEventListener('input', _passwordInputListener);
       dom.password.removeEventListener('change', _passwordInputListener);
       dom.email.removeEventListener('keydown', _emailKeyListener);
+      dom.password.removeEventListener('keydown', _passwordKeyListener);
       dom.form.removeEventListener('submit', _submitListener);
     }
     final viewId = _viewId;
@@ -163,6 +179,7 @@ class AuthCredentialFieldsState extends State<AuthCredentialFields> {
     dom.password.addEventListener('input', _passwordInputListener);
     dom.password.addEventListener('change', _passwordInputListener);
     dom.email.addEventListener('keydown', _emailKeyListener);
+    dom.password.addEventListener('keydown', _passwordKeyListener);
     dom.form.addEventListener('submit', _submitListener);
     _applyTheme();
     _applyAutocomplete();
@@ -243,12 +260,192 @@ class AuthCredentialFieldsState extends State<AuthCredentialFields> {
     }
   }
 
+  /// Runs before Flutter's focus traversal. Tab would otherwise be cancelled
+  /// in the window capture phase and never move between these inputs.
+  KeyEventResult _handleEarlyKey(KeyEvent event) {
+    if (event is! KeyDownEvent ||
+        !mounted ||
+        !widget.visible ||
+        !widget.enabled) {
+      return KeyEventResult.ignored;
+    }
+    final dom = _dom;
+    if (dom == null) {
+      return KeyEventResult.ignored;
+    }
+    final key = switch (event.logicalKey) {
+      LogicalKeyboardKey.tab => 'Tab',
+      LogicalKeyboardKey.arrowDown => 'ArrowDown',
+      LogicalKeyboardKey.arrowUp => 'ArrowUp',
+      LogicalKeyboardKey.navigateNext => 'NavigateNext',
+      LogicalKeyboardKey.navigatePrevious => 'NavigatePrevious',
+      _ => null,
+    };
+    if (key == null) {
+      return KeyEventResult.ignored;
+    }
+    final keyboard = HardwareKeyboard.instance;
+    final move = authCredentialFieldMove(
+      onEmail: _isActive(dom.email),
+      onPassword: _isActive(dom.password),
+      key: key,
+      shift: keyboard.isShiftPressed,
+      alt: keyboard.isAltPressed,
+      control: keyboard.isControlPressed,
+      meta: keyboard.isMetaPressed,
+    );
+    if (move == null) {
+      return KeyEventResult.ignored;
+    }
+    _skipDomKey = true;
+    Future<void>.microtask(() => _skipDomKey = false);
+    _applyMove(move);
+    return KeyEventResult.handled;
+  }
+
   void _handleEmailKeyDown(web.KeyboardEvent event) {
-    if (event.key != 'Enter') {
+    _handleDomKey(event, onEmail: true, onPassword: false);
+  }
+
+  void _handlePasswordKeyDown(web.KeyboardEvent event) {
+    _handleDomKey(event, onEmail: false, onPassword: true);
+  }
+
+  void _handleDomKey(
+    web.KeyboardEvent event, {
+    required bool onEmail,
+    required bool onPassword,
+  }) {
+    if (_skipDomKey) {
+      _skipDomKey = false;
+      event.preventDefault();
+      return;
+    }
+    if (!mounted || !widget.visible || !widget.enabled) {
+      return;
+    }
+    final move = authCredentialFieldMove(
+      onEmail: onEmail,
+      onPassword: onPassword,
+      key: event.key,
+      shift: event.shiftKey,
+      alt: event.altKey,
+      control: event.ctrlKey,
+      meta: event.metaKey,
+      composing: event.isComposing,
+      repeat: event.repeat,
+      keyCode: event.keyCode,
+    );
+    if (move == null) {
       return;
     }
     event.preventDefault();
-    _dom?.password.focus();
+    _applyMove(move);
+  }
+
+  void _applyMove(AuthFieldMove move) {
+    final dom = _dom;
+    if (dom == null) {
+      return;
+    }
+    switch (move) {
+      case AuthFieldMove.toEmail:
+        _focusInput(dom.email);
+        break;
+      case AuthFieldMove.toPassword:
+        _focusInput(dom.password);
+        break;
+      case AuthFieldMove.leaveForward:
+        if (_moveToFlutterNeighbor(forward: true)) {
+          dom.password.blur();
+        }
+        break;
+      case AuthFieldMove.leaveBackward:
+        if (_moveToFlutterNeighbor(forward: false)) {
+          dom.email.blur();
+        }
+        break;
+    }
+  }
+
+  /// Focuses [input] and claims it again on the next frame if Flutter's
+  /// traversal moved DOM focus after this handler.
+  void _focusInput(web.HTMLInputElement input) {
+    input.focus();
+    web.window.requestAnimationFrame(
+      ((JSNumber _) {
+        if (!mounted || !input.isConnected) {
+          return;
+        }
+        if (!input.matches(':focus')) {
+          input.focus();
+        }
+      }).toJS,
+    );
+  }
+
+  bool _isActive(web.HTMLInputElement field) {
+    final active = web.document.activeElement;
+    if (active == null) {
+      return false;
+    }
+    return field.isSameNode(active);
+  }
+
+  /// Moves Flutter focus to the next control past this platform view.
+  ///
+  /// The inputs are not Flutter focus nodes, so Tab out of the pair has to
+  /// pick the neighbor by where it sits on screen.
+  bool _moveToFlutterNeighbor({required bool forward}) {
+    if (!mounted) {
+      return false;
+    }
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize || !box.attached) {
+      return false;
+    }
+    final fields = box.localToGlobal(Offset.zero) & box.size;
+    final placed = <({FocusNode node, Rect rect})>[];
+    for (final node in FocusScope.of(context).traversalDescendants) {
+      final render = node.context?.findRenderObject();
+      if (render is! RenderBox || !render.hasSize || !render.attached) {
+        continue;
+      }
+      final rect = render.localToGlobal(Offset.zero) & render.size;
+      if (rect.width <= 0 || rect.height <= 0) {
+        continue;
+      }
+      placed.add((node: node, rect: rect));
+    }
+    placed.sort((a, b) {
+      final dy = a.rect.top.compareTo(b.rect.top);
+      if (dy != 0) {
+        return dy;
+      }
+      return a.rect.left.compareTo(b.rect.left);
+    });
+    const gap = 4.0;
+    FocusNode? target;
+    if (forward) {
+      for (final item in placed) {
+        if (item.rect.top >= fields.bottom - gap) {
+          target = item.node;
+          break;
+        }
+      }
+    } else {
+      for (final item in placed.reversed) {
+        if (item.rect.bottom <= fields.top + gap) {
+          target = item.node;
+          break;
+        }
+      }
+    }
+    if (target == null) {
+      return false;
+    }
+    target.requestFocus();
+    return true;
   }
 
   void _handleSubmit(web.Event event) {
@@ -456,6 +653,7 @@ _AuthFieldDom _buildDom(int viewId) {
   email.setAttribute('autocapitalize', 'none');
   email.setAttribute('autocorrect', 'off');
   email.setAttribute('aria-label', 'Email');
+  email.setAttribute('enterkeyhint', 'next');
 
   final password = passwordField.input
     ..type = 'password'
@@ -466,6 +664,7 @@ _AuthFieldDom _buildDom(int viewId) {
   password.setAttribute('autocapitalize', 'none');
   password.setAttribute('autocorrect', 'off');
   password.setAttribute('aria-label', 'Password');
+  password.setAttribute('enterkeyhint', 'done');
 
   final emailError = web.HTMLParagraphElement()..className = 'pb-auth-error';
   final passwordError = web.HTMLParagraphElement()..className = 'pb-auth-error';
@@ -559,12 +758,19 @@ const String _fieldCss = '''
   background: transparent;
   color: var(--pb-on-surface);
   font: 16px/24px var(--pb-font);
-  outline: none;
   caret-color: var(--pb-primary);
 }
-.pb-auth-field input:focus {
+.pb-auth-field input:focus,
+.pb-auth-field input:focus-visible {
   border-color: var(--pb-primary);
   box-shadow: inset 0 0 0 1px var(--pb-primary);
+  outline: 2px solid var(--pb-primary);
+  outline-offset: 2px;
+}
+@media (forced-colors: active) {
+  .pb-auth-field input:focus-visible {
+    outline: 2px solid Highlight;
+  }
 }
 .pb-auth-field--error input {
   border-color: var(--pb-error);

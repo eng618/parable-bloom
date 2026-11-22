@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -189,6 +190,52 @@ void main() {
 
       expect(find.text('Please enter a valid email address.'), findsOneWidget);
       expect(testGameProgressNotifier.enableCalled, isFalse);
+    });
+
+    bool fieldHasFocus(WidgetTester tester, Finder field) {
+      final editable = find.descendant(
+        of: field,
+        matching: find.byType(EditableText),
+      );
+      return tester.widget<EditableText>(editable).focusNode.hasFocus;
+    }
+
+    testWidgets('arrow keys and tab move between email and password',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createAuthScreen());
+      final email = find.byType(TextFormField).first;
+      final password = find.byType(TextFormField).last;
+
+      await tester.tap(email);
+      await tester.pump();
+      expect(fieldHasFocus(tester, email), isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(fieldHasFocus(tester, password), isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(fieldHasFocus(tester, email), isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      expect(fieldHasFocus(tester, password), isTrue);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+      expect(fieldHasFocus(tester, email), isTrue);
+
+      await tester.tap(password);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      expect(
+        Focus.of(tester.element(find.text('Forgot Password?'))).hasFocus,
+        isTrue,
+      );
     });
 
     testWidgets('exposes password-manager autofill hints',
