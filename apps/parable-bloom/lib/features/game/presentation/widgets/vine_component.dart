@@ -64,7 +64,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   final VineSlideController _slide = VineSlideController.idle();
   VineSlideController get slide => _slide;
 
-  /// Cells whose dots have already throbbed on this vine's clear.
+  /// Cells this clear has already reported. Each vine keeps its own
+  /// cursor, so a dot can throb again when a later tail uncovers it.
   final VineDotReveal _dotReveal = VineDotReveal();
 
   VineTrack? _railTrack;

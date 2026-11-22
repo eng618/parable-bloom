@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-11-19: grid dots follow the theme and throb as a clear uncovers them)
+Date: 2026-10-19 (last updated 2026-11-20: a grid dot throbs again when a later clearing vine uncovers it)
 
 ## Why a redesign
 
@@ -146,14 +146,15 @@ DPI-independent pass:
 
 - **Grid dots**: the dot color comes from the theme (`AppTheme.gridDotLight`
   on cream, `AppTheme.gridDotDark` on night soil) and is applied once per
-  frame. As a clearing tail uncovers a grid dot, that dot throbs once
+  frame. As a clearing tail uncovers a grid dot, that dot throbs
   (`GridDotPulse`, about 0.42s, up to twice its resting radius, then back).
   The cells are the old vine, then every cell straight ahead in the head
   direction until the ray leaves the board — the tail keeps going after it
-  leaves the cells the vine used to cover. The throb starts only after the
-  tail center has passed the cell by the tube-cap margin. A blocked wiggle
-  does not throb, and a masked-out cell stays undrawn. The legacy painter
-  does not drive the throb.
+  leaves the cells the vine used to cover. A dot throbs again when a later
+  vine's tail uncovers it; a throb already playing is not restarted. The
+  throb starts only after the tail center has passed the cell by the
+  tube-cap margin. A blocked wiggle does not throb, and a masked-out cell
+  stays undrawn. The legacy painter does not drive the throb.
 - **Clear run**: cruise at `AnimationTiming.vineCruiseSecondsPerCell`.
   Retune the whole exit with `AnimationTiming.vineSpeed` in
   `animation_timing.dart` (`1` is 0.16s per cell, about 260 px/s; `2` is

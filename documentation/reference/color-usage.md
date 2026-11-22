@@ -68,7 +68,7 @@ static Color getGridDotColor(Brightness brightness) {
 
 `GameScreen` and the tutorial flow pass `AppThemeExtension.gridDot` into `GardenGame.updateThemeColors`. `GridComponent.update` copies that color onto the shared dot paint once per frame. `CellComponent.render` does not call `Theme.of`.
 
-A clearing vine throbs each grid dot once, growing and settling, as its tail uncovers that cell. The trail is the old vine plus every cell straight ahead until the tail leaves the board. A blocked wiggle does not. Masked-out cells stay undrawn.
+A clearing vine throbs each grid dot as its tail uncovers that cell, growing and settling. The trail is the old vine plus every cell straight ahead until the tail leaves the board. A dot that already settled throbs again when a later vine uncovers it. A throb in progress is not restarted. A blocked wiggle does not. Masked-out cells stay undrawn.
 
 ### Example: Semantic Colors
 

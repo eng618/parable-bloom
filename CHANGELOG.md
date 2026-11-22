@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Weekly releases run from `.github/workflows/release.yml`. Monday 15:00 UTC, or a manual run, versions the game, the site, and the level builder together when commits have landed since the latest `v*` tag. One conventional-commit specifier is applied to all three, `pubspec.yaml` is synced, and the release tags are pushed. A week with nothing new finishes successfully and does not release.
-- Grid dots follow the light and dark theme. Light mode uses an ink speck that stays visible on the cream garden. Dark mode keeps the beige speck. When a vine clears, each dot throbs once as the tail uncovers it, along the whole trail the tail travels, including cells the vine never sat on. A blocked vine does not.
+- Grid dots follow the light and dark theme. Light mode uses an ink speck that stays visible on the cream garden. Dark mode keeps the beige speck. When a vine clears, each dot throbs as the tail uncovers it, along the whole trail the tail travels, including cells the vine never sat on. A later vine can throb a settled dot again. A blocked vine does not.
 - Settings no longer has a board default zoom. A level eases out onto the whole grid, including when you leave and come back. The reset control returns to that same view.
 - When the vines in view have left and others remain, the camera eases over to those vines. It keeps the current zoom unless the group needs a wider frame. The end-of-level pull-back still frames the empty board.
 - Clearing vines cruise off the board instead of whipping away. Pace is `AnimationTiming.vineSpeed` (`1` is 0.16s per cell, `2` is twice as fast; the vine that empties the board stays a little slower). The vine leaves the solver the moment the clear is valid, so later taps do not wait on the slide. It stays fully opaque and keeps sliding across the margin around the grid until the tail has left the screen. When that last vine starts to leave, the camera eases out and centers on the whole empty grid. The win card waits until the vine has left and that frame has settled, holds the encouraging line for 3.2s, and loads the next board only after the celebration finishes. Continue on that card skips the rest of the hold. Home stays the quiet control.
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Grid dots ahead of a clearing vine throb as its tail uncovers them, including dots that already throbbed for the vine that used to sit there. A throb still playing is left alone.
 - Flutter lint follows Flutter stable's Material split. App and test code import `package:material_ui/material_ui.dart`, and Cupertino localizations come from `package:cupertino_ui/cupertino_ui.dart`. Generated l10n still names the old delegates, so `l10n.yaml` ignores that deprecation. The app registers the new delegates itself.
 - Android publish runs Gradle on JDK 21. AGP 9.3 release lint crashes on JDK 17 while analyzing `firebase_core` because `List.removeLast()` is missing. The app still compiles to JVM 17.
 - Android release builds use Gradle 9.5.0 and Android Gradle Plugin 9.3.1. Flutter stable rejects Gradle below 9.3.1, and AGP 9.3 requires Gradle 9.5. Google services is 4.5.0 and the Crashlytics Gradle plugin is 3.0.8 so those plugins still apply.

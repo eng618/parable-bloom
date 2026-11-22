@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parable_bloom/core/app_theme.dart';
 import 'package:parable_bloom/core/game_board_layout.dart';
+import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/game_event_sink.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/garden_game.dart';
@@ -83,7 +84,7 @@ void main() {
       expect(GridDotPulse.scaleAt(GridDotPulse.duration + 0.2), 1);
     });
 
-    test('a cell throbs once', () {
+    test('a throb in progress is not restarted, and a settled dot can throb again', () {
       final cell = CellComponent(
         gridX: 0,
         gridY: 0,
@@ -97,12 +98,16 @@ void main() {
       cell.update(GridDotPulse.duration / 2);
       expect(cell.dotScale, closeTo(1 + GridDotPulse.amplitude, 1e-6));
 
+      cell.pulse();
+      cell.update(GridDotPulse.duration / 4);
+      expect(cell.dotScale, lessThan(1 + GridDotPulse.amplitude));
+
       cell.update(GridDotPulse.duration);
       expect(cell.dotScale, 1);
 
       cell.pulse();
       cell.update(GridDotPulse.duration / 2);
-      expect(cell.dotScale, 1);
+      expect(cell.dotScale, closeTo(1 + GridDotPulse.amplitude, 1e-6));
     });
   });
 
@@ -259,6 +264,80 @@ void main() {
         clearing: true,
       );
       expect(next.map((cell) => cell.y), [2]);
+    });
+  });
+
+  group('clearing vine on a live grid', () {
+    test('a dot the vine slides onto throbs again after an earlier uncover',
+        () async {
+      final game = _DotGame();
+      await game.onLoad();
+      final grid = game.grid;
+      await grid.onLoad();
+      final level = LevelData(
+        id: 'dots',
+        name: 'Dots',
+        difficulty: 'Seed',
+        gridWidth: 6,
+        gridHeight: 4,
+        vines: [
+          VineData(
+            id: 'v1',
+            headDirection: 'right',
+            orderedPath: const [
+              {'x': 3, 'y': 2},
+              {'x': 2, 'y': 2},
+              {'x': 1, 'y': 2},
+              {'x': 1, 'y': 1},
+              {'x': 1, 'y': 0},
+            ],
+          ),
+        ],
+        maxMoves: 1,
+        minMoves: 1,
+        complexity: 'low',
+        grace: 1,
+        mask: MaskData(mode: 'show-all', points: const []),
+      );
+      grid.setLevelData(level, {
+        'v1': VineState(id: 'v1', isBlocked: false, isCleared: false),
+      });
+      grid.applyCameraTransform(
+        zoom: 1,
+        panOffset: Vector2.zero(),
+        screenWidth: 800,
+        screenHeight: 600,
+      );
+
+      // (4, 2) is the first cell ahead of the head. On a shipped board that
+      // cell belonged to a vine that already left, so its dot has settled.
+      final ahead = grid.cells[2][4];
+      ahead.pulse();
+      ahead.update(GridDotPulse.duration);
+      expect(ahead.dotScale, 1);
+
+      final comp = grid.getVineComponent('v1')!;
+      comp.slideOut();
+      // (1, 2) is on the vine. (4, 1) is beside the exit ray.
+      final body = grid.cells[2][1];
+      final offRay = grid.cells[1][4];
+      var aheadPeak = 1.0;
+      var bodyPeak = 1.0;
+      var offRayPeak = 1.0;
+      for (var i = 0; i < 500; i++) {
+        comp.update(1 / 60);
+        for (final row in grid.cells) {
+          for (final cell in row) {
+            cell.update(1 / 60);
+          }
+        }
+        if (ahead.dotScale > aheadPeak) aheadPeak = ahead.dotScale;
+        if (body.dotScale > bodyPeak) bodyPeak = body.dotScale;
+        if (offRay.dotScale > offRayPeak) offRayPeak = offRay.dotScale;
+      }
+      expect(aheadPeak, greaterThan(1.8));
+      expect(bodyPeak, greaterThan(1.8));
+      expect(offRayPeak, 1);
     });
   });
 

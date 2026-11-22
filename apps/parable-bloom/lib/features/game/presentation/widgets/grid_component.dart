@@ -324,10 +324,11 @@ class GridComponent extends PositionComponent
     CellComponent.applyDotColor(parent.gridDotColor);
   }
 
-  /// Starts the one-shot size throb on the dot at ([x], [y]).
+  /// Starts the uncover throb on the dot at ([x], [y]).
   ///
-  /// A masked-out cell stays undrawn, so it does not throb. A dot that
-  /// has already throbbed does not start again.
+  /// A masked-out cell stays undrawn, so it does not throb. A throb that
+  /// is already playing is left alone. Once it settles, a later clearing
+  /// tail can start another.
   void pulseCell(int x, int y) {
     if (x < 0 || y < 0 || x >= cols || y >= rows) return;
     if (!isCellVisibleCached(x, y)) return;
@@ -666,18 +667,14 @@ class CellComponent extends RectangleComponent
   /// Seconds into the uncover throb. Negative means the dot is at rest.
   double _pulseElapsed = -1;
 
-  /// True after this dot has throbbed once. A second clear does not replay it.
-  bool _pulsePlayed = false;
-
   /// Current radius scale. 1 at rest, peaking mid-throb.
   double get dotScale =>
       _pulseElapsed < 0 ? 1 : GridDotPulse.scaleAt(_pulseElapsed);
 
-  /// Starts the uncover throb. A dot already throbbing, or one that has
-  /// finished, stays on its current timeline.
+  /// Starts the uncover throb. A dot already throbbing stays on its
+  /// current timeline. After it settles, the next uncover may start again.
   void pulse() {
-    if (_pulsePlayed) return;
-    _pulsePlayed = true;
+    if (_pulseElapsed >= 0) return;
     _pulseElapsed = 0;
   }
 
