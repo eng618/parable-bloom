@@ -2,9 +2,16 @@ import 'package:material_ui/material_ui.dart';
 
 /// Thin rule with a centered leaf-pair ornament (level-complete / garden HUD).
 class GardenLeafDivider extends StatelessWidget {
-  const GardenLeafDivider({super.key, this.height = 18});
+  const GardenLeafDivider({
+    super.key,
+    this.height = 18,
+    this.asset = 'assets/art/ornaments/leaf_pair.png',
+  });
 
   final double height;
+
+  /// Ornament painted between the rules. Defaults to the garden leaf pair.
+  final String asset;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +22,7 @@ class GardenLeafDivider extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Image.asset(
-            'assets/art/ornaments/leaf_pair.png',
+            asset,
             height: height,
             color: cs.secondary,
             colorBlendMode: BlendMode.srcIn,

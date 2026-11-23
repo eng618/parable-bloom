@@ -15,8 +15,7 @@ export const metadata: Metadata = {
 const faqs = [
   {
     question: 'Which platforms are supported?',
-    answer:
-      'Parable Bloom is available on the web, and on Google Play for Android open testing. iOS is coming soon.',
+    answer: 'Parable Bloom is available on the web, and on Google Play for Android open testing. iOS is coming soon.',
   },
   {
     question: 'How many levels are there?',

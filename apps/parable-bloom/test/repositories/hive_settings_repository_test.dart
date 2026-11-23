@@ -90,5 +90,38 @@ void main() {
       await box.put('sfxEnabled', 'loud');
       expect(await repository.getSfxEnabled(), isTrue);
     });
+
+    test('should default the season to automatic', () async {
+      expect(await repository.getAppearancePack(), 'auto');
+    });
+
+    test('should save and retrieve the season', () async {
+      await repository.setAppearancePack('christmas');
+      expect(await repository.getAppearancePack(), 'christmas');
+    });
+
+    test('should fall back when the stored season is not a string', () async {
+      await box.put('appearancePack', true);
+      expect(await repository.getAppearancePack(), 'auto');
+    });
+
+    test('should remember a vine skin per pack', () async {
+      expect(await repository.getVineSkinsByPack(), isEmpty);
+      await repository.setVineSkinForPack('garden', 'flat');
+      await repository.setVineSkinForPack('christmas', 'trellis');
+      expect(await repository.getVineSkinsByPack(), {
+        'garden': 'flat',
+        'christmas': 'trellis',
+      });
+      await repository.setVineSkinForPack('garden', 'blossom');
+      expect(
+        (await repository.getVineSkinsByPack())['garden'],
+        'blossom',
+      );
+      expect(
+        (await repository.getVineSkinsByPack())['christmas'],
+        'trellis',
+      );
+    });
   });
 }

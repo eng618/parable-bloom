@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parable_bloom/core/app_theme.dart';
+import 'package:parable_bloom/features/appearance/domain/appearance_pack.dart';
+import 'package:parable_bloom/features/appearance/domain/vine_skin.dart';
 
 void main() {
   group('AppTheme.getContrastRatio Tests', () {
@@ -89,6 +91,53 @@ void main() {
       expect(
         AppTheme.darkTheme.scaffoldBackgroundColor,
         const Color(0xFF141914),
+      );
+    });
+
+    test('garden pack leaves the theme data unchanged', () {
+      expect(
+        identical(
+          AppTheme.forPack(AppearancePack.garden, Brightness.light),
+          AppTheme.lightTheme,
+        ),
+        isTrue,
+      );
+      expect(
+        identical(
+          AppTheme.forPack(AppearancePack.garden, Brightness.dark),
+          AppTheme.darkTheme,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a pack primary replaces the garden primary only', () {
+      final pack = AppearancePack(
+        id: 'pine',
+        name: 'Pine',
+        assets: AppearancePack.garden.assets,
+        vineSkins: [
+          VineSkin(
+              id: 'flat', label: 'Flat', flat: true, foliage: VineFoliage.none)
+        ],
+        defaultVineSkinId: 'flat',
+        lightColors: AppearanceColorRoles(primary: Color(0xFF1B4332)),
+      );
+
+      final themed = AppTheme.forPack(pack, Brightness.light);
+      expect(themed.colorScheme.primary, const Color(0xFF1B4332));
+      expect(themed.colorScheme.secondary, AppTheme.secondarySeed);
+      expect(
+        themed.scaffoldBackgroundColor,
+        AppTheme.lightTheme.scaffoldBackgroundColor,
+      );
+      expect(
+        themed.extension<AppThemeExtension>()!.vineAttempted,
+        AppTheme.vineAttemptedLight,
+      );
+      expect(
+        identical(AppTheme.forPack(pack, Brightness.dark), AppTheme.darkTheme),
+        isTrue,
       );
     });
   });

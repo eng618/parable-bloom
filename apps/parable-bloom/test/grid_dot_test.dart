@@ -84,7 +84,9 @@ void main() {
       expect(GridDotPulse.scaleAt(GridDotPulse.duration + 0.2), 1);
     });
 
-    test('a throb in progress is not restarted, and a settled dot can throb again', () {
+    test(
+        'a throb in progress is not restarted, and a settled dot can throb again',
+        () {
       final cell = CellComponent(
         gridX: 0,
         gridY: 0,

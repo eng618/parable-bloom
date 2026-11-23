@@ -2,14 +2,23 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/settings_providers.dart';
+import '../../../appearance/application/appearance_providers.dart';
+import '../../../appearance/data/appearance_catalog.dart';
+import '../../../appearance/domain/appearance_pack.dart';
 
-/// Theme and vine style.
+/// Brightness, season, and vine style.
 class SettingsAppearanceSection extends ConsumerWidget {
   const SettingsAppearanceSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final season = ref.watch(appearanceSelectionProvider);
+    final resolvedSeason = ref.watch(resolvedAppearancePackProvider);
+    final catalog = ref.watch(appearanceCatalogProvider).maybeWhen(
+          data: (value) => value,
+          orElse: () => AppearanceCatalog.fallback,
+        );
     final vineStyle = ref.watch(vineStyleProvider);
     final texturedSkinsEnabled = ref.watch(vineTexturedSkinsEnabledProvider);
 
@@ -20,6 +29,12 @@ class SettingsAppearanceSection extends ConsumerWidget {
           title: const Text('Theme'),
           subtitle: Text(_themeLabel(themeMode)),
           onTap: () => _showThemeDialog(context, ref, themeMode),
+        ),
+        ListTile(
+          leading: const Icon(Icons.event_repeat),
+          title: const Text('Season'),
+          subtitle: Text(_seasonSubtitle(season, resolvedSeason)),
+          onTap: () => _showSeasonDialog(context, ref, season, catalog),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -122,6 +137,60 @@ String _themeLabel(AppThemeMode mode) {
     case AppThemeMode.system:
       return 'System';
   }
+}
+
+String _seasonSubtitle(String selection, AppearancePack resolved) {
+  if (selection == AppearancePack.autoSelection) {
+    if (resolved.id == AppearancePack.gardenId) return 'Automatic';
+    return 'Automatic · ${resolved.name}';
+  }
+  return resolved.name;
+}
+
+void _showSeasonDialog(
+  BuildContext context,
+  WidgetRef ref,
+  String currentSelection,
+  AppearanceCatalog catalog,
+) {
+  final choices = <(String, String)>[
+    (AppearancePack.autoSelection, 'Automatic'),
+    for (final pack in catalog.packs) (pack.id, pack.name),
+  ];
+  showDialog(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Choose Season'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: choices.map((choice) {
+          final (id, label) = choice;
+          final isSelected = id == currentSelection;
+          return ListTile(
+            title: Text(
+              label,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? Theme.of(dialogContext).colorScheme.primary
+                    : null,
+              ),
+            ),
+            trailing: isSelected
+                ? Icon(
+                    Icons.check,
+                    color: Theme.of(dialogContext).colorScheme.primary,
+                  )
+                : null,
+            onTap: () {
+              ref.read(appearanceSelectionProvider.notifier).setSelection(id);
+              Navigator.of(dialogContext).pop();
+            },
+          );
+        }).toList(),
+      ),
+    ),
+  );
 }
 
 void _showThemeDialog(

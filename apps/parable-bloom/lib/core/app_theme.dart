@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'dart:math';
 
+import '../features/appearance/domain/appearance_pack.dart';
+
 /// Centralized theme configuration for Parable Bloom.
 ///
 /// Visual refresh palette (garden parchment + forest / moonlit soil) is
@@ -134,8 +136,11 @@ class AppTheme {
     );
   }
 
-  /// Light theme for the app
-  static ThemeData get lightTheme {
+  /// Light theme for the app. Cached so an appearance pack with no color
+  /// overrides can return this same instance.
+  static final ThemeData lightTheme = _buildLightTheme();
+
+  static ThemeData _buildLightTheme() {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primarySeed,
       brightness: Brightness.light,
@@ -203,8 +208,11 @@ class AppTheme {
     );
   }
 
-  /// Dark theme for the app
-  static ThemeData get darkTheme {
+  /// Dark theme for the app. Cached so an appearance pack with no color
+  /// overrides can return this same instance.
+  static final ThemeData darkTheme = _buildDarkTheme();
+
+  static ThemeData _buildDarkTheme() {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primarySeedDark,
       brightness: Brightness.dark,
@@ -296,6 +304,60 @@ class AppTheme {
   /// Get tap effect color based on brightness
   static Color getTapEffectColor(Brightness brightness) {
     return brightness == Brightness.dark ? tapEffectDark : tapEffectLight;
+  }
+
+  /// Garden theme with [pack] color roles applied.
+  ///
+  /// An empty override, or roles that already match the garden seeds, returns
+  /// [lightTheme] or [darkTheme] unchanged. Surfaces, ink, error, and the
+  /// blocked-vine colors stay on the garden values.
+  static ThemeData forPack(AppearancePack pack, Brightness brightness) {
+    final base = brightness == Brightness.dark ? darkTheme : lightTheme;
+    final roles = pack.colorsFor(brightness);
+    if (roles.isEmpty) return base;
+
+    final scheme = base.colorScheme;
+    final primary = _changedRole(roles.primary, scheme.primary);
+    final secondary = _changedRole(roles.secondary, scheme.secondary);
+    final tertiary = _changedRole(roles.tertiary, scheme.tertiary);
+    if (primary == null && secondary == null && tertiary == null) return base;
+
+    final nextPrimary = primary ?? scheme.primary;
+    final next = scheme.copyWith(
+      primary: nextPrimary,
+      secondary: secondary ?? scheme.secondary,
+      tertiary: tertiary ?? scheme.tertiary,
+      outline: nextPrimary.withValues(
+        alpha: brightness == Brightness.dark ? 0.45 : 0.55,
+      ),
+    );
+    return base.copyWith(
+      colorScheme: next,
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: next.primary,
+          foregroundColor: next.onPrimary,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: next.primary,
+          side: BorderSide(color: next.outline),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Color? _changedRole(Color? next, Color current) {
+    if (next == null || next == current) return null;
+    return next;
   }
 
   /// Calculate contrast ratio between two colors (WCAG AA compliance helper)

@@ -17,7 +17,11 @@ Comprehensive technical specification for level data:
 - Structural validation rules (4-connectivity, neck-head orientation, cycle prevention).
 - Difficulty tier configurations (Seedling, Nurturing, Flourishing, Transcendent).
 
-### 2. [Color System & Token Usage](color-usage.md)
+### 2. [Appearance Packs](appearance-packs.md)
+
+Season manifests, art slots, palette overrides, and how Automatic chooses a pack. Separate from brightness and from biblical themes.
+
+### 3. [Color System & Token Usage](color-usage.md)
 
 Design token specifications and palettes:
 
@@ -25,7 +29,7 @@ Design token specifications and palettes:
 - Garden-themed vine colors and bloom state animations.
 - Hexadecimal code references and WCAG contrast compliance.
 
-### 3. [Scripture Licensing & Compliance](scripture-licensing.md)
+### 4. [Scripture Licensing & Compliance](scripture-licensing.md)
 
 Legal parameters and technical safeguards for Bible translations:
 
@@ -33,15 +37,15 @@ Legal parameters and technical safeguards for Bible translations:
 - Mandatory copyright notices and attribution statements.
 - Technical limits (verse counts, proportion caps).
 
-### 4. [Third-Party Attributions](attributions.md)
+### 5. [Third-Party Attributions](attributions.md)
 
 Credits, licenses, and notices for third-party libraries, audio tracks, and graphical assets used throughout the project.
 
-### 5. [Launch Readiness Verification](launch-readiness-audit.md)
+### 6. [Launch Readiness Verification](launch-readiness-audit.md)
 
 Technical verification gates and release evaluation criteria across code, UX, solvability, and release assets.
 
-### 6. [Known Constraints & Platform Compatibility](known-issues.md)
+### 7. [Known Constraints & Platform Compatibility](known-issues.md)
 
 Supported platforms, runtime requirements, viewport scaling behaviors, offline sync handling, and development troubleshooting notes.
 

@@ -18,6 +18,8 @@ Brand identity shifted from bracelet blue to a **parchment + forest / moonlit so
 
 Home uses reusable botanical assets under `assets/art/home/` and `assets/art/ornaments/`. Full token table: project store `docs/visual-refresh-palette.md`.
 
+A season (appearance pack) may replace primary, secondary, and tertiary on top of this palette. Surfaces, ink, error, and the blocked-vine colors stay here. See [Appearance Packs](appearance-packs.md).
+
 ### Color Const Files
 
 1. **`lib/core/app_theme.dart`** - Primary theme colors

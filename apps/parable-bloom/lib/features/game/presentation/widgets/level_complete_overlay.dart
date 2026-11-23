@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../core/app_theme.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/widgets/garden_leaf_divider.dart';
+import '../../../appearance/domain/appearance_slot.dart';
+import '../../../appearance/presentation/widgets/themed_asset.dart';
 import 'garden_encouraging_message.dart';
 
 /// Full-screen "Level Complete" celebration overlay content.
@@ -35,9 +37,9 @@ class LevelCompleteOverlay extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final frameAsset = isDark
-        ? 'assets/art/home/frame_dark.png'
-        : 'assets/art/home/frame_light.png';
+    final pack = AppearanceScope.of(context);
+    final frameSlot =
+        isDark ? AppearanceSlot.homeFrameDark : AppearanceSlot.homeFrameLight;
 
     return Stack(
       fit: StackFit.expand,
@@ -54,8 +56,8 @@ class LevelCompleteOverlay extends StatelessWidget {
         Positioned.fill(
           child: Opacity(
             opacity: isDark ? 0.35 : 0.55,
-            child: Image.asset(
-              frameAsset,
+            child: ThemedAsset(
+              slot: frameSlot,
               fit: BoxFit.cover,
               excludeFromSemantics: true,
             ),
@@ -78,8 +80,8 @@ class LevelCompleteOverlay extends StatelessWidget {
                     Positioned.fill(
                       child: Opacity(
                         opacity: isDark ? 0.08 : 0.22,
-                        child: Image.asset(
-                          'assets/art/home/parchment.png',
+                        child: const ThemedAsset(
+                          slot: AppearanceSlot.homeGrain,
                           fit: BoxFit.cover,
                           excludeFromSemantics: true,
                         ),
@@ -92,8 +94,8 @@ class LevelCompleteOverlay extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Center(
-                            child: Image.asset(
-                              'assets/art/ornaments/leaf_sprig.png',
+                            child: const ThemedAsset(
+                              slot: AppearanceSlot.ornamentSprig,
                               height: 56,
                               excludeFromSemantics: true,
                             ),
@@ -121,7 +123,9 @@ class LevelCompleteOverlay extends StatelessWidget {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 14),
-                          const GardenLeafDivider(),
+                          GardenLeafDivider(
+                            asset: pack.asset(AppearanceSlot.ornamentDivider),
+                          ),
                           const SizedBox(height: 16),
                           GardenEncouragingMessage(message: message),
                           if (onContinue != null) ...[

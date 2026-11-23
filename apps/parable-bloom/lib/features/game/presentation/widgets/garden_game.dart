@@ -1,9 +1,13 @@
+import 'dart:ui' as ui;
+
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/app_theme.dart';
+import '../../../appearance/domain/appearance_pack.dart';
+import '../../../appearance/domain/appearance_slot.dart';
 import '../../../../core/game_board_layout.dart';
 import '../../../../core/board_transform.dart';
 import '../../../../core/constants/animation_timing.dart';
@@ -48,6 +52,10 @@ class GardenGame extends FlameGame with TapCallbacks {
   SpriteComponent? _gameBackground;
   Sprite? _bgDaySprite;
   Sprite? _bgNightSprite;
+  String? _dayAssetKey;
+  String? _nightAssetKey;
+  Future<void>? _boardLoad;
+  int _boardLoadGen = 0;
 
   // Scratch pan vector: applyCameraFrame runs ~60fps during camera
   // animations; reuse instead of allocating a Vector2 per tick.
@@ -165,6 +173,85 @@ class GardenGame extends FlameGame with TapCallbacks {
     _updateBackgroundOpacity();
   }
 
+  /// Loads the day and night board plates from appearance-pack asset keys.
+  ///
+  /// Keys under `assets/art/` use the Flame image cache. Any other key is
+  /// decoded from the asset bundle, so a season can live outside that prefix.
+  /// Repeated calls for the same keys share one load.
+  Future<void> applyBoardBackgrounds({
+    required String dayAsset,
+    required String nightAsset,
+  }) {
+    images.prefix = 'assets/art/';
+    if (_dayAssetKey == dayAsset && _nightAssetKey == nightAsset) {
+      if (_bgDaySprite != null && _bgNightSprite != null) {
+        return Future<void>.value();
+      }
+      final inflight = _boardLoad;
+      if (inflight != null) return inflight;
+    }
+    _dayAssetKey = dayAsset;
+    _nightAssetKey = nightAsset;
+    final gen = ++_boardLoadGen;
+    final load = _loadBoardBackgrounds(dayAsset, nightAsset, gen);
+    _boardLoad = load.whenComplete(() {
+      if (_boardLoadGen == gen) _boardLoad = null;
+    });
+    return load;
+  }
+
+  Future<void> _loadBoardBackgrounds(
+    String dayAsset,
+    String nightAsset,
+    int gen,
+  ) async {
+    try {
+      final sprites = await Future.wait([
+        _loadBoardSprite(dayAsset),
+        _loadBoardSprite(nightAsset),
+      ]);
+      if (gen != _boardLoadGen) return;
+      _bgDaySprite = sprites[0];
+      _bgNightSprite = sprites[1];
+      final isDark = _backgroundColor.computeLuminance() < 0.5;
+      final sprite = isDark ? _bgNightSprite : _bgDaySprite;
+      if (_gameBackground == null) {
+        _gameBackground = SpriteComponent(
+          sprite: sprite,
+          priority: -2,
+        );
+        add(_gameBackground!);
+      } else {
+        _gameBackground!.sprite = sprite;
+      }
+      _updateBackgroundSize();
+      _updateBackgroundOpacity();
+    } catch (e, stack) {
+      LoggerService.error(
+        'Failed to load background sprite',
+        error: e,
+        stackTrace: stack,
+        tag: 'GardenGame',
+      );
+    }
+  }
+
+  Future<Sprite> _loadBoardSprite(String assetKey) async {
+    const prefix = 'assets/art/';
+    if (assetKey.startsWith(prefix)) {
+      return loadSprite(assetKey.substring(prefix.length));
+    }
+    final data = await rootBundle.load(assetKey);
+    final bytes = data.buffer.asUint8List(
+      data.offsetInBytes,
+      data.lengthInBytes,
+    );
+    final codec = await ui.instantiateImageCodec(bytes);
+    final frame = await codec.getNextFrame();
+    codec.dispose();
+    return Sprite(frame.image);
+  }
+
   void _updateBackgroundOpacity([bool? isSimpleVines]) {
     if (_gameBackground == null) return;
     final simple = isSimpleVines ?? useSimpleVines;
@@ -218,28 +305,12 @@ class GardenGame extends FlameGame with TapCallbacks {
     images.prefix = 'assets/art/';
     await super.onLoad();
 
-    // Load parable background artwork in parallel
-    try {
-      final sprites = await Future.wait([
-        loadSprite('bg_day_new.png'),
-        loadSprite('bg_night_new.png'),
-      ]);
-      _bgDaySprite = sprites[0];
-      _bgNightSprite = sprites[1];
-
-      final isDark = _backgroundColor.computeLuminance() < 0.5;
-
-      _gameBackground = SpriteComponent(
-        sprite: isDark ? _bgNightSprite : _bgDaySprite,
-        priority: -2,
-      );
-      add(_gameBackground!);
-      _updateBackgroundSize();
-      _updateBackgroundOpacity();
-    } catch (e, stack) {
-      LoggerService.error('Failed to load background sprite',
-          error: e, stackTrace: stack, tag: 'GardenGame');
-    }
+    await applyBoardBackgrounds(
+      dayAsset:
+          _dayAssetKey ?? AppearancePack.garden.asset(AppearanceSlot.boardDay),
+      nightAsset: _nightAssetKey ??
+          AppearancePack.garden.asset(AppearanceSlot.boardNight),
+    );
 
     // Create grid and background components
     _createLevelComponents();

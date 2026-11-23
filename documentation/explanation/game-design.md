@@ -64,13 +64,13 @@ A module is 21 levels. A short sitting should clear two to four of them, not mos
 
 The generator cannot measure minutes. It uses board size, average vine length, and the share of vines whose exit is open. The files in `assets/levels/` follow the schedule in `pkg/common/progression.go`.
 
-| Tier | Slots (W×H) | Vines | Avg length |
-| --- | --- | --- | --- |
-| **Seedling** | 9×12, 9×14, 10×14, 10×16, 12×16 | 14–24 | 7–12 |
-| **Sprout** | 12×16, 12×18, 14×18, 14×20, 14×22 | 20–32 | 8–14 |
-| **Nurturing** | 14×20, 14×22, 16×22, 16×24, 16×26 | 26–40 | 9–16 |
-| **Flourishing** | 16×24, 16×26, 18×26, 18×28, 18×30 | 34–52 | 10–16 |
-| **Transcendent** | 22×36 | 55–80 | 12–18 |
+| Tier             | Slots (W×H)                       | Vines | Avg length |
+| ---------------- | --------------------------------- | ----- | ---------- |
+| **Seedling**     | 9×12, 9×14, 10×14, 10×16, 12×16   | 14–24 | 7–12       |
+| **Sprout**       | 12×16, 12×18, 14×18, 14×20, 14×22 | 20–32 | 8–14       |
+| **Nurturing**    | 14×20, 14×22, 16×22, 16×24, 16×26 | 26–40 | 9–16       |
+| **Flourishing**  | 16×24, 16×26, 18×26, 18×28, 18×30 | 34–52 | 10–16      |
+| **Transcendent** | 22×36                             | 55–80 | 12–18      |
 
 Color still does not encode role. The generator assigns colors round-robin. Moss, gold, and purple do not yet mean "free", "quick", or "deep chain".
 

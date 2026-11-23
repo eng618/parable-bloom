@@ -6,6 +6,8 @@ import 'package:flame/game.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
+import '../../../appearance/application/appearance_providers.dart';
+import '../../../appearance/domain/appearance_slot.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../domain/entities/lesson_data.dart';
@@ -108,6 +110,11 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
     ref.listenManual<VineStyle>(vineStyleProvider, (previous, next) {
       if (previous != next) _game?.updateVineStyle(next);
     });
+
+    ref.listenManual(resolvedAppearancePackProvider, (previous, next) {
+      if (previous == next) return;
+      _applyBoardBackgrounds();
+    });
   }
 
   @override
@@ -129,6 +136,17 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       tapEffectColor: extension.tapEffect,
       vineAttemptedColor: extension.vineAttempted,
       gridDotColor: extension.gridDot,
+    );
+    _applyBoardBackgrounds();
+  }
+
+  void _applyBoardBackgrounds() {
+    final pack = ref.read(resolvedAppearancePackProvider);
+    unawaited(
+      _game?.applyBoardBackgrounds(
+        dayAsset: pack.asset(AppearanceSlot.boardDay),
+        nightAsset: pack.asset(AppearanceSlot.boardNight),
+      ),
     );
   }
 

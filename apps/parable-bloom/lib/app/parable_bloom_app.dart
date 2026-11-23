@@ -8,6 +8,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_theme.dart';
+import '../features/appearance/application/appearance_providers.dart';
+import '../features/appearance/presentation/widgets/themed_asset.dart';
 import '../core/config/environment_config.dart';
 import '../features/auth/application/providers/auth_providers.dart';
 import '../features/game/application/providers/progress_providers.dart';
@@ -186,13 +188,14 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
+    final appearance = ref.watch(resolvedAppearancePackProvider);
 
     final app = MaterialApp.router(
       title: 'Parable Bloom',
       debugShowCheckedModeBanner:
           _isScreenshotMode ? false : !EnvironmentConfig.isProd(),
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.forPack(appearance, Brightness.light),
+      darkTheme: AppTheme.forPack(appearance, Brightness.dark),
       themeMode: _convertToThemeMode(themeMode),
       routerConfig: appRouter,
       builder: (context, child) {
@@ -242,7 +245,10 @@ class _ParableBloomAppState extends ConsumerState<ParableBloomApp>
             ),
           );
         };
-        return _buildHomeWrapper(child!);
+        return AppearanceScope(
+          pack: appearance,
+          child: _buildHomeWrapper(child!),
+        );
       },
       localizationsDelegates: const [
         AppLocalizations.delegate,

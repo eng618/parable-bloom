@@ -44,4 +44,16 @@ abstract class SettingsRepository {
 
   /// Set the user's preferred Bible translation id.
   Future<void> setPreferredTranslation(String translationId);
+
+  /// Season selection. `auto`, `garden`, or another appearance pack id.
+  Future<String> getAppearancePack();
+
+  /// Persist the season selection.
+  Future<void> setAppearancePack(String id);
+
+  /// Vine skin id chosen for each appearance pack.
+  Future<Map<String, String>> getVineSkinsByPack();
+
+  /// Remember [skinId] for [packId] without changing other packs.
+  Future<void> setVineSkinForPack(String packId, String skinId);
 }

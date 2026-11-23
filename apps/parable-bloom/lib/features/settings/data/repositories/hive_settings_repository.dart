@@ -27,6 +27,11 @@ class HiveSettingsRepository implements SettingsRepository {
   static const String _preferredTranslationKey = 'preferredTranslationId';
   static const String _defaultPreferredTranslation = 'net';
 
+  static const String _appearancePackKey = 'appearancePack';
+  static const String _defaultAppearancePack = 'auto';
+
+  static const String _vineSkinByPackKey = 'vineSkinByPack';
+
   HiveSettingsRepository(this.hiveBox);
 
   T _readTypedValue<T>(String key, T defaultValue) {
@@ -127,5 +132,33 @@ class HiveSettingsRepository implements SettingsRepository {
   @override
   Future<void> setPreferredTranslation(String translationId) async {
     await hiveBox.put(_preferredTranslationKey, translationId.toLowerCase());
+  }
+
+  @override
+  Future<String> getAppearancePack() async {
+    return _readTypedValue<String>(_appearancePackKey, _defaultAppearancePack);
+  }
+
+  @override
+  Future<void> setAppearancePack(String id) async {
+    await hiveBox.put(_appearancePackKey, id);
+  }
+
+  @override
+  Future<Map<String, String>> getVineSkinsByPack() async {
+    final value = hiveBox.get(_vineSkinByPackKey);
+    if (value is Map) {
+      return {
+        for (final entry in value.entries)
+          entry.key.toString(): entry.value.toString(),
+      };
+    }
+    return const {};
+  }
+
+  @override
+  Future<void> setVineSkinForPack(String packId, String skinId) async {
+    final current = await getVineSkinsByPack();
+    await hiveBox.put(_vineSkinByPackKey, {...current, packId: skinId});
   }
 }

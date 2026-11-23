@@ -6,6 +6,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
+import '../../../appearance/application/appearance_providers.dart';
+import '../../../appearance/domain/appearance_slot.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/service_providers.dart';
@@ -142,6 +144,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _game?.updateVineStyle(next);
     });
 
+    ref.listenManual(resolvedAppearancePackProvider, (previous, next) {
+      if (previous == next) return;
+      _applyBoardBackgrounds();
+    });
+
     // Single subscription: ProjectionMode carries show-all + hints atomically.
     ref.listenManual(projectionModeProvider, (previous, next) {
       if (previous != next) syncProjectionLines(ref, _game);
@@ -189,6 +196,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       tapEffectColor: extension.tapEffect,
       vineAttemptedColor: extension.vineAttempted,
       gridDotColor: extension.gridDot,
+    );
+    _applyBoardBackgrounds();
+  }
+
+  void _applyBoardBackgrounds() {
+    final pack = ref.read(resolvedAppearancePackProvider);
+    unawaited(
+      _game?.applyBoardBackgrounds(
+        dayAsset: pack.asset(AppearanceSlot.boardDay),
+        nightAsset: pack.asset(AppearanceSlot.boardNight),
+      ),
     );
   }
 

@@ -1,0 +1,46 @@
+{
+  "id": "garden",
+  "name": "Garden",
+  "schema": 1,
+  "assets": {
+    "home.grain": "assets/art/home/parchment.png",
+    "home.frame.light": "assets/art/home/frame_light.png",
+    "home.frame.dark": "assets/art/home/frame_dark.png",
+    "home.hero": "assets/art/home/cross_wood.png",
+    "ornament.sprig": "assets/art/ornaments/leaf_sprig.png",
+    "ornament.divider": "assets/art/ornaments/leaf_pair.png",
+    "board.day": "assets/art/bg_day_new.png",
+    "board.night": "assets/art/bg_night_new.png"
+  },
+  "vineSkins": [
+    {
+      "id": "trellis",
+      "label": "Trellis",
+      "texture": "assets/art/classic_vine_texture.png",
+      "foliage": "leaves",
+      "accent": "#5E9C33"
+    },
+    {
+      "id": "blossom",
+      "label": "Blossom",
+      "texture": "assets/art/blossom_vine_texture.png",
+      "foliage": "blossom",
+      "accent": "#DE7FA4"
+    },
+    {
+      "id": "ethereal",
+      "label": "Ethereal",
+      "texture": "assets/art/ethereal_vine_texture.png",
+      "foliage": "glow",
+      "accent": "#74F4FF"
+    },
+    {
+      "id": "flat",
+      "label": "Flat",
+      "flat": true,
+      "foliage": "none",
+      "accent": "#5E9C33"
+    }
+  ],
+  "defaultVineSkin": "trellis"
+}

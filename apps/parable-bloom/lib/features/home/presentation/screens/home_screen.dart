@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/providers/settings_providers.dart';
+import '../../../appearance/domain/appearance_slot.dart';
+import '../../../appearance/presentation/widgets/themed_asset.dart';
 import '../../../game/application/providers/module_providers.dart';
 import '../../../game/application/providers/progress_providers.dart';
 import '../../../../core/app_theme.dart';
 import '../../../../core/providers/service_providers.dart';
+import '../../../../core/providers/settings_providers.dart';
 import '../../../../core/widgets/constrained_page.dart';
 import '../../../../core/widgets/garden_loading_view.dart';
 import '../../../game/domain/entities/game_progress.dart';
@@ -23,19 +25,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  bool _precached = false;
+  String? _precachedPackId;
   bool _habitOpenRecorded = false;
   String? _welcomeBackLine;
-
-  static const _homeAssets = [
-    'assets/art/home/cross_wood.png',
-    'assets/art/home/frame_light.png',
-    'assets/art/home/frame_dark.png',
-    'assets/art/home/parchment.png',
-    'assets/art/cross.png',
-    'assets/art/bg_day.png',
-    'assets/art/bg_night.png',
-  ];
 
   @override
   void initState() {
@@ -49,9 +41,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_precached) {
-      _precached = true;
-      for (final asset in _homeAssets) {
+    final pack = AppearanceScope.of(context);
+    if (_precachedPackId != pack.id) {
+      _precachedPackId = pack.id;
+      for (final asset in pack.homePrecacheAssets) {
         precacheImage(AssetImage(asset), context);
       }
     }
@@ -99,9 +92,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final frameAsset = isDark
-        ? 'assets/art/home/frame_dark.png'
-        : 'assets/art/home/frame_light.png';
+    final frameSlot =
+        isDark ? AppearanceSlot.homeFrameDark : AppearanceSlot.homeFrameLight;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -112,16 +104,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Positioned.fill(
             child: Opacity(
               opacity: isDark ? 0.12 : 0.28,
-              child: Image.asset(
-                'assets/art/home/parchment.png',
+              child: const ThemedAsset(
+                slot: AppearanceSlot.homeGrain,
                 fit: BoxFit.cover,
                 excludeFromSemantics: true,
               ),
             ),
           ),
           Positioned.fill(
-            child: Image.asset(
-              frameAsset,
+            child: ThemedAsset(
+              slot: frameSlot,
               fit: BoxFit.cover,
               excludeFromSemantics: true,
             ),
@@ -394,8 +386,8 @@ class _HomeCrossArtwork extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       painter: _CrossGroundShadowPainter(isDark: isDark),
-      child: Image.asset(
-        'assets/art/home/cross_wood.png',
+      child: const ThemedAsset(
+        slot: AppearanceSlot.homeHero,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.medium,
         semanticLabel: 'Wooden cross',

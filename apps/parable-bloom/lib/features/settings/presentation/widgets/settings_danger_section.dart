@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/infrastructure_providers.dart';
 import '../../../../core/providers/settings_providers.dart';
+import '../../../appearance/application/appearance_providers.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../auth/application/providers/auth_providers.dart';
 import '../../../game/application/providers/counter_providers.dart';
@@ -310,6 +311,8 @@ Future<void> _performResetAsync({
     ref.invalidate(levelAttemptCountProvider);
     ref.invalidate(levelStartTimestampProvider);
     ref.invalidate(themeModeProvider);
+    ref.invalidate(appearanceSelectionProvider);
+    ref.invalidate(vineSkinByPackProvider);
     ref.invalidate(backgroundAudioEnabledProvider);
     ref.invalidate(hapticsEnabledProvider);
     ref.invalidate(vineStyleProvider);

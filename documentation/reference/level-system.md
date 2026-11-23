@@ -269,14 +269,14 @@ Source of truth: `pkg/generator/config.DifficultySpecs` + `GridSizeRanges`. Vali
 
 These bands are what the generator accepts, and the shipped `assets/levels/` files follow this schedule. `task levels:validate` checks those files. `task levels:variety` reports them. `variety --enforce` fails a file that misses the contract.
 
-| Difficulty   | Grid schedule (W×H)                                      | Vine Count | Avg Length | Occupancy | Grace | Complexity |
-| ------------ | -------------------------------------------------------- | ---------- | ---------- | --------- | ----- | ---------- |
-| Tutorial     | 5×8 to 9×12 (hand-authored)                              | 3-8        | 6-10       | 30%+      | 3     | tutorial   |
-| Seedling     | 9×12, 9×14, 10×14, 10×16, 12×16                          | 14-24      | 7-12       | 93%+      | 3     | low        |
-| Sprout       | 12×16, 12×18, 14×18, 14×20, 14×22                        | 20-32      | 8-14       | 93%+      | 3     | low        |
-| Nurturing    | 14×20, 14×22, 16×22, 16×24, 16×26                        | 26-40      | 9-16       | 93%+      | 3     | medium     |
-| Flourishing  | 16×24, 16×26, 18×26, 18×28, 18×30                        | 34-52      | 10-16      | 93%+      | 3     | high       |
-| Transcendent | 22×36                                                    | 55-80      | 12-18      | 93%+      | 4     | extreme    |
+| Difficulty   | Grid schedule (W×H)               | Vine Count | Avg Length | Occupancy | Grace | Complexity |
+| ------------ | --------------------------------- | ---------- | ---------- | --------- | ----- | ---------- |
+| Tutorial     | 5×8 to 9×12 (hand-authored)       | 3-8        | 6-10       | 30%+      | 3     | tutorial   |
+| Seedling     | 9×12, 9×14, 10×14, 10×16, 12×16   | 14-24      | 7-12       | 93%+      | 3     | low        |
+| Sprout       | 12×16, 12×18, 14×18, 14×20, 14×22 | 20-32      | 8-14       | 93%+      | 3     | low        |
+| Nurturing    | 14×20, 14×22, 16×22, 16×24, 16×26 | 26-40      | 9-16       | 93%+      | 3     | medium     |
+| Flourishing  | 16×24, 16×26, 18×26, 18×28, 18×30 | 34-52      | 10-16      | 93%+      | 3     | high       |
+| Transcendent | 22×36                             | 55-80      | 12-18      | 93%+      | 4     | extreme    |
 
 ### 5.2 Direction-First Placement Algorithm
 
