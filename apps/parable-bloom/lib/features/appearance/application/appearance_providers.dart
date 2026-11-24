@@ -7,6 +7,10 @@ import '../data/appearance_catalog.dart';
 import '../domain/appearance_pack.dart';
 import '../domain/vine_skin.dart';
 
+/// Store captures compile with this flag. December runs stay on garden so
+/// the listing does not follow the Christmas window.
+const bool _isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
+
 /// Bundled packs. Falls back to the built-in garden pack while loading.
 final appearanceCatalogProvider =
     FutureProvider<AppearanceCatalog>((ref) async {
@@ -45,6 +49,7 @@ class AppearanceSelectionNotifier extends Notifier<String> {
 
 /// The pack to paint. `auto` follows the local date.
 final resolvedAppearancePackProvider = Provider<AppearancePack>((ref) {
+  if (_isScreenshotMode) return AppearancePack.garden;
   final catalog = ref.watch(appearanceCatalogProvider).maybeWhen(
         data: (catalog) => catalog,
         orElse: () => AppearanceCatalog.fallback,

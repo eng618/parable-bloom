@@ -107,6 +107,7 @@ flutter:
     - assets/levels/
     - assets/lessons/
     - assets/themes/garden/
+    - assets/themes/christmas/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

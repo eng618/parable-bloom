@@ -53,10 +53,73 @@ void main() {
   });
 
   group('AppearanceCatalog.parseDocuments', () {
-    test('bundled garden manifest matches the built-in pack', () async {
+    test('bundled manifests keep garden and ship Christmas', () async {
       final catalog = await AppearanceCatalog.load(rootBundle);
       expect(catalog.garden, AppearancePack.garden);
-      expect(catalog.seasons, isEmpty);
+      expect(catalog.seasons.map((pack) => pack.id), ['christmas']);
+
+      final christmas = catalog.seasons.single;
+      expect(
+        christmas.asset(AppearanceSlot.homeHero),
+        'assets/themes/christmas/hero.png',
+      );
+      expect(
+        christmas.asset(AppearanceSlot.homeFrameLight),
+        'assets/themes/christmas/frame_light.png',
+      );
+      expect(
+        christmas.asset(AppearanceSlot.homeFrameDark),
+        'assets/themes/christmas/frame_dark.png',
+      );
+      expect(
+        christmas.asset(AppearanceSlot.ornamentSprig),
+        'assets/themes/christmas/sprig.png',
+      );
+      expect(
+        christmas.asset(AppearanceSlot.ornamentDivider),
+        'assets/themes/christmas/divider.png',
+      );
+      expect(
+        christmas.asset(AppearanceSlot.homeGrain),
+        AppearancePack.garden.asset(AppearanceSlot.homeGrain),
+      );
+      expect(
+        christmas.asset(AppearanceSlot.boardDay),
+        AppearancePack.garden.asset(AppearanceSlot.boardDay),
+      );
+      expect(
+        christmas.asset(AppearanceSlot.boardNight),
+        AppearancePack.garden.asset(AppearanceSlot.boardNight),
+      );
+      expect(christmas.vineSkins.map((skin) => skin.id), ['trellis', 'flat']);
+      expect(
+        christmas.vineSkins.first.textureAsset,
+        'assets/themes/christmas/trellis.png',
+      );
+      expect(christmas.vineSkins.first.flat, isFalse);
+      expect(christmas.vineSkins.last.flat, isTrue);
+      expect(christmas.lightColors.primary, const Color(0xFF1B4332));
+      expect(christmas.darkColors.primary, const Color(0xFFC5D5C0));
+      expect(christmas.lightColors.secondary, const Color(0xFF9B3A3A));
+      expect(christmas.darkColors.tertiary, const Color(0xFFE2C98A));
+      expect(
+        catalog
+            .resolve(AppearancePack.autoSelection, DateTime(2026, 11, 30))
+            .id,
+        'garden',
+      );
+      expect(
+        catalog.resolve(AppearancePack.autoSelection, DateTime(2026, 12, 1)).id,
+        'christmas',
+      );
+      expect(
+        catalog.resolve(AppearancePack.autoSelection, DateTime(2027, 1, 6)).id,
+        'christmas',
+      );
+      expect(
+        catalog.resolve(AppearancePack.autoSelection, DateTime(2027, 1, 7)).id,
+        'garden',
+      );
     });
 
     test('a season inherits omitted slots and resolves relative art', () {

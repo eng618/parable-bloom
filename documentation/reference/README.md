@@ -19,7 +19,7 @@ Comprehensive technical specification for level data:
 
 ### 2. [Appearance Packs](appearance-packs.md)
 
-Season manifests, art slots, palette overrides, and how Automatic chooses a pack. Separate from brightness and from biblical themes.
+Season manifests, art slots, palette overrides, how Automatic chooses a pack, and the Christmas pack. Separate from brightness and from biblical themes.
 
 ### 3. [Color System & Token Usage](color-usage.md)
 

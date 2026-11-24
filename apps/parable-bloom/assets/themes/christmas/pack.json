@@ -1,0 +1,42 @@
+{
+  "id": "christmas",
+  "name": "Christmas",
+  "schema": 1,
+  "window": { "from": "12-01", "until": "01-06" },
+  "colors": {
+    "light": {
+      "primary": "#1B4332",
+      "secondary": "#9B3A3A",
+      "tertiary": "#C6A15B"
+    },
+    "dark": {
+      "primary": "#C5D5C0",
+      "secondary": "#E7B7B0",
+      "tertiary": "#E2C98A"
+    }
+  },
+  "assets": {
+    "home.hero": "hero.png",
+    "home.frame.light": "frame_light.png",
+    "home.frame.dark": "frame_dark.png",
+    "ornament.sprig": "sprig.png",
+    "ornament.divider": "divider.png"
+  },
+  "vineSkins": [
+    {
+      "id": "trellis",
+      "label": "Evergreen",
+      "texture": "trellis.png",
+      "foliage": "leaves",
+      "accent": "#C6A15B"
+    },
+    {
+      "id": "flat",
+      "label": "Flat",
+      "flat": true,
+      "foliage": "none",
+      "accent": "#C6A15B"
+    }
+  ],
+  "defaultVineSkin": "trellis"
+}

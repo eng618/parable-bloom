@@ -29,6 +29,7 @@ All in-game and website visual assets, including:
 - App Icons (`app_icon.png`, `app_icon_branded.png`)
 - Watercolor Backgrounds (`bg_day_new.png`, `bg_night_new.png`)
 - Vine Textures (`classic_vine_texture.png`, `blossom_vine_texture.png`, `ethereal_vine_texture.png`)
+- Advent season art under `assets/themes/christmas/` (home frames, oak-cross hero, holly sprig, divider, evergreen trellis)
 - Decorative artwork and grid cells
 
 Are custom creations designed specifically for Parable Bloom.

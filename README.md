@@ -153,7 +153,7 @@ The documentation follows the **[Diátaxis Technical Documentation Framework](do
 - **🛠️ [How-To: Release Process](documentation/how-to/release-process.md)** - Automated release and deployment guide
 - **🛠️ [How-To: Level Generation](documentation/how-to/level-generation.md)** - Level generation, validation, and repair workflows
 - **📖 [Reference: Level System](documentation/reference/level-system.md)** - JSON schemas, coordinate system, and validation rules
-- **📖 [Reference: Appearance Packs](documentation/reference/appearance-packs.md)** - Season art, palette slots, and the Automatic window
+- **📖 [Reference: Appearance Packs](documentation/reference/appearance-packs.md)** - Season art, palette slots, the Automatic window, and the Christmas pack
 - **📖 [Reference: Color System](documentation/reference/color-usage.md)** - Color palettes, design tokens, and theme mappings
 - **💡 [Explanation: Architecture Guide](documentation/explanation/architecture.md)** - State management, persistence, and Firebase roadmap
 - **💡 [Explanation: Game Design Document](documentation/explanation/game-design.md)** - Complete mechanics, features, and design philosophy

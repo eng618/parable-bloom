@@ -117,7 +117,7 @@ The game implements several high-performance visual systems within the Flame `Po
 We use **Hive** for immediate, offline-capable storage. Key persisted settings include:
 
 - **Theme Mode**: System, Light, or Dark.
-- **Season**: Hive `appearancePack` (`auto`, `garden`, or a pack id) selects an appearance pack. `auto` follows the pack's month-day window. Art slots and optional palette roles are documented in `reference/appearance-packs.md`. This is separate from biblical themes.
+- **Season**: Hive `appearancePack` (`auto`, `garden`, or a pack id) selects an appearance pack. `auto` follows the pack's month-day window. The Christmas pack is bundled for 1 December through 6 January. `SCREENSHOT_MODE` stays on garden. Art slots and optional palette roles are documented in `reference/appearance-packs.md`. This is separate from biblical themes.
 - **Vine skin by pack**: Hive `vineSkinByPack` remembers a skin id per season. The rail draws that skin's texture, foliage, and accent. `vineTexturedSkins` (default off) keeps the flat stroke until textured vines are previewed.
 - **Vines Style**: Legacy Hive `vineStyle`. Read once when `vineSkinByPack` is empty (`classic` → `trellis`, `simple` → `flat`).
 - **Audio/Haptics**: Individual toggles for sound and vibration.

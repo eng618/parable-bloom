@@ -50,7 +50,7 @@ _Task-oriented recipes for accomplishing specific real-world tasks._
 _Information-oriented technical descriptions, data schemas, design tokens, and compliance specifications._
 
 - **[Level System Specification](reference/level-system.md)** — JSON data format, coordinate system, occupancy rules, and validation checks.
-- **[Appearance Packs](reference/appearance-packs.md)** — Season art slots, palette overrides, and the Automatic window.
+- **[Appearance Packs](reference/appearance-packs.md)** — Season art slots, palette overrides, the Automatic window, and the Christmas pack.
 - **[Color System & Token Usage](reference/color-usage.md)** — Semantic palettes, dark/light themes, hex codes, and vine color mappings.
 - **[Scripture Licensing & Compliance](reference/scripture-licensing.md)** — Legal guidelines, copyright notices, and translation usage limits.
 - **[Third-Party Attributions](reference/attributions.md)** — Software licenses, audio credits, and graphical asset notices.
