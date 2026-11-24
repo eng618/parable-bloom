@@ -54,12 +54,16 @@ void main() {
     expect(move(onEmail: true, key: 'ArrowDown', shift: true), isNull);
   });
 
-  test('enter on email moves to password and leaves an ime alone', () {
+  test('enter moves from email to password, then submits', () {
     expect(move(onEmail: true, key: 'Enter'), AuthFieldMove.toPassword);
-    expect(move(onPassword: true, key: 'Enter'), isNull);
+    expect(move(onPassword: true, key: 'Enter'), AuthFieldMove.submit);
+    expect(move(onPassword: true, key: 'NumpadEnter'), AuthFieldMove.submit);
     expect(move(onEmail: true, key: 'Enter', composing: true), isNull);
+    expect(move(onPassword: true, key: 'Enter', composing: true), isNull);
     expect(move(onEmail: true, key: 'Enter', keyCode: 229), isNull);
+    expect(move(onPassword: true, key: 'Enter', shift: true), isNull);
     expect(move(onEmail: true, key: 'Enter', repeat: true), isNull);
+    expect(move(onPassword: true, key: 'Enter', repeat: true), isNull);
   });
 
   test('modified keys and keys from outside the fields stay put', () {

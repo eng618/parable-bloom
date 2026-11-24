@@ -99,6 +99,9 @@ class AuthCredentialFieldsState extends State<AuthCredentialFields> {
       case AuthFieldMove.leaveBackward:
       case null:
         return KeyEventResult.ignored;
+      case AuthFieldMove.submit:
+        widget.onSubmit();
+        return KeyEventResult.handled;
     }
   }
 

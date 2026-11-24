@@ -11,6 +11,9 @@ enum AuthFieldMove {
 
   /// Leave the pair toward the previous control.
   leaveBackward,
+
+  /// Submit the sign-in form.
+  submit,
 }
 
 /// Decides how email and password should respond to a field-navigation key.
@@ -19,6 +22,9 @@ enum AuthFieldMove {
 /// [composing] and [keyCode] `229` are an IME confirming text. That Enter stays
 /// in the field. Modifier combinations other than Shift+Tab stay with the
 /// browser. A repeated Enter does not advance again.
+///
+/// Enter on the password field returns [AuthFieldMove.submit]. A form with two
+/// text fields and no submit button does not submit on its own.
 AuthFieldMove? authCredentialFieldMove({
   required bool onEmail,
   required bool onPassword,
@@ -41,11 +47,14 @@ AuthFieldMove? authCredentialFieldMove({
     return null;
   }
 
-  if (key == 'Enter') {
-    if (repeat || shift || !onEmail) {
+  if (key == 'Enter' || key == 'NumpadEnter') {
+    if (repeat || shift) {
       return null;
     }
-    return AuthFieldMove.toPassword;
+    if (onEmail) {
+      return AuthFieldMove.toPassword;
+    }
+    return AuthFieldMove.submit;
   }
 
   final tabForward = key == 'Tab' && !shift;

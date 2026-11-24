@@ -29,7 +29,8 @@ final Map<int, _AuthFieldDom> _domByViewId = <int, _AuthFieldDom>{};
 /// Flutter takes Tab on the window before the browser can move between these
 /// inputs, so the fields move focus themselves. Tab and Shift+Tab walk email,
 /// password, then the next Flutter control. Arrow Up, Arrow Down, and the
-/// platform previous and next keys switch between the two fields.
+/// platform previous and next keys switch between the two fields. Enter on
+/// email focuses password. Enter on password submits the form.
 class AuthCredentialFields extends StatefulWidget {
   const AuthCredentialFields({
     super.key,
@@ -364,6 +365,9 @@ class AuthCredentialFieldsState extends State<AuthCredentialFields> {
         if (_moveToFlutterNeighbor(forward: false)) {
           dom.email.blur();
         }
+        break;
+      case AuthFieldMove.submit:
+        submit();
         break;
     }
   }

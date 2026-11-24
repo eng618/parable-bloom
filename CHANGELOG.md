@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Enter on the web sign-in password field submits. The form has two text fields and no submit button, so the browser was dropping that key. Enter on email still moves to password.
 - Sign-in keyboard focus moves from email to password. On the web, Tab and Shift+Tab walk the two fields and then the next control. Arrow Up, Arrow Down, and the mobile previous and next keys switch between the fields on web and on the device. Enter on email moves to password. Enter on password still submits.
 - Grid dots ahead of a clearing vine throb as its tail uncovers them, including dots that already throbbed for the vine that used to sit there. A throb still playing is left alone.
 - Flutter lint follows Flutter stable's Material split. App and test code import `package:material_ui/material_ui.dart`, and Cupertino localizations come from `package:cupertino_ui/cupertino_ui.dart`. Generated l10n still names the old delegates, so `l10n.yaml` ignores that deprecation. The app registers the new delegates itself.
