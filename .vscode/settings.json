@@ -13,5 +13,6 @@
     "hugo": true,
     "./level-builder": true
   },
-  "java.configuration.updateBuildConfiguration": "automatic"
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "oxc.enable.oxfmt": true
 }
