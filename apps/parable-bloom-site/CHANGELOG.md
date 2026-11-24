@@ -1,3 +1,18 @@
+## 0.5.31 (2026-11-24)
+
+### 🚀 Features
+
+- **auth:** improve keyboard navigation for sign-in fields ([f56d4d6](https://github.com/eng618/parable-bloom/commit/f56d4d6))
+- **grid:** enhance grid dot throbbing behavior during vine clears ([c0acf6c](https://github.com/eng618/parable-bloom/commit/c0acf6c))
+
+### 🏡 Chore
+
+- **release:** update release workflow and versioning process ([04fec97](https://github.com/eng618/parable-bloom/commit/04fec97))
+
+### ❤️ Thank You
+
+- Eric N. Garcia @eng618
+
 ## 0.5.30 (2026-11-19)
 
 ### 🚀 Features
