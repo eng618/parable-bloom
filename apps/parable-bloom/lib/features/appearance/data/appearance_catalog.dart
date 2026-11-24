@@ -340,6 +340,8 @@ class AppearanceCatalog {
     );
   }
 
+  static const Color _defaultRail = Color(0xFF6B4A2E);
+
   static Color? _parseColor(Object? raw) {
     if (raw is! String) return null;
     var hex = raw.trim();
@@ -349,6 +351,14 @@ class AppearanceCatalog {
     final value = int.tryParse(hex, radix: 16);
     if (value == null) return null;
     return Color(value);
+  }
+
+  /// A hex color, or null for `calm` / `contrast` / anything that is not hex.
+  static Color? _parseOptionalColor(Object? raw) {
+    if (raw is! String) return null;
+    final text = raw.trim().toLowerCase();
+    if (text.isEmpty || text == 'calm' || text == 'contrast') return null;
+    return _parseColor(raw);
   }
 
   static List<VineSkin> _parseSkins(String directory, Object? raw) {
@@ -370,15 +380,20 @@ class AppearanceCatalog {
         textureAsset =
             texture.startsWith('assets/') ? texture : '$directory/$texture';
       }
-      if (!flat && textureAsset == null) continue;
+      final arrow = _parseOptionalColor(item['arrow']);
+      final rail = flat ? null : _parseColor(item['rail']) ?? _defaultRail;
       skins.add(
         VineSkin(
           id: id,
           label: label,
           flat: flat,
-          textureAsset: flat ? null : textureAsset,
+          textureAsset: textureAsset,
           foliage: flat ? VineFoliage.none : foliage,
-          accent: _parseColor(item['accent']) ?? VineSkin.defaultAccent,
+          accent:
+              _parseColor(item['accent']) ?? arrow ?? VineSkin.defaultAccent,
+          rail: rail,
+          core: flat ? null : _parseOptionalColor(item['core']),
+          arrow: flat ? null : arrow,
         ),
       );
     }

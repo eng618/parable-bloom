@@ -101,14 +101,13 @@ The game implements several high-performance visual systems within the Flame `Po
   - **Grid Compaction**: Visual layout is compacted (52px cells with 42px spacing) to reduce white space and create a dense, satisfying board.
   - **Visual Profiles**: Uniform 13px thin-tube core (`VineMetrics.tubeWidth`) for every style, with corner rounding (12px radius) baked once into an invariant track polyline so corners never pop during animation.
   - **Sliding-window animation**: a clearing vine is a rigid shape sliding along a fixed track — one scalar head-arc position drives the whole motion with a single global ease (no per-step sawtooth velocity). Off-screen exit is a board-edge clip plus a 63px per-vertex fade band (no unclipped travel; frustum culling valid again).
-  - **GPU vertex strips**: the tube is drawn with one `canvas.drawVertices` call per vine (`Vertices.raw` from reused typed-data buffers), independent of vine length; UVs anchor the texture grain to the board (0.25 world scale) exactly like the legacy shader.
-  - **Baked foliage**: a startup `PictureRecorder` atlas of white leaf/petal/glow tiles per style is tinted at draw time through vertex colors; foliage quads are one extra `drawVertices` per vine, and `Simple` stays flat through the same pipeline.
-  - **Dynamic texture themes**: Classic, Cherry Blossom, and Ethereal keep generated seamless textures (`classic_vine_texture.png`, etc.) as world-anchored `ImageShader` grain over the thin core, tinted with the vine's group colors.
+  - **Stroke skins**: each vine is one or two anti-aliased strokes of the cached centerline, plus one ornament path, plus a triangle arrow. Draw count stays independent of vine length. Flat is a 13px calm stroke. Trellis, blossom, ethereal, and evergreen add a 15px rail, a 7px core, and vector stamps (leaves, blossoms, mist discs, needles). The arrow is drawn last and sized from the 13px stroke.
   - **Organic Node Details**:
-    - **Classic**: Watercolor green ivy leaves growing organically at alternating 45-degree angles along the branch segments (small 0.55x scale, sparse stride).
-    - **Cherry Blossom**: Beautiful programmatically-rendered pink cherry blossoms with bright yellow centers at the segment joints (0.8x scale, sparse stride).
-    - **Ethereal**: Glowing bioluminescent cyber-cyan leaves alongside a soft cyan neon outer-glow (baked halo tile — no runtime `MaskFilter.blur`).
-    - **Simple**: Sleek solid thin-tube paths with compact triangular arrowheads, matching the clean maze aesthetic. No foliage.
+    - **Trellis**: wood rail, calm core, leaf pairs with a midrib, cream arrow.
+    - **Blossom**: warm stem, calm core, five-petal blossoms with a yellow center, rose arrow.
+    - **Ethereal**: mist rail, calm core, soft discs. No runtime `MaskFilter.blur`.
+    - **Evergreen**: wood rail, fixed evergreen core, needle fans and a cranberry dot, candle-gold arrow.
+    - **Flat**: one calm stroke and a lighter arrow in that same family.
 
 ---
 
@@ -118,7 +117,7 @@ We use **Hive** for immediate, offline-capable storage. Key persisted settings i
 
 - **Theme Mode**: System, Light, or Dark.
 - **Season**: Hive `appearancePack` (`auto`, `garden`, or a pack id) selects an appearance pack. `auto` follows the pack's month-day window. The Christmas pack is bundled for 1 December through 6 January. `SCREENSHOT_MODE` stays on garden. Art slots and optional palette roles are documented in `reference/appearance-packs.md`. This is separate from biblical themes.
-- **Vine skin by pack**: Hive `vineSkinByPack` remembers a skin id per season. The rail draws that skin's texture, foliage, and accent. `vineTexturedSkins` (default off) keeps the flat stroke until textured vines are previewed.
+- **Vine skin by pack**: Hive `vineSkinByPack` remembers a skin id per season. The rail strokes that skin (rail, core, ornaments, arrow). `vineTexturedSkins` is still stored and does not change the board.
 - **Vines Style**: Legacy Hive `vineStyle`. Read once when `vineSkinByPack` is empty (`classic` → `trellis`, `simple` → `flat`).
 - **Audio/Haptics**: Individual toggles for sound and vibration.
 

@@ -26,8 +26,10 @@
     {
       "id": "trellis",
       "label": "Evergreen",
-      "texture": "trellis.png",
-      "foliage": "leaves",
+      "foliage": "needles",
+      "rail": "#6B4A2E",
+      "core": "#1B4332",
+      "arrow": "#C6A15B",
       "accent": "#C6A15B"
     },
     {

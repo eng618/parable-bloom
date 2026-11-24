@@ -53,9 +53,8 @@ final sfxEnabledProvider = NotifierProvider<SfxEnabledNotifier, bool>(
   SfxEnabledNotifier.new,
 );
 
-/// Play-pass gate for textured vine skins. Default off, so the board draws
-/// the flat stroke. The saved skin id is left in place. Turning this on
-/// previews the active pack's trellis, blossom, and ethereal strips.
+/// Older saves store this flag. The board ignores it: vine skins draw on
+/// the stroke path. The legacy style notifier still reads it.
 final vineTexturedSkinsEnabledProvider =
     NotifierProvider<VineTexturedSkinsEnabledNotifier, bool>(
   VineTexturedSkinsEnabledNotifier.new,

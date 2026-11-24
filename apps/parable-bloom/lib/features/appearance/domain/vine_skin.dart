@@ -1,13 +1,14 @@
 import 'package:material_ui/material_ui.dart';
 
-/// How foliage quads are baked for a textured vine skin.
+/// Ornament stamped along a vine body.
 ///
-/// Counts match the rail atlas: two mirrored leaves, one blossom, or a glow
-/// plus two leaves. [none] is the flat stroke, which draws no foliage.
+/// [leaves], [blossom], [glow], and [needles] are vector stamps on the
+/// stroked vine. [none] is the flat stroke and draws no ornaments.
 enum VineFoliage {
   leaves,
   blossom,
   glow,
+  needles,
   none;
 
   static VineFoliage? parse(String? raw) {
@@ -15,6 +16,7 @@ enum VineFoliage {
       'leaves' => VineFoliage.leaves,
       'blossom' => VineFoliage.blossom,
       'glow' => VineFoliage.glow,
+      'needles' => VineFoliage.needles,
       'none' => VineFoliage.none,
       _ => null,
     };
@@ -23,8 +25,9 @@ enum VineFoliage {
 
 /// One vine look published by an appearance pack.
 ///
-/// The rail renderer loads [textureAsset], draws [foliage], and paints caps
-/// in [accent]. [flat] is the stroked vine and draws no trellis strip.
+/// The rail strokes [rail] (when set) and then a core. A null [core] uses
+/// the vine's own calm color. A null [arrow] uses a lighter shade of that
+/// core. [flat] is a single stroke and draws no rail or ornaments.
 class VineSkin {
   const VineSkin({
     required this.id,
@@ -33,6 +36,9 @@ class VineSkin {
     this.textureAsset,
     this.flat = false,
     this.accent = defaultAccent,
+    this.rail,
+    this.core,
+    this.arrow,
   });
 
   /// Hive id. Garden maps the old `classic` style to `trellis`.
@@ -41,18 +47,27 @@ class VineSkin {
   /// Settings label.
   final String label;
 
-  /// Flutter asset key of the trellis strip. Null when [flat] is set.
+  /// Legacy trellis image. The stroke skins do not sample it.
   final String? textureAsset;
 
-  /// Stroked vector vine. Ignores [textureAsset].
+  /// Single calm-colored stroke. Ignores [rail] and [foliage].
   final bool flat;
 
   final VineFoliage foliage;
 
-  /// Arrow and cap color for a textured skin.
+  /// Legacy accent. Stroke skins use [arrow] for the head.
   final Color accent;
 
-  /// Classic trellis accent. Matches `VineMetrics.accentColor` for classic.
+  /// Outer stroke. Null on the flat skin.
+  final Color? rail;
+
+  /// Inner stroke. Null means the vine's calm color.
+  final Color? core;
+
+  /// Arrow fill. Null means a lighter shade of the body.
+  final Color? arrow;
+
+  /// Classic trellis accent. Matches the old leaf green.
   static const Color defaultAccent = Color(0xFF5E9C33);
 
   /// Maps a legacy `vineStyle` Hive value onto a garden skin id.
@@ -72,10 +87,22 @@ class VineSkin {
         other.textureAsset == textureAsset &&
         other.flat == flat &&
         other.foliage == foliage &&
-        other.accent == accent;
+        other.accent == accent &&
+        other.rail == rail &&
+        other.core == core &&
+        other.arrow == arrow;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, label, textureAsset, flat, foliage, accent);
+  int get hashCode => Object.hash(
+        id,
+        label,
+        textureAsset,
+        flat,
+        foliage,
+        accent,
+        rail,
+        core,
+        arrow,
+      );
 }

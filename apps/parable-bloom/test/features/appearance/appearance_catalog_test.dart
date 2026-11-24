@@ -92,12 +92,21 @@ void main() {
         AppearancePack.garden.asset(AppearanceSlot.boardNight),
       );
       expect(christmas.vineSkins.map((skin) => skin.id), ['trellis', 'flat']);
-      expect(
-        christmas.vineSkins.first.textureAsset,
-        'assets/themes/christmas/trellis.png',
-      );
-      expect(christmas.vineSkins.first.flat, isFalse);
+      final evergreen = christmas.vineSkins.first;
+      expect(evergreen.textureAsset, isNull);
+      expect(evergreen.foliage, VineFoliage.needles);
+      expect(evergreen.rail, const Color(0xFF6B4A2E));
+      expect(evergreen.core, const Color(0xFF1B4332));
+      expect(evergreen.arrow, const Color(0xFFC6A15B));
+      expect(evergreen.flat, isFalse);
       expect(christmas.vineSkins.last.flat, isTrue);
+      expect(christmas.vineSkins.last.arrow, isNull);
+      final trellis = catalog.garden.skinOrDefault('trellis');
+      expect(trellis.textureAsset, isNull);
+      expect(trellis.rail, const Color(0xFF6B4A2E));
+      expect(trellis.core, isNull);
+      expect(trellis.arrow, const Color(0xFFF3E2B8));
+      expect(catalog.garden.skinOrDefault('flat').rail, isNull);
       expect(christmas.lightColors.primary, const Color(0xFF1B4332));
       expect(christmas.darkColors.primary, const Color(0xFFC5D5C0));
       expect(christmas.lightColors.secondary, const Color(0xFF9B3A3A));
@@ -255,19 +264,19 @@ void main() {
       addTearDown(container.dispose);
 
       expect(container.read(activeVineSkinProvider).id, 'trellis');
-      expect(container.read(renderedVineSkinProvider).id, 'flat');
+      expect(container.read(renderedVineSkinProvider).id, 'trellis');
     });
 
-    test('the texture gate previews the saved skin without rewriting it',
-        () async {
+    test('the texture flag does not change the skin the board draws', () async {
       box.store['vineStyle'] = 'classic';
       final container = _container(box);
       addTearDown(container.dispose);
 
+      expect(container.read(renderedVineSkinProvider).id, 'trellis');
+
       await container
           .read(vineTexturedSkinsEnabledProvider.notifier)
           .setEnabled(true);
-
       expect(container.read(renderedVineSkinProvider).id, 'trellis');
       expect(box.store['vineStyle'], 'classic');
 
@@ -280,7 +289,8 @@ void main() {
           .read(vineTexturedSkinsEnabledProvider.notifier)
           .setEnabled(false);
       expect(container.read(activeVineSkinProvider).id, 'blossom');
-      expect(container.read(renderedVineSkinProvider).flat, isTrue);
+      expect(container.read(renderedVineSkinProvider).id, 'blossom');
+      expect(container.read(renderedVineSkinProvider).flat, isFalse);
     });
 
     test('a saved skin stays on its own pack', () async {
@@ -297,10 +307,8 @@ void main() {
     });
   });
 
-  testWidgets('vine control lists pack skins when textures are enabled',
-      (tester) async {
+  testWidgets('vine control lists every pack skin', (tester) async {
     final box = _MemoryBox();
-    box.store['vineTexturedSkins'] = true;
 
     await tester.pumpWidget(
       ProviderScope(
@@ -319,6 +327,7 @@ void main() {
 
     expect(find.text('Trellis'), findsOneWidget);
     expect(find.text('Blossom'), findsOneWidget);
+    expect(find.text('Ethereal'), findsOneWidget);
     expect(find.text('Flat'), findsOneWidget);
 
     await tester.tap(find.text('Flat'));

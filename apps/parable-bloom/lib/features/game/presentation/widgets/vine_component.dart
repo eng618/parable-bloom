@@ -17,6 +17,7 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_dot_r
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_bloom_renderer.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_foliage_atlas.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_ornament_path.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_rail_draw.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_slide_controller.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_strip_mesh.dart';
@@ -81,6 +82,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   double? _cacheUvPhase;
   bool _railIdleCacheValid = false;
   ui.Path? _cachedSimplePath;
+  ui.Path? _cachedOrnamentFill;
+  ui.Path? _cachedOrnamentDetail;
+  VineFoliage? _cacheFoliageKind;
 
   /// Per-vine body-arc phase offset into the texture so vines sample
   /// different parts of the trellis image (deterministic from the vine id).
@@ -164,6 +168,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         _railIdleCacheValid &&
         _cacheStripTint == stripTint &&
         _cacheFoliageTint == foliageTint &&
+        _cacheFoliageKind == foliageKind &&
         _cacheUvPhase == uvPhase) {
       return VineRailDraw(
         track: track,
@@ -171,15 +176,30 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         strip: _cachedStrip,
         foliage: _cachedFoliage,
         simplePath: _cachedSimplePath,
+        ornamentFill: _cachedOrnamentFill,
+        ornamentDetail: _cachedOrnamentDetail,
       );
     }
 
     ui.Vertices? strip;
     ui.Vertices? foliage;
     ui.Path? simplePath;
+    ui.Path? ornamentFill;
+    ui.Path? ornamentDetail;
     if (simple) {
-      // Vector-crisp stroked pass: no strip, no foliage quads.
       simplePath = track.windowPath(headArc, windowLength);
+      if (foliageKind != VineFoliage.none) {
+        final ornaments = VineOrnamentPath.build(
+          track: track,
+          headArc: headArc,
+          windowLength: windowLength,
+          stride: foliageStride,
+          foliage: foliageKind,
+          scratch: _scratch,
+        );
+        ornamentFill = ornaments.fill;
+        ornamentDetail = ornaments.detail;
+      }
     } else {
       _stripBuffers ??= VineStripMesh.allocate(track);
       VineStripMesh.writeWindow(
@@ -220,6 +240,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         strip: strip,
         foliage: foliage,
         simplePath: simplePath,
+        ornamentFill: ornamentFill,
+        ornamentDetail: ornamentDetail,
       );
     }
 
@@ -227,8 +249,11 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _cachedStrip = strip;
     _cachedFoliage = foliage;
     _cachedSimplePath = simplePath;
+    _cachedOrnamentFill = ornamentFill;
+    _cachedOrnamentDetail = ornamentDetail;
     _cacheStripTint = stripTint;
     _cacheFoliageTint = foliageTint;
+    _cacheFoliageKind = foliageKind;
     _cacheUvPhase = uvPhase;
     _railIdleCacheValid = true;
     return VineRailDraw(
@@ -237,6 +262,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       strip: strip,
       foliage: foliage,
       simplePath: simplePath,
+      ornamentFill: ornamentFill,
+      ornamentDetail: ornamentDetail,
     );
   }
 

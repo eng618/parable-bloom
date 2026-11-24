@@ -136,23 +136,26 @@ class AppearancePack {
       VineSkin(
         id: 'trellis',
         label: 'Trellis',
-        textureAsset: 'assets/art/classic_vine_texture.png',
         foliage: VineFoliage.leaves,
-        accent: VineSkin.defaultAccent,
+        accent: Color(0xFFF3E2B8),
+        rail: Color(0xFF6B4A2E),
+        arrow: Color(0xFFF3E2B8),
       ),
       VineSkin(
         id: 'blossom',
         label: 'Blossom',
-        textureAsset: 'assets/art/blossom_vine_texture.png',
         foliage: VineFoliage.blossom,
         accent: Color(0xFFDE7FA4),
+        rail: Color(0xFF8D5A4A),
+        arrow: Color(0xFFDE7FA4),
       ),
       VineSkin(
         id: 'ethereal',
         label: 'Ethereal',
-        textureAsset: 'assets/art/ethereal_vine_texture.png',
         foliage: VineFoliage.glow,
         accent: Color(0xFF74F4FF),
+        rail: Color(0x66D5F4F6),
+        arrow: Color(0xFF74F4FF),
       ),
       VineSkin(
         id: 'flat',
@@ -234,19 +237,8 @@ class AppearancePack {
     }
   }
 
-  /// Skins the settings control may offer.
-  ///
-  /// Textured skins stay hidden while the play-pass gate is off. The flat
-  /// stroke is always offered.
-  List<VineSkin> skinsForPicker({required bool textured}) {
-    if (textured) return vineSkins;
-    final flats = <VineSkin>[
-      for (final skin in vineSkins)
-        if (skin.flat) skin,
-    ];
-    if (flats.isNotEmpty) return flats;
-    return [flatSkin];
-  }
+  /// Skins the settings control offers. Flat stays in the list.
+  List<VineSkin> skinsForPicker() => vineSkins;
 
   @override
   bool operator ==(Object other) {

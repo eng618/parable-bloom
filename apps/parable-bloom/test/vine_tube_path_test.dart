@@ -97,6 +97,17 @@ void main() {
       expect(VineMetrics.tubeWidth, 13.0);
       // 42px pitch minus 13px tube = 29px gap.
       expect(42.0 - VineMetrics.tubeWidth, greaterThan(28.0));
+      expect(42.0 - VineMetrics.railWidth, greaterThan(26.0));
+    });
+
+    test('a flat arrow is a lighter shade of the body', () {
+      const body = Color(0xFF5E8A4A);
+      final arrow = VineMetrics.contrastArrow(body);
+      expect(arrow, isNot(body));
+      expect(
+        HSLColor.fromColor(arrow).lightness,
+        greaterThan(HSLColor.fromColor(body).lightness),
+      );
     });
 
     test('foliage LOD stride', () {

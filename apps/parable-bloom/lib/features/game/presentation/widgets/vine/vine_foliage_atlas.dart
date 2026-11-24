@@ -175,7 +175,7 @@ class VineFoliageMesh {
     const pitch = 42.0;
     final maxAnchor = (windowLength / pitch).ceil().clamp(0, 4096);
     final quadsPerLeaf = switch (foliage) {
-      VineFoliage.leaves => 2, // two mirrored leaves
+      VineFoliage.leaves || VineFoliage.needles => 2,
       VineFoliage.glow => 3, // glow + two mirrored leaves
       VineFoliage.blossom => 1,
       VineFoliage.none => 0,

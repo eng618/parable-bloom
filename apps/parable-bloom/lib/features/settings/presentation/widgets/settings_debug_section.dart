@@ -9,7 +9,7 @@ import '../../../game/application/providers/gameplay_state_providers.dart';
 import '../../../game/application/providers/module_providers.dart';
 import '../../../game/domain/entities/level_data.dart';
 
-/// Debug-only settings: coordinates, animation logs, skins, level picker.
+/// Debug-only settings: coordinates, animation logs, and the level picker.
 class SettingsDebugSection extends ConsumerWidget {
   const SettingsDebugSection({super.key});
 
@@ -17,7 +17,6 @@ class SettingsDebugSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final showCoordinates = ref.watch(debugShowGridCoordinatesProvider);
     final loggingEnabled = ref.watch(debugVineAnimationLoggingProvider);
-    final texturedSkins = ref.watch(vineTexturedSkinsEnabledProvider);
     final selected = ref.watch(debugSelectedLevelProvider);
     final subtitle =
         selected == null ? 'No level selected' : 'Selected: $selected';
@@ -59,27 +58,6 @@ class SettingsDebugSection extends ConsumerWidget {
           onChanged: (value) async {
             await ref
                 .read(debugVineAnimationLoggingProvider.notifier)
-                .setEnabled(value);
-          },
-        ),
-        SwitchListTile(
-          secondary: Icon(
-            Icons.texture,
-            color: texturedSkins
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.6),
-          ),
-          title: const Text('Textured Vine Skins'),
-          subtitle: const Text(
-            'Preview the season\'s trellis skins. Off keeps the flat stroke and leaves the saved skin in place.',
-          ),
-          value: texturedSkins,
-          onChanged: (value) async {
-            await ref
-                .read(vineTexturedSkinsEnabledProvider.notifier)
                 .setEnabled(value);
           },
         ),

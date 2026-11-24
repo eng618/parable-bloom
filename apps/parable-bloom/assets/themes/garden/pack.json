@@ -16,22 +16,28 @@
     {
       "id": "trellis",
       "label": "Trellis",
-      "texture": "assets/art/classic_vine_texture.png",
       "foliage": "leaves",
-      "accent": "#5E9C33"
+      "rail": "#6B4A2E",
+      "core": "calm",
+      "arrow": "#F3E2B8",
+      "accent": "#F3E2B8"
     },
     {
       "id": "blossom",
       "label": "Blossom",
-      "texture": "assets/art/blossom_vine_texture.png",
       "foliage": "blossom",
+      "rail": "#8D5A4A",
+      "core": "calm",
+      "arrow": "#DE7FA4",
       "accent": "#DE7FA4"
     },
     {
       "id": "ethereal",
       "label": "Ethereal",
-      "texture": "assets/art/ethereal_vine_texture.png",
       "foliage": "glow",
+      "rail": "#66D5F4F6",
+      "core": "calm",
+      "arrow": "#74F4FF",
       "accent": "#74F4FF"
     },
     {

@@ -1,14 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../../../core/providers/settings_providers.dart';
 import '../../application/appearance_providers.dart';
 import '../../domain/vine_skin.dart';
 
 /// Segmented picker for the active pack's vine skins.
-///
-/// Textured skins stay hidden while [vineTexturedSkinsEnabledProvider] is
-/// off. The saved skin is unchanged; the board draws the flat stroke.
 class VineSkinControl extends ConsumerWidget {
   const VineSkinControl({
     super.key,
@@ -21,9 +17,8 @@ class VineSkinControl extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pack = ref.watch(resolvedAppearancePackProvider);
-    final textured = ref.watch(vineTexturedSkinsEnabledProvider);
     final rendered = ref.watch(renderedVineSkinProvider);
-    final skins = pack.skinsForPicker(textured: textured);
+    final skins = pack.skinsForPicker();
     final selected = skins.any((skin) => skin.id == rendered.id)
         ? rendered.id
         : skins.first.id;
@@ -58,16 +53,12 @@ String vineSkinSubtitle(VineSkin skin) {
   if (skin.flat) {
     return 'Crisp stroke. Easier to read on a busy board.';
   }
-  return switch (skin.id) {
-    'trellis' => 'Wood trellis with leaves wrapped around it',
-    'blossom' => 'Blossoms along the trellis',
-    'ethereal' => 'Soft glow around the trellis',
-    _ => switch (skin.foliage) {
-        VineFoliage.leaves => 'Wood trellis with leaves',
-        VineFoliage.blossom => 'Blossoms along the trellis',
-        VineFoliage.glow => 'Soft glow around the trellis',
-        VineFoliage.none => 'Crisp stroke',
-      },
+  return switch (skin.foliage) {
+    VineFoliage.leaves => 'Wood rail with leaves along the vine',
+    VineFoliage.blossom => 'Blossoms along the vine',
+    VineFoliage.glow => 'A soft mist with a bright core',
+    VineFoliage.needles => 'Wood rail with evergreen needles',
+    VineFoliage.none => 'Crisp stroke',
   };
 }
 
@@ -80,6 +71,7 @@ IconData vineSkinIcon(VineSkin skin, {bool outlined = false}) {
       outlined ? Icons.local_florist_outlined : Icons.local_florist,
     VineFoliage.glow => outlined ? Icons.star_outline : Icons.star,
     VineFoliage.leaves ||
+    VineFoliage.needles ||
     VineFoliage.none =>
       outlined ? Icons.park_outlined : Icons.park,
   };

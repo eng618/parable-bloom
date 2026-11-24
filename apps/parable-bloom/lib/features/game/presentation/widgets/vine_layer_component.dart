@@ -6,11 +6,13 @@ import 'package:parable_bloom/core/providers/settings_providers.dart'
     show VineRenderMode;
 import 'package:parable_bloom/core/services/logger_service.dart';
 import 'package:parable_bloom/features/appearance/domain/appearance_pack.dart';
+import 'package:parable_bloom/features/appearance/domain/vine_skin.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/grid_component.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine_component.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_foliage_atlas.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_ornament_path.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_rail_renderer.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_path_painter.dart';
 
@@ -21,8 +23,8 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_path_
 /// frustum culling, and board-size-aware foliage LOD. Logic and
 /// animation state stay in [VineComponent]; this component only reads.
 ///
-/// Rendering mode: `rail` batches one `drawVertices` strip + one foliage
-/// call per vine (draw calls independent of vine length); `legacy` keeps
+/// Rendering mode: `rail` strokes each vine (a rail, a core, ornaments, and
+/// an arrow) with draw count independent of vine length; `legacy` keeps
 /// the per-frame Path painter for A/B regression.
 class VineLayerComponent extends PositionComponent
     with ParentIsA<GridComponent> {
@@ -138,32 +140,27 @@ class VineLayerComponent extends PositionComponent
         final texW = textureImage?.width ?? 1024;
         final texH = textureImage?.height ?? 1024;
 
-        // Rail tint rules (see [VineRailRenderer.draw]):
-        // - tube strip modulates the real texture: white shows the bark/vine
-        //   detail, [VineMetrics.witheredColor] turns dead vines brown.
-        // - flat stroke: withered bark brown after a failed attempt,
-        //   otherwise the vine's calm palette color.
-        // - foliage quads: per-vine calm color, brown when withered.
-        // - the arrow is the skin accent, brown when withered, and is drawn
-        //   after the body so it stays distinct from the texture.
-        final flatTint = isAttempted ? VineMetrics.witheredColor : calmColor;
-        final arrowTint = isAttempted ? VineMetrics.witheredColor : skin.accent;
-        final tubeTint = (useSimpleVines || textureImage == null)
-            ? flatTint
-            : const Color(0xFFFFFFFF);
-        final capTint = arrowTint;
-        final foliageTint = useSimpleVines
-            ? flatTint
-            : isAttempted
-                ? VineMetrics.witheredColor
-                : calmColor;
+        // Stroke skins. A failed clear paints the rail, core, ornaments,
+        // and arrow in one brown. Otherwise the core is the skin color or
+        // the vine's calm color, and a null arrow is a lighter shade of
+        // that core.
+        final brown = VineMetrics.witheredColor;
+        final coreColor = isAttempted ? brown : (skin.core ?? calmColor);
+        final railColor =
+            skin.rail == null ? null : (isAttempted ? brown : skin.rail);
+        final arrowColor = isAttempted
+            ? brown
+            : (skin.arrow ?? VineMetrics.contrastArrow(coreColor));
+        final ornamentPaints = VineOrnamentPaints.forKind(skin.foliage);
+        final ornamentColor = isAttempted ? brown : ornamentPaints.fill;
+        final ornamentDetailColor = isAttempted ? brown : ornamentPaints.detail;
 
         final rail = comp.prepareRailDraw(
-          simple: useSimpleVines,
-          foliageKind: skin.foliage,
+          simple: true,
+          foliageKind: skin.flat ? VineFoliage.none : skin.foliage,
           foliageStride: isAnimating ? animatingFoliageStride : foliageStride,
-          stripTint: tubeTint,
-          foliageTint: foliageTint,
+          stripTint: coreColor,
+          foliageTint: ornamentColor,
           uvPhase: comp.uvPhase,
           texWidth: texW,
           texHeight: texH,
@@ -172,12 +169,11 @@ class VineLayerComponent extends PositionComponent
         VineRailRenderer.draw(
           canvas: canvas,
           rail: rail,
-          useSimpleVines: useSimpleVines,
-          textureImage: textureImage,
-          foliageAtlasImage: foliageAtlas.image,
-          tubeTint: tubeTint,
-          foliageTint: foliageTint,
-          capTint: capTint,
+          coreColor: coreColor,
+          arrowColor: arrowColor,
+          railColor: railColor,
+          ornamentColor: ornamentColor,
+          ornamentDetailColor: ornamentDetailColor,
         );
         comp.bloom.draw(
           canvas: canvas,

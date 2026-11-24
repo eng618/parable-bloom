@@ -58,12 +58,42 @@ class VineMetrics {
   /// the adjacent segment lengths so tight U-turns can't overshoot.
   static const double cornerRadius = 12.0;
 
-  /// Arrow head length as a multiple of the stroke width. The tip has to
-  /// clear the tube so the direction reads on top of a textured skin.
-  static const double arrowLengthScale = 2.6;
+  /// Outer rail on a cored skin. Lane pitch is 42px, so a 15px rail still
+  /// leaves a gap between parallel vines.
+  static const double railWidth = 15.0;
+
+  /// Living core drawn on top of [railWidth].
+  static const double coreWidth = 7.0;
+
+  /// Arrow head length as a multiple of [tubeWidth]. The head is sized from
+  /// the flat stroke, so a wider rail does not grow the triangle.
+  static const double arrowLengthScale = 2.4;
 
   /// Arrow head half-width as a multiple of [tubeWidth].
-  static const double arrowHalfWidthScale = 1.05;
+  static const double arrowHalfWidthScale = 1.15;
+
+  /// Extra gap behind the arrow tip before an ornament may sit.
+  static const double arrowClearPad = 8.0;
+
+  /// Leaf length along the vine. Ornaments also stop this far short of the
+  /// arrow so a tip cannot land on the head.
+  static const double leafLength = 12.0;
+
+  /// Furthest an ornament may extend off the centerline.
+  static const double ornamentReach = 11.0;
+
+  static double get arrowClearArc =>
+      tubeWidth * arrowLengthScale + arrowClearPad + leafLength * 0.6;
+
+  /// Lighter shade of [body] for a flat arrow. The head stays in the vine's
+  /// own family and does not pick up a pack accent.
+  static Color contrastArrow(Color body) {
+    final hsl = HSLColor.fromColor(body);
+    return hsl
+        .withLightness((hsl.lightness + 0.28).clamp(0.0, 0.92))
+        .withSaturation((hsl.saturation * 0.7).clamp(0.0, 1.0))
+        .toColor();
+  }
 
   /// Foliage sizes relative to [tubeWidth]. Deliberately small so leaves
   /// and blossoms never bridge the lane gap.
@@ -110,7 +140,7 @@ extension VineSkinLegacyStyle on VineSkin {
     return switch (foliage) {
       VineFoliage.blossom => VineStyle.blossom,
       VineFoliage.glow => VineStyle.ethereal,
-      VineFoliage.leaves => VineStyle.classic,
+      VineFoliage.leaves || VineFoliage.needles => VineStyle.classic,
       VineFoliage.none => VineStyle.simple,
     };
   }

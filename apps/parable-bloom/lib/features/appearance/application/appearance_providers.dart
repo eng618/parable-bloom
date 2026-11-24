@@ -2,7 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/infrastructure_providers.dart';
-import '../../../core/providers/settings_providers.dart';
 import '../data/appearance_catalog.dart';
 import '../domain/appearance_pack.dart';
 import '../domain/vine_skin.dart';
@@ -95,20 +94,17 @@ class VineSkinByPackNotifier extends Notifier<Map<String, String>> {
   }
 }
 
-/// Skin the player picked for the active pack, before the texture gate.
+/// Skin the player picked for the active pack.
 final activeVineSkinProvider = Provider<VineSkin>((ref) {
   final pack = ref.watch(resolvedAppearancePackProvider);
   final byPack = ref.watch(vineSkinByPackProvider);
   return pack.skinOrDefault(byPack[pack.id]);
 });
 
-/// Skin the board draws.
+/// Skin the board draws. The same skin the player picked.
 ///
-/// `vineTexturedSkins` (default off) is the play-pass gate. While it is off,
-/// a textured choice stays saved and the board draws the pack's flat stroke.
+/// Hive `vineTexturedSkins` is left in place so older saves still open.
+/// It does not change this skin. Stroke skins draw without that gate.
 final renderedVineSkinProvider = Provider<VineSkin>((ref) {
-  final skin = ref.watch(activeVineSkinProvider);
-  final textured = ref.watch(vineTexturedSkinsEnabledProvider);
-  if (textured || skin.flat) return skin;
-  return ref.watch(resolvedAppearancePackProvider).flatSkin;
+  return ref.watch(activeVineSkinProvider);
 });

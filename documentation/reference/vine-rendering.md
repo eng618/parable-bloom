@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-11-20: a grid dot throbs again when a later clearing vine uncovers it)
+Date: 2026-10-19 (last updated 2026-11-23: pack skins are a rail stroke, a core stroke, vector ornaments, and a triangle arrow)
 
 ## Why a redesign
 
@@ -35,9 +35,9 @@ lib/features/game/presentation/widgets/
   vine/vine_slide_controller.dart  scalar phase machine (replaces VineAnimator)
   vine/vine_foliage_atlas.dart startup-baked white leaf atlas + quad writer
   vine/vine_rail_draw.dart     per-frame draw payload record
-  vine/vine_rail_renderer.dart native pass (drawVertices strips + caps +
-                               arrow for textured styles; AA stroked path
-                               for the simple style)
+  vine/vine_rail_renderer.dart native pass (AA stroked rail + core,
+                               vector ornaments, triangle arrow)
+  vine/vine_ornament_path.dart leaf, blossom, mist, and needle stamps
   vine/vine_path_painter.dart  legacy painter (legacy mode only; still samples
                                the full-scene JPEG textures)
   vine/vine_animator.dart      legacy step animator (legacy mode only)
@@ -82,18 +82,38 @@ lib/features/game/presentation/widgets/
 - Per-vertex colors encode tint. A clearing vine does not fade: it is drawn
   until the tail has left the viewport, then the component is removed.
   Idle vines are still culled to the board rect.
-- Tube width varies by style: `VineMetrics.tubeWidth` (13px) for the flat
-  vector stroke, `VineMetrics.texturedTubeWidth` (18px) for the textured
-  skins — the wrapped-vine pattern needs the extra width to read.
+- The player vine is a stroke. Flat is `VineMetrics.tubeWidth` (13px). A
+  cored skin adds `VineMetrics.railWidth` (15px) under `VineMetrics.coreWidth`
+  (7px). The old photo wrap is not what the board draws.
 
-### Skin texture: real trellis+ivy with body-pinned wrap UVs
+### Skin: rail, core, ornaments, arrow
 
-Textured styles sample the real trellis/ivy texture images
-(`assets/art/classic_vine_texture.png`, `blossom_vine_texture.png`,
-`ethereal_vine_texture.png`) instead of a baked atlas — this is what gives
-the wood grain and vine wrapping their natural, non-repeating look.
+Pack skins draw on the anti-aliased centerline. A square painting sampled
+through a few dozen pixels of its middle cannot read as a wrapped vine at
+this width, and `drawVertices` is never anti-aliased, so the body stays a
+stroke.
 
-The garden appearance pack records those three files, plus the flat stroke, as vine skins (`trellis`, `blossom`, `ethereal`, `flat`). The Christmas pack adds `assets/themes/christmas/trellis.png` (wood with evergreen in the center columns the tube samples) and its own flat stroke. `VineTextureLoader` loads whatever asset key the active skin names, including a season strip outside `assets/art/`. Foliage quad count and the cap accent come from that skin. Textured skins stay behind the debug gate `vineTexturedSkins` until a play pass makes the garden trellis the default. See [Appearance Packs](appearance-packs.md).
+- **Flat**: one 13px stroke in the vine's calm color. The arrow is a lighter
+  shade of that color, with a dark outline.
+- **Trellis**: 15px wood rail, 7px calm core, leaf pairs with a midrib,
+  cream arrow `#F3E2B8`.
+- **Blossom**: warm stem rail, calm core, five-petal blossoms, rose arrow.
+- **Ethereal**: mist rail (the rail color carries the alpha), calm core,
+  soft discs, cyan arrow. No blur.
+- **Christmas evergreen**: wood rail, fixed evergreen core `#1B4332`, needle
+  fans and a cranberry dot, candle-gold arrow.
+
+Ornaments are vector paths from `VineOrnamentPath`, one fill and one detail
+path per vine, cached while the vine is idle. They stop
+`VineMetrics.arrowClearArc` behind the head and stay within
+`VineMetrics.ornamentReach` of the centerline. A failed clear paints the
+rail, the core, the ornaments, and the arrow in `VineMetrics.witheredColor`.
+
+The arrow is `VineTubePath.buildArrowHead`, sized from the 13px stroke, drawn
+last. Hive `vineTexturedSkins` does not change which skin is drawn. See
+[Appearance Packs](appearance-packs.md).
+
+The cylindrical wrap below is the old strip mesh. The board does not call it.
 
 Each texture is wrapped around the tube with **cylindrical wrap UVs** pinned
 to the vine body:
@@ -117,11 +137,9 @@ real bark/vine detail shows. A failed clear attempt modulates the strip with
 `VineMetrics.witheredColor`, turning dead vines brown naturally (like dead
 vines on wood) — no separate withered tile needed.
 
-The old baked sine-coil atlas and its choppy repeating oval "buds" are gone;
-the real texture carries the vine detail. The arrow is drawn last, in the
-skin accent, with a dark outline, so the direction stays readable on the
-bark. A failed clear paints that arrow brown. The flat stroke keeps the
-vine's own color and uses the same outlined arrow.
+The old baked sine-coil atlas and its choppy repeating oval "buds" are gone.
+The strip mesh is still in the tree for that UV math. Pack skins do not
+sample it.
 
 - Idle vines freeze their built `ui.Vertices` (keyed on tint × skin tile);
   animating vines rebuild only the window each frame.
@@ -138,10 +156,9 @@ DPI-independent pass:
   interpolating mid-corner when an edge lands inside a corner arc.
   `O(fine points in window)` per frame — a few hundred points for a 40-cell
   bind; idle vines cache the built `Path` tint-keyed like the `Vertices`.
-- Draw = one `drawPath` stroke (`VineMetrics.tubeWidth`, round cap, round
-  join, flat tint, no shader/blur) + one solid `VineTubePath.buildArrowHead`
-  triangle at the head. Tail cap coverage comes free from the round stroke
-  cap.
+- Draw = the centerline stroke (one stroke for flat, rail then core for a
+  cored skin), the ornament paths, then the outlined arrow. Tail coverage
+  comes from the round stroke cap. No shader and no blur.
 - The stroke stays at full alpha for the whole exit. Tail and head vacate
   together, as one rigid vine, and keep going across the margin around the
   grid until the tail has left the screen.
