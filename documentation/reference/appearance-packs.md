@@ -122,9 +122,9 @@ Settings → Appearance → Season lists Automatic and every loaded pack. Reset 
 
 The garden manifest records four skins: `trellis`, `blossom`, `ethereal`, and `flat`. Foliage is `leaves`, `blossom`, `glow`, `needles`, or `none`. A skin does not need a texture file.
 
-`rail` is the outer stroke. `core` is a hex color or `calm` (the vine's own color). `arrow` is a hex color or `contrast` (a lighter shade of the body). Flat leaves `rail` and `arrow` empty: one calm stroke, and an arrow in that lighter shade.
+`rail` is the outer stroke. `core` is a hex color or `calm` (the vine's own color). `vine` is the winding stroke on a wood shaft, or the calm color when it is omitted. `arrow` is a hex color or `contrast` (a lighter shade of the body). Flat leaves `rail` and `arrow` empty: one calm stroke, and an arrow in that lighter shade.
 
-Christmas publishes `trellis` (label Evergreen: wood rail, fixed evergreen core, needle stamps, candle-gold arrow) and `flat`. It does not republish blossom or ethereal.
+Christmas publishes `trellis` (label Evergreen: wood shaft, evergreen vine winding around it, needle stamps, candle-gold arrow) and `flat`. It does not republish blossom or ethereal.
 
 Hive `vineSkinByPack` stores a skin id per pack id, so a holiday choice does not replace the garden choice. A legacy `vineStyle` of `classic` reads as garden `trellis`, and `simple` reads as `flat`, when the per-pack map is still empty.
 

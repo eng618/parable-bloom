@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-11-23: pack skins are a rail stroke, a core stroke, vector ornaments, and a triangle arrow)
+Date: 2026-10-19 (last updated 2026-11-24: the shaft and arrow are the trellis; a thin vine winds around them)
 
 ## Why a redesign
 
@@ -36,7 +36,7 @@ lib/features/game/presentation/widgets/
   vine/vine_foliage_atlas.dart startup-baked white leaf atlas + quad writer
   vine/vine_rail_draw.dart     per-frame draw payload record
   vine/vine_rail_renderer.dart native pass (AA stroked rail + core,
-                               vector ornaments, triangle arrow)
+                               winding vine, vector ornaments, triangle arrow)
   vine/vine_ornament_path.dart leaf, blossom, mist, and needle stamps
   vine/vine_path_painter.dart  legacy painter (legacy mode only; still samples
                                the full-scene JPEG textures)
@@ -95,19 +95,24 @@ stroke.
 
 - **Flat**: one 13px stroke in the vine's calm color. The arrow is a lighter
   shade of that color, with a dark outline.
-- **Trellis**: 15px wood rail, 7px calm core, leaf pairs with a midrib,
-  cream arrow `#F3E2B8`.
-- **Blossom**: warm stem rail, calm core, five-petal blossoms, rose arrow.
+- **Trellis**: 15px wood rail, 7px lighter wood core, a 2.5px vine in the
+  calm color winding around the shaft, small leaves on that wind, cream
+  arrow `#F3E2B8`.
+- **Blossom**: warm wood rail, lighter wood core, the same winding vine,
+  small five-petal cherry blossoms and tiny leaves, cream arrow. Petals stay
+  `#DE7FA4` with a gold center. The arrow is the trellis finial.
 - **Ethereal**: mist rail (the rail color carries the alpha), calm core,
-  soft discs, cyan arrow. No blur.
-- **Christmas evergreen**: wood rail, fixed evergreen core `#1B4332`, needle
-  fans and a cranberry dot, candle-gold arrow.
+  soft discs on the same wind, cyan arrow. No separate vine stroke and no blur.
+- **Christmas evergreen**: wood rail, lighter wood core, a fixed evergreen
+  vine `#1B4332` winding the shaft, needle fans and a cranberry dot,
+  candle-gold arrow.
 
-Ornaments are vector paths from `VineOrnamentPath`, one fill and one detail
-path per vine, cached while the vine is idle. They stop
-`VineMetrics.arrowClearArc` behind the head and stay within
-`VineMetrics.ornamentReach` of the centerline. A failed clear paints the
-rail, the core, the ornaments, and the arrow in `VineMetrics.witheredColor`.
+The wind is one sine, wavelength 56px and amplitude 5.5px, shared by the
+stroke and the stamps. Ornaments are vector paths from `VineOrnamentPath`,
+cached while the vine is idle. They stop `VineMetrics.arrowClearArc` behind
+the head and stay within `VineMetrics.ornamentReach` of the centerline. A
+failed clear paints the rail, the core, the wind, the ornaments, and the
+arrow in `VineMetrics.witheredColor`.
 
 The arrow is `VineTubePath.buildArrowHead`, sized from the 13px stroke, drawn
 last. Hive `vineTexturedSkins` does not change which skin is drawn. See

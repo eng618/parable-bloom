@@ -139,6 +139,7 @@ class AppearancePack {
         foliage: VineFoliage.leaves,
         accent: Color(0xFFF3E2B8),
         rail: Color(0xFF6B4A2E),
+        core: Color(0xFFC4A574),
         arrow: Color(0xFFF3E2B8),
       ),
       VineSkin(
@@ -147,7 +148,8 @@ class AppearancePack {
         foliage: VineFoliage.blossom,
         accent: Color(0xFFDE7FA4),
         rail: Color(0xFF8D5A4A),
-        arrow: Color(0xFFDE7FA4),
+        core: Color(0xFFE0C2A4),
+        arrow: Color(0xFFF3E2B8),
       ),
       VineSkin(
         id: 'ethereal',

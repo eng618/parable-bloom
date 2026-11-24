@@ -73,4 +73,29 @@ void main() {
       );
     }
   });
+
+  test(
+      'the winding vine is drawn for blossom and omitted when there is no foliage',
+      () {
+    final blossom = VineOrnamentPath.build(
+      track: track,
+      headArc: 0,
+      windowLength: track.windowLength,
+      stride: 1,
+      foliage: VineFoliage.blossom,
+      scratch: Float32List(VineTrack.positionW),
+    );
+    expect(blossom.wind.getBounds().isEmpty, isFalse);
+
+    final none = VineOrnamentPath.build(
+      track: track,
+      headArc: 0,
+      windowLength: track.windowLength,
+      stride: 1,
+      foliage: VineFoliage.none,
+      scratch: Float32List(VineTrack.positionW),
+    );
+    expect(none.wind.getBounds().isEmpty, isTrue);
+    expect(none.fill.getBounds().isEmpty, isTrue);
+  });
 }

@@ -27,7 +27,9 @@ enum VineFoliage {
 ///
 /// The rail strokes [rail] (when set) and then a core. A null [core] uses
 /// the vine's own calm color. A null [arrow] uses a lighter shade of that
-/// core. [flat] is a single stroke and draws no rail or ornaments.
+/// core. A wood skin paints [vine], or the calm color when [vine] is null,
+/// as a thin stroke winding around the shaft. [flat] is a single stroke and
+/// draws no rail or ornaments.
 class VineSkin {
   const VineSkin({
     required this.id,
@@ -38,6 +40,7 @@ class VineSkin {
     this.accent = defaultAccent,
     this.rail,
     this.core,
+    this.vine,
     this.arrow,
   });
 
@@ -63,6 +66,12 @@ class VineSkin {
 
   /// Inner stroke. Null means the vine's calm color.
   final Color? core;
+
+  /// Winding vine on a wood shaft. Null means the vine's calm color.
+  final Color? vine;
+
+  /// True when the shaft is a trellis and a vine should wind around it.
+  bool get winds => !flat && rail != null && foliage != VineFoliage.glow;
 
   /// Arrow fill. Null means a lighter shade of the body.
   final Color? arrow;
@@ -90,6 +99,7 @@ class VineSkin {
         other.accent == accent &&
         other.rail == rail &&
         other.core == core &&
+        other.vine == vine &&
         other.arrow == arrow;
   }
 
@@ -103,6 +113,7 @@ class VineSkin {
         accent,
         rail,
         core,
+        vine,
         arrow,
       );
 }

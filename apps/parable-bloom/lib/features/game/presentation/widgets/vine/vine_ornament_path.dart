@@ -42,21 +42,21 @@ class VineOrnamentPaints {
   }
 }
 
-/// Vector stamps along a vine, as two paths the stroke renderer fills.
+/// Vector stamps along a vine, plus the winding stroke they sit on.
 ///
-/// Stamps sit on the body and stop short of the arrow. The reach off the
-/// centerline stays inside [VineMetrics.ornamentReach].
+/// The wind is a sine off the centerline. Stamps sit on that curve and stop
+/// short of the arrow. The reach off the centerline stays inside
+/// [VineMetrics.ornamentReach].
 class VineOrnamentPath {
   const VineOrnamentPath._();
 
   static const double _pitch = 42.0;
-  static const double _side = 6.0;
 
   /// True when [arc] is far enough behind [headArc] to miss the arrow.
   static bool clearsArrow(double headArc, double arc) =>
       headArc - arc >= VineMetrics.arrowClearArc;
 
-  static ({Path fill, Path detail}) build({
+  static ({Path wind, Path fill, Path detail}) build({
     required VineTrack track,
     required double headArc,
     required double windowLength,
@@ -64,11 +64,14 @@ class VineOrnamentPath {
     required VineFoliage foliage,
     required Float32List scratch,
   }) {
+    final wind = Path();
     final fill = Path();
     final detail = Path();
     if (foliage == VineFoliage.none) {
-      return (fill: fill, detail: detail);
+      return (wind: wind, fill: fill, detail: detail);
     }
+
+    _addWind(wind, track, headArc, windowLength, scratch);
 
     final strideSafe = math.max(1, stride);
     final maxAnchor = (windowLength / _pitch).ceil().clamp(0, 4096);
@@ -78,15 +81,35 @@ class VineOrnamentPath {
       if (!clearsArrow(headArc, arc)) continue;
 
       track.sampleAt(arc, scratch);
-      final origin = Offset(scratch[0], scratch[1]);
+      final origin = _alongWind(
+        Offset(scratch[0], scratch[1]),
+        scratch[2],
+        scratch[3],
+        arc,
+      );
       final nx = scratch[2];
       final ny = scratch[3];
       final tangent = math.atan2(-nx, ny);
       switch (foliage) {
         case VineFoliage.leaves:
-          _addLeafPair(fill, detail, origin, nx, ny, tangent, i.isEven);
+          _addLeaf(
+            fill,
+            detail,
+            origin,
+            tangent,
+            bulge: i.isEven ? 1 : -1,
+            scale: 0.55,
+          );
         case VineFoliage.blossom:
-          _addBlossom(fill, detail, origin, nx, ny);
+          if (i.isEven) {
+            _addBlossom(fill, detail, origin);
+          } else {
+            _addLeaf(fill, detail, origin, tangent, bulge: 1, scale: 0.42);
+            final bud =
+                origin + Offset(math.cos(tangent), math.sin(tangent)) * 5;
+            detail
+                .addOval(Rect.fromCenter(center: bud, width: 2.0, height: 2.8));
+          }
         case VineFoliage.glow:
           _addGlow(fill, origin);
         case VineFoliage.needles:
@@ -95,22 +118,42 @@ class VineOrnamentPath {
           break;
       }
     }
-    return (fill: fill, detail: detail);
+    return (wind: wind, fill: fill, detail: detail);
   }
 
-  static void _addLeafPair(
-    Path fill,
-    Path detail,
-    Offset origin,
-    double nx,
-    double ny,
-    double tangent,
-    bool flip,
+  static void _addWind(
+    Path wind,
+    VineTrack track,
+    double headArc,
+    double windowLength,
+    Float32List scratch,
   ) {
-    final left = origin + Offset(nx, ny) * _side;
-    final right = origin - Offset(nx, ny) * _side;
-    _addLeaf(fill, detail, left, tangent, bulge: flip ? 1 : -1);
-    _addLeaf(fill, detail, right, tangent, bulge: flip ? -1 : 1);
+    final tail = headArc - windowLength;
+    final end = headArc - VineMetrics.arrowClearArc;
+    if (end <= tail) return;
+    var started = false;
+    for (var arc = tail; arc <= end; arc += VineMetrics.windSample) {
+      track.sampleAt(arc, scratch);
+      final point = _alongWind(
+        Offset(scratch[0], scratch[1]),
+        scratch[2],
+        scratch[3],
+        arc,
+      );
+      if (!started) {
+        wind.moveTo(point.dx, point.dy);
+        started = true;
+      } else {
+        wind.lineTo(point.dx, point.dy);
+      }
+    }
+  }
+
+  /// Sine offset shared by the stroke and the stamps.
+  static Offset _alongWind(Offset origin, double nx, double ny, double arc) {
+    final off = math.sin(arc / VineMetrics.windWavelength * math.pi * 2) *
+        VineMetrics.windAmplitude;
+    return origin + Offset(nx, ny) * off;
   }
 
   static void _addLeaf(
@@ -119,9 +162,10 @@ class VineOrnamentPath {
     Offset origin,
     double angle, {
     required double bulge,
+    double scale = 1,
   }) {
-    const len = VineMetrics.leafLength;
-    const halfW = 4.5;
+    final len = VineMetrics.leafLength * scale;
+    final halfW = 4.5 * scale;
     final wy = halfW * bulge;
     fill.addPath(
       Path()
@@ -143,33 +187,30 @@ class VineOrnamentPath {
     );
   }
 
-  static void _addBlossom(
-    Path fill,
-    Path detail,
-    Offset origin,
-    double nx,
-    double ny,
-  ) {
-    final center = origin + Offset(nx, ny) * _side;
-    const orbit = 2.2;
-    const rx = 2.4;
-    const ry = 1.6;
+  /// Five teardrop petals and a gold center. The petal path points along +X.
+  static void _addBlossom(Path fill, Path detail, Offset center) {
+    const petalLen = 2.6;
+    const petalW = 1.35;
+    const orbit = 0.7;
     for (var k = 0; k < 5; k++) {
-      final angle = k * math.pi * 2 / 5;
-      final petal = center + Offset(math.cos(angle), math.sin(angle)) * orbit;
+      final angle = k * math.pi * 2 / 5 - math.pi / 2;
+      final base = center + Offset(math.cos(angle), math.sin(angle)) * orbit;
       fill.addPath(
         Path()
-          ..addOval(Rect.fromCenter(
-              center: Offset.zero, width: rx * 2, height: ry * 2)),
+          ..moveTo(petalLen, 0)
+          ..quadraticBezierTo(petalLen * 0.35, petalW, 0, 0.35)
+          ..quadraticBezierTo(-0.15, 0, 0, -0.35)
+          ..quadraticBezierTo(petalLen * 0.35, -petalW, petalLen, 0)
+          ..close(),
         Offset.zero,
-        matrix4: _matrix(petal, angle),
+        matrix4: _matrix(base, angle),
       );
     }
-    detail.addOval(Rect.fromCircle(center: center, radius: 1.7));
+    detail.addOval(Rect.fromCircle(center: center, radius: 1.05));
   }
 
   static void _addGlow(Path fill, Offset origin) {
-    fill.addOval(Rect.fromCircle(center: origin, radius: 8));
+    fill.addOval(Rect.fromCircle(center: origin, radius: 5));
   }
 
   static void _addNeedles(
@@ -184,14 +225,14 @@ class VineOrnamentPath {
       fill.addPath(
         Path()
           ..moveTo(0, 0)
-          ..lineTo(9, 1.2)
-          ..lineTo(9, -1.2)
+          ..lineTo(7.5, 1.1)
+          ..lineTo(7.5, -1.1)
           ..close(),
         Offset.zero,
         matrix4: _matrix(origin, tangent + delta),
       );
     }
-    final berry = origin + Offset(nx, ny) * 4;
+    final berry = origin + Offset(nx, ny) * 3;
     detail.addOval(Rect.fromCircle(center: berry, radius: 2.2));
   }
 

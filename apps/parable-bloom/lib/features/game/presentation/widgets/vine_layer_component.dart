@@ -151,6 +151,9 @@ class VineLayerComponent extends PositionComponent
         final arrowColor = isAttempted
             ? brown
             : (skin.arrow ?? VineMetrics.contrastArrow(coreColor));
+        final windColor = !skin.winds
+            ? null
+            : (isAttempted ? brown : (skin.vine ?? calmColor));
         final ornamentPaints = VineOrnamentPaints.forKind(skin.foliage);
         final ornamentColor = isAttempted ? brown : ornamentPaints.fill;
         final ornamentDetailColor = isAttempted ? brown : ornamentPaints.detail;
@@ -172,6 +175,7 @@ class VineLayerComponent extends PositionComponent
           coreColor: coreColor,
           arrowColor: arrowColor,
           railColor: railColor,
+          windColor: windColor,
           ornamentColor: ornamentColor,
           ornamentDetailColor: ornamentDetailColor,
         );

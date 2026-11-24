@@ -62,8 +62,22 @@ class VineMetrics {
   /// leaves a gap between parallel vines.
   static const double railWidth = 15.0;
 
-  /// Living core drawn on top of [railWidth].
+  /// Living core drawn on top of [railWidth]. On a wood skin this is the
+  /// lighter slat, not the vine.
   static const double coreWidth = 7.0;
+
+  /// Thin vine that winds around a trellis shaft.
+  static const double vineWidth = 2.5;
+
+  /// One wrap of that vine, a little longer than a cell.
+  static const double windWavelength = 56.0;
+
+  /// How far the wind leaves the centerline. Stamps sit on this curve and
+  /// must still fit inside [ornamentReach].
+  static const double windAmplitude = 5.5;
+
+  /// Step along the track when building the wind stroke.
+  static const double windSample = 6.0;
 
   /// Arrow head length as a multiple of [tubeWidth]. The head is sized from
   /// the flat stroke, so a wider rail does not grow the triangle.

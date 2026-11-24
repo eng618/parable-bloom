@@ -28,7 +28,8 @@
       "label": "Evergreen",
       "foliage": "needles",
       "rail": "#6B4A2E",
-      "core": "#1B4332",
+      "core": "#C4A574",
+      "vine": "#1B4332",
       "arrow": "#C6A15B",
       "accent": "#C6A15B"
     },

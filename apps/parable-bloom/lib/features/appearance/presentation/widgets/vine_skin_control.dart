@@ -54,10 +54,10 @@ String vineSkinSubtitle(VineSkin skin) {
     return 'Crisp stroke. Easier to read on a busy board.';
   }
   return switch (skin.foliage) {
-    VineFoliage.leaves => 'Wood rail with leaves along the vine',
-    VineFoliage.blossom => 'Blossoms along the vine',
-    VineFoliage.glow => 'A soft mist with a bright core',
-    VineFoliage.needles => 'Wood rail with evergreen needles',
+    VineFoliage.leaves => 'Wood trellis with a vine winding through the leaves',
+    VineFoliage.blossom => 'Wood trellis with a vine of small cherry blossoms',
+    VineFoliage.glow => 'A soft mist winding along a bright core',
+    VineFoliage.needles => 'Wood trellis with an evergreen vine',
     VineFoliage.none => 'Crisp stroke',
   };
 }

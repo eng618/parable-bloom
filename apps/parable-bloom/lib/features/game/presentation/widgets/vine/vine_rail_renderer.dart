@@ -10,9 +10,10 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track
 /// Stroke pass for the rail architecture.
 ///
 /// Every pack skin uses this path. A flat skin is one anti-aliased stroke.
-/// A cored skin strokes a rail, then a narrower core, then fills a few
-/// vector ornaments. The arrow is a triangle drawn last, sized from the
-/// flat stroke so the direction stays readable.
+/// A cored skin strokes a rail, then a narrower core. A wood skin then
+/// strokes the winding vine and fills a few vector ornaments. The arrow is
+/// a triangle drawn last, sized from the flat stroke so the direction stays
+/// readable.
 ///
 /// Draw count stays independent of vine length: the centerline and the
 /// ornament paths are cached while the vine is idle. There is no vertex
@@ -27,6 +28,7 @@ class VineRailRenderer {
     required Color coreColor,
     required Color arrowColor,
     Color? railColor,
+    Color? windColor,
     Color ornamentColor = const Color(0x00000000),
     Color ornamentDetailColor = const Color(0x00000000),
   }) {
@@ -55,6 +57,16 @@ class VineRailRenderer {
         path,
         coreColor.withValues(alpha: coreColor.a * alpha),
         VineMetrics.tubeWidth,
+      );
+    }
+
+    final wind = rail.windPath;
+    if (windColor != null && wind != null) {
+      _stroke(
+        canvas,
+        wind,
+        windColor.withValues(alpha: windColor.a * alpha),
+        VineMetrics.vineWidth,
       );
     }
 

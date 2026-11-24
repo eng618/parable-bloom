@@ -393,6 +393,7 @@ class AppearanceCatalog {
               _parseColor(item['accent']) ?? arrow ?? VineSkin.defaultAccent,
           rail: rail,
           core: flat ? null : _parseOptionalColor(item['core']),
+          vine: flat ? null : _parseOptionalColor(item['vine']),
           arrow: flat ? null : arrow,
         ),
       );

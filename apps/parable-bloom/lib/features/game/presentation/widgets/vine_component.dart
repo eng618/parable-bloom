@@ -82,6 +82,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   double? _cacheUvPhase;
   bool _railIdleCacheValid = false;
   ui.Path? _cachedSimplePath;
+  ui.Path? _cachedWindPath;
   ui.Path? _cachedOrnamentFill;
   ui.Path? _cachedOrnamentDetail;
   VineFoliage? _cacheFoliageKind;
@@ -176,6 +177,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         strip: _cachedStrip,
         foliage: _cachedFoliage,
         simplePath: _cachedSimplePath,
+        windPath: _cachedWindPath,
         ornamentFill: _cachedOrnamentFill,
         ornamentDetail: _cachedOrnamentDetail,
       );
@@ -184,6 +186,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     ui.Vertices? strip;
     ui.Vertices? foliage;
     ui.Path? simplePath;
+    ui.Path? windPath;
     ui.Path? ornamentFill;
     ui.Path? ornamentDetail;
     if (simple) {
@@ -197,6 +200,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           foliage: foliageKind,
           scratch: _scratch,
         );
+        windPath = ornaments.wind;
         ornamentFill = ornaments.fill;
         ornamentDetail = ornaments.detail;
       }
@@ -240,6 +244,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         strip: strip,
         foliage: foliage,
         simplePath: simplePath,
+        windPath: windPath,
         ornamentFill: ornamentFill,
         ornamentDetail: ornamentDetail,
       );
@@ -249,6 +254,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     _cachedStrip = strip;
     _cachedFoliage = foliage;
     _cachedSimplePath = simplePath;
+    _cachedWindPath = windPath;
     _cachedOrnamentFill = ornamentFill;
     _cachedOrnamentDetail = ornamentDetail;
     _cacheStripTint = stripTint;
@@ -262,6 +268,7 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
       strip: strip,
       foliage: foliage,
       simplePath: simplePath,
+      windPath: windPath,
       ornamentFill: ornamentFill,
       ornamentDetail: ornamentDetail,
     );

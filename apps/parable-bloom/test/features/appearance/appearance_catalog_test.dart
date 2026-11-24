@@ -96,7 +96,8 @@ void main() {
       expect(evergreen.textureAsset, isNull);
       expect(evergreen.foliage, VineFoliage.needles);
       expect(evergreen.rail, const Color(0xFF6B4A2E));
-      expect(evergreen.core, const Color(0xFF1B4332));
+      expect(evergreen.core, const Color(0xFFC4A574));
+      expect(evergreen.vine, const Color(0xFF1B4332));
       expect(evergreen.arrow, const Color(0xFFC6A15B));
       expect(evergreen.flat, isFalse);
       expect(christmas.vineSkins.last.flat, isTrue);
@@ -104,7 +105,8 @@ void main() {
       final trellis = catalog.garden.skinOrDefault('trellis');
       expect(trellis.textureAsset, isNull);
       expect(trellis.rail, const Color(0xFF6B4A2E));
-      expect(trellis.core, isNull);
+      expect(trellis.core, const Color(0xFFC4A574));
+      expect(trellis.vine, isNull);
       expect(trellis.arrow, const Color(0xFFF3E2B8));
       expect(catalog.garden.skinOrDefault('flat').rail, isNull);
       expect(christmas.lightColors.primary, const Color(0xFF1B4332));

@@ -18,7 +18,7 @@
       "label": "Trellis",
       "foliage": "leaves",
       "rail": "#6B4A2E",
-      "core": "calm",
+      "core": "#C4A574",
       "arrow": "#F3E2B8",
       "accent": "#F3E2B8"
     },
@@ -27,8 +27,8 @@
       "label": "Blossom",
       "foliage": "blossom",
       "rail": "#8D5A4A",
-      "core": "calm",
-      "arrow": "#DE7FA4",
+      "core": "#E0C2A4",
+      "arrow": "#F3E2B8",
       "accent": "#DE7FA4"
     },
     {
