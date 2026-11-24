@@ -14,10 +14,12 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track
 /// length:
 /// - **Textured styles**: one `drawVertices` for the tube strip sampling the
 ///   real trellis/ivy texture with body-pinned cylindrical wrap UVs, one for
-///   the foliage quads, plus two flat tube caps and a canvas arrow head in
-///   the style's vine-accent color.
+///   the foliage quads, a tail cap, and an outlined arrow head in the
+///   skin's accent color. The arrow is last so leaves and bark do not
+///   cover the direction.
 /// - **Simple**: an anti-aliased stroked `Path` along the baked centerline
-///   plus a solid arrow head — vector-crisp edges at any device pixel ratio.
+///   plus that same outlined arrow — vector-crisp edges at any device
+///   pixel ratio.
 ///
 /// Geometry comes straight from the invariant [VineTrack], so the tube
 /// reads as one continuous object through turns and while exiting
@@ -78,8 +80,9 @@ class VineRailRenderer {
     //
     // `drawVertices` never reaches vector-crisp edges (no AA on any
     // backend), so the flat/simple style strokes the baked centerline
-    // instead: round cap + round join, solid tint, plus a solid triangle
-    // head. The vine stays fully opaque until it has left the viewport.
+    // instead: round cap + round join, solid tint, plus an outlined arrow
+    // in the skin accent. The vine stays fully opaque until it has left
+    // the viewport.
     if (useSimpleVines) {
       final alpha = track.fadeAlphaAt(headArc);
       final color = tubeTint.withValues(alpha: tubeTint.a * alpha);
@@ -90,6 +93,7 @@ class VineRailRenderer {
         headArc: headArc,
         windowLength: windowLength,
         color: color,
+        arrowColor: capTint.withValues(alpha: capTint.a * alpha),
       );
       return;
     }
@@ -106,36 +110,7 @@ class VineRailRenderer {
       canvas.drawVertices(rail.strip!, BlendMode.srcOver, _stripPaint);
     }
 
-    // 2. Rounded caps + arrow head in the style's vine-accent color
-    //    (withered state: warm bark brown — the tip reads as the dead
-    //    stem's end). Two tiny canvas draws, far cheaper than baking cap
-    //    fans into the strip.
-    track.sampleAt(headArc, _sample);
-    final head = Offset(_sample[0], _sample[1]);
-    final headAlpha = track.fadeAlphaAt(headArc);
-
-    final tailArc = headArc - windowLength;
-    track.sampleAt(tailArc, _sample);
-    final tail = Offset(_sample[0], _sample[1]);
-    final tailAlpha = track.fadeAlphaAt(tailArc);
-
-    final capRadius = tubeWidth / 2;
-    final capPaint = (_capPaint)..shader = null;
-    capPaint.color = capTint.withValues(alpha: headAlpha);
-    canvas.drawCircle(head, capRadius, capPaint);
-    capPaint.color = capTint.withValues(alpha: tailAlpha);
-    canvas.drawCircle(tail, capRadius, capPaint);
-
-    final headPath =
-        VineTubePath.buildArrowHead(head, track.headDirection, tubeWidth);
-    _headPaint
-      ..shader = null
-      ..color = capTint.withValues(alpha: headAlpha);
-    canvas.drawPath(headPath, _headPaint);
-
-    // 3. Foliage quads (one drawVertices per vine); tint carries the
-    //    per-vine leaf color, or the withered brown after a failed
-    //    attempt.
+    // 2. Foliage before the arrow, so a leaf cannot sit on the head.
     final foliageShader = _shaderFor(foliageAtlasImage);
     if (rail.foliage != null && foliageShader != null) {
       _stripPaint
@@ -143,6 +118,27 @@ class VineRailRenderer {
         ..color = const Color(0xFFFFFFFF);
       canvas.drawVertices(rail.foliage!, BlendMode.srcOver, _stripPaint);
     }
+
+    // 3. Tail cap only. A disc under the head turns the arrow into a blob.
+    final tailArc = headArc - windowLength;
+    track.sampleAt(tailArc, _sample);
+    final tail = Offset(_sample[0], _sample[1]);
+    final tailAlpha = track.fadeAlphaAt(tailArc);
+    final capPaint = (_capPaint)..shader = null;
+    capPaint.color = capTint.withValues(alpha: tailAlpha);
+    canvas.drawCircle(tail, tubeWidth / 2, capPaint);
+
+    // 4. Outlined arrow, last, in the skin accent.
+    track.sampleAt(headArc, _sample);
+    final head = Offset(_sample[0], _sample[1]);
+    final headAlpha = track.fadeAlphaAt(headArc);
+    _drawArrow(
+      canvas: canvas,
+      head: head,
+      direction: track.headDirection,
+      tubeWidth: tubeWidth,
+      fill: capTint.withValues(alpha: headAlpha),
+    );
   }
 
   static void _drawSimpleBody({
@@ -152,6 +148,7 @@ class VineRailRenderer {
     required double headArc,
     required double windowLength,
     required Color color,
+    required Color arrowColor,
   }) {
     final path = rail.simplePath ?? track.windowPath(headArc, windowLength);
     _simplePaint
@@ -161,20 +158,44 @@ class VineRailRenderer {
     canvas.drawPath(path, _simplePaint);
 
     track.sampleAt(headArc, _sample);
-    final head = Offset(_sample[0], _sample[1]);
-    final headPath = VineTubePath.buildArrowHead(
-      head,
-      track.headDirection,
-      VineMetrics.tubeWidth,
+    _drawArrow(
+      canvas: canvas,
+      head: Offset(_sample[0], _sample[1]),
+      direction: track.headDirection,
+      tubeWidth: VineMetrics.tubeWidth,
+      fill: arrowColor,
     );
+  }
+
+  /// Dark rim, then the accent fill. The rim is what keeps the tip readable
+  /// on bark, leaves, and the day or night board.
+  static void _drawArrow({
+    required Canvas canvas,
+    required Offset head,
+    required String direction,
+    required double tubeWidth,
+    required Color fill,
+  }) {
+    final path = VineTubePath.buildArrowHead(head, direction, tubeWidth);
+    _arrowOutline
+      ..shader = null
+      ..strokeWidth = tubeWidth * 0.18
+      ..color = const Color(0xFF24180F).withValues(alpha: fill.a);
+    canvas.drawPath(path, _arrowOutline);
     _headPaint
       ..shader = null
-      ..color = color;
-    canvas.drawPath(headPath, _headPaint);
+      ..style = PaintingStyle.fill
+      ..color = fill;
+    canvas.drawPath(path, _headPaint);
   }
 
   static final Paint _capPaint = Paint()..style = PaintingStyle.fill;
   static final Paint _headPaint = Paint()..style = PaintingStyle.fill;
+
+  static final Paint _arrowOutline = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeJoin = StrokeJoin.round
+    ..strokeCap = StrokeCap.round;
 
   /// Simple-pass stroke: solid AA vector stroke with round caps and joins.
   static final Paint _simplePaint = Paint()

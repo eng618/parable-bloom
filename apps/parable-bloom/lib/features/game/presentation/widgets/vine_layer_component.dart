@@ -144,17 +144,14 @@ class VineLayerComponent extends PositionComponent
         // - flat stroke: withered bark brown after a failed attempt,
         //   otherwise the vine's calm palette color.
         // - foliage quads: per-vine calm color, brown when withered.
-        // - caps and the arrow head use the skin accent, brown when withered.
+        // - the arrow is the skin accent, brown when withered, and is drawn
+        //   after the body so it stays distinct from the texture.
         final flatTint = isAttempted ? VineMetrics.witheredColor : calmColor;
-        Color tubeTint;
-        Color capTint;
-        if (useSimpleVines || textureImage == null) {
-          tubeTint = flatTint;
-          capTint = flatTint;
-        } else {
-          tubeTint = const Color(0xFFFFFFFF);
-          capTint = isAttempted ? VineMetrics.witheredColor : skin.accent;
-        }
+        final arrowTint = isAttempted ? VineMetrics.witheredColor : skin.accent;
+        final tubeTint = (useSimpleVines || textureImage == null)
+            ? flatTint
+            : const Color(0xFFFFFFFF);
+        final capTint = arrowTint;
         final foliageTint = useSimpleVines
             ? flatTint
             : isAttempted

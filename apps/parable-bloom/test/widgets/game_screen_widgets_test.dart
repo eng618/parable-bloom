@@ -6,6 +6,7 @@ import 'package:parable_bloom/features/game/application/providers/camera_provide
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
 import 'package:parable_bloom/core/app_theme.dart';
+import 'package:parable_bloom/core/widgets/garden_leaf_divider.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/garden_encouraging_message.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/game_state_dialogs.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/game_zoom_controls.dart';
@@ -97,6 +98,28 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pump();
       expect(continued, isTrue);
+    });
+  });
+
+  group('GardenLeafDivider', () {
+    testWidgets('draws the ornament across the full width in its own colors',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 320,
+              child: GardenLeafDivider(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final image = tester.widget<Image>(find.byType(Image));
+      expect(image.fit, BoxFit.fitWidth);
+      expect(image.color, isNull);
+      expect(tester.getSize(find.byType(Image)).width, 320);
     });
   });
 

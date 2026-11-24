@@ -94,7 +94,7 @@ Paths that start with `assets/` are used as written. Any other path is relative 
 
 Widgets read slots through `AppearanceScope` and `ThemedAsset`. With no scope mounted, the scope returns the built-in garden pack.
 
-`GardenLeafDivider` paints `ornament.divider` with `BlendMode.srcIn` in the secondary color. Shape and alpha are what show. Paint color in the file is discarded.
+`GardenLeafDivider` draws `ornament.divider` at the full width of the card, in the colors painted in the file. The asset is a wide rule, so a fixed height would shrink it into the middle.
 
 Board plates load through `GardenGame.applyBoardBackgrounds`. Keys under `assets/art/` use the Flame image cache. A season file outside that prefix is decoded from the asset bundle.
 

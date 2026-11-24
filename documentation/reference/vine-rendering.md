@@ -83,7 +83,7 @@ lib/features/game/presentation/widgets/
   until the tail has left the viewport, then the component is removed.
   Idle vines are still culled to the board rect.
 - Tube width varies by style: `VineMetrics.tubeWidth` (13px) for the flat
-  vector stroke, `VineMetrics.texturedTubeWidth` (15px) for the textured
+  vector stroke, `VineMetrics.texturedTubeWidth` (18px) for the textured
   skins — the wrapped-vine pattern needs the extra width to read.
 
 ### Skin texture: real trellis+ivy with body-pinned wrap UVs
@@ -108,8 +108,9 @@ to the vine body:
 - `uvPhase` is a per-vine offset (deterministic from the vine id) so vines
   sample different parts of the trellis image.
 
-`VineMetrics.textureRepeatArc` (63px) is the body arc over which the
-texture advances one full vertical cycle. `VineMetrics.textureUPerPx`
+`VineMetrics.textureRepeatArc` (252px, about six cells) is the body arc over which the
+texture advances one full vertical cycle. A shorter cycle crushed the painting
+into a few pixels. `VineMetrics.textureUPerPx`
 (2.5) scales the cross-tube bark sliver. One `ImageShader` per texture
 (image px, repeated in both axes); draw-time vertex tint stays white so the
 real bark/vine detail shows. A failed clear attempt modulates the strip with
@@ -117,9 +118,10 @@ real bark/vine detail shows. A failed clear attempt modulates the strip with
 vines on wood) — no separate withered tile needed.
 
 The old baked sine-coil atlas and its choppy repeating oval "buds" are gone;
-the real texture carries the vine detail, with head/tail distinction still
-provided by round caps and the arrow head in the style's accent color
-(flat fill, brown when withered).
+the real texture carries the vine detail. The arrow is drawn last, in the
+skin accent, with a dark outline, so the direction stays readable on the
+bark. A failed clear paints that arrow brown. The flat stroke keeps the
+vine's own color and uses the same outlined arrow.
 
 - Idle vines freeze their built `ui.Vertices` (keyed on tint × skin tile);
   animating vines rebuild only the window each frame.

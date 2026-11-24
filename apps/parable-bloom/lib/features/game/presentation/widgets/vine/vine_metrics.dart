@@ -21,7 +21,7 @@ class VineMetrics {
 
   /// Tube width for the textured skin styles. The baked wood-trellis skin
   /// reads better as a slightly wider dowel than the flat vector stroke.
-  static const double texturedTubeWidth = 15.0;
+  static const double texturedTubeWidth = 18.0;
 
   /// Withered palette: one warm bark brown for the tube, foliage, and caps
   /// after a failed clear attempt. Deliberately theme-independent — dead
@@ -37,8 +37,9 @@ class VineMetrics {
   /// bark so the tube reads as a wood dowel, not random color bands.
   ///
   /// [textureRepeatArc] is the body arc (world px) over which the texture
-  /// advances one full vertical cycle. Smaller = tighter pattern repeat.
-  static const double textureRepeatArc = 63.0;
+  /// advances one full vertical cycle. A short arc crushes the painting into
+  /// a few pixels, so the skin never reads. One cycle spans about six cells.
+  static const double textureRepeatArc = 252.0;
 
   /// Texture px sampled per world px across the tube's width for `u`. A
   /// narrow band keeps the tube reading as a single wood strip.
@@ -57,17 +58,17 @@ class VineMetrics {
   /// the adjacent segment lengths so tight U-turns can't overshoot.
   static const double cornerRadius = 12.0;
 
-  /// Arrow head length as a multiple of [tubeWidth]. Chunky enough to read
-  /// as a solid directional marker from across the board.
-  static const double arrowLengthScale = 2.1;
+  /// Arrow head length as a multiple of the stroke width. The tip has to
+  /// clear the tube so the direction reads on top of a textured skin.
+  static const double arrowLengthScale = 2.6;
 
   /// Arrow head half-width as a multiple of [tubeWidth].
   static const double arrowHalfWidthScale = 1.05;
 
   /// Foliage sizes relative to [tubeWidth]. Deliberately small so leaves
   /// and blossoms never bridge the lane gap.
-  static const double leafScale = 0.55;
-  static const double blossomScale = 0.8;
+  static const double leafScale = 0.85;
+  static const double blossomScale = 1.05;
 
   /// Board-size-aware foliage LOD: fewer leaf draws per frame on dense
   /// boards. Animations keep stride 2 so motion still reads as lush.

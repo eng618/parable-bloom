@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Vine skins show a longer stretch of the trellis painting along the vine, on a slightly wider tube. The arrow is drawn last, in the skin accent, with a dark outline, so the direction stays readable on the bark. The flat stroke keeps the vine color and uses that same arrow.
 - Weekly releases run from `.github/workflows/release.yml`. Monday 15:00 UTC, or a manual run, versions the game, the site, and the level builder together when commits have landed since the latest `v*` tag. One conventional-commit specifier is applied to all three, `pubspec.yaml` is synced, and the release tags are pushed. A week with nothing new finishes successfully and does not release.
 - Grid dots follow the light and dark theme. Light mode uses an ink speck that stays visible on the cream garden. Dark mode keeps the beige speck. When a vine clears, each dot throbs as the tail uncovers it, along the whole trail the tail travels, including cells the vine never sat on. A later vine can throb a settled dot again. A blocked vine does not.
 - Settings no longer has a board default zoom. A level eases out onto the whole grid, including when you leave and come back. The reset control returns to that same view.
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The level-complete divider spans the card. The ornament is a wide rule, and scaling it to a fixed height had collapsed it into the middle.
 - Enter on the web sign-in password field submits. The form has two text fields and no submit button, so the browser was dropping that key. Enter on email still moves to password.
 - Sign-in keyboard focus moves from email to password. On the web, Tab and Shift+Tab walk the two fields and then the next control. Arrow Up, Arrow Down, and the mobile previous and next keys switch between the fields on web and on the device. Enter on email moves to password. Enter on password still submits.
 - Grid dots ahead of a clearing vine throb as its tail uncovers them, including dots that already throbbed for the vine that used to sit there. A throb still playing is left alone.
