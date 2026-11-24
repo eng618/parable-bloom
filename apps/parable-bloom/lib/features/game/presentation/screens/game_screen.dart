@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
 import '../../../appearance/application/appearance_providers.dart';
+import '../../../appearance/domain/appearance_pack.dart';
 import '../../../appearance/domain/appearance_slot.dart';
+import '../../../appearance/domain/vine_skin.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../features/game/domain/entities/level_data.dart';
 import '../../../../core/providers/service_providers.dart';
@@ -138,10 +140,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _game?.updateVineStates(next);
     });
 
-    ref.listenManual(vineStyleProvider, (previous, next) {
-      // Single entry point: also handles background visibility for
-      // VineStyle.simple internally.
-      _game?.updateVineStyle(next);
+    ref.listenManual(renderedVineSkinProvider, (previous, next) {
+      if (previous == next) return;
+      _game?.updateVineSkin(next);
     });
 
     ref.listenManual(resolvedAppearancePackProvider, (previous, next) {

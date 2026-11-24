@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:material_ui/material_ui.dart';
 
-import 'package:parable_bloom/core/providers/settings_providers.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_rail_draw.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_tube_path.dart';
@@ -54,7 +53,6 @@ class VineRailRenderer {
   static void draw({
     required Canvas canvas,
     required VineRailDraw rail,
-    required VineStyle vineStyle,
     required bool useSimpleVines,
 
     /// The real trellis/ivy texture for textured styles; null degrades to

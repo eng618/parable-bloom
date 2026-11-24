@@ -74,7 +74,7 @@ class SettingsDebugSection extends ConsumerWidget {
           ),
           title: const Text('Textured Vine Skins'),
           subtitle: const Text(
-            'Show classic/blossom/ethereal vine textures (debug only)',
+            'Preview the season\'s trellis skins. Off keeps the flat stroke and leaves the saved skin in place.',
           ),
           value: texturedSkins,
           onChanged: (value) async {

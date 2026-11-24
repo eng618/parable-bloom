@@ -101,9 +101,11 @@ Settings → Appearance → Season lists Automatic and every loaded pack. Reset 
 
 The garden manifest records four skins: `trellis` (the classic wood texture), `blossom`, `ethereal`, and `flat`. Foliage is `leaves`, `blossom`, `glow`, or `none`.
 
-Hive `vineSkinByPack` stores a skin id per pack id, so a holiday choice does not replace the garden choice. A legacy `vineStyle` of `classic` reads as garden `trellis`, and `simple` reads as `flat`, until the player picks a skin.
+Hive `vineSkinByPack` stores a skin id per pack id, so a holiday choice does not replace the garden choice. A legacy `vineStyle` of `classic` reads as garden `trellis`, and `simple` reads as `flat`, when the per-pack map is still empty.
 
-The rail renderer still draws from `vineStyleProvider`. Textured skins stay behind `vineTexturedSkinsEnabled` (default off), so the board still uses the flat stroke. Pointing the renderer at `activeVineSkinProvider` is the next step, after a play pass of the trellis. See [Vine rendering](vine-rendering.md).
+The rail reads `renderedVineSkinProvider`. That skin picks the trellis strip, the foliage recipe, and the cap accent. `VineTextureLoader` loads the strip by asset key. Files under `assets/art/` use the Flame cache. A season file outside that prefix is decoded from the bundle.
+
+`vineTexturedSkins` (Hive, default off) is the play-pass gate. While it is off, Settings and the pause menu offer the flat stroke, and a saved textured skin stays saved. Settings → Debug → Textured Vine Skins turns the preview on. Flat stays selectable on every pack. See [Vine rendering](vine-rendering.md).
 
 ## What a pack does not change
 

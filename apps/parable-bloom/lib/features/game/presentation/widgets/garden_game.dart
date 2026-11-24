@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/app_theme.dart';
 import '../../../appearance/domain/appearance_pack.dart';
 import '../../../appearance/domain/appearance_slot.dart';
+import '../../../appearance/domain/vine_skin.dart';
 import '../../../../core/game_board_layout.dart';
 import '../../../../core/board_transform.dart';
 import '../../../../core/constants/animation_timing.dart';
@@ -25,6 +27,7 @@ import 'game_event_sink.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
 import 'tap_effect_component.dart';
+import 'vine/vine_metrics.dart';
 import 'vine/vine_texture_loader.dart';
 
 class GardenGame extends FlameGame with TapCallbacks {
@@ -318,11 +321,10 @@ class GardenGame extends FlameGame with TapCallbacks {
     // Center camera
     camera.viewport.size = size;
 
-    // Sync the persisted vine style before the Flutter layer loads the
-    // level: fresh game instances default to classic, and the provider
-    // listener only fires on change, so without this every new level
-    // resets the visuals.
-    updateVineStyle(sink.vineStyle);
+    // Sync the persisted vine skin before the Flutter layer loads the
+    // level. The provider listener only fires on change, so without this
+    // every new level resets the visuals.
+    updateVineSkin(sink.vineSkin);
 
     // Trigger game loaded callback to let the Flutter layer initialize the level
     sink.onGameLoaded(this);
@@ -465,13 +467,52 @@ class GardenGame extends FlameGame with TapCallbacks {
     _updateBackgroundOpacity();
   }
 
-  VineStyle _vineStyle = VineStyle.classic;
-  VineStyle get vineStyle => _vineStyle;
+  VineSkin _vineSkin = AppearancePack.garden.skinOrDefault('trellis');
 
-  /// Update vine style dynamically
+  /// Skin the board is drawing. Flat is the stroked vine.
+  VineSkin get vineSkin => _vineSkin;
+
+  /// Legacy bucket for callers that still switch on [VineStyle].
+  VineStyle get vineStyle => _vineSkin.legacyStyle;
+
+  /// Swap the vine skin without rebuilding the game.
+  void updateVineSkin(VineSkin skin) {
+    final changed = _vineSkin != skin;
+    _vineSkin = skin;
+    _updateBackgroundOpacity(skin.flat);
+    if (changed && _isGridInitialized) {
+      for (final vine in grid.vineLogicComponents) {
+        vine.invalidateRailCache();
+      }
+    }
+    final asset = skin.textureAsset;
+    if (!skin.flat && asset != null && asset.isNotEmpty) {
+      unawaited(_loadVineTexture(asset));
+    }
+  }
+
+  /// Maps a legacy style onto the garden pack. Tests and older call sites
+  /// still pass [VineStyle].
   void updateVineStyle(VineStyle style) {
-    _vineStyle = style;
-    _updateBackgroundOpacity(style == VineStyle.simple);
+    updateVineSkin(
+      AppearancePack.garden.skinOrDefault(
+        VineSkin.idFromLegacyStyle(style.name),
+      ),
+    );
+  }
+
+  Future<void> _loadVineTexture(String asset) async {
+    try {
+      await vineTextures.ensureLoaded(images, [asset]);
+    } catch (e, stack) {
+      LoggerService.warn(
+        'Vine texture failed to load',
+        tag: 'GardenGame',
+        error: e,
+        stackTrace: stack,
+        metadata: {'asset': asset},
+      );
+    }
   }
 
   /// Update the vine renderer mode dynamically (rail vs legacy painter).

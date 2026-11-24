@@ -212,6 +212,42 @@ class AppearancePack {
     return vineSkins.first;
   }
 
+  /// Flat stroke for this pack, or a synthetic one when the pack has none.
+  VineSkin get flatSkin {
+    for (final skin in vineSkins) {
+      if (skin.flat) return skin;
+    }
+    return const VineSkin(
+      id: 'flat',
+      label: 'Flat',
+      flat: true,
+      foliage: VineFoliage.none,
+    );
+  }
+
+  /// Trellis strips this pack paints. Flat skins are omitted.
+  Iterable<String> get vineTextureAssets sync* {
+    for (final skin in vineSkins) {
+      final asset = skin.textureAsset;
+      if (skin.flat || asset == null || asset.isEmpty) continue;
+      yield asset;
+    }
+  }
+
+  /// Skins the settings control may offer.
+  ///
+  /// Textured skins stay hidden while the play-pass gate is off. The flat
+  /// stroke is always offered.
+  List<VineSkin> skinsForPicker({required bool textured}) {
+    if (textured) return vineSkins;
+    final flats = <VineSkin>[
+      for (final skin in vineSkins)
+        if (skin.flat) skin,
+    ];
+    if (flats.isNotEmpty) return flats;
+    return [flatSkin];
+  }
+
   @override
   bool operator ==(Object other) {
     return other is AppearancePack &&

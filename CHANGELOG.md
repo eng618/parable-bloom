@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Appearance packs. A season is a bundled manifest of art slots and optional primary, secondary, and tertiary colors. Garden is the fallback and matches the current home, level-complete, and board art. Settings → Season chooses Automatic, Garden, or a pack that is in the binary. Automatic follows a month-day window. Brightness and biblical themes are unchanged. The vine rail still draws the existing vine style.
+- Appearance packs. A season is a bundled manifest of art slots and optional primary, secondary, and tertiary colors. Garden is the fallback and matches the current home, level-complete, and board art. Settings → Season chooses Automatic, Garden, or a pack that is in the binary. Automatic follows a month-day window. Brightness and biblical themes are unchanged. The vine rail draws the active pack's skin (texture, foliage, and accent). Textured skins stay behind Settings → Debug → Textured Vine Skins until a play pass makes the garden trellis the default. Flat stays selectable.
 
 - Case Portman UI SFX (credit: “Case Portman Audio”) and the Antoinemax Nature Sounds Pack (CC-BY 4.0). Played cues live under `assets/audio/sfx/`. Credits are on the site `/attributions` page and in Settings → About. Existing vine cues moved to `sfx/vines/`.
 - Soft UI and vine feedback uses those packs: Case Portman menu open/close, click, confirm, and cancel; a quiet foliage rustle while a vine slides; the existing bloom, blocked, grace, and level-complete cues, with a short foliage swell on a clear. Ambient nature loops stay unused so they do not compete with the music.

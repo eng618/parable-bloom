@@ -6,9 +6,8 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:parable_bloom/core/board_transform.dart';
 import 'package:parable_bloom/core/game_board_layout.dart';
-import 'package:parable_bloom/core/providers/settings_providers.dart'
-    show VineStyle;
 import 'package:parable_bloom/core/services/logger_service.dart';
+import 'package:parable_bloom/features/appearance/domain/vine_skin.dart';
 import 'package:parable_bloom/core/vine_color_palette.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/features/game/domain/entities/level_data.dart';
@@ -141,7 +140,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   /// cache key: the withered state flip must rebuild vertex colors and the
   /// UV position even while the vine is not moving.
   VineRailDraw? prepareRailDraw({
-    required VineStyle style,
+    required bool simple,
+    required VineFoliage foliageKind,
     required int foliageStride,
     required Color stripTint,
     required Color foliageTint,
@@ -158,7 +158,6 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final headArc = _slide.headArc;
     final windowLength = track.windowLength;
     final halfWidth = VineMetrics.texturedTubeWidth / 2;
-    final simple = style == VineStyle.simple;
 
     // Idle caches are keyed on tint + skin tile (see doc comment).
     if (!_slide.isAnimating &&
@@ -198,13 +197,13 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
           _stripBuffers!, _stripBuffers!.lastVertexCount);
 
       final mesh = _foliageMesh;
-      if (mesh != null && foliageAtlas!.supportsStyle(style)) {
+      if (mesh != null && foliageAtlas!.supports(foliageKind)) {
         mesh.write(
           track: track,
           headArc: headArc,
           windowLength: windowLength,
           stride: foliageStride,
-          style: style,
+          foliage: foliageKind,
           tint: foliageTint,
           halfWidth: halfWidth,
           scratch: _scratch,

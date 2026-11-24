@@ -53,9 +53,9 @@ final sfxEnabledProvider = NotifierProvider<SfxEnabledNotifier, bool>(
   SfxEnabledNotifier.new,
 );
 
-/// Feature flag: textured vine skins (classic / blossom / ethereal) behind
-/// [vineTexturedSkinsEnabled]. When disabled only the flat/simple style is
-/// available so textured rendering stays a development-only option.
+/// Play-pass gate for textured vine skins. Default off, so the board draws
+/// the flat stroke. The saved skin id is left in place. Turning this on
+/// previews the active pack's trellis, blossom, and ethereal strips.
 final vineTexturedSkinsEnabledProvider =
     NotifierProvider<VineTexturedSkinsEnabledNotifier, bool>(
   VineTexturedSkinsEnabledNotifier.new,
@@ -72,15 +72,6 @@ class VineTexturedSkinsEnabledNotifier extends Notifier<bool> {
     state = enabled;
     final box = ref.read(hiveBoxProvider);
     await box.put('vineTexturedSkins', enabled);
-
-    // When disabling, force the active style back to simple so no textured
-    // vine leaks through while the flag is off.
-    if (!enabled) {
-      final style = ref.read(vineStyleProvider);
-      if (style != VineStyle.simple) {
-        await ref.read(vineStyleProvider.notifier).setStyle(VineStyle.simple);
-      }
-    }
   }
 }
 
@@ -167,6 +158,8 @@ class VineStyleNotifier extends Notifier<VineStyle> {
   }
 }
 
+/// Legacy boolean derived from [vineStyleProvider]. The board follows
+/// `renderedVineSkinProvider` instead.
 final useSimpleVinesProvider = NotifierProvider<UseSimpleVinesNotifier, bool>(
   UseSimpleVinesNotifier.new,
 );

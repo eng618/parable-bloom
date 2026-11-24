@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme.dart';
 import '../../../appearance/application/appearance_providers.dart';
+import '../../../appearance/domain/appearance_pack.dart';
 import '../../../appearance/domain/appearance_slot.dart';
+import '../../../appearance/domain/vine_skin.dart';
 import '../../../../core/constants/animation_timing.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../domain/entities/lesson_data.dart';
@@ -106,9 +108,8 @@ class _TutorialFlowScreenState extends ConsumerState<TutorialFlowScreen> {
       if (previous != next) syncProjectionLines(ref, _game);
     });
 
-    // Forward vine-style changes (the game otherwise stays on classic).
-    ref.listenManual<VineStyle>(vineStyleProvider, (previous, next) {
-      if (previous != next) _game?.updateVineStyle(next);
+    ref.listenManual(renderedVineSkinProvider, (previous, next) {
+      if (previous != next) _game?.updateVineSkin(next);
     });
 
     ref.listenManual(resolvedAppearancePackProvider, (previous, next) {
@@ -891,8 +892,10 @@ class _TutorialFlowEventSink implements GameEventSink {
   }
 
   @override
-  bool get useSimpleVines =>
-      _read((c) => c.read(useSimpleVinesProvider), false);
+  bool get useSimpleVines => _read(
+        (c) => c.read(renderedVineSkinProvider).flat,
+        false,
+      );
 
   @override
   bool get hapticsEnabled =>
@@ -911,6 +914,8 @@ class _TutorialFlowEventSink implements GameEventSink {
       _read((c) => c.read(debugVineAnimationLoggingProvider), false);
 
   @override
-  VineStyle get vineStyle =>
-      _read((c) => c.read(vineStyleProvider), VineStyle.classic);
+  VineSkin get vineSkin => _read(
+        (c) => c.read(renderedVineSkinProvider),
+        AppearancePack.garden.skinOrDefault('trellis'),
+      );
 }

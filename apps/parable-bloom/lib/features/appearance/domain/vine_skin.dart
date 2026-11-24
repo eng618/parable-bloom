@@ -23,8 +23,8 @@ enum VineFoliage {
 
 /// One vine look published by an appearance pack.
 ///
-/// The rail renderer still selects `VineStyle` directly. Skins are the
-/// descriptor it will read when textured vines follow the active pack.
+/// The rail renderer loads [textureAsset], draws [foliage], and paints caps
+/// in [accent]. [flat] is the stroked vine and draws no trellis strip.
 class VineSkin {
   const VineSkin({
     required this.id,

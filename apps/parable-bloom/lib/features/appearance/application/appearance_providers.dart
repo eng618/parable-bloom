@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/infrastructure_providers.dart';
+import '../../../core/providers/settings_providers.dart';
 import '../data/appearance_catalog.dart';
 import '../domain/appearance_pack.dart';
 import '../domain/vine_skin.dart';
@@ -89,10 +90,20 @@ class VineSkinByPackNotifier extends Notifier<Map<String, String>> {
   }
 }
 
-/// Skin the active pack would draw. The rail renderer still reads
-/// `vineStyleProvider` until textured vines follow this descriptor.
+/// Skin the player picked for the active pack, before the texture gate.
 final activeVineSkinProvider = Provider<VineSkin>((ref) {
   final pack = ref.watch(resolvedAppearancePackProvider);
   final byPack = ref.watch(vineSkinByPackProvider);
   return pack.skinOrDefault(byPack[pack.id]);
+});
+
+/// Skin the board draws.
+///
+/// `vineTexturedSkins` (default off) is the play-pass gate. While it is off,
+/// a textured choice stays saved and the board draws the pack's flat stroke.
+final renderedVineSkinProvider = Provider<VineSkin>((ref) {
+  final skin = ref.watch(activeVineSkinProvider);
+  final textured = ref.watch(vineTexturedSkinsEnabledProvider);
+  if (textured || skin.flat) return skin;
+  return ref.watch(resolvedAppearancePackProvider).flatSkin;
 });

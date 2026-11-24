@@ -131,8 +131,10 @@ class _GameScreenEventSink implements GameEventSink {
   }
 
   @override
-  bool get useSimpleVines =>
-      _read((c) => c.read(useSimpleVinesProvider), false);
+  bool get useSimpleVines => _read(
+        (c) => c.read(renderedVineSkinProvider).flat,
+        false,
+      );
 
   @override
   bool get hapticsEnabled =>
@@ -151,6 +153,8 @@ class _GameScreenEventSink implements GameEventSink {
       _read((c) => c.read(debugVineAnimationLoggingProvider), false);
 
   @override
-  VineStyle get vineStyle =>
-      _read((c) => c.read(vineStyleProvider), VineStyle.classic);
+  VineSkin get vineSkin => _read(
+        (c) => c.read(renderedVineSkinProvider),
+        AppearancePack.garden.skinOrDefault('trellis'),
+      );
 }

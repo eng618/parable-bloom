@@ -11,6 +11,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:parable_bloom/core/constants/animation_timing.dart';
 import 'package:parable_bloom/core/providers/settings_providers.dart'
     show VineStyle;
+import 'package:parable_bloom/features/appearance/domain/vine_skin.dart';
 
 class VineMetrics {
   const VineMetrics._();
@@ -44,7 +45,8 @@ class VineMetrics {
   static const double textureUPerPx = 2.5;
 
   /// Vine-stem accent color for caps and arrow heads on textured styles,
-  /// per style. The withered state overrides with [witheredColor].
+  /// per legacy style. Skins carry their own accent. The withered state
+  /// overrides with [witheredColor].
   static Color accentColor(VineStyle style) => switch (style) {
         VineStyle.blossom => const Color(0xFFDE7FA4),
         VineStyle.ethereal => const Color(0xFF74F4FF),
@@ -98,4 +100,17 @@ class VineMetrics {
   /// the legacy `MaskFilter.blur` glow and gives CanvasKit-native
   /// `drawVertices` strips soft, anti-aliased-looking edges.
   static const double tubeFeather = 2.0;
+}
+
+/// Bucket the legacy path painter still switches on.
+extension VineSkinLegacyStyle on VineSkin {
+  VineStyle get legacyStyle {
+    if (flat || foliage == VineFoliage.none) return VineStyle.simple;
+    return switch (foliage) {
+      VineFoliage.blossom => VineStyle.blossom,
+      VineFoliage.glow => VineStyle.ethereal,
+      VineFoliage.leaves => VineStyle.classic,
+      VineFoliage.none => VineStyle.simple,
+    };
+  }
 }

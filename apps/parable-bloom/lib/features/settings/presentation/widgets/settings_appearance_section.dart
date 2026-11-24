@@ -5,8 +5,9 @@ import '../../../../core/providers/settings_providers.dart';
 import '../../../appearance/application/appearance_providers.dart';
 import '../../../appearance/data/appearance_catalog.dart';
 import '../../../appearance/domain/appearance_pack.dart';
+import '../../../appearance/presentation/widgets/vine_skin_control.dart';
 
-/// Brightness, season, and vine style.
+/// Brightness, season, and vine skin.
 class SettingsAppearanceSection extends ConsumerWidget {
   const SettingsAppearanceSection({super.key});
 
@@ -19,8 +20,7 @@ class SettingsAppearanceSection extends ConsumerWidget {
           data: (value) => value,
           orElse: () => AppearanceCatalog.fallback,
         );
-    final vineStyle = ref.watch(vineStyleProvider);
-    final texturedSkinsEnabled = ref.watch(vineTexturedSkinsEnabledProvider);
+    final vineSkin = ref.watch(renderedVineSkinProvider);
 
     return Column(
       children: [
@@ -44,7 +44,7 @@ class SettingsAppearanceSection extends ConsumerWidget {
               Row(
                 children: [
                   Icon(
-                    _vineStyleIcon(vineStyle),
+                    vineSkinIcon(vineSkin),
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(width: 16),
@@ -57,7 +57,7 @@ class SettingsAppearanceSection extends ConsumerWidget {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         Text(
-                          _vineStyleSubtitle(vineStyle),
+                          vineSkinSubtitle(vineSkin),
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Theme.of(context)
@@ -72,42 +72,9 @@ class SettingsAppearanceSection extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              SizedBox(
+              const SizedBox(
                 width: double.infinity,
-                child: SegmentedButton<VineStyle>(
-                  showSelectedIcon: false,
-                  segments: <ButtonSegment<VineStyle>>[
-                    if (texturedSkinsEnabled)
-                      const ButtonSegment<VineStyle>(
-                        value: VineStyle.classic,
-                        icon: Icon(Icons.park),
-                        label: Text('Classic'),
-                      ),
-                    if (texturedSkinsEnabled)
-                      const ButtonSegment<VineStyle>(
-                        value: VineStyle.blossom,
-                        icon: Icon(Icons.local_florist),
-                        label: Text('Blossom'),
-                      ),
-                    if (texturedSkinsEnabled)
-                      const ButtonSegment<VineStyle>(
-                        value: VineStyle.ethereal,
-                        icon: Icon(Icons.star),
-                        label: Text('Ethereal'),
-                      ),
-                    const ButtonSegment<VineStyle>(
-                      value: VineStyle.simple,
-                      icon: Icon(Icons.grid_view),
-                      label: Text('Simple'),
-                    ),
-                  ],
-                  selected: <VineStyle>{vineStyle},
-                  onSelectionChanged: (Set<VineStyle> newSelection) async {
-                    await ref
-                        .read(vineStyleProvider.notifier)
-                        .setStyle(newSelection.first);
-                  },
-                ),
+                child: VineSkinControl(),
               ),
             ],
           ),
@@ -237,30 +204,4 @@ void _showThemeDialog(
       ),
     ),
   );
-}
-
-IconData _vineStyleIcon(VineStyle style) {
-  switch (style) {
-    case VineStyle.classic:
-      return Icons.park;
-    case VineStyle.blossom:
-      return Icons.local_florist;
-    case VineStyle.ethereal:
-      return Icons.star;
-    case VineStyle.simple:
-      return Icons.grid_view;
-  }
-}
-
-String _vineStyleSubtitle(VineStyle style) {
-  switch (style) {
-    case VineStyle.classic:
-      return 'Detailed wood branches with green leaves';
-    case VineStyle.blossom:
-      return 'Cherry blossom branches with pink flowers';
-    case VineStyle.ethereal:
-      return 'Glowing bioluminescent purple-blue magic vines';
-    case VineStyle.simple:
-      return 'High-contrast geometric shapes (accessibility)';
-  }
 }

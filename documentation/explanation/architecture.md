@@ -118,8 +118,8 @@ We use **Hive** for immediate, offline-capable storage. Key persisted settings i
 
 - **Theme Mode**: System, Light, or Dark.
 - **Season**: Hive `appearancePack` (`auto`, `garden`, or a pack id) selects an appearance pack. `auto` follows the pack's month-day window. Art slots and optional palette roles are documented in `reference/appearance-packs.md`. This is separate from biblical themes.
-- **Vine skin by pack**: Hive `vineSkinByPack` remembers a skin id per season. The board still draws `vineStyle` until the rail renderer reads that map.
-- **Vines Style**: Classic, Cherry Blossom, Ethereal, or Simple.
+- **Vine skin by pack**: Hive `vineSkinByPack` remembers a skin id per season. The rail draws that skin's texture, foliage, and accent. `vineTexturedSkins` (default off) keeps the flat stroke until textured vines are previewed.
+- **Vines Style**: Legacy Hive `vineStyle`. Read once when `vineSkinByPack` is empty (`classic` → `trellis`, `simple` → `flat`).
 - **Audio/Haptics**: Individual toggles for sound and vibration.
 
 - **Boxes**: `game_progress`, `settings`.

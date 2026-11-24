@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:material_ui/material_ui.dart';
 
-import 'package:parable_bloom/core/providers/settings_providers.dart';
+import 'package:parable_bloom/features/appearance/domain/vine_skin.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track.dart';
 
@@ -111,9 +111,9 @@ class VineFoliageAtlas {
 
   static double tileCenterX(int tile) => (tile + 0.5) * tileSize;
 
-  /// Whether foliage rendering is available for [style].
-  bool supportsStyle(VineStyle style) =>
-      image != null && style != VineStyle.simple;
+  /// Whether foliage rendering is available for [foliage].
+  bool supports(VineFoliage foliage) =>
+      image != null && foliage != VineFoliage.none;
 
   void dispose() {
     image?.dispose();
@@ -157,12 +157,12 @@ class VineFoliageMesh {
     required double headArc,
     required double windowLength,
     required int stride,
-    required VineStyle style,
+    required VineFoliage foliage,
     required Color tint,
     required double halfWidth,
     required Float32List scratch,
   }) {
-    if (atlas.image == null || style == VineStyle.simple) {
+    if (atlas.image == null || foliage == VineFoliage.none) {
       quadCount = 0;
       return;
     }
@@ -174,11 +174,11 @@ class VineFoliageMesh {
     // headArc - i * pitch (legacy foliage indexes body points).
     const pitch = 42.0;
     final maxAnchor = (windowLength / pitch).ceil().clamp(0, 4096);
-    final quadsPerLeaf = switch (style) {
-      VineStyle.classic => 2, // two mirrored leaves
-      VineStyle.ethereal => 3, // glow + two mirrored leaves
-      VineStyle.blossom => 1,
-      _ => 0,
+    final quadsPerLeaf = switch (foliage) {
+      VineFoliage.leaves => 2, // two mirrored leaves
+      VineFoliage.glow => 3, // glow + two mirrored leaves
+      VineFoliage.blossom => 1,
+      VineFoliage.none => 0,
     };
 
     final strideSafe = math.max(1, stride);
@@ -191,7 +191,7 @@ class VineFoliageMesh {
     final int r;
     final int g;
     final int b;
-    if (style == VineStyle.ethereal) {
+    if (foliage == VineFoliage.glow) {
       r = 255;
       g = 255;
       b = 255;
@@ -215,7 +215,7 @@ class VineFoliageMesh {
       final alpha = (track.fadeAlphaAt(arc) * 255).round().clamp(0, 255);
       if (alpha <= 2) continue;
 
-      final glow = style == VineStyle.ethereal;
+      final glow = foliage == VineFoliage.glow;
       if (glow) {
         quad += _writeQuad(
           quad: quad,
@@ -239,7 +239,7 @@ class VineFoliageMesh {
       final rotB = tangentAngle - math.pi / 4;
       final halfSize = halfWidth * VineMetrics.leafScale * 2;
 
-      if (style == VineStyle.blossom) {
+      if (foliage == VineFoliage.blossom) {
         quad += _writeQuad(
           quad: quad,
           cx: x,
@@ -278,7 +278,7 @@ class VineFoliageMesh {
           rot: rotB,
           halfW: halfSize,
           halfH: halfSize * 0.7,
-          tile: style == VineStyle.ethereal
+          tile: foliage == VineFoliage.glow
               ? VineFoliageAtlas.tileEtherealA
               : VineFoliageAtlas.tileClassicB,
           tilePx: tilePx,

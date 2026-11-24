@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:parable_bloom/core/providers/infrastructure_providers.dart';
+import 'package:parable_bloom/core/providers/settings_providers.dart';
 import 'package:parable_bloom/features/appearance/application/appearance_providers.dart';
 import 'package:parable_bloom/features/appearance/data/appearance_catalog.dart';
 import 'package:parable_bloom/features/appearance/domain/appearance_pack.dart';
 import 'package:parable_bloom/features/appearance/domain/appearance_slot.dart';
 import 'package:parable_bloom/features/appearance/domain/vine_skin.dart';
 import 'package:parable_bloom/features/appearance/presentation/widgets/themed_asset.dart';
+import 'package:parable_bloom/features/appearance/presentation/widgets/vine_skin_control.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/level_complete_overlay.dart';
 
 void main() {
@@ -190,6 +192,32 @@ void main() {
       addTearDown(container.dispose);
 
       expect(container.read(activeVineSkinProvider).id, 'trellis');
+      expect(container.read(renderedVineSkinProvider).id, 'flat');
+    });
+
+    test('the texture gate previews the saved skin without rewriting it',
+        () async {
+      box.store['vineStyle'] = 'classic';
+      final container = _container(box);
+      addTearDown(container.dispose);
+
+      await container
+          .read(vineTexturedSkinsEnabledProvider.notifier)
+          .setEnabled(true);
+
+      expect(container.read(renderedVineSkinProvider).id, 'trellis');
+      expect(box.store['vineStyle'], 'classic');
+
+      await container
+          .read(vineSkinByPackProvider.notifier)
+          .setSkin('garden', 'blossom');
+      expect(container.read(renderedVineSkinProvider).id, 'blossom');
+
+      await container
+          .read(vineTexturedSkinsEnabledProvider.notifier)
+          .setEnabled(false);
+      expect(container.read(activeVineSkinProvider).id, 'blossom');
+      expect(container.read(renderedVineSkinProvider).flat, isTrue);
     });
 
     test('a saved skin stays on its own pack', () async {
@@ -204,6 +232,39 @@ void main() {
       expect(container.read(vineSkinByPackProvider)['garden'], 'flat');
       expect(container.read(vineSkinByPackProvider)['christmas'], 'trellis');
     });
+  });
+
+  testWidgets('vine control lists pack skins when textures are enabled',
+      (tester) async {
+    final box = _MemoryBox();
+    box.store['vineTexturedSkins'] = true;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          hiveBoxProvider.overrideWithValue(box),
+          appearanceCatalogProvider.overrideWith(
+            (ref) async => AppearanceCatalog.fallback,
+          ),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(body: VineSkinControl()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Trellis'), findsOneWidget);
+    expect(find.text('Blossom'), findsOneWidget);
+    expect(find.text('Flat'), findsOneWidget);
+
+    await tester.tap(find.text('Flat'));
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(VineSkinControl)),
+    );
+    expect(container.read(renderedVineSkinProvider).id, 'flat');
   });
 
   testWidgets('level complete reads the sprig slot from the scope',

@@ -313,6 +313,7 @@ Future<void> _performResetAsync({
     ref.invalidate(themeModeProvider);
     ref.invalidate(appearanceSelectionProvider);
     ref.invalidate(vineSkinByPackProvider);
+    ref.invalidate(vineTexturedSkinsEnabledProvider);
     ref.invalidate(backgroundAudioEnabledProvider);
     ref.invalidate(hapticsEnabledProvider);
     ref.invalidate(vineStyleProvider);

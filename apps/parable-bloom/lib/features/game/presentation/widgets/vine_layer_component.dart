@@ -1,12 +1,11 @@
-import 'dart:ui' as ui;
-
 import 'package:flame/components.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:parable_bloom/core/game_board_layout.dart';
 import 'package:parable_bloom/core/providers/settings_providers.dart'
-    show VineRenderMode, VineStyle;
+    show VineRenderMode;
 import 'package:parable_bloom/core/services/logger_service.dart';
+import 'package:parable_bloom/features/appearance/domain/appearance_pack.dart';
 import 'package:parable_bloom/features/game/application/providers/gameplay_state_providers.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/grid_component.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine_component.dart';
@@ -27,22 +26,8 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_path_
 /// the per-frame Path painter for A/B regression.
 class VineLayerComponent extends PositionComponent
     with ParentIsA<GridComponent> {
-  // Shared textures resolved once from the game-level loader (legacy mode
-  // keeps sampling the full-scene JPEGs for regression).
-  ui.Image? _classicTexture;
-  ui.Image? _blossomTexture;
-  ui.Image? _etherealTexture;
-
   /// Startup-baked foliage atlas for the rail renderer.
   final VineFoliageAtlas foliageAtlas = VineFoliageAtlas();
-
-  /// Texture dimensions per style (image px), resolved when textures load.
-  int _classicTexW = 0;
-  int _classicTexH = 0;
-  int _blossomTexW = 0;
-  int _blossomTexH = 0;
-  int _etherealTexW = 0;
-  int _etherealTexH = 0;
 
   /// Live render mode (set from [vineRenderModeProvider] by GardenGame).
   VineRenderMode renderMode = VineRenderMode.rail;
@@ -58,10 +43,19 @@ class VineLayerComponent extends PositionComponent
     renderMode = parent.parent.vineRenderMode;
     final game = parent.parent;
     final textures = game.vineTextures;
-    await textures.load(game.images);
-    _classicTexture = textures.classic;
-    _blossomTexture = textures.blossom;
-    _etherealTexture = textures.ethereal;
+    final keys = <String>{
+      ...AppearancePack.garden.vineTextureAssets,
+      if (game.vineSkin.textureAsset case final asset?) asset,
+    };
+    try {
+      await textures.ensureLoaded(game.images, keys);
+    } catch (e) {
+      LoggerService.warn(
+        'Vine textures failed to load; the board falls back to the flat stroke',
+        tag: 'VineLayer',
+        metadata: {'error': '$e'},
+      );
+    }
 
     // Bake once; GPU-cheap via toImageSync. On engines without
     // toImageSync support the try/catch degrades gracefully to flat color.
@@ -74,15 +68,6 @@ class VineLayerComponent extends PositionComponent
         metadata: {'error': '$e'},
       );
     }
-
-    // Dimensions are queried from the textures as they load; fall back to
-    // a sane 1024 if a texture is absent.
-    _classicTexW = _classicTexture?.width ?? 1024;
-    _classicTexH = _classicTexture?.height ?? 1024;
-    _blossomTexW = _blossomTexture?.width ?? 1024;
-    _blossomTexH = _blossomTexture?.height ?? 1024;
-    _etherealTexW = _etherealTexture?.width ?? 1024;
-    _etherealTexH = _etherealTexture?.height ?? 1024;
   }
 
   @override
@@ -94,8 +79,10 @@ class VineLayerComponent extends PositionComponent
     if (level == null) return;
 
     final game = grid.parent;
-    final vineStyle = game.vineStyle;
-    final useSimpleVines = vineStyle == VineStyle.simple;
+    final skin = game.vineSkin;
+    final vineStyle = skin.legacyStyle;
+    final useSimpleVines = skin.flat;
+    final textureImage = game.vineTextures.imageFor(skin.textureAsset);
     final attemptedColor = game.vineAttemptedColor;
 
     final gridHeight = level.gridHeight;
@@ -146,37 +133,18 @@ class VineLayerComponent extends PositionComponent
         comp.ensureRailTrack();
         final isAnimating = comp.slide.isAnimating;
 
-        // Select the real trellis/ivy texture for this style (the baked
-        // skin atlas is gone). Null degrades to flat-colored vertex strips.
-        ui.Image? textureImage;
-        int texW, texH;
-        switch (vineStyle) {
-          case VineStyle.classic:
-            textureImage = _classicTexture;
-            texW = _classicTexW;
-            texH = _classicTexH;
-          case VineStyle.blossom:
-            textureImage = _blossomTexture;
-            texW = _blossomTexW;
-            texH = _blossomTexH;
-          case VineStyle.ethereal:
-            textureImage = _etherealTexture;
-            texW = _etherealTexW;
-            texH = _etherealTexH;
-          case VineStyle.simple:
-            textureImage = null;
-            texW = 1024;
-            texH = 1024;
-        }
+        // The skin's trellis strip. Null degrades to a flat-colored vertex
+        // strip until the loader finishes.
+        final texW = textureImage?.width ?? 1024;
+        final texH = textureImage?.height ?? 1024;
 
         // Rail tint rules (see [VineRailRenderer.draw]):
         // - tube strip modulates the real texture: white shows the bark/vine
         //   detail, [VineMetrics.witheredColor] turns dead vines brown.
-        // - flat/simple stroke: withered bark brown after a failed attempt,
+        // - flat stroke: withered bark brown after a failed attempt,
         //   otherwise the vine's calm palette color.
         // - foliage quads: per-vine calm color, brown when withered.
-        // - caps/arrow head: flat style's vine accent color, brown when
-        //   withered.
+        // - caps and the arrow head use the skin accent, brown when withered.
         final flatTint = isAttempted ? VineMetrics.witheredColor : calmColor;
         Color tubeTint;
         Color capTint;
@@ -185,9 +153,7 @@ class VineLayerComponent extends PositionComponent
           capTint = flatTint;
         } else {
           tubeTint = const Color(0xFFFFFFFF);
-          capTint = isAttempted
-              ? VineMetrics.witheredColor
-              : VineMetrics.accentColor(vineStyle);
+          capTint = isAttempted ? VineMetrics.witheredColor : skin.accent;
         }
         final foliageTint = useSimpleVines
             ? flatTint
@@ -196,7 +162,8 @@ class VineLayerComponent extends PositionComponent
                 : calmColor;
 
         final rail = comp.prepareRailDraw(
-          style: vineStyle,
+          simple: useSimpleVines,
+          foliageKind: skin.foliage,
           foliageStride: isAnimating ? animatingFoliageStride : foliageStride,
           stripTint: tubeTint,
           foliageTint: foliageTint,
@@ -208,7 +175,6 @@ class VineLayerComponent extends PositionComponent
         VineRailRenderer.draw(
           canvas: canvas,
           rail: rail,
-          vineStyle: vineStyle,
           useSimpleVines: useSimpleVines,
           textureImage: textureImage,
           foliageAtlasImage: foliageAtlas.image,
@@ -253,9 +219,9 @@ class VineLayerComponent extends PositionComponent
         isAnimating: isAnimating,
         foliageStride: isAnimating ? animatingFoliageStride : foliageStride,
         cachedPath: comp.renderPath(gridHeight, points),
-        classicTexture: _classicTexture,
-        blossomTexture: _blossomTexture,
-        etherealTexture: _etherealTexture,
+        classicTexture: textureImage,
+        blossomTexture: textureImage,
+        etherealTexture: textureImage,
       );
 
       comp.bloom.draw(

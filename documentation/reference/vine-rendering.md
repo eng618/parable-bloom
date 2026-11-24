@@ -93,7 +93,7 @@ Textured styles sample the real trellis/ivy texture images
 `ethereal_vine_texture.png`) instead of a baked atlas — this is what gives
 the wood grain and vine wrapping their natural, non-repeating look.
 
-The garden appearance pack records those three files, plus the flat stroke, as vine skins (`trellis`, `blossom`, `ethereal`, `flat`). The loader still binds the three textures itself. A season can ship another strip in the same wrap; the renderer reads `vineStyleProvider` until that skin descriptor is wired up. See [Appearance Packs](appearance-packs.md).
+The garden appearance pack records those three files, plus the flat stroke, as vine skins (`trellis`, `blossom`, `ethereal`, `flat`). `VineTextureLoader` loads whatever asset key the active skin names, including a season strip outside `assets/art/`. Foliage quad count and the cap accent come from that skin. Textured skins stay behind the debug gate `vineTexturedSkins` until a play pass makes the garden trellis the default. See [Appearance Packs](appearance-packs.md).
 
 Each texture is wrapped around the tube with **cylindrical wrap UVs** pinned
 to the vine body:

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/settings_providers.dart';
+import '../../../appearance/presentation/widgets/vine_skin_control.dart';
 
 class PauseMenuDialog extends ConsumerWidget {
   final VoidCallback onRestart;
@@ -20,9 +21,6 @@ class PauseMenuDialog extends ConsumerWidget {
     final audioEnabled = ref.watch(backgroundAudioEnabledProvider);
     final sfxEnabled = ref.watch(sfxEnabledProvider);
     final hapticsEnabled = ref.watch(hapticsEnabledProvider);
-    final vineStyle = ref.watch(vineStyleProvider);
-    final texturedSkinsEnabled = ref.watch(vineTexturedSkinsEnabledProvider);
-
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
@@ -78,45 +76,9 @@ class PauseMenuDialog extends ConsumerWidget {
                     ),
               ),
               const SizedBox(height: 8),
-              SizedBox(
+              const SizedBox(
                 width: double.infinity,
-                child: SegmentedButton<VineStyle>(
-                  segments: <ButtonSegment<VineStyle>>[
-                    if (texturedSkinsEnabled)
-                      ButtonSegment(
-                        value: VineStyle.classic,
-                        icon: Icon(Icons.park_outlined),
-                        tooltip: 'Classic Style',
-                      ),
-                    if (texturedSkinsEnabled)
-                      ButtonSegment(
-                        value: VineStyle.blossom,
-                        icon: Icon(Icons.local_florist_outlined),
-                        tooltip: 'Cherry Blossom',
-                      ),
-                    if (texturedSkinsEnabled)
-                      ButtonSegment(
-                        value: VineStyle.ethereal,
-                        icon: Icon(Icons.star_outline),
-                        tooltip: 'Ethereal Magic',
-                      ),
-                    ButtonSegment(
-                      value: VineStyle.simple,
-                      icon: Icon(Icons.grid_view_outlined),
-                      tooltip: 'Simple Shapes',
-                    ),
-                  ],
-                  selected: <VineStyle>{vineStyle},
-                  onSelectionChanged: (Set<VineStyle> newSelection) {
-                    ref
-                        .read(vineStyleProvider.notifier)
-                        .setStyle(newSelection.first);
-                  },
-                  showSelectedIcon: false,
-                  style: SegmentedButton.styleFrom(
-                    visualDensity: VisualDensity.comfortable,
-                  ),
-                ),
+                child: VineSkinControl(showLabels: false),
               ),
               const SizedBox(height: 16),
               Text(

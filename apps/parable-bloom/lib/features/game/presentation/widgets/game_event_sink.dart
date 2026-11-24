@@ -3,7 +3,8 @@ import '../../application/providers/gameplay_state_providers.dart'
 import '../../domain/entities/level_data.dart' show VineData;
 import '../../../tutorial/presentation/widgets/tutorial_guide_overlay.dart'
     show BlockedTapState;
-import '../../../../core/providers/settings_providers.dart' show VineStyle;
+import '../../../appearance/domain/appearance_pack.dart';
+import '../../../appearance/domain/vine_skin.dart';
 import 'garden_game.dart';
 
 /// Single bridge between the Flame engine ([GardenGame] and its components)
@@ -40,10 +41,10 @@ abstract class GameEventSink {
   bool get debugShowGridCoordinates;
   bool get debugVineAnimationLogging;
 
-  /// Persisted vine style. The game syncs this on load: without it, a fresh
-  /// game instance defaults to classic and the provider listener (which only
-  /// fires on change) never corrects it.
-  VineStyle get vineStyle;
+  /// Persisted vine skin. The game syncs this on load: without it, a fresh
+  /// game instance keeps the garden trellis and the provider listener (which
+  /// only fires on change) never corrects it.
+  VineSkin get vineSkin;
 }
 
 /// No-op [GameEventSink] for tests that need a game instance without
@@ -107,5 +108,5 @@ class TestGameEventSink implements GameEventSink {
   bool get debugVineAnimationLogging => false;
 
   @override
-  VineStyle get vineStyle => VineStyle.classic;
+  VineSkin get vineSkin => AppearancePack.garden.skinOrDefault('trellis');
 }
