@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:parable_bloom/core/providers/settings_providers.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_rail_draw.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_skin.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_tube_path.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track.dart';
 
@@ -13,17 +14,20 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_track
 ///
 /// Two render paths per vine, both with draw-call count independent of vine
 /// length:
-/// - **Textured styles**: one `drawVertices` for the tube strip sampling the
-///   real trellis/ivy texture with body-pinned cylindrical wrap UVs, one for
-///   the foliage quads, plus two flat tube caps and a canvas arrow head in
-///   the style's vine-accent color.
+/// - **Classic modular**: shaft strip + wrap overlay strip + head/tail
+///   end sprites from the theme atlases (≤4 textured draws + optional
+///   foliage). Themes/states swap by overlay tile, not by rebuilding
+///   geometry.
+/// - **Other textured styles**: one `drawVertices` for the tube strip
+///   sampling the trellis/ivy JPEG, one for foliage quads, plus two flat
+///   tube caps and a canvas arrow head.
 /// - **Simple**: an anti-aliased stroked `Path` along the baked centerline
 ///   plus a solid arrow head — vector-crisp edges at any device pixel ratio.
 ///
 /// Geometry comes straight from the invariant [VineTrack], so the tube
 /// reads as one continuous object through turns and while exiting
-/// off-screen. A failed clear attempt (withered) modulates the tube in
-/// warm bark brown and paints caps/head/foliage brown.
+/// off-screen. A failed clear attempt (withered) swaps wrap/head/tail to
+/// the withered tiles (Classic) or modulates the JPEG tube brown.
 class VineRailRenderer {
   /// Identity-matrix ImageShader per texture image (cylindrical UVs already
   /// carry the wrap).
@@ -57,10 +61,15 @@ class VineRailRenderer {
     required VineStyle vineStyle,
     required bool useSimpleVines,
 
-    /// The real trellis/ivy texture for textured styles; null degrades to
-    /// flat-colored vertex strips.
+    /// The real trellis/ivy texture for non-modular textured styles; null
+    /// degrades to flat-colored vertex strips.
     required ui.Image? textureImage,
     required ui.Image? foliageAtlasImage,
+
+    /// Classic modular theme (shaft / wrap / ends). Null falls back to the
+    /// single-texture pass even for [VineStyle.classic].
+    VineSkinTheme? classicSkin,
+    VineSkinState skinState = VineSkinState.live,
 
     /// Vertex RGB+alpha for the tube: white (healthy) lets the real texture
     /// show; [VineMetrics.witheredColor] turns dead vines brown.
@@ -69,7 +78,7 @@ class VineRailRenderer {
     /// Vertex RGB+alpha for foliage quads.
     required Color foliageTint,
 
-    /// Flat fill color for caps and arrow head.
+    /// Flat fill color for caps and arrow head (non-modular styles).
     required Color capTint,
   }) {
     final track = rail.track;
@@ -77,11 +86,6 @@ class VineRailRenderer {
     final windowLength = track.windowLength;
 
     // ---------- Simple render pass: anti-aliased stroked path ----------
-    //
-    // `drawVertices` never reaches vector-crisp edges (no AA on any
-    // backend), so the flat/simple style strokes the baked centerline
-    // instead: round cap + round join, solid tint, plus a solid triangle
-    // head. The vine stays fully opaque until it has left the viewport.
     if (useSimpleVines) {
       final alpha = track.fadeAlphaAt(headArc);
       final color = tubeTint.withValues(alpha: tubeTint.a * alpha);
@@ -96,11 +100,22 @@ class VineRailRenderer {
       return;
     }
 
-    // ---------- Textured styles: vertex strip pipeline ----------
+    // ---------- Classic modular layered pass ----------
+    if (VineSkinTheme.usesModularLayers(vineStyle) && classicSkin != null) {
+      _drawClassicModular(
+        canvas: canvas,
+        rail: rail,
+        theme: classicSkin,
+        skinState: skinState,
+        foliageAtlasImage: foliageAtlasImage,
+      );
+      return;
+    }
+
+    // ---------- Other textured styles: vertex strip pipeline ----------
     final shader = _shaderFor(textureImage);
     final tubeWidth = VineMetrics.texturedTubeWidth;
 
-    // 1. Tube strip (single draw call regardless of vine length).
     if (rail.strip != null) {
       _stripPaint
         ..shader = shader
@@ -108,10 +123,6 @@ class VineRailRenderer {
       canvas.drawVertices(rail.strip!, BlendMode.srcOver, _stripPaint);
     }
 
-    // 2. Rounded caps + arrow head in the style's vine-accent color
-    //    (withered state: warm bark brown — the tip reads as the dead
-    //    stem's end). Two tiny canvas draws, far cheaper than baking cap
-    //    fans into the strip.
     track.sampleAt(headArc, _sample);
     final head = Offset(_sample[0], _sample[1]);
     final headAlpha = track.fadeAlphaAt(headArc);
@@ -135,15 +146,61 @@ class VineRailRenderer {
       ..color = capTint.withValues(alpha: headAlpha);
     canvas.drawPath(headPath, _headPaint);
 
-    // 3. Foliage quads (one drawVertices per vine); tint carries the
-    //    per-vine leaf color, or the withered brown after a failed
-    //    attempt.
     final foliageShader = _shaderFor(foliageAtlasImage);
     if (rail.foliage != null && foliageShader != null) {
       _stripPaint
         ..shader = foliageShader
         ..color = const Color(0xFFFFFFFF);
       canvas.drawVertices(rail.foliage!, BlendMode.srcOver, _stripPaint);
+    }
+  }
+
+  static void _drawClassicModular({
+    required Canvas canvas,
+    required VineRailDraw rail,
+    required VineSkinTheme theme,
+    required VineSkinState skinState,
+    required ui.Image? foliageAtlasImage,
+  }) {
+    // 1. Shaft (dough) base.
+    final shaftShader = _shaderFor(theme.shaft);
+    if (rail.strip != null && shaftShader != null) {
+      _stripPaint
+        ..shader = shaftShader
+        ..color = const Color(0xFFFFFFFF);
+      canvas.drawVertices(rail.strip!, BlendMode.srcOver, _stripPaint);
+    }
+
+    // 2. Wrap overlay (live or withered tile — alpha lets shaft show).
+    final wrapShader = _shaderFor(theme.wrapFor(skinState));
+    if (rail.wrapStrip != null && wrapShader != null) {
+      _stripPaint
+        ..shader = wrapShader
+        ..color = const Color(0xFFFFFFFF);
+      canvas.drawVertices(rail.wrapStrip!, BlendMode.srcOver, _stripPaint);
+    }
+
+    // 3. Sparse foliage garnish (calm/withered tint already in verts).
+    final foliageShader = _shaderFor(foliageAtlasImage);
+    if (rail.foliage != null && foliageShader != null) {
+      _stripPaint
+        ..shader = foliageShader
+        ..color = const Color(0xFFFFFFFF);
+      canvas.drawVertices(rail.foliage!, BlendMode.srcOver, _stripPaint);
+    }
+
+    // 4. Tail then head end sprites (head on top).
+    final endsShader = _shaderFor(theme.endsAtlas);
+    if (endsShader != null) {
+      _stripPaint
+        ..shader = endsShader
+        ..color = const Color(0xFFFFFFFF);
+      if (rail.tailVerts != null) {
+        canvas.drawVertices(rail.tailVerts!, BlendMode.srcOver, _stripPaint);
+      }
+      if (rail.headVerts != null) {
+        canvas.drawVertices(rail.headVerts!, BlendMode.srcOver, _stripPaint);
+      }
     }
   }
 
