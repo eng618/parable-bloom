@@ -67,6 +67,11 @@ class VineMetrics {
   static const double leafScale = 0.55;
   static const double blossomScale = 0.8;
 
+  /// Modular skin head/tail sprite half-size as a multiple of
+  /// [texturedTubeWidth]. Chunk enough to read the bud/fletching without
+  /// bridging neighboring lanes on dense boards.
+  static const double skinEndScale = 1.35;
+
   /// Board-size-aware foliage LOD: fewer leaf draws per frame on dense
   /// boards. Animations keep stride 2 so motion still reads as lush.
   static int foliageStride(

@@ -97,6 +97,8 @@ flutter:
     - assets/art/home/
     - assets/art/ornaments/
     - assets/art/extras/
+    - assets/art/skins/
+    - assets/art/skins/classic/
     - assets/audio/
     - assets/audio/sfx/
     # Flutter does not recurse into asset directories.

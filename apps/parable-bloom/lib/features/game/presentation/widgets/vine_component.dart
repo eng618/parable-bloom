@@ -16,9 +16,11 @@ import 'package:parable_bloom/features/game/presentation/widgets/grid_component.
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_animator.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_dot_reveal.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_bloom_renderer.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_end_sprites.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_foliage_atlas.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_rail_draw.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_skin.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_slide_controller.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_strip_mesh.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_path_painter.dart';
@@ -71,15 +73,20 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   VineTrack? _railTrack;
   VineTrack? get railTrack => _railTrack;
   WindowBuffers? _stripBuffers;
+  WindowBuffers? _wrapBuffers;
   late final VineFoliageMesh? _foliageMesh =
       foliageAtlas == null ? null : VineFoliageMesh(atlas: foliageAtlas!);
   final Float32List _scratch = Float32List(VineTrack.positionW);
 
   ui.Vertices? _cachedStrip;
+  ui.Vertices? _cachedWrapStrip;
   ui.Vertices? _cachedFoliage;
+  ui.Vertices? _cachedHeadVerts;
+  ui.Vertices? _cachedTailVerts;
   Color? _cacheStripTint;
   Color? _cacheFoliageTint;
   double? _cacheUvPhase;
+  VineSkinState? _cacheSkinState;
   bool _railIdleCacheValid = false;
   ui.Path? _cachedSimplePath;
 
@@ -137,9 +144,9 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
   /// the stroked centerline [Path] per window — anti-aliased, no vertex
   /// mesh work, and equally cheap (O(window) points).
   ///
-  /// Skin texture phase ([uvPhase]) and both tints are part of the idle
-  /// cache key: the withered state flip must rebuild vertex colors and the
-  /// UV position even while the vine is not moving.
+  /// Skin texture phase ([uvPhase]), both tints, and [skinState] are part
+  /// of the idle cache key: the withered state flip must rebuild vertex
+  /// colors / wrap+end overlays even while the vine is not moving.
   VineRailDraw? prepareRailDraw({
     required VineStyle style,
     required int foliageStride,
@@ -148,6 +155,8 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     required double uvPhase,
     required int texWidth,
     required int texHeight,
+    VineSkinTheme? classicSkin,
+    VineSkinState skinState = VineSkinState.live,
   }) {
     final level = parent.getCurrentLevelData();
     if (level == null) return null;
@@ -159,29 +168,41 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
     final windowLength = track.windowLength;
     final halfWidth = VineMetrics.texturedTubeWidth / 2;
     final simple = style == VineStyle.simple;
+    final modular = VineSkinTheme.usesModularLayers(style) && classicSkin != null;
 
-    // Idle caches are keyed on tint + skin tile (see doc comment).
+    // Idle caches are keyed on tint + skin state (see doc comment).
     if (!_slide.isAnimating &&
         _railIdleCacheValid &&
         _cacheStripTint == stripTint &&
         _cacheFoliageTint == foliageTint &&
-        _cacheUvPhase == uvPhase) {
+        _cacheUvPhase == uvPhase &&
+        _cacheSkinState == skinState) {
       return VineRailDraw(
         track: track,
         headArc: headArc,
         strip: _cachedStrip,
+        wrapStrip: _cachedWrapStrip,
         foliage: _cachedFoliage,
+        headVerts: _cachedHeadVerts,
+        tailVerts: _cachedTailVerts,
         simplePath: _cachedSimplePath,
       );
     }
 
     ui.Vertices? strip;
+    ui.Vertices? wrapStrip;
     ui.Vertices? foliage;
+    ui.Vertices? headVerts;
+    ui.Vertices? tailVerts;
     ui.Path? simplePath;
     if (simple) {
       // Vector-crisp stroked pass: no strip, no foliage quads.
       simplePath = track.windowPath(headArc, windowLength);
     } else {
+      final theme = modular ? classicSkin : null;
+      final bodyW = theme?.shaft.width ?? texWidth;
+      final bodyH = theme?.shaft.height ?? texHeight;
+
       _stripBuffers ??= VineStripMesh.allocate(track);
       VineStripMesh.writeWindow(
         track: track,
@@ -191,11 +212,51 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         tint: stripTint,
         halfWidth: halfWidth,
         uvPhase: uvPhase,
-        texWidth: texWidth,
-        texHeight: texHeight,
+        texWidth: bodyW,
+        texHeight: bodyH,
       );
       strip = VineStripMesh.verticesFor(
           _stripBuffers!, _stripBuffers!.lastVertexCount);
+
+      if (theme != null) {
+        // Wrap overlay: identical window geometry, separate buffers so the
+        // shaft Vertices stay valid (Vertices.raw does not copy lists).
+        _wrapBuffers ??= VineStripMesh.allocate(track);
+        VineStripMesh.writeWindow(
+          track: track,
+          headArc: headArc,
+          windowLength: windowLength,
+          buffers: _wrapBuffers!,
+          tint: const Color(0xFFFFFFFF),
+          halfWidth: halfWidth,
+          uvPhase: uvPhase,
+          texWidth: theme.wrapLive.width,
+          texHeight: theme.wrapLive.height,
+        );
+        wrapStrip = VineStripMesh.verticesFor(
+            _wrapBuffers!, _wrapBuffers!.lastVertexCount);
+
+        final endHalf = VineEndSprites.halfSizeForTube();
+        const endTint = Color(0xFFFFFFFF);
+        headVerts = VineEndSprites.quad(
+          theme: theme,
+          track: track,
+          arc: headArc,
+          tile: theme.headTile(skinState),
+          tint: endTint,
+          halfSize: endHalf,
+          flipForTail: false,
+        );
+        tailVerts = VineEndSprites.quad(
+          theme: theme,
+          track: track,
+          arc: headArc - windowLength,
+          tile: theme.tailTile(skinState),
+          tint: endTint,
+          halfSize: endHalf,
+          flipForTail: true,
+        );
+      }
 
       final mesh = _foliageMesh;
       if (mesh != null && foliageAtlas!.supportsStyle(style)) {
@@ -219,24 +280,34 @@ class VineComponent extends PositionComponent with ParentIsA<GridComponent> {
         track: track,
         headArc: headArc,
         strip: strip,
+        wrapStrip: wrapStrip,
         foliage: foliage,
+        headVerts: headVerts,
+        tailVerts: tailVerts,
         simplePath: simplePath,
       );
     }
 
     // Idle: freeze the freshly built payload.
     _cachedStrip = strip;
+    _cachedWrapStrip = wrapStrip;
     _cachedFoliage = foliage;
+    _cachedHeadVerts = headVerts;
+    _cachedTailVerts = tailVerts;
     _cachedSimplePath = simplePath;
     _cacheStripTint = stripTint;
     _cacheFoliageTint = foliageTint;
     _cacheUvPhase = uvPhase;
+    _cacheSkinState = skinState;
     _railIdleCacheValid = true;
     return VineRailDraw(
       track: track,
       headArc: headArc,
       strip: strip,
+      wrapStrip: wrapStrip,
       foliage: foliage,
+      headVerts: headVerts,
+      tailVerts: tailVerts,
       simplePath: simplePath,
     );
   }

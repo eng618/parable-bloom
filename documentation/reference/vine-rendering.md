@@ -4,7 +4,7 @@ Reference for how binds (vines) are rendered and animated. The rail renderer
 replaces the legacy per-frame Path painter; both remain reachable through the
 `vineRenderModeProvider` flag (`rail` | `legacy`) for A/B regression.
 
-Date: 2026-10-19 (last updated 2026-11-20: a grid dot throbs again when a later clearing vine uncovers it)
+Date: 2026-10-19 (last updated 2026-11-25: Classic modular layered skins — shaft + wrap + head + tail)
 
 ## Why a redesign
 
@@ -34,14 +34,18 @@ lib/features/game/presentation/widgets/
                                cylindrical-wrap UVs into the real texture
   vine/vine_slide_controller.dart  scalar phase machine (replaces VineAnimator)
   vine/vine_foliage_atlas.dart startup-baked white leaf atlas + quad writer
-  vine/vine_rail_draw.dart     per-frame draw payload record
-  vine/vine_rail_renderer.dart native pass (drawVertices strips + caps +
-                               arrow for textured styles; AA stroked path
-                               for the simple style)
+  vine/vine_skin.dart          modular theme contract (Classic first)
+  vine/vine_skin_loader.dart   loads shaft/wrap/ends atlases once per game
+  vine/vine_end_sprites.dart   oriented head/tail quads from ends atlas
+  vine/vine_rail_draw.dart     per-frame draw payload record (+ wrap/ends)
+  vine/vine_rail_renderer.dart native pass: Classic modular layers; other
+                               textured styles keep JPEG strip + caps +
+                               arrow; AA stroked path for simple
   vine/vine_path_painter.dart  legacy painter (legacy mode only; still samples
                                the full-scene JPEG textures)
   vine/vine_animator.dart      legacy step animator (legacy mode only)
-  vine/vine_tube_path.dart     legacy corner/arrow geometry (arrow still used)
+  vine/vine_tube_path.dart     legacy corner/arrow geometry (arrow still used
+                               by non-Classic textured + simple passes)
   vine/vine_metrics.dart       shared visual constants
 ```
 
@@ -86,15 +90,30 @@ lib/features/game/presentation/widgets/
   vector stroke, `VineMetrics.texturedTubeWidth` (15px) for the textured
   skins — the wrapped-vine pattern needs the extra width to read.
 
-### Skin texture: real trellis+ivy with body-pinned wrap UVs
+### Classic modular skins (layered atlas template)
 
-Textured styles sample the real trellis/ivy texture images
-(`assets/art/classic_vine_texture.png`, `blossom_vine_texture.png`,
-`ethereal_vine_texture.png`) instead of a baked atlas — this is what gives
-the wood grain and vine wrapping their natural, non-repeating look.
+Classic is the first theme on the modular template. Parts live under
+`assets/art/skins/classic/` and swap by overlay:
 
-Each texture is wrapped around the tube with **cylindrical wrap UVs** pinned
-to the vine body:
+| Layer | Live | Withered |
+| --- | --- | --- |
+| Shaft (dough wood) | `shaft.png` | same shaft |
+| Wrap overlay | `wrap_live.png` | `wrap_withered.png` |
+| Head / tail | tiles in `ends_atlas.png` | withered tiles in the same atlas |
+
+Rail draw order for Classic: shaft strip → wrap strip → foliage garnish →
+tail quad → head quad. Draw-call count stays ≤ 5 and independent of vine
+length. Moving and bloom reuse the live/withered tiles — no separate motion
+skin. See the project spec `docs/classic-vine-skin-spec.md` (agent store).
+
+Future themes drop the same filenames under `assets/art/skins/<id>/` and
+register a `VineSkinTheme`. Blossom / ethereal still use the JPEG path below
+until they are ported onto this template.
+
+### Skin texture: body-pinned cylindrical UVs
+
+Body strips (Classic shaft/wrap and other textured styles) use
+**cylindrical wrap UVs** pinned to the vine body:
 
 - `v` (along the tube axis) = `(rowArc − headArc + uvPhase) × (texHeight /
   textureRepeatArc)`, wrapped into `[0, texHeight)`. Because `v` is
@@ -104,22 +123,21 @@ to the vine body:
 - `u` (around the tube's circumference) = a narrow per-column bark sliver
   centered on `texWidth/2`, so the tube reads as a single wood dowel strip.
 - `uvPhase` is a per-vine offset (deterministic from the vine id) so vines
-  sample different parts of the trellis image.
+  sample different parts of the strip.
 
 `VineMetrics.textureRepeatArc` (63px) is the body arc over which the
 texture advances one full vertical cycle. `VineMetrics.textureUPerPx`
 (2.5) scales the cross-tube bark sliver. One `ImageShader` per texture
 (image px, repeated in both axes); draw-time vertex tint stays white so the
-real bark/vine detail shows. A failed clear attempt modulates the strip with
-`VineMetrics.witheredColor`, turning dead vines brown naturally (like dead
-vines on wood) — no separate withered tile needed.
+atlas / JPEG detail shows.
 
-The old baked sine-coil atlas and its choppy repeating oval "buds" are gone;
-the real texture carries the vine detail, with head/tail distinction still
-provided by round caps and the arrow head in the style's accent color
-(flat fill, brown when withered).
+Blossom / ethereal still sample
+`assets/art/blossom_vine_texture.png` and `ethereal_vine_texture.png`, with
+flat caps + canvas arrow heads. A failed clear attempt modulates those
+strips with `VineMetrics.witheredColor`. Classic withered instead swaps the
+wrap/head/tail overlay tiles (shaft stays wood).
 
-- Idle vines freeze their built `ui.Vertices` (keyed on tint × skin tile);
+- Idle vines freeze their built `ui.Vertices` (keyed on tint × skin state);
   animating vines rebuild only the window each frame.
 
 ### Simple render pass (stroked path)
@@ -211,10 +229,11 @@ A blocked clear attempt is a stateful swap, driven by solver truth:
   `markVineAttempted`, which flips `hasBeenAttempted` + `isWithered` in
   `VineStatesNotifier` (and decrements grace).
 - From then on (for the session) the vine renders withered in every rail
-  pass: the strip selects the baked withered skin tile, foliage quads tint
-  warm bark brown, caps/arrow head go brown, and the flat/simple stroke
-  swaps to `VineMetrics.witheredColor`. Motion never changes.
-- The idle caches key on tint × skin tile, so the flip rebuilds even when
+  pass: Classic swaps wrap/head/tail to withered atlas tiles (shaft stays
+  wood); other textured styles brown the JPEG strip + caps/arrow; foliage
+  quads tint warm bark brown; the flat/simple stroke swaps to
+  `VineMetrics.witheredColor`. Motion never changes the skin set.
+- The idle caches key on tint × skin state, so the flip rebuilds even when
   the vine is not moving.
 
 ### Foliage (one startup bake, zero per-leaf canvas draws)

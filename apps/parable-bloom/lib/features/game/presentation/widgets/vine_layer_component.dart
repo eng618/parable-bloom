@@ -14,6 +14,7 @@ import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_folia
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_metrics.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_rail_renderer.dart';
 import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_path_painter.dart';
+import 'package:parable_bloom/features/game/presentation/widgets/vine/vine_skin.dart';
 
 /// Single batched renderer for all vines on the board.
 ///
@@ -58,7 +59,10 @@ class VineLayerComponent extends PositionComponent
     renderMode = parent.parent.vineRenderMode;
     final game = parent.parent;
     final textures = game.vineTextures;
-    await textures.load(game.images);
+    await Future.wait([
+      textures.load(game.images),
+      game.vineSkins.load(game.images),
+    ]);
     _classicTexture = textures.classic;
     _blossomTexture = textures.blossom;
     _etherealTexture = textures.ethereal;
@@ -146,13 +150,21 @@ class VineLayerComponent extends PositionComponent
         comp.ensureRailTrack();
         final isAnimating = comp.slide.isAnimating;
 
-        // Select the real trellis/ivy texture for this style (the baked
-        // skin atlas is gone). Null degrades to flat-colored vertex strips.
+        // Classic uses modular layered atlases (shaft + wrap + ends).
+        // Other textured styles still sample the trellis/ivy JPEGs.
+        final classicSkin = game.vineSkins.classic;
+        final modularClassic = VineSkinTheme.usesModularLayers(vineStyle) &&
+            classicSkin != null;
+        final skinState =
+            isAttempted ? VineSkinState.withered : VineSkinState.live;
+
         ui.Image? textureImage;
         int texW, texH;
         switch (vineStyle) {
           case VineStyle.classic:
-            textureImage = _classicTexture;
+            // Modular path ignores textureImage; keep JPEG as legacy fallback
+            // when Classic atlases failed to load.
+            textureImage = modularClassic ? null : _classicTexture;
             texW = _classicTexW;
             texH = _classicTexH;
           case VineStyle.blossom:
@@ -170,21 +182,27 @@ class VineLayerComponent extends PositionComponent
         }
 
         // Rail tint rules (see [VineRailRenderer.draw]):
-        // - tube strip modulates the real texture: white shows the bark/vine
-        //   detail, [VineMetrics.witheredColor] turns dead vines brown.
+        // - Classic modular: shaft/wrap/ends stay white (atlas carries color);
+        //   withered swaps wrap/head/tail tiles rather than browning the shaft.
+        // - Other textured: white shows bark/vine detail; withered browns the
+        //   strip via [VineMetrics.witheredColor].
         // - flat/simple stroke: withered bark brown after a failed attempt,
         //   otherwise the vine's calm palette color.
         // - foliage quads: per-vine calm color, brown when withered.
-        // - caps/arrow head: flat style's vine accent color, brown when
-        //   withered.
+        // - caps/arrow head (non-modular): style accent, brown when withered.
         final flatTint = isAttempted ? VineMetrics.witheredColor : calmColor;
         Color tubeTint;
         Color capTint;
-        if (useSimpleVines || textureImage == null) {
+        if (useSimpleVines || (!modularClassic && textureImage == null)) {
           tubeTint = flatTint;
           capTint = flatTint;
-        } else {
+        } else if (modularClassic) {
           tubeTint = const Color(0xFFFFFFFF);
+          capTint = const Color(0xFFFFFFFF);
+        } else {
+          tubeTint = isAttempted
+              ? VineMetrics.witheredColor
+              : const Color(0xFFFFFFFF);
           capTint = isAttempted
               ? VineMetrics.witheredColor
               : VineMetrics.accentColor(vineStyle);
@@ -203,6 +221,8 @@ class VineLayerComponent extends PositionComponent
           uvPhase: comp.uvPhase,
           texWidth: texW,
           texHeight: texH,
+          classicSkin: modularClassic ? classicSkin : null,
+          skinState: skinState,
         );
         if (rail == null) continue;
         VineRailRenderer.draw(
@@ -212,6 +232,8 @@ class VineLayerComponent extends PositionComponent
           useSimpleVines: useSimpleVines,
           textureImage: textureImage,
           foliageAtlasImage: foliageAtlas.image,
+          classicSkin: modularClassic ? classicSkin : null,
+          skinState: skinState,
           tubeTint: tubeTint,
           foliageTint: foliageTint,
           capTint: capTint,

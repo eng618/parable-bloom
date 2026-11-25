@@ -21,6 +21,7 @@ import 'game_event_sink.dart';
 import 'grid_component.dart';
 import 'projection_lines_component.dart';
 import 'tap_effect_component.dart';
+import 'vine/vine_skin_loader.dart';
 import 'vine/vine_texture_loader.dart';
 
 class GardenGame extends FlameGame with TapCallbacks {
@@ -40,6 +41,10 @@ class GardenGame extends FlameGame with TapCallbacks {
   /// Shared vine-texture loader: one in-flight load per game, reused by all
   /// vine components (see [VineTextureLoader]).
   final VineTextureLoader vineTextures = VineTextureLoader();
+
+  /// Modular Classic (and future theme) skin atlases — layered shaft/wrap/
+  /// head/tail parts for the rail Classic pass.
+  final VineSkinLoader vineSkins = VineSkinLoader();
 
   bool _isGridInitialized = false;
   bool get isGridInitialized => _isGridInitialized;
